@@ -32,6 +32,36 @@ public partial class ResponseSectionViewModel : ViewModelBase
     [ObservableProperty]
     private int selectedResponseTab;
 
+    public string StatusBadgeClass
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(StatusText))
+            {
+                return "Light Secondary";
+            }
+
+            if (StatusText == "请求失败")
+            {
+                return "Light Danger";
+            }
+
+            if (StatusText.StartsWith("HTTP ", StringComparison.OrdinalIgnoreCase) &&
+                int.TryParse(StatusText["HTTP ".Length..], out var code))
+            {
+                return code switch
+                {
+                    >= 200 and < 300 => "Light Success",
+                    >= 300 and < 400 => "Light Secondary",
+                    >= 400 and < 500 => "Light Warning",
+                    _ => "Light Danger"
+                };
+            }
+
+            return "Light Primary";
+        }
+    }
+
     public void ApplyResult(IResultModel<ResponseSnapshotDto> result, RequestSnapshotDto request)
     {
         HasResponse = true;
@@ -64,5 +94,10 @@ public partial class ResponseSectionViewModel : ViewModelBase
         SizeText = string.Empty;
         BodyText = string.Empty;
         HeadersText = string.Empty;
+    }
+
+    partial void OnStatusTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(StatusBadgeClass));
     }
 }

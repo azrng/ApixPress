@@ -46,8 +46,10 @@
                               PopupContent="删除后本环境下的变量引用将立即失效。"
                               ConfirmCommand="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).EnvironmentPanel.RemoveVariableCommand}"
                               ConfirmCommandParameter="{Binding}">
-                  <Button Classes="SecondaryButton"
-                          Content="删除" />
+                  <u:IconButton Classes="Danger"
+                                Theme="{DynamicResource BorderlessIconButton}"
+                                Icon="{StaticResource SemiIconDelete}"
+                                ToolTip.Tip="删除该变量" />
                 </u:PopConfirm>
                 <TextBox Grid.Row="1"
                          Grid.Column="1"

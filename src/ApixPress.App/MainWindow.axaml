@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:iri="https://irihi.tech/shared"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:models="using:ApixPress.App.Models.DTOs"
         xmlns:u="https://irihi.tech/ursa"
@@ -93,16 +94,10 @@
                       <!-- Row 0: Method + URL -->
                       <Grid Grid.Row="0"
                             ColumnDefinitions="Auto,*,Auto">
-                        <Border Grid.Column="0"
-                                Background="{Binding MethodColor}"
-                                CornerRadius="4"
-                                Padding="6,3"
-                                Margin="0,0,8,0">
-                          <TextBlock Text="{Binding Method}"
-                                     FontSize="11"
-                                     Foreground="White"
-                                     FontWeight="SemiBold" />
-                        </Border>
+                        <u:Badge Grid.Column="0"
+                                 Margin="0,0,8,0"
+                                 Header="{Binding Method}"
+                                 iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
                         <TextBlock Grid.Column="1"
                                    Text="{Binding Url}"
                                    TextTrimming="CharacterEllipsis"
@@ -118,16 +113,10 @@
                       <Grid Grid.Row="1"
                             ColumnDefinitions="Auto,Auto,Auto,*"
                             ColumnSpacing="{StaticResource Space.2}">
-                        <Border Grid.Column="0"
-                                Background="{Binding StatusColor}"
-                                CornerRadius="4"
-                                Padding="6,2"
-                                IsVisible="{Binding HasResponse}">
-                          <TextBlock Text="{Binding StatusText}"
-                                     FontSize="11"
-                                     Foreground="White"
-                                     FontWeight="Medium" />
-                        </Border>
+                        <u:Badge Grid.Column="0"
+                                 Header="{Binding StatusText}"
+                                 IsVisible="{Binding HasResponse}"
+                                 iri:ClassHelper.Classes="{Binding StatusBadgeClass}" />
                         <TextBlock Grid.Column="1"
                                    Classes="CaptionText"
                                    Text="{Binding DurationText}"
@@ -268,16 +257,13 @@
                                      Text="{Binding Value}"
                                      Watermark="参数值"
                                      FontSize="13" />
-                            <Button Grid.Column="2"
-                                    Classes="DeleteButton"
-                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
-                                    CommandParameter="{Binding}"
-                                    ToolTip.Tip="删除此参数">
-                              <Path Width="14"
-                                    Height="14"
-                                    Fill="{DynamicResource Brush.Text.Secondary}"
-                                    Data="M6,19 C6,20.1 6.9,21 8,21 L16,21 C17.1,21 18,20.1 18,19 L18,7 L6,7 L6,19 Z M19,4 L15.5,4 L14.5,3 L9.5,3 L8.5,4 L5,4 L5,6 L19,6 L19,4 Z" />
-                            </Button>
+                            <u:IconButton Grid.Column="2"
+                                          Classes="Danger"
+                                          Theme="{DynamicResource BorderlessIconButton}"
+                                          Icon="{StaticResource SemiIconDelete}"
+                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
+                                          CommandParameter="{Binding}"
+                                          ToolTip.Tip="删除此参数" />
                           </Grid>
                         </Border>
                       </DataTemplate>
@@ -361,16 +347,13 @@
                                        Text="{Binding Value}"
                                        Watermark="字段值"
                                        FontSize="13" />
-                              <Button Grid.Column="2"
-                                      Classes="DeleteButton"
-                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
-                                      CommandParameter="{Binding}"
-                                      ToolTip.Tip="删除此字段">
-                                <Path Width="14"
-                                      Height="14"
-                                      Fill="{DynamicResource Brush.Text.Secondary}"
-                                      Data="M6,19 C6,20.1 6.9,21 8,21 L16,21 C17.1,21 18,20.1 18,19 L18,7 L6,7 L6,19 Z M19,4 L15.5,4 L14.5,3 L9.5,3 L8.5,4 L5,4 L5,6 L19,6 L19,4 Z" />
-                              </Button>
+                              <u:IconButton Grid.Column="2"
+                                            Classes="Danger"
+                                            Theme="{DynamicResource BorderlessIconButton}"
+                                            Icon="{StaticResource SemiIconDelete}"
+                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip.Tip="删除此字段" />
                             </Grid>
                           </Border>
                         </DataTemplate>
@@ -450,16 +433,13 @@
                                      Text="{Binding Value}"
                                      Watermark="Header 值"
                                      FontSize="13" />
-                            <Button Grid.Column="2"
-                                    Classes="DeleteButton"
-                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
-                                    CommandParameter="{Binding}"
-                                    ToolTip.Tip="删除此 Header">
-                              <Path Width="14"
-                                    Height="14"
-                                    Fill="{DynamicResource Brush.Text.Secondary}"
-                                    Data="M6,19 C6,20.1 6.9,21 8,21 L16,21 C17.1,21 18,20.1 18,19 L18,7 L6,7 L6,19 Z M19,4 L15.5,4 L14.5,3 L9.5,3 L8.5,4 L5,4 L5,6 L19,6 L19,4 Z" />
-                            </Button>
+                            <u:IconButton Grid.Column="2"
+                                          Classes="Danger"
+                                          Theme="{DynamicResource BorderlessIconButton}"
+                                          Icon="{StaticResource SemiIconDelete}"
+                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
+                                          CommandParameter="{Binding}"
+                                          ToolTip.Tip="删除此 Header" />
                           </Grid>
                         </Border>
                       </DataTemplate>
@@ -524,10 +504,9 @@
               <Grid Grid.Row="0"
                     ColumnDefinitions="Auto,Auto,Auto,*"
                     ColumnSpacing="{StaticResource Space.3}">
-                <Border Grid.Column="0" Classes="StatusSuccess">
-                  <TextBlock Text="{Binding ResponseSection.StatusText}"
-                             FontWeight="Medium" />
-                </Border>
+                <u:Badge Grid.Column="0"
+                         Header="{Binding ResponseSection.StatusText}"
+                         iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
                 <TextBlock Grid.Column="1"
                            Classes="CaptionText"
                            Text="{Binding ResponseSection.DurationText}"

@@ -27,32 +27,33 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
     public required RequestSnapshotDto RequestSnapshot { get; init; }
     public ResponseSnapshotDto? ResponseSnapshot { get; init; }
 
-    // Computed badge classes
-    public string MethodBadgeClass => $"MethodBadge_{Method}";
-
-    public string StatusBadgeClass =>
-        !HasResponse ? "StatusBadge_Error" :
-        int.TryParse(StatusText, out var code) ? $"StatusBadge_{code / 100}xx" :
-        "StatusBadge_Error";
-
-    // Computed colors for UI
-    public string MethodColor => Method switch
+    public string MethodBadgeClass => Method switch
     {
-        "GET" => "#6C757D",
-        "POST" => "#0D6EFD",
-        "PUT" => "#FD7E14",
-        "DELETE" => "#DC3545",
-        "PATCH" => "#20C997",
-        _ => "#6C757D"
+        "GET" => "Light Tertiary",
+        "POST" => "Light Primary",
+        "PUT" => "Light Warning",
+        "DELETE" => "Light Danger",
+        "PATCH" => "Light Success",
+        _ => "Light Secondary"
     };
 
-    public string StatusColor =>
-        !HasResponse ? "#6C757D" :
+    public string StatusBadgeClass =>
+        !HasResponse ? "Light Danger" :
         int.TryParse(StatusText, out var code) ? code switch
         {
-            >= 200 and < 300 => "#198754",
-            >= 300 and < 400 => "#6C757D",
-            >= 400 and < 500 => "#FD7E14",
-            _ => "#DC3545"
-        } : "#6C757D";
+            >= 200 and < 300 => "Light Success",
+            >= 300 and < 400 => "Light Secondary",
+            >= 400 and < 500 => "Light Warning",
+            _ => "Light Danger"
+        } : "Light Danger";
+
+    partial void OnHasResponseChanged(bool value)
+    {
+        OnPropertyChanged(nameof(StatusBadgeClass));
+    }
+
+    partial void OnStatusTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(StatusBadgeClass));
+    }
 }
