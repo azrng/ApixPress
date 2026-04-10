@@ -91,19 +91,9 @@
               RowDefinitions="Auto,Auto,*"
               RowSpacing="{StaticResource Space.4}">
           <Border Classes="BrowserToolbarCard">
-            <Grid ColumnDefinitions="Auto,*,Auto"
+            <Grid ColumnDefinitions="*,Auto"
                   ColumnSpacing="{StaticResource Space.4}">
-              <Border Classes="BrowserSegmentGroup">
-                <StackPanel Orientation="Horizontal"
-                            Spacing="{StaticResource Space.2}">
-                  <Button Classes="BrowserSegmentButton BrowserSegmentButtonActive"
-                          Content="卡片视图" />
-                  <Button Classes="BrowserSegmentButton"
-                          Content="项目总览" />
-                </StackPanel>
-              </Border>
-
-              <StackPanel Grid.Column="1"
+              <StackPanel Grid.Column="0"
                           Spacing="{StaticResource Space.1}"
                           VerticalAlignment="Center">
                 <TextBlock Classes="SectionTitle"
@@ -112,7 +102,7 @@
                            Text="{Binding ProjectPanel.FilteredProjects.Count, StringFormat='共 {0} 个项目，可点击进入详情页'}" />
               </StackPanel>
 
-              <Grid Grid.Column="2"
+              <Grid Grid.Column="1"
                     ColumnDefinitions="260,Auto,Auto"
                     ColumnSpacing="{StaticResource Space.2}"
                     HorizontalAlignment="Right">
