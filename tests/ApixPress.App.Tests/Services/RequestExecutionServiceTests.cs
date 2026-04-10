@@ -22,13 +22,26 @@ public sealed class RequestExecutionServiceTests
             ]
         };
 
-        var url = RequestExecutionService.BuildUrl(request, new Dictionary<string, string>
+        var url = RequestExecutionService.BuildUrl(request, "https://api.example.com", new Dictionary<string, string>
         {
-            ["baseUrl"] = "https://api.example.com",
             ["scope"] = "profile"
         });
 
         Assert.Equal("https://api.example.com/users/42?expand=profile", url);
+    }
+
+    [Fact]
+    public void BuildUrl_ShouldCombineRelativePathWithEnvironmentBaseUrl()
+    {
+        var request = new RequestSnapshotDto
+        {
+            Method = "POST",
+            Url = "/orders"
+        };
+
+        var url = RequestExecutionService.BuildUrl(request, "https://api.example.com", new Dictionary<string, string>());
+
+        Assert.Equal("https://api.example.com/orders", url);
     }
 
     [Fact]

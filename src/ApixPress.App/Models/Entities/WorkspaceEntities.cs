@@ -3,6 +3,7 @@ namespace ApixPress.App.Models.Entities;
 public sealed class ApiDocumentEntity
 {
     public string Id { get; set; } = string.Empty;
+    public string ProjectId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string SourceType { get; set; } = string.Empty;
     public string SourceValue { get; set; } = string.Empty;
@@ -37,6 +38,7 @@ public sealed class RequestParameterEntity
 public sealed class RequestCaseEntity
 {
     public string Id { get; set; } = string.Empty;
+    public string ProjectId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string GroupName { get; set; } = string.Empty;
     public string TagsJson { get; set; } = string.Empty;
@@ -48,6 +50,7 @@ public sealed class RequestCaseEntity
 public sealed class EnvironmentVariableEntity
 {
     public string Id { get; set; } = string.Empty;
+    public string EnvironmentId { get; set; } = string.Empty;
     public string EnvironmentName { get; set; } = "Default";
     public string Key { get; set; } = string.Empty;
     public string Value { get; set; } = string.Empty;

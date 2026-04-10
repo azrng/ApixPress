@@ -6,62 +6,114 @@
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.EnvironmentDrawerView"
              x:DataType="vm:MainWindowViewModel"
-             d:DesignWidth="380"
+             d:DesignWidth="400"
              d:DesignHeight="720"
              mc:Ignorable="d">
-  <ScrollViewer>
-    <StackPanel Spacing="{StaticResource Space.3}">
-      <Grid ColumnDefinitions="*,Auto,Auto"
-            ColumnSpacing="{StaticResource Space.2}">
-        <TextBlock Classes="CaptionText"
-                   Text="当前环境：Default。变量支持通过 {{key}} 形式在请求地址、Header 与请求体中引用。"
-                   VerticalAlignment="Center" />
-        <Button Grid.Column="1"
-                Classes="SecondaryButton"
-                Content="新增变量"
-                Command="{Binding EnvironmentPanel.AddVariableCommand}" />
-        <Button Grid.Column="2"
-                Classes="PrimaryButton"
-                Content="保存"
-                Command="{Binding EnvironmentPanel.SaveVariablesCommand}" />
-      </Grid>
+  <Grid RowDefinitions="Auto,Auto,*"
+        RowSpacing="{StaticResource Space.3}">
+    <Grid ColumnDefinitions="*,Auto"
+          ColumnSpacing="{StaticResource Space.2}">
+      <TextBlock Classes="CaptionText"
+                 Text="当前项目下仅允许一个激活环境。相对路径请求会使用 BaseUrl 自动补全。"
+                 VerticalAlignment="Center" />
+      <Button Grid.Column="1"
+              Classes="SecondaryButton"
+              Content="新增环境"
+              Command="{Binding EnvironmentPanel.AddEnvironmentCommand}" />
+    </Grid>
 
-      <ItemsControl ItemsSource="{Binding EnvironmentPanel.EnvironmentVariables}">
-        <ItemsControl.ItemTemplate>
-          <DataTemplate x:DataType="vm:EnvironmentVariableItemViewModel">
-            <Border Classes="PanelCard"
-                    Padding="{StaticResource Pad.3}">
-              <Grid ColumnDefinitions="Auto,*,Auto"
-                    ColumnSpacing="{StaticResource Space.2}"
-                    RowDefinitions="Auto,Auto">
-                <CheckBox Grid.RowSpan="2"
-                          VerticalAlignment="Top"
-                          IsChecked="{Binding IsEnabled}" />
-                <TextBox Grid.Column="1"
-                         Classes="SectionInput"
-                         Watermark="变量键，例如 baseUrl"
-                         Text="{Binding Key}" />
-                <u:PopConfirm Grid.Column="2"
-                              PopupHeader="确认删除该环境变量？"
-                              PopupContent="删除后本环境下的变量引用将立即失效。"
-                              ConfirmCommand="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).EnvironmentPanel.RemoveVariableCommand}"
-                              ConfirmCommandParameter="{Binding}">
-                  <u:IconButton Classes="Danger"
-                                Theme="{DynamicResource BorderlessIconButton}"
-                                Icon="{StaticResource SemiIconDelete}"
-                                ToolTip.Tip="删除该变量" />
-                </u:PopConfirm>
-                <TextBox Grid.Row="1"
-                         Grid.Column="1"
-                         Grid.ColumnSpan="2"
-                         Classes="SectionInput"
-                         Watermark="变量值"
-                         Text="{Binding Value}" />
-              </Grid>
-            </Border>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-    </StackPanel>
-  </ScrollViewer>
+    <ListBox Grid.Row="1"
+             Classes="FlatListBox"
+             ItemsSource="{Binding EnvironmentPanel.Environments}"
+             SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}"
+             Height="180">
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
+          <StackPanel Spacing="{StaticResource Space.1}">
+            <TextBlock Text="{Binding DisplayName}" />
+            <TextBlock Classes="CaptionText"
+                       Text="{Binding BaseUrl}" />
+          </StackPanel>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <ScrollViewer Grid.Row="2">
+      <StackPanel Spacing="{StaticResource Space.3}"
+                  IsVisible="{Binding EnvironmentPanel.HasSelectedEnvironment}">
+        <u:Form LabelPosition="Top">
+          <TextBox Classes="SectionInput"
+                   u:FormItem.Label="环境名称"
+                   Watermark="例如 开发 / 测试 / 生产"
+                   Text="{Binding EnvironmentPanel.SelectedEnvironment.Name}" />
+          <TextBox Classes="SectionInput"
+                   u:FormItem.Label="BaseUrl"
+                   Watermark="例如 https://api.example.com"
+                   Text="{Binding EnvironmentPanel.SelectedEnvironment.BaseUrl}" />
+        </u:Form>
+
+        <Grid ColumnDefinitions="*,*"
+              ColumnSpacing="{StaticResource Space.2}">
+          <Button Grid.Column="0"
+                  Classes="PrimaryButton"
+                  Content="保存环境"
+                  Command="{Binding EnvironmentPanel.SaveEnvironmentCommand}" />
+          <u:PopConfirm Grid.Column="1"
+                        PopupHeader="确认删除当前环境？"
+                        PopupContent="若这是激活环境，系统会自动切换到其他环境。"
+                        ConfirmCommand="{Binding EnvironmentPanel.RemoveEnvironmentCommand}">
+            <Button Classes="SecondaryButton"
+                    Content="删除环境" />
+          </u:PopConfirm>
+        </Grid>
+
+        <Grid ColumnDefinitions="*,Auto"
+              ColumnSpacing="{StaticResource Space.2}">
+          <TextBlock Classes="SectionTitle"
+                     Text="环境变量" />
+          <Button Grid.Column="1"
+                  Classes="SecondaryButton"
+                  Content="新增变量"
+                  Command="{Binding EnvironmentPanel.AddVariableCommand}" />
+        </Grid>
+
+        <ItemsControl ItemsSource="{Binding EnvironmentPanel.EnvironmentVariables}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:EnvironmentVariableItemViewModel">
+              <Border Classes="PanelCard"
+                      Padding="{StaticResource Pad.3}">
+                <Grid ColumnDefinitions="Auto,*,Auto"
+                      ColumnSpacing="{StaticResource Space.2}"
+                      RowDefinitions="Auto,Auto">
+                  <CheckBox Grid.RowSpan="2"
+                            VerticalAlignment="Top"
+                            IsChecked="{Binding IsEnabled}" />
+                  <TextBox Grid.Column="1"
+                           Classes="SectionInput"
+                           Watermark="变量键，例如 token"
+                           Text="{Binding Key}" />
+                  <u:PopConfirm Grid.Column="2"
+                                PopupHeader="确认删除该环境变量？"
+                                PopupContent="删除后当前环境下对应的变量引用会立即失效。"
+                                ConfirmCommand="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).EnvironmentPanel.RemoveVariableCommand}"
+                                ConfirmCommandParameter="{Binding}">
+                    <u:IconButton Classes="Danger"
+                                  Theme="{DynamicResource BorderlessIconButton}"
+                                  Icon="{StaticResource SemiIconDelete}"
+                                  ToolTip.Tip="删除该变量" />
+                  </u:PopConfirm>
+                  <TextBox Grid.Row="1"
+                           Grid.Column="1"
+                           Grid.ColumnSpan="2"
+                           Classes="SectionInput"
+                           Watermark="变量值"
+                           Text="{Binding Value}" />
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
 </UserControl>

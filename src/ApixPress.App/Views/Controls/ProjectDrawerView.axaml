@@ -1,0 +1,80 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.ProjectDrawerView"
+             x:DataType="vm:MainWindowViewModel"
+             d:DesignWidth="420"
+             d:DesignHeight="720"
+             mc:Ignorable="d">
+  <Grid RowDefinitions="Auto,Auto,*"
+        RowSpacing="{StaticResource Space.3}">
+    <Grid ColumnDefinitions="*,Auto"
+          ColumnSpacing="{StaticResource Space.2}">
+      <TextBlock Classes="CaptionText"
+                 Text="在这里维护本地项目工作区。切换项目后，请求历史、用例和环境会自动隔离。"
+                 VerticalAlignment="Center" />
+      <Button Grid.Column="1"
+              Classes="PrimaryButton"
+              Content="新建项目"
+              Command="{Binding ProjectPanel.CreateProjectCommand}" />
+    </Grid>
+
+    <ListBox Grid.Row="1"
+             Classes="FlatListBox"
+             ItemsSource="{Binding ProjectPanel.Projects}"
+             SelectedItem="{Binding ProjectPanel.SelectedProject}"
+             Height="220">
+      <ListBox.ItemTemplate>
+        <DataTemplate x:DataType="vm:ProjectWorkspaceItemViewModel">
+          <StackPanel Spacing="{StaticResource Space.1}">
+            <TextBlock Text="{Binding DisplayName}" />
+            <TextBlock Classes="CaptionText"
+                       Text="{Binding Description}" />
+          </StackPanel>
+        </DataTemplate>
+      </ListBox.ItemTemplate>
+    </ListBox>
+
+    <Border Grid.Row="2"
+            Classes="PanelCard"
+            IsVisible="{Binding ProjectPanel.HasSelectedProject}">
+      <StackPanel Spacing="{StaticResource Space.3}">
+        <u:Form LabelPosition="Top">
+          <TextBox Classes="SectionInput"
+                   u:FormItem.Label="项目名称"
+                   Watermark="请输入项目名称"
+                   Text="{Binding ProjectPanel.SelectedProject.Name}" />
+          <TextBox Classes="SectionInput"
+                   AcceptsReturn="True"
+                   Height="88"
+                   TextWrapping="Wrap"
+                   u:FormItem.Label="项目说明"
+                   Watermark="用于区分服务域、环境或团队"
+                   Text="{Binding ProjectPanel.SelectedProject.Description}" />
+        </u:Form>
+
+        <Grid ColumnDefinitions="*,*,*"
+              ColumnSpacing="{StaticResource Space.2}">
+          <Button Grid.Column="0"
+                  Classes="SecondaryButton"
+                  Content="设为默认"
+                  Command="{Binding ProjectPanel.SetSelectedProjectAsDefaultCommand}" />
+          <Button Grid.Column="1"
+                  Classes="PrimaryButton"
+                  Content="保存"
+                  Command="{Binding ProjectPanel.SaveSelectedProjectCommand}" />
+          <u:PopConfirm Grid.Column="2"
+                        PopupHeader="确认删除当前项目？"
+                        PopupContent="该项目下的环境、用例、文档和请求历史都会被一起删除。"
+                        ConfirmCommand="{Binding ProjectPanel.DeleteSelectedProjectCommand}">
+            <Button Classes="SecondaryButton"
+                    Content="删除" />
+          </u:PopConfirm>
+        </Grid>
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

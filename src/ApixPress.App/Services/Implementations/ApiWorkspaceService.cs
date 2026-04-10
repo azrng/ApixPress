@@ -20,9 +20,9 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         _apiDocumentRepository = apiDocumentRepository;
     }
 
-    public async Task<IReadOnlyList<ApiDocumentDto>> GetDocumentsAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ApiDocumentDto>> GetDocumentsAsync(string projectId, CancellationToken cancellationToken)
     {
-        var documents = await _apiDocumentRepository.GetDocumentsAsync(cancellationToken);
+        var documents = await _apiDocumentRepository.GetDocumentsAsync(projectId, cancellationToken);
         return documents.Select(ToDocumentDto).ToList();
     }
 
@@ -48,13 +48,13 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         }).ToList();
     }
 
-    public async Task<ApiDocumentDto?> GetDocumentAsync(string documentId, CancellationToken cancellationToken)
+    public async Task<ApiDocumentDto?> GetDocumentAsync(string projectId, string documentId, CancellationToken cancellationToken)
     {
-        var documents = await _apiDocumentRepository.GetDocumentsAsync(cancellationToken);
-        return documents.Where(item => item.Id == documentId).Select(ToDocumentDto).FirstOrDefault();
+        var document = await _apiDocumentRepository.GetByIdAsync(projectId, documentId, cancellationToken);
+        return document is null ? null : ToDocumentDto(document);
     }
 
-    public async Task<IResultModel<ApiDocumentDto>> ImportFromUrlAsync(string url, CancellationToken cancellationToken)
+    public async Task<IResultModel<ApiDocumentDto>> ImportFromUrlAsync(string projectId, string url, CancellationToken cancellationToken)
     {
         try
         {
@@ -65,7 +65,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
 
             using var httpClient = new HttpClient();
             var json = await httpClient.GetStringAsync(targetUri, cancellationToken);
-            return await ImportCoreAsync("URL", url, json, cancellationToken);
+            return await ImportCoreAsync(projectId, "URL", url, json, cancellationToken);
         }
         catch (Exception exception)
         {
@@ -73,7 +73,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         }
     }
 
-    public async Task<IResultModel<ApiDocumentDto>> ImportFromFileAsync(string filePath, CancellationToken cancellationToken)
+    public async Task<IResultModel<ApiDocumentDto>> ImportFromFileAsync(string projectId, string filePath, CancellationToken cancellationToken)
     {
         try
         {
@@ -89,7 +89,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
             }
 
             var json = await File.ReadAllTextAsync(filePath, cancellationToken);
-            return await ImportCoreAsync("FILE", filePath, json, cancellationToken);
+            return await ImportCoreAsync(projectId, "FILE", filePath, json, cancellationToken);
         }
         catch (Exception exception)
         {
@@ -97,11 +97,12 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         }
     }
 
-    private async Task<IResultModel<ApiDocumentDto>> ImportCoreAsync(string sourceType, string sourceValue, string json, CancellationToken cancellationToken)
+    private async Task<IResultModel<ApiDocumentDto>> ImportCoreAsync(string projectId, string sourceType, string sourceValue, string json, CancellationToken cancellationToken)
     {
         try
         {
             var graph = OpenApiJsonParser.Parse(json, sourceType, sourceValue);
+            graph.Document.ProjectId = projectId;
             await _apiDocumentRepository.SaveDocumentGraphAsync(graph.Document, graph.Endpoints, graph.Parameters, cancellationToken);
             return ResultModel<ApiDocumentDto>.Success(ToDocumentDto(graph.Document));
         }
@@ -120,6 +121,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         return new ApiDocumentDto
         {
             Id = entity.Id,
+            ProjectId = entity.ProjectId,
             Name = entity.Name,
             SourceType = entity.SourceType,
             SourceValue = entity.SourceValue,

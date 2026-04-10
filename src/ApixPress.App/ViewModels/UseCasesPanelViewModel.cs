@@ -10,6 +10,7 @@ namespace ApixPress.App.ViewModels;
 public partial class UseCasesPanelViewModel : ViewModelBase
 {
     private readonly IRequestCaseService _requestCaseService;
+    private string _currentProjectId = string.Empty;
 
     public event Action<RequestSnapshotDto>? CaseApplied;
 
@@ -34,10 +35,27 @@ public partial class UseCasesPanelViewModel : ViewModelBase
 
     public ObservableCollection<string> CaseTags { get; } = [];
 
+    public void SetProjectContext(string projectId)
+    {
+        _currentProjectId = projectId;
+    }
+
+    public void ClearProjectContext()
+    {
+        _currentProjectId = string.Empty;
+        RequestCases.Clear();
+        SelectedRequestCase = null;
+    }
+
     public async Task LoadCasesAsync()
     {
         RequestCases.Clear();
-        var cases = await _requestCaseService.GetCasesAsync(CancellationToken.None);
+        if (string.IsNullOrWhiteSpace(_currentProjectId))
+        {
+            return;
+        }
+
+        var cases = await _requestCaseService.GetCasesAsync(_currentProjectId, CancellationToken.None);
         foreach (var requestCase in cases)
         {
             RequestCases.Add(new RequestCaseItemViewModel
@@ -65,6 +83,7 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         return new RequestCaseDto
         {
             Id = caseId,
+            ProjectId = _currentProjectId,
             Name = string.IsNullOrWhiteSpace(CaseName) ? requestName : CaseName,
             GroupName = CaseGroupName,
             Tags = CaseTags.Where(tag => !string.IsNullOrWhiteSpace(tag)).ToList(),
@@ -77,6 +96,11 @@ public partial class UseCasesPanelViewModel : ViewModelBase
     [RelayCommand]
     public async Task SaveCaseAsync(RequestSnapshotDto snapshot)
     {
+        if (string.IsNullOrWhiteSpace(_currentProjectId))
+        {
+            return;
+        }
+
         var dto = BuildCaseDto(SelectedRequestCase?.Id ?? string.Empty, snapshot.Name, snapshot);
         var result = await _requestCaseService.SaveAsync(dto, CancellationToken.None);
         if (result.IsSuccess)
@@ -99,7 +123,8 @@ public partial class UseCasesPanelViewModel : ViewModelBase
     private async Task DuplicateSelectedCaseAsync()
     {
         if (SelectedRequestCase is null) return;
-        var result = await _requestCaseService.DuplicateAsync(SelectedRequestCase.Id, CancellationToken.None);
+        if (string.IsNullOrWhiteSpace(_currentProjectId)) return;
+        var result = await _requestCaseService.DuplicateAsync(_currentProjectId, SelectedRequestCase.Id, CancellationToken.None);
         if (result.IsSuccess)
             await LoadCasesAsync();
     }
@@ -108,8 +133,9 @@ public partial class UseCasesPanelViewModel : ViewModelBase
     private async Task DeleteSelectedCaseAsync()
     {
         if (SelectedRequestCase is null) return;
+        if (string.IsNullOrWhiteSpace(_currentProjectId)) return;
 
-        await _requestCaseService.DeleteAsync(SelectedRequestCase.Id, CancellationToken.None);
+        await _requestCaseService.DeleteAsync(_currentProjectId, SelectedRequestCase.Id, CancellationToken.None);
         SelectedRequestCase = null;
         await LoadCasesAsync();
     }

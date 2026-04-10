@@ -20,6 +20,7 @@ public static class BodyModes
 public sealed class ApiDocumentDto
 {
     public string Id { get; init; } = string.Empty;
+    public string ProjectId { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
     public string SourceType { get; init; } = string.Empty;
     public string SourceValue { get; init; } = string.Empty;
@@ -92,6 +93,7 @@ public sealed class ResponseSnapshotDto
 public sealed class RequestCaseDto
 {
     public string Id { get; init; } = string.Empty;
+    public string ProjectId { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
     public string GroupName { get; init; } = "默认分组";
     public List<string> Tags { get; init; } = [];
@@ -103,6 +105,7 @@ public sealed class RequestCaseDto
 public sealed class EnvironmentVariableDto
 {
     public string Id { get; init; } = string.Empty;
+    public string EnvironmentId { get; init; } = string.Empty;
     public string EnvironmentName { get; init; } = "Default";
     public string Key { get; init; } = string.Empty;
     public string Value { get; init; } = string.Empty;

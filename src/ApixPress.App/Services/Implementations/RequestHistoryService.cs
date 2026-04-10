@@ -20,18 +20,19 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
         _serializer = serializer;
     }
 
-    public async Task<IReadOnlyList<RequestHistoryItemDto>> GetHistoryAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<RequestHistoryItemDto>> GetHistoryAsync(string projectId, CancellationToken cancellationToken)
     {
         const int limit = 50;
-        var entities = await _requestHistoryRepository.GetHistoryAsync(limit, cancellationToken);
+        var entities = await _requestHistoryRepository.GetHistoryAsync(projectId, limit, cancellationToken);
         return entities.Select(ToDto).ToList();
     }
 
-    public async Task<IResultModel<RequestHistoryItemDto>> AddAsync(RequestSnapshotDto request, ResponseSnapshotDto? response, CancellationToken cancellationToken)
+    public async Task<IResultModel<RequestHistoryItemDto>> AddAsync(string projectId, RequestSnapshotDto request, ResponseSnapshotDto? response, CancellationToken cancellationToken)
     {
         var entity = new RequestHistoryEntity
         {
             Id = Guid.NewGuid().ToString("N"),
+            ProjectId = projectId,
             Timestamp = DateTime.UtcNow,
             RequestSnapshotJson = _serializer.ToJson(request),
             ResponseSnapshotJson = response is not null ? _serializer.ToJson(response) : "{}"
@@ -41,15 +42,15 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
         return ResultModel<RequestHistoryItemDto>.Success(ToDto(entity));
     }
 
-    public async Task<IResultModel<bool>> ClearAsync(CancellationToken cancellationToken)
+    public async Task<IResultModel<bool>> ClearAsync(string projectId, CancellationToken cancellationToken)
     {
-        await _requestHistoryRepository.ClearAsync(cancellationToken);
+        await _requestHistoryRepository.ClearAsync(projectId, cancellationToken);
         return ResultModel<bool>.Success(true);
     }
 
-    public async Task<IResultModel<bool>> DeleteAsync(string id, CancellationToken cancellationToken)
+    public async Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
     {
-        await _requestHistoryRepository.DeleteAsync(id, cancellationToken);
+        await _requestHistoryRepository.DeleteAsync(projectId, id, cancellationToken);
         return ResultModel<bool>.Success(true);
     }
 

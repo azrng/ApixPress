@@ -20,7 +20,7 @@
   <Grid RowDefinitions="Auto,*">
     <!-- ===== Row 0: Top Bar ===== -->
     <Border Grid.Row="0" Classes="TopBarCard">
-      <Grid ColumnDefinitions="Auto,*,Auto"
+      <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto"
             ColumnSpacing="{StaticResource Space.4}">
         <StackPanel Grid.Column="0"
                     Orientation="Horizontal"
@@ -34,15 +34,54 @@
                      Text="API 协作平台"
                      VerticalAlignment="Center" />
         </StackPanel>
-        <TextBlock Grid.Column="1"
+        <StackPanel Grid.Column="1"
+                    Spacing="{StaticResource Space.1}"
+                    VerticalAlignment="Center">
+          <TextBlock Classes="CaptionText"
+                     Text="当前项目" />
+          <ComboBox Classes="SectionInput"
+                    Width="220"
+                    ItemsSource="{Binding ProjectPanel.Projects}"
+                    SelectedItem="{Binding ProjectPanel.SelectedProject}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:ProjectWorkspaceItemViewModel">
+                <TextBlock Text="{Binding DisplayName}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </StackPanel>
+        <StackPanel Grid.Column="2"
+                    Spacing="{StaticResource Space.1}"
+                    VerticalAlignment="Center">
+          <TextBlock Classes="CaptionText"
+                     Text="当前环境" />
+          <ComboBox Classes="SectionInput"
+                    Width="180"
+                    ItemsSource="{Binding EnvironmentPanel.Environments}"
+                    SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}"
+                    IsEnabled="{Binding HasProjectContext}">
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
+                <TextBlock Text="{Binding DisplayName}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </StackPanel>
+        <TextBlock Grid.Column="3"
                    Classes="CaptionText"
                    Text="{Binding StatusMessage}"
                    VerticalAlignment="Center"
                    HorizontalAlignment="Center" />
-        <StackPanel Grid.Column="2"
+        <StackPanel Grid.Column="4"
                     Orientation="Horizontal"
                     Spacing="{StaticResource Space.2}"
                     VerticalAlignment="Center">
+          <Button Classes="SecondaryButton"
+                  Content="新建项目"
+                  Command="{Binding ProjectPanel.CreateProjectCommand}" />
+          <Button Classes="SecondaryButton"
+                  Content="项目管理"
+                  Click="OnOpenProjectDrawer" />
           <Button Classes="SecondaryButton"
                   Content="刷新"
                   Command="{Binding RefreshWorkspaceCommand}" />
@@ -51,7 +90,31 @@
     </Border>
 
     <!-- ===== Row 1: Main Content ===== -->
-    <Grid Grid.Row="1"
+    <Grid Grid.Row="1">
+      <Border Classes="EmptyStateCard"
+              Margin="{StaticResource Pad.4}"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              MaxWidth="540"
+              IsVisible="{Binding ShowProjectEmptyState}">
+        <StackPanel Spacing="{StaticResource Space.3}">
+          <TextBlock Classes="SectionTitle"
+                     Text="请先创建项目" />
+          <TextBlock Classes="SubtleText"
+                     Text="创建项目后，你就可以按项目隔离维护请求历史、用例、环境和接口文档。" />
+          <StackPanel Orientation="Horizontal"
+                      Spacing="{StaticResource Space.2}">
+            <Button Classes="PrimaryButton"
+                    Content="新建项目"
+                    Command="{Binding ProjectPanel.CreateProjectCommand}" />
+            <Button Classes="SecondaryButton"
+                    Content="打开项目管理"
+                    Click="OnOpenProjectDrawer" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <Grid IsVisible="{Binding HasProjectContext}"
           ColumnDefinitions="280,*">
 
       <!-- ===== Left Sidebar: Request History ===== -->
@@ -196,6 +259,7 @@
                   Classes="SendButton"
                   Content="发送"
                   Command="{Binding SendRequestCommand}"
+                  IsEnabled="{Binding HasEnvironmentContext}"
                   Width="80"
                   Height="40" />
         </Grid>
@@ -549,6 +613,7 @@
         </Border>
 
       </Grid>
+    </Grid>
     </Grid>
     <u:OverlayDialogHost />
   </Grid>

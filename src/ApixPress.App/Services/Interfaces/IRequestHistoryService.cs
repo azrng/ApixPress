@@ -5,13 +5,13 @@ namespace ApixPress.App.Services.Interfaces;
 
 public interface IRequestHistoryService
 {
-    Task<IReadOnlyList<RequestHistoryItemDto>> GetHistoryAsync(CancellationToken cancellationToken);
+    Task<IReadOnlyList<RequestHistoryItemDto>> GetHistoryAsync(string projectId, CancellationToken cancellationToken);
 
-    Task<IResultModel<RequestHistoryItemDto>> AddAsync(RequestSnapshotDto request, ResponseSnapshotDto? response, CancellationToken cancellationToken);
+    Task<IResultModel<RequestHistoryItemDto>> AddAsync(string projectId, RequestSnapshotDto request, ResponseSnapshotDto? response, CancellationToken cancellationToken);
 
-    Task<IResultModel<bool>> ClearAsync(CancellationToken cancellationToken);
+    Task<IResultModel<bool>> ClearAsync(string projectId, CancellationToken cancellationToken);
 
-    Task<IResultModel<bool>> DeleteAsync(string id, CancellationToken cancellationToken);
+    Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken);
 }
 
 public sealed class RequestHistoryItemDto

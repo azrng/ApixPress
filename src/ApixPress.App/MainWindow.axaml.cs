@@ -14,6 +14,7 @@ public partial class MainWindow : Window
     private readonly MainWindowViewModel _viewModel;
     private readonly IWindowHostService _windowHostService;
     private bool _isEnvironmentDrawerOpen;
+    private bool _isProjectDrawerOpen;
     private bool _isUseCasesDrawerOpen;
 
     public MainWindow()
@@ -73,6 +74,37 @@ public partial class MainWindow : Window
         finally
         {
             _isUseCasesDrawerOpen = false;
+        }
+    }
+
+    private async void OnOpenProjectDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_isProjectDrawerOpen)
+        {
+            return;
+        }
+
+        _isProjectDrawerOpen = true;
+        try
+        {
+            await Drawer.ShowModal(
+                new ProjectDrawerView(),
+                _viewModel,
+                null,
+                new DrawerOptions
+                {
+                    Buttons = DialogButton.None,
+                    Title = "项目管理",
+                    Position = Ursa.Common.Position.Right,
+                    MinWidth = 460,
+                    MaxWidth = 520,
+                    CanResize = true,
+                    TopLevelHashCode = GetHashCode()
+                });
+        }
+        finally
+        {
+            _isProjectDrawerOpen = false;
         }
     }
 

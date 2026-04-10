@@ -26,11 +26,13 @@ public sealed class SqliteConnectionFactory : IDbConnectionFactory, ISingletonDe
                 Directory.CreateDirectory(directory);
             }
 
-            _connectionString = $"{prefix}{fullPath}";
+            _connectionString = $"{prefix}{fullPath};Foreign Keys=True";
         }
         else
         {
-            _connectionString = rawConnectionString;
+            _connectionString = rawConnectionString.Contains("Foreign Keys=", StringComparison.OrdinalIgnoreCase)
+                ? rawConnectionString
+                : $"{rawConnectionString};Foreign Keys=True";
         }
     }
 

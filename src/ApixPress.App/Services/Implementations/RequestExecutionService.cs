@@ -24,13 +24,21 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
 
     public async Task<IResultModel<ResponseSnapshotDto>> SendAsync(
         RequestSnapshotDto request,
-        string environmentName,
+        ProjectEnvironmentDto environment,
         CancellationToken cancellationToken)
     {
         try
         {
-            var activeVariables = await _environmentVariableService.GetActiveDictionaryAsync(environmentName, cancellationToken);
-            var finalUrl = BuildUrl(request, activeVariables);
+            var activeVariables = new Dictionary<string, string>(
+                await _environmentVariableService.GetActiveDictionaryAsync(environment.Id, cancellationToken),
+                StringComparer.OrdinalIgnoreCase);
+            var resolvedBaseUrl = ReplaceVariables(environment.BaseUrl, activeVariables);
+            if (!string.IsNullOrWhiteSpace(resolvedBaseUrl))
+            {
+                activeVariables["baseUrl"] = resolvedBaseUrl;
+            }
+
+            var finalUrl = BuildUrl(request, resolvedBaseUrl, activeVariables);
             using var httpClient = CreateHttpClient(request.IgnoreSslErrors);
             using var message = new HttpRequestMessage(new HttpMethod(request.Method), finalUrl);
 
@@ -78,7 +86,7 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
                 StatusCode = (int)response.StatusCode,
                 DurationMs = stopwatch.ElapsedMilliseconds,
                 SizeBytes = sizeBytes,
-               // Content = TryFormatJson(content),
+                Content = content,
                 Headers = headers,
                 RequestSummary = $"{request.Method.ToUpperInvariant()} {finalUrl}"
             });
@@ -110,22 +118,38 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         }
     }
 
-    public static string BuildUrl(RequestSnapshotDto request, IReadOnlyDictionary<string, string> variables)
+    public static string BuildUrl(RequestSnapshotDto request, string baseUrl, IReadOnlyDictionary<string, string> variables)
     {
-        var url = ReplaceVariables(request.Url, variables);
+        var effectiveVariables = new Dictionary<string, string>(variables, StringComparer.OrdinalIgnoreCase);
+        if (!string.IsNullOrWhiteSpace(baseUrl) && !effectiveVariables.ContainsKey("baseUrl"))
+        {
+            effectiveVariables["baseUrl"] = baseUrl;
+        }
+
+        var url = ReplaceVariables(request.Url, effectiveVariables);
 
         foreach (var pathParameter in request.PathParameters.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
         {
-            var value = Uri.EscapeDataString(ReplaceVariables(pathParameter.Value, variables));
+            var value = Uri.EscapeDataString(ReplaceVariables(pathParameter.Value, effectiveVariables));
             url = url.Replace($"{{{pathParameter.Name}}}", value, StringComparison.OrdinalIgnoreCase);
             url = url.Replace($":{pathParameter.Name}", value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (!Uri.TryCreate(url, UriKind.Absolute, out _))
+        {
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                throw new InvalidOperationException("当前环境未配置 BaseUrl，无法发送相对路径请求。");
+            }
+
+            url = $"{baseUrl.TrimEnd('/')}/{url.TrimStart('/')}";
         }
 
         var builder = new UriBuilder(url);
         var queryItems = ParseQuery(builder.Query);
         foreach (var queryParameter in request.QueryParameters.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
         {
-            queryItems[queryParameter.Name] = ReplaceVariables(queryParameter.Value, variables);
+            queryItems[queryParameter.Name] = ReplaceVariables(queryParameter.Value, effectiveVariables);
         }
 
         builder.Query = string.Join("&", queryItems.Select(item => $"{Uri.EscapeDataString(item.Key)}={Uri.EscapeDataString(item.Value)}"));

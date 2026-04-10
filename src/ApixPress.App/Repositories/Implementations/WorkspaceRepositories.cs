@@ -15,11 +15,12 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<IReadOnlyList<ApiDocumentEntity>> GetDocumentsAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ApiDocumentEntity>> GetDocumentsAsync(string projectId, CancellationToken cancellationToken)
     {
         const string sql = """
                            select
                                id Id,
+                               project_id ProjectId,
                                name Name,
                                source_type SourceType,
                                source_value SourceValue,
@@ -27,13 +28,36 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
                                raw_json RawJson,
                                imported_at ImportedAt
                            from api_documents
+                           where project_id = @ProjectId
                            order by imported_at desc
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
         var items = await connection.QueryAsync<ApiDocumentEntity>(
-            new CommandDefinition(sql, cancellationToken: cancellationToken));
+            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken));
         return items.ToList();
+    }
+
+    public async Task<ApiDocumentEntity?> GetByIdAsync(string projectId, string documentId, CancellationToken cancellationToken)
+    {
+        const string sql = """
+                           select
+                               id Id,
+                               project_id ProjectId,
+                               name Name,
+                               source_type SourceType,
+                               source_value SourceValue,
+                               base_url BaseUrl,
+                               raw_json RawJson,
+                               imported_at ImportedAt
+                           from api_documents
+                           where project_id = @ProjectId and id = @DocumentId
+                           limit 1
+                           """;
+
+        using var connection = _connectionFactory.CreateConnection();
+        return await connection.QuerySingleOrDefaultAsync<ApiDocumentEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId, DocumentId = documentId }, cancellationToken: cancellationToken));
     }
 
     public async Task<IReadOnlyList<ApiEndpointEntity>> GetEndpointsByDocumentIdAsync(string documentId, CancellationToken cancellationToken)
@@ -95,9 +119,9 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
     {
         const string insertDocumentSql = """
                                          insert into api_documents (
-                                             id, name, source_type, source_value, base_url, raw_json, imported_at
+                                             id, project_id, name, source_type, source_value, base_url, raw_json, imported_at
                                          ) values (
-                                             @Id, @Name, @SourceType, @SourceValue, @BaseUrl, @RawJson, @ImportedAt
+                                             @Id, @ProjectId, @Name, @SourceType, @SourceValue, @BaseUrl, @RawJson, @ImportedAt
                                          )
                                          """;
 
@@ -138,11 +162,12 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<IReadOnlyList<RequestCaseEntity>> GetCasesAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<RequestCaseEntity>> GetCasesAsync(string projectId, CancellationToken cancellationToken)
     {
         const string sql = """
                            select
                                id Id,
+                               project_id ProjectId,
                                name Name,
                                group_name GroupName,
                                tags_json TagsJson,
@@ -150,20 +175,22 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                                request_snapshot_json RequestSnapshotJson,
                                updated_at UpdatedAt
                            from request_cases
+                           where project_id = @ProjectId
                            order by updated_at desc
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
         var items = await connection.QueryAsync<RequestCaseEntity>(
-            new CommandDefinition(sql, cancellationToken: cancellationToken));
+            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken));
         return items.ToList();
     }
 
-    public async Task<RequestCaseEntity?> GetByIdAsync(string id, CancellationToken cancellationToken)
+    public async Task<RequestCaseEntity?> GetByIdAsync(string projectId, string id, CancellationToken cancellationToken)
     {
         const string sql = """
                            select
                                id Id,
+                               project_id ProjectId,
                                name Name,
                                group_name GroupName,
                                tags_json TagsJson,
@@ -171,24 +198,24 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                                request_snapshot_json RequestSnapshotJson,
                                updated_at UpdatedAt
                            from request_cases
-                           where id = @Id
+                           where project_id = @ProjectId and id = @Id
                            limit 1
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QuerySingleOrDefaultAsync<RequestCaseEntity>(
-            new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken));
+            new CommandDefinition(sql, new { ProjectId = projectId, Id = id }, cancellationToken: cancellationToken));
     }
 
     public async Task UpsertAsync(RequestCaseEntity entity, CancellationToken cancellationToken)
     {
         const string sql = """
                            insert into request_cases (
-                               id, name, group_name, tags_json, description, request_snapshot_json, updated_at
+                               id, project_id, name, group_name, tags_json, description, request_snapshot_json, updated_at
                            ) values (
-                               @Id, @Name, @GroupName, @TagsJson, @Description, @RequestSnapshotJson, @UpdatedAt
+                               @Id, @ProjectId, @Name, @GroupName, @TagsJson, @Description, @RequestSnapshotJson, @UpdatedAt
                            )
-                           on conflict(group_name, name) do update set
+                           on conflict(project_id, group_name, name) do update set
                                id = excluded.id,
                                tags_json = excluded.tags_json,
                                description = excluded.description,
@@ -200,12 +227,12 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
         await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken));
     }
 
-    public async Task DeleteAsync(string id, CancellationToken cancellationToken)
+    public async Task DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
         await connection.ExecuteAsync(new CommandDefinition(
-            "delete from request_cases where id = @Id",
-            new { Id = id },
+            "delete from request_cases where project_id = @ProjectId and id = @Id",
+            new { ProjectId = projectId, Id = id },
             cancellationToken: cancellationToken));
     }
 }
@@ -219,23 +246,24 @@ public sealed class EnvironmentVariableRepository : IEnvironmentVariableReposito
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<IReadOnlyList<EnvironmentVariableEntity>> GetByEnvironmentAsync(string environmentName, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<EnvironmentVariableEntity>> GetByEnvironmentAsync(string environmentId, CancellationToken cancellationToken)
     {
         const string sql = """
                            select
                                id Id,
+                               environment_id EnvironmentId,
                                environment_name EnvironmentName,
                                key Key,
                                value Value,
                                is_enabled IsEnabled
                            from environment_variables
-                           where environment_name = @EnvironmentName
+                           where environment_id = @EnvironmentId
                            order by key
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
         var items = await connection.QueryAsync<EnvironmentVariableEntity>(
-            new CommandDefinition(sql, new { EnvironmentName = environmentName }, cancellationToken: cancellationToken));
+            new CommandDefinition(sql, new { EnvironmentId = environmentId }, cancellationToken: cancellationToken));
         return items.ToList();
     }
 
@@ -243,12 +271,13 @@ public sealed class EnvironmentVariableRepository : IEnvironmentVariableReposito
     {
         const string sql = """
                            insert into environment_variables (
-                               id, environment_name, key, value, is_enabled
+                               id, environment_id, environment_name, key, value, is_enabled
                            ) values (
-                               @Id, @EnvironmentName, @Key, @Value, @IsEnabled
+                               @Id, @EnvironmentId, @EnvironmentName, @Key, @Value, @IsEnabled
                            )
-                           on conflict(environment_name, key) do update set
+                           on conflict(environment_id, key) do update set
                                id = excluded.id,
+                               environment_name = excluded.environment_name,
                                value = excluded.value,
                                is_enabled = excluded.is_enabled
                            """;
@@ -276,22 +305,24 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryAsync(int limit, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryAsync(string projectId, int limit, CancellationToken cancellationToken)
     {
         const string sql = """
                            select
                                id Id,
+                               project_id ProjectId,
                                timestamp Timestamp,
                                request_snapshot_json RequestSnapshotJson,
                                response_snapshot_json ResponseSnapshotJson
                            from request_history
+                           where project_id = @ProjectId
                            order by timestamp desc
                            limit @Limit
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
         var items = await connection.QueryAsync<RequestHistoryEntity>(
-            new CommandDefinition(sql, new { Limit = limit }, cancellationToken: cancellationToken));
+            new CommandDefinition(sql, new { ProjectId = projectId, Limit = limit }, cancellationToken: cancellationToken));
         return items.ToList();
     }
 
@@ -299,9 +330,9 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
     {
         const string sql = """
                            insert into request_history (
-                               id, timestamp, request_snapshot_json, response_snapshot_json
+                               id, project_id, timestamp, request_snapshot_json, response_snapshot_json
                            ) values (
-                               @Id, @Timestamp, @RequestSnapshotJson, @ResponseSnapshotJson
+                               @Id, @ProjectId, @Timestamp, @RequestSnapshotJson, @ResponseSnapshotJson
                            )
                            """;
 
@@ -309,20 +340,21 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
         await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken));
     }
 
-    public async Task DeleteAsync(string id, CancellationToken cancellationToken)
+    public async Task DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
         await connection.ExecuteAsync(new CommandDefinition(
-            "delete from request_history where id = @Id",
-            new { Id = id },
+            "delete from request_history where project_id = @ProjectId and id = @Id",
+            new { ProjectId = projectId, Id = id },
             cancellationToken: cancellationToken));
     }
 
-    public async Task ClearAsync(CancellationToken cancellationToken)
+    public async Task ClearAsync(string projectId, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
         await connection.ExecuteAsync(new CommandDefinition(
-            "delete from request_history",
+            "delete from request_history where project_id = @ProjectId",
+            new { ProjectId = projectId },
             cancellationToken: cancellationToken));
     }
 }

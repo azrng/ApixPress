@@ -11,6 +11,7 @@ namespace ApixPress.App.ViewModels;
 public partial class RequestHistoryPanelViewModel : ViewModelBase
 {
     private readonly IRequestHistoryService _requestHistoryService;
+    private string _currentProjectId = string.Empty;
 
     public ObservableCollection<RequestHistoryItemViewModel> HistoryItems { get; } = [];
 
@@ -22,10 +23,26 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         _requestHistoryService = requestHistoryService;
     }
 
+    public void SetProjectContext(string projectId)
+    {
+        _currentProjectId = projectId;
+    }
+
+    public void ClearProjectContext()
+    {
+        _currentProjectId = string.Empty;
+        HistoryItems.Clear();
+    }
+
     public async Task LoadHistoryAsync()
     {
-        var history = await _requestHistoryService.GetHistoryAsync(CancellationToken.None);
         HistoryItems.Clear();
+        if (string.IsNullOrWhiteSpace(_currentProjectId))
+        {
+            return;
+        }
+
+        var history = await _requestHistoryService.GetHistoryAsync(_currentProjectId, CancellationToken.None);
         foreach (var item in history)
         {
             var snapshot = item.RequestSnapshot;
@@ -50,7 +67,12 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     [RelayCommand]
     public async Task ClearHistoryAsync()
     {
-        await _requestHistoryService.ClearAsync(CancellationToken.None);
+        if (string.IsNullOrWhiteSpace(_currentProjectId))
+        {
+            return;
+        }
+
+        await _requestHistoryService.ClearAsync(_currentProjectId, CancellationToken.None);
         await LoadHistoryAsync();
     }
 

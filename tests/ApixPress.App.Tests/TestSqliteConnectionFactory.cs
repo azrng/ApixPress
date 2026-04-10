@@ -16,7 +16,7 @@ public sealed class TestSqliteConnectionFactory : IDbConnectionFactory, IDisposa
 
     public IDbConnection CreateConnection()
     {
-        return new SqliteConnection($"Data Source={_databasePath};Pooling=False");
+        return new SqliteConnection($"Data Source={_databasePath};Pooling=False;Foreign Keys=True");
     }
 
     public async Task InitializeAsync()
@@ -24,7 +24,7 @@ public sealed class TestSqliteConnectionFactory : IDbConnectionFactory, IDisposa
         var migrationPath = Path.Combine(AppContext.BaseDirectory, "001_Initial.sql");
         var sql = await File.ReadAllTextAsync(migrationPath);
 
-        await using var connection = new SqliteConnection($"Data Source={_databasePath};Pooling=False");
+        await using var connection = new SqliteConnection($"Data Source={_databasePath};Pooling=False;Foreign Keys=True");
         await connection.OpenAsync();
         await using var command = connection.CreateCommand();
         command.CommandText = sql;

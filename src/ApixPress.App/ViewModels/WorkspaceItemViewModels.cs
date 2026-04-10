@@ -67,6 +67,9 @@ public partial class EnvironmentVariableItemViewModel : ViewModelBase
     private string id = string.Empty;
 
     [ObservableProperty]
+    private string environmentId = string.Empty;
+
+    [ObservableProperty]
     private string environmentName = "Default";
 
     [ObservableProperty]
