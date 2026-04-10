@@ -106,7 +106,7 @@
 
   <Style Selector="Border.NotificationDot">
     <Setter Property="Background" Value="{DynamicResource Brush.Status.Warning.Text}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderThickness" Value="1" />
   </Style>
@@ -273,7 +273,7 @@
 
   <Style Selector="Border.NotificationItemDot">
     <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="VerticalAlignment" Value="Top" />
     <Setter Property="Margin" Value="0,6,0,0" />
   </Style>
