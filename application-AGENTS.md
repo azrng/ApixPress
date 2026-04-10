@@ -51,13 +51,13 @@ src/AppName/
 **工作内容**：
 1. 严格按照 DTO 中的类型定义实现 ViewModel 命令编排与 Service 层逻辑。
 2. 遵循 `ViewModel → Service → Repository → Model` 完整分层。
-3. 涉及数据访问或数据库结构变更时，结合 `infrastructure/AGENTS.md` 同步补齐仓储实现与迁移脚本。
+3. 涉及数据访问或数据库结构变更时，结合 `infrastructure-AGENTS.md` 同步补齐仓储实现与迁移脚本。
 4. 每个关键服务方法和关键 ViewModel 命令都应能通过测试独立验证。
 
 **字段命名约定**：
 - C# 类型 / 属性：PascalCase
 - DTO / 序列化字段：遵循当前协议约定并保持一致
-- 数据库存储字段和映射规则见 `infrastructure/AGENTS.md`
+- 数据库存储字段和映射规则见 `infrastructure-AGENTS.md`
 
 **门控规则**：
 - 核心业务逻辑测试通过后，才允许进入阶段 3。
@@ -70,7 +70,7 @@ src/AppName/
 - View 只负责展示，不承载业务逻辑。
 - ViewModel 负责状态管理、命令触发、调用 Service 与处理用户可见结果。
 - Service 负责业务逻辑、流程编排和规则校验，不直接操作 View。
-- Repository 是数据访问边界，具体实现细则见 `infrastructure/AGENTS.md`。
+- Repository 是数据访问边界，具体实现细则见 `infrastructure-AGENTS.md`。
 - Model / DTO 负责承载业务数据，不在其中夹带 UI 行为。
 
 ### ViewModel 规则

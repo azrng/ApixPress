@@ -38,20 +38,20 @@
 
 | 文件 | 适用范围 | 何时阅读 |
 | --- | --- | --- |
-| `ui/AGENTS.md` | Avalonia 视图、样式、导航、对话框、ViewModel 绑定与 UI 测试规则 | 涉及界面实现、交互、样式资源、页面状态、UI smoke test 时阅读 |
-| `application/AGENTS.md` | ViewModel 业务编排、Service、Model、结果包装、业务异常与应用层测试规则 | 涉及命令逻辑、业务流程、服务实现、DTO 使用、业务测试时阅读 |
-| `infrastructure/AGENTS.md` | Repository、Dapper、SQLite、依赖注入、迁移、配置与发布规则 | 涉及仓储实现、数据库、连接配置、打包发布、构建启动验证时阅读 |
-| `doc/AGENTS.md` | 设计文档、DTO 契约、设计系统与文档维护规则 | 涉及阶段 0 设计、`design-system.yaml`、`doc/requirement.md`、`doc/devlog/` 时阅读 |
+| `ui-AGENTS.md` | Avalonia 视图、样式、导航、对话框、ViewModel 绑定与 UI 测试规则 | 涉及界面实现、交互、样式资源、页面状态、UI smoke test 时阅读 |
+| `application-AGENTS.md` | ViewModel 业务编排、Service、Model、结果包装、业务异常与应用层测试规则 | 涉及命令逻辑、业务流程、服务实现、DTO 使用、业务测试时阅读 |
+| `infrastructure-AGENTS.md` | Repository、Dapper、SQLite、依赖注入、迁移、配置与发布规则 | 涉及仓储实现、数据库、连接配置、打包发布、构建启动验证时阅读 |
+| `doc-AGENTS.md` | 设计文档、DTO 契约、设计系统与文档维护规则 | 涉及阶段 0 设计、`design-system.yaml`、`doc/requirement.md`、`doc/devlog/` 时阅读 |
 
 ---
 
 ## 子规则阅读顺序
 
 1. 先阅读当前文件，理解全局规则、阶段门控和交付要求。
-2. 涉及设计说明、DTO 契约、设计系统或文档维护时，继续阅读 `doc/AGENTS.md`。
-3. 涉及视图、样式、导航、对话框、绑定和交互时，继续阅读 `ui/AGENTS.md`。
-4. 涉及 ViewModel 命令编排、Service、业务规则、结果包装和业务异常时，继续阅读 `application/AGENTS.md`。
-5. 涉及 Repository、数据库、配置、依赖注入、迁移、构建或发布链路时，补充阅读 `infrastructure/AGENTS.md`。
+2. 涉及设计说明、DTO 契约、设计系统或文档维护时，继续阅读 `doc-AGENTS.md`。
+3. 涉及视图、样式、导航、对话框、绑定和交互时，继续阅读 `ui-AGENTS.md`。
+4. 涉及 ViewModel 命令编排、Service、业务规则、结果包装和业务异常时，继续阅读 `application-AGENTS.md`。
+5. 涉及 Repository、数据库、配置、依赖注入、迁移、构建或发布链路时，补充阅读 `infrastructure-AGENTS.md`。
 
 ---
 
@@ -73,10 +73,10 @@
 - 配置、环境变量、发布脚本调整
 - 单个字段的增删（不涉及新页面或新业务流程）
 
-- 阶段 0 设计文档、DTO 契约和文档维护细则见 `doc/AGENTS.md`
-- 阶段 1 视图实现细则见 `ui/AGENTS.md`
-- 阶段 2 业务逻辑实现细则见 `application/AGENTS.md`，涉及数据访问或发布配置时同时结合 `infrastructure/AGENTS.md`
-- 阶段 3 集成测试、构建与发布相关约束结合当前文件、`ui/AGENTS.md`、`application/AGENTS.md`、`infrastructure/AGENTS.md` 一起执行
+- 阶段 0 设计文档、DTO 契约和文档维护细则见 `doc-AGENTS.md`
+- 阶段 1 视图实现细则见 `ui-AGENTS.md`
+- 阶段 2 业务逻辑实现细则见 `application-AGENTS.md`，涉及数据访问或发布配置时同时结合 `infrastructure-AGENTS.md`
+- 阶段 3 集成测试、构建与发布相关约束结合当前文件、`ui-AGENTS.md`、`application-AGENTS.md`、`infrastructure-AGENTS.md` 一起执行
 
 ---
 
@@ -88,14 +88,14 @@
 4. 再阅读相关模块和现有实现。
 5. 优先复用当前结构，再决定是否新增文件。
 6. 不要每次预读所有文件，优先通过索引、目录和搜索定位命中的文件后再阅读。
-7. 先读根文件中的子规则索引，再读命中的子 `AGENTS.md`，不要全量加载所有规则文件。
+7. 先读根文件中的子规则索引，再读命中的子规则文件，不要全量加载所有规则文件。
 
 ### 任务类型阅读策略
 
-- 视图任务优先阅读 `ui/AGENTS.md`
-- 业务逻辑任务优先阅读 `application/AGENTS.md`
-- 仓储、数据库、配置、发布任务优先阅读 `infrastructure/AGENTS.md`
-- 联调任务必须同时阅读根 `AGENTS.md`、`ui/AGENTS.md`、`application/AGENTS.md`、`infrastructure/AGENTS.md`
+- 视图任务优先阅读 `ui-AGENTS.md`
+- 业务逻辑任务优先阅读 `application-AGENTS.md`
+- 仓储、数据库、配置、发布任务优先阅读 `infrastructure-AGENTS.md`
+- 联调任务必须同时阅读根 `AGENTS.md`、`ui-AGENTS.md`、`application-AGENTS.md`、`infrastructure-AGENTS.md`
 - 若任务明显跨视图与业务逻辑，先拆成子任务再执行，不要把不同层的实现混在一个步骤里
 
 ---
@@ -251,7 +251,7 @@
 - 当 AI 在同一类问题上连续出现两次错误时，必须触发一次简短回顾分析。
 - 回顾至少应说明：错误现象、根因、原规则缺口、后续如何避免再次发生。
 - 回顾结论必须落实到当前架构目录的 `AGENTS.md` 或对应子 `AGENTS.md` 中，不能只停留在对话说明。
-- 回顾分析的简短记录格式见 `doc/AGENTS.md`。
+- 回顾分析的简短记录格式见 `doc-AGENTS.md`。
 - 若本次回顾导致规则模板发生变更，必须同步新增一条 `devlog/` 记录。
 
 ---
