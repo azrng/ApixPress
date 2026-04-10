@@ -2,6 +2,7 @@ using System.Reflection;
 using ApixPress.App.Data.Context;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
+using Azrng.Core.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,6 +19,7 @@ public static class ServiceBootstrapper
 
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
+        services.ConfigureDefaultJson(_ => { });
         services.RegisterBusinessServices(Assembly.GetExecutingAssembly());
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<DatabaseInitializer>();
