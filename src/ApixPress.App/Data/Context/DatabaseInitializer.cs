@@ -27,12 +27,18 @@ public sealed class DatabaseInitializer : ISingletonDependency
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();
         connection.Execute("PRAGMA foreign_keys = ON;");
+        if (HasExistingWorkspace(connection))
+        {
+            UpgradeLegacyWorkspace(connection);
+        }
+
         connection.Execute(sql);
         UpgradeLegacyWorkspace(connection);
     }
 
     private static void UpgradeLegacyWorkspace(IDbConnection connection)
     {
+        EnsureProjectWorkspaceTables(connection);
         EnsureColumn(connection, "api_documents", "project_id", "TEXT");
         EnsureColumn(connection, "request_cases", "project_id", "TEXT");
         EnsureColumn(connection, "request_history", "project_id", "TEXT");
@@ -167,6 +173,11 @@ public sealed class DatabaseInitializer : ISingletonDependency
 
     private static void EnsureColumn(IDbConnection connection, string tableName, string columnName, string columnDefinition)
     {
+        if (!TableExists(connection, tableName))
+        {
+            return;
+        }
+
         var columns = connection.Query<TableColumnInfo>($"pragma table_info('{tableName}')").ToList();
         if (columns.Any(item => string.Equals(item.Name, columnName, StringComparison.OrdinalIgnoreCase)))
         {
@@ -174,6 +185,50 @@ public sealed class DatabaseInitializer : ISingletonDependency
         }
 
         connection.Execute($"alter table {tableName} add column {columnName} {columnDefinition}");
+    }
+
+    private static bool HasExistingWorkspace(IDbConnection connection)
+    {
+        return TableExists(connection, "api_documents")
+               || TableExists(connection, "request_cases")
+               || TableExists(connection, "request_history")
+               || TableExists(connection, "environment_variables");
+    }
+
+    private static bool TableExists(IDbConnection connection, string tableName)
+    {
+        return connection.ExecuteScalar<long>(
+            "select count(1) from sqlite_master where type = 'table' and name = @Name",
+            new { Name = tableName }) > 0;
+    }
+
+    private static void EnsureProjectWorkspaceTables(IDbConnection connection)
+    {
+        connection.Execute(
+            """
+            create table if not exists projects (
+                id text primary key,
+                name text not null,
+                description text not null default '',
+                is_default integer not null default 0,
+                created_at text not null,
+                updated_at text not null
+            )
+            """);
+
+        connection.Execute(
+            """
+            create table if not exists project_environments (
+                id text primary key,
+                project_id text not null,
+                name text not null,
+                base_url text not null default '',
+                is_active integer not null default 0,
+                sort_order integer not null default 0,
+                created_at text not null,
+                updated_at text not null
+            )
+            """);
     }
 
     private static long CountRows(IDbConnection connection, string tableName)

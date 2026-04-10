@@ -24,6 +24,13 @@ public partial class ProjectPanelViewModel : ViewModelBase
     [ObservableProperty]
     private ProjectWorkspaceItemViewModel? selectedProject;
 
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(CreateProjectCommand))]
+    private string draftProjectName = string.Empty;
+
+    [ObservableProperty]
+    private string draftProjectDescription = string.Empty;
+
     public bool HasSelectedProject => SelectedProject is not null;
 
     public async Task LoadProjectsAsync(string? preferredProjectId = null)
@@ -49,20 +56,39 @@ public partial class ProjectPanelViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasSelectedProject));
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanCreateProject))]
     private async Task CreateProjectAsync()
     {
+        var projectName = DraftProjectName.Trim();
+        if (string.IsNullOrWhiteSpace(projectName))
+        {
+            return;
+        }
+
         var result = await _projectWorkspaceService.SaveAsync(new ProjectWorkspaceDto
         {
-            Name = BuildNextProjectName(),
-            Description = string.Empty,
+            Name = projectName,
+            Description = DraftProjectDescription.Trim(),
             IsDefault = Projects.Count == 0
         }, CancellationToken.None);
 
         if (result.IsSuccess && result.Data is not null)
         {
+            DraftProjectName = string.Empty;
+            DraftProjectDescription = string.Empty;
             await LoadProjectsAsync(result.Data.Id);
         }
+    }
+
+    private bool CanCreateProject()
+    {
+        return !string.IsNullOrWhiteSpace(DraftProjectName);
+    }
+
+    [RelayCommand]
+    private void UseProjectTemplate()
+    {
+        DraftProjectName = BuildNextProjectName();
     }
 
     [RelayCommand]

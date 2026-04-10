@@ -96,8 +96,8 @@ public partial class MainWindow : Window
                     Buttons = DialogButton.None,
                     Title = "项目管理",
                     Position = Ursa.Common.Position.Right,
-                    MinWidth = 460,
-                    MaxWidth = 520,
+                    MinWidth = 920,
+                    MaxWidth = 1024,
                     CanResize = true,
                     TopLevelHashCode = GetHashCode()
                 });

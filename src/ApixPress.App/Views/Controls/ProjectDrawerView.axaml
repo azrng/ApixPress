@@ -1,80 +1,169 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:iri="https://irihi.tech/shared"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.ProjectDrawerView"
              x:DataType="vm:MainWindowViewModel"
-             d:DesignWidth="420"
+             d:DesignWidth="860"
              d:DesignHeight="720"
              mc:Ignorable="d">
-  <Grid RowDefinitions="Auto,Auto,*"
+  <Grid RowDefinitions="Auto,*"
         RowSpacing="{StaticResource Space.3}">
-    <Grid ColumnDefinitions="*,Auto"
-          ColumnSpacing="{StaticResource Space.2}">
-      <TextBlock Classes="CaptionText"
-                 Text="在这里维护本地项目工作区。切换项目后，请求历史、用例和环境会自动隔离。"
-                 VerticalAlignment="Center" />
-      <Button Grid.Column="1"
-              Classes="PrimaryButton"
-              Content="新建项目"
-              Command="{Binding ProjectPanel.CreateProjectCommand}" />
-    </Grid>
-
-    <ListBox Grid.Row="1"
-             Classes="FlatListBox"
-             ItemsSource="{Binding ProjectPanel.Projects}"
-             SelectedItem="{Binding ProjectPanel.SelectedProject}"
-             Height="220">
-      <ListBox.ItemTemplate>
-        <DataTemplate x:DataType="vm:ProjectWorkspaceItemViewModel">
-          <StackPanel Spacing="{StaticResource Space.1}">
-            <TextBlock Text="{Binding DisplayName}" />
-            <TextBlock Classes="CaptionText"
-                       Text="{Binding Description}" />
-          </StackPanel>
-        </DataTemplate>
-      </ListBox.ItemTemplate>
-    </ListBox>
-
-    <Border Grid.Row="2"
-            Classes="PanelCard"
-            IsVisible="{Binding ProjectPanel.HasSelectedProject}">
-      <StackPanel Spacing="{StaticResource Space.3}">
-        <u:Form LabelPosition="Top">
+    <Border Classes="PanelCard">
+      <Grid ColumnDefinitions="2*,3*,Auto"
+            ColumnSpacing="{StaticResource Space.3}">
+        <StackPanel Grid.Column="0"
+                    Spacing="{StaticResource Space.2}">
+          <TextBlock Classes="SectionTitle"
+                     Text="新建项目" />
+          <TextBlock Classes="CaptionText"
+                     Text="先输入项目名称，再创建项目。创建后会自动生成一个默认环境。" />
           <TextBox Classes="SectionInput"
-                   u:FormItem.Label="项目名称"
                    Watermark="请输入项目名称"
-                   Text="{Binding ProjectPanel.SelectedProject.Name}" />
+                   Text="{Binding ProjectPanel.DraftProjectName}" />
+        </StackPanel>
+        <StackPanel Grid.Column="1"
+                    Spacing="{StaticResource Space.2}">
+          <TextBlock Classes="SectionTitle"
+                     Text="项目说明" />
+          <TextBlock Classes="CaptionText"
+                     Text="可选，用于区分系统、服务域或团队。" />
           <TextBox Classes="SectionInput"
                    AcceptsReturn="True"
                    Height="88"
                    TextWrapping="Wrap"
-                   u:FormItem.Label="项目说明"
-                   Watermark="用于区分服务域、环境或团队"
-                   Text="{Binding ProjectPanel.SelectedProject.Description}" />
-        </u:Form>
-
-        <Grid ColumnDefinitions="*,*,*"
-              ColumnSpacing="{StaticResource Space.2}">
-          <Button Grid.Column="0"
-                  Classes="SecondaryButton"
-                  Content="设为默认"
-                  Command="{Binding ProjectPanel.SetSelectedProjectAsDefaultCommand}" />
-          <Button Grid.Column="1"
-                  Classes="PrimaryButton"
-                  Content="保存"
-                  Command="{Binding ProjectPanel.SaveSelectedProjectCommand}" />
-          <u:PopConfirm Grid.Column="2"
-                        PopupHeader="确认删除当前项目？"
-                        PopupContent="该项目下的环境、用例、文档和请求历史都会被一起删除。"
-                        ConfirmCommand="{Binding ProjectPanel.DeleteSelectedProjectCommand}">
-            <Button Classes="SecondaryButton"
-                    Content="删除" />
-          </u:PopConfirm>
-        </Grid>
-      </StackPanel>
+                   Watermark="例如：支付域联调、会员系统 OpenAPI、测试导出项目"
+                   Text="{Binding ProjectPanel.DraftProjectDescription}" />
+        </StackPanel>
+        <StackPanel Grid.Column="2"
+                    VerticalAlignment="Bottom"
+                    Spacing="{StaticResource Space.2}">
+          <Button Classes="SecondaryButton"
+                  Content="自动命名"
+                  Command="{Binding ProjectPanel.UseProjectTemplateCommand}" />
+          <Button Classes="PrimaryButton"
+                  Content="创建项目"
+                  Command="{Binding ProjectPanel.CreateProjectCommand}" />
+        </StackPanel>
+      </Grid>
     </Border>
+
+    <Grid Grid.Row="1"
+          ColumnDefinitions="360,*"
+          ColumnSpacing="{StaticResource Space.3}">
+      <Border Grid.Column="0"
+              Classes="PanelCard"
+              Padding="0">
+        <Grid RowDefinitions="Auto,*"
+              RowSpacing="{StaticResource Space.2}">
+          <Border Classes="ParameterHeader">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0"
+                         Classes="SectionTitle"
+                         Text="项目列表" />
+              <TextBlock Grid.Column="1"
+                         Classes="CaptionText"
+                         Text="{Binding ProjectPanel.Projects.Count, StringFormat='共 {0} 个'}"
+                         VerticalAlignment="Center" />
+            </Grid>
+          </Border>
+
+          <ListBox Grid.Row="1"
+                   Background="Transparent"
+                   BorderThickness="0"
+                   ItemsSource="{Binding ProjectPanel.Projects}"
+                   SelectedItem="{Binding ProjectPanel.SelectedProject}">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:ProjectWorkspaceItemViewModel">
+                <Border Classes="PanelCard"
+                        Margin="0,0,0,12"
+                        Padding="{StaticResource Pad.3}">
+                  <Grid RowDefinitions="Auto,Auto,*"
+                        RowSpacing="{StaticResource Space.2}">
+                    <Grid ColumnDefinitions="Auto,*,Auto"
+                          ColumnSpacing="{StaticResource Space.2}">
+                      <Border Width="36"
+                              Height="36"
+                              Background="{DynamicResource Brush.Status.Info.Background}"
+                              CornerRadius="{StaticResource Radius.Lg}">
+                        <Path Width="18"
+                              Height="18"
+                              Fill="{DynamicResource Brush.Border.Focus}"
+                              Stretch="Uniform"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Data="M5,4 L19,4 L19,20 L5,20 Z M8,8 L16,8 L16,10 L8,10 Z M8,12 L16,12 L16,14 L8,14 Z" />
+                      </Border>
+                      <TextBlock Grid.Column="1"
+                                 Text="{Binding Name}"
+                                 FontSize="{StaticResource Font.Size.BodyLarge}"
+                                 FontWeight="SemiBold"
+                                 VerticalAlignment="Center" />
+                      <u:Badge Grid.Column="2"
+                               Header="默认"
+                               IsVisible="{Binding IsDefault}"
+                               iri:ClassHelper.Classes="Light Primary" />
+                    </Grid>
+                    <TextBlock Grid.Row="1"
+                               Classes="CaptionText"
+                               Text="{Binding Description}" />
+                    <TextBlock Grid.Row="2"
+                               Classes="CaptionText"
+                               Text="点击卡片可切换项目并在右侧查看详情。" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Grid>
+      </Border>
+
+      <Border Grid.Column="1"
+              Classes="PanelCard"
+              IsVisible="{Binding ProjectPanel.HasSelectedProject}">
+        <StackPanel Spacing="{StaticResource Space.3}">
+          <TextBlock Classes="SectionTitle"
+                     Text="项目详情" />
+          <TextBlock Classes="CaptionText"
+                     Text="可以在这里修改项目名称、说明，或设置默认项目。" />
+
+          <u:Form LabelPosition="Top">
+            <TextBox Classes="SectionInput"
+                     u:FormItem.Label="项目名称"
+                     Watermark="请输入项目名称"
+                     Text="{Binding ProjectPanel.SelectedProject.Name}" />
+            <TextBox Classes="SectionInput"
+                     AcceptsReturn="True"
+                     Height="120"
+                     TextWrapping="Wrap"
+                     u:FormItem.Label="项目说明"
+                     Watermark="用于区分服务域、环境或团队"
+                     Text="{Binding ProjectPanel.SelectedProject.Description}" />
+          </u:Form>
+
+          <Grid ColumnDefinitions="*,*,*"
+                ColumnSpacing="{StaticResource Space.2}">
+            <Button Grid.Column="0"
+                    Classes="SecondaryButton"
+                    Content="设为默认"
+                    Command="{Binding ProjectPanel.SetSelectedProjectAsDefaultCommand}" />
+            <Button Grid.Column="1"
+                    Classes="PrimaryButton"
+                    Content="保存"
+                    Command="{Binding ProjectPanel.SaveSelectedProjectCommand}" />
+            <u:PopConfirm Grid.Column="2"
+                          PopupHeader="确认删除当前项目？"
+                          PopupContent="该项目下的环境、用例、文档和请求历史都会被一起删除。"
+                          ConfirmCommand="{Binding ProjectPanel.DeleteSelectedProjectCommand}">
+              <Button Classes="SecondaryButton"
+                      Content="删除" />
+            </u:PopConfirm>
+          </Grid>
+        </StackPanel>
+      </Border>
+    </Grid>
   </Grid>
 </UserControl>
