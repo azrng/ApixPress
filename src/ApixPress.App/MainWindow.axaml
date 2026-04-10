@@ -103,7 +103,7 @@
               </StackPanel>
 
               <Grid Grid.Column="1"
-                    ColumnDefinitions="260,Auto,Auto"
+                    ColumnDefinitions="260,Auto"
                     ColumnSpacing="{StaticResource Space.2}"
                     HorizontalAlignment="Right">
                 <TextBox Grid.Column="0"
@@ -111,10 +111,6 @@
                          Watermark="搜索项目"
                          Text="{Binding ProjectPanel.SearchText}" />
                 <Button Grid.Column="1"
-                        Classes="SecondaryButton"
-                        Content="项目管理"
-                        Click="OnOpenProjectDrawer" />
-                <Button Grid.Column="2"
                         Classes="PrimaryButton"
                         Content="新建项目"
                         Command="{Binding OpenCreateProjectDialogCommand}" />
