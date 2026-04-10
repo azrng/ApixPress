@@ -240,14 +240,6 @@
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
-  <Style Selector="Button.DialogCloseButton">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
-  </Style>
-
   <Style Selector="Border.CreateProjectFormShell">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />

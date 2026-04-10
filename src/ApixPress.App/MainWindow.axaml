@@ -847,19 +847,12 @@
           <Border Classes="CreateProjectDialogCard">
             <Grid RowDefinitions="Auto,Auto,Auto"
                   RowSpacing="{StaticResource Space.3}">
-              <Grid ColumnDefinitions="*,Auto"
-                    ColumnSpacing="{StaticResource Space.3}">
-                <StackPanel Spacing="2">
-                  <TextBlock Classes="DialogTitle"
-                             Text="新建项目" />
-                  <TextBlock Classes="CaptionText"
-                             Text="只需要填写项目名称和备注信息。创建后会自动生成该项目的默认环境。" />
-                </StackPanel>
-                <Button Grid.Column="1"
-                        Classes="DialogCloseButton"
-                        Content="关闭"
-                        Command="{Binding CloseCreateProjectDialogCommand}" />
-              </Grid>
+              <StackPanel Spacing="2">
+                <TextBlock Classes="DialogTitle"
+                           Text="新建项目" />
+                <TextBlock Classes="CaptionText"
+                           Text="只需要填写项目名称和备注信息。创建后会自动生成该项目的默认环境。" />
+              </StackPanel>
 
               <Border Grid.Row="1"
                       Classes="CreateProjectFormShell">
