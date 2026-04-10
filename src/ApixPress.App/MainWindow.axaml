@@ -94,7 +94,7 @@
             <Grid ColumnDefinitions="2.4*,1.2*"
                   ColumnSpacing="{StaticResource Space.4}">
               <StackPanel Spacing="{StaticResource Space.2}">
-                <TextBlock Classes="HeroTitle"
+                <TextBlock Classes="PageTitle"
                            Text="先选择项目，再进入项目详情和调试工作台" />
                 <TextBlock Classes="SubtleText"
                            Text="项目会隔离保存环境、请求历史、用例和接口调试配置。右上角保留项目管理与刷新入口，首屏聚焦项目列表本身。" />
@@ -111,69 +111,85 @@
             </Grid>
           </Border>
 
-          <Grid Grid.Row="1"
-                ColumnDefinitions="1.7*,1.3*"
-                ColumnSpacing="{StaticResource Space.4}">
-            <Border Grid.Column="0"
-                    Classes="PanelCard">
-              <StackPanel Spacing="{StaticResource Space.3}">
+          <Border Grid.Row="1"
+                  Classes="PanelCard">
+            <Grid ColumnDefinitions="1.1*,1.45*,1.1*,Auto"
+                  ColumnSpacing="{StaticResource Space.4}">
+              <StackPanel Spacing="{StaticResource Space.2}">
                 <TextBlock Classes="SectionTitle"
                            Text="新建项目" />
                 <TextBlock Classes="CaptionText"
-                           Text="必须先输入项目名称，创建后会自动生成该项目的默认环境。" />
-
-                <u:Form LabelPosition="Top">
-                  <TextBox Classes="SectionInput"
-                           u:FormItem.Label="项目名称"
-                           Watermark="请输入项目名称"
-                           Text="{Binding ProjectPanel.DraftProjectName}" />
-                  <TextBox Classes="SectionInput"
-                           u:FormItem.Label="项目说明"
-                           AcceptsReturn="True"
-                           Height="104"
-                           TextWrapping="Wrap"
-                           Watermark="例如：支付域联调、会员系统 OpenAPI、测试导出项目"
-                           Text="{Binding ProjectPanel.DraftProjectDescription}" />
-                </u:Form>
-
-                <StackPanel Orientation="Horizontal"
-                            Spacing="{StaticResource Space.2}">
-                  <Button Classes="PrimaryButton"
-                          Content="创建项目"
-                          Command="{Binding ProjectPanel.CreateProjectCommand}" />
-                  <Button Classes="SecondaryButton"
-                          Content="自动命名"
-                          Command="{Binding ProjectPanel.UseProjectTemplateCommand}" />
-                </StackPanel>
+                           Text="项目名称必填。" />
+                <TextBox Classes="SectionInput"
+                         Watermark="请输入项目名称"
+                         HorizontalAlignment="Stretch"
+                         Text="{Binding ProjectPanel.DraftProjectName}" />
               </StackPanel>
-            </Border>
 
-            <Border Grid.Column="1"
-                    Classes="PanelCard">
-              <StackPanel Spacing="{StaticResource Space.3}">
+              <StackPanel Grid.Column="1"
+                          Spacing="{StaticResource Space.2}">
                 <TextBlock Classes="SectionTitle"
-                           Text="快速查找" />
+                           Text="项目说明" />
                 <TextBlock Classes="CaptionText"
-                           Text="输入项目名称或说明进行筛选，然后点击卡片进入项目详情。" />
+                           Text="可选，用于区分服务域、团队或用途。" />
+                <TextBox Classes="SectionInput"
+                         AcceptsReturn="True"
+                         Height="84"
+                         HorizontalAlignment="Stretch"
+                         TextWrapping="Wrap"
+                         Watermark="例如：支付域联调、会员系统 OpenAPI、测试导出项目"
+                         Text="{Binding ProjectPanel.DraftProjectDescription}" />
+              </StackPanel>
+
+              <StackPanel Grid.Column="2"
+                          Spacing="{StaticResource Space.2}">
+                <TextBlock Classes="SectionTitle"
+                           Text="搜索项目" />
+                <TextBlock Classes="CaptionText"
+                           Text="按名称或说明快速过滤。" />
                 <TextBox Classes="SectionInput"
                          Watermark="搜索项目名称 / 项目说明"
+                         HorizontalAlignment="Stretch"
                          Text="{Binding ProjectPanel.SearchText}" />
-
                 <Border Classes="InfoPill">
                   <TextBlock Classes="CaptionText"
-                             Text="{Binding BrowserStatusText}" />
+                             Text="{Binding BrowserStatusText}"
+                             TextWrapping="Wrap" />
                 </Border>
               </StackPanel>
+
+              <StackPanel Grid.Column="3"
+                          VerticalAlignment="Bottom"
+                          Spacing="{StaticResource Space.2}">
+                <Button Classes="PrimaryButton"
+                        MinWidth="112"
+                        Content="创建项目"
+                        Command="{Binding ProjectPanel.CreateProjectCommand}" />
+                <Button Classes="SecondaryButton"
+                        MinWidth="112"
+                        Content="自动命名"
+                        Command="{Binding ProjectPanel.UseProjectTemplateCommand}" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <Grid Grid.Row="2"
+                ColumnDefinitions="*,Auto"
+                ColumnSpacing="{StaticResource Space.4}">
+            <StackPanel Spacing="{StaticResource Space.1}">
+              <TextBlock Classes="SectionTitle"
+                         Text="项目列表" />
+              <TextBlock Classes="CaptionText"
+                         Text="点击项目卡片进入详情页，继续维护该项目的环境、用例和请求数据。" />
+            </StackPanel>
+
+            <Border Grid.Column="1"
+                    Classes="InfoPill"
+                    VerticalAlignment="Center">
+              <TextBlock Classes="CaptionText"
+                         Text="从列表进入项目详情" />
             </Border>
           </Grid>
-
-          <StackPanel Grid.Row="2"
-                      Spacing="{StaticResource Space.2}">
-            <TextBlock Classes="SectionTitle"
-                       Text="项目列表" />
-            <TextBlock Classes="CaptionText"
-                       Text="点击任意项目卡片进入详情页，继续维护该项目的环境、用例和请求数据。" />
-          </StackPanel>
 
           <Border Grid.Row="3"
                   Classes="EmptyStateCard"
