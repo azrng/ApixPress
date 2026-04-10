@@ -181,7 +181,7 @@
                 <ItemsPanelTemplate>
                   <WrapPanel Orientation="Horizontal"
                              ItemWidth="320"
-                             ItemHeight="236" />
+                             ItemHeight="248" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
@@ -190,20 +190,17 @@
                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenProjectWorkspaceCommand}"
                           CommandParameter="{Binding}">
                     <Border Classes="ProjectCard">
-                      <Grid RowDefinitions="Auto,*,Auto"
+                      <Grid RowDefinitions="Auto,Auto,*,Auto"
                             RowSpacing="{StaticResource Space.4}">
+                        <Border Classes="ProjectCardGlow" />
+
                         <Grid ColumnDefinitions="Auto,*,Auto"
                               ColumnSpacing="{StaticResource Space.3}">
-                          <Border Width="52"
+                          <Border Width="56"
                                   Height="52"
                                   Classes="ProjectCardIcon">
-                            <Path Width="20"
-                                  Height="20"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  Fill="{DynamicResource Brush.Border.Focus}"
-                                  Stretch="Uniform"
-                                  Data="M5,5 L19,5 L19,19 L5,19 Z M8,8 L16,8 L16,10 L8,10 Z M8,12 L16,12 L16,14 L8,14 Z" />
+                            <TextBlock Classes="ProjectAvatarText"
+                                       Text="{Binding AvatarText}" />
                           </Border>
 
                           <StackPanel Grid.Column="1"
@@ -221,25 +218,40 @@
                                    iri:ClassHelper.Classes="Light Primary" />
                         </Grid>
 
-                        <TextBlock Grid.Row="1"
+                        <StackPanel Grid.Row="1"
+                                    Orientation="Horizontal"
+                                    Spacing="{StaticResource Space.2}">
+                          <Border Classes="ProjectMetaPill">
+                            <TextBlock Classes="CaptionText"
+                                       Text="{Binding CategoryText}" />
+                          </Border>
+                          <Border Classes="ProjectMetaPill ProjectMetaPillMuted">
+                            <TextBlock Classes="CaptionText"
+                                       Text="项目级隔离" />
+                          </Border>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="2"
                                    Classes="ProjectCardSummary"
                                    Text="{Binding SummaryText}"
                                    TextWrapping="Wrap" />
 
-                        <Grid Grid.Row="2"
-                              ColumnDefinitions="Auto,*,Auto"
+                        <Grid Grid.Row="3"
+                              ColumnDefinitions="*,Auto"
                               ColumnSpacing="{StaticResource Space.3}">
-                          <Border Grid.Column="0"
-                                  Classes="ProjectMetaPill">
-                            <TextBlock Classes="CaptionText"
-                                       Text="{Binding CategoryText}" />
-                          </Border>
-                          <TextBlock Grid.Column="1"
+                          <TextBlock Grid.Column="0"
                                      Classes="ProjectEntryHint"
-                                     Text="点击卡片进入项目详情" />
-                          <TextBlock Grid.Column="2"
-                                     Classes="ProjectArrowText"
-                                     Text="→" />
+                                     Text="点击卡片进入项目详情与调试工作台" />
+                          <Border Grid.Column="1"
+                                  Classes="ProjectEntryBadge">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="6">
+                              <TextBlock Classes="ProjectEntryBadgeText"
+                                         Text="进入项目" />
+                              <TextBlock Classes="ProjectEntryBadgeText"
+                                         Text="→" />
+                            </StackPanel>
+                          </Border>
                         </Grid>
                       </Grid>
                     </Border>
@@ -833,12 +845,12 @@
         <Grid HorizontalAlignment="Center"
               VerticalAlignment="Center">
           <Border Classes="CreateProjectDialogCard">
-            <Grid RowDefinitions="Auto,*,Auto"
-                  RowSpacing="{StaticResource Space.4}">
+            <Grid RowDefinitions="Auto,Auto,Auto"
+                  RowSpacing="{StaticResource Space.3}">
               <Grid ColumnDefinitions="*,Auto"
                     ColumnSpacing="{StaticResource Space.3}">
-                <StackPanel Spacing="{StaticResource Space.1}">
-                  <TextBlock Classes="SectionTitle"
+                <StackPanel Spacing="2">
+                  <TextBlock Classes="DialogTitle"
                              Text="新建项目" />
                   <TextBlock Classes="CaptionText"
                              Text="只需要填写项目名称和备注信息。创建后会自动生成该项目的默认环境。" />
@@ -849,29 +861,31 @@
                         Command="{Binding CloseCreateProjectDialogCommand}" />
               </Grid>
 
-              <u:Form Grid.Row="1"
-                      LabelPosition="Top">
-                <TextBox Classes="SectionInput"
-                         u:FormItem.Label="项目名称"
-                         Watermark="请输入项目名称"
-                         Text="{Binding ProjectPanel.DraftProjectName}" />
-                <TextBox Classes="SectionInput"
-                         u:FormItem.Label="备注信息"
-                         AcceptsReturn="True"
-                         Height="140"
-                         TextWrapping="Wrap"
-                         Watermark="补充项目用途、团队或说明"
-                         Text="{Binding ProjectPanel.DraftProjectDescription}" />
-              </u:Form>
+              <Border Grid.Row="1"
+                      Classes="CreateProjectFormShell">
+                <u:Form LabelPosition="Top">
+                  <TextBox Classes="SectionInput DialogInput"
+                           u:FormItem.Label="项目名称"
+                           Watermark="请输入项目名称"
+                           Text="{Binding ProjectPanel.DraftProjectName}" />
+                  <TextBox Classes="SectionInput DialogInput"
+                           u:FormItem.Label="备注信息"
+                           AcceptsReturn="True"
+                           Height="112"
+                           TextWrapping="Wrap"
+                           Watermark="补充项目用途、团队或说明"
+                           Text="{Binding ProjectPanel.DraftProjectDescription}" />
+                </u:Form>
+              </Border>
 
               <StackPanel Grid.Row="2"
                           Orientation="Horizontal"
                           HorizontalAlignment="Right"
                           Spacing="{StaticResource Space.2}">
-                <Button Classes="SecondaryButton"
+                <Button Classes="DialogSecondaryButton"
                         Content="取消"
                         Command="{Binding CloseCreateProjectDialogCommand}" />
-                <Button Classes="PrimaryButton"
+                <Button Classes="DialogPrimaryButton"
                         Content="创建项目"
                         Command="{Binding ProjectPanel.CreateProjectCommand}" />
               </StackPanel>

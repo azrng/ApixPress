@@ -231,8 +231,13 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="{StaticResource Pad.5}" />
-    <Setter Property="Width" Value="520" />
+    <Setter Property="Width" Value="460" />
     <Setter Property="BoxShadow" Value="0 24 60 0 #0F172A20" />
+  </Style>
+
+  <Style Selector="TextBlock.DialogTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Title}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
   <Style Selector="Button.DialogCloseButton">
@@ -241,6 +246,33 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Border.CreateProjectFormShell">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+  </Style>
+
+  <Style Selector="TextBox.DialogInput">
+    <Setter Property="MinWidth" Value="320" />
+  </Style>
+
+  <Style Selector="Button.DialogSecondaryButton">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="Padding" Value="16,12" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="MinWidth" Value="92" />
+  </Style>
+
+  <Style Selector="Button.DialogPrimaryButton">
+    <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="Padding" Value="16,12" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="MinWidth" Value="112" />
   </Style>
 
   <Style Selector="Button.ProjectCardButton">
@@ -258,8 +290,17 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="{StaticResource Pad.5}" />
-    <Setter Property="MinHeight" Value="212" />
+    <Setter Property="MinHeight" Value="224" />
     <Setter Property="BoxShadow" Value="0 12 32 0 #0F172A0D" />
+  </Style>
+
+  <Style Selector="Border.ProjectCardGlow">
+    <Setter Property="Height" Value="4" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Margin" Value="-20,-20,-20,0" />
   </Style>
 
   <Style Selector="Button.ProjectCardButton:pointerover Border.ProjectCard">
@@ -271,10 +312,21 @@
   <Style Selector="Border.ProjectCardIcon">
     <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BoxShadow" Value="0 8 18 0 #4C84F020" />
+  </Style>
+
+  <Style Selector="TextBlock.ProjectAvatarText">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Title}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Border.Focus}" />
   </Style>
 
   <Style Selector="Border.ProjectGridHost">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
@@ -289,7 +341,7 @@
   <Style Selector="TextBlock.ProjectCardSummary">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.Body}" />
-    <Setter Property="MaxHeight" Value="68" />
+    <Setter Property="MaxHeight" Value="72" />
   </Style>
 
   <Style Selector="Border.ProjectMetaPill">
@@ -298,17 +350,29 @@
     <Setter Property="Padding" Value="8,4" />
   </Style>
 
+  <Style Selector="Border.ProjectMetaPillMuted">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
   <Style Selector="TextBlock.ProjectEntryHint">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
   </Style>
 
-  <Style Selector="TextBlock.ProjectArrowText">
+  <Style Selector="Border.ProjectEntryBadge">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="10,6" />
+  </Style>
+
+  <Style Selector="TextBlock.ProjectEntryBadgeText">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
     <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
   <Style Selector="Border.ProjectCardMeta">
