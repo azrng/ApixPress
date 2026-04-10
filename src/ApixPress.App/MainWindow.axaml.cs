@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
 using ApixPress.App.Views.Controls;
@@ -36,6 +37,7 @@ public partial class MainWindow : Window
     private async void OnOpened(object? sender, System.EventArgs e)
     {
         _windowHostService.MainWindow = this;
+        _viewModel.UpdateWindowState(WindowState);
         await _viewModel.InitializeAsync();
     }
 
@@ -45,6 +47,30 @@ public partial class MainWindow : Window
         {
             _windowHostService.MainWindow = null;
         }
+    }
+
+    private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            BeginMoveDrag(e);
+        }
+    }
+
+    private void OnMinimizeWindow(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
+    }
+
+    private void OnToggleMaximizeWindow(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        _viewModel.UpdateWindowState(WindowState);
+    }
+
+    private void OnCloseWindow(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        Close();
     }
 
     private async void OnOpenUseCasesDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

@@ -21,6 +21,14 @@
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
+  <Style Selector="Path.ShellIconPath">
+    <Setter Property="Width" Value="16" />
+    <Setter Property="Height" Value="16" />
+    <Setter Property="Stretch" Value="Uniform" />
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="StrokeThickness" Value="1.6" />
+  </Style>
+
   <Style Selector="Border.EmptyStateCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Strong}" />
@@ -79,6 +87,52 @@
   <Style Selector="Button.TopActionButton:pointerover">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <Style Selector="Button.ShellIconButton">
+    <Setter Property="Width" Value="36" />
+    <Setter Property="Height" Value="36" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+  </Style>
+
+  <Style Selector="Button.ShellIconButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <Style Selector="Border.NotificationDot">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Warning.Text}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="Button.WindowControlButton">
+    <Setter Property="Width" Value="44" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="Button.WindowControlButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+
+  <Style Selector="Button.WindowCloseButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Warning.Background}" />
+  </Style>
+
+  <Style Selector="TextBlock.WindowControlGlyph">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
 
   <Style Selector="Button.IconButton">
@@ -198,6 +252,115 @@
 
   <Style Selector="Border.CreateProjectDialogBackdrop">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Overlay}" />
+  </Style>
+
+  <Style Selector="Border.NotificationFlyoutCard">
+    <Setter Property="Width" Value="360" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+    <Setter Property="BoxShadow" Value="0 18 36 0 #0F172A18" />
+  </Style>
+
+  <Style Selector="Border.NotificationItemCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="Margin" Value="0,0,0,8" />
+  </Style>
+
+  <Style Selector="Border.NotificationItemDot">
+    <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="Margin" Value="0,6,0,0" />
+  </Style>
+
+  <Style Selector="Border.SettingsDialogBackdrop">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Overlay}" />
+  </Style>
+
+  <Style Selector="Border.SettingsDialogCard">
+    <Setter Property="Width" Value="980" />
+    <Setter Property="Height" Value="640" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="BoxShadow" Value="0 28 60 0 #0F172A20" />
+  </Style>
+
+  <Style Selector="Border.SettingsSidebar">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="0,0,1,0" />
+    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
+    <Setter Property="CornerRadius" Value="16,0,0,16" />
+  </Style>
+
+  <Style Selector="ToggleButton.SettingsNavButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="16,12" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="ToggleButton.SettingsNavButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+  </Style>
+
+  <Style Selector="ToggleButton.SettingsNavButton:checked">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="Border.SettingsPageSection">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+  </Style>
+
+  <Style Selector="TextBlock.SettingsGroupTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="NumericUpDown.SettingsNumberInput">
+    <Setter Property="MinWidth" Value="150" />
+  </Style>
+
+  <Style Selector="Button.DialogIconButton">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="10,6" />
+  </Style>
+
+  <Style Selector="Border.AboutHeroCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+  </Style>
+
+  <Style Selector="Border.AboutIconBadge">
+    <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="BoxShadow" Value="0 14 28 0 #4C84F02A" />
+  </Style>
+
+  <Style Selector="Border.VersionTag">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="10,6" />
   </Style>
 
   <Style Selector="Border.CreateProjectDialogCard">

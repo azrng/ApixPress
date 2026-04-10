@@ -13,12 +13,17 @@ namespace ApixPress.App.Services.Implementations;
 
 public sealed partial class RequestExecutionService : IRequestExecutionService, ITransientDependency
 {
+    private readonly IAppShellSettingsService _appShellSettingsService;
     private readonly IEnvironmentVariableService _environmentVariableService;
     private readonly IJsonSerializer _serializer;
 
-    public RequestExecutionService(IEnvironmentVariableService environmentVariableService, IJsonSerializer serializer)
+    public RequestExecutionService(
+        IEnvironmentVariableService environmentVariableService,
+        IAppShellSettingsService appShellSettingsService,
+        IJsonSerializer serializer)
     {
         _environmentVariableService = environmentVariableService;
+        _appShellSettingsService = appShellSettingsService;
         _serializer = serializer;
     }
 
@@ -29,6 +34,8 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
     {
         try
         {
+            var shellSettingsResult = await _appShellSettingsService.LoadAsync(cancellationToken);
+            var shellSettings = shellSettingsResult.Data ?? new AppShellSettingsDto();
             var activeVariables = new Dictionary<string, string>(
                 await _environmentVariableService.GetActiveDictionaryAsync(environment.Id, cancellationToken),
                 StringComparer.OrdinalIgnoreCase);
@@ -39,8 +46,21 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             }
 
             var finalUrl = BuildUrl(request, resolvedBaseUrl, activeVariables);
-            using var httpClient = CreateHttpClient(request.IgnoreSslErrors);
+            var ignoreSslErrors = request.IgnoreSslErrors || !shellSettings.ValidateSslCertificate;
+            using var httpClient = CreateHttpClient(
+                ignoreSslErrors,
+                shellSettings.AutoFollowRedirects,
+                shellSettings.RequestTimeoutMilliseconds);
             using var message = new HttpRequestMessage(new HttpMethod(request.Method), finalUrl);
+
+            if (shellSettings.SendNoCacheHeader && !message.Headers.Contains("Cache-Control"))
+            {
+                message.Headers.CacheControl = new CacheControlHeaderValue
+                {
+                    NoCache = true,
+                    NoStore = true
+                };
+            }
 
             foreach (var header in request.Headers.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
             {
@@ -190,15 +210,22 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         return result;
     }
 
-    private static HttpClient CreateHttpClient(bool ignoreSslErrors)
+    private static HttpClient CreateHttpClient(bool ignoreSslErrors, bool allowAutoRedirect, int timeoutMilliseconds)
     {
-        var handler = new HttpClientHandler();
+        var handler = new HttpClientHandler
+        {
+            AllowAutoRedirect = allowAutoRedirect
+        };
         if (ignoreSslErrors)
         {
             handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
         }
 
-        return new HttpClient(handler, disposeHandler: true);
+        var client = new HttpClient(handler, disposeHandler: true);
+        client.Timeout = timeoutMilliseconds <= 0
+            ? Timeout.InfiniteTimeSpan
+            : TimeSpan.FromMilliseconds(timeoutMilliseconds);
+        return client;
     }
 
 

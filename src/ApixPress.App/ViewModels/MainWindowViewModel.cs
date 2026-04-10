@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Avalonia.Controls;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -18,10 +19,18 @@ public partial class MainWindowViewModel : ViewModelBase
         public const string ProjectSettings = "project_settings";
     }
 
+    private static class SettingsSections
+    {
+        public const string General = "general";
+        public const string About = "about";
+    }
+
+    private readonly IAppShellSettingsService _appShellSettingsService;
     private readonly IRequestExecutionService _requestExecutionService;
     private readonly IRequestCaseService _requestCaseService;
     private readonly IRequestHistoryService _requestHistoryService;
     private bool _initialized;
+    private bool _isApplyingShellSettings;
     private bool _isNavigatingProjectSelection;
 
     public MainWindowViewModel(
@@ -29,11 +38,13 @@ public partial class MainWindowViewModel : ViewModelBase
         IRequestCaseService requestCaseService,
         IRequestHistoryService requestHistoryService,
         IEnvironmentVariableService environmentVariableService,
-        IProjectWorkspaceService projectWorkspaceService)
+        IProjectWorkspaceService projectWorkspaceService,
+        IAppShellSettingsService appShellSettingsService)
     {
         _requestExecutionService = requestExecutionService;
         _requestCaseService = requestCaseService;
         _requestHistoryService = requestHistoryService;
+        _appShellSettingsService = appShellSettingsService;
 
         ConfigTab = new RequestConfigTabViewModel(null);
         ResponseSection = new ResponseSectionViewModel();
@@ -41,6 +52,12 @@ public partial class MainWindowViewModel : ViewModelBase
         UseCasesPanel = new UseCasesPanelViewModel(requestCaseService);
         EnvironmentPanel = new EnvironmentPanelViewModel(environmentVariableService);
         HistoryPanel = new RequestHistoryPanelViewModel(requestHistoryService);
+        Notifications = CreateNotifications();
+
+        var version = typeof(MainWindowViewModel).Assembly.GetName().Version;
+        CurrentAppVersion = version is null
+            ? "1.0.0"
+            : $"{version.Major}.{Math.Max(version.Minor, 0)}.{Math.Max(version.Build, 0)}";
 
         ProjectPanel.ProjectCreated += OnProjectCreated;
         ProjectPanel.PropertyChanged += OnProjectPanelPropertyChanged;
@@ -48,6 +65,11 @@ public partial class MainWindowViewModel : ViewModelBase
         EnvironmentPanel.PropertyChanged += OnEnvironmentPanelPropertyChanged;
         EnvironmentPanel.SelectedEnvironmentChanged += OnSelectedEnvironmentChanged;
         UseCasesPanel.CaseApplied += OnCaseApplied;
+
+        foreach (var item in Notifications)
+        {
+            item.PropertyChanged += OnNotificationPropertyChanged;
+        }
     }
 
     public RequestConfigTabViewModel ConfigTab { get; }
@@ -58,6 +80,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public RequestHistoryPanelViewModel HistoryPanel { get; }
 
     public ObservableCollection<RequestHistoryItemViewModel> RequestHistory => HistoryPanel.HistoryItems;
+    public ObservableCollection<NotificationItemViewModel> Notifications { get; }
 
     public bool HasEnvironmentContext => EnvironmentPanel.HasSelectedEnvironment;
     public bool HasSelectedProject => ProjectPanel.SelectedProject is not null;
@@ -66,7 +89,11 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool ShowWorkbenchSection => IsWorkspaceMode && CurrentWorkspaceSection == WorkspaceSections.Workbench;
     public bool ShowHistorySection => IsWorkspaceMode && CurrentWorkspaceSection == WorkspaceSections.History;
     public bool ShowProjectSettingsSection => IsWorkspaceMode && CurrentWorkspaceSection == WorkspaceSections.ProjectSettings;
+    public bool ShowGeneralSettingsSection => CurrentSettingsSection == SettingsSections.General;
+    public bool ShowAboutSettingsSection => CurrentSettingsSection == SettingsSections.About;
+    public bool HasUnreadNotifications => Notifications.Any(item => item.IsUnread);
 
+    public string AppDisplayName { get; } = "ApixPress";
     public string CurrentProjectName => ProjectPanel.SelectedProject?.Name ?? "项目列表";
     public string CurrentProjectSummary =>
         string.IsNullOrWhiteSpace(ProjectPanel.SelectedProject?.Description)
@@ -76,7 +103,11 @@ public partial class MainWindowViewModel : ViewModelBase
     public string BrowserStatusText => ProjectPanel.HasProjects
         ? "选择一个项目进入工作台，或继续创建新项目。"
         : "当前还没有项目，请先创建一个项目。";
-
+    public string CurrentAppVersion { get; }
+    public string CurrentSettingsTitle => ShowAboutSettingsSection ? "关于" : "通用";
+    public string LatestMockVersion { get; } = "1.1.0";
+    public string RuntimeStackText { get; } = ".NET 10 / Avalonia 11 / Ursa";
+    public string WindowMaximizeGlyph => IsWindowMaximized ? "\u2750" : "\u25A1";
     public IReadOnlyList<string> HttpMethods { get; } = ["GET", "POST", "PUT", "DELETE", "PATCH"];
 
     [ObservableProperty]
@@ -106,6 +137,45 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string currentWorkspaceSection = WorkspaceSections.Workbench;
 
+    [ObservableProperty]
+    private bool isSettingsDialogOpen;
+
+    [ObservableProperty]
+    private bool isNotificationCenterOpen;
+
+    [ObservableProperty]
+    private bool isWindowMaximized;
+
+    [ObservableProperty]
+    private string currentSettingsSection = SettingsSections.General;
+
+    [ObservableProperty]
+    private decimal requestTimeoutMilliseconds = 30000;
+
+    [ObservableProperty]
+    private bool validateSslCertificate = true;
+
+    [ObservableProperty]
+    private bool autoFollowRedirects = true;
+
+    [ObservableProperty]
+    private bool sendNoCacheHeader;
+
+    [ObservableProperty]
+    private bool enableVerboseLogging;
+
+    [ObservableProperty]
+    private bool enableUpdateReminder = true;
+
+    [ObservableProperty]
+    private string generalSettingsSaveStatus = "设置会自动保存到本地工作目录。";
+
+    [ObservableProperty]
+    private string aboutUpdateStatus = "尚未检查更新。";
+
+    [ObservableProperty]
+    private string lastUpdateCheckText = "尚未检查";
+
     public async Task InitializeAsync()
     {
         if (_initialized)
@@ -115,6 +185,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _initialized = true;
         IsBusy = true;
+        await LoadShellSettingsAsync();
         await ProjectPanel.LoadProjectsAsync(autoSelect: false);
         ClearWorkspaceContext();
         IsProjectBrowserMode = true;
@@ -167,6 +238,73 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         IsCreateProjectDialogOpen = false;
         StatusMessage = BrowserStatusText;
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void OpenSettingsDialog()
+    {
+        CurrentSettingsSection = SettingsSections.General;
+        IsSettingsDialogOpen = true;
+        IsNotificationCenterOpen = false;
+        StatusMessage = "可在这里调整通用设置和查看版本信息。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void CloseSettingsDialog()
+    {
+        IsSettingsDialogOpen = false;
+        StatusMessage = IsProjectBrowserMode ? BrowserStatusText : $"当前正在处理项目：{CurrentProjectName}。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ShowGeneralSettings()
+    {
+        CurrentSettingsSection = SettingsSections.General;
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ShowAboutSettings()
+    {
+        CurrentSettingsSection = SettingsSections.About;
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ToggleNotificationCenter()
+    {
+        IsNotificationCenterOpen = !IsNotificationCenterOpen;
+        if (IsNotificationCenterOpen)
+        {
+            IsSettingsDialogOpen = false;
+            MarkAllNotificationsRead();
+            StatusMessage = "这里展示近期动态和提醒。";
+        }
+
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void MarkAllNotificationsRead()
+    {
+        foreach (var item in Notifications)
+        {
+            item.IsUnread = false;
+        }
+
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private async Task CheckForUpdatesAsync()
+    {
+        await Task.Delay(240);
+        LastUpdateCheckText = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+        AboutUpdateStatus = $"已完成 Mock 检查，发现可用版本 {LatestMockVersion}。";
+        StatusMessage = AboutUpdateStatus;
         NotifyShellState();
     }
 
@@ -331,6 +469,103 @@ public partial class MainWindowViewModel : ViewModelBase
         NotifyShellState();
     }
 
+    public void UpdateWindowState(WindowState state)
+    {
+        IsWindowMaximized = state == WindowState.Maximized;
+        NotifyShellState();
+    }
+
+    partial void OnRequestTimeoutMillisecondsChanged(decimal value)
+    {
+        TriggerShellSettingsSave();
+    }
+
+    partial void OnValidateSslCertificateChanged(bool value)
+    {
+        TriggerShellSettingsSave();
+    }
+
+    partial void OnAutoFollowRedirectsChanged(bool value)
+    {
+        TriggerShellSettingsSave();
+    }
+
+    partial void OnSendNoCacheHeaderChanged(bool value)
+    {
+        TriggerShellSettingsSave();
+    }
+
+    partial void OnEnableVerboseLoggingChanged(bool value)
+    {
+        TriggerShellSettingsSave();
+    }
+
+    partial void OnEnableUpdateReminderChanged(bool value)
+    {
+        TriggerShellSettingsSave();
+    }
+
+    partial void OnIsProjectBrowserModeChanged(bool value)
+    {
+        NotifyShellState();
+    }
+
+    partial void OnCurrentWorkspaceSectionChanged(string value)
+    {
+        NotifyShellState();
+    }
+
+    partial void OnCurrentSettingsSectionChanged(string value)
+    {
+        NotifyShellState();
+    }
+
+    private async Task LoadShellSettingsAsync()
+    {
+        _isApplyingShellSettings = true;
+        var result = await _appShellSettingsService.LoadAsync(CancellationToken.None);
+        var settings = result.Data ?? new AppShellSettingsDto();
+
+        RequestTimeoutMilliseconds = settings.RequestTimeoutMilliseconds;
+        ValidateSslCertificate = settings.ValidateSslCertificate;
+        AutoFollowRedirects = settings.AutoFollowRedirects;
+        SendNoCacheHeader = settings.SendNoCacheHeader;
+        EnableVerboseLogging = settings.EnableVerboseLogging;
+        EnableUpdateReminder = settings.EnableUpdateReminder;
+        GeneralSettingsSaveStatus = result.IsSuccess
+            ? "设置会自动保存到本地工作目录。"
+            : "设置读取失败，已回退默认值。";
+        _isApplyingShellSettings = false;
+    }
+
+    private void TriggerShellSettingsSave()
+    {
+        if (_isApplyingShellSettings || !_initialized)
+        {
+            return;
+        }
+
+        _ = SaveShellSettingsAsync();
+    }
+
+    private async Task SaveShellSettingsAsync()
+    {
+        var result = await _appShellSettingsService.SaveAsync(new AppShellSettingsDto
+        {
+            RequestTimeoutMilliseconds = (int)RequestTimeoutMilliseconds,
+            ValidateSslCertificate = ValidateSslCertificate,
+            AutoFollowRedirects = AutoFollowRedirects,
+            SendNoCacheHeader = SendNoCacheHeader,
+            EnableVerboseLogging = EnableVerboseLogging,
+            EnableUpdateReminder = EnableUpdateReminder
+        }, CancellationToken.None);
+
+        GeneralSettingsSaveStatus = result.IsSuccess
+            ? $"已自动保存 {DateTime.Now:HH:mm:ss}"
+            : $"保存失败：{result.Message}";
+        NotifyShellState();
+    }
+
     private async Task LoadWorkspaceForProjectAsync(string projectId, string? preferredEnvironmentId = null)
     {
         UseCasesPanel.SetProjectContext(projectId);
@@ -440,14 +675,12 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    partial void OnIsProjectBrowserModeChanged(bool value)
+    private void OnNotificationPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        NotifyShellState();
-    }
-
-    partial void OnCurrentWorkspaceSectionChanged(string value)
-    {
-        NotifyShellState();
+        if (e.PropertyName == nameof(NotificationItemViewModel.IsUnread))
+        {
+            NotifyShellState();
+        }
     }
 
     private void NotifyShellState()
@@ -459,9 +692,42 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowWorkbenchSection));
         OnPropertyChanged(nameof(ShowHistorySection));
         OnPropertyChanged(nameof(ShowProjectSettingsSection));
+        OnPropertyChanged(nameof(ShowGeneralSettingsSection));
+        OnPropertyChanged(nameof(ShowAboutSettingsSection));
+        OnPropertyChanged(nameof(HasUnreadNotifications));
         OnPropertyChanged(nameof(CurrentProjectName));
         OnPropertyChanged(nameof(CurrentProjectSummary));
         OnPropertyChanged(nameof(CurrentEnvironmentLabel));
         OnPropertyChanged(nameof(BrowserStatusText));
+        OnPropertyChanged(nameof(CurrentSettingsTitle));
+        OnPropertyChanged(nameof(WindowMaximizeGlyph));
+    }
+
+    private static ObservableCollection<NotificationItemViewModel> CreateNotifications()
+    {
+        return
+        [
+            new NotificationItemViewModel
+            {
+                Title = "欢迎使用 ApixPress",
+                Message = "项目列表已作为默认首页，可以直接创建项目或进入工作台。",
+                RelativeTimeText = "刚刚",
+                IsUnread = true
+            },
+            new NotificationItemViewModel
+            {
+                Title = "多项目工作流已启用",
+                Message = "每个项目会隔离保存环境、历史记录和请求用例。",
+                RelativeTimeText = "2 分钟前",
+                IsUnread = true
+            },
+            new NotificationItemViewModel
+            {
+                Title = "设置中心已准备就绪",
+                Message = "现在可以在顶部设置中调整通用行为并查看版本信息。",
+                RelativeTimeText = "5 分钟前",
+                IsUnread = false
+            }
+        ];
     }
 }
