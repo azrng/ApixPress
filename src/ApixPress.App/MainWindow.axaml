@@ -88,129 +88,95 @@
     <Grid Grid.Row="1">
       <ScrollViewer IsVisible="{Binding IsProjectBrowserMode}">
         <Grid Margin="{StaticResource Pad.6}"
-              RowDefinitions="Auto,Auto,Auto,*"
+              RowDefinitions="Auto,Auto,*"
               RowSpacing="{StaticResource Space.4}">
-          <Border Classes="BrowserHeroCard">
-            <Grid ColumnDefinitions="2.4*,1.2*"
+          <Border Classes="BrowserToolbarCard">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto"
                   ColumnSpacing="{StaticResource Space.4}">
-              <StackPanel Spacing="{StaticResource Space.2}">
-                <TextBlock Classes="PageTitle"
-                           Text="先选择项目，再进入项目详情和调试工作台" />
-                <TextBlock Classes="SubtleText"
-                           Text="项目会隔离保存环境、请求历史、用例和接口调试配置。右上角保留项目管理与刷新入口，首屏聚焦项目列表本身。" />
-              </StackPanel>
-
-              <StackPanel Grid.Column="1"
+              <StackPanel Orientation="Horizontal"
                           Spacing="{StaticResource Space.2}"
                           VerticalAlignment="Center">
-                <TextBlock Classes="SectionTitle"
-                           Text="当前状态" />
-                <TextBlock Classes="CaptionText"
-                           Text="{Binding BrowserStatusText}" />
-              </StackPanel>
-            </Grid>
-          </Border>
-
-          <Border Grid.Row="1"
-                  Classes="PanelCard">
-            <Grid ColumnDefinitions="1.1*,1.45*,1.1*,Auto"
-                  ColumnSpacing="{StaticResource Space.4}">
-              <StackPanel Spacing="{StaticResource Space.2}">
-                <TextBlock Classes="SectionTitle"
-                           Text="新建项目" />
-                <TextBlock Classes="CaptionText"
-                           Text="项目名称必填。" />
-                <TextBox Classes="SectionInput"
-                         Watermark="请输入项目名称"
-                         HorizontalAlignment="Stretch"
-                         Text="{Binding ProjectPanel.DraftProjectName}" />
-              </StackPanel>
-
-              <StackPanel Grid.Column="1"
-                          Spacing="{StaticResource Space.2}">
-                <TextBlock Classes="SectionTitle"
-                           Text="项目说明" />
-                <TextBlock Classes="CaptionText"
-                           Text="可选，用于区分服务域、团队或用途。" />
-                <TextBox Classes="SectionInput"
-                         AcceptsReturn="True"
-                         Height="84"
-                         HorizontalAlignment="Stretch"
-                         TextWrapping="Wrap"
-                         Watermark="例如：支付域联调、会员系统 OpenAPI、测试导出项目"
-                         Text="{Binding ProjectPanel.DraftProjectDescription}" />
-              </StackPanel>
-
-              <StackPanel Grid.Column="2"
-                          Spacing="{StaticResource Space.2}">
-                <TextBlock Classes="SectionTitle"
-                           Text="搜索项目" />
-                <TextBlock Classes="CaptionText"
-                           Text="按名称或说明快速过滤。" />
-                <TextBox Classes="SectionInput"
-                         Watermark="搜索项目名称 / 项目说明"
-                         HorizontalAlignment="Stretch"
-                         Text="{Binding ProjectPanel.SearchText}" />
-                <Border Classes="InfoPill">
+                <Border Classes="BrowserToolBadge">
                   <TextBlock Classes="CaptionText"
-                             Text="{Binding BrowserStatusText}"
-                             TextWrapping="Wrap" />
+                             Text="卡片视图" />
+                </Border>
+                <Border Classes="BrowserToolBadge">
+                  <TextBlock Classes="CaptionText"
+                             Text="项目总览" />
                 </Border>
               </StackPanel>
 
-              <StackPanel Grid.Column="3"
-                          VerticalAlignment="Bottom"
-                          Spacing="{StaticResource Space.2}">
-                <Button Classes="PrimaryButton"
-                        MinWidth="112"
-                        Content="创建项目"
-                        Command="{Binding ProjectPanel.CreateProjectCommand}" />
-                <Button Classes="SecondaryButton"
-                        MinWidth="112"
-                        Content="自动命名"
-                        Command="{Binding ProjectPanel.UseProjectTemplateCommand}" />
+              <StackPanel Grid.Column="1"
+                          Spacing="2"
+                          VerticalAlignment="Center">
+                <TextBlock Classes="SectionTitle"
+                           Text="项目列表" />
+                <TextBlock Classes="CaptionText"
+                           Text="{Binding ProjectPanel.FilteredProjects.Count, StringFormat='共 {0} 个项目，可点击进入详情页'}" />
               </StackPanel>
+
+              <TextBox Grid.Column="2"
+                       Width="260"
+                       Classes="SectionInput"
+                       Watermark="搜索项目"
+                       Text="{Binding ProjectPanel.SearchText}" />
+
+              <Button Grid.Column="3"
+                      Classes="SecondaryButton"
+                      Content="项目管理"
+                      Click="OnOpenProjectDrawer" />
+
+              <Button Grid.Column="4"
+                      Classes="PrimaryButton"
+                      Content="新建项目"
+                      Click="OnOpenCreateProjectDrawer" />
             </Grid>
           </Border>
 
-          <Grid Grid.Row="2"
+          <Grid Grid.Row="1"
                 ColumnDefinitions="*,Auto"
                 ColumnSpacing="{StaticResource Space.4}">
             <StackPanel Spacing="{StaticResource Space.1}">
               <TextBlock Classes="SectionTitle"
-                         Text="项目列表" />
+                         Text="全部项目" />
               <TextBlock Classes="CaptionText"
-                         Text="点击项目卡片进入详情页，继续维护该项目的环境、用例和请求数据。" />
+                         Text="默认打开这里展示项目列表，点击项目卡片进入详情页和调试工作台。" />
             </StackPanel>
 
             <Border Grid.Column="1"
                     Classes="InfoPill"
                     VerticalAlignment="Center">
               <TextBlock Classes="CaptionText"
-                         Text="从列表进入项目详情" />
+                         Text="{Binding BrowserStatusText}" />
             </Border>
           </Grid>
 
-          <Border Grid.Row="3"
+          <Border Grid.Row="2"
                   Classes="EmptyStateCard"
+                  Margin="0,56,0,0"
                   IsVisible="{Binding ShowProjectListEmptyState}">
             <StackPanel Spacing="{StaticResource Space.3}"
                         HorizontalAlignment="Center">
               <TextBlock Classes="SectionTitle"
                          Text="还没有项目" />
               <TextBlock Classes="CaptionText"
-                         Text="先在上方输入项目名称并创建，创建成功后项目会出现在这里。" />
+                         Text="点击右上角“新建项目”，在侧边栏填写项目名称和备注后创建。" />
+              <Button Classes="PrimaryButton"
+                      HorizontalAlignment="Center"
+                      Content="新建项目"
+                      Click="OnOpenCreateProjectDrawer" />
             </StackPanel>
           </Border>
 
-          <ItemsControl Grid.Row="3"
+          <ItemsControl Grid.Row="2"
+                        Margin="0,56,0,0"
                         IsVisible="{Binding ProjectPanel.HasProjects}"
                         ItemsSource="{Binding ProjectPanel.FilteredProjects}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <WrapPanel Orientation="Horizontal"
                            ItemWidth="372"
-                           ItemHeight="212" />
+                           ItemHeight="188" />
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
@@ -219,7 +185,7 @@
                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenProjectWorkspaceCommand}"
                         CommandParameter="{Binding}">
                   <Border Classes="ProjectCard">
-                    <Grid RowDefinitions="Auto,Auto,*,Auto"
+                    <Grid RowDefinitions="Auto,*,Auto"
                           RowSpacing="{StaticResource Space.3}">
                       <Grid ColumnDefinitions="Auto,*,Auto"
                             ColumnSpacing="{StaticResource Space.3}">
@@ -254,36 +220,16 @@
                                  Classes="SubtleText"
                                  Text="{Binding SummaryText}"
                                  TextWrapping="Wrap"
-                                 MaxHeight="42" />
+                                 MaxHeight="52" />
 
-                      <Border Grid.Row="2"
-                              Classes="ProjectCardMeta">
-                        <Grid ColumnDefinitions="*,*"
-                              ColumnSpacing="{StaticResource Space.3}">
-                          <StackPanel Spacing="2">
-                            <TextBlock Classes="CaptionText"
-                                       Text="环境与变量" />
-                            <TextBlock Text="项目级隔离"
-                                       FontWeight="SemiBold" />
-                          </StackPanel>
-                          <StackPanel Grid.Column="1"
-                                      Spacing="2">
-                            <TextBlock Classes="CaptionText"
-                                       Text="历史与用例" />
-                            <TextBlock Text="可持续保存"
-                                       FontWeight="SemiBold" />
-                          </StackPanel>
-                        </Grid>
-                      </Border>
-
-                      <Grid Grid.Row="3"
-                            ColumnDefinitions="*,Auto">
-                        <TextBlock Classes="CaptionText"
-                                   Text="进入项目详情" />
-                        <TextBlock Grid.Column="1"
-                                   FontSize="{StaticResource Font.Size.BodyLarge}"
-                                   Text="→" />
-                      </Grid>
+                      <StackPanel Grid.Row="2"
+                                  Orientation="Horizontal"
+                                  Spacing="{StaticResource Space.2}">
+                        <u:Badge Header="{Binding CategoryText}"
+                                 iri:ClassHelper.Classes="Light Secondary" />
+                        <u:Badge Header="进入项目详情"
+                                 iri:ClassHelper.Classes="Light Primary" />
+                      </StackPanel>
                     </Grid>
                   </Border>
                 </Button>

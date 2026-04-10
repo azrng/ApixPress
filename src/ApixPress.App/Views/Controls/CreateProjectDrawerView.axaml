@@ -1,0 +1,49 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.CreateProjectDrawerView"
+             x:DataType="vm:MainWindowViewModel"
+             d:DesignWidth="420"
+             d:DesignHeight="560"
+             mc:Ignorable="d">
+  <Grid RowDefinitions="Auto,*,Auto"
+        RowSpacing="{StaticResource Space.4}">
+    <StackPanel Spacing="{StaticResource Space.2}">
+      <TextBlock Classes="SectionTitle"
+                 Text="新建项目" />
+      <TextBlock Classes="CaptionText"
+                 Text="只需要填写项目名称和备注信息。创建后会自动生成该项目的默认环境。" />
+    </StackPanel>
+
+    <u:Form Grid.Row="1"
+            LabelPosition="Top">
+      <TextBox Classes="SectionInput"
+               u:FormItem.Label="项目名称"
+               Watermark="请输入项目名称"
+               Text="{Binding ProjectPanel.DraftProjectName}" />
+      <TextBox Classes="SectionInput"
+               u:FormItem.Label="备注信息"
+               AcceptsReturn="True"
+               Height="140"
+               TextWrapping="Wrap"
+               Watermark="补充项目用途、团队或说明"
+               Text="{Binding ProjectPanel.DraftProjectDescription}" />
+    </u:Form>
+
+    <Grid Grid.Row="2"
+          ColumnDefinitions="*,*"
+          ColumnSpacing="{StaticResource Space.2}">
+      <Button Grid.Column="0"
+              Classes="SecondaryButton"
+              Content="自动命名"
+              Command="{Binding ProjectPanel.UseProjectTemplateCommand}" />
+      <Button Grid.Column="1"
+              Classes="PrimaryButton"
+              Content="创建项目"
+              Command="{Binding ProjectPanel.CreateProjectCommand}" />
+    </Grid>
+  </Grid>
+</UserControl>
