@@ -4,6 +4,7 @@
   <SolidColorBrush x:Key="Brush.Background.Surface" Color="#FFFFFF" />
   <SolidColorBrush x:Key="Brush.Background.Subtle" Color="#F1F5F9" />
   <SolidColorBrush x:Key="Brush.Background.Selected" Color="#E8F0FF" />
+  <SolidColorBrush x:Key="Brush.Background.Overlay" Color="#480F172A" />
   <SolidColorBrush x:Key="Brush.Border.Default" Color="#DCE3EC" />
   <SolidColorBrush x:Key="Brush.Border.Subtle" Color="#E9EEF5" />
   <SolidColorBrush x:Key="Brush.Border.Strong" Color="#C2CDD9" />

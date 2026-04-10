@@ -42,6 +42,7 @@ public partial class MainWindowViewModel : ViewModelBase
         EnvironmentPanel = new EnvironmentPanelViewModel(environmentVariableService);
         HistoryPanel = new RequestHistoryPanelViewModel(requestHistoryService);
 
+        ProjectPanel.ProjectCreated += OnProjectCreated;
         ProjectPanel.PropertyChanged += OnProjectPanelPropertyChanged;
         ProjectPanel.SelectedProjectChanged += OnSelectedProjectChanged;
         EnvironmentPanel.PropertyChanged += OnEnvironmentPanelPropertyChanged;
@@ -100,6 +101,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool isProjectBrowserMode = true;
 
     [ObservableProperty]
+    private bool isCreateProjectDialogOpen;
+
+    [ObservableProperty]
     private string currentWorkspaceSection = WorkspaceSections.Workbench;
 
     public async Task InitializeAsync()
@@ -145,6 +149,23 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         IsProjectBrowserMode = true;
         CurrentWorkspaceSection = WorkspaceSections.Workbench;
+        IsCreateProjectDialogOpen = false;
+        StatusMessage = BrowserStatusText;
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void OpenCreateProjectDialog()
+    {
+        IsCreateProjectDialogOpen = true;
+        StatusMessage = "填写项目名称和备注信息后即可创建项目。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void CloseCreateProjectDialog()
+    {
+        IsCreateProjectDialogOpen = false;
         StatusMessage = BrowserStatusText;
         NotifyShellState();
     }
@@ -390,6 +411,13 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         StatusMessage = $"当前环境已切换为：{environment.Name}。";
+    }
+
+    private void OnProjectCreated()
+    {
+        IsCreateProjectDialogOpen = false;
+        StatusMessage = "项目已创建，可点击卡片进入项目详情。";
+        NotifyShellState();
     }
 
     private void OnProjectPanelPropertyChanged(object? sender, PropertyChangedEventArgs e)

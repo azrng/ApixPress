@@ -14,6 +14,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
     private List<ProjectWorkspaceItemViewModel> _allProjects = [];
 
     public event Action<ProjectWorkspaceItemViewModel?>? SelectedProjectChanged;
+    public event Action? ProjectCreated;
 
     public ProjectPanelViewModel(IProjectWorkspaceService projectWorkspaceService)
     {
@@ -86,6 +87,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
             DraftProjectName = string.Empty;
             DraftProjectDescription = string.Empty;
             await LoadProjectsAsync(result.Data.Id);
+            ProjectCreated?.Invoke();
         }
     }
 

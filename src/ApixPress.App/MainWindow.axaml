@@ -129,7 +129,7 @@
               <Button Grid.Column="4"
                       Classes="PrimaryButton"
                       Content="新建项目"
-                      Click="OnOpenCreateProjectDrawer" />
+                      Command="{Binding OpenCreateProjectDialogCommand}" />
             </Grid>
           </Border>
 
@@ -153,30 +153,30 @@
 
           <Border Grid.Row="2"
                   Classes="EmptyStateCard"
-                  Margin="0,56,0,0"
+                  Margin="0,24,0,0"
                   IsVisible="{Binding ShowProjectListEmptyState}">
             <StackPanel Spacing="{StaticResource Space.3}"
                         HorizontalAlignment="Center">
               <TextBlock Classes="SectionTitle"
                          Text="还没有项目" />
               <TextBlock Classes="CaptionText"
-                         Text="点击右上角“新建项目”，在侧边栏填写项目名称和备注后创建。" />
+                         Text="点击右上角“新建项目”，在弹框中填写项目名称和备注后创建。" />
               <Button Classes="PrimaryButton"
                       HorizontalAlignment="Center"
                       Content="新建项目"
-                      Click="OnOpenCreateProjectDrawer" />
+                      Command="{Binding OpenCreateProjectDialogCommand}" />
             </StackPanel>
           </Border>
 
           <ItemsControl Grid.Row="2"
-                        Margin="0,56,0,0"
+                        Margin="0,24,0,0"
                         IsVisible="{Binding ProjectPanel.HasProjects}"
                         ItemsSource="{Binding ProjectPanel.FilteredProjects}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <WrapPanel Orientation="Horizontal"
-                           ItemWidth="372"
-                           ItemHeight="188" />
+                           ItemWidth="320"
+                           ItemHeight="212" />
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
@@ -220,16 +220,23 @@
                                  Classes="SubtleText"
                                  Text="{Binding SummaryText}"
                                  TextWrapping="Wrap"
-                                 MaxHeight="52" />
+                                 MaxHeight="68" />
 
-                      <StackPanel Grid.Row="2"
-                                  Orientation="Horizontal"
-                                  Spacing="{StaticResource Space.2}">
-                        <u:Badge Header="{Binding CategoryText}"
+                      <Grid Grid.Row="2"
+                            ColumnDefinitions="Auto,*,Auto"
+                            ColumnSpacing="{StaticResource Space.2}">
+                        <u:Badge Grid.Column="0"
+                                 Header="{Binding CategoryText}"
                                  iri:ClassHelper.Classes="Light Secondary" />
-                        <u:Badge Header="进入项目详情"
-                                 iri:ClassHelper.Classes="Light Primary" />
-                      </StackPanel>
+                        <TextBlock Grid.Column="1"
+                                   Classes="CaptionText"
+                                   Text="点击卡片进入项目详情"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="2"
+                                   Text="→"
+                                   FontSize="{StaticResource Font.Size.BodyLarge}"
+                                   VerticalAlignment="Center" />
+                      </Grid>
                     </Grid>
                   </Border>
                 </Button>
@@ -815,6 +822,59 @@
           </Grid>
         </Grid>
       </Grid>
+
+      <Border Classes="CreateProjectDialogBackdrop"
+              IsVisible="{Binding IsCreateProjectDialogOpen}">
+        <Grid HorizontalAlignment="Center"
+              VerticalAlignment="Center">
+          <Border Classes="CreateProjectDialogCard">
+            <Grid RowDefinitions="Auto,*,Auto"
+                  RowSpacing="{StaticResource Space.4}">
+              <Grid ColumnDefinitions="*,Auto"
+                    ColumnSpacing="{StaticResource Space.3}">
+                <StackPanel Spacing="{StaticResource Space.1}">
+                  <TextBlock Classes="SectionTitle"
+                             Text="新建项目" />
+                  <TextBlock Classes="CaptionText"
+                             Text="只需要填写项目名称和备注信息。创建后会自动生成该项目的默认环境。" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Classes="TopActionButton"
+                        Content="关闭"
+                        Command="{Binding CloseCreateProjectDialogCommand}" />
+              </Grid>
+
+              <u:Form Grid.Row="1"
+                      LabelPosition="Top">
+                <TextBox Classes="SectionInput"
+                         u:FormItem.Label="项目名称"
+                         Watermark="请输入项目名称"
+                         Text="{Binding ProjectPanel.DraftProjectName}" />
+                <TextBox Classes="SectionInput"
+                         u:FormItem.Label="备注信息"
+                         AcceptsReturn="True"
+                         Height="140"
+                         TextWrapping="Wrap"
+                         Watermark="补充项目用途、团队或说明"
+                         Text="{Binding ProjectPanel.DraftProjectDescription}" />
+              </u:Form>
+
+              <Grid Grid.Row="2"
+                    ColumnDefinitions="*,*"
+                    ColumnSpacing="{StaticResource Space.2}">
+                <Button Grid.Column="0"
+                        Classes="SecondaryButton"
+                        Content="自动命名"
+                        Command="{Binding ProjectPanel.UseProjectTemplateCommand}" />
+                <Button Grid.Column="1"
+                        Classes="PrimaryButton"
+                        Content="创建项目"
+                        Command="{Binding ProjectPanel.CreateProjectCommand}" />
+              </Grid>
+            </Grid>
+          </Border>
+        </Grid>
+      </Border>
 
       <u:OverlayDialogHost />
     </Grid>
