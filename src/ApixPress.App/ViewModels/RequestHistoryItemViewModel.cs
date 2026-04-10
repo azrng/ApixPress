@@ -47,6 +47,8 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
             _ => "Light Danger"
         } : "Light Danger";
 
+    public string TimestampText => Timestamp.ToLocalTime().ToString("MM-dd HH:mm");
+
     partial void OnHasResponseChanged(bool value)
     {
         OnPropertyChanged(nameof(StatusBadgeClass));

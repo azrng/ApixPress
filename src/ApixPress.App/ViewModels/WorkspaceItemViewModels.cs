@@ -59,6 +59,12 @@ public partial class RequestCaseItemViewModel : ViewModelBase
     private DateTime updatedAt;
 
     public RequestCaseDto SourceCase { get; init; } = new();
+    public string UpdatedAtText => $"更新于 {UpdatedAt:MM-dd HH:mm}";
+
+    partial void OnUpdatedAtChanged(DateTime value)
+    {
+        OnPropertyChanged(nameof(UpdatedAtText));
+    }
 }
 
 public partial class EnvironmentVariableItemViewModel : ViewModelBase

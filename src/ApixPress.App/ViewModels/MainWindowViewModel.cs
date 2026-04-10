@@ -1,24 +1,17 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Avalonia.Controls;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
-using Azrng.Core.Results;
 
 namespace ApixPress.App.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
-    private static class WorkspaceSections
-    {
-        public const string Workbench = "workbench";
-        public const string History = "history";
-        public const string ProjectSettings = "project_settings";
-    }
-
     private static class SettingsSections
     {
         public const string General = "general";
@@ -26,12 +19,17 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     private readonly IAppShellSettingsService _appShellSettingsService;
-    private readonly IRequestExecutionService _requestExecutionService;
+    private readonly IEnvironmentVariableService _environmentVariableService;
     private readonly IRequestCaseService _requestCaseService;
+    private readonly IRequestExecutionService _requestExecutionService;
     private readonly IRequestHistoryService _requestHistoryService;
+    private readonly RequestConfigTabViewModel _fallbackConfigTab;
+    private readonly ResponseSectionViewModel _fallbackResponseSection;
+    private readonly EnvironmentPanelViewModel _fallbackEnvironmentPanel;
+    private readonly UseCasesPanelViewModel _fallbackUseCasesPanel;
+    private readonly RequestHistoryPanelViewModel _fallbackHistoryPanel;
     private bool _initialized;
     private bool _isApplyingShellSettings;
-    private bool _isNavigatingProjectSelection;
 
     public MainWindowViewModel(
         IRequestExecutionService requestExecutionService,
@@ -44,14 +42,16 @@ public partial class MainWindowViewModel : ViewModelBase
         _requestExecutionService = requestExecutionService;
         _requestCaseService = requestCaseService;
         _requestHistoryService = requestHistoryService;
+        _environmentVariableService = environmentVariableService;
         _appShellSettingsService = appShellSettingsService;
 
-        ConfigTab = new RequestConfigTabViewModel(null);
-        ResponseSection = new ResponseSectionViewModel();
+        _fallbackConfigTab = new RequestConfigTabViewModel(null);
+        _fallbackResponseSection = new ResponseSectionViewModel();
+        _fallbackEnvironmentPanel = new EnvironmentPanelViewModel(environmentVariableService);
+        _fallbackUseCasesPanel = new UseCasesPanelViewModel(requestCaseService);
+        _fallbackHistoryPanel = new RequestHistoryPanelViewModel(requestHistoryService);
+
         ProjectPanel = new ProjectPanelViewModel(projectWorkspaceService);
-        UseCasesPanel = new UseCasesPanelViewModel(requestCaseService);
-        EnvironmentPanel = new EnvironmentPanelViewModel(environmentVariableService);
-        HistoryPanel = new RequestHistoryPanelViewModel(requestHistoryService);
         Notifications = CreateNotifications();
 
         var version = typeof(MainWindowViewModel).Assembly.GetName().Version;
@@ -59,12 +59,10 @@ public partial class MainWindowViewModel : ViewModelBase
             ? "1.0.0"
             : $"{version.Major}.{Math.Max(version.Minor, 0)}.{Math.Max(version.Build, 0)}";
 
+        ProjectTabs.CollectionChanged += OnProjectTabsCollectionChanged;
         ProjectPanel.ProjectCreated += OnProjectCreated;
         ProjectPanel.PropertyChanged += OnProjectPanelPropertyChanged;
-        ProjectPanel.SelectedProjectChanged += OnSelectedProjectChanged;
-        EnvironmentPanel.PropertyChanged += OnEnvironmentPanelPropertyChanged;
-        EnvironmentPanel.SelectedEnvironmentChanged += OnSelectedEnvironmentChanged;
-        UseCasesPanel.CaseApplied += OnCaseApplied;
+        ProjectPanel.Projects.CollectionChanged += OnProjectsCollectionChanged;
 
         foreach (var item in Notifications)
         {
@@ -72,70 +70,55 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    public RequestConfigTabViewModel ConfigTab { get; }
-    public ResponseSectionViewModel ResponseSection { get; }
     public ProjectPanelViewModel ProjectPanel { get; }
-    public UseCasesPanelViewModel UseCasesPanel { get; }
-    public EnvironmentPanelViewModel EnvironmentPanel { get; }
-    public RequestHistoryPanelViewModel HistoryPanel { get; }
-
-    public ObservableCollection<RequestHistoryItemViewModel> RequestHistory => HistoryPanel.HistoryItems;
+    public ObservableCollection<ProjectTabViewModel> ProjectTabs { get; } = [];
     public ObservableCollection<NotificationItemViewModel> Notifications { get; }
 
-    public bool HasEnvironmentContext => EnvironmentPanel.HasSelectedEnvironment;
-    public bool HasSelectedProject => ProjectPanel.SelectedProject is not null;
-    public bool IsWorkspaceMode => !IsProjectBrowserMode && HasSelectedProject;
-    public bool ShowProjectListEmptyState => IsProjectBrowserMode && !ProjectPanel.HasProjects;
-    public bool ShowWorkbenchSection => IsWorkspaceMode && CurrentWorkspaceSection == WorkspaceSections.Workbench;
-    public bool ShowHistorySection => IsWorkspaceMode && CurrentWorkspaceSection == WorkspaceSections.History;
-    public bool ShowProjectSettingsSection => IsWorkspaceMode && CurrentWorkspaceSection == WorkspaceSections.ProjectSettings;
+    public RequestConfigTabViewModel ConfigTab => ActiveProjectTab?.ConfigTab ?? _fallbackConfigTab;
+    public ResponseSectionViewModel ResponseSection => ActiveProjectTab?.ResponseSection ?? _fallbackResponseSection;
+    public EnvironmentPanelViewModel EnvironmentPanel => ActiveProjectTab?.EnvironmentPanel ?? _fallbackEnvironmentPanel;
+    public UseCasesPanelViewModel UseCasesPanel => ActiveProjectTab?.UseCasesPanel ?? _fallbackUseCasesPanel;
+    public RequestHistoryPanelViewModel HistoryPanel => ActiveProjectTab?.HistoryPanel ?? _fallbackHistoryPanel;
+    public ObservableCollection<RequestHistoryItemViewModel> RequestHistory => HistoryPanel.HistoryItems;
+
+    public bool IsHomeTabActive => ActiveProjectTab is null;
+    public bool HasActiveProjectTab => ActiveProjectTab is not null;
+    public bool HasProjectTabs => ProjectTabs.Count > 0;
+    public bool IsProjectBrowserMode => IsHomeTabActive;
+    public bool IsWorkspaceMode => HasActiveProjectTab;
+    public bool ShowProjectListEmptyState => IsHomeTabActive && !ProjectPanel.HasProjects;
+    public bool HasEnvironmentContext => ActiveProjectTab?.HasEnvironmentContext ?? false;
     public bool ShowGeneralSettingsSection => CurrentSettingsSection == SettingsSections.General;
     public bool ShowAboutSettingsSection => CurrentSettingsSection == SettingsSections.About;
     public bool HasUnreadNotifications => Notifications.Any(item => item.IsUnread);
 
     public string AppDisplayName { get; } = "ApixPress";
-    public string CurrentProjectName => ProjectPanel.SelectedProject?.Name ?? "项目列表";
-    public string CurrentProjectSummary =>
-        string.IsNullOrWhiteSpace(ProjectPanel.SelectedProject?.Description)
-            ? "本地 API 工作区"
-            : ProjectPanel.SelectedProject.Description;
-    public string CurrentEnvironmentLabel => EnvironmentPanel.SelectedEnvironment?.Name ?? "未选择环境";
+    public string CurrentProjectName => ActiveProjectTab?.Project.Name ?? "项目列表";
+    public string CurrentProjectSummary => ActiveProjectTab?.ProjectSummary ?? "在首页选择项目后，会以新的标签页打开快捷请求工作区。";
+    public string CurrentEnvironmentLabel => ActiveProjectTab?.CurrentEnvironmentLabel ?? "未选择环境";
     public string BrowserStatusText => ProjectPanel.HasProjects
-        ? "选择一个项目进入工作台，或继续创建新项目。"
+        ? "选择一个项目会在顶部新开标签页，并保留首页列表。"
         : "当前还没有项目，请先创建一个项目。";
     public string CurrentAppVersion { get; }
     public string CurrentSettingsTitle => ShowAboutSettingsSection ? "关于" : "通用";
     public string LatestMockVersion { get; } = "1.1.0";
     public string RuntimeStackText { get; } = ".NET 10 / Avalonia 11 / Ursa";
     public string WindowMaximizeGlyph => IsWindowMaximized ? "\u2750" : "\u25A1";
-    public IReadOnlyList<string> HttpMethods { get; } = ["GET", "POST", "PUT", "DELETE", "PATCH"];
 
     [ObservableProperty]
-    private bool hasNoHistory = true;
-
-    [ObservableProperty]
-    private string historySearchText = string.Empty;
+    private ProjectTabViewModel? activeProjectTab;
 
     [ObservableProperty]
     private bool isBusy;
 
     [ObservableProperty]
-    private string statusMessage = "欢迎使用 API 协作平台。";
-
-    [ObservableProperty]
-    private string selectedMethod = "GET";
-
-    [ObservableProperty]
-    private string requestUrl = string.Empty;
-
-    [ObservableProperty]
-    private bool isProjectBrowserMode = true;
+    private string statusMessage = "欢迎使用 ApixPress。";
 
     [ObservableProperty]
     private bool isCreateProjectDialogOpen;
 
     [ObservableProperty]
-    private string currentWorkspaceSection = WorkspaceSections.Workbench;
+    private bool isEnvironmentManagerOpen;
 
     [ObservableProperty]
     private bool isSettingsDialogOpen;
@@ -187,8 +170,6 @@ public partial class MainWindowViewModel : ViewModelBase
         IsBusy = true;
         await LoadShellSettingsAsync();
         await ProjectPanel.LoadProjectsAsync(autoSelect: false);
-        ClearWorkspaceContext();
-        IsProjectBrowserMode = true;
         StatusMessage = BrowserStatusText;
         IsBusy = false;
         NotifyShellState();
@@ -203,25 +184,85 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         IsBusy = true;
-        _isNavigatingProjectSelection = true;
-        ProjectPanel.SelectedProject = project;
-        _isNavigatingProjectSelection = false;
+        var tab = ProjectTabs.FirstOrDefault(item => string.Equals(item.ProjectId, project.Id, StringComparison.OrdinalIgnoreCase));
+        if (tab is null)
+        {
+            tab = CreateProjectTab(project);
+            ProjectTabs.Add(tab);
+            await tab.InitializeAsync();
+        }
+        else
+        {
+            SyncTabProject(tab, project);
+        }
 
-        await LoadWorkspaceForProjectAsync(project.Id);
-        IsProjectBrowserMode = false;
-        CurrentWorkspaceSection = WorkspaceSections.Workbench;
-        StatusMessage = $"已进入项目：{project.Name}。";
+        ActivateProjectTabCore(tab);
+        ProjectPanel.SelectedProject = ProjectPanel.Projects.FirstOrDefault(item =>
+            string.Equals(item.Id, project.Id, StringComparison.OrdinalIgnoreCase));
+        StatusMessage = $"已打开项目：{tab.Project.Name}";
         IsBusy = false;
         NotifyShellState();
     }
 
     [RelayCommand]
-    private void BackToProjectList()
+    private void ActivateHomeTab()
     {
-        IsProjectBrowserMode = true;
-        CurrentWorkspaceSection = WorkspaceSections.Workbench;
-        IsCreateProjectDialogOpen = false;
+        ActiveProjectTab = null;
+        IsEnvironmentManagerOpen = false;
         StatusMessage = BrowserStatusText;
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ActivateProjectTab(ProjectTabViewModel? tab)
+    {
+        if (tab is null)
+        {
+            return;
+        }
+
+        ActivateProjectTabCore(tab);
+        StatusMessage = tab.StatusMessage;
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void CloseProjectTab(ProjectTabViewModel? tab)
+    {
+        if (tab is null)
+        {
+            return;
+        }
+
+        var closingIndex = ProjectTabs.IndexOf(tab);
+        if (closingIndex < 0)
+        {
+            return;
+        }
+
+        var wasActive = ReferenceEquals(tab, ActiveProjectTab);
+        tab.ShellStateChanged -= OnProjectTabShellStateChanged;
+        ProjectTabs.Remove(tab);
+
+        if (!wasActive)
+        {
+            NotifyShellState();
+            return;
+        }
+
+        if (ProjectTabs.Count == 0)
+        {
+            ActiveProjectTab = null;
+            IsEnvironmentManagerOpen = false;
+            StatusMessage = BrowserStatusText;
+        }
+        else
+        {
+            var nextIndex = Math.Clamp(closingIndex - 1, 0, ProjectTabs.Count - 1);
+            ActivateProjectTabCore(ProjectTabs[nextIndex]);
+            StatusMessage = ActiveProjectTab?.StatusMessage ?? BrowserStatusText;
+        }
+
         NotifyShellState();
     }
 
@@ -237,8 +278,54 @@ public partial class MainWindowViewModel : ViewModelBase
     private void CloseCreateProjectDialog()
     {
         IsCreateProjectDialogOpen = false;
-        StatusMessage = BrowserStatusText;
+        StatusMessage = IsHomeTabActive ? BrowserStatusText : ActiveProjectTab?.StatusMessage ?? BrowserStatusText;
         NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void OpenEnvironmentManager()
+    {
+        if (ActiveProjectTab is null)
+        {
+            StatusMessage = "请先打开一个项目标签页。";
+            return;
+        }
+
+        IsEnvironmentManagerOpen = true;
+        StatusMessage = $"正在管理项目 {ActiveProjectTab.Project.Name} 的环境。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void CloseEnvironmentManager()
+    {
+        IsEnvironmentManagerOpen = false;
+        StatusMessage = ActiveProjectTab?.StatusMessage ?? BrowserStatusText;
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private async Task SaveEnvironmentManagerAsync()
+    {
+        if (ActiveProjectTab is null)
+        {
+            StatusMessage = "请先打开一个项目标签页。";
+            return;
+        }
+
+        await ActiveProjectTab.SaveCurrentEnvironmentAsync();
+        StatusMessage = ActiveProjectTab.StatusMessage;
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private async Task SaveAndCloseEnvironmentManagerAsync()
+    {
+        await SaveEnvironmentManagerAsync();
+        if (HasActiveProjectTab)
+        {
+            CloseEnvironmentManager();
+        }
     }
 
     [RelayCommand]
@@ -255,7 +342,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private void CloseSettingsDialog()
     {
         IsSettingsDialogOpen = false;
-        StatusMessage = IsProjectBrowserMode ? BrowserStatusText : $"当前正在处理项目：{CurrentProjectName}。";
+        StatusMessage = ActiveProjectTab?.StatusMessage ?? BrowserStatusText;
         NotifyShellState();
     }
 
@@ -283,6 +370,10 @@ public partial class MainWindowViewModel : ViewModelBase
             MarkAllNotificationsRead();
             StatusMessage = "这里展示近期动态和提醒。";
         }
+        else
+        {
+            StatusMessage = ActiveProjectTab?.StatusMessage ?? BrowserStatusText;
+        }
 
         NotifyShellState();
     }
@@ -309,62 +400,100 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void ShowWorkbench()
+    private async Task RefreshWorkspaceAsync()
     {
-        CurrentWorkspaceSection = WorkspaceSections.Workbench;
+        IsBusy = true;
+        var activeProjectId = ActiveProjectTab?.ProjectId;
+        if (string.IsNullOrWhiteSpace(activeProjectId))
+        {
+            await ProjectPanel.LoadProjectsAsync(autoSelect: false);
+            StatusMessage = BrowserStatusText;
+        }
+        else
+        {
+            await ProjectPanel.LoadProjectsAsync(activeProjectId);
+            var tab = ProjectTabs.FirstOrDefault(item => string.Equals(item.ProjectId, activeProjectId, StringComparison.OrdinalIgnoreCase));
+            if (tab is not null)
+            {
+                await tab.RefreshAsync();
+                ActivateProjectTabCore(tab);
+                StatusMessage = tab.StatusMessage;
+            }
+            else
+            {
+                ActiveProjectTab = null;
+                StatusMessage = BrowserStatusText;
+            }
+        }
+
+        IsBusy = false;
         NotifyShellState();
     }
 
     [RelayCommand]
-    private void ShowHistory()
+    private async Task SendRequestAsync()
     {
-        CurrentWorkspaceSection = WorkspaceSections.History;
+        if (ActiveProjectTab is null)
+        {
+            StatusMessage = "请先打开一个项目标签页。";
+            return;
+        }
+
+        await ActiveProjectTab.SendQuickRequestAsync();
+        StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }
 
     [RelayCommand]
-    private void ShowProjectSettings()
+    private async Task SaveCaseAsync()
     {
-        CurrentWorkspaceSection = WorkspaceSections.ProjectSettings;
+        if (ActiveProjectTab is null)
+        {
+            StatusMessage = "请先打开一个项目标签页。";
+            return;
+        }
+
+        var snapshot = ActiveProjectTab.ConfigTab.BuildRequestSnapshot(
+            string.Empty,
+            ActiveProjectTab.SelectedMethod,
+            ActiveProjectTab.RequestUrl);
+        await ActiveProjectTab.UseCasesPanel.SaveCaseAsync(snapshot);
+        await ActiveProjectTab.UseCasesPanel.LoadCasesAsync();
+        ActiveProjectTab.StatusMessage = "已保存当前快捷请求。";
+        StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }
 
     [RelayCommand]
-    private async Task ClearHistoryAsync()
+    private void LoadSavedRequest(RequestCaseItemViewModel? item)
     {
-        await HistoryPanel.ClearHistoryAsync();
-        await RefreshHistoryAsync();
-        StatusMessage = "当前项目的请求历史已清空。";
+        if (ActiveProjectTab is null || item is null)
+        {
+            return;
+        }
+
+        ActiveProjectTab.LoadSavedRequest(item);
+        StatusMessage = ActiveProjectTab.StatusMessage;
+        NotifyShellState();
     }
 
     [RelayCommand]
     private void LoadHistoryItem(RequestHistoryItemViewModel? item)
     {
-        if (item is null)
+        if (ActiveProjectTab is null || item is null)
         {
             return;
         }
 
-        SelectedMethod = item.Method;
-        RequestUrl = item.Url;
-        ConfigTab.ApplySnapshot(item.RequestSnapshot);
-
-        if (item.ResponseSnapshot is not null)
-        {
-            ResponseSection.ApplyResult(
-                ResultModel<ResponseSnapshotDto>.Success(item.ResponseSnapshot),
-                item.RequestSnapshot);
-        }
-
-        CurrentWorkspaceSection = WorkspaceSections.Workbench;
-        StatusMessage = $"已加载 {item.Timestamp.ToLocalTime():yyyy-MM-dd HH:mm} 的请求。";
+        ActiveProjectTab.LoadHistoryRequest(item);
+        StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }
 
     [RelayCommand]
     private async Task SaveHistoryAsCaseAsync(RequestHistoryItemViewModel? item)
     {
-        if (item is null || ProjectPanel.SelectedProject is null)
+        if (ActiveProjectTab is null || item is null)
         {
             return;
         }
@@ -372,7 +501,7 @@ public partial class MainWindowViewModel : ViewModelBase
         var snapshot = item.RequestSnapshot;
         var caseDto = new RequestCaseDto
         {
-            ProjectId = ProjectPanel.SelectedProject.Id,
+            ProjectId = ActiveProjectTab.ProjectId,
             Name = $"{snapshot.Method} {snapshot.Url}",
             GroupName = "历史导入",
             Description = $"从 {item.Timestamp.ToLocalTime():yyyy-MM-dd HH:mm} 的历史记录创建",
@@ -381,91 +510,23 @@ public partial class MainWindowViewModel : ViewModelBase
         };
 
         await _requestCaseService.SaveAsync(caseDto, CancellationToken.None);
-        await UseCasesPanel.LoadCasesAsync();
-        StatusMessage = "已保存为当前项目用例。";
+        await ActiveProjectTab.UseCasesPanel.LoadCasesAsync();
+        ActiveProjectTab.StatusMessage = "已从历史记录生成保存请求。";
+        StatusMessage = ActiveProjectTab.StatusMessage;
+        NotifyShellState();
     }
 
     [RelayCommand]
-    private async Task SendRequestAsync()
+    private async Task ClearHistoryAsync()
     {
-        if (ProjectPanel.SelectedProject is null)
+        if (ActiveProjectTab is null)
         {
-            StatusMessage = "请先选择一个项目。";
             return;
         }
 
-        var environment = EnvironmentPanel.GetSelectedEnvironmentDto();
-        if (environment is null)
-        {
-            StatusMessage = "请先为当前项目创建并选择环境。";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(RequestUrl))
-        {
-            StatusMessage = "请求地址不能为空。";
-            return;
-        }
-
-        IsBusy = true;
-        var snapshot = ConfigTab.BuildRequestSnapshot(
-            string.Empty,
-            SelectedMethod,
-            RequestUrl);
-        var result = await _requestExecutionService.SendAsync(snapshot, environment, CancellationToken.None);
-        IsBusy = false;
-
-        ResponseSection.ApplyResult(result, snapshot);
-        StatusMessage = result.IsSuccess ? "请求发送完成。" : result.Message;
-
-        if (result.IsSuccess || result.Data is not null)
-        {
-            await _requestHistoryService.AddAsync(ProjectPanel.SelectedProject.Id, snapshot, result.Data, CancellationToken.None);
-            await RefreshHistoryAsync();
-        }
-    }
-
-    [RelayCommand]
-    private async Task SaveCaseAsync()
-    {
-        if (ProjectPanel.SelectedProject is null)
-        {
-            StatusMessage = "请先选择项目后再保存用例。";
-            return;
-        }
-
-        var snapshot = ConfigTab.BuildRequestSnapshot(
-            string.Empty,
-            SelectedMethod,
-            RequestUrl);
-        await UseCasesPanel.SaveCaseAsync(snapshot);
-        StatusMessage = "用例已保存。";
-    }
-
-    [RelayCommand]
-    private async Task RefreshWorkspaceAsync()
-    {
-        IsBusy = true;
-        if (IsProjectBrowserMode)
-        {
-            await ProjectPanel.LoadProjectsAsync(autoSelect: false);
-            StatusMessage = BrowserStatusText;
-        }
-        else if (ProjectPanel.SelectedProject is not null)
-        {
-            await ProjectPanel.LoadProjectsAsync(ProjectPanel.SelectedProject.Id);
-            await LoadWorkspaceForProjectAsync(ProjectPanel.SelectedProject.Id, EnvironmentPanel.SelectedEnvironment?.Id);
-            StatusMessage = $"项目 {ProjectPanel.SelectedProject.Name} 已刷新。";
-        }
-        else
-        {
-            await ProjectPanel.LoadProjectsAsync(autoSelect: false);
-            ClearWorkspaceContext();
-            IsProjectBrowserMode = true;
-            StatusMessage = BrowserStatusText;
-        }
-
-        IsBusy = false;
+        await ActiveProjectTab.HistoryPanel.ClearHistoryAsync();
+        ActiveProjectTab.StatusMessage = "当前项目的请求历史已清空。";
+        StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }
 
@@ -505,18 +566,24 @@ public partial class MainWindowViewModel : ViewModelBase
         TriggerShellSettingsSave();
     }
 
-    partial void OnIsProjectBrowserModeChanged(bool value)
+    partial void OnActiveProjectTabChanged(ProjectTabViewModel? oldValue, ProjectTabViewModel? newValue)
     {
-        NotifyShellState();
-    }
+        if (oldValue is not null)
+        {
+            oldValue.IsActive = false;
+        }
 
-    partial void OnCurrentWorkspaceSectionChanged(string value)
-    {
-        NotifyShellState();
-    }
+        foreach (var tab in ProjectTabs)
+        {
+            tab.IsActive = ReferenceEquals(tab, newValue);
+        }
 
-    partial void OnCurrentSettingsSectionChanged(string value)
-    {
+        OnPropertyChanged(nameof(ConfigTab));
+        OnPropertyChanged(nameof(ResponseSection));
+        OnPropertyChanged(nameof(EnvironmentPanel));
+        OnPropertyChanged(nameof(UseCasesPanel));
+        OnPropertyChanged(nameof(HistoryPanel));
+        OnPropertyChanged(nameof(RequestHistory));
         NotifyShellState();
     }
 
@@ -566,92 +633,84 @@ public partial class MainWindowViewModel : ViewModelBase
         NotifyShellState();
     }
 
-    private async Task LoadWorkspaceForProjectAsync(string projectId, string? preferredEnvironmentId = null)
+    private ProjectTabViewModel CreateProjectTab(ProjectWorkspaceItemViewModel project)
     {
-        UseCasesPanel.SetProjectContext(projectId);
-        HistoryPanel.SetProjectContext(projectId);
-        await EnvironmentPanel.LoadProjectAsync(projectId, preferredEnvironmentId);
-        await UseCasesPanel.LoadCasesAsync();
-        await RefreshHistoryAsync();
-        NotifyShellState();
+        var tab = new ProjectTabViewModel(
+            project,
+            _requestExecutionService,
+            _requestCaseService,
+            _requestHistoryService,
+            _environmentVariableService);
+        tab.ShellStateChanged += OnProjectTabShellStateChanged;
+        return tab;
     }
 
-    private void ClearWorkspaceContext()
+    private void ActivateProjectTabCore(ProjectTabViewModel tab)
     {
-        UseCasesPanel.ClearProjectContext();
-        HistoryPanel.ClearProjectContext();
-        EnvironmentPanel.ClearProjectContext();
-        HasNoHistory = true;
-        NotifyShellState();
-    }
-
-    private async Task RefreshHistoryAsync()
-    {
-        await HistoryPanel.LoadHistoryAsync();
-        HasNoHistory = RequestHistory.Count == 0;
-    }
-
-    private void OnCaseApplied(RequestSnapshotDto snapshot)
-    {
-        SelectedMethod = snapshot.Method;
-        RequestUrl = snapshot.Url;
-        ConfigTab.ApplySnapshot(snapshot);
-        CurrentWorkspaceSection = WorkspaceSections.Workbench;
-        StatusMessage = "已加载选中用例。";
-        NotifyShellState();
-    }
-
-    private void OnSelectedProjectChanged(ProjectWorkspaceItemViewModel? project)
-    {
-        if (_isNavigatingProjectSelection)
-        {
-            return;
-        }
-
-        _ = HandleProjectSelectionChangedAsync(project);
-    }
-
-    private async Task HandleProjectSelectionChangedAsync(ProjectWorkspaceItemViewModel? project)
-    {
-        if (IsProjectBrowserMode)
-        {
-            NotifyShellState();
-            return;
-        }
-
-        IsBusy = true;
-        if (project is null)
-        {
-            ClearWorkspaceContext();
-            IsProjectBrowserMode = true;
-            StatusMessage = BrowserStatusText;
-        }
-        else
-        {
-            await LoadWorkspaceForProjectAsync(project.Id);
-            StatusMessage = $"已切换到项目：{project.Name}。";
-        }
-
-        IsBusy = false;
-        NotifyShellState();
-    }
-
-    private void OnSelectedEnvironmentChanged(ProjectEnvironmentItemViewModel? environment)
-    {
-        NotifyShellState();
-        if (environment is null)
-        {
-            StatusMessage = "当前项目尚未配置环境。";
-            return;
-        }
-
-        StatusMessage = $"当前环境已切换为：{environment.Name}。";
+        ActiveProjectTab = tab;
+        IsEnvironmentManagerOpen = false;
     }
 
     private void OnProjectCreated()
     {
         IsCreateProjectDialogOpen = false;
-        StatusMessage = "项目已创建，可点击卡片进入项目详情。";
+        StatusMessage = "项目已创建，可在首页卡片中继续打开为新标签页。";
+        NotifyShellState();
+    }
+
+    private void OnProjectsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        SyncProjectTabsWithProjectList();
+    }
+
+    private void SyncProjectTabsWithProjectList()
+    {
+        var sourceLookup = ProjectPanel.Projects.ToDictionary(item => item.Id, StringComparer.OrdinalIgnoreCase);
+        var removedTabs = ProjectTabs
+            .Where(tab => !sourceLookup.ContainsKey(tab.ProjectId))
+            .ToList();
+
+        foreach (var tab in ProjectTabs)
+        {
+            if (sourceLookup.TryGetValue(tab.ProjectId, out var source))
+            {
+                SyncTabProject(tab, source);
+            }
+        }
+
+        foreach (var tab in removedTabs)
+        {
+            tab.ShellStateChanged -= OnProjectTabShellStateChanged;
+            ProjectTabs.Remove(tab);
+        }
+
+        if (ActiveProjectTab is not null && !ProjectTabs.Contains(ActiveProjectTab))
+        {
+            ActiveProjectTab = ProjectTabs.FirstOrDefault();
+            if (ActiveProjectTab is null)
+            {
+                IsEnvironmentManagerOpen = false;
+                StatusMessage = BrowserStatusText;
+            }
+        }
+
+        NotifyShellState();
+    }
+
+    private static void SyncTabProject(ProjectTabViewModel tab, ProjectWorkspaceItemViewModel source)
+    {
+        tab.Project.Name = source.Name;
+        tab.Project.Description = source.Description;
+        tab.Project.IsDefault = source.IsDefault;
+    }
+
+    private void OnProjectTabShellStateChanged(ProjectTabViewModel tab)
+    {
+        if (ReferenceEquals(tab, ActiveProjectTab) && !string.IsNullOrWhiteSpace(tab.StatusMessage))
+        {
+            StatusMessage = tab.StatusMessage;
+        }
+
         NotifyShellState();
     }
 
@@ -659,17 +718,8 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (e.PropertyName is nameof(ProjectPanelViewModel.SelectedProject)
             or nameof(ProjectPanelViewModel.HasProjects)
-            or nameof(ProjectPanelViewModel.SearchText))
-        {
-            NotifyShellState();
-        }
-    }
-
-    private void OnEnvironmentPanelPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName is nameof(EnvironmentPanelViewModel.SelectedEnvironment)
-            or nameof(EnvironmentPanelViewModel.HasSelectedEnvironment)
-            or nameof(EnvironmentPanelViewModel.ActiveEnvironmentName))
+            or nameof(ProjectPanelViewModel.SearchText)
+            or nameof(ProjectPanelViewModel.HasSelectedProject))
         {
             NotifyShellState();
         }
@@ -683,15 +733,21 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
+    private void OnProjectTabsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(HasProjectTabs));
+        NotifyShellState();
+    }
+
     private void NotifyShellState()
     {
-        OnPropertyChanged(nameof(HasEnvironmentContext));
-        OnPropertyChanged(nameof(HasSelectedProject));
+        OnPropertyChanged(nameof(IsHomeTabActive));
+        OnPropertyChanged(nameof(HasActiveProjectTab));
+        OnPropertyChanged(nameof(HasProjectTabs));
+        OnPropertyChanged(nameof(IsProjectBrowserMode));
         OnPropertyChanged(nameof(IsWorkspaceMode));
         OnPropertyChanged(nameof(ShowProjectListEmptyState));
-        OnPropertyChanged(nameof(ShowWorkbenchSection));
-        OnPropertyChanged(nameof(ShowHistorySection));
-        OnPropertyChanged(nameof(ShowProjectSettingsSection));
+        OnPropertyChanged(nameof(HasEnvironmentContext));
         OnPropertyChanged(nameof(ShowGeneralSettingsSection));
         OnPropertyChanged(nameof(ShowAboutSettingsSection));
         OnPropertyChanged(nameof(HasUnreadNotifications));
@@ -710,21 +766,21 @@ public partial class MainWindowViewModel : ViewModelBase
             new NotificationItemViewModel
             {
                 Title = "欢迎使用 ApixPress",
-                Message = "项目列表已作为默认首页，可以直接创建项目或进入工作台。",
+                Message = "首页会固定展示项目列表，打开项目后会在顶部新增工作标签。",
                 RelativeTimeText = "刚刚",
                 IsUnread = true
             },
             new NotificationItemViewModel
             {
-                Title = "多项目工作流已启用",
-                Message = "每个项目会隔离保存环境、历史记录和请求用例。",
+                Title = "快捷请求已切到项目工作区",
+                Message = "每个项目标签页会独立保存环境、历史记录和保存请求。",
                 RelativeTimeText = "2 分钟前",
                 IsUnread = true
             },
             new NotificationItemViewModel
             {
-                Title = "设置中心已准备就绪",
-                Message = "现在可以在顶部设置中调整通用行为并查看版本信息。",
+                Title = "环境管理弹框已上线",
+                Message = "现在可以在项目页右上角集中管理项目级环境和变量。",
                 RelativeTimeText = "5 分钟前",
                 IsUnread = false
             }
