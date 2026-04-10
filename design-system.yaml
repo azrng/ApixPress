@@ -1,0 +1,379 @@
+# Avalonia 桌面端设计系统唯一事实来源
+# 面向人和 AI 共同使用：可读、可解析、非可执行、易于比对
+# 技术栈：.NET 10 + Avalonia 11 + Ursa.Avalonia + CommunityToolkit.Mvvm
+
+meta:
+  name: "Avalonia 桌面端设计系统"
+  version: "3.0.0"
+  status: "启用中"
+  platform: "Desktop"
+  owners:
+    - "design"
+    - "desktop"
+  tech_stack:
+    runtime: ".NET 10"
+    ui_framework: "Avalonia 11+"
+    component_library: "Ursa.Avalonia"
+    mvvm: "CommunityToolkit.Mvvm"
+    data_access: "Dapper + SQLite / PostgreSQL（按项目选择）"
+    messaging: "IMessenger"
+    dependency_injection: "Microsoft.Extensions.DependencyInjection"
+  usage:
+    read_order:
+      - "进行任何 UI 改动前先阅读本文件"
+      - "然后阅读 AGENTS.md 中的 Avalonia 视图层规则"
+      - "然后查看现有 Views、ViewModels、Styles 与 Controls 实现"
+    principles:
+      - "优先复用，而不是重新创建"
+      - "优先使用语义化资源，而不是直接写视觉值"
+      - "优先通过 Styles/Classes 管理样式，而不是在控件属性中硬编码"
+      - "优先保持桌面端交互清晰、稳定、易恢复"
+
+product:
+  style_keywords:
+    - "专业"
+    - "清晰"
+    - "可信"
+    - "高效"
+    - "现代"
+    - "克制"
+  ui_goal:
+    - "以桌面端高信息密度场景为前提，保证层级清晰和操作稳定"
+    - "在复杂业务页面中优先保证可读性、状态感知和低学习成本"
+    - "重要操作必须有明确反馈，危险操作必须有二次确认"
+    - "主框架、列表页、表单页、详情页、对话框风格保持统一"
+  motion_goal:
+    - "动效用于强化导航和状态反馈，不做喧宾夺主的装饰"
+    - "页面切换、对话框出现、加载占位采用轻量 Fluent 风格过渡"
+
+design_principles:
+  - "Fluent Design 为主，保持简洁、克制、可依赖"
+  - "统一使用浅色主题作为默认主题，深色主题仅在项目明确要求时扩展"
+  - "主流程优先，次级信息弱化，危险操作显著区分"
+  - "所有用户可见状态必须可解释：成功、失败、为空、加载中"
+
+tokens:
+  colors:
+    brand:
+      50: "#F4F8FF"
+      100: "#E8F0FF"
+      200: "#C9DDFF"
+      300: "#A7C7FF"
+      400: "#7AA7F8"
+      500: "#4C84F0"
+      600: "#3568D4"
+      700: "#264FB0"
+      800: "#1A387F"
+      900: "#122554"
+    neutral:
+      0: "#FFFFFF"
+      50: "#F8FAFC"
+      100: "#F1F5F9"
+      150: "#E9EEF5"
+      200: "#DCE3EC"
+      300: "#C2CDD9"
+      400: "#94A3B8"
+      500: "#64748B"
+      600: "#475569"
+      700: "#334155"
+      800: "#1F2937"
+      900: "#0F172A"
+    success:
+      50: "#F0FDF4"
+      100: "#DCFCE7"
+      500: "#22C55E"
+      600: "#16A34A"
+      700: "#15803D"
+    warning:
+      50: "#FFF7ED"
+      100: "#FFEDD5"
+      500: "#F59E0B"
+      600: "#D97706"
+      700: "#B45309"
+    error:
+      50: "#FEF2F2"
+      100: "#FEE2E2"
+      500: "#EF4444"
+      600: "#DC2626"
+      700: "#B91C1C"
+    info:
+      50: "#EFF6FF"
+      100: "#DBEAFE"
+      500: "#3B82F6"
+      600: "#2563EB"
+      700: "#1D4ED8"
+
+  semantic:
+    text:
+      primary: "Brush.Text.Primary"
+      secondary: "Brush.Text.Secondary"
+      tertiary: "Brush.Text.Tertiary"
+      inverse: "Brush.Text.Inverse"
+      link: "Brush.Text.Link"
+      danger: "Brush.Text.Danger"
+    background:
+      app: "Brush.Background.App"
+      surface: "Brush.Background.Surface"
+      subtle: "Brush.Background.Subtle"
+      elevated: "Brush.Background.Elevated"
+      overlay: "Brush.Background.Overlay"
+      selected: "Brush.Background.Selected"
+      disabled: "Brush.Background.Disabled"
+    border:
+      default: "Brush.Border.Default"
+      strong: "Brush.Border.Strong"
+      focus: "Brush.Border.Focus"
+      danger: "Brush.Border.Danger"
+    status:
+      success_bg: "Brush.Status.Success.Background"
+      success_text: "Brush.Status.Success.Text"
+      warning_bg: "Brush.Status.Warning.Background"
+      warning_text: "Brush.Status.Warning.Text"
+      error_bg: "Brush.Status.Error.Background"
+      error_text: "Brush.Status.Error.Text"
+      info_bg: "Brush.Status.Info.Background"
+      info_text: "Brush.Status.Info.Text"
+
+  typography:
+    font_family:
+      default: "Segoe UI, Microsoft YaHei UI, sans-serif"
+      monospace: "Cascadia Mono, Consolas, monospace"
+    font_size:
+      caption: 12
+      body_small: 13
+      body: 14
+      body_large: 16
+      title_small: 18
+      title: 20
+      title_large: 24
+      hero: 30
+    font_weight:
+      regular: 400
+      medium: 500
+      semibold: 600
+      bold: 700
+    line_height:
+      tight: 1.2
+      normal: 1.5
+      relaxed: 1.7
+
+  spacing:
+    base_unit: 4
+    scale:
+      xs: 4
+      sm: 8
+      md: 12
+      lg: 16
+      xl: 20
+      "2xl": 24
+      "3xl": 32
+      "4xl": 40
+      "5xl": 48
+
+  radius:
+    xs: 2
+    sm: 4
+    md: 6
+    lg: 8
+    xl: 12
+    "2xl": 16
+    pill: 999
+
+  shadow:
+    none: "none"
+    sm: "0 1 3 0 #14000000"
+    md: "0 4 12 0 #18000000"
+    lg: "0 10 24 0 #22000000"
+
+  motion:
+    duration:
+      fast: "120ms"
+      base: "180ms"
+      slow: "260ms"
+    easing:
+      standard: "cubic-bezier(0.2, 0, 0, 1)"
+      entrance: "cubic-bezier(0.16, 1, 0.3, 1)"
+      exit: "cubic-bezier(0.7, 0, 1, 1)"
+
+  breakpoints:
+    compact_width: 960
+    regular_width: 1280
+    expanded_width: 1600
+    compact_height: 720
+
+resources:
+  structure:
+    colors: "Styles/Colors.axaml"
+    fonts: "Styles/Fonts.axaml"
+    spacing: "Styles/Spacing.axaml"
+    shadows: "Styles/Shadows.axaml"
+    controls: "Styles/Controls/*.axaml"
+    global: "Styles/Global.axaml"
+    fluent: "Styles/Fluent.axaml"
+  naming:
+    brush_prefix: "Brush."
+    font_prefix: "Font."
+    spacing_prefix: "Space."
+    radius_prefix: "Radius."
+    shadow_prefix: "Shadow."
+    duration_prefix: "Duration."
+  rules:
+    - "颜色、间距、圆角、阴影必须先落到 ResourceDictionary，再在样式中引用"
+    - "优先使用 {StaticResource}，需要运行时换肤时使用 {DynamicResource}"
+    - "禁止在控件属性中直接硬编码十六进制颜色、Margin、Padding、CornerRadius"
+
+layout:
+  shell:
+    app_min_width: 1280
+    app_min_height: 800
+    top_bar_height: 56
+    side_nav_width_expanded: 248
+    side_nav_width_collapsed: 72
+    content_padding: 24
+  page:
+    section_gap: 24
+    card_gap: 16
+    form_column_gap: 16
+    form_row_gap: 12
+  responsive_rules:
+    - "宽度低于 compact_width 时，次级面板优先折叠或转为抽屉"
+    - "表格列过多时优先启用横向滚动，不强行压缩到不可读"
+    - "主界面与工作台页必须在 1280、1440、1920 宽度下确认布局"
+
+page_states:
+  loading:
+    required:
+      - "首屏加载必须展示骨架屏或进度环，禁止纯空白等待"
+      - "局部加载优先使用区域级 loading，而不是整页锁死"
+  empty:
+    required:
+      - "必须包含标题、说明文案、建议动作"
+      - "空状态图形优先使用 Shapes 或内置资源，不引入无关风格插画"
+  error:
+    required:
+      - "必须展示错误说明、重试入口、必要时显示错误编号"
+      - "错误文案要可理解，避免直接暴露底层异常堆栈"
+  no_permission:
+    required:
+      - "必须明确说明缺少权限，不可伪装成空数据"
+      - "若当前工具没有访问条件控制，可省略该状态"
+
+icons:
+  source:
+    primary: "Avalonia.Controls.Shapes"
+    secondary: "素材图片"
+  rules:
+    - "图标尺寸优先使用 16、18、20、24"
+    - "同一页面中的图标风格必须一致"
+    - "业务图标优先语义明确，不使用纯装饰性图标堆砌"
+
+navigation:
+  rules:
+    - "使用 Ursa 的导航组件进行页面切换"
+    - "导航逻辑封装在 NavigationService 中"
+    - "页面参数通过导航消息或导航参数对象传递"
+    - "支持前进、后退与当前页面高亮"
+    - "左侧导航默认展示一级模块，二级模块按业务需要展开"
+
+dialogs:
+  rules:
+    - "统一使用 Ursa Dialog 或 Overlay 组件"
+    - "对话框内容必须绑定独立 ViewModel"
+    - "结果通过 TaskCompletionSource 或服务封装异步返回"
+    - "危险操作对话框必须突出后果与确认动作"
+  sizes:
+    sm: 420
+    md: 640
+    lg: 860
+
+forms:
+  rules:
+    - "表单标签、输入框、帮助文本、错误文本垂直对齐"
+    - "必填项明确标识，但不要满屏红色星号"
+    - "校验错误紧贴字段展示，同时支持顶部汇总提示"
+    - "保存按钮位置固定且可预测，避免用户重复寻找"
+  density:
+    compact: "用于高密度后台录入"
+    regular: "用于普通配置和详情编辑"
+
+tables:
+  rules:
+    - "表头固定语义清晰，避免缩写难懂"
+    - "行高以 40-44 为基准，支持紧凑模式"
+    - "操作列最多保留高频动作，低频动作放入更多菜单"
+    - "加载、空态、错误态必须在表格容器内完整表达"
+
+cards:
+  rules:
+    - "卡片用于聚合信息，不代替页面主结构"
+    - "卡片标题、说明、操作区分层清晰"
+    - "同页卡片的阴影和圆角保持一致"
+
+feedback:
+  notification:
+    rules:
+      - "成功提示短而明确"
+      - "失败提示说明原因并提供下一步建议"
+      - "批量操作完成后需要给出结果摘要"
+  progress:
+    rules:
+      - "超过 300ms 的操作应展示进度反馈"
+      - "可取消操作应提供取消入口"
+
+motion:
+  rules:
+    - "页面进入动效时长不超过 slow"
+    - "Hover、Pressed、Focus 动效优先使用透明度、阴影、边框变化"
+    - "避免大面积缩放、弹跳、长时间旋转等强干扰动效"
+
+mvvm:
+  viewmodel:
+    base_class: "ObservableObject"
+    property_rule: "使用 [ObservableProperty]"
+    command_rule: "使用 [RelayCommand]"
+  messaging:
+    tool: "IMessenger"
+    rule: "跨 ViewModel 通信通过消息传递，禁止静态全局状态"
+  collection_binding:
+    rule:
+      - "列表优先使用 ObservableCollection<T> 或 ObservableRangeCollection<T>"
+      - "复杂刷新优先 ReplaceAll，而不是 Clear 后逐项 Add"
+      - "异步加载必须支持 CancellationToken"
+  dependency_injection:
+    rule:
+      - "ViewModel、Service、Repository 通过构造函数注入依赖"
+      - "服务通过 RegisterBusinessServices 批量注册"
+
+accessibility:
+  rules:
+    - "键盘导航可达：主要操作必须支持 Tab 焦点访问"
+    - "焦点态可见，不允许只有鼠标 Hover 才能识别可操作项"
+    - "文本与背景保持足够对比度，状态色不能只靠颜色区分"
+
+testing:
+  view:
+    tool: "Avalonia.Headless"
+    rules:
+      - "页面交互变化应补 UI 自动化测试"
+      - "至少覆盖 loading、empty、error、no-permission 四类状态"
+  logic:
+    tool: "xUnit"
+    rules:
+      - "ViewModel 命令、属性变更、消息发送应有测试"
+      - "Service 与 Repository 变更应补业务与数据访问测试"
+
+do:
+  - "使用 Avalonia Styles(.axaml) 管理视觉规则"
+  - "使用语义化资源名称，而不是直接使用原始色值"
+  - "使用 Ursa.Avalonia 优先构建导航、对话框、基础控件体验"
+  - "让主界面左上角显示应用图标和应用名称"
+  - "让所有可见按钮、菜单、操作入口都具备真实交互"
+  - "为新增页面补齐 loading、empty、error、no-permission 状态"
+
+dont:
+  - "不要写 React、Tailwind、ECharts、Zustand、lucide-react 相关规则"
+  - "不要在 XAML 控件属性中硬编码颜色、间距、圆角"
+  - "不要在 ViewModel 中直接操作 View 或写导航细节"
+  - "不要用假的删除、新增、编辑交互冒充真实业务逻辑"
+  - "不要新增与现有样式体系并行的第二套设计规范"
+  - "不要为了单次需求过度抽象共享组件"

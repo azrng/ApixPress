@@ -1,0 +1,20 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <SolidColorBrush x:Key="Brush.Background.App" Color="#F8FAFC" />
+  <SolidColorBrush x:Key="Brush.Background.Surface" Color="#FFFFFF" />
+  <SolidColorBrush x:Key="Brush.Background.Subtle" Color="#F1F5F9" />
+  <SolidColorBrush x:Key="Brush.Background.Selected" Color="#E8F0FF" />
+  <SolidColorBrush x:Key="Brush.Border.Default" Color="#DCE3EC" />
+  <SolidColorBrush x:Key="Brush.Border.Strong" Color="#C2CDD9" />
+  <SolidColorBrush x:Key="Brush.Border.Focus" Color="#4C84F0" />
+  <SolidColorBrush x:Key="Brush.Text.Primary" Color="#1F2937" />
+  <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#64748B" />
+  <SolidColorBrush x:Key="Brush.Text.Tertiary" Color="#94A3B8" />
+  <SolidColorBrush x:Key="Brush.Text.Inverse" Color="#FFFFFF" />
+  <SolidColorBrush x:Key="Brush.Status.Info.Background" Color="#EFF6FF" />
+  <SolidColorBrush x:Key="Brush.Status.Info.Text" Color="#1D4ED8" />
+  <SolidColorBrush x:Key="Brush.Status.Success.Background" Color="#F0FDF4" />
+  <SolidColorBrush x:Key="Brush.Status.Success.Text" Color="#15803D" />
+  <SolidColorBrush x:Key="Brush.Status.Warning.Background" Color="#FFF7ED" />
+  <SolidColorBrush x:Key="Brush.Status.Warning.Text" Color="#B45309" />
+</ResourceDictionary>
