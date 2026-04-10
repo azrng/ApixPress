@@ -3,635 +3,858 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:iri="https://irihi.tech/shared"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:models="using:ApixPress.App.Models.DTOs"
         xmlns:u="https://irihi.tech/ursa"
         xmlns:vm="using:ApixPress.App.ViewModels"
         mc:Ignorable="d"
-        d:DesignWidth="1400"
-        d:DesignHeight="900"
+        d:DesignWidth="1440"
+        d:DesignHeight="920"
         x:Class="ApixPress.App.MainWindow"
         x:Name="RootWindow"
         x:DataType="vm:MainWindowViewModel"
-        Width="1400"
-        Height="900"
-        MinWidth="1024"
-        MinHeight="700"
-        Title="API 协作平台">
+        Width="1440"
+        Height="920"
+        MinWidth="1280"
+        MinHeight="800"
+        Title="ApixPress">
   <Grid RowDefinitions="Auto,*">
-    <!-- ===== Row 0: Top Bar ===== -->
-    <Border Grid.Row="0" Classes="TopBarCard">
-      <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto"
+    <Border Grid.Row="0"
+            Classes="TopBarCard">
+      <Grid ColumnDefinitions="Auto,*,Auto"
             ColumnSpacing="{StaticResource Space.4}">
         <StackPanel Grid.Column="0"
                     Orientation="Horizontal"
                     Spacing="{StaticResource Space.3}"
                     VerticalAlignment="Center">
-          <Path Width="24"
-                Height="24"
-                Fill="{DynamicResource Brush.Border.Focus}"
-                Data="M4,7 L12,2 L20,7 L20,17 C20,19.2 18.2,21 16,21 L8,21 C5.8,21 4,19.2 4,17 Z M8,10 L8,15 L16,15 L16,10 Z" />
-          <TextBlock Classes="PageTitle"
-                     Text="API 协作平台"
+          <Border Width="40"
+                  Height="40"
+                  Classes="AppIconBadge">
+            <Path Width="20"
+                  Height="20"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  Fill="{DynamicResource Brush.Border.Focus}"
+                  Stretch="Uniform"
+                  Data="M6,4 L18,4 C19.1,4 20,4.9 20,6 L20,18 C20,19.1 19.1,20 18,20 L6,20 C4.9,20 4,19.1 4,18 L4,6 C4,4.9 4.9,4 6,4 Z M8,8 L16,8 L16,10 L8,10 Z M8,12 L13,12 L13,14 L8,14 Z M8,16 L15,16 L15,18 L8,18 Z" />
+          </Border>
+
+          <StackPanel Spacing="2"
+                      VerticalAlignment="Center">
+            <TextBlock Classes="PageTitle"
+                       Text="ApixPress" />
+            <TextBlock Classes="CaptionText"
+                       Text="项目总览"
+                       IsVisible="{Binding IsProjectBrowserMode}" />
+            <TextBlock Classes="CaptionText"
+                       Text="{Binding CurrentProjectName}"
+                       IsVisible="{Binding IsWorkspaceMode}" />
+          </StackPanel>
+
+          <Button Classes="TopActionButton"
+                  Content="返回项目列表"
+                  Command="{Binding BackToProjectListCommand}"
+                  IsVisible="{Binding IsWorkspaceMode}" />
+        </StackPanel>
+
+        <Border Grid.Column="1"
+                Classes="StatusStrip">
+          <TextBlock Classes="CaptionText"
+                     Text="{Binding StatusMessage}"
+                     TextTrimming="CharacterEllipsis"
                      VerticalAlignment="Center" />
-        </StackPanel>
-        <StackPanel Grid.Column="1"
-                    Spacing="{StaticResource Space.1}"
-                    VerticalAlignment="Center">
-          <TextBlock Classes="CaptionText"
-                     Text="当前项目" />
-          <ComboBox Classes="SectionInput"
-                    Width="220"
-                    ItemsSource="{Binding ProjectPanel.Projects}"
-                    SelectedItem="{Binding ProjectPanel.SelectedProject}">
-            <ComboBox.ItemTemplate>
-              <DataTemplate x:DataType="vm:ProjectWorkspaceItemViewModel">
-                <TextBlock Text="{Binding DisplayName}" />
-              </DataTemplate>
-            </ComboBox.ItemTemplate>
-          </ComboBox>
-        </StackPanel>
+        </Border>
+
         <StackPanel Grid.Column="2"
-                    Spacing="{StaticResource Space.1}"
-                    VerticalAlignment="Center">
-          <TextBlock Classes="CaptionText"
-                     Text="当前环境" />
-          <ComboBox Classes="SectionInput"
-                    Width="180"
-                    ItemsSource="{Binding EnvironmentPanel.Environments}"
-                    SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}"
-                    IsEnabled="{Binding HasProjectContext}">
-            <ComboBox.ItemTemplate>
-              <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
-                <TextBlock Text="{Binding DisplayName}" />
-              </DataTemplate>
-            </ComboBox.ItemTemplate>
-          </ComboBox>
-        </StackPanel>
-        <TextBlock Grid.Column="3"
-                   Classes="CaptionText"
-                   Text="{Binding StatusMessage}"
-                   TextTrimming="CharacterEllipsis"
-                   VerticalAlignment="Center"
-                   HorizontalAlignment="Left" />
-        <StackPanel Grid.Column="4"
                     Orientation="Horizontal"
                     Spacing="{StaticResource Space.2}"
                     VerticalAlignment="Center">
-          <Button Classes="SecondaryButton"
-                  Content="新建项目"
-                  Command="{Binding ProjectPanel.CreateProjectCommand}" />
-          <Button Classes="SecondaryButton"
-                  Content="项目管理"
-                  Click="OnOpenProjectDrawer" />
-          <Button Classes="SecondaryButton"
+          <Button Classes="TopActionButton"
                   Content="刷新"
                   Command="{Binding RefreshWorkspaceCommand}" />
+          <Button Classes="TopActionButton"
+                  Content="项目管理"
+                  Click="OnOpenProjectDrawer" />
+          <Button Classes="TopActionButton"
+                  Content="环境"
+                  Click="OnOpenEnvironmentDrawer"
+                  IsVisible="{Binding IsWorkspaceMode}" />
+          <Button Classes="TopActionButton"
+                  Content="用例"
+                  Click="OnOpenUseCasesDrawer"
+                  IsVisible="{Binding IsWorkspaceMode}" />
         </StackPanel>
       </Grid>
     </Border>
 
-    <!-- ===== Row 1: Main Content ===== -->
     <Grid Grid.Row="1">
-      <Border Classes="EmptyStateCard"
-              Margin="{StaticResource Pad.4}"
-              HorizontalAlignment="Center"
-              VerticalAlignment="Center"
-              MaxWidth="620"
-              IsVisible="{Binding ShowProjectEmptyState}">
-        <StackPanel Spacing="{StaticResource Space.4}">
-          <TextBlock Classes="SectionTitle"
-                     Text="请先创建项目" />
-          <TextBlock Classes="SubtleText"
-                     Text="创建项目后，你就可以按项目隔离维护请求历史、用例、环境和接口文档。" />
-          <u:Form LabelPosition="Top">
-            <TextBox Classes="SectionInput"
-                     u:FormItem.Label="项目名称"
-                     Watermark="请输入项目名称"
-                     Text="{Binding ProjectPanel.DraftProjectName}" />
-            <TextBox Classes="SectionInput"
-                     AcceptsReturn="True"
-                     Height="88"
-                     TextWrapping="Wrap"
-                     u:FormItem.Label="项目说明"
-                     Watermark="可选，用于区分系统或服务域"
-                     Text="{Binding ProjectPanel.DraftProjectDescription}" />
-          </u:Form>
-          <StackPanel Orientation="Horizontal"
-                      Spacing="{StaticResource Space.2}">
-            <Button Classes="PrimaryButton"
-                    Content="新建项目"
-                    Command="{Binding ProjectPanel.CreateProjectCommand}" />
-            <Button Classes="SecondaryButton"
-                    Content="自动命名"
-                    Command="{Binding ProjectPanel.UseProjectTemplateCommand}" />
-            <Button Classes="SecondaryButton"
-                    Content="打开项目管理"
-                    Click="OnOpenProjectDrawer" />
-          </StackPanel>
-        </StackPanel>
-      </Border>
+      <ScrollViewer IsVisible="{Binding IsProjectBrowserMode}">
+        <Grid Margin="{StaticResource Pad.6}"
+              RowDefinitions="Auto,Auto,Auto,*"
+              RowSpacing="{StaticResource Space.4}">
+          <Border Classes="BrowserHeroCard">
+            <Grid ColumnDefinitions="2.4*,1.2*"
+                  ColumnSpacing="{StaticResource Space.4}">
+              <StackPanel Spacing="{StaticResource Space.2}">
+                <TextBlock Classes="HeroTitle"
+                           Text="先选择项目，再进入项目详情和调试工作台" />
+                <TextBlock Classes="SubtleText"
+                           Text="项目会隔离保存环境、请求历史、用例和接口调试配置。右上角保留项目管理与刷新入口，首屏聚焦项目列表本身。" />
+              </StackPanel>
 
-      <Grid IsVisible="{Binding HasProjectContext}"
-          ColumnDefinitions="280,*">
-
-      <!-- ===== Left Sidebar: Request History ===== -->
-      <Border Grid.Column="0"
-              Background="{DynamicResource Brush.Background.Subtle}"
-              BorderBrush="{DynamicResource Brush.Border.Default}"
-              BorderThickness="0,0,1,0">
-        <ScrollViewer>
-          <StackPanel Spacing="{StaticResource Space.3}"
-                      Margin="{StaticResource Pad.3}">
-            <!-- Request History -->
-            <StackPanel Spacing="{StaticResource Space.2}">
-              <Grid ColumnDefinitions="*,Auto">
+              <StackPanel Grid.Column="1"
+                          Spacing="{StaticResource Space.2}"
+                          VerticalAlignment="Center">
                 <TextBlock Classes="SectionTitle"
-                           Text="请求历史"
-                           FontWeight="SemiBold" />
-                <u:PopConfirm Grid.Column="1"
-                              PopupHeader="确认清空请求历史？"
-                              PopupContent="历史记录将被永久删除，且无法恢复。"
-                              ConfirmCommand="{Binding ClearHistoryCommand}">
-                  <Button Classes="TextButton"
-                          Content="清空"
-                          FontSize="12" />
-                </u:PopConfirm>
-              </Grid>
-              <TextBox Classes="SectionInput"
-                       Watermark="搜索历史..."
-                       Text="{Binding HistorySearchText}"
-                       Height="36" />
-            </StackPanel>
+                           Text="当前状态" />
+                <TextBlock Classes="CaptionText"
+                           Text="{Binding BrowserStatusText}" />
+              </StackPanel>
+            </Grid>
+          </Border>
 
-            <ItemsControl ItemsSource="{Binding RequestHistory}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:RequestHistoryItemViewModel">
-                  <Border Classes="HistoryItemCard"
-                          Margin="0,0,0,8"
-                          Cursor="Hand">
-                    <Grid RowDefinitions="Auto,Auto,Auto"
-                          RowSpacing="6">
-                      <!-- Row 0: Method + URL -->
-                      <Grid Grid.Row="0"
-                            ColumnDefinitions="Auto,*,Auto">
-                        <u:Badge Grid.Column="0"
-                                 Margin="0,0,8,0"
-                                 Header="{Binding Method}"
-                                 iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding Url}"
-                                   TextTrimming="CharacterEllipsis"
-                                   VerticalAlignment="Center"
-                                   FontSize="13" />
-                        <TextBlock Grid.Column="2"
-                                   Classes="CaptionText"
-                                   Text="{Binding Timestamp, StringFormat='{}{0:HH:mm}'}"
-                                   VerticalAlignment="Center"
-                                   FontSize="11" />
+          <Grid Grid.Row="1"
+                ColumnDefinitions="1.7*,1.3*"
+                ColumnSpacing="{StaticResource Space.4}">
+            <Border Grid.Column="0"
+                    Classes="PanelCard">
+              <StackPanel Spacing="{StaticResource Space.3}">
+                <TextBlock Classes="SectionTitle"
+                           Text="新建项目" />
+                <TextBlock Classes="CaptionText"
+                           Text="必须先输入项目名称，创建后会自动生成该项目的默认环境。" />
+
+                <u:Form LabelPosition="Top">
+                  <TextBox Classes="SectionInput"
+                           u:FormItem.Label="项目名称"
+                           Watermark="请输入项目名称"
+                           Text="{Binding ProjectPanel.DraftProjectName}" />
+                  <TextBox Classes="SectionInput"
+                           u:FormItem.Label="项目说明"
+                           AcceptsReturn="True"
+                           Height="104"
+                           TextWrapping="Wrap"
+                           Watermark="例如：支付域联调、会员系统 OpenAPI、测试导出项目"
+                           Text="{Binding ProjectPanel.DraftProjectDescription}" />
+                </u:Form>
+
+                <StackPanel Orientation="Horizontal"
+                            Spacing="{StaticResource Space.2}">
+                  <Button Classes="PrimaryButton"
+                          Content="创建项目"
+                          Command="{Binding ProjectPanel.CreateProjectCommand}" />
+                  <Button Classes="SecondaryButton"
+                          Content="自动命名"
+                          Command="{Binding ProjectPanel.UseProjectTemplateCommand}" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Classes="PanelCard">
+              <StackPanel Spacing="{StaticResource Space.3}">
+                <TextBlock Classes="SectionTitle"
+                           Text="快速查找" />
+                <TextBlock Classes="CaptionText"
+                           Text="输入项目名称或说明进行筛选，然后点击卡片进入项目详情。" />
+                <TextBox Classes="SectionInput"
+                         Watermark="搜索项目名称 / 项目说明"
+                         Text="{Binding ProjectPanel.SearchText}" />
+
+                <Border Classes="InfoPill">
+                  <TextBlock Classes="CaptionText"
+                             Text="{Binding BrowserStatusText}" />
+                </Border>
+              </StackPanel>
+            </Border>
+          </Grid>
+
+          <StackPanel Grid.Row="2"
+                      Spacing="{StaticResource Space.2}">
+            <TextBlock Classes="SectionTitle"
+                       Text="项目列表" />
+            <TextBlock Classes="CaptionText"
+                       Text="点击任意项目卡片进入详情页，继续维护该项目的环境、用例和请求数据。" />
+          </StackPanel>
+
+          <Border Grid.Row="3"
+                  Classes="EmptyStateCard"
+                  IsVisible="{Binding ShowProjectListEmptyState}">
+            <StackPanel Spacing="{StaticResource Space.3}"
+                        HorizontalAlignment="Center">
+              <TextBlock Classes="SectionTitle"
+                         Text="还没有项目" />
+              <TextBlock Classes="CaptionText"
+                         Text="先在上方输入项目名称并创建，创建成功后项目会出现在这里。" />
+            </StackPanel>
+          </Border>
+
+          <ItemsControl Grid.Row="3"
+                        IsVisible="{Binding ProjectPanel.HasProjects}"
+                        ItemsSource="{Binding ProjectPanel.FilteredProjects}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <WrapPanel Orientation="Horizontal"
+                           ItemWidth="372"
+                           ItemHeight="212" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:ProjectWorkspaceItemViewModel">
+                <Button Classes="ProjectCardButton"
+                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenProjectWorkspaceCommand}"
+                        CommandParameter="{Binding}">
+                  <Border Classes="ProjectCard">
+                    <Grid RowDefinitions="Auto,Auto,*,Auto"
+                          RowSpacing="{StaticResource Space.3}">
+                      <Grid ColumnDefinitions="Auto,*,Auto"
+                            ColumnSpacing="{StaticResource Space.3}">
+                        <Border Width="44"
+                                Height="44"
+                                Classes="ProjectCardIcon">
+                          <Path Width="18"
+                                Height="18"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Fill="{DynamicResource Brush.Border.Focus}"
+                                Stretch="Uniform"
+                                Data="M5,5 L19,5 L19,19 L5,19 Z M8,8 L16,8 L16,10 L8,10 Z M8,12 L16,12 L16,14 L8,14 Z" />
+                        </Border>
+
+                        <StackPanel Grid.Column="1"
+                                    Spacing="2">
+                          <TextBlock FontSize="{StaticResource Font.Size.BodyLarge}"
+                                     FontWeight="SemiBold"
+                                     Text="{Binding Name}" />
+                          <TextBlock Classes="CaptionText"
+                                     Text="{Binding CategoryText}" />
+                        </StackPanel>
+
+                        <u:Badge Grid.Column="2"
+                                 Header="默认"
+                                 IsVisible="{Binding IsDefault}"
+                                 iri:ClassHelper.Classes="Light Primary" />
                       </Grid>
-                      <!-- Row 1: Status + Duration -->
-                      <Grid Grid.Row="1"
-                            ColumnDefinitions="Auto,Auto,Auto,*"
-                            ColumnSpacing="{StaticResource Space.2}">
-                        <u:Badge Grid.Column="0"
-                                 Header="{Binding StatusText}"
-                                 IsVisible="{Binding HasResponse}"
-                                 iri:ClassHelper.Classes="{Binding StatusBadgeClass}" />
+
+                      <TextBlock Grid.Row="1"
+                                 Classes="SubtleText"
+                                 Text="{Binding SummaryText}"
+                                 TextWrapping="Wrap"
+                                 MaxHeight="42" />
+
+                      <Border Grid.Row="2"
+                              Classes="ProjectCardMeta">
+                        <Grid ColumnDefinitions="*,*"
+                              ColumnSpacing="{StaticResource Space.3}">
+                          <StackPanel Spacing="2">
+                            <TextBlock Classes="CaptionText"
+                                       Text="环境与变量" />
+                            <TextBlock Text="项目级隔离"
+                                       FontWeight="SemiBold" />
+                          </StackPanel>
+                          <StackPanel Grid.Column="1"
+                                      Spacing="2">
+                            <TextBlock Classes="CaptionText"
+                                       Text="历史与用例" />
+                            <TextBlock Text="可持续保存"
+                                       FontWeight="SemiBold" />
+                          </StackPanel>
+                        </Grid>
+                      </Border>
+
+                      <Grid Grid.Row="3"
+                            ColumnDefinitions="*,Auto">
+                        <TextBlock Classes="CaptionText"
+                                   Text="进入项目详情" />
                         <TextBlock Grid.Column="1"
-                                   Classes="CaptionText"
-                                   Text="{Binding DurationText}"
-                                   IsVisible="{Binding HasResponse}"
-                                   FontSize="11" />
-                        <TextBlock Grid.Column="2"
-                                   Classes="CaptionText"
-                                   Text="{Binding SizeText}"
-                                   IsVisible="{Binding HasResponse}"
-                                   FontSize="11" />
+                                   FontSize="{StaticResource Font.Size.BodyLarge}"
+                                   Text="→" />
                       </Grid>
-                      <!-- Row 2: Actions -->
-                      <StackPanel Grid.Row="2"
-                                  Orientation="Horizontal"
-                                  Spacing="{StaticResource Space.3}">
-                        <Button Classes="TextButton"
-                                Content="加载"
-                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadHistoryItemCommand}"
-                                CommandParameter="{Binding}"
-                                FontSize="11" />
-                        <Button Classes="TextButton"
-                                Content="保存为用例"
-                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveHistoryAsCaseCommand}"
-                                CommandParameter="{Binding}"
-                                FontSize="11" />
-                      </StackPanel>
                     </Grid>
                   </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <!-- Empty state -->
-            <StackPanel IsVisible="{Binding HasNoHistory}"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Margin="0,48,0,48"
-                        Spacing="{StaticResource Space.2}">
-              <Path Width="48"
-                    Height="48"
-                    Fill="{DynamicResource Brush.Border.Default}"
-                    Data="M12,2 C6.48,2 2,6.48 2,12 C2,17.52 6.48,22 12,22 C17.52,22 22,17.52 22,12 C22,6.48 17.52,2 12,2 Z M13,17 L11,17 L11,11 L13,11 L13,17 Z M13,9 L11,9 L11,7 L13,7 L13,9 Z"
-                    HorizontalAlignment="Center" />
-              <TextBlock Classes="SubtleText"
-                         Text="暂无请求历史"
-                         HorizontalAlignment="Center"
-                         FontSize="13" />
-              <TextBlock Classes="CaptionText"
-                         Text="发送请求后将自动保存到此处"
-                         HorizontalAlignment="Center"
-                         FontSize="11" />
-            </StackPanel>
-          </StackPanel>
-        </ScrollViewer>
-      </Border>
-
-      <!-- ===== Right: Main Request/Response Area ===== -->
-      <Grid Grid.Column="1"
-            RowDefinitions="Auto,Auto,*"
-            Margin="{StaticResource Pad.3}"
-            RowSpacing="{StaticResource Space.3}">
-
-        <!-- ===== Row 0: Request Bar (Method + URL + Send) ===== -->
-        <Grid Grid.Row="0"
-              ColumnDefinitions="110,*,Auto"
-              ColumnSpacing="{StaticResource Space.2}">
-          <ComboBox Grid.Column="0"
-                    Classes="MethodSelector"
-                    ItemsSource="{Binding HttpMethods}"
-                    SelectedItem="{Binding SelectedMethod}"
-                    Height="40" />
-          <TextBox Grid.Column="1"
-                   Classes="UrlInput"
-                   Watermark="输入请求地址，如 https://api.example.com/users"
-                   Text="{Binding RequestUrl}"
-                   Height="40" />
-          <Button Grid.Column="2"
-                  Classes="SendButton"
-                  Content="发送"
-                  Command="{Binding SendRequestCommand}"
-                  IsEnabled="{Binding HasEnvironmentContext}"
-                  Width="80"
-                  Height="40" />
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
         </Grid>
+      </ScrollViewer>
 
-        <!-- ===== Row 1: Request Configuration Tabs ===== -->
-        <Border Grid.Row="1"
-                Classes="PanelCard"
-                Padding="0">
-          <TabControl Classes="ConfigTabControl"
-                      SelectedIndex="{Binding ConfigTab.SelectedTabIndex}"
-                      MinHeight="240">
-            <!-- Params Tab -->
-            <TabItem Header="Params">
-              <DockPanel Margin="{StaticResource Pad.3}">
-                <!-- Header Row -->
-                <Border DockPanel.Dock="Top"
-                        Classes="ParameterHeader">
-                  <Grid ColumnDefinitions="*,*,Auto">
-                    <TextBlock Grid.Column="0"
-                               Classes="CaptionText"
-                               Text="参数名"
-                               FontWeight="Medium"
-                               FontSize="12" />
-                    <TextBlock Grid.Column="1"
-                               Classes="CaptionText"
-                               Text="参数值"
-                               FontWeight="Medium"
-                               FontSize="12" />
-                    <TextBlock Grid.Column="2"
-                               Classes="CaptionText"
-                               Text=""
-                               FontSize="12" />
-                  </Grid>
+      <Grid IsVisible="{Binding IsWorkspaceMode}"
+            ColumnDefinitions="88,*"
+            ColumnSpacing="{StaticResource Space.4}"
+            Margin="{StaticResource Pad.5}">
+        <Border Grid.Column="0"
+                Classes="SideRail">
+          <StackPanel Spacing="{StaticResource Space.3}">
+            <Button Classes="RailButton"
+                    Content="工作台"
+                    Command="{Binding ShowWorkbenchCommand}" />
+            <Button Classes="RailButton"
+                    Content="历史"
+                    Command="{Binding ShowHistoryCommand}" />
+            <Button Classes="RailButton"
+                    Content="设置"
+                    Command="{Binding ShowProjectSettingsCommand}" />
+          </StackPanel>
+        </Border>
+
+        <Grid Grid.Column="1"
+              RowDefinitions="Auto,*"
+              RowSpacing="{StaticResource Space.4}">
+          <Border Classes="WorkspaceHeaderCard">
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="{StaticResource Space.4}">
+              <StackPanel Spacing="{StaticResource Space.2}">
+                <TextBlock Classes="HeroTitle"
+                           Text="{Binding CurrentProjectName}" />
+                <TextBlock Classes="SubtleText"
+                           Text="{Binding CurrentProjectSummary}" />
+              </StackPanel>
+
+              <StackPanel Grid.Column="1"
+                          Width="260"
+                          Spacing="{StaticResource Space.2}">
+                <TextBlock Classes="CaptionText"
+                           Text="当前环境" />
+                <ComboBox Classes="SectionInput"
+                          ItemsSource="{Binding EnvironmentPanel.Environments}"
+                          SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
+                      <TextBlock Text="{Binding DisplayName}" />
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <Grid Grid.Row="1"
+                IsVisible="{Binding ShowWorkbenchSection}"
+                ColumnDefinitions="320,*"
+                ColumnSpacing="{StaticResource Space.4}">
+            <ScrollViewer Grid.Column="0">
+              <StackPanel Spacing="{StaticResource Space.3}">
+                <Border Classes="PanelCard">
+                  <StackPanel Spacing="{StaticResource Space.2}">
+                    <TextBlock Classes="SectionTitle"
+                               Text="项目概览" />
+                    <TextBlock Classes="CaptionText"
+                               Text="当前项目的调试资产会按项目隔离保存。" />
+                    <TextBlock Text="{Binding ProjectPanel.SelectedProject.DisplayName}"
+                               FontSize="{StaticResource Font.Size.BodyLarge}"
+                               FontWeight="SemiBold" />
+                    <TextBlock Classes="SubtleText"
+                               Text="{Binding ProjectPanel.SelectedProject.SummaryText}"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
                 </Border>
 
-                <!-- Add Button -->
-                <Button DockPanel.Dock="Bottom"
-                        Classes="AddButton"
-                        HorizontalAlignment="Left"
-                        Margin="0,8,0,0"
-                        Content="+ 添加参数"
-                        Command="{Binding ConfigTab.AddQueryParameterCommand}" />
-
-                <!-- Parameter List -->
-                <ScrollViewer>
-                  <ItemsControl ItemsSource="{Binding ConfigTab.QueryParameters}">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
-                        <Border Classes="ParameterRow">
-                          <Grid ColumnDefinitions="*,*,Auto"
-                                ColumnSpacing="{StaticResource Space.2}">
-                            <TextBox Grid.Column="0"
-                                     Classes="ParameterInput"
-                                     Text="{Binding Name}"
-                                     Watermark="参数名"
-                                     FontSize="13" />
-                            <TextBox Grid.Column="1"
-                                     Classes="ParameterInput"
-                                     Text="{Binding Value}"
-                                     Watermark="参数值"
-                                     FontSize="13" />
-                            <u:IconButton Grid.Column="2"
-                                          Classes="Danger"
-                                          Theme="{DynamicResource BorderlessIconButton}"
-                                          Icon="{StaticResource SemiIconDelete}"
-                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
-                                          CommandParameter="{Binding}"
-                                          ToolTip.Tip="删除此参数" />
-                          </Grid>
-                        </Border>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </ScrollViewer>
-              </DockPanel>
-            </TabItem>
-
-            <!-- Body Tab -->
-            <TabItem Header="Body">
-              <DockPanel Margin="{StaticResource Pad.3}">
-                <!-- Body type selector -->
-                <u:SelectionList DockPanel.Dock="Top"
-                                 ItemsSource="{Binding ConfigTab.BodyModeOptions}"
-                                 SelectedItem="{Binding ConfigTab.SelectedBodyModeOption}"
-                                 Margin="0,0,0,12">
-                  <u:SelectionList.ItemsPanel>
-                    <ItemsPanelTemplate>
-                      <StackPanel Orientation="Horizontal" />
-                    </ItemsPanelTemplate>
-                  </u:SelectionList.ItemsPanel>
-                  <u:SelectionList.ItemTemplate>
-                    <DataTemplate x:DataType="vm:BodyModeOptionViewModel">
-                      <Border Padding="{StaticResource Pad.2}">
-                        <TextBlock Text="{Binding DisplayName}"
-                                   VerticalAlignment="Center"
-                                   HorizontalAlignment="Center"
-                                   FontSize="12" />
-                      </Border>
-                    </DataTemplate>
-                  </u:SelectionList.ItemTemplate>
-                </u:SelectionList>
-
-                <!-- Form-data / urlencoded key-value editor -->
-                <DockPanel IsVisible="{Binding ConfigTab.IsBodyModeFormData}">
-                  <!-- Header Row -->
-                  <Border DockPanel.Dock="Top"
-                          Classes="ParameterHeader">
-                    <Grid ColumnDefinitions="2*,3*,Auto">
-                      <TextBlock Grid.Column="0"
-                                 Classes="CaptionText"
-                                 Text="字段名"
-                                 FontWeight="Medium"
-                                 FontSize="12" />
-                      <TextBlock Grid.Column="1"
-                                 Classes="CaptionText"
-                                 Text="字段值"
-                                 FontWeight="Medium"
-                                 FontSize="12" />
-                      <TextBlock Grid.Column="2"
-                                 Classes="CaptionText"
-                                 Text=""
-                                 FontSize="12" />
+                <Border Classes="PanelCard">
+                  <StackPanel Spacing="{StaticResource Space.3}">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Classes="SectionTitle"
+                                 Text="环境概览" />
+                      <Button Grid.Column="1"
+                              Classes="SecondaryButton"
+                              Content="管理"
+                              Click="OnOpenEnvironmentDrawer" />
                     </Grid>
-                  </Border>
-
-                  <!-- Add Button -->
-                  <Button DockPanel.Dock="Bottom"
-                          Classes="AddButton"
-                          HorizontalAlignment="Left"
-                          Margin="0,8,0,0"
-                          Content="+ 添加字段"
-                          Command="{Binding ConfigTab.AddFormFieldCommand}" />
-
-                  <!-- Field List -->
-                  <ScrollViewer>
-                    <ItemsControl ItemsSource="{Binding ConfigTab.FormFields}">
+                    <TextBlock Classes="CaptionText"
+                               Text="{Binding CurrentEnvironmentLabel}" />
+                    <ItemsControl ItemsSource="{Binding EnvironmentPanel.Environments}">
                       <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
-                          <Border Classes="ParameterRow">
-                            <Grid ColumnDefinitions="2*,3*,Auto"
-                                  ColumnSpacing="{StaticResource Space.2}">
-                              <TextBox Grid.Column="0"
-                                       Classes="ParameterInput"
-                                       Text="{Binding Name}"
-                                       Watermark="字段名"
-                                       FontSize="13" />
-                              <TextBox Grid.Column="1"
-                                       Classes="ParameterInput"
-                                       Text="{Binding Value}"
-                                       Watermark="字段值"
-                                       FontSize="13" />
-                              <u:IconButton Grid.Column="2"
-                                            Classes="Danger"
-                                            Theme="{DynamicResource BorderlessIconButton}"
-                                            Icon="{StaticResource SemiIconDelete}"
-                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
-                                            CommandParameter="{Binding}"
-                                            ToolTip.Tip="删除此字段" />
+                        <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
+                          <Border Classes="MiniInfoCard">
+                            <Grid ColumnDefinitions="*,Auto">
+                              <StackPanel Spacing="2">
+                                <TextBlock Text="{Binding Name}"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Classes="CaptionText"
+                                           Text="{Binding BaseUrl}" />
+                              </StackPanel>
+                              <u:Badge Grid.Column="1"
+                                       Header="激活"
+                                       IsVisible="{Binding IsActive}"
+                                       iri:ClassHelper.Classes="Light Success" />
                             </Grid>
                           </Border>
                         </DataTemplate>
                       </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                  </ScrollViewer>
-                </DockPanel>
-
-                <!-- Raw body text editor (JSON / XML / Text) -->
-                <Border IsVisible="{Binding ConfigTab.HasRawBodyEditor}"
-                        Background="{DynamicResource Brush.Background.Subtle}"
-                        BorderBrush="{DynamicResource Brush.Border.Default}"
-                        BorderThickness="1"
-                        CornerRadius="{StaticResource Radius.Md}"
-                        Padding="{StaticResource Pad.2}">
-                  <TextBox AcceptsReturn="True"
-                           TextWrapping="Wrap"
-                           VerticalContentAlignment="Top"
-                           VerticalAlignment="Stretch"
-                           BorderThickness="0"
-                           Background="Transparent"
-                           Watermark="{Binding ConfigTab.RequestBodyWatermark}"
-                           Text="{Binding ConfigTab.RequestBody}"
-                           FontFamily="Consolas,monospace"
-                           FontSize="13" />
-                </Border>
-              </DockPanel>
-            </TabItem>
-
-            <!-- Headers Tab -->
-            <TabItem Header="Headers">
-              <DockPanel Margin="{StaticResource Pad.3}">
-                <!-- Header Row -->
-                <Border DockPanel.Dock="Top"
-                        Classes="ParameterHeader">
-                  <Grid ColumnDefinitions="*,*,Auto">
-                    <TextBlock Grid.Column="0"
-                               Classes="CaptionText"
-                               Text="Header 名"
-                               FontWeight="Medium"
-                               FontSize="12" />
-                    <TextBlock Grid.Column="1"
-                               Classes="CaptionText"
-                               Text="Header 值"
-                               FontWeight="Medium"
-                               FontSize="12" />
-                    <TextBlock Grid.Column="2"
-                               Classes="CaptionText"
-                               Text=""
-                               FontSize="12" />
-                  </Grid>
+                  </StackPanel>
                 </Border>
 
-                <!-- Add Button -->
-                <Button DockPanel.Dock="Bottom"
-                        Classes="AddButton"
-                        HorizontalAlignment="Left"
-                        Margin="0,8,0,0"
-                        Content="+ 添加 Header"
-                        Command="{Binding ConfigTab.AddHeaderCommand}" />
+                <Border Classes="PanelCard">
+                  <StackPanel Spacing="{StaticResource Space.3}">
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Classes="SectionTitle"
+                                 Text="常用用例" />
+                      <Button Grid.Column="1"
+                              Classes="SecondaryButton"
+                              Content="管理"
+                              Click="OnOpenUseCasesDrawer" />
+                    </Grid>
 
-                <!-- Header List -->
-                <ScrollViewer>
-                  <ItemsControl ItemsSource="{Binding ConfigTab.Headers}">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
-                        <Border Classes="ParameterRow">
-                          <Grid ColumnDefinitions="*,*,Auto"
-                                ColumnSpacing="{StaticResource Space.2}">
-                            <TextBox Grid.Column="0"
-                                     Classes="ParameterInput"
-                                     Text="{Binding Name}"
-                                     Watermark="Header 名"
-                                     FontSize="13" />
-                            <TextBox Grid.Column="1"
-                                     Classes="ParameterInput"
-                                     Text="{Binding Value}"
-                                     Watermark="Header 值"
-                                     FontSize="13" />
-                            <u:IconButton Grid.Column="2"
-                                          Classes="Danger"
-                                          Theme="{DynamicResource BorderlessIconButton}"
-                                          Icon="{StaticResource SemiIconDelete}"
-                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
-                                          CommandParameter="{Binding}"
-                                          ToolTip.Tip="删除此 Header" />
-                          </Grid>
-                        </Border>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </ScrollViewer>
-              </DockPanel>
-            </TabItem>
+                    <ListBox Classes="FlatListBox"
+                             ItemsSource="{Binding UseCasesPanel.RequestCases}"
+                             SelectedItem="{Binding UseCasesPanel.SelectedRequestCase}"
+                             MaxHeight="280">
+                      <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RequestCaseItemViewModel">
+                          <StackPanel Spacing="2">
+                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock Classes="CaptionText"
+                                       Text="{Binding GroupName}" />
+                            <TextBlock Classes="CaptionText"
+                                       Text="{Binding UpdatedAt, StringFormat='更新于 {0:yyyy-MM-dd HH:mm}'}" />
+                          </StackPanel>
+                        </DataTemplate>
+                      </ListBox.ItemTemplate>
+                    </ListBox>
 
-          </TabControl>
-        </Border>
-
-        <!-- ===== Row 2: Response Section ===== -->
-        <Border Grid.Row="2"
-                Classes="PanelCard">
-          <DockPanel>
-            <!-- Response header bar -->
-            <Grid DockPanel.Dock="Top"
-                  ColumnDefinitions="*,Auto,Auto"
-                  Margin="0,0,0,8">
-              <TextBlock Classes="SectionTitle"
-                         Text="返回响应"
-                         FontWeight="SemiBold" />
-              <StackPanel Grid.Column="1"
-                          Orientation="Horizontal"
-                          Spacing="{StaticResource Space.2}">
-                <Button Classes="SecondaryButton"
-                        Content="用例管理"
-                        Click="OnOpenUseCasesDrawer"
-                        Padding="{StaticResource Pad.2},{StaticResource Pad.1}"
-                        FontSize="12" />
-                <Button Classes="SecondaryButton"
-                        Content="环境变量"
-                        Click="OnOpenEnvironmentDrawer"
-                        Padding="{StaticResource Pad.2},{StaticResource Pad.1}"
-                        FontSize="12" />
+                    <Button Classes="PrimaryButton"
+                            Content="加载选中用例"
+                            Command="{Binding UseCasesPanel.LoadSelectedCaseCommand}" />
+                  </StackPanel>
+                </Border>
               </StackPanel>
-            </Grid>
+            </ScrollViewer>
 
-            <!-- Empty state -->
-            <StackPanel IsVisible="{Binding ResponseSection.ShowPlaceholder}"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Spacing="{StaticResource Space.3}">
-              <Path Width="64"
-                    Height="64"
-                    Fill="{DynamicResource Brush.Border.Default}"
-                    Opacity="0.5"
-                    Data="M12,2 C6.48,2 2,6.48 2,12 C2,17.52 6.48,22 12,22 C17.52,22 22,17.52 22,12 C22,6.48 17.52,2 12,2 Z M13,17 L11,17 L11,11 L13,11 L13,17 Z M13,9 L11,9 L11,7 L13,7 L13,9 Z"
-                    HorizontalAlignment="Center" />
-              <TextBlock Classes="SubtleText"
-                         Text="点击 发送 按钮获取返回结果"
-                         HorizontalAlignment="Center"
-                         FontSize="13" />
-            </StackPanel>
-
-            <!-- Response content -->
-            <Grid IsVisible="{Binding ResponseSection.HasResponse}"
-                  RowDefinitions="Auto,*"
-                  RowSpacing="{StaticResource Space.2}">
-              <!-- Status bar -->
-              <Grid Grid.Row="0"
-                    ColumnDefinitions="Auto,Auto,Auto,*"
-                    ColumnSpacing="{StaticResource Space.3}">
-                <u:Badge Grid.Column="0"
-                         Header="{Binding ResponseSection.StatusText}"
-                         iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
-                <TextBlock Grid.Column="1"
-                           Classes="CaptionText"
-                           Text="{Binding ResponseSection.DurationText}"
-                           VerticalAlignment="Center" />
-                <TextBlock Grid.Column="2"
-                           Classes="CaptionText"
-                           Text="{Binding ResponseSection.SizeText}"
-                           VerticalAlignment="Center" />
+            <Grid Grid.Column="1"
+                  RowDefinitions="Auto,Auto,*"
+                  RowSpacing="{StaticResource Space.3}">
+              <Grid ColumnDefinitions="110,*,Auto,Auto"
+                    ColumnSpacing="{StaticResource Space.2}">
+                <ComboBox Grid.Column="0"
+                          Classes="MethodSelector"
+                          ItemsSource="{Binding HttpMethods}"
+                          SelectedItem="{Binding SelectedMethod}" />
+                <TextBox Grid.Column="1"
+                         Classes="UrlInput"
+                         Watermark="输入完整地址或相对路径"
+                         Text="{Binding RequestUrl}" />
+                <Button Grid.Column="2"
+                        Classes="SecondaryButton"
+                        Content="保存为用例"
+                        Command="{Binding SaveCaseCommand}" />
+                <Button Grid.Column="3"
+                        Classes="SendButton"
+                        Content="发送"
+                        Command="{Binding SendRequestCommand}"
+                        IsEnabled="{Binding HasEnvironmentContext}" />
               </Grid>
 
-              <!-- Response tabs -->
-              <TabControl Grid.Row="1"
-                          Classes="ResponseTabs"
-                          SelectedIndex="{Binding ResponseSection.SelectedResponseTab}">
-                <TabItem Header="Body">
-                  <TextBox AcceptsReturn="True"
-                           TextWrapping="Wrap"
-                           VerticalContentAlignment="Top"
-                           BorderThickness="0"
-                           Background="Transparent"
-                           IsReadOnly="True"
-                           Text="{Binding ResponseSection.BodyText}"
-                           FontFamily="Consolas,monospace"
-                           FontSize="12" />
-                </TabItem>
-                <TabItem Header="Headers">
-                  <TextBox AcceptsReturn="True"
-                           TextWrapping="Wrap"
-                           VerticalContentAlignment="Top"
-                           BorderThickness="0"
-                           Background="Transparent"
-                           IsReadOnly="True"
-                           Text="{Binding ResponseSection.HeadersText}"
-                           FontFamily="Consolas,monospace"
-                           FontSize="12" />
-                </TabItem>
-              </TabControl>
-            </Grid>
-          </DockPanel>
-        </Border>
+              <Border Grid.Row="1"
+                      Classes="PanelCard"
+                      Padding="0">
+                <TabControl Classes="ConfigTabControl"
+                            SelectedIndex="{Binding ConfigTab.SelectedTabIndex}"
+                            MinHeight="252">
+                  <TabItem Header="Params">
+                    <DockPanel Margin="{StaticResource Pad.3}">
+                      <Border DockPanel.Dock="Top"
+                              Classes="ParameterHeader">
+                        <Grid ColumnDefinitions="*,*,Auto">
+                          <TextBlock Grid.Column="0"
+                                     Classes="CaptionText"
+                                     Text="参数名" />
+                          <TextBlock Grid.Column="1"
+                                     Classes="CaptionText"
+                                     Text="参数值" />
+                        </Grid>
+                      </Border>
+                      <Button DockPanel.Dock="Bottom"
+                              Classes="AddButton"
+                              HorizontalAlignment="Left"
+                              Margin="0,8,0,0"
+                              Content="+ 添加参数"
+                              Command="{Binding ConfigTab.AddQueryParameterCommand}" />
+                      <ScrollViewer>
+                        <ItemsControl ItemsSource="{Binding ConfigTab.QueryParameters}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
+                              <Border Classes="ParameterRow">
+                                <Grid ColumnDefinitions="*,*,Auto"
+                                      ColumnSpacing="{StaticResource Space.2}">
+                                  <TextBox Grid.Column="0"
+                                           Classes="ParameterInput"
+                                           Text="{Binding Name}"
+                                           Watermark="参数名" />
+                                  <TextBox Grid.Column="1"
+                                           Classes="ParameterInput"
+                                           Text="{Binding Value}"
+                                           Watermark="参数值" />
+                                  <u:IconButton Grid.Column="2"
+                                                Classes="Danger"
+                                                Theme="{DynamicResource BorderlessIconButton}"
+                                                Icon="{StaticResource SemiIconDelete}"
+                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
+                                                CommandParameter="{Binding}" />
+                                </Grid>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </ScrollViewer>
+                    </DockPanel>
+                  </TabItem>
 
+                  <TabItem Header="Body">
+                    <DockPanel Margin="{StaticResource Pad.3}">
+                      <u:SelectionList DockPanel.Dock="Top"
+                                       ItemsSource="{Binding ConfigTab.BodyModeOptions}"
+                                       SelectedItem="{Binding ConfigTab.SelectedBodyModeOption}"
+                                       Margin="0,0,0,12">
+                        <u:SelectionList.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                          </ItemsPanelTemplate>
+                        </u:SelectionList.ItemsPanel>
+                        <u:SelectionList.ItemTemplate>
+                          <DataTemplate x:DataType="vm:BodyModeOptionViewModel">
+                            <Border Padding="{StaticResource Pad.2}">
+                              <TextBlock Text="{Binding DisplayName}" />
+                            </Border>
+                          </DataTemplate>
+                        </u:SelectionList.ItemTemplate>
+                      </u:SelectionList>
+
+                      <DockPanel IsVisible="{Binding ConfigTab.IsBodyModeFormData}">
+                        <Border DockPanel.Dock="Top"
+                                Classes="ParameterHeader">
+                          <Grid ColumnDefinitions="2*,3*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Classes="CaptionText"
+                                       Text="字段名" />
+                            <TextBlock Grid.Column="1"
+                                       Classes="CaptionText"
+                                       Text="字段值" />
+                          </Grid>
+                        </Border>
+                        <Button DockPanel.Dock="Bottom"
+                                Classes="AddButton"
+                                HorizontalAlignment="Left"
+                                Margin="0,8,0,0"
+                                Content="+ 添加字段"
+                                Command="{Binding ConfigTab.AddFormFieldCommand}" />
+                        <ScrollViewer>
+                          <ItemsControl ItemsSource="{Binding ConfigTab.FormFields}">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
+                                <Border Classes="ParameterRow">
+                                  <Grid ColumnDefinitions="2*,3*,Auto"
+                                        ColumnSpacing="{StaticResource Space.2}">
+                                    <TextBox Grid.Column="0"
+                                             Classes="ParameterInput"
+                                             Text="{Binding Name}"
+                                             Watermark="字段名" />
+                                    <TextBox Grid.Column="1"
+                                             Classes="ParameterInput"
+                                             Text="{Binding Value}"
+                                             Watermark="字段值" />
+                                    <u:IconButton Grid.Column="2"
+                                                  Classes="Danger"
+                                                  Theme="{DynamicResource BorderlessIconButton}"
+                                                  Icon="{StaticResource SemiIconDelete}"
+                                                  Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
+                                                  CommandParameter="{Binding}" />
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                        </ScrollViewer>
+                      </DockPanel>
+
+                      <Border IsVisible="{Binding ConfigTab.HasRawBodyEditor}"
+                              Classes="RawEditorCard">
+                        <TextBox AcceptsReturn="True"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 TextWrapping="Wrap"
+                                 VerticalContentAlignment="Top"
+                                 Watermark="{Binding ConfigTab.RequestBodyWatermark}"
+                                 Text="{Binding ConfigTab.RequestBody}"
+                                 FontFamily="{StaticResource Font.Monospace}" />
+                      </Border>
+                    </DockPanel>
+                  </TabItem>
+
+                  <TabItem Header="Headers">
+                    <DockPanel Margin="{StaticResource Pad.3}">
+                      <Border DockPanel.Dock="Top"
+                              Classes="ParameterHeader">
+                        <Grid ColumnDefinitions="*,*,Auto">
+                          <TextBlock Grid.Column="0"
+                                     Classes="CaptionText"
+                                     Text="Header 名" />
+                          <TextBlock Grid.Column="1"
+                                     Classes="CaptionText"
+                                     Text="Header 值" />
+                        </Grid>
+                      </Border>
+                      <Button DockPanel.Dock="Bottom"
+                              Classes="AddButton"
+                              HorizontalAlignment="Left"
+                              Margin="0,8,0,0"
+                              Content="+ 添加 Header"
+                              Command="{Binding ConfigTab.AddHeaderCommand}" />
+                      <ScrollViewer>
+                        <ItemsControl ItemsSource="{Binding ConfigTab.Headers}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
+                              <Border Classes="ParameterRow">
+                                <Grid ColumnDefinitions="*,*,Auto"
+                                      ColumnSpacing="{StaticResource Space.2}">
+                                  <TextBox Grid.Column="0"
+                                           Classes="ParameterInput"
+                                           Text="{Binding Name}"
+                                           Watermark="Header 名" />
+                                  <TextBox Grid.Column="1"
+                                           Classes="ParameterInput"
+                                           Text="{Binding Value}"
+                                           Watermark="Header 值" />
+                                  <u:IconButton Grid.Column="2"
+                                                Classes="Danger"
+                                                Theme="{DynamicResource BorderlessIconButton}"
+                                                Icon="{StaticResource SemiIconDelete}"
+                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
+                                                CommandParameter="{Binding}" />
+                                </Grid>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </ScrollViewer>
+                    </DockPanel>
+                  </TabItem>
+                </TabControl>
+              </Border>
+
+              <Border Grid.Row="2"
+                      Classes="PanelCard">
+                <DockPanel>
+                  <Grid DockPanel.Dock="Top"
+                        ColumnDefinitions="*,Auto,Auto"
+                        Margin="0,0,0,8">
+                    <TextBlock Classes="SectionTitle"
+                               Text="响应结果" />
+                    <TextBlock Grid.Column="1"
+                               Classes="CaptionText"
+                               Text="{Binding CurrentEnvironmentLabel}"
+                               VerticalAlignment="Center" />
+                  </Grid>
+
+                  <StackPanel IsVisible="{Binding ResponseSection.ShowPlaceholder}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Spacing="{StaticResource Space.2}">
+                    <TextBlock Classes="SubtleText"
+                               Text="发送请求后在这里查看响应内容" />
+                  </StackPanel>
+
+                  <Grid IsVisible="{Binding ResponseSection.HasResponse}"
+                        RowDefinitions="Auto,*"
+                        RowSpacing="{StaticResource Space.2}">
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,*"
+                          ColumnSpacing="{StaticResource Space.3}">
+                      <u:Badge Grid.Column="0"
+                               Header="{Binding ResponseSection.StatusText}"
+                               iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
+                      <TextBlock Grid.Column="1"
+                                 Classes="CaptionText"
+                                 Text="{Binding ResponseSection.DurationText}" />
+                      <TextBlock Grid.Column="2"
+                                 Classes="CaptionText"
+                                 Text="{Binding ResponseSection.SizeText}" />
+                    </Grid>
+
+                    <TabControl Grid.Row="1"
+                                Classes="ResponseTabs"
+                                SelectedIndex="{Binding ResponseSection.SelectedResponseTab}">
+                      <TabItem Header="Body">
+                        <TextBox AcceptsReturn="True"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 IsReadOnly="True"
+                                 TextWrapping="Wrap"
+                                 VerticalContentAlignment="Top"
+                                 Text="{Binding ResponseSection.BodyText}"
+                                 FontFamily="{StaticResource Font.Monospace}" />
+                      </TabItem>
+                      <TabItem Header="Headers">
+                        <TextBox AcceptsReturn="True"
+                                 BorderThickness="0"
+                                 Background="Transparent"
+                                 IsReadOnly="True"
+                                 TextWrapping="Wrap"
+                                 VerticalContentAlignment="Top"
+                                 Text="{Binding ResponseSection.HeadersText}"
+                                 FontFamily="{StaticResource Font.Monospace}" />
+                      </TabItem>
+                    </TabControl>
+                  </Grid>
+                </DockPanel>
+              </Border>
+            </Grid>
+          </Grid>
+
+          <Border Grid.Row="1"
+                  Classes="PanelCard"
+                  IsVisible="{Binding ShowHistorySection}">
+            <Grid RowDefinitions="Auto,*"
+                  RowSpacing="{StaticResource Space.3}">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="2">
+                  <TextBlock Classes="SectionTitle"
+                             Text="项目历史记录" />
+                  <TextBlock Classes="CaptionText"
+                             Text="这里展示当前项目下已发送的请求，可再次载入或转存为用例。" />
+                </StackPanel>
+                <u:PopConfirm Grid.Column="1"
+                              PopupHeader="确认清空当前项目的请求历史？"
+                              PopupContent="清空后无法恢复。"
+                              ConfirmCommand="{Binding ClearHistoryCommand}">
+                  <Button Classes="SecondaryButton"
+                          Content="清空历史" />
+                </u:PopConfirm>
+              </Grid>
+
+              <ScrollViewer Grid.Row="1">
+                <ItemsControl ItemsSource="{Binding RequestHistory}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RequestHistoryItemViewModel">
+                      <Border Classes="HistoryItemCard"
+                              Margin="0,0,0,12"
+                              Padding="{StaticResource Pad.3}">
+                        <Grid RowDefinitions="Auto,Auto,Auto"
+                              RowSpacing="{StaticResource Space.2}">
+                          <Grid ColumnDefinitions="Auto,*,Auto"
+                                ColumnSpacing="{StaticResource Space.2}">
+                            <u:Badge Grid.Column="0"
+                                     Header="{Binding Method}"
+                                     iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Url}"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Grid.Column="2"
+                                       Classes="CaptionText"
+                                       Text="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" />
+                          </Grid>
+
+                          <Grid Grid.Row="1"
+                                ColumnDefinitions="Auto,Auto,Auto,*"
+                                ColumnSpacing="{StaticResource Space.2}">
+                            <u:Badge Grid.Column="0"
+                                     Header="{Binding StatusText}"
+                                     IsVisible="{Binding HasResponse}"
+                                     iri:ClassHelper.Classes="{Binding StatusBadgeClass}" />
+                            <TextBlock Grid.Column="1"
+                                       Classes="CaptionText"
+                                       IsVisible="{Binding HasResponse}"
+                                       Text="{Binding DurationText}" />
+                            <TextBlock Grid.Column="2"
+                                       Classes="CaptionText"
+                                       IsVisible="{Binding HasResponse}"
+                                       Text="{Binding SizeText}" />
+                          </Grid>
+
+                          <StackPanel Grid.Row="2"
+                                      Orientation="Horizontal"
+                                      Spacing="{StaticResource Space.2}">
+                            <Button Classes="SecondaryButton"
+                                    Content="载入请求"
+                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadHistoryItemCommand}"
+                                    CommandParameter="{Binding}" />
+                            <Button Classes="SecondaryButton"
+                                    Content="保存为用例"
+                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveHistoryAsCaseCommand}"
+                                    CommandParameter="{Binding}" />
+                          </StackPanel>
+                        </Grid>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
+            </Grid>
+          </Border>
+
+          <Grid Grid.Row="1"
+                IsVisible="{Binding ShowProjectSettingsSection}"
+                ColumnDefinitions="1.6*,*"
+                ColumnSpacing="{StaticResource Space.4}">
+            <Border Grid.Column="0"
+                    Classes="PanelCard">
+              <StackPanel Spacing="{StaticResource Space.3}">
+                <TextBlock Classes="SectionTitle"
+                           Text="项目设置" />
+                <TextBlock Classes="CaptionText"
+                           Text="在这里维护项目名称、项目说明和默认项目设置。" />
+
+                <u:Form LabelPosition="Top">
+                  <TextBox Classes="SectionInput"
+                           u:FormItem.Label="项目名称"
+                           Text="{Binding ProjectPanel.SelectedProject.Name}" />
+                  <TextBox Classes="SectionInput"
+                           u:FormItem.Label="项目说明"
+                           AcceptsReturn="True"
+                           Height="128"
+                           TextWrapping="Wrap"
+                           Text="{Binding ProjectPanel.SelectedProject.Description}" />
+                </u:Form>
+
+                <Grid ColumnDefinitions="*,*,*"
+                      ColumnSpacing="{StaticResource Space.2}">
+                  <Button Grid.Column="0"
+                          Classes="SecondaryButton"
+                          Content="设为默认"
+                          Command="{Binding ProjectPanel.SetSelectedProjectAsDefaultCommand}" />
+                  <Button Grid.Column="1"
+                          Classes="PrimaryButton"
+                          Content="保存项目"
+                          Command="{Binding ProjectPanel.SaveSelectedProjectCommand}" />
+                  <u:PopConfirm Grid.Column="2"
+                                PopupHeader="确认删除当前项目？"
+                                PopupContent="该项目下的环境、历史和用例都会一并删除。"
+                                ConfirmCommand="{Binding ProjectPanel.DeleteSelectedProjectCommand}">
+                    <Button Classes="SecondaryButton"
+                            Content="删除项目" />
+                  </u:PopConfirm>
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Column="1"
+                        Spacing="{StaticResource Space.3}">
+              <Border Classes="PanelCard">
+                <StackPanel Spacing="{StaticResource Space.3}">
+                  <TextBlock Classes="SectionTitle"
+                             Text="环境与变量" />
+                  <TextBlock Classes="CaptionText"
+                             Text="环境和变量继续通过右上角环境入口管理，保持项目级隔离。" />
+                  <Button Classes="PrimaryButton"
+                          Content="打开环境管理"
+                          Click="OnOpenEnvironmentDrawer" />
+                </StackPanel>
+              </Border>
+
+              <Border Classes="PanelCard">
+                <StackPanel Spacing="{StaticResource Space.3}">
+                  <TextBlock Classes="SectionTitle"
+                             Text="请求用例" />
+                  <TextBlock Classes="CaptionText"
+                             Text="用例通过抽屉集中维护，也可以从历史记录中快速转存。" />
+                  <Button Classes="SecondaryButton"
+                          Content="打开用例管理"
+                          Click="OnOpenUseCasesDrawer" />
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </Grid>
+        </Grid>
       </Grid>
+
+      <u:OverlayDialogHost />
     </Grid>
-    </Grid>
-    <u:OverlayDialogHost />
   </Grid>
 </Window>

@@ -11,6 +11,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
 {
     private readonly IProjectWorkspaceService _projectWorkspaceService;
     private bool _isUpdatingSelection;
+    private List<ProjectWorkspaceItemViewModel> _allProjects = [];
 
     public event Action<ProjectWorkspaceItemViewModel?>? SelectedProjectChanged;
 
@@ -20,6 +21,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
     }
 
     public ObservableCollection<ProjectWorkspaceItemViewModel> Projects { get; } = [];
+    public ObservableCollection<ProjectWorkspaceItemViewModel> FilteredProjects { get; } = [];
 
     [ObservableProperty]
     private ProjectWorkspaceItemViewModel? selectedProject;
@@ -31,12 +33,16 @@ public partial class ProjectPanelViewModel : ViewModelBase
     [ObservableProperty]
     private string draftProjectDescription = string.Empty;
 
-    public bool HasSelectedProject => SelectedProject is not null;
+    [ObservableProperty]
+    private string searchText = string.Empty;
 
-    public async Task LoadProjectsAsync(string? preferredProjectId = null)
+    public bool HasSelectedProject => SelectedProject is not null;
+    public bool HasProjects => FilteredProjects.Count > 0;
+
+    public async Task LoadProjectsAsync(string? preferredProjectId = null, bool autoSelect = true)
     {
         var projects = await _projectWorkspaceService.GetProjectsAsync(CancellationToken.None);
-        var items = projects.Select(project => new ProjectWorkspaceItemViewModel
+        _allProjects = projects.Select(project => new ProjectWorkspaceItemViewModel
         {
             Id = project.Id,
             Name = project.Name,
@@ -45,15 +51,18 @@ public partial class ProjectPanelViewModel : ViewModelBase
         }).ToList();
 
         Projects.Clear();
-        foreach (var item in items)
+        foreach (var item in _allProjects)
         {
             Projects.Add(item);
         }
 
+        RefreshFilteredProjects();
+
         _isUpdatingSelection = true;
-        SelectedProject = ResolveSelection(items, preferredProjectId);
+        SelectedProject = autoSelect ? ResolveSelection(_allProjects, preferredProjectId) : null;
         _isUpdatingSelection = false;
         OnPropertyChanged(nameof(HasSelectedProject));
+        OnPropertyChanged(nameof(HasProjects));
     }
 
     [RelayCommand(CanExecute = nameof(CanCreateProject))]
@@ -122,7 +131,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
         }
 
         await _projectWorkspaceService.DeleteAsync(SelectedProject.Id, CancellationToken.None);
-        await LoadProjectsAsync();
+        await LoadProjectsAsync(autoSelect: false);
     }
 
     [RelayCommand]
@@ -187,5 +196,28 @@ public partial class ProjectPanelViewModel : ViewModelBase
         }
 
         SelectedProjectChanged?.Invoke(value);
+    }
+
+    partial void OnSearchTextChanged(string value)
+    {
+        RefreshFilteredProjects();
+        OnPropertyChanged(nameof(HasProjects));
+    }
+
+    private void RefreshFilteredProjects()
+    {
+        var keyword = SearchText.Trim();
+        var items = string.IsNullOrWhiteSpace(keyword)
+            ? _allProjects
+            : _allProjects.Where(item =>
+                    item.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                    || item.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+        FilteredProjects.Clear();
+        foreach (var item in items)
+        {
+            FilteredProjects.Add(item);
+        }
     }
 }

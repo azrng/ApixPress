@@ -18,10 +18,17 @@ public partial class ProjectWorkspaceItemViewModel : ViewModelBase
     private bool isDefault;
 
     public string DisplayName => IsDefault ? $"{Name}（默认）" : Name;
+    public string SummaryText => string.IsNullOrWhiteSpace(Description) ? "暂无项目说明" : Description;
+    public string CategoryText => "HTTP";
 
     partial void OnNameChanged(string value)
     {
         OnPropertyChanged(nameof(DisplayName));
+    }
+
+    partial void OnDescriptionChanged(string value)
+    {
+        OnPropertyChanged(nameof(SummaryText));
     }
 
     partial void OnIsDefaultChanged(bool value)
