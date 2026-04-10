@@ -20,6 +20,7 @@ public static class ServiceBootstrapper
         services.AddSingleton<IConfiguration>(configuration);
         services.RegisterBusinessServices(Assembly.GetExecutingAssembly());
         services.AddSingleton<MainWindowViewModel>();
+        services.AddSingleton<DatabaseInitializer>();
         services.AddTransient<MainWindow>();
         services.AddSingleton<IWindowHostService, Services.Implementations.WindowHostService>();
 

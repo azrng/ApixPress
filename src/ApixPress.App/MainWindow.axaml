@@ -3,6 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:models="using:ApixPress.App.Models.DTOs"
+        xmlns:u="https://irihi.tech/ursa"
         xmlns:vm="using:ApixPress.App.ViewModels"
         mc:Ignorable="d"
         d:DesignWidth="1400"
@@ -66,11 +67,14 @@
                 <TextBlock Classes="SectionTitle"
                            Text="请求历史"
                            FontWeight="SemiBold" />
-                <Button Grid.Column="1"
-                        Classes="TextButton"
-                        Content="清空"
-                        Command="{Binding ClearHistoryCommand}"
-                        FontSize="12" />
+                <u:PopConfirm Grid.Column="1"
+                              PopupHeader="确认清空请求历史？"
+                              PopupContent="历史记录将被永久删除，且无法恢复。"
+                              ConfirmCommand="{Binding ClearHistoryCommand}">
+                  <Button Classes="TextButton"
+                          Content="清空"
+                          FontSize="12" />
+                </u:PopConfirm>
               </Grid>
               <TextBox Classes="SectionInput"
                        Watermark="搜索历史..."
@@ -287,26 +291,26 @@
             <TabItem Header="Body">
               <DockPanel Margin="{StaticResource Pad.3}">
                 <!-- Body type selector -->
-                <ListBox DockPanel.Dock="Top"
-                         Classes="BodyTypeSelector"
-                         ItemsSource="{Binding ConfigTab.BodyModeOptions}"
-                         SelectedItem="{Binding ConfigTab.SelectedBodyModeOption}"
-                         Height="36"
-                         Margin="0,0,0,12">
-                  <ListBox.ItemsPanel>
+                <u:SelectionList DockPanel.Dock="Top"
+                                 ItemsSource="{Binding ConfigTab.BodyModeOptions}"
+                                 SelectedItem="{Binding ConfigTab.SelectedBodyModeOption}"
+                                 Margin="0,0,0,12">
+                  <u:SelectionList.ItemsPanel>
                     <ItemsPanelTemplate>
                       <StackPanel Orientation="Horizontal" />
                     </ItemsPanelTemplate>
-                  </ListBox.ItemsPanel>
-                  <ListBox.ItemTemplate>
+                  </u:SelectionList.ItemsPanel>
+                  <u:SelectionList.ItemTemplate>
                     <DataTemplate x:DataType="vm:BodyModeOptionViewModel">
-                      <TextBlock Text="{Binding DisplayName}"
-                                 VerticalAlignment="Center"
-                                 HorizontalAlignment="Center"
-                                 FontSize="12" />
+                      <Border Padding="{StaticResource Pad.2}">
+                        <TextBlock Text="{Binding DisplayName}"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"
+                                   FontSize="12" />
+                      </Border>
                     </DataTemplate>
-                  </ListBox.ItemTemplate>
-                </ListBox>
+                  </u:SelectionList.ItemTemplate>
+                </u:SelectionList>
 
                 <!-- Form-data / urlencoded key-value editor -->
                 <DockPanel IsVisible="{Binding ConfigTab.IsBodyModeFormData}">
@@ -484,12 +488,12 @@
                           Spacing="{StaticResource Space.2}">
                 <Button Classes="SecondaryButton"
                         Content="用例管理"
-                        Command="{Binding ToggleUseCasesCommand}"
+                        Click="OnOpenUseCasesDrawer"
                         Padding="{StaticResource Pad.2},{StaticResource Pad.1}"
                         FontSize="12" />
                 <Button Classes="SecondaryButton"
                         Content="环境变量"
-                        Command="{Binding ToggleEnvironmentCommand}"
+                        Click="OnOpenEnvironmentDrawer"
                         Padding="{StaticResource Pad.2},{StaticResource Pad.1}"
                         FontSize="12" />
               </StackPanel>
@@ -565,137 +569,8 @@
           </DockPanel>
         </Border>
 
-        <!-- ===== Use Cases Slide Panel ===== -->
-        <Border Grid.Row="1"
-                Grid.RowSpan="2"
-                IsVisible="{Binding ShowUseCasesPanel}"
-                Classes="PanelCard"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Stretch"
-                Width="360"
-                Margin="{StaticResource Pad.3}">
-          <DockPanel>
-            <Grid DockPanel.Dock="Top"
-                  ColumnDefinitions="*,Auto,Auto"
-                  ColumnSpacing="{StaticResource Space.2}">
-              <TextBlock Classes="SectionTitle"
-                         Text="用例管理" />
-              <Button Grid.Column="1"
-                      Classes="PrimaryButton"
-                      Content="保存"
-                      Command="{Binding SaveCaseCommand}" />
-              <Button Grid.Column="2"
-                      Classes="SecondaryButton"
-                      Content="关闭"
-                      Command="{Binding ToggleUseCasesCommand}" />
-            </Grid>
-            <ScrollViewer>
-              <StackPanel Spacing="{StaticResource Space.2}">
-                <TextBox Classes="SectionInput"
-                         Watermark="用例名称"
-                         Text="{Binding UseCasesPanel.CaseName}" />
-                <TextBox Classes="SectionInput"
-                         Watermark="分组名称"
-                         Text="{Binding UseCasesPanel.CaseGroupName}" />
-                <TextBox Classes="SectionInput"
-                         Watermark="标签（逗号分隔）"
-                         Text="{Binding UseCasesPanel.CaseTags}" />
-                <Grid ColumnDefinitions="*,*,*"
-                      ColumnSpacing="{StaticResource Space.2}">
-                  <Button Grid.Column="0"
-                          Classes="SecondaryButton"
-                          Content="加载"
-                          Command="{Binding UseCasesPanel.LoadSelectedCaseCommand}" />
-                  <Button Grid.Column="1"
-                          Classes="SecondaryButton"
-                          Content="复制"
-                          Command="{Binding UseCasesPanel.DuplicateSelectedCaseCommand}" />
-                  <Button Grid.Column="2"
-                          Classes="SecondaryButton"
-                          Content="删除"
-                          Command="{Binding UseCasesPanel.DeleteSelectedCaseCommand}" />
-                </Grid>
-                <ListBox Classes="FlatListBox"
-                         ItemsSource="{Binding UseCasesPanel.RequestCases}"
-                         SelectedItem="{Binding UseCasesPanel.SelectedRequestCase}"
-                         Height="280">
-                  <ListBox.ItemTemplate>
-                    <DataTemplate x:DataType="vm:RequestCaseItemViewModel">
-                      <StackPanel Spacing="{StaticResource Space.1}">
-                        <TextBlock Text="{Binding Name}" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="{Binding GroupName}" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="{Binding UpdatedAt, StringFormat='更新于 {0:yyyy-MM-dd HH:mm}'}" />
-                      </StackPanel>
-                    </DataTemplate>
-                  </ListBox.ItemTemplate>
-                </ListBox>
-              </StackPanel>
-            </ScrollViewer>
-          </DockPanel>
-        </Border>
-
-        <!-- ===== Environment Variables Slide Panel ===== -->
-        <Border Grid.Row="1"
-                Grid.RowSpan="2"
-                IsVisible="{Binding ShowEnvironmentPanel}"
-                Classes="PanelCard"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Stretch"
-                Width="360"
-                Margin="{StaticResource Pad.3}">
-          <DockPanel>
-            <Grid DockPanel.Dock="Top"
-                  ColumnDefinitions="*,Auto,Auto"
-                  ColumnSpacing="{StaticResource Space.2}">
-              <TextBlock Classes="SectionTitle"
-                         Text="环境变量" />
-              <Button Grid.Column="1"
-                      Classes="PrimaryButton"
-                      Content="保存"
-                      Command="{Binding EnvironmentPanel.SaveVariablesCommand}" />
-              <Button Grid.Column="2"
-                      Classes="SecondaryButton"
-                      Content="关闭"
-                      Command="{Binding ToggleEnvironmentCommand}" />
-            </Grid>
-            <ScrollViewer>
-              <StackPanel Spacing="{StaticResource Space.2}">
-                <TextBlock Classes="CaptionText"
-                           Text="当前环境：Default。变量支持通过 {{key}} 形式引用。" />
-                <Button Classes="SecondaryButton"
-                        HorizontalAlignment="Left"
-                        Content="新增变量"
-                        Command="{Binding EnvironmentPanel.AddVariableCommand}" />
-                <ItemsControl ItemsSource="{Binding EnvironmentPanel.EnvironmentVariables}">
-                  <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="vm:EnvironmentVariableItemViewModel">
-                      <Grid ColumnDefinitions="Auto,*,*,Auto"
-                            ColumnSpacing="{StaticResource Space.2}"
-                            Margin="0,2">
-                        <CheckBox Grid.Column="0"
-                                  IsChecked="{Binding IsEnabled}" />
-                        <TextBox Grid.Column="1"
-                                 Classes="SectionInput"
-                                 Text="{Binding Key}" />
-                        <TextBox Grid.Column="2"
-                                 Classes="SectionInput"
-                                 Text="{Binding Value}" />
-                        <Button Grid.Column="3"
-                                Classes="IconButton"
-                                Content="删除"
-                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).EnvironmentPanel.RemoveVariableCommand}"
-                                CommandParameter="{Binding}" />
-                      </Grid>
-                    </DataTemplate>
-                  </ItemsControl.ItemTemplate>
-                </ItemsControl>
-              </StackPanel>
-            </ScrollViewer>
-          </DockPanel>
-        </Border>
       </Grid>
     </Grid>
+    <u:OverlayDialogHost />
   </Grid>
 </Window>

@@ -1,6 +1,8 @@
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Repositories.Implementations;
 using ApixPress.App.Services.Implementations;
+using Azrng.Core.Json;
+using Microsoft.Extensions.Options;
 
 namespace ApixPress.App.Tests.Repositories;
 
@@ -13,7 +15,9 @@ public sealed class WorkspacePersistenceTests
         await factory.InitializeAsync();
 
         var repository = new RequestCaseRepository(factory);
-        var service = new RequestCaseService(repository);
+        var service = new RequestCaseService(
+            repository,
+            new SysTextJsonSerializer(Options.Create(new DefaultJsonSerializerOptions())));
 
         var saveResult = await service.SaveAsync(new RequestCaseDto
         {

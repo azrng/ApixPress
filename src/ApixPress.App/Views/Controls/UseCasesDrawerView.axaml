@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.UseCasesDrawerView"
+             x:DataType="vm:MainWindowViewModel"
+             d:DesignWidth="380"
+             d:DesignHeight="720"
+             mc:Ignorable="d">
+  <ScrollViewer>
+    <StackPanel Spacing="{StaticResource Space.3}">
+      <Grid ColumnDefinitions="*,Auto"
+            ColumnSpacing="{StaticResource Space.2}">
+        <TextBlock Classes="CaptionText"
+                   Text="保存当前请求为用例，或从已存档用例中快速恢复配置。"
+                   VerticalAlignment="Center" />
+        <Button Grid.Column="1"
+                Classes="PrimaryButton"
+                Content="保存当前请求"
+                Command="{Binding SaveCaseCommand}" />
+      </Grid>
+
+      <u:Form LabelPosition="Top">
+        <TextBox Classes="SectionInput"
+                 u:FormItem.Label="用例名称"
+                 Watermark="请输入用例名称"
+                 Text="{Binding UseCasesPanel.CaseName}" />
+        <TextBox Classes="SectionInput"
+                 u:FormItem.Label="分组名称"
+                 Watermark="请输入分组名称"
+                 Text="{Binding UseCasesPanel.CaseGroupName}" />
+        <u:TagInput u:FormItem.Label="标签"
+                    Watermark="输入标签后按回车"
+                    Tags="{Binding UseCasesPanel.CaseTags}" />
+      </u:Form>
+
+      <Grid ColumnDefinitions="*,*,*"
+            ColumnSpacing="{StaticResource Space.2}">
+        <Button Grid.Column="0"
+                Classes="SecondaryButton"
+                Content="加载"
+                Command="{Binding UseCasesPanel.LoadSelectedCaseCommand}" />
+        <Button Grid.Column="1"
+                Classes="SecondaryButton"
+                Content="复制"
+                Command="{Binding UseCasesPanel.DuplicateSelectedCaseCommand}" />
+        <u:PopConfirm Grid.Column="2"
+                      PopupHeader="确认删除当前选中用例？"
+                      PopupContent="删除后无法恢复，请确认当前已不再需要该用例。"
+                      ConfirmCommand="{Binding UseCasesPanel.DeleteSelectedCaseCommand}">
+          <Button Classes="SecondaryButton"
+                  Content="删除" />
+        </u:PopConfirm>
+      </Grid>
+
+      <ListBox Classes="FlatListBox"
+               ItemsSource="{Binding UseCasesPanel.RequestCases}"
+               SelectedItem="{Binding UseCasesPanel.SelectedRequestCase}"
+               Height="360">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:RequestCaseItemViewModel">
+            <StackPanel Spacing="{StaticResource Space.1}">
+              <TextBlock Text="{Binding Name}" />
+              <TextBlock Classes="CaptionText"
+                         Text="{Binding GroupName}" />
+              <TextBlock Classes="CaptionText"
+                         Text="{Binding TagsText}" />
+              <TextBlock Classes="CaptionText"
+                         Text="{Binding UpdatedAt, StringFormat='更新于 {0:yyyy-MM-dd HH:mm}'}" />
+            </StackPanel>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

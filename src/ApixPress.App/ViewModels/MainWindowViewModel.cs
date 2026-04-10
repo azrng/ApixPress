@@ -70,14 +70,6 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string requestUrl = "https://";
 
-    // --- Panel visibility ---
-
-    [ObservableProperty]
-    private bool showUseCasesPanel;
-
-    [ObservableProperty]
-    private bool showEnvironmentPanel;
-
     // --- Initialization ---
 
     public async Task InitializeAsync()
@@ -179,12 +171,6 @@ public partial class MainWindowViewModel : ViewModelBase
         await UseCasesPanel.SaveCaseAsync(snapshot);
         StatusMessage = "用例已保存。";
     }
-
-    [RelayCommand]
-    private void ToggleUseCases() => ShowUseCasesPanel = !ShowUseCasesPanel;
-
-    [RelayCommand]
-    private void ToggleEnvironment() => ShowEnvironmentPanel = !ShowEnvironmentPanel;
 
     [RelayCommand]
     private async Task RefreshWorkspaceAsync()

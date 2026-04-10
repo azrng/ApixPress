@@ -10,7 +10,6 @@ namespace ApixPress.App.ViewModels;
 public partial class UseCasesPanelViewModel : ViewModelBase
 {
     private readonly IRequestCaseService _requestCaseService;
-    private string? _pendingDeleteCaseId;
 
     public event Action<RequestSnapshotDto>? CaseApplied;
 
@@ -28,13 +27,12 @@ public partial class UseCasesPanelViewModel : ViewModelBase
     private string caseGroupName = "默认分组";
 
     [ObservableProperty]
-    private string caseTags = string.Empty;
-
-    [ObservableProperty]
     private string caseDescription = string.Empty;
 
     [ObservableProperty]
     private RequestCaseItemViewModel? selectedRequestCase;
+
+    public ObservableCollection<string> CaseTags { get; } = [];
 
     public async Task LoadCasesAsync()
     {
@@ -69,7 +67,7 @@ public partial class UseCasesPanelViewModel : ViewModelBase
             Id = caseId,
             Name = string.IsNullOrWhiteSpace(CaseName) ? requestName : CaseName,
             GroupName = CaseGroupName,
-            Tags = CaseTags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),
+            Tags = CaseTags.Where(tag => !string.IsNullOrWhiteSpace(tag)).ToList(),
             Description = CaseDescription,
             RequestSnapshot = snapshot,
             UpdatedAt = DateTime.UtcNow
@@ -92,7 +90,7 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         var snapshot = SelectedRequestCase.SourceCase.RequestSnapshot;
         CaseName = SelectedRequestCase.SourceCase.Name;
         CaseGroupName = SelectedRequestCase.SourceCase.GroupName;
-        CaseTags = string.Join(", ", SelectedRequestCase.SourceCase.Tags);
+        ReplaceCaseTags(SelectedRequestCase.SourceCase.Tags);
         CaseDescription = SelectedRequestCase.SourceCase.Description;
         CaseApplied?.Invoke(snapshot);
     }
@@ -111,15 +109,17 @@ public partial class UseCasesPanelViewModel : ViewModelBase
     {
         if (SelectedRequestCase is null) return;
 
-        if (_pendingDeleteCaseId != SelectedRequestCase.Id)
-        {
-            _pendingDeleteCaseId = SelectedRequestCase.Id;
-            return;
-        }
-
         await _requestCaseService.DeleteAsync(SelectedRequestCase.Id, CancellationToken.None);
-        _pendingDeleteCaseId = null;
         SelectedRequestCase = null;
         await LoadCasesAsync();
+    }
+
+    private void ReplaceCaseTags(IEnumerable<string> tags)
+    {
+        CaseTags.Clear();
+        foreach (var tag in tags.Where(tag => !string.IsNullOrWhiteSpace(tag)))
+        {
+            CaseTags.Add(tag);
+        }
     }
 }
