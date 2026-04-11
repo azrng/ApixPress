@@ -3,6 +3,7 @@
   <FontFamily x:Key="Font.Default">Segoe UI, Microsoft YaHei UI, sans-serif</FontFamily>
   <FontFamily x:Key="Font.Monospace">Cascadia Mono, Consolas, monospace</FontFamily>
   <x:Double x:Key="Font.Size.Caption">12</x:Double>
+  <x:Double x:Key="Font.Size.BodySmall">13</x:Double>
   <x:Double x:Key="Font.Size.Body">14</x:Double>
   <x:Double x:Key="Font.Size.BodyLarge">16</x:Double>
   <x:Double x:Key="Font.Size.Title">20</x:Double>
