@@ -34,7 +34,9 @@ public partial class ExplorerItemViewModel : ViewModelBase
     public bool HasChildren => Children.Count > 0;
     public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
     public bool ShowMethodBadge => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase);
-    public bool ShowLeadingGlyph => !ShowMethodBadge;
+    public bool ShowLeadingGlyph => !ShowMethodBadge && !IsHttpCaseNode;
+    public bool IsHttpCaseNode => string.Equals(NodeType, "http-case", StringComparison.OrdinalIgnoreCase);
+    public bool IsQuickRequestNode => string.Equals(NodeType, "quick-request", StringComparison.OrdinalIgnoreCase);
     public bool ShowTrailingDot => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase) && HasChildren;
     public string MethodBadgeText => SourceCase?.RequestSnapshot.Method?.ToUpperInvariant() ?? string.Empty;
     public string MethodBadgeClass => MethodBadgeText switch

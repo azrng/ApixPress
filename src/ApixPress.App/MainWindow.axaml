@@ -454,6 +454,11 @@
                                                FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                                Text="{Binding NodeGlyph}"
                                                IsVisible="{Binding ShowLeadingGlyph}" />
+                                    <TextBlock Grid.Column="0"
+                                               Classes="WorkspaceTreeNodeGlyph WorkspaceTreeCaseGlyph"
+                                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                               Text="{Binding NodeGlyph}"
+                                               IsVisible="{Binding IsHttpCaseNode}" />
                                     <u:Badge Grid.Column="1"
                                              Margin="0,0,4,0"
                                              Header="{Binding MethodBadgeText}"
@@ -488,6 +493,9 @@
                                      Classes="ProjectSidebarSectionTitle"
                                      Text="数据模型" />
                         </Grid>
+                        <Button Classes="ProjectSidebarGhostButton"
+                                Content="+ 新建"
+                                IsEnabled="False" />
                       </StackPanel>
 
                       <StackPanel Spacing="{StaticResource Space.2}">
@@ -537,6 +545,11 @@
                                                FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                                Text="{Binding NodeGlyph}"
                                                IsVisible="{Binding ShowLeadingGlyph}" />
+                                    <TextBlock Grid.Column="0"
+                                               Classes="WorkspaceTreeNodeGlyph WorkspaceTreeCaseGlyph"
+                                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                               Text="{Binding NodeGlyph}"
+                                               IsVisible="{Binding IsHttpCaseNode}" />
                                     <u:Badge Grid.Column="1"
                                              Margin="0,0,4,0"
                                              Header="{Binding MethodBadgeText}"

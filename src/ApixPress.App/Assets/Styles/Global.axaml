@@ -1095,8 +1095,9 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="0,10" />
+    <Setter Property="Padding" Value="0,8" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="MinHeight" Value="34" />
   </Style>
 
   <Style Selector="Button.ProjectSidebarGhostButton:pointerover">
@@ -1238,7 +1239,7 @@
   </Style>
 
   <Style Selector="TreeView.WorkspaceTreeView TreeViewItem">
-    <Setter Property="Margin" Value="0,0,0,1" />
+    <Setter Property="Margin" Value="0" />
     <Setter Property="Padding" Value="0" />
   </Style>
 
@@ -1257,6 +1258,7 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="MinHeight" Value="24" />
   </Style>
 
   <Style Selector="Button.WorkspaceTreeNodeButton:pointerover">
@@ -1270,6 +1272,11 @@
     <Setter Property="Margin" Value="0,0,3,0" />
   </Style>
 
+  <Style Selector="TextBlock.WorkspaceTreeCaseGlyph">
+    <Setter Property="Foreground" Value="#8B6AE6" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+
   <Style Selector="TextBlock.WorkspaceTreeSubtitleText">
     <Setter Property="Margin" Value="24,0,0,0" />
   </Style>
@@ -1280,6 +1287,7 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
     <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="4,0,0,0" />
   </Style>
 
   <Style Selector="Border.HttpRequestUrlShell">
