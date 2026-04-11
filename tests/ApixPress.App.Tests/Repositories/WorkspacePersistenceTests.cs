@@ -69,6 +69,7 @@ public sealed class WorkspacePersistenceTests
         var saveResult = await caseService.SaveAsync(new RequestCaseDto
         {
             ProjectId = projectA.Id,
+            EntryType = "quick-request",
             Name = "获取用户详情",
             GroupName = "用户",
             Tags = ["smoke", "demo"],
@@ -85,6 +86,7 @@ public sealed class WorkspacePersistenceTests
 
         var projectACases = await caseService.GetCasesAsync(projectA.Id, CancellationToken.None);
         var saved = Assert.Single(projectACases);
+        Assert.Equal("quick-request", saved.EntryType);
         Assert.Equal("获取用户详情", saved.Name);
         Assert.Equal("用户", saved.GroupName);
         Assert.Equal("https://api.example.com/users/42", saved.RequestSnapshot.Url);
@@ -92,6 +94,72 @@ public sealed class WorkspacePersistenceTests
 
         var projectBCases = await caseService.GetCasesAsync(projectB.Id, CancellationToken.None);
         Assert.Empty(projectBCases);
+    }
+
+    [Fact]
+    public async Task RequestCaseService_ShouldPersistHttpInterfaceHierarchy()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var serializer = CreateSerializer();
+        var caseRepository = new RequestCaseRepository(factory);
+        var caseService = new RequestCaseService(caseRepository, serializer);
+
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "接口树项目"
+        }, CancellationToken.None)).Data!;
+
+        var interfaceResult = await caseService.SaveAsync(new RequestCaseDto
+        {
+            ProjectId = project.Id,
+            EntryType = "http-interface",
+            Name = "获取单个用户信息",
+            GroupName = "接口",
+            FolderPath = "用户",
+            Description = "接口定义",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "/users/{id}"
+            },
+            UpdatedAt = DateTime.UtcNow
+        }, CancellationToken.None);
+
+        Assert.True(interfaceResult.IsSuccess);
+        Assert.NotNull(interfaceResult.Data);
+
+        var caseResult = await caseService.SaveAsync(new RequestCaseDto
+        {
+            ProjectId = project.Id,
+            EntryType = "http-case",
+            ParentId = interfaceResult.Data!.Id,
+            Name = "成功",
+            GroupName = "用例",
+            FolderPath = "用户",
+            Description = "成功响应",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "/users/{id}"
+            },
+            UpdatedAt = DateTime.UtcNow
+        }, CancellationToken.None);
+
+        Assert.True(caseResult.IsSuccess);
+
+        var cases = await caseService.GetCasesAsync(project.Id, CancellationToken.None);
+        var savedInterface = Assert.Single(cases, item => item.EntryType == "http-interface");
+        var savedCase = Assert.Single(cases, item => item.EntryType == "http-case");
+
+        Assert.Equal("用户", savedInterface.FolderPath);
+        Assert.Equal("/users/{id}", savedInterface.RequestSnapshot.Url);
+        Assert.Equal(savedInterface.Id, savedCase.ParentId);
+        Assert.Equal("用户", savedCase.FolderPath);
     }
 
     [Fact]

@@ -7,6 +7,11 @@ namespace ApixPress.App.ViewModels;
 
 public partial class ExplorerItemViewModel : ViewModelBase
 {
+    public ExplorerItemViewModel()
+    {
+        Children.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasChildren));
+    }
+
     [ObservableProperty]
     private string title = string.Empty;
 
@@ -16,8 +21,19 @@ public partial class ExplorerItemViewModel : ViewModelBase
     [ObservableProperty]
     private bool isGroup;
 
-    public ObservableCollection<ExplorerItemViewModel> Children { get; } = [];
+    [ObservableProperty]
+    private string nodeType = string.Empty;
 
+    [ObservableProperty]
+    private bool canLoad;
+
+    [ObservableProperty]
+    private bool isExpanded = true;
+
+    public ObservableCollection<ExplorerItemViewModel> Children { get; } = [];
+    public bool HasChildren => Children.Count > 0;
+
+    public RequestCaseDto? SourceCase { get; init; }
     public ApiEndpointDto? Endpoint { get; init; }
 }
 

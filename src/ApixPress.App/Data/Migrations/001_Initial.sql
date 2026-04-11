@@ -71,8 +71,11 @@ CREATE TABLE IF NOT EXISTS request_parameters (
 CREATE TABLE IF NOT EXISTS request_cases (
     id TEXT PRIMARY KEY,
     project_id TEXT NOT NULL,
+    entry_type TEXT NOT NULL DEFAULT 'quick-request',
     name TEXT NOT NULL,
     group_name TEXT NOT NULL,
+    folder_path TEXT NOT NULL DEFAULT '',
+    parent_id TEXT NOT NULL DEFAULT '',
     tags_json TEXT NOT NULL DEFAULT '[]',
     description TEXT NOT NULL DEFAULT '',
     request_snapshot_json TEXT NOT NULL,
@@ -81,9 +84,10 @@ CREATE TABLE IF NOT EXISTS request_cases (
 );
 
 DROP INDEX IF EXISTS ux_request_cases_group_name;
+DROP INDEX IF EXISTS ux_request_cases_project_group_name;
 
-CREATE UNIQUE INDEX IF NOT EXISTS ux_request_cases_project_group_name
-ON request_cases(project_id, group_name, name);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_request_cases_project_entry_scope_name
+ON request_cases(project_id, entry_type, group_name, folder_path, parent_id, name);
 
 CREATE TABLE IF NOT EXISTS environment_variables (
     id TEXT PRIMARY KEY,

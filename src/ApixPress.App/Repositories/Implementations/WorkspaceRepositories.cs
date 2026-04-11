@@ -168,15 +168,18 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                            select
                                id Id,
                                project_id ProjectId,
+                               entry_type EntryType,
                                name Name,
                                group_name GroupName,
+                               folder_path FolderPath,
+                               parent_id ParentId,
                                tags_json TagsJson,
                                description Description,
                                request_snapshot_json RequestSnapshotJson,
                                updated_at UpdatedAt
                            from request_cases
                            where project_id = @ProjectId
-                           order by updated_at desc
+                           order by entry_type, folder_path, updated_at desc
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
@@ -191,8 +194,11 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                            select
                                id Id,
                                project_id ProjectId,
+                               entry_type EntryType,
                                name Name,
                                group_name GroupName,
+                               folder_path FolderPath,
+                               parent_id ParentId,
                                tags_json TagsJson,
                                description Description,
                                request_snapshot_json RequestSnapshotJson,
@@ -211,11 +217,11 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
     {
         const string sql = """
                            insert into request_cases (
-                               id, project_id, name, group_name, tags_json, description, request_snapshot_json, updated_at
+                               id, project_id, entry_type, name, group_name, folder_path, parent_id, tags_json, description, request_snapshot_json, updated_at
                            ) values (
-                               @Id, @ProjectId, @Name, @GroupName, @TagsJson, @Description, @RequestSnapshotJson, @UpdatedAt
+                               @Id, @ProjectId, @EntryType, @Name, @GroupName, @FolderPath, @ParentId, @TagsJson, @Description, @RequestSnapshotJson, @UpdatedAt
                            )
-                           on conflict(project_id, group_name, name) do update set
+                           on conflict(project_id, entry_type, group_name, folder_path, parent_id, name) do update set
                                id = excluded.id,
                                tags_json = excluded.tags_json,
                                description = excluded.description,

@@ -453,26 +453,20 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        var snapshot = ActiveProjectTab.ConfigTab.BuildRequestSnapshot(
-            string.Empty,
-            ActiveProjectTab.SelectedMethod,
-            ActiveProjectTab.RequestUrl);
-        await ActiveProjectTab.UseCasesPanel.SaveCaseAsync(snapshot);
-        await ActiveProjectTab.UseCasesPanel.LoadCasesAsync();
-        ActiveProjectTab.StatusMessage = "已保存当前快捷请求。";
+        await ActiveProjectTab.SaveCurrentEditorAsync();
         StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }
 
     [RelayCommand]
-    private void LoadSavedRequest(RequestCaseItemViewModel? item)
+    private void LoadSavedRequest(ExplorerItemViewModel? item)
     {
         if (ActiveProjectTab is null || item is null)
         {
             return;
         }
 
-        ActiveProjectTab.LoadSavedRequest(item);
+        ActiveProjectTab.LoadWorkspaceItem(item);
         StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }
@@ -498,20 +492,7 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        var snapshot = item.RequestSnapshot;
-        var caseDto = new RequestCaseDto
-        {
-            ProjectId = ActiveProjectTab.ProjectId,
-            Name = $"{snapshot.Method} {snapshot.Url}",
-            GroupName = "历史导入",
-            Description = $"从 {item.Timestamp.ToLocalTime():yyyy-MM-dd HH:mm} 的历史记录创建",
-            RequestSnapshot = snapshot,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        await _requestCaseService.SaveAsync(caseDto, CancellationToken.None);
-        await ActiveProjectTab.UseCasesPanel.LoadCasesAsync();
-        ActiveProjectTab.StatusMessage = "已从历史记录生成保存请求。";
+        await ActiveProjectTab.SaveHistoryAsQuickRequestAsync(item);
         StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }

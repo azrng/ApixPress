@@ -400,15 +400,19 @@
                 <Grid IsVisible="{Binding IsInterfaceManagementSection}"
                       RowDefinitions="Auto,Auto,*"
                       RowSpacing="{StaticResource Space.3}">
-                  <Grid ColumnDefinitions="*,Auto"
+                  <Grid ColumnDefinitions="*,Auto,Auto"
                         ColumnSpacing="{StaticResource Space.2}">
                     <StackPanel Spacing="2">
                       <TextBlock Classes="SectionTitle"
                                  Text="接口管理" />
                       <TextBlock Classes="CaptionText"
-                                 Text="保留项目中的快捷请求入口和已保存接口草稿。" />
+                                 Text="左侧保留默认模块接口树和快捷请求目录。" />
                     </StackPanel>
                     <Button Grid.Column="1"
+                            Classes="SecondaryButton"
+                            Content="+ HTTP 接口"
+                            Command="{Binding OpenHttpInterfaceWorkspaceCommand}" />
+                    <Button Grid.Column="2"
                             Classes="SecondaryButton"
                             Content="+ 快捷请求"
                             Command="{Binding OpenQuickRequestWorkspaceCommand}" />
@@ -419,49 +423,75 @@
                     <StackPanel Spacing="{StaticResource Space.2}">
                       <TextBlock Classes="CaptionText"
                                  Text="{Binding InterfaceSectionHint}" />
-                      <Button Classes="ProjectTreeEntryButton"
-                              Content="快捷请求"
-                              Command="{Binding OpenQuickRequestWorkspaceCommand}" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="{Binding QuickRequestSectionHint}" />
                     </StackPanel>
                   </Border>
 
                   <ScrollViewer Grid.Row="2">
-                    <StackPanel Spacing="{StaticResource Space.2}">
+                    <StackPanel Spacing="{StaticResource Space.3}">
                       <TextBlock Classes="CaptionText"
-                                 Text="已保存接口"
-                                 IsVisible="{Binding HasSavedRequests}" />
+                                 Text="默认模块"
+                                 FontWeight="SemiBold" />
                       <TextBlock Classes="CaptionText"
-                                 Text="当前还没有保存的接口草稿"
-                                 IsVisible="{Binding ShowSavedRequestsEmptyState}" />
-                      <ItemsControl ItemsSource="{Binding SavedRequests}"
-                                    IsVisible="{Binding HasSavedRequests}">
-                        <ItemsControl.ItemTemplate>
-                          <DataTemplate x:DataType="vm:RequestCaseItemViewModel">
-                            <Border Classes="SidebarListCard">
+                                 Text="当前还没有保存的 HTTP 接口"
+                                 IsVisible="{Binding ShowInterfaceEntriesEmptyState}" />
+                      <TreeView Classes="WorkspaceTreeView"
+                                ItemsSource="{Binding InterfaceTreeItems}">
+                        <TreeView.ItemTemplate>
+                          <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
+                                            ItemsSource="{Binding Children}">
+                            <Border Classes="WorkspaceTreeNodeCard">
                               <Grid ColumnDefinitions="*,Auto"
-                                    RowDefinitions="Auto,Auto"
-                                    ColumnSpacing="{StaticResource Space.2}"
-                                    RowSpacing="4">
-                                <TextBlock Text="{Binding Name}"
-                                           FontWeight="SemiBold"
-                                           TextTrimming="CharacterEllipsis" />
+                                    ColumnSpacing="{StaticResource Space.2}">
+                                <StackPanel Spacing="2">
+                                  <TextBlock Text="{Binding Title}"
+                                             TextWrapping="Wrap" />
+                                  <TextBlock Classes="CaptionText"
+                                             Text="{Binding Subtitle}"
+                                             TextWrapping="Wrap" />
+                                </StackPanel>
                                 <Button Grid.Column="1"
                                         Classes="TextButton"
-                                        Content="载入"
+                                        Content="打开"
+                                        IsVisible="{Binding CanLoad}"
                                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
                                         CommandParameter="{Binding}" />
-                                <TextBlock Grid.Row="1"
-                                           Classes="CaptionText"
-                                           Text="{Binding GroupName}" />
-                                <TextBlock Grid.Row="1"
-                                           Grid.Column="1"
-                                           Classes="CaptionText"
-                                           Text="{Binding UpdatedAtText}" />
                               </Grid>
                             </Border>
-                          </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                      </ItemsControl>
+                          </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                      </TreeView>
+
+                      <TextBlock Classes="CaptionText"
+                                 Text="快捷请求"
+                                 FontWeight="SemiBold" />
+                      <TreeView Classes="WorkspaceTreeView"
+                                ItemsSource="{Binding QuickRequestTreeItems}">
+                        <TreeView.ItemTemplate>
+                          <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
+                                            ItemsSource="{Binding Children}">
+                            <Border Classes="WorkspaceTreeNodeCard">
+                              <Grid ColumnDefinitions="*,Auto"
+                                    ColumnSpacing="{StaticResource Space.2}">
+                                <StackPanel Spacing="2">
+                                  <TextBlock Text="{Binding Title}"
+                                             TextWrapping="Wrap" />
+                                  <TextBlock Classes="CaptionText"
+                                             Text="{Binding Subtitle}"
+                                             TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Classes="TextButton"
+                                        Content="打开"
+                                        IsVisible="{Binding CanLoad}"
+                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
+                                        CommandParameter="{Binding}" />
+                              </Grid>
+                            </Border>
+                          </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                      </TreeView>
                     </StackPanel>
                   </ScrollViewer>
                 </Grid>
@@ -587,30 +617,16 @@
               <Grid RowDefinitions="Auto,*"
                     RowSpacing="{StaticResource Space.4}">
                 <Border Classes="ProjectWorkspaceTopActionBar">
-                  <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                  <Grid ColumnDefinitions="*,Auto,Auto"
                         ColumnSpacing="{StaticResource Space.3}">
-                    <Border Classes="ProjectWorkspaceEditorTabs">
-                      <StackPanel Orientation="Horizontal"
-                                  Spacing="0">
-                        <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonActive"
-                                Command="{Binding OpenQuickRequestWorkspaceCommand}">
-                          <StackPanel Orientation="Horizontal"
-                                      Spacing="{StaticResource Space.2}">
-                            <Path Width="16"
-                                  Height="16"
-                                  Stretch="Uniform"
-                                  Fill="{DynamicResource Brush.Status.Success.Text}"
-                                  Data="M4,12 L16,4 L13,11 L20,11 L8,20 L11,13 L4,13 Z" />
-                            <TextBlock Text="快捷请求" />
-                          </StackPanel>
-                        </Button>
-                        <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonGhost"
-                                Command="{Binding CreateNewQuickRequestDraftCommand}"
-                                Content="新建..." />
-                      </StackPanel>
-                    </Border>
+                    <StackPanel Spacing="2">
+                      <TextBlock Classes="SectionTitle"
+                                 Text="项目详情" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="默认打开新建入口，可直接创建 HTTP 接口或快捷请求。" />
+                    </StackPanel>
 
-                    <ComboBox Grid.Column="2"
+                    <ComboBox Grid.Column="1"
                               Width="220"
                               Classes="SectionInput ProjectWorkspaceToolbarComboBox"
                               ItemsSource="{Binding EnvironmentPanel.Environments}"
@@ -622,18 +638,39 @@
                       </ComboBox.ItemTemplate>
                     </ComboBox>
 
-                    <Button Grid.Column="3"
+                    <Button Grid.Column="2"
                             Classes="SecondaryButton ProjectWorkspaceToolbarButton"
                             Content="环境设置"
                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
                   </Grid>
                 </Border>
 
-                <StackPanel Grid.Row="1"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Spacing="{StaticResource Space.4}">
+                <Grid Grid.Row="1"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      ColumnDefinitions="Auto,Auto"
+                      ColumnSpacing="{StaticResource Space.4}">
                   <Button Classes="ProjectLaunchButton"
+                          Command="{Binding OpenHttpInterfaceWorkspaceCommand}">
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="{StaticResource Space.3}">
+                      <Path Width="52"
+                            Height="52"
+                            Stretch="Uniform"
+                            Fill="{DynamicResource Brush.Border.Focus}"
+                            Data="M4,6 L20,6 L20,8 L4,8 Z M4,11 L20,11 L20,13 L4,13 Z M4,16 L14,16 L14,18 L4,18 Z" />
+                      <TextBlock Classes="SectionTitle"
+                                 Text="新建 HTTP 接口" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="自动继承当前环境 BaseUrl，保存后进入默认模块 / 接口目录。"
+                                 TextAlignment="Center"
+                                 TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Button>
+
+                  <Button Grid.Column="1"
+                          Classes="ProjectLaunchButton"
                           Command="{Binding OpenQuickRequestWorkspaceCommand}">
                     <StackPanel HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
@@ -646,87 +683,171 @@
                       <TextBlock Classes="SectionTitle"
                                  Text="快捷请求" />
                       <TextBlock Classes="CaptionText"
-                                 Text="中间区域只保留一个快捷请求入口，点击后进入真实请求编辑器。"
+                                 Text="不固定 BaseUrl，可自由输入 URL，保存后进入左侧快捷请求目录。"
                                  TextAlignment="Center"
                                  TextWrapping="Wrap" />
                     </StackPanel>
                   </Button>
-                </StackPanel>
+                </Grid>
               </Grid>
             </Border>
 
             <Grid Grid.Column="2"
-                  IsVisible="{Binding ShowQuickRequestWorkspace}"
-                  RowDefinitions="Auto,Auto,*"
+                  IsVisible="{Binding ShowRequestEditorWorkspace}"
+                  RowDefinitions="Auto,Auto,Auto,*"
                   RowSpacing="{StaticResource Space.3}">
-            <Border Classes="ProjectWorkspaceTopActionBar">
-              <Grid ColumnDefinitions="Auto,*,Auto,Auto"
-                    ColumnSpacing="{StaticResource Space.3}">
-                <Border Classes="ProjectWorkspaceEditorTabs">
-                  <StackPanel Orientation="Horizontal"
-                              Spacing="0">
-                    <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonActive"
-                            Command="{Binding OpenQuickRequestWorkspaceCommand}">
-                      <StackPanel Orientation="Horizontal"
-                                  Spacing="{StaticResource Space.2}">
-                        <Path Width="16"
-                              Height="16"
-                              Stretch="Uniform"
-                              Fill="{DynamicResource Brush.Status.Success.Text}"
-                              Data="M4,12 L16,4 L13,11 L20,11 L8,20 L11,13 L4,13 Z" />
-                        <TextBlock Text="快捷请求" />
-                      </StackPanel>
-                    </Button>
-                    <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonGhost"
-                            Command="{Binding CreateNewQuickRequestDraftCommand}"
-                            Content="新建..." />
+              <Border Classes="ProjectWorkspaceTopActionBar">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto"
+                      ColumnSpacing="{StaticResource Space.3}">
+                  <Border Classes="ProjectWorkspaceEditorTabs">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="0">
+                      <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonActive"
+                              IsVisible="{Binding IsHttpInterfaceEditor}"
+                              Command="{Binding OpenHttpInterfaceWorkspaceCommand}"
+                              Content="HTTP 接口" />
+                      <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonGhost"
+                              IsVisible="{Binding IsQuickRequestEditor}"
+                              Command="{Binding OpenHttpInterfaceWorkspaceCommand}"
+                              Content="HTTP 接口" />
+
+                      <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonActive"
+                              IsVisible="{Binding IsQuickRequestEditor}"
+                              Command="{Binding OpenQuickRequestWorkspaceCommand}"
+                              Content="快捷请求" />
+                      <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonGhost"
+                              IsVisible="{Binding IsHttpInterfaceEditor}"
+                              Command="{Binding OpenQuickRequestWorkspaceCommand}"
+                              Content="快捷请求" />
+                    </StackPanel>
+                  </Border>
+
+                  <StackPanel Grid.Column="1"
+                              Spacing="2"
+                              VerticalAlignment="Center">
+                    <TextBlock Classes="SectionTitle"
+                               Text="{Binding CurrentEditorTitle}" />
+                    <TextBlock Classes="CaptionText"
+                               Text="{Binding CurrentEditorDescription}" />
                   </StackPanel>
-                </Border>
 
-                <ComboBox Grid.Column="2"
-                          Width="220"
-                          Classes="SectionInput ProjectWorkspaceToolbarComboBox"
-                          ItemsSource="{Binding EnvironmentPanel.Environments}"
-                          SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}">
-                  <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
-                      <TextBlock Text="{Binding DisplayName}" />
-                    </DataTemplate>
-                  </ComboBox.ItemTemplate>
-                </ComboBox>
+                  <ComboBox Grid.Column="2"
+                            Width="220"
+                            Classes="SectionInput ProjectWorkspaceToolbarComboBox"
+                            ItemsSource="{Binding EnvironmentPanel.Environments}"
+                            SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
+                        <TextBlock Text="{Binding DisplayName}" />
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
 
-                <Button Grid.Column="3"
-                        Classes="SecondaryButton ProjectWorkspaceToolbarButton"
-                        Content="环境设置"
-                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+                  <Button Grid.Column="3"
+                          Classes="SecondaryButton ProjectWorkspaceToolbarButton"
+                          Content="返回概览"
+                          Command="{Binding ReturnToInterfaceHomeCommand}" />
+
+                  <Button Grid.Column="4"
+                          Classes="SecondaryButton ProjectWorkspaceToolbarButton"
+                          Content="环境设置"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+                </Grid>
+              </Border>
+
+              <Border Grid.Row="1"
+                      Classes="ProjectWorkspaceMetaCard">
+                <Grid ColumnDefinitions="*">
+                  <Grid IsVisible="{Binding IsHttpInterfaceEditor}"
+                        ColumnDefinitions="240,*,220"
+                        ColumnSpacing="{StaticResource Space.3}">
+                    <TextBox Grid.Column="0"
+                             Classes="SectionInput"
+                             Watermark="接口目录，如 用户/资料"
+                             Text="{Binding CurrentInterfaceFolderPath}" />
+                    <TextBox Grid.Column="1"
+                             Classes="SectionInput"
+                             Watermark="接口名称"
+                             Text="{Binding ConfigTab.RequestName}" />
+                    <TextBox Grid.Column="2"
+                             Classes="SectionInput"
+                             Watermark="用例名称"
+                             Text="{Binding CurrentHttpCaseName}" />
+                  </Grid>
+
+                  <Grid IsVisible="{Binding IsQuickRequestEditor}"
+                        ColumnDefinitions="*">
+                    <TextBox Classes="SectionInput"
+                             Watermark="请求名称"
+                             Text="{Binding ConfigTab.RequestName}" />
+                  </Grid>
+                </Grid>
+              </Border>
+
+              <Grid Grid.Row="2"
+                    ColumnDefinitions="110,*"
+                    ColumnSpacing="{StaticResource Space.2}"
+                    IsVisible="{Binding IsQuickRequestEditor}">
+                <ComboBox Grid.Column="0"
+                          Classes="MethodSelector"
+                          ItemsSource="{Binding HttpMethods}"
+                          SelectedItem="{Binding SelectedMethod}" />
+                <Grid Grid.Column="1"
+                      ColumnDefinitions="*,Auto,Auto"
+                      ColumnSpacing="{StaticResource Space.2}">
+                  <TextBox Grid.Column="0"
+                           Classes="UrlInput"
+                           Watermark="{Binding CurrentEditorUrlWatermark}"
+                           Text="{Binding RequestUrl}" />
+                  <Button Grid.Column="1"
+                          Classes="SecondaryButton"
+                          Content="{Binding CurrentEditorPrimaryActionText}"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveCaseCommand}" />
+                  <Button Grid.Column="2"
+                          Classes="SendButton"
+                          Content="发送"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendRequestCommand}"
+                          IsEnabled="{Binding HasEnvironmentContext}" />
+                </Grid>
               </Grid>
-            </Border>
 
-            <Grid Grid.Row="1"
-                  ColumnDefinitions="110,*,Auto,Auto"
-                  ColumnSpacing="{StaticResource Space.2}">
-              <ComboBox Grid.Column="0"
-                        Classes="MethodSelector"
-                        ItemsSource="{Binding HttpMethods}"
-                        SelectedItem="{Binding SelectedMethod}" />
-              <TextBox Grid.Column="1"
-                       Classes="UrlInput"
-                       Watermark="输入完整地址或相对路径"
-                       Text="{Binding RequestUrl}" />
-              <Button Grid.Column="2"
-                      Classes="SecondaryButton"
-                      Content="保存请求"
-                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveCaseCommand}" />
-              <Button Grid.Column="3"
-                      Classes="SendButton"
-                      Content="发送"
-                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendRequestCommand}"
-                      IsEnabled="{Binding HasEnvironmentContext}" />
-            </Grid>
+              <Grid Grid.Row="2"
+                    ColumnDefinitions="110,260,*,Auto,Auto,Auto"
+                    ColumnSpacing="{StaticResource Space.2}"
+                    IsVisible="{Binding IsHttpInterfaceEditor}">
+                <ComboBox Grid.Column="0"
+                          Classes="MethodSelector"
+                          ItemsSource="{Binding HttpMethods}"
+                          SelectedItem="{Binding SelectedMethod}" />
+                <Border Grid.Column="1"
+                        Classes="BaseUrlPrefixCard">
+                  <TextBlock Classes="CaptionText"
+                             Text="{Binding CurrentEditorBaseUrlCaption}"
+                             TextWrapping="Wrap"
+                             VerticalAlignment="Center" />
+                </Border>
+                <TextBox Grid.Column="2"
+                         Classes="UrlInput"
+                         Watermark="{Binding CurrentEditorUrlWatermark}"
+                         Text="{Binding RequestUrl}" />
+                <Button Grid.Column="3"
+                        Classes="SecondaryButton"
+                        Content="{Binding CurrentEditorPrimaryActionText}"
+                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveCaseCommand}" />
+                <Button Grid.Column="4"
+                        Classes="SecondaryButton"
+                        Content="保存用例"
+                        Command="{Binding SaveHttpCaseCommand}" />
+                <Button Grid.Column="5"
+                        Classes="SendButton"
+                        Content="发送"
+                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendRequestCommand}"
+                        IsEnabled="{Binding HasEnvironmentContext}" />
+              </Grid>
 
-            <Grid Grid.Row="2"
-                  RowDefinitions="320,*"
-                  RowSpacing="{StaticResource Space.3}">
+              <Grid Grid.Row="3"
+                    RowDefinitions="320,*"
+                    RowSpacing="{StaticResource Space.3}">
               <Border Classes="PanelCard"
                       Padding="0">
                 <TabControl Classes="ConfigTabControl"

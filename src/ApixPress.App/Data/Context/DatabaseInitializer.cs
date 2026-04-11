@@ -41,18 +41,26 @@ public sealed class DatabaseInitializer : ISingletonDependency
         EnsureProjectWorkspaceTables(connection);
         EnsureColumn(connection, "api_documents", "project_id", "TEXT");
         EnsureColumn(connection, "request_cases", "project_id", "TEXT");
+        EnsureColumn(connection, "request_cases", "entry_type", "TEXT NOT NULL DEFAULT 'quick-request'");
+        EnsureColumn(connection, "request_cases", "folder_path", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(connection, "request_cases", "parent_id", "TEXT NOT NULL DEFAULT ''");
         EnsureColumn(connection, "request_history", "project_id", "TEXT");
         EnsureColumn(connection, "environment_variables", "environment_id", "TEXT");
         EnsureColumn(connection, "environment_variables", "environment_name", "TEXT NOT NULL DEFAULT ''");
 
         connection.Execute("DROP INDEX IF EXISTS ux_request_cases_group_name;");
+        connection.Execute("DROP INDEX IF EXISTS ux_request_cases_project_group_name;");
         connection.Execute("DROP INDEX IF EXISTS ux_environment_variables_name_key;");
-        connection.Execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_request_cases_project_group_name ON request_cases(project_id, group_name, name);");
+        connection.Execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_request_cases_project_entry_scope_name ON request_cases(project_id, entry_type, group_name, folder_path, parent_id, name);");
         connection.Execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_environment_variables_environment_key ON environment_variables(environment_id, key);");
         connection.Execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_projects_name ON projects(name);");
         connection.Execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_projects_default ON projects(is_default) WHERE is_default = 1;");
         connection.Execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_project_environments_project_name ON project_environments(project_id, name);");
         connection.Execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_project_environments_project_active ON project_environments(project_id, is_active) WHERE is_active = 1;");
+
+        connection.Execute("update request_cases set entry_type = 'quick-request' where ifnull(entry_type, '') = ''");
+        connection.Execute("update request_cases set folder_path = '' where folder_path is null");
+        connection.Execute("update request_cases set parent_id = '' where parent_id is null");
 
         var hasLegacyData = CountRows(connection, "api_documents") > 0
                             || CountRows(connection, "request_cases") > 0
