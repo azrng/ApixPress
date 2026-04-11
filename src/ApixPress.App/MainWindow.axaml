@@ -24,7 +24,7 @@
                   x:DataType="vm:ExplorerItemViewModel">
       <StackPanel Spacing="2">
         <Grid ColumnDefinitions="8,*"
-              ColumnSpacing="{StaticResource Space.1}">
+              ColumnSpacing="2">
           <ToggleButton x:Name="ExplorerExpandToggle"
                         Grid.Column="0"
                         Classes="ProjectSidebarTreeExpanderToggle"
@@ -52,7 +52,7 @@
                   CommandParameter="{Binding}">
             <StackPanel Spacing="2">
               <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-                    ColumnSpacing="{StaticResource Space.1}">
+                    ColumnSpacing="2">
                 <TextBlock Grid.Column="0"
                            Classes="WorkspaceTreeNodeGlyph"
                            FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
@@ -64,7 +64,7 @@
                            Text="{Binding NodeGlyph}"
                            IsVisible="{Binding IsHttpCaseNode}" />
                 <u:Badge Grid.Column="1"
-                         Margin="0,0,4,0"
+                         Margin="0,0,2,0"
                          Header="{Binding MethodBadgeText}"
                          IsVisible="{Binding ShowMethodBadge}"
                          iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />

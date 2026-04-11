@@ -1424,7 +1424,7 @@
   <Style Selector="Button.WorkspaceTreeNodeButton">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Padding" Value="2,2" />
+    <Setter Property="Padding" Value="0,2" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
@@ -1439,7 +1439,7 @@
     <Setter Property="FontSize" Value="13" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="Margin" Value="0,0,3,0" />
+    <Setter Property="Margin" Value="0,0,1,0" />
   </Style>
 
   <Style Selector="TextBlock.WorkspaceTreeCaseGlyph">
