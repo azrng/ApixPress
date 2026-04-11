@@ -993,7 +993,7 @@
 
   <Style Selector="StackPanel.ProjectSidebarCatalogContent">
     <Setter Property="Spacing" Value="{StaticResource Space.2}" />
-    <Setter Property="Margin" Value="14,2,0,0" />
+    <Setter Property="Margin" Value="6,2,0,0" />
   </Style>
 
   <Style Selector="TextBlock.ProjectSidebarCatalogChevron">
