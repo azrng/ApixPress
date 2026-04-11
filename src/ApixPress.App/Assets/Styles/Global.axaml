@@ -910,6 +910,14 @@
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
+  <Style Selector="Border.ProjectWorkspaceTreeSection">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
   <Style Selector="Border.ProjectWorkspaceModuleCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
@@ -1116,11 +1124,11 @@
   </Style>
 
   <Style Selector="Border.WorkspaceTreeNodeCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="10,8" />
   </Style>
 
   <Style Selector="Border.EnvironmentSummaryPill">
@@ -1152,6 +1160,18 @@
 
   <Style Selector="Border.ResponsePanelCard">
     <Setter Property="MinHeight" Value="320" />
+  </Style>
+
+  <Style Selector="Border.ProjectWorkspaceSettingsCard">
+    <Setter Property="MinHeight" Value="320" />
+  </Style>
+
+  <Style Selector="Border.ProjectWorkspaceSettingsHeader">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="CornerRadius" Value="12,12,0,0" />
   </Style>
 
   <Style Selector="Border.ProjectSettingsInfoCard">
