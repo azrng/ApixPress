@@ -448,13 +448,14 @@
                                       CommandParameter="{Binding}">
                                 <StackPanel Spacing="2">
                                   <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-                                        ColumnSpacing="{StaticResource Space.2}">
+                                        ColumnSpacing="{StaticResource Space.1}">
                                     <TextBlock Grid.Column="0"
                                                Classes="WorkspaceTreeNodeGlyph"
                                                FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                                Text="{Binding NodeGlyph}"
                                                IsVisible="{Binding ShowLeadingGlyph}" />
                                     <u:Badge Grid.Column="1"
+                                             Margin="0,0,4,0"
                                              Header="{Binding MethodBadgeText}"
                                              IsVisible="{Binding ShowMethodBadge}"
                                              iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
@@ -474,6 +475,32 @@
                             </TreeDataTemplate>
                           </TreeView.ItemTemplate>
                         </TreeView>
+                      </StackPanel>
+
+                      <StackPanel Spacing="{StaticResource Space.2}">
+                        <Grid ColumnDefinitions="Auto,*"
+                              ColumnSpacing="{StaticResource Space.2}">
+                          <TextBlock Grid.Column="0"
+                                     Classes="WorkspaceTreeNodeGlyph"
+                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                     Text="&#xEC1A;" />
+                          <TextBlock Grid.Column="1"
+                                     Classes="ProjectSidebarSectionTitle"
+                                     Text="数据模型" />
+                        </Grid>
+                      </StackPanel>
+
+                      <StackPanel Spacing="{StaticResource Space.2}">
+                        <Grid ColumnDefinitions="Auto,*"
+                              ColumnSpacing="{StaticResource Space.2}">
+                          <TextBlock Grid.Column="0"
+                                     Classes="WorkspaceTreeNodeGlyph"
+                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                     Text="&#xE8FD;" />
+                          <TextBlock Grid.Column="1"
+                                     Classes="ProjectSidebarSectionTitle"
+                                     Text="组件库" />
+                        </Grid>
                       </StackPanel>
 
                       <StackPanel Spacing="{StaticResource Space.2}">
@@ -504,13 +531,14 @@
                                       CommandParameter="{Binding}">
                                 <StackPanel Spacing="2">
                                   <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-                                        ColumnSpacing="{StaticResource Space.2}">
+                                        ColumnSpacing="{StaticResource Space.1}">
                                     <TextBlock Grid.Column="0"
                                                Classes="WorkspaceTreeNodeGlyph"
                                                FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                                Text="{Binding NodeGlyph}"
                                                IsVisible="{Binding ShowLeadingGlyph}" />
                                     <u:Badge Grid.Column="1"
+                                             Margin="0,0,4,0"
                                              Header="{Binding MethodBadgeText}"
                                              IsVisible="{Binding ShowMethodBadge}"
                                              iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
