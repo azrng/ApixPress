@@ -400,32 +400,20 @@
                 <Grid IsVisible="{Binding IsInterfaceManagementSection}"
                       RowDefinitions="Auto,Auto,*"
                       RowSpacing="{StaticResource Space.3}">
-                  <Grid ColumnDefinitions="*,124"
-                        ColumnSpacing="{StaticResource Space.2}">
+                  <Grid ColumnDefinitions="*">
                     <StackPanel Spacing="4">
                       <TextBlock Classes="SectionTitle"
                                  Text="接口管理" />
                     </StackPanel>
-                    <ComboBox Grid.Column="1"
-                              SelectedIndex="0"
-                              Classes="ProjectSidebarEnvCombo">
-                      <ComboBoxItem Content="main" />
-                    </ComboBox>
                   </Grid>
 
                   <Grid Grid.Row="1"
-                        ColumnDefinitions="*,Auto,Auto"
+                        ColumnDefinitions="*,Auto"
                         ColumnSpacing="{StaticResource Space.2}">
                     <TextBox Grid.Column="0"
                              Classes="ProjectSidebarSearchBox"
                              Watermark="搜索" />
                     <Button Grid.Column="1"
-                            Classes="ProjectSidebarToolButton"
-                            Command="{Binding OpenQuickRequestWorkspaceCommand}">
-                      <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                 Text="&#xE71C;" />
-                    </Button>
-                    <Button Grid.Column="2"
                             Classes="ProjectSidebarAddButton"
                             Command="{Binding OpenHttpInterfaceWorkspaceCommand}">
                       <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
