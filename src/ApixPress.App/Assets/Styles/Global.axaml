@@ -976,9 +976,11 @@
   <Style Selector="ToggleButton.ProjectSidebarCatalogToggleButton">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="10,7" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="MinHeight" Value="34" />
   </Style>
 
   <Style Selector="ToggleButton.ProjectSidebarCatalogToggleButton:pointerover">
@@ -991,7 +993,7 @@
 
   <Style Selector="StackPanel.ProjectSidebarCatalogContent">
     <Setter Property="Spacing" Value="{StaticResource Space.2}" />
-    <Setter Property="Margin" Value="18,2,0,0" />
+    <Setter Property="Margin" Value="14,2,0,0" />
   </Style>
 
   <Style Selector="TextBlock.ProjectSidebarCatalogChevron">
@@ -1007,14 +1009,21 @@
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
+  <Style Selector="TextBlock.ProjectSidebarCatalogMeta">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,0,6,0" />
+  </Style>
+
   <Style Selector="Button.ProjectSidebarMiniActionButton">
-    <Setter Property="Width" Value="22" />
-    <Setter Property="Height" Value="22" />
+    <Setter Property="Width" Value="20" />
+    <Setter Property="Height" Value="20" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
   </Style>
@@ -1220,7 +1229,7 @@
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="Padding" Value="0,10" />
+    <Setter Property="Padding" Value="0,9" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
   </Style>
 
