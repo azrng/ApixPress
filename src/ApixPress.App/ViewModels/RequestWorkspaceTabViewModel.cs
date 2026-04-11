@@ -71,7 +71,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
             ? "快捷请求不固定 BaseUrl，可直接输入完整地址或自由组合变量。"
             : "从下方卡片中选择要创建的工作内容。";
     public string PrimaryActionText => IsHttpInterfaceTab ? "保存接口" : "保存";
-    public string UrlWatermark => IsHttpInterfaceTab ? "输入接口相对路径，例如 /users/{id}" : "输入完整地址或相对路径";
+    public string UrlWatermark => IsHttpInterfaceTab ? "接口路径，如 /起始" : "输入完整地址或相对路径";
 
     public void ConfigureAsLanding()
     {

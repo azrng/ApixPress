@@ -128,10 +128,34 @@ public partial class ProjectTabViewModel : ViewModelBase
     public string CurrentEditorUrlWatermark => ActiveWorkspaceTab?.UrlWatermark ?? "输入请求地址";
     public bool ShowEditorBaseUrlPrefix => IsHttpInterfaceEditor;
     public string CurrentEditorBaseUrlPrefix => IsHttpInterfaceEditor ? EnvironmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty : string.Empty;
+    public string CurrentHttpInterfaceBaseUrl => IsHttpInterfaceEditor ? EnvironmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty : string.Empty;
     public bool ShowSaveHttpCaseAction => IsHttpInterfaceEditor;
     public string CurrentEditorBaseUrlCaption => IsHttpInterfaceEditor
         ? (string.IsNullOrWhiteSpace(EnvironmentPanel.SelectedEnvironment?.BaseUrl) ? "当前环境未配置 BaseUrl" : EnvironmentPanel.SelectedEnvironment.BaseUrl)
         : "快捷请求不固定 BaseUrl";
+    public string CurrentResponseValidationResultText
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(ResponseSection.StatusText))
+            {
+                return "等待响应";
+            }
+
+            if (string.Equals(ResponseSection.StatusText, "请求失败", StringComparison.OrdinalIgnoreCase))
+            {
+                return "请求失败";
+            }
+
+            if (ResponseSection.StatusText.StartsWith("HTTP ", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(ResponseSection.StatusText["HTTP ".Length..], out var code))
+            {
+                return code is >= 200 and < 300 ? $"成功 ({code})" : $"HTTP {code}";
+            }
+
+            return ResponseSection.StatusText;
+        }
+    }
     public string SelectedMethod
     {
         get => ActiveWorkspaceTab?.SelectedMethod ?? "GET";
@@ -217,6 +241,9 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private string quickRequestSaveDescription = string.Empty;
+
+    [ObservableProperty]
+    private bool responseValidationEnabled = true;
 
     public async Task InitializeAsync()
     {
@@ -691,18 +718,19 @@ public partial class ProjectTabViewModel : ViewModelBase
             .Where(item => string.Equals(item.SourceCase.EntryType, RequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(item => item.UpdatedAt)
             .ToList();
+        var folderCounts = BuildFolderDescendantCounts(httpInterfaces);
 
         var moduleNode = new ExplorerItemViewModel
         {
             Title = "默认模块",
-            Subtitle = "接口目录",
+            Subtitle = string.Empty,
             IsGroup = true,
             NodeType = "module"
         };
         var interfaceRoot = new ExplorerItemViewModel
         {
             Title = "接口",
-            Subtitle = httpInterfaces.Count == 0 ? "暂无已保存接口" : $"共 {httpInterfaces.Count} 个接口",
+            Subtitle = string.Empty,
             IsGroup = true,
             NodeType = "interface-root"
         };
@@ -725,8 +753,8 @@ public partial class ProjectTabViewModel : ViewModelBase
                     {
                         folderNode = new ExplorerItemViewModel
                         {
-                            Title = segment,
-                            Subtitle = "文件夹",
+                            Title = BuildFolderTitle(segment, currentPath, folderCounts),
+                            Subtitle = string.Empty,
                             IsGroup = true,
                             NodeType = "folder"
                         };
@@ -740,8 +768,8 @@ public partial class ProjectTabViewModel : ViewModelBase
 
             var interfaceNode = new ExplorerItemViewModel
             {
-                Title = item.Name,
-                Subtitle = $"{item.SourceCase.RequestSnapshot.Method} {item.SourceCase.RequestSnapshot.Url}",
+                Title = BuildInterfaceTitle(item.Name, httpCases.TryGetValue(item.Id, out var interfaceCases) ? interfaceCases.Count : 0),
+                Subtitle = string.Empty,
                 NodeType = RequestEntryTypes.HttpInterface,
                 CanLoad = true,
                 SourceCase = item.SourceCase
@@ -755,7 +783,7 @@ public partial class ProjectTabViewModel : ViewModelBase
                     interfaceNode.Children.Add(new ExplorerItemViewModel
                     {
                         Title = caseItem.Name,
-                        Subtitle = $"用例 · {caseItem.UpdatedAtText}",
+                        Subtitle = string.Empty,
                         NodeType = RequestEntryTypes.HttpCase,
                         CanLoad = true,
                         SourceCase = caseItem.SourceCase
@@ -928,6 +956,41 @@ public partial class ProjectTabViewModel : ViewModelBase
             normalized.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
     }
 
+    private static Dictionary<string, int> BuildFolderDescendantCounts(IReadOnlyCollection<RequestCaseItemViewModel> httpInterfaces)
+    {
+        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var item in httpInterfaces)
+        {
+            var folderPath = NormalizeFolderPath(item.SourceCase.FolderPath);
+            if (string.IsNullOrWhiteSpace(folderPath))
+            {
+                continue;
+            }
+
+            var segments = folderPath.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var currentPath = string.Empty;
+            foreach (var segment in segments)
+            {
+                currentPath = string.IsNullOrWhiteSpace(currentPath) ? segment : $"{currentPath}/{segment}";
+                counts[currentPath] = counts.TryGetValue(currentPath, out var count) ? count + 1 : 1;
+            }
+        }
+
+        return counts;
+    }
+
+    private static string BuildFolderTitle(string segment, string path, IReadOnlyDictionary<string, int> folderCounts)
+    {
+        return folderCounts.TryGetValue(path, out var count) && count > 0
+            ? $"{segment} ({count})"
+            : segment;
+    }
+
+    private static string BuildInterfaceTitle(string name, int caseCount)
+    {
+        return caseCount > 0 ? $"{name} ({caseCount})" : name;
+    }
+
     private void OnSelectedEnvironmentChanged(ProjectEnvironmentItemViewModel? environment)
     {
         StatusMessage = environment is null
@@ -1058,8 +1121,10 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentEditorUrlWatermark));
         OnPropertyChanged(nameof(ShowEditorBaseUrlPrefix));
         OnPropertyChanged(nameof(CurrentEditorBaseUrlPrefix));
+        OnPropertyChanged(nameof(CurrentHttpInterfaceBaseUrl));
         OnPropertyChanged(nameof(ShowSaveHttpCaseAction));
         OnPropertyChanged(nameof(CurrentEditorBaseUrlCaption));
+        OnPropertyChanged(nameof(CurrentResponseValidationResultText));
         ShellStateChanged?.Invoke(this);
     }
 }

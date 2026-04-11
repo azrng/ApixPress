@@ -446,24 +446,35 @@
                             <TreeView.ItemTemplate>
                               <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
                                                 ItemsSource="{Binding Children}">
-                                <Border Classes="WorkspaceTreeNodeCard">
-                                  <Grid ColumnDefinitions="*,Auto"
-                                        ColumnSpacing="{StaticResource Space.2}">
-                                    <StackPanel Spacing="2">
-                                      <TextBlock Text="{Binding Title}"
+                                <Button Classes="WorkspaceTreeNodeButton"
+                                        IsHitTestVisible="{Binding CanLoad}"
+                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
+                                        CommandParameter="{Binding}">
+                                  <StackPanel Spacing="2">
+                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+                                          ColumnSpacing="{StaticResource Space.2}">
+                                      <TextBlock Grid.Column="0"
+                                                 Classes="WorkspaceTreeNodeGlyph"
+                                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                                 Text="{Binding NodeGlyph}"
+                                                 IsVisible="{Binding ShowLeadingGlyph}" />
+                                      <u:Badge Grid.Column="1"
+                                               Header="{Binding MethodBadgeText}"
+                                               IsVisible="{Binding ShowMethodBadge}"
+                                               iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
+                                      <TextBlock Grid.Column="2"
+                                                 Text="{Binding Title}"
+                                                 VerticalAlignment="Center"
                                                  TextWrapping="Wrap" />
-                                      <TextBlock Classes="CaptionText"
-                                                 Text="{Binding Subtitle}"
-                                                 TextWrapping="Wrap" />
-                                    </StackPanel>
-                                    <Button Grid.Column="1"
-                                            Classes="TextButton"
-                                            Content="打开"
-                                            IsVisible="{Binding CanLoad}"
-                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
-                                            CommandParameter="{Binding}" />
-                                  </Grid>
-                                </Border>
+                                      <Border Grid.Column="3"
+                                              Classes="WorkspaceTreeStatusDot"
+                                              IsVisible="{Binding ShowTrailingDot}" />
+                                    </Grid>
+                                    <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
+                                               Text="{Binding Subtitle}"
+                                               IsVisible="{Binding HasSubtitle}" />
+                                  </StackPanel>
+                                </Button>
                               </TreeDataTemplate>
                             </TreeView.ItemTemplate>
                           </TreeView>
@@ -483,24 +494,35 @@
                             <TreeView.ItemTemplate>
                               <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
                                                 ItemsSource="{Binding Children}">
-                                <Border Classes="WorkspaceTreeNodeCard">
-                                  <Grid ColumnDefinitions="*,Auto"
-                                        ColumnSpacing="{StaticResource Space.2}">
-                                    <StackPanel Spacing="2">
-                                      <TextBlock Text="{Binding Title}"
+                                <Button Classes="WorkspaceTreeNodeButton"
+                                        IsHitTestVisible="{Binding CanLoad}"
+                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
+                                        CommandParameter="{Binding}">
+                                  <StackPanel Spacing="2">
+                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+                                          ColumnSpacing="{StaticResource Space.2}">
+                                      <TextBlock Grid.Column="0"
+                                                 Classes="WorkspaceTreeNodeGlyph"
+                                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                                 Text="{Binding NodeGlyph}"
+                                                 IsVisible="{Binding ShowLeadingGlyph}" />
+                                      <u:Badge Grid.Column="1"
+                                               Header="{Binding MethodBadgeText}"
+                                               IsVisible="{Binding ShowMethodBadge}"
+                                               iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
+                                      <TextBlock Grid.Column="2"
+                                                 Text="{Binding Title}"
+                                                 VerticalAlignment="Center"
                                                  TextWrapping="Wrap" />
-                                      <TextBlock Classes="CaptionText"
-                                                 Text="{Binding Subtitle}"
-                                                 TextWrapping="Wrap" />
-                                    </StackPanel>
-                                    <Button Grid.Column="1"
-                                            Classes="TextButton"
-                                            Content="打开"
-                                            IsVisible="{Binding CanLoad}"
-                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
-                                            CommandParameter="{Binding}" />
-                                  </Grid>
-                                </Border>
+                                      <Border Grid.Column="3"
+                                              Classes="WorkspaceTreeStatusDot"
+                                              IsVisible="{Binding ShowTrailingDot}" />
+                                    </Grid>
+                                    <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
+                                               Text="{Binding Subtitle}"
+                                               IsVisible="{Binding HasSubtitle}" />
+                                  </StackPanel>
+                                </Button>
                               </TreeDataTemplate>
                             </TreeView.ItemTemplate>
                           </TreeView>
@@ -797,7 +819,7 @@
 
             <Grid Grid.Column="2"
                   IsVisible="{Binding ShowRequestEditorWorkspace}"
-                  RowDefinitions="Auto,Auto,Auto,*"
+                  RowDefinitions="Auto,Auto,*"
                   RowSpacing="{StaticResource Space.3}">
               <Border Classes="ProjectWorkspaceTopActionBar">
                 <Grid ColumnDefinitions="Auto,*,Auto,Auto"
@@ -887,27 +909,7 @@
                 </Grid>
               </Border>
 
-              <Border Grid.Row="1"
-                      Classes="ProjectWorkspaceMetaCard"
-                      IsVisible="{Binding IsHttpInterfaceEditor}">
-                <Grid ColumnDefinitions="240,*,220"
-                      ColumnSpacing="{StaticResource Space.3}">
-                  <TextBox Grid.Column="0"
-                           Classes="SectionInput"
-                           Watermark="接口目录，如 用户/资料"
-                           Text="{Binding CurrentInterfaceFolderPath}" />
-                  <TextBox Grid.Column="1"
-                           Classes="SectionInput"
-                           Watermark="接口名称"
-                           Text="{Binding ConfigTab.RequestName}" />
-                  <TextBox Grid.Column="2"
-                           Classes="SectionInput"
-                           Watermark="用例名称"
-                           Text="{Binding CurrentHttpCaseName}" />
-                </Grid>
-              </Border>
-
-              <Grid Grid.Row="2"
+              <Grid Grid.Row="1"
                     ColumnDefinitions="110,*,Auto,Auto"
                     ColumnSpacing="{StaticResource Space.2}"
                     IsVisible="{Binding IsQuickRequestEditor}">
@@ -929,41 +931,40 @@
                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveCaseCommand}" />
               </Grid>
 
-              <Grid Grid.Row="2"
-                    ColumnDefinitions="110,260,*,Auto,Auto,Auto"
+              <Grid Grid.Row="1"
+                    ColumnDefinitions="*,Auto,Auto"
                     ColumnSpacing="{StaticResource Space.2}"
                     IsVisible="{Binding IsHttpInterfaceEditor}">
-                <ComboBox Grid.Column="0"
-                          Classes="MethodSelector"
-                          ItemsSource="{Binding HttpMethods}"
-                          SelectedItem="{Binding SelectedMethod}" />
-                <Border Grid.Column="1"
-                        Classes="BaseUrlPrefixCard">
-                  <TextBlock Classes="CaptionText"
-                             Text="{Binding CurrentEditorBaseUrlCaption}"
-                             TextWrapping="Wrap"
-                             VerticalAlignment="Center" />
+                <Border Grid.Column="0"
+                        Classes="HttpRequestUrlShell">
+                  <Grid ColumnDefinitions="88,Auto,*"
+                        ColumnSpacing="{StaticResource Space.2}">
+                    <ComboBox Grid.Column="0"
+                              Classes="HttpMethodSelector"
+                              ItemsSource="{Binding HttpMethods}"
+                              SelectedItem="{Binding SelectedMethod}" />
+                    <TextBlock Grid.Column="1"
+                               Classes="HttpBaseUrlPrefixText"
+                               Text="{Binding CurrentHttpInterfaceBaseUrl}"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBox Grid.Column="2"
+                             Classes="HttpRequestPathInput"
+                             Watermark="{Binding CurrentEditorUrlWatermark}"
+                             Text="{Binding RequestUrl}" />
+                  </Grid>
                 </Border>
-                <TextBox Grid.Column="2"
-                         Classes="UrlInput"
-                         Watermark="{Binding CurrentEditorUrlWatermark}"
-                         Text="{Binding RequestUrl}" />
-                <Button Grid.Column="3"
-                        Classes="SecondaryButton"
-                        Content="{Binding CurrentEditorPrimaryActionText}"
-                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveCaseCommand}" />
-                <Button Grid.Column="4"
-                        Classes="SecondaryButton"
-                        Content="保存用例"
-                        Command="{Binding SaveHttpCaseCommand}" />
-                <Button Grid.Column="5"
-                        Classes="SendButton"
+                <Button Grid.Column="1"
+                        Classes="HttpSendButton"
                         Content="发送"
-                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendRequestCommand}"
-                        IsEnabled="{Binding HasEnvironmentContext}" />
+                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendRequestCommand}" />
+                <Button Grid.Column="2"
+                        Classes="HttpSaveButton"
+                        Content="保存"
+                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveCaseCommand}" />
               </Grid>
 
-              <Grid Grid.Row="3"
+              <Grid Grid.Row="2"
                     RowDefinitions="Auto,*"
                     RowSpacing="{StaticResource Space.3}"
                     IsVisible="{Binding IsQuickRequestEditor}">
@@ -1258,20 +1259,29 @@
                 </Border>
               </Grid>
 
-              <Grid Grid.Row="3"
-                    ColumnDefinitions="*,360"
-                    ColumnSpacing="{StaticResource Space.3}"
+              <Grid Grid.Row="2"
+                    RowDefinitions="3*,2*"
+                    RowSpacing="{StaticResource Space.2}"
                     IsVisible="{Binding IsHttpInterfaceEditor}">
-                <Border Classes="PanelCard ResponsePanelCard">
+                <Border Grid.Row="1"
+                        Classes="PanelCard HttpResponseCard">
                   <DockPanel>
                     <Grid DockPanel.Dock="Top"
-                          ColumnDefinitions="*,Auto"
+                          ColumnDefinitions="*,Auto,Auto,Auto"
+                          ColumnSpacing="{StaticResource Space.2}"
                           Margin="0,0,0,12">
                       <TextBlock Classes="SectionTitle"
-                                 Text="响应结果" />
+                                 Text="返回响应" />
                       <TextBlock Grid.Column="1"
                                  Classes="CaptionText"
-                                 Text="{Binding CurrentEnvironmentLabel}"
+                                 Text="校验响应"
+                                 VerticalAlignment="Center" />
+                      <ToggleSwitch Grid.Column="2"
+                                    IsChecked="{Binding ResponseValidationEnabled}"
+                                    VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="3"
+                                 Classes="CaptionText"
+                                 Text="{Binding CurrentResponseValidationResultText}"
                                  VerticalAlignment="Center" />
                     </Grid>
 
@@ -1279,8 +1289,11 @@
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 Spacing="{StaticResource Space.2}">
+                      <TextBlock Classes="HttpResponsePlaceholderIcon"
+                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                 Text="&#xE7C3;" />
                       <TextBlock Classes="SubtleText"
-                                 Text="发送请求后在这里查看响应内容" />
+                                 Text="点击“发送”按钮获取返回结果" />
                     </StackPanel>
 
                     <Grid IsVisible="{Binding ResponseSection.HasResponse}"
@@ -1327,57 +1340,63 @@
                   </DockPanel>
                 </Border>
 
-                <Border Grid.Column="1"
+                <Border Grid.Row="0"
                         Classes="PanelCard ProjectWorkspaceSettingsCard"
                         Padding="0">
-                  <Grid RowDefinitions="Auto,*">
-                    <Border Classes="ProjectWorkspaceSettingsHeader">
-                      <StackPanel Spacing="2">
-                        <TextBlock Classes="SectionTitle"
-                                   Text="请求设置" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="参数、Body 与 Header 已移动到右侧设置栏。" />
-                      </StackPanel>
-                    </Border>
-
-                    <TabControl Grid.Row="1"
-                                Classes="ConfigTabControl"
+                  <Grid RowDefinitions="*">
+                    <TabControl Grid.Row="0"
+                                Classes="ConfigTabControl HttpRequestTabs"
                                 SelectedIndex="{Binding ConfigTab.SelectedTabIndex}">
                       <TabItem Header="Params">
                         <DockPanel Margin="{StaticResource Pad.3}">
                           <Border DockPanel.Dock="Top"
-                                  Classes="ParameterHeader">
-                            <Grid ColumnDefinitions="*,*,Auto">
+                                  Classes="HttpRequestTableHeader">
+                            <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,Auto"
+                                  ColumnSpacing="{StaticResource Space.3}">
                               <TextBlock Grid.Column="0"
                                          Classes="CaptionText"
                                          Text="参数名" />
                               <TextBlock Grid.Column="1"
                                          Classes="CaptionText"
                                          Text="参数值" />
+                              <TextBlock Grid.Column="2"
+                                         Classes="CaptionText"
+                                         Text="类型" />
+                              <TextBlock Grid.Column="3"
+                                         Classes="CaptionText"
+                                         Text="说明" />
                             </Grid>
                           </Border>
                           <Button DockPanel.Dock="Bottom"
                                   Classes="AddButton"
                                   HorizontalAlignment="Left"
                                   Margin="0,8,0,0"
-                                  Content="+ 添加参数"
+                                  Content="添加参数"
                                   Command="{Binding ConfigTab.AddQueryParameterCommand}" />
                           <ScrollViewer>
                             <ItemsControl ItemsSource="{Binding ConfigTab.QueryParameters}">
                               <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
-                                  <Border Classes="ParameterRow">
-                                    <Grid ColumnDefinitions="*,*,Auto"
-                                          ColumnSpacing="{StaticResource Space.2}">
+                                  <Border Classes="ParameterRow HttpRequestParameterRow">
+                                    <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,Auto"
+                                          ColumnSpacing="{StaticResource Space.3}">
                                       <TextBox Grid.Column="0"
-                                               Classes="ParameterInput"
+                                               Classes="ParameterInput HttpTableInput"
                                                Text="{Binding Name}"
-                                               Watermark="参数名" />
+                                               Watermark="添加参数" />
                                       <TextBox Grid.Column="1"
-                                               Classes="ParameterInput"
+                                               Classes="ParameterInput HttpTableInput"
                                                Text="{Binding Value}"
                                                Watermark="参数值" />
-                                      <u:IconButton Grid.Column="2"
+                                      <TextBlock Grid.Column="2"
+                                                 Classes="CaptionText"
+                                                 Text="String"
+                                                 VerticalAlignment="Center" />
+                                      <TextBox Grid.Column="3"
+                                               Classes="ParameterInput HttpTableInput"
+                                               Text="{Binding Description}"
+                                               Watermark="说明" />
+                                      <u:IconButton Grid.Column="4"
                                                     Classes="Danger"
                                                     Theme="{DynamicResource BorderlessIconButton}"
                                                     Icon="{StaticResource SemiIconDelete}"
@@ -1412,43 +1431,58 @@
                             </u:SelectionList.ItemTemplate>
                           </u:SelectionList>
 
-                          <DockPanel IsVisible="{Binding ConfigTab.IsBodyModeFormData}">
-                            <Border DockPanel.Dock="Top"
-                                    Classes="ParameterHeader">
-                              <Grid ColumnDefinitions="2*,3*,Auto">
-                                <TextBlock Grid.Column="0"
-                                           Classes="CaptionText"
-                                           Text="字段名" />
-                                <TextBlock Grid.Column="1"
-                                           Classes="CaptionText"
-                                           Text="字段值" />
-                              </Grid>
-                            </Border>
-                            <Button DockPanel.Dock="Bottom"
-                                    Classes="AddButton"
-                                    HorizontalAlignment="Left"
-                                    Margin="0,8,0,0"
-                                    Content="+ 添加字段"
-                                    Command="{Binding ConfigTab.AddFormFieldCommand}" />
-                            <ScrollViewer>
-                              <ItemsControl ItemsSource="{Binding ConfigTab.FormFields}">
-                                <ItemsControl.ItemTemplate>
-                                  <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
-                                    <Border Classes="ParameterRow">
-                                      <Grid ColumnDefinitions="2*,3*,Auto"
-                                            ColumnSpacing="{StaticResource Space.2}">
-                                        <TextBox Grid.Column="0"
-                                                 Classes="ParameterInput"
-                                                 Text="{Binding Name}"
-                                                 Watermark="字段名" />
-                                        <TextBox Grid.Column="1"
-                                                 Classes="ParameterInput"
-                                                 Text="{Binding Value}"
-                                                 Watermark="字段值" />
-                                        <u:IconButton Grid.Column="2"
-                                                      Classes="Danger"
-                                                      Theme="{DynamicResource BorderlessIconButton}"
-                                                      Icon="{StaticResource SemiIconDelete}"
+                        <DockPanel IsVisible="{Binding ConfigTab.IsBodyModeFormData}">
+                          <Border DockPanel.Dock="Top"
+                                  Classes="HttpRequestTableHeader">
+                            <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,Auto"
+                                  ColumnSpacing="{StaticResource Space.3}">
+                              <TextBlock Grid.Column="0"
+                                         Classes="CaptionText"
+                                         Text="字段名" />
+                              <TextBlock Grid.Column="1"
+                                         Classes="CaptionText"
+                                         Text="字段值" />
+                              <TextBlock Grid.Column="2"
+                                         Classes="CaptionText"
+                                         Text="类型" />
+                              <TextBlock Grid.Column="3"
+                                         Classes="CaptionText"
+                                         Text="说明" />
+                            </Grid>
+                          </Border>
+                          <Button DockPanel.Dock="Bottom"
+                                  Classes="AddButton"
+                                  HorizontalAlignment="Left"
+                                  Margin="0,8,0,0"
+                                  Content="添加字段"
+                                  Command="{Binding ConfigTab.AddFormFieldCommand}" />
+                          <ScrollViewer>
+                            <ItemsControl ItemsSource="{Binding ConfigTab.FormFields}">
+                              <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
+                                  <Border Classes="ParameterRow HttpRequestParameterRow">
+                                    <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,Auto"
+                                          ColumnSpacing="{StaticResource Space.3}">
+                                      <TextBox Grid.Column="0"
+                                               Classes="ParameterInput HttpTableInput"
+                                               Text="{Binding Name}"
+                                               Watermark="字段名" />
+                                      <TextBox Grid.Column="1"
+                                               Classes="ParameterInput HttpTableInput"
+                                               Text="{Binding Value}"
+                                               Watermark="字段值" />
+                                      <TextBlock Grid.Column="2"
+                                                 Classes="CaptionText"
+                                                 Text="String"
+                                                 VerticalAlignment="Center" />
+                                      <TextBox Grid.Column="3"
+                                               Classes="ParameterInput HttpTableInput"
+                                               Text="{Binding Description}"
+                                               Watermark="说明" />
+                                      <u:IconButton Grid.Column="4"
+                                                    Classes="Danger"
+                                                    Theme="{DynamicResource BorderlessIconButton}"
+                                                    Icon="{StaticResource SemiIconDelete}"
                                                       Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
                                                       CommandParameter="{Binding}" />
                                       </Grid>
@@ -1476,38 +1510,53 @@
                       <TabItem Header="Headers">
                         <DockPanel Margin="{StaticResource Pad.3}">
                           <Border DockPanel.Dock="Top"
-                                  Classes="ParameterHeader">
-                            <Grid ColumnDefinitions="*,*,Auto">
+                                  Classes="HttpRequestTableHeader">
+                            <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,Auto"
+                                  ColumnSpacing="{StaticResource Space.3}">
                               <TextBlock Grid.Column="0"
                                          Classes="CaptionText"
                                          Text="Header 名" />
                               <TextBlock Grid.Column="1"
                                          Classes="CaptionText"
                                          Text="Header 值" />
+                              <TextBlock Grid.Column="2"
+                                         Classes="CaptionText"
+                                         Text="类型" />
+                              <TextBlock Grid.Column="3"
+                                         Classes="CaptionText"
+                                         Text="说明" />
                             </Grid>
                           </Border>
                           <Button DockPanel.Dock="Bottom"
                                   Classes="AddButton"
                                   HorizontalAlignment="Left"
                                   Margin="0,8,0,0"
-                                  Content="+ 添加 Header"
+                                  Content="添加 Header"
                                   Command="{Binding ConfigTab.AddHeaderCommand}" />
                           <ScrollViewer>
                             <ItemsControl ItemsSource="{Binding ConfigTab.Headers}">
                               <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
-                                  <Border Classes="ParameterRow">
-                                    <Grid ColumnDefinitions="*,*,Auto"
-                                          ColumnSpacing="{StaticResource Space.2}">
+                                  <Border Classes="ParameterRow HttpRequestParameterRow">
+                                    <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,Auto"
+                                          ColumnSpacing="{StaticResource Space.3}">
                                       <TextBox Grid.Column="0"
-                                               Classes="ParameterInput"
+                                               Classes="ParameterInput HttpTableInput"
                                                Text="{Binding Name}"
                                                Watermark="Header 名" />
                                       <TextBox Grid.Column="1"
-                                               Classes="ParameterInput"
+                                               Classes="ParameterInput HttpTableInput"
                                                Text="{Binding Value}"
                                                Watermark="Header 值" />
-                                      <u:IconButton Grid.Column="2"
+                                      <TextBlock Grid.Column="2"
+                                                 Classes="CaptionText"
+                                                 Text="String"
+                                                 VerticalAlignment="Center" />
+                                      <TextBox Grid.Column="3"
+                                               Classes="ParameterInput HttpTableInput"
+                                               Text="{Binding Description}"
+                                               Watermark="说明" />
+                                      <u:IconButton Grid.Column="4"
                                                     Classes="Danger"
                                                     Theme="{DynamicResource BorderlessIconButton}"
                                                     Icon="{StaticResource SemiIconDelete}"
@@ -1520,6 +1569,74 @@
                             </ItemsControl>
                           </ScrollViewer>
                         </DockPanel>
+                      </TabItem>
+                      <TabItem Header="Cookies">
+                        <Border Classes="HttpRequestPlaceholderCard">
+                          <TextBlock Classes="CaptionText"
+                                     Text="Cookies 配置入口已预留，后续会补充站点级 Cookie 选择与注入规则。" />
+                        </Border>
+                      </TabItem>
+                      <TabItem Header="Auth">
+                        <Border Classes="HttpRequestPlaceholderCard">
+                          <TextBlock Classes="CaptionText"
+                                     Text="认证配置入口已预留，后续会补充 Bearer、Basic 与项目级鉴权方案。" />
+                        </Border>
+                      </TabItem>
+                      <TabItem Header="前置操作">
+                        <Border Classes="HttpRequestPlaceholderCard">
+                          <TextBlock Classes="CaptionText"
+                                     Text="前置操作区域已预留，后续可接入脚本、变量初始化与参数预处理。" />
+                        </Border>
+                      </TabItem>
+                      <TabItem Header="后置操作">
+                        <Border Classes="HttpRequestPlaceholderCard">
+                          <TextBlock Classes="CaptionText"
+                                     Text="后置操作区域已预留，后续可接入断言、提取变量与用例回写能力。" />
+                        </Border>
+                      </TabItem>
+                      <TabItem Header="设置">
+                        <Border Classes="HttpRequestPlaceholderCard">
+                          <StackPanel Spacing="{StaticResource Space.3}">
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="{StaticResource Space.3}">
+                              <TextBlock Grid.Column="0"
+                                         VerticalAlignment="Center"
+                                         Text="接口目录" />
+                              <TextBox Grid.Column="1"
+                                       Classes="SectionInput"
+                                       Watermark="如 用户/资料"
+                                       Text="{Binding CurrentInterfaceFolderPath}" />
+                            </Grid>
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="{StaticResource Space.3}">
+                              <TextBlock Grid.Column="0"
+                                         VerticalAlignment="Center"
+                                         Text="接口名称" />
+                              <TextBox Grid.Column="1"
+                                       Classes="SectionInput"
+                                       Watermark="接口名称"
+                                       Text="{Binding ConfigTab.RequestName}" />
+                            </Grid>
+                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                  ColumnSpacing="{StaticResource Space.3}">
+                              <TextBlock Grid.Column="0"
+                                         VerticalAlignment="Center"
+                                         Text="接口用例" />
+                              <TextBox Grid.Column="1"
+                                       Classes="SectionInput"
+                                       Watermark="默认成功"
+                                       Text="{Binding CurrentHttpCaseName}" />
+                              <Button Grid.Column="2"
+                                      Classes="SecondaryButton"
+                                      Content="保存当前用例"
+                                      Command="{Binding SaveHttpCaseCommand}" />
+                            </Grid>
+                            <CheckBox IsChecked="{Binding ConfigTab.IgnoreSslErrors}"
+                                      Content="发送时忽略 SSL 证书校验" />
+                            <TextBlock Classes="CaptionText"
+                                       Text="{Binding CurrentEditorBaseUrlCaption}" />
+                          </StackPanel>
+                        </Border>
                       </TabItem>
                     </TabControl>
                   </Grid>

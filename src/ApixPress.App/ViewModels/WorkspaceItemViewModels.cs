@@ -32,6 +32,30 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public ObservableCollection<ExplorerItemViewModel> Children { get; } = [];
     public bool HasChildren => Children.Count > 0;
+    public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
+    public bool ShowMethodBadge => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase);
+    public bool ShowLeadingGlyph => !ShowMethodBadge;
+    public bool ShowTrailingDot => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase) && HasChildren;
+    public string MethodBadgeText => SourceCase?.RequestSnapshot.Method?.ToUpperInvariant() ?? string.Empty;
+    public string MethodBadgeClass => MethodBadgeText switch
+    {
+        "GET" => "Light Success",
+        "POST" => "Light Primary",
+        "PUT" => "Light Warning",
+        "DELETE" => "Light Danger",
+        "PATCH" => "Light Secondary",
+        _ => "Light Secondary"
+    };
+    public string NodeGlyph => NodeType switch
+    {
+        "module" => "\uE8B7",
+        "interface-root" => "\uE71D",
+        "folder" => "\uE8B7",
+        "http-case" => "\uE7C3",
+        "quick-root" => "\uE945",
+        "quick-request" => "\uE8A5",
+        _ => "\uE8A5"
+    };
 
     public RequestCaseDto? SourceCase { get; init; }
     public ApiEndpointDto? Endpoint { get; init; }
