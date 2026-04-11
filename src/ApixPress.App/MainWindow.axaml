@@ -23,8 +23,8 @@
     <Border Grid.Row="0"
             Classes="TopBarCard AppTopBar"
             PointerPressed="OnTitleBarPointerPressed">
-      <Grid ColumnDefinitions="Auto,Auto,220,Auto,Auto"
-            ColumnSpacing="{StaticResource Space.4}">
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto"
+            ColumnSpacing="{StaticResource Space.3}">
         <StackPanel Grid.Column="0"
                     Orientation="Horizontal"
                     Spacing="{StaticResource Space.3}"
@@ -106,7 +106,7 @@
 
         <StackPanel Grid.Column="3"
                     Orientation="Horizontal"
-                    Spacing="{StaticResource Space.2}"
+                    Spacing="{StaticResource Space.1}"
                     VerticalAlignment="Center">
           <Button Classes="ShellIconButton"
                   Command="{Binding RefreshWorkspaceCommand}"
@@ -139,7 +139,8 @@
         <StackPanel Grid.Column="4"
                     Orientation="Horizontal"
                     Spacing="0"
-                    VerticalAlignment="Center">
+                    VerticalAlignment="Center"
+                    Margin="{StaticResource Space.1},0,0,0">
           <Button Classes="WindowControlButton"
                   Click="OnMinimizeWindow">
             <TextBlock Classes="WindowControlGlyph"
