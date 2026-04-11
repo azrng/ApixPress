@@ -1376,6 +1376,15 @@
     <Setter Property="Padding" Value="0" />
   </Style>
 
+  <Style Selector="TreeView.ProjectSidebarTree TreeViewItem /template/ Panel#PART_ExpandCollapseChevronContainer">
+    <Setter Property="Width" Value="12" />
+    <Setter Property="Margin" Value="0,0,2,0" />
+  </Style>
+
+  <Style Selector="TreeView.ProjectSidebarTree TreeViewItem /template/ ContentPresenter#PART_Header">
+    <Setter Property="Margin" Value="0" />
+  </Style>
+
   <Style Selector="Border.WorkspaceTreeNodeCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
