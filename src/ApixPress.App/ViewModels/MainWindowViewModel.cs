@@ -690,6 +690,12 @@ public partial class MainWindowViewModel : ViewModelBase
         if (ReferenceEquals(tab, ActiveProjectTab) && !string.IsNullOrWhiteSpace(tab.StatusMessage))
         {
             StatusMessage = tab.StatusMessage;
+            OnPropertyChanged(nameof(ConfigTab));
+            OnPropertyChanged(nameof(ResponseSection));
+            OnPropertyChanged(nameof(EnvironmentPanel));
+            OnPropertyChanged(nameof(UseCasesPanel));
+            OnPropertyChanged(nameof(HistoryPanel));
+            OnPropertyChanged(nameof(RequestHistory));
         }
 
         NotifyShellState();

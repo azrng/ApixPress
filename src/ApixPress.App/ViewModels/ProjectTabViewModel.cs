@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -18,13 +20,6 @@ public partial class ProjectTabViewModel : ViewModelBase
         public const string ProjectSettings = "project-settings";
     }
 
-    private static class EditorModes
-    {
-        public const string None = "none";
-        public const string QuickRequest = "quick-request";
-        public const string HttpInterface = "http-interface";
-    }
-
     private static class RequestEntryTypes
     {
         public const string QuickRequest = "quick-request";
@@ -35,6 +30,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     private readonly IRequestCaseService _requestCaseService;
     private readonly IRequestExecutionService _requestExecutionService;
     private readonly IRequestHistoryService _requestHistoryService;
+    private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
     private bool _initialized;
 
     public event Action<ProjectTabViewModel>? ShellStateChanged;
@@ -53,12 +49,14 @@ public partial class ProjectTabViewModel : ViewModelBase
             Description = project.Description,
             IsDefault = project.IsDefault
         };
+
         _requestExecutionService = requestExecutionService;
         _requestCaseService = requestCaseService;
         _requestHistoryService = requestHistoryService;
 
-        ConfigTab = new RequestConfigTabViewModel(null);
-        ResponseSection = new ResponseSectionViewModel();
+        _fallbackWorkspaceTab = new RequestWorkspaceTabViewModel();
+        _fallbackWorkspaceTab.ConfigureAsLanding();
+
         EnvironmentPanel = new EnvironmentPanelViewModel(environmentVariableService);
         UseCasesPanel = new UseCasesPanelViewModel(requestCaseService);
         HistoryPanel = new RequestHistoryPanelViewModel(requestHistoryService);
@@ -72,28 +70,33 @@ public partial class ProjectTabViewModel : ViewModelBase
             NotifyShellState();
         };
         HistoryPanel.HistoryItems.CollectionChanged += (_, _) => NotifyShellState();
+        WorkspaceTabs.CollectionChanged += OnWorkspaceTabsCollectionChanged;
+
+        EnsureLandingWorkspaceTab();
     }
 
     public ProjectWorkspaceItemViewModel Project { get; }
-    public RequestConfigTabViewModel ConfigTab { get; }
-    public ResponseSectionViewModel ResponseSection { get; }
     public EnvironmentPanelViewModel EnvironmentPanel { get; }
     public UseCasesPanelViewModel UseCasesPanel { get; }
     public RequestHistoryPanelViewModel HistoryPanel { get; }
 
+    public ObservableCollection<RequestWorkspaceTabViewModel> WorkspaceTabs { get; } = [];
     public ObservableCollection<ExplorerItemViewModel> InterfaceTreeItems { get; } = [];
     public ObservableCollection<ExplorerItemViewModel> QuickRequestTreeItems { get; } = [];
     public ObservableCollection<RequestCaseItemViewModel> SavedRequests => UseCasesPanel.RequestCases;
     public ObservableCollection<RequestHistoryItemViewModel> RequestHistory => HistoryPanel.HistoryItems;
 
+    public RequestConfigTabViewModel ConfigTab => ActiveWorkspaceTab?.ConfigTab ?? _fallbackWorkspaceTab.ConfigTab;
+    public ResponseSectionViewModel ResponseSection => ActiveWorkspaceTab?.ResponseSection ?? _fallbackWorkspaceTab.ResponseSection;
+
     public string ProjectId => Project.Id;
     public string TabTitle => Project.Name;
     public string ProjectSummary => string.IsNullOrWhiteSpace(Project.Description) ? "暂无项目备注" : Project.Description;
-    public string CurrentEnvironmentLabel => EnvironmentPanel.SelectedEnvironment?.Name ?? "请选择环境";
+    public string CurrentEnvironmentLabel => EnvironmentPanel.SelectedEnvironment?.Name ?? "未选择环境";
     public string CurrentBaseUrlText => string.IsNullOrWhiteSpace(EnvironmentPanel.SelectedEnvironment?.BaseUrl)
-        ? "当前环境暂未配置前置 URL"
+        ? "当前环境暂未配置 BaseUrl"
         : EnvironmentPanel.SelectedEnvironment.BaseUrl;
-    public bool HasEnvironmentContext => EnvironmentPanel.HasSelectedEnvironment;
+    public bool HasEnvironmentContext => ActiveWorkspaceTab is not null && !ActiveWorkspaceTab.IsLandingTab;
     public bool HasSavedRequests => SavedRequests.Count > 0;
     public bool HasHistory => RequestHistory.Count > 0;
     public bool HasQuickRequestEntries => SavedRequests.Any(item => string.Equals(item.SourceCase.EntryType, RequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase));
@@ -104,10 +107,10 @@ public partial class ProjectTabViewModel : ViewModelBase
     public bool IsInterfaceManagementSection => SelectedWorkspaceSection == WorkspaceSections.InterfaceManagement;
     public bool IsRequestHistorySection => SelectedWorkspaceSection == WorkspaceSections.RequestHistory;
     public bool IsProjectSettingsSection => SelectedWorkspaceSection == WorkspaceSections.ProjectSettings;
-    public bool IsQuickRequestEditor => SelectedEditorMode == EditorModes.QuickRequest;
-    public bool IsHttpInterfaceEditor => SelectedEditorMode == EditorModes.HttpInterface;
-    public bool IsRequestEditorOpen => SelectedEditorMode != EditorModes.None;
-    public bool ShowInterfaceManagementLanding => IsInterfaceManagementSection && !IsRequestEditorOpen;
+    public bool IsQuickRequestEditor => ActiveWorkspaceTab?.IsQuickRequestTab ?? false;
+    public bool IsHttpInterfaceEditor => ActiveWorkspaceTab?.IsHttpInterfaceTab ?? false;
+    public bool IsRequestEditorOpen => ActiveWorkspaceTab is not null && !ActiveWorkspaceTab.IsLandingTab;
+    public bool ShowInterfaceManagementLanding => IsInterfaceManagementSection && (ActiveWorkspaceTab?.IsLandingTab ?? true);
     public bool ShowRequestEditorWorkspace => IsInterfaceManagementSection && IsRequestEditorOpen;
     public string SavedRequestCountText => SavedRequests.Count(item =>
         string.Equals(item.SourceCase.EntryType, RequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase)
@@ -117,26 +120,79 @@ public partial class ProjectTabViewModel : ViewModelBase
     public string ProjectSettingsDescription => string.IsNullOrWhiteSpace(Project.Description)
         ? "当前项目还没有补充备注，可在这里继续维护环境与工作区说明。"
         : Project.Description;
-    public string InterfaceSectionHint => HasInterfaceEntries
-        ? "默认模块 / 接口"
-        : "默认模块下还没有保存的 HTTP 接口";
-    public string QuickRequestSectionHint => HasQuickRequestEntries
-        ? "保存到左侧快捷请求目录"
-        : "左侧快捷请求目录还是空的";
-    public string CurrentEditorTitle => IsHttpInterfaceEditor ? "HTTP 接口" : "快捷请求";
-    public string CurrentEditorDescription => IsHttpInterfaceEditor
-        ? "HTTP 接口会自动使用当前环境的 BaseUrl，请在右侧输入相对路径。"
-        : "快捷请求不固定 BaseUrl，可直接输入完整地址或自由组合变量。";
-    public string CurrentEditorPrimaryActionText => IsHttpInterfaceEditor ? "保存接口" : "保存快捷请求";
-    public string CurrentEditorUrlWatermark => IsHttpInterfaceEditor ? "输入接口相对路径，例如 /users/{id}" : "输入完整地址或相对路径";
+    public string InterfaceSectionHint => HasInterfaceEntries ? "默认模块 / 接口" : "默认模块下还没有保存的 HTTP 接口";
+    public string QuickRequestSectionHint => HasQuickRequestEntries ? "保存到左侧快捷请求目录" : "左侧快捷请求目录还是空的";
+    public string CurrentEditorTitle => ActiveWorkspaceTab?.EditorTitle ?? "新建...";
+    public string CurrentEditorDescription => ActiveWorkspaceTab?.EditorDescription ?? "从下方卡片中选择要创建的工作内容。";
+    public string CurrentEditorPrimaryActionText => ActiveWorkspaceTab?.PrimaryActionText ?? "保存";
+    public string CurrentEditorUrlWatermark => ActiveWorkspaceTab?.UrlWatermark ?? "输入请求地址";
     public bool ShowEditorBaseUrlPrefix => IsHttpInterfaceEditor;
-    public string CurrentEditorBaseUrlPrefix => IsHttpInterfaceEditor
-        ? EnvironmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty
-        : string.Empty;
+    public string CurrentEditorBaseUrlPrefix => IsHttpInterfaceEditor ? EnvironmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty : string.Empty;
     public bool ShowSaveHttpCaseAction => IsHttpInterfaceEditor;
-    public string CurrentEditorBaseUrlCaption => string.IsNullOrWhiteSpace(CurrentEditorBaseUrlPrefix)
-        ? "当前环境未配置 BaseUrl"
-        : CurrentEditorBaseUrlPrefix;
+    public string CurrentEditorBaseUrlCaption => IsHttpInterfaceEditor
+        ? (string.IsNullOrWhiteSpace(EnvironmentPanel.SelectedEnvironment?.BaseUrl) ? "当前环境未配置 BaseUrl" : EnvironmentPanel.SelectedEnvironment.BaseUrl)
+        : "快捷请求不固定 BaseUrl";
+    public string SelectedMethod
+    {
+        get => ActiveWorkspaceTab?.SelectedMethod ?? "GET";
+        set
+        {
+            if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.SelectedMethod == value)
+            {
+                return;
+            }
+
+            ActiveWorkspaceTab.SelectedMethod = value;
+            NotifyWorkspaceEditorState();
+        }
+    }
+
+    public string RequestUrl
+    {
+        get => ActiveWorkspaceTab?.RequestUrl ?? string.Empty;
+        set
+        {
+            if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.RequestUrl == value)
+            {
+                return;
+            }
+
+            ActiveWorkspaceTab.RequestUrl = value;
+            NotifyWorkspaceEditorState();
+        }
+    }
+
+    public string CurrentInterfaceFolderPath
+    {
+        get => ActiveWorkspaceTab?.InterfaceFolderPath ?? "用户";
+        set
+        {
+            if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.InterfaceFolderPath == value)
+            {
+                return;
+            }
+
+            ActiveWorkspaceTab.InterfaceFolderPath = value;
+            NotifyWorkspaceEditorState();
+        }
+    }
+
+    public string CurrentHttpCaseName
+    {
+        get => ActiveWorkspaceTab?.HttpCaseName ?? "成功";
+        set
+        {
+            if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.HttpCaseName == value)
+            {
+                return;
+            }
+
+            ActiveWorkspaceTab.HttpCaseName = value;
+            NotifyWorkspaceEditorState();
+        }
+    }
+
+    public IReadOnlyList<string> HttpMethods { get; } = ["GET", "POST", "PUT", "DELETE", "PATCH"];
 
     [ObservableProperty]
     private bool isActive;
@@ -145,36 +201,13 @@ public partial class ProjectTabViewModel : ViewModelBase
     private bool isBusy;
 
     [ObservableProperty]
-    private string statusMessage = "快捷请求已就绪。";
-
-    [ObservableProperty]
-    private string selectedMethod = "GET";
-
-    [ObservableProperty]
-    private string requestUrl = string.Empty;
+    private string statusMessage = "项目工作区已就绪。";
 
     [ObservableProperty]
     private string selectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
 
     [ObservableProperty]
-    private string selectedEditorMode = EditorModes.None;
-
-    [ObservableProperty]
-    private string currentInterfaceFolderPath = "用户";
-
-    [ObservableProperty]
-    private string currentHttpCaseName = "成功";
-
-    [ObservableProperty]
-    private string currentEditingQuickRequestId = string.Empty;
-
-    [ObservableProperty]
-    private string currentEditingInterfaceId = string.Empty;
-
-    [ObservableProperty]
-    private string currentEditingCaseId = string.Empty;
-
-    public IReadOnlyList<string> HttpMethods { get; } = ["GET", "POST", "PUT", "DELETE", "PATCH"];
+    private RequestWorkspaceTabViewModel? activeWorkspaceTab;
 
     public async Task InitializeAsync()
     {
@@ -196,7 +229,7 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     public async Task SaveCurrentEnvironmentAsync()
     {
-        if (!HasEnvironmentContext)
+        if (!EnvironmentPanel.HasSelectedEnvironment)
         {
             StatusMessage = "请先选择环境后再保存。";
             NotifyShellState();
@@ -211,15 +244,15 @@ public partial class ProjectTabViewModel : ViewModelBase
     public async Task SendQuickRequestAsync()
     {
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-        var environment = EnvironmentPanel.GetSelectedEnvironmentDto();
-        if (environment is null)
+        var workspaceTab = ActiveWorkspaceTab;
+        if (workspaceTab is null || workspaceTab.IsLandingTab)
         {
-            StatusMessage = "请先选择一个环境。";
+            StatusMessage = "请先打开一个 HTTP 接口或快捷请求标签。";
             NotifyShellState();
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(RequestUrl))
+        if (string.IsNullOrWhiteSpace(workspaceTab.RequestUrl))
         {
             StatusMessage = "请输入请求地址。";
             NotifyShellState();
@@ -227,9 +260,10 @@ public partial class ProjectTabViewModel : ViewModelBase
         }
 
         IsBusy = true;
-        var snapshot = BuildCurrentSnapshot();
+        var snapshot = workspaceTab.BuildSnapshot();
+        var environment = BuildExecutionEnvironment();
         var result = await _requestExecutionService.SendAsync(snapshot, environment, CancellationToken.None);
-        ResponseSection.ApplyResult(result, snapshot);
+        workspaceTab.ResponseSection.ApplyResult(result, snapshot);
 
         if (result.IsSuccess || result.Data is not null)
         {
@@ -239,7 +273,7 @@ public partial class ProjectTabViewModel : ViewModelBase
 
         IsBusy = false;
         StatusMessage = result.IsSuccess
-            ? (IsHttpInterfaceEditor ? "HTTP 接口请求发送完成。" : "快捷请求发送完成。")
+            ? (workspaceTab.IsHttpInterfaceTab ? "HTTP 接口请求发送完成。" : "快捷请求发送完成。")
             : result.Message;
         NotifyShellState();
     }
@@ -247,13 +281,21 @@ public partial class ProjectTabViewModel : ViewModelBase
     public async Task SaveCurrentEditorAsync()
     {
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-        if (IsHttpInterfaceEditor)
+        var workspaceTab = ActiveWorkspaceTab;
+        if (workspaceTab is null || workspaceTab.IsLandingTab)
         {
-            await SaveHttpInterfaceAsync();
+            StatusMessage = "请先打开一个请求标签。";
+            NotifyShellState();
             return;
         }
 
-        await SaveQuickRequestAsync();
+        if (workspaceTab.IsHttpInterfaceTab)
+        {
+            await SaveHttpInterfaceAsync(workspaceTab);
+            return;
+        }
+
+        await SaveQuickRequestAsync(workspaceTab);
     }
 
     public async Task SaveHistoryAsQuickRequestAsync(RequestHistoryItemViewModel item)
@@ -286,36 +328,37 @@ public partial class ProjectTabViewModel : ViewModelBase
     [RelayCommand]
     public async Task SaveHttpCaseAsync()
     {
-        if (!IsHttpInterfaceEditor)
+        var workspaceTab = ActiveWorkspaceTab;
+        if (workspaceTab is null || !workspaceTab.IsHttpInterfaceTab)
         {
             return;
         }
 
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-        var interfaceId = await EnsureHttpInterfaceSavedAsync(reloadAfterSave: false);
+        var interfaceId = await EnsureHttpInterfaceSavedAsync(workspaceTab, reloadAfterSave: false);
         if (string.IsNullOrWhiteSpace(interfaceId))
         {
             return;
         }
 
-        var snapshot = BuildCurrentSnapshot();
+        var snapshot = workspaceTab.BuildSnapshot();
         var result = await _requestCaseService.SaveAsync(new RequestCaseDto
         {
-            Id = CurrentEditingCaseId,
+            Id = workspaceTab.EditingCaseId,
             ProjectId = ProjectId,
             EntryType = RequestEntryTypes.HttpCase,
-            Name = BuildHttpCaseName(),
+            Name = BuildHttpCaseName(workspaceTab),
             GroupName = "用例",
-            FolderPath = NormalizeFolderPath(CurrentInterfaceFolderPath),
+            FolderPath = NormalizeFolderPath(workspaceTab.InterfaceFolderPath),
             ParentId = interfaceId,
-            Description = $"{BuildHttpInterfaceName()} 的请求用例",
+            Description = $"{workspaceTab.ResolveRequestName()} 的请求用例",
             RequestSnapshot = snapshot,
             UpdatedAt = DateTime.UtcNow
         }, CancellationToken.None);
 
         if (result.IsSuccess && result.Data is not null)
         {
-            CurrentEditingCaseId = result.Data.Id;
+            workspaceTab.EditingCaseId = result.Data.Id;
             await ReloadSavedRequestsAsync();
             StatusMessage = "HTTP 接口用例已保存。";
         }
@@ -335,48 +378,26 @@ public partial class ProjectTabViewModel : ViewModelBase
         }
 
         var source = item.SourceCase;
+        var parentInterface = string.Equals(source.EntryType, RequestEntryTypes.HttpCase, StringComparison.OrdinalIgnoreCase)
+            ? FindRequestById(source.ParentId)
+            : null;
+
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-        ApplySnapshot(source.RequestSnapshot);
+        var targetTab = FindWorkspaceTabForSource(source) ?? ReuseActiveLandingOrCreateWorkspace();
+        targetTab.ApplySavedRequest(source, parentInterface);
 
-        switch (source.EntryType)
+        if (string.Equals(source.EntryType, RequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase))
         {
-            case RequestEntryTypes.HttpInterface:
-                SelectedEditorMode = EditorModes.HttpInterface;
-                CurrentEditingInterfaceId = source.Id;
-                CurrentEditingCaseId = string.Empty;
-                CurrentEditingQuickRequestId = string.Empty;
-                CurrentInterfaceFolderPath = source.FolderPath;
-                CurrentHttpCaseName = ResolveLatestCaseName(source.Id);
-                StatusMessage = $"已加载 HTTP 接口：{source.Name}";
-                break;
-            case RequestEntryTypes.HttpCase:
-            {
-                SelectedEditorMode = EditorModes.HttpInterface;
-                CurrentEditingQuickRequestId = string.Empty;
-                CurrentEditingCaseId = source.Id;
-                CurrentHttpCaseName = source.Name;
-                var parent = FindRequestById(source.ParentId);
-                CurrentEditingInterfaceId = parent?.Id ?? source.ParentId;
-                CurrentInterfaceFolderPath = parent?.FolderPath ?? source.FolderPath;
-                if (parent is not null && string.IsNullOrWhiteSpace(ConfigTab.RequestName))
-                {
-                    ConfigTab.RequestName = parent.Name;
-                }
-
-                StatusMessage = $"已加载接口用例：{source.Name}";
-                break;
-            }
-            default:
-                SelectedEditorMode = EditorModes.QuickRequest;
-                CurrentEditingQuickRequestId = source.Id;
-                CurrentEditingInterfaceId = string.Empty;
-                CurrentEditingCaseId = string.Empty;
-                CurrentInterfaceFolderPath = "用户";
-                CurrentHttpCaseName = "成功";
-                StatusMessage = $"已加载快捷请求：{source.Name}";
-                break;
+            targetTab.HttpCaseName = ResolveLatestCaseName(source.Id);
         }
 
+        ActivateWorkspaceTabCore(targetTab);
+        StatusMessage = source.EntryType switch
+        {
+            RequestEntryTypes.HttpInterface => $"已加载 HTTP 接口：{source.Name}",
+            RequestEntryTypes.HttpCase => $"已加载接口用例：{source.Name}",
+            _ => $"已加载快捷请求：{source.Name}"
+        };
         NotifyShellState();
     }
 
@@ -387,24 +408,21 @@ public partial class ProjectTabViewModel : ViewModelBase
             return;
         }
 
-        SelectedWorkspaceSection = WorkspaceSections.RequestHistory;
-        ApplySnapshot(item.RequestSnapshot);
+        var targetTab = ActiveWorkspaceTab?.IsLandingTab == true
+            ? ActiveWorkspaceTab
+            : FindFirstQuickRequestTab() ?? CreateWorkspaceTab(activate: false);
+
+        targetTab ??= CreateWorkspaceTab(activate: false);
+        targetTab.ConfigureAsQuickRequest();
+        targetTab.ApplySnapshot(item.RequestSnapshot);
         if (item.ResponseSnapshot is not null)
         {
-            ResponseSection.ApplyResult(ResultModel<ResponseSnapshotDto>.Success(item.ResponseSnapshot), item.RequestSnapshot);
+            targetTab.ResponseSection.ApplyResult(ResultModel<ResponseSnapshotDto>.Success(item.ResponseSnapshot), item.RequestSnapshot);
         }
 
+        ActivateWorkspaceTabCore(targetTab);
+        SelectedWorkspaceSection = WorkspaceSections.RequestHistory;
         StatusMessage = $"已加载历史请求：{item.Method} {item.Url}";
-        NotifyShellState();
-    }
-
-    private async Task LoadWorkspaceAsync(string? preferredEnvironmentId = null)
-    {
-        UseCasesPanel.SetProjectContext(ProjectId);
-        HistoryPanel.SetProjectContext(ProjectId);
-        await EnvironmentPanel.LoadProjectAsync(ProjectId, preferredEnvironmentId);
-        await ReloadSavedRequestsAsync();
-        await HistoryPanel.LoadHistoryAsync();
         NotifyShellState();
     }
 
@@ -412,8 +430,10 @@ public partial class ProjectTabViewModel : ViewModelBase
     private void ShowInterfaceManagement()
     {
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-        SelectedEditorMode = EditorModes.None;
-        StatusMessage = "接口管理已就绪，可新建 HTTP 接口或快捷请求。";
+        EnsureLandingWorkspaceTab();
+        StatusMessage = ActiveWorkspaceTab?.IsLandingTab == true
+            ? "接口管理已就绪，可在中间新建 HTTP 接口或快捷请求。"
+            : "接口管理已打开。";
         NotifyShellState();
     }
 
@@ -421,9 +441,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     private void ShowRequestHistory()
     {
         SelectedWorkspaceSection = WorkspaceSections.RequestHistory;
-        StatusMessage = HasHistory
-            ? "这里展示当前项目的请求历史。"
-            : "当前项目还没有请求历史。";
+        StatusMessage = HasHistory ? "这里展示当前项目的请求历史。" : "当前项目还没有请求历史。";
         NotifyShellState();
     }
 
@@ -439,19 +457,10 @@ public partial class ProjectTabViewModel : ViewModelBase
     private void OpenQuickRequestWorkspace()
     {
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-        SelectedEditorMode = EditorModes.QuickRequest;
-        ResetQuickRequestDraft();
-        StatusMessage = "快捷请求编辑器已打开。";
-        NotifyShellState();
-    }
-
-    [RelayCommand]
-    private void CreateNewQuickRequestDraft()
-    {
-        SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-        SelectedEditorMode = EditorModes.QuickRequest;
-        ResetQuickRequestDraft();
-        StatusMessage = "已新建快捷请求草稿。";
+        var tab = ReuseActiveLandingOrCreateWorkspace();
+        tab.ConfigureAsQuickRequest();
+        ActivateWorkspaceTabCore(tab);
+        StatusMessage = "快捷请求标签已打开。";
         NotifyShellState();
     }
 
@@ -459,9 +468,10 @@ public partial class ProjectTabViewModel : ViewModelBase
     private void OpenHttpInterfaceWorkspace()
     {
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-        SelectedEditorMode = EditorModes.HttpInterface;
-        ResetHttpInterfaceDraft();
-        StatusMessage = "HTTP 接口编辑器已打开。";
+        var tab = ReuseActiveLandingOrCreateWorkspace();
+        tab.ConfigureAsHttpInterface();
+        ActivateWorkspaceTabCore(tab);
+        StatusMessage = "HTTP 接口标签已打开。";
         NotifyShellState();
     }
 
@@ -469,104 +479,92 @@ public partial class ProjectTabViewModel : ViewModelBase
     private void ReturnToInterfaceHome()
     {
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-        SelectedEditorMode = EditorModes.None;
-        StatusMessage = "已返回接口管理首页。";
+        var landingTab = FindLandingWorkspaceTab() ?? CreateWorkspaceTab(activate: false);
+        landingTab.ConfigureAsLanding();
+        ActivateWorkspaceTabCore(landingTab);
+        StatusMessage = "已返回新建页。";
         NotifyShellState();
     }
 
-    private RequestSnapshotDto BuildCurrentSnapshot()
+    [RelayCommand]
+    private void CreateWorkspaceTab()
     {
-        ConfigTab.RequestName = IsHttpInterfaceEditor ? BuildHttpInterfaceName() : BuildQuickRequestName();
-        return ConfigTab.BuildRequestSnapshot(string.Empty, SelectedMethod, RequestUrl);
+        SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
+        var tab = CreateWorkspaceTab(activate: true);
+        tab.ConfigureAsLanding();
+        StatusMessage = "已新建一个工作标签。";
+        NotifyShellState();
     }
 
-    private void ResetQuickRequestDraft()
+    [RelayCommand]
+    private void ActivateWorkspaceTab(RequestWorkspaceTabViewModel? tab)
     {
-        CurrentEditingQuickRequestId = string.Empty;
-        CurrentEditingInterfaceId = string.Empty;
-        CurrentEditingCaseId = string.Empty;
-        CurrentInterfaceFolderPath = "用户";
-        CurrentHttpCaseName = "成功";
-        SelectedMethod = "GET";
-        RequestUrl = string.Empty;
-        ConfigTab.Reset();
-        ResponseSection.Reset();
-    }
-
-    private void ResetHttpInterfaceDraft()
-    {
-        CurrentEditingQuickRequestId = string.Empty;
-        CurrentEditingInterfaceId = string.Empty;
-        CurrentEditingCaseId = string.Empty;
-        CurrentInterfaceFolderPath = "用户";
-        CurrentHttpCaseName = "成功";
-        SelectedMethod = "GET";
-        RequestUrl = string.Empty;
-        ConfigTab.Reset();
-        ResponseSection.Reset();
-    }
-
-    private string BuildQuickRequestName()
-    {
-        if (!string.IsNullOrWhiteSpace(ConfigTab.RequestName))
+        if (tab is null)
         {
-            return ConfigTab.RequestName.Trim();
+            return;
         }
 
-        var target = RequestUrl.Trim();
-        if (string.IsNullOrWhiteSpace(target))
+        ActivateWorkspaceTabCore(tab);
+        SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
+        StatusMessage = tab.IsLandingTab ? "已切换到新建页。" : $"已切换到标签：{tab.HeaderText}";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void CloseWorkspaceTab(RequestWorkspaceTabViewModel? tab)
+    {
+        if (tab is null || !WorkspaceTabs.Contains(tab))
         {
-            return "快捷请求";
+            return;
         }
 
-        return $"{SelectedMethod} {target}";
-    }
+        var removedIndex = WorkspaceTabs.IndexOf(tab);
+        DetachWorkspaceTab(tab);
+        WorkspaceTabs.Remove(tab);
 
-    private string BuildHttpInterfaceName()
-    {
-        if (!string.IsNullOrWhiteSpace(ConfigTab.RequestName))
+        if (WorkspaceTabs.Count == 0)
         {
-            return ConfigTab.RequestName.Trim();
+            EnsureLandingWorkspaceTab();
+        }
+        else if (ReferenceEquals(ActiveWorkspaceTab, tab))
+        {
+            var nextIndex = Math.Clamp(removedIndex - 1, 0, WorkspaceTabs.Count - 1);
+            ActivateWorkspaceTabCore(WorkspaceTabs[nextIndex]);
         }
 
-        var target = RequestUrl.Trim();
-        return string.IsNullOrWhiteSpace(target)
-            ? "新建 HTTP 接口"
-            : $"{SelectedMethod} {target}";
+        StatusMessage = "工作标签已关闭。";
+        NotifyShellState();
     }
 
-    private string BuildHttpCaseName()
+    private async Task LoadWorkspaceAsync(string? preferredEnvironmentId = null)
     {
-        return string.IsNullOrWhiteSpace(CurrentHttpCaseName)
-            ? "成功"
-            : CurrentHttpCaseName.Trim();
+        UseCasesPanel.SetProjectContext(ProjectId);
+        HistoryPanel.SetProjectContext(ProjectId);
+        await EnvironmentPanel.LoadProjectAsync(ProjectId, preferredEnvironmentId);
+        await ReloadSavedRequestsAsync();
+        await HistoryPanel.LoadHistoryAsync();
+        EnsureLandingWorkspaceTab();
+        NotifyShellState();
     }
 
-    private void ApplySnapshot(RequestSnapshotDto snapshot)
+    private async Task SaveQuickRequestAsync(RequestWorkspaceTabViewModel workspaceTab)
     {
-        SelectedMethod = snapshot.Method;
-        RequestUrl = snapshot.Url;
-        ConfigTab.ApplySnapshot(snapshot);
-    }
-
-    private async Task SaveQuickRequestAsync()
-    {
-        var snapshot = BuildCurrentSnapshot();
+        var snapshot = workspaceTab.BuildSnapshot();
         var result = await _requestCaseService.SaveAsync(new RequestCaseDto
         {
-            Id = CurrentEditingQuickRequestId,
+            Id = workspaceTab.EditingQuickRequestId,
             ProjectId = ProjectId,
             EntryType = RequestEntryTypes.QuickRequest,
-            Name = BuildQuickRequestName(),
+            Name = workspaceTab.ResolveRequestName(),
             GroupName = "快捷请求",
-            Description = ConfigTab.RequestDescription,
+            Description = workspaceTab.ConfigTab.RequestDescription,
             RequestSnapshot = snapshot,
             UpdatedAt = DateTime.UtcNow
         }, CancellationToken.None);
 
         if (result.IsSuccess && result.Data is not null)
         {
-            CurrentEditingQuickRequestId = result.Data.Id;
+            workspaceTab.EditingQuickRequestId = result.Data.Id;
             await ReloadSavedRequestsAsync();
             StatusMessage = "快捷请求已保存到左侧目录。";
         }
@@ -578,9 +576,9 @@ public partial class ProjectTabViewModel : ViewModelBase
         NotifyShellState();
     }
 
-    private async Task SaveHttpInterfaceAsync()
+    private async Task SaveHttpInterfaceAsync(RequestWorkspaceTabViewModel workspaceTab)
     {
-        var interfaceId = await EnsureHttpInterfaceSavedAsync(reloadAfterSave: true);
+        var interfaceId = await EnsureHttpInterfaceSavedAsync(workspaceTab, reloadAfterSave: true);
         if (!string.IsNullOrWhiteSpace(interfaceId))
         {
             StatusMessage = "HTTP 接口已保存到默认模块。";
@@ -588,18 +586,18 @@ public partial class ProjectTabViewModel : ViewModelBase
         }
     }
 
-    private async Task<string?> EnsureHttpInterfaceSavedAsync(bool reloadAfterSave)
+    private async Task<string?> EnsureHttpInterfaceSavedAsync(RequestWorkspaceTabViewModel workspaceTab, bool reloadAfterSave)
     {
-        var snapshot = BuildCurrentSnapshot();
+        var snapshot = workspaceTab.BuildSnapshot();
         var result = await _requestCaseService.SaveAsync(new RequestCaseDto
         {
-            Id = CurrentEditingInterfaceId,
+            Id = workspaceTab.EditingInterfaceId,
             ProjectId = ProjectId,
             EntryType = RequestEntryTypes.HttpInterface,
-            Name = BuildHttpInterfaceName(),
+            Name = workspaceTab.ResolveRequestName(),
             GroupName = "接口",
-            FolderPath = NormalizeFolderPath(CurrentInterfaceFolderPath),
-            Description = ConfigTab.RequestDescription,
+            FolderPath = NormalizeFolderPath(workspaceTab.InterfaceFolderPath),
+            Description = workspaceTab.ConfigTab.RequestDescription,
             RequestSnapshot = snapshot,
             UpdatedAt = DateTime.UtcNow
         }, CancellationToken.None);
@@ -611,7 +609,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             return null;
         }
 
-        CurrentEditingInterfaceId = result.Data.Id;
+        workspaceTab.EditingInterfaceId = result.Data.Id;
         if (reloadAfterSave)
         {
             await ReloadSavedRequestsAsync();
@@ -739,6 +737,99 @@ public partial class ProjectTabViewModel : ViewModelBase
         QuickRequestTreeItems.Add(quickRoot);
     }
 
+    private ProjectEnvironmentDto BuildExecutionEnvironment()
+    {
+        var environment = EnvironmentPanel.GetSelectedEnvironmentDto();
+        if (environment is not null)
+        {
+            return environment;
+        }
+
+        return new ProjectEnvironmentDto
+        {
+            Id = string.Empty,
+            ProjectId = ProjectId,
+            Name = "未配置环境",
+            BaseUrl = string.Empty,
+            IsActive = false,
+            SortOrder = 0
+        };
+    }
+
+    private RequestWorkspaceTabViewModel ReuseActiveLandingOrCreateWorkspace()
+    {
+        if (ActiveWorkspaceTab?.IsLandingTab == true)
+        {
+            return ActiveWorkspaceTab;
+        }
+
+        return CreateWorkspaceTab(activate: false);
+    }
+
+    private RequestWorkspaceTabViewModel CreateWorkspaceTab(bool activate)
+    {
+        var tab = new RequestWorkspaceTabViewModel();
+        tab.ConfigureAsLanding();
+        AttachWorkspaceTab(tab);
+        WorkspaceTabs.Add(tab);
+        if (activate)
+        {
+            ActivateWorkspaceTabCore(tab);
+        }
+
+        return tab;
+    }
+
+    private void EnsureLandingWorkspaceTab()
+    {
+        if (WorkspaceTabs.Count == 0)
+        {
+            var tab = CreateWorkspaceTab(activate: false);
+            ActivateWorkspaceTabCore(tab);
+            return;
+        }
+
+        if (ActiveWorkspaceTab is null)
+        {
+            ActivateWorkspaceTabCore(WorkspaceTabs[0]);
+        }
+    }
+
+    private RequestWorkspaceTabViewModel? FindLandingWorkspaceTab()
+    {
+        return WorkspaceTabs.FirstOrDefault(item => item.IsLandingTab);
+    }
+
+    private RequestWorkspaceTabViewModel? FindFirstQuickRequestTab()
+    {
+        return WorkspaceTabs.FirstOrDefault(item => item.IsQuickRequestTab);
+    }
+
+    private RequestWorkspaceTabViewModel? FindWorkspaceTabForSource(RequestCaseDto source)
+    {
+        return WorkspaceTabs.FirstOrDefault(item =>
+            string.Equals(source.EntryType, RequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase)
+                ? string.Equals(item.EditingQuickRequestId, source.Id, StringComparison.OrdinalIgnoreCase)
+                : string.Equals(source.EntryType, RequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase)
+                    ? string.Equals(item.EditingInterfaceId, source.Id, StringComparison.OrdinalIgnoreCase)
+                    : string.Equals(item.EditingCaseId, source.Id, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void AttachWorkspaceTab(RequestWorkspaceTabViewModel tab)
+    {
+        tab.PropertyChanged += OnWorkspaceTabPropertyChanged;
+    }
+
+    private void DetachWorkspaceTab(RequestWorkspaceTabViewModel tab)
+    {
+        tab.PropertyChanged -= OnWorkspaceTabPropertyChanged;
+    }
+
+    private void ActivateWorkspaceTabCore(RequestWorkspaceTabViewModel tab)
+    {
+        ActiveWorkspaceTab = tab;
+    }
+
     private RequestCaseDto? FindRequestById(string id)
     {
         return SavedRequests
@@ -755,6 +846,13 @@ public partial class ProjectTabViewModel : ViewModelBase
             .Select(item => item.Name)
             .FirstOrDefault()
             ?? "成功";
+    }
+
+    private static string BuildHttpCaseName(RequestWorkspaceTabViewModel workspaceTab)
+    {
+        return string.IsNullOrWhiteSpace(workspaceTab.HttpCaseName)
+            ? "成功"
+            : workspaceTab.HttpCaseName.Trim();
     }
 
     private static string NormalizeFolderPath(string folderPath)
@@ -777,33 +875,87 @@ public partial class ProjectTabViewModel : ViewModelBase
         NotifyShellState();
     }
 
+    private void OnWorkspaceTabsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.NewItems is not null)
+        {
+            foreach (var item in e.NewItems.OfType<RequestWorkspaceTabViewModel>())
+            {
+                item.IsActive = ReferenceEquals(item, ActiveWorkspaceTab);
+            }
+        }
+
+        OnPropertyChanged(nameof(WorkspaceTabs));
+        NotifyShellState();
+    }
+
+    private void OnWorkspaceTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is not RequestWorkspaceTabViewModel tab)
+        {
+            return;
+        }
+
+        if (!ReferenceEquals(tab, ActiveWorkspaceTab))
+        {
+            if (e.PropertyName == nameof(RequestWorkspaceTabViewModel.HeaderText))
+            {
+                NotifyShellState();
+            }
+
+            return;
+        }
+
+        if (e.PropertyName is nameof(RequestWorkspaceTabViewModel.SelectedMethod)
+            or nameof(RequestWorkspaceTabViewModel.RequestUrl)
+            or nameof(RequestWorkspaceTabViewModel.InterfaceFolderPath)
+            or nameof(RequestWorkspaceTabViewModel.HttpCaseName)
+            or nameof(RequestWorkspaceTabViewModel.EntryType)
+            or nameof(RequestWorkspaceTabViewModel.HeaderText))
+        {
+            NotifyWorkspaceEditorState();
+        }
+    }
+
+    private void NotifyWorkspaceEditorState()
+    {
+        OnPropertyChanged(nameof(ConfigTab));
+        OnPropertyChanged(nameof(ResponseSection));
+        OnPropertyChanged(nameof(SelectedMethod));
+        OnPropertyChanged(nameof(RequestUrl));
+        OnPropertyChanged(nameof(CurrentInterfaceFolderPath));
+        OnPropertyChanged(nameof(CurrentHttpCaseName));
+        NotifyShellState();
+    }
+
     partial void OnSelectedWorkspaceSectionChanged(string value)
     {
         OnPropertyChanged(nameof(IsInterfaceManagementSection));
         OnPropertyChanged(nameof(IsRequestHistorySection));
         OnPropertyChanged(nameof(IsProjectSettingsSection));
-        OnPropertyChanged(nameof(IsQuickRequestEditor));
-        OnPropertyChanged(nameof(IsHttpInterfaceEditor));
-        OnPropertyChanged(nameof(IsRequestEditorOpen));
         OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
         OnPropertyChanged(nameof(ShowRequestEditorWorkspace));
     }
 
-    partial void OnSelectedEditorModeChanged(string value)
+    partial void OnActiveWorkspaceTabChanged(RequestWorkspaceTabViewModel? oldValue, RequestWorkspaceTabViewModel? newValue)
     {
-        OnPropertyChanged(nameof(IsQuickRequestEditor));
-        OnPropertyChanged(nameof(IsHttpInterfaceEditor));
-        OnPropertyChanged(nameof(IsRequestEditorOpen));
-        OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
-        OnPropertyChanged(nameof(ShowRequestEditorWorkspace));
-        OnPropertyChanged(nameof(CurrentEditorTitle));
-        OnPropertyChanged(nameof(CurrentEditorDescription));
-        OnPropertyChanged(nameof(CurrentEditorPrimaryActionText));
-        OnPropertyChanged(nameof(CurrentEditorUrlWatermark));
-        OnPropertyChanged(nameof(ShowEditorBaseUrlPrefix));
-        OnPropertyChanged(nameof(CurrentEditorBaseUrlPrefix));
-        OnPropertyChanged(nameof(ShowSaveHttpCaseAction));
-        OnPropertyChanged(nameof(CurrentEditorBaseUrlCaption));
+        if (oldValue is not null)
+        {
+            oldValue.IsActive = false;
+        }
+
+        if (newValue is not null)
+        {
+            newValue.IsActive = true;
+        }
+
+        OnPropertyChanged(nameof(ConfigTab));
+        OnPropertyChanged(nameof(ResponseSection));
+        OnPropertyChanged(nameof(SelectedMethod));
+        OnPropertyChanged(nameof(RequestUrl));
+        OnPropertyChanged(nameof(CurrentInterfaceFolderPath));
+        OnPropertyChanged(nameof(CurrentHttpCaseName));
+        NotifyShellState();
     }
 
     private void NotifyShellState()

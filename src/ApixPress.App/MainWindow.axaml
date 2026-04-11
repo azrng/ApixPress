@@ -617,16 +617,67 @@
               <Grid RowDefinitions="Auto,*"
                     RowSpacing="{StaticResource Space.4}">
                 <Border Classes="ProjectWorkspaceTopActionBar">
-                  <Grid ColumnDefinitions="*,Auto,Auto"
+                  <Grid ColumnDefinitions="Auto,*,Auto,Auto"
                         ColumnSpacing="{StaticResource Space.3}">
-                    <StackPanel Spacing="2">
+                    <Border Classes="ProjectWorkspaceEditorTabs">
+                      <ScrollViewer HorizontalScrollBarVisibility="Hidden"
+                                    VerticalScrollBarVisibility="Disabled">
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="{StaticResource Space.2}">
+                          <ItemsControl ItemsSource="{Binding WorkspaceTabs}">
+                            <ItemsControl.ItemsPanel>
+                              <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="{StaticResource Space.2}" />
+                              </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="vm:RequestWorkspaceTabViewModel">
+                                <Border Classes="ProjectWorkspaceInnerTabShell">
+                                  <Grid ColumnDefinitions="*,Auto"
+                                        ColumnSpacing="{StaticResource Space.1}">
+                                    <ToggleButton Grid.Column="0"
+                                                  Classes="ProjectWorkspaceInnerTabButton"
+                                                  Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActiveProjectTab.ActivateWorkspaceTabCommand}"
+                                                  CommandParameter="{Binding}"
+                                                  IsChecked="{Binding IsActive, Mode=OneWay}">
+                                      <StackPanel Orientation="Horizontal"
+                                                  Spacing="{StaticResource Space.2}">
+                                        <Border Classes="ProjectWorkspaceInnerTabBadge"
+                                                IsVisible="{Binding ShowMethodBadge}">
+                                          <TextBlock Classes="CaptionText"
+                                                     Text="{Binding MethodBadgeText}" />
+                                        </Border>
+                                        <TextBlock Text="{Binding HeaderText}" />
+                                      </StackPanel>
+                                    </ToggleButton>
+                                    <Button Grid.Column="1"
+                                            Classes="ProjectWorkspaceInnerTabCloseButton"
+                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActiveProjectTab.CloseWorkspaceTabCommand}"
+                                            CommandParameter="{Binding}"
+                                            Content="×" />
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+
+                          <Button Classes="ProjectWorkspaceInnerTabAddButton"
+                                  Content="+"
+                                  Command="{Binding CreateWorkspaceTabCommand}" />
+                        </StackPanel>
+                      </ScrollViewer>
+                    </Border>
+
+                    <StackPanel Grid.Column="1"
+                                Spacing="2">
                       <TextBlock Classes="SectionTitle"
-                                 Text="项目详情" />
+                                 Text="{Binding CurrentEditorTitle}" />
                       <TextBlock Classes="CaptionText"
-                                 Text="默认打开新建入口，可直接创建 HTTP 接口或快捷请求。" />
+                                 Text="{Binding CurrentEditorDescription}" />
                     </StackPanel>
 
-                    <ComboBox Grid.Column="1"
+                    <ComboBox Grid.Column="2"
                               Width="220"
                               Classes="SectionInput ProjectWorkspaceToolbarComboBox"
                               ItemsSource="{Binding EnvironmentPanel.Environments}"
@@ -638,10 +689,16 @@
                       </ComboBox.ItemTemplate>
                     </ComboBox>
 
-                    <Button Grid.Column="2"
-                            Classes="SecondaryButton ProjectWorkspaceToolbarButton"
-                            Content="环境设置"
-                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+                    <StackPanel Grid.Column="3"
+                                Orientation="Horizontal"
+                                Spacing="{StaticResource Space.2}">
+                      <Button Classes="SecondaryButton ProjectWorkspaceToolbarButton"
+                              Content="新建页"
+                              Command="{Binding ReturnToInterfaceHomeCommand}" />
+                      <Button Classes="SecondaryButton ProjectWorkspaceToolbarButton"
+                              Content="环境设置"
+                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+                    </StackPanel>
                   </Grid>
                 </Border>
 
@@ -697,29 +754,56 @@
                   RowDefinitions="Auto,Auto,Auto,*"
                   RowSpacing="{StaticResource Space.3}">
               <Border Classes="ProjectWorkspaceTopActionBar">
-                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto"
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto"
                       ColumnSpacing="{StaticResource Space.3}">
                   <Border Classes="ProjectWorkspaceEditorTabs">
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="0">
-                      <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonActive"
-                              IsVisible="{Binding IsHttpInterfaceEditor}"
-                              Command="{Binding OpenHttpInterfaceWorkspaceCommand}"
-                              Content="HTTP 接口" />
-                      <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonGhost"
-                              IsVisible="{Binding IsQuickRequestEditor}"
-                              Command="{Binding OpenHttpInterfaceWorkspaceCommand}"
-                              Content="HTTP 接口" />
+                    <ScrollViewer HorizontalScrollBarVisibility="Hidden"
+                                  VerticalScrollBarVisibility="Disabled">
+                      <StackPanel Orientation="Horizontal"
+                                  Spacing="{StaticResource Space.2}">
+                        <ItemsControl ItemsSource="{Binding WorkspaceTabs}">
+                          <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                              <StackPanel Orientation="Horizontal"
+                                          Spacing="{StaticResource Space.2}" />
+                            </ItemsPanelTemplate>
+                          </ItemsControl.ItemsPanel>
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:RequestWorkspaceTabViewModel">
+                              <Border Classes="ProjectWorkspaceInnerTabShell">
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="{StaticResource Space.1}">
+                                  <ToggleButton Grid.Column="0"
+                                                Classes="ProjectWorkspaceInnerTabButton"
+                                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActiveProjectTab.ActivateWorkspaceTabCommand}"
+                                                CommandParameter="{Binding}"
+                                                IsChecked="{Binding IsActive, Mode=OneWay}">
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="{StaticResource Space.2}">
+                                      <Border Classes="ProjectWorkspaceInnerTabBadge"
+                                              IsVisible="{Binding ShowMethodBadge}">
+                                        <TextBlock Classes="CaptionText"
+                                                   Text="{Binding MethodBadgeText}" />
+                                      </Border>
+                                      <TextBlock Text="{Binding HeaderText}" />
+                                    </StackPanel>
+                                  </ToggleButton>
+                                  <Button Grid.Column="1"
+                                          Classes="ProjectWorkspaceInnerTabCloseButton"
+                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActiveProjectTab.CloseWorkspaceTabCommand}"
+                                          CommandParameter="{Binding}"
+                                          Content="×" />
+                                </Grid>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
 
-                      <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonActive"
-                              IsVisible="{Binding IsQuickRequestEditor}"
-                              Command="{Binding OpenQuickRequestWorkspaceCommand}"
-                              Content="快捷请求" />
-                      <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonGhost"
-                              IsVisible="{Binding IsHttpInterfaceEditor}"
-                              Command="{Binding OpenQuickRequestWorkspaceCommand}"
-                              Content="快捷请求" />
-                    </StackPanel>
+                        <Button Classes="ProjectWorkspaceInnerTabAddButton"
+                                Content="+"
+                                Command="{Binding CreateWorkspaceTabCommand}" />
+                      </StackPanel>
+                    </ScrollViewer>
                   </Border>
 
                   <StackPanel Grid.Column="1"
@@ -743,15 +827,16 @@
                     </ComboBox.ItemTemplate>
                   </ComboBox>
 
-                  <Button Grid.Column="3"
-                          Classes="SecondaryButton ProjectWorkspaceToolbarButton"
-                          Content="返回概览"
-                          Command="{Binding ReturnToInterfaceHomeCommand}" />
-
-                  <Button Grid.Column="4"
-                          Classes="SecondaryButton ProjectWorkspaceToolbarButton"
-                          Content="环境设置"
-                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+                  <StackPanel Grid.Column="3"
+                              Orientation="Horizontal"
+                              Spacing="{StaticResource Space.2}">
+                    <Button Classes="SecondaryButton ProjectWorkspaceToolbarButton"
+                            Content="新建页"
+                            Command="{Binding ReturnToInterfaceHomeCommand}" />
+                    <Button Classes="SecondaryButton ProjectWorkspaceToolbarButton"
+                            Content="环境设置"
+                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+                  </StackPanel>
                 </Grid>
               </Border>
 

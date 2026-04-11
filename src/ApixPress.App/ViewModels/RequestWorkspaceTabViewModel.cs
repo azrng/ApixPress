@@ -1,0 +1,237 @@
+using System.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using ApixPress.App.Models.DTOs;
+using ApixPress.App.ViewModels.Base;
+
+namespace ApixPress.App.ViewModels;
+
+public partial class RequestWorkspaceTabViewModel : ViewModelBase
+{
+    private static class WorkspaceEntryTypes
+    {
+        public const string Landing = "landing";
+        public const string QuickRequest = "quick-request";
+        public const string HttpInterface = "http-interface";
+    }
+
+    public RequestWorkspaceTabViewModel()
+    {
+        ConfigTab = new RequestConfigTabViewModel(null);
+        ResponseSection = new ResponseSectionViewModel();
+
+        ConfigTab.PropertyChanged += OnConfigTabPropertyChanged;
+        UpdateTabHeader();
+    }
+
+    public RequestConfigTabViewModel ConfigTab { get; }
+    public ResponseSectionViewModel ResponseSection { get; }
+
+    [ObservableProperty]
+    private string id = Guid.NewGuid().ToString("N");
+
+    [ObservableProperty]
+    private string entryType = WorkspaceEntryTypes.Landing;
+
+    [ObservableProperty]
+    private string selectedMethod = "GET";
+
+    [ObservableProperty]
+    private string requestUrl = string.Empty;
+
+    [ObservableProperty]
+    private string interfaceFolderPath = "用户";
+
+    [ObservableProperty]
+    private string httpCaseName = "成功";
+
+    [ObservableProperty]
+    private string editingQuickRequestId = string.Empty;
+
+    [ObservableProperty]
+    private string editingInterfaceId = string.Empty;
+
+    [ObservableProperty]
+    private string editingCaseId = string.Empty;
+
+    [ObservableProperty]
+    private bool isActive;
+
+    [ObservableProperty]
+    private string headerText = "新建...";
+
+    public bool IsLandingTab => EntryType == WorkspaceEntryTypes.Landing;
+    public bool IsQuickRequestTab => EntryType == WorkspaceEntryTypes.QuickRequest;
+    public bool IsHttpInterfaceTab => EntryType == WorkspaceEntryTypes.HttpInterface;
+    public bool ShowMethodBadge => IsHttpInterfaceTab;
+    public string MethodBadgeText => SelectedMethod;
+    public string EditorTitle => IsHttpInterfaceTab ? "HTTP 接口" : IsQuickRequestTab ? "快捷请求" : "新建...";
+    public string EditorDescription => IsHttpInterfaceTab
+        ? "HTTP 接口会自动使用当前环境的 BaseUrl，请在右侧输入相对路径。"
+        : IsQuickRequestTab
+            ? "快捷请求不固定 BaseUrl，可直接输入完整地址或自由组合变量。"
+            : "从下方卡片中选择要创建的工作内容。";
+    public string PrimaryActionText => IsHttpInterfaceTab ? "保存接口" : "保存快捷请求";
+    public string UrlWatermark => IsHttpInterfaceTab ? "输入接口相对路径，例如 /users/{id}" : "输入完整地址或相对路径";
+
+    public void ConfigureAsLanding()
+    {
+        EntryType = WorkspaceEntryTypes.Landing;
+        SelectedMethod = "GET";
+        RequestUrl = string.Empty;
+        InterfaceFolderPath = "用户";
+        HttpCaseName = "成功";
+        EditingQuickRequestId = string.Empty;
+        EditingInterfaceId = string.Empty;
+        EditingCaseId = string.Empty;
+        ConfigTab.Reset();
+        ResponseSection.Reset();
+        UpdateTabHeader();
+    }
+
+    public void ConfigureAsQuickRequest()
+    {
+        EntryType = WorkspaceEntryTypes.QuickRequest;
+        SelectedMethod = "GET";
+        RequestUrl = string.Empty;
+        InterfaceFolderPath = "用户";
+        HttpCaseName = "成功";
+        EditingQuickRequestId = string.Empty;
+        EditingInterfaceId = string.Empty;
+        EditingCaseId = string.Empty;
+        ConfigTab.Reset();
+        ResponseSection.Reset();
+        UpdateTabHeader();
+    }
+
+    public void ConfigureAsHttpInterface()
+    {
+        EntryType = WorkspaceEntryTypes.HttpInterface;
+        SelectedMethod = "GET";
+        RequestUrl = string.Empty;
+        InterfaceFolderPath = "用户";
+        HttpCaseName = "成功";
+        EditingQuickRequestId = string.Empty;
+        EditingInterfaceId = string.Empty;
+        EditingCaseId = string.Empty;
+        ConfigTab.Reset();
+        ResponseSection.Reset();
+        UpdateTabHeader();
+    }
+
+    public void ApplySavedRequest(RequestCaseDto source, RequestCaseDto? parentInterface = null)
+    {
+        switch (source.EntryType)
+        {
+            case WorkspaceEntryTypes.HttpInterface:
+                EntryType = WorkspaceEntryTypes.HttpInterface;
+                EditingInterfaceId = source.Id;
+                EditingCaseId = string.Empty;
+                EditingQuickRequestId = string.Empty;
+                InterfaceFolderPath = string.IsNullOrWhiteSpace(source.FolderPath) ? "用户" : source.FolderPath;
+                HttpCaseName = "成功";
+                break;
+            case "http-case":
+                EntryType = WorkspaceEntryTypes.HttpInterface;
+                EditingCaseId = source.Id;
+                EditingQuickRequestId = string.Empty;
+                EditingInterfaceId = parentInterface?.Id ?? source.ParentId;
+                InterfaceFolderPath = !string.IsNullOrWhiteSpace(parentInterface?.FolderPath) ? parentInterface.FolderPath : source.FolderPath;
+                HttpCaseName = source.Name;
+                break;
+            default:
+                EntryType = WorkspaceEntryTypes.QuickRequest;
+                EditingQuickRequestId = source.Id;
+                EditingInterfaceId = string.Empty;
+                EditingCaseId = string.Empty;
+                InterfaceFolderPath = "用户";
+                HttpCaseName = "成功";
+                break;
+        }
+
+        ApplySnapshot(source.RequestSnapshot);
+        if (source.EntryType == "http-case" && parentInterface is not null && string.IsNullOrWhiteSpace(ConfigTab.RequestName))
+        {
+            ConfigTab.RequestName = parentInterface.Name;
+        }
+
+        UpdateTabHeader();
+    }
+
+    public void ApplySnapshot(RequestSnapshotDto snapshot)
+    {
+        SelectedMethod = string.IsNullOrWhiteSpace(snapshot.Method) ? "GET" : snapshot.Method;
+        RequestUrl = snapshot.Url;
+        ConfigTab.ApplySnapshot(snapshot);
+        UpdateTabHeader();
+    }
+
+    public RequestSnapshotDto BuildSnapshot()
+    {
+        ConfigTab.RequestName = ResolveRequestName();
+        return ConfigTab.BuildRequestSnapshot(string.Empty, SelectedMethod, RequestUrl);
+    }
+
+    public string ResolveRequestName()
+    {
+        if (!string.IsNullOrWhiteSpace(ConfigTab.RequestName))
+        {
+            return ConfigTab.RequestName.Trim();
+        }
+
+        var target = RequestUrl.Trim();
+        if (IsHttpInterfaceTab)
+        {
+            return string.IsNullOrWhiteSpace(target)
+                ? "新建 HTTP 接口"
+                : $"{SelectedMethod} {target}";
+        }
+
+        return string.IsNullOrWhiteSpace(target)
+            ? "快捷请求"
+            : $"{SelectedMethod} {target}";
+    }
+
+    private void OnConfigTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(RequestConfigTabViewModel.RequestName)
+            or nameof(RequestConfigTabViewModel.RequestDescription))
+        {
+            UpdateTabHeader();
+        }
+    }
+
+    partial void OnEntryTypeChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsLandingTab));
+        OnPropertyChanged(nameof(IsQuickRequestTab));
+        OnPropertyChanged(nameof(IsHttpInterfaceTab));
+        OnPropertyChanged(nameof(ShowMethodBadge));
+        OnPropertyChanged(nameof(MethodBadgeText));
+        OnPropertyChanged(nameof(EditorTitle));
+        OnPropertyChanged(nameof(EditorDescription));
+        OnPropertyChanged(nameof(PrimaryActionText));
+        OnPropertyChanged(nameof(UrlWatermark));
+        UpdateTabHeader();
+    }
+
+    partial void OnSelectedMethodChanged(string value)
+    {
+        OnPropertyChanged(nameof(MethodBadgeText));
+        UpdateTabHeader();
+    }
+
+    partial void OnRequestUrlChanged(string value)
+    {
+        UpdateTabHeader();
+    }
+
+    private void UpdateTabHeader()
+    {
+        HeaderText = EntryType switch
+        {
+            WorkspaceEntryTypes.Landing => "新建...",
+            WorkspaceEntryTypes.HttpInterface => ResolveRequestName(),
+            _ => ResolveRequestName()
+        };
+    }
+}

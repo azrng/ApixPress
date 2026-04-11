@@ -18,7 +18,7 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
-    <Setter Property="Padding" Value="20,12" />
+    <Setter Property="Padding" Value="16,8" />
   </Style>
 
   <Style Selector="Path.ShellIconPath">
@@ -90,8 +90,8 @@
   </Style>
 
   <Style Selector="Button.ShellIconButton">
-    <Setter Property="Width" Value="34" />
-    <Setter Property="Height" Value="34" />
+    <Setter Property="Width" Value="32" />
+    <Setter Property="Height" Value="32" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
@@ -113,7 +113,7 @@
 
   <Style Selector="Button.WindowControlButton">
     <Setter Property="Width" Value="44" />
-    <Setter Property="Height" Value="32" />
+    <Setter Property="Height" Value="30" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
@@ -803,7 +803,7 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="Padding" Value="4" />
+    <Setter Property="Padding" Value="3" />
   </Style>
 
   <Style Selector="Border.WorkspaceTabItemShell">
@@ -815,7 +815,7 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="12,8" />
+    <Setter Property="Padding" Value="10,6" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
   </Style>
@@ -956,31 +956,73 @@
 
   <Style Selector="Border.ProjectWorkspaceEditorTabs">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="2" />
+    <Setter Property="Padding" Value="4" />
   </Style>
 
-  <Style Selector="Button.ProjectWorkspaceEditorTabButton">
-    <Setter Property="BorderThickness" Value="0" />
+  <Style Selector="Border.ProjectWorkspaceInnerTabShell">
     <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Padding" Value="14,12" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
-  <Style Selector="Button.ProjectWorkspaceEditorTabButton:pointerover">
+  <Style Selector="ToggleButton.ProjectWorkspaceInnerTabButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="12,8" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectWorkspaceInnerTabButton:pointerover">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
 
-  <Style Selector="Button.ProjectWorkspaceEditorTabButtonActive">
+  <Style Selector="ToggleButton.ProjectWorkspaceInnerTabButton:checked">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
     <Setter Property="BorderThickness" Value="1" />
   </Style>
 
-  <Style Selector="Button.ProjectWorkspaceEditorTabButtonGhost">
+  <Style Selector="Border.ProjectWorkspaceInnerTabBadge">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="6,2" />
+  </Style>
+
+  <Style Selector="Button.ProjectWorkspaceInnerTabCloseButton">
+    <Setter Property="Width" Value="22" />
+    <Setter Property="Height" Value="22" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="Button.ProjectWorkspaceInnerTabCloseButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Button.ProjectWorkspaceInnerTabAddButton">
+    <Setter Property="Width" Value="32" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+  </Style>
+
+  <Style Selector="Button.ProjectWorkspaceInnerTabAddButton:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
   </Style>
 
   <Style Selector="ComboBox.ProjectWorkspaceToolbarComboBox">
