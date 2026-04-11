@@ -41,15 +41,9 @@
                   Data="M6,4 L18,4 C19.1,4 20,4.9 20,6 L20,18 C20,19.1 19.1,20 18,20 L6,20 C4.9,20 4,19.1 4,18 L4,6 C4,4.9 4.9,4 6,4 Z M8,8 L16,8 L16,10 L8,10 Z M8,12 L13,12 L13,14 L8,14 Z M8,16 L15,16 L15,18 L8,18 Z" />
           </Border>
 
-          <StackPanel Spacing="2"
-                      VerticalAlignment="Center">
-            <TextBlock Classes="PageTitle"
-                       Text="ApixPress" />
-            <TextBlock Classes="CaptionText"
-                       Text="{Binding StatusMessage}"
-                       MaxWidth="260"
-                       TextTrimming="CharacterEllipsis" />
-          </StackPanel>
+          <TextBlock Classes="PageTitle"
+                     VerticalAlignment="Center"
+                     Text="ApixPress" />
         </StackPanel>
 
         <Border Grid.Column="1"
@@ -207,12 +201,9 @@
                   Classes="BrowserToolbarCard">
             <Grid ColumnDefinitions="*,Auto"
                   ColumnSpacing="{StaticResource Space.4}">
-              <StackPanel Spacing="{StaticResource Space.1}">
-                <TextBlock Classes="SectionTitle"
-                           Text="项目列表" />
-                <TextBlock Classes="CaptionText"
-                           Text="{Binding BrowserStatusText}" />
-              </StackPanel>
+              <TextBlock Classes="SectionTitle"
+                         VerticalAlignment="Center"
+                         Text="项目列表" />
               <Grid Grid.Column="1"
                     ColumnDefinitions="280,Auto"
                     ColumnSpacing="{StaticResource Space.2}">
