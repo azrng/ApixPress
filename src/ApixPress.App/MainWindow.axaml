@@ -139,8 +139,7 @@
         <StackPanel Grid.Column="4"
                     Orientation="Horizontal"
                     Spacing="0"
-                    VerticalAlignment="Center"
-                    Margin="{StaticResource Space.1},0,0,0">
+                    VerticalAlignment="Center">
           <Button Classes="WindowControlButton"
                   Click="OnMinimizeWindow">
             <TextBlock Classes="WindowControlGlyph"
