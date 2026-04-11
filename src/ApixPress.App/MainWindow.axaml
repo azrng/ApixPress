@@ -23,7 +23,7 @@
     <DataTemplate x:Key="ProjectSidebarExplorerItemTemplate"
                   x:DataType="vm:ExplorerItemViewModel">
       <StackPanel Spacing="2">
-        <Grid ColumnDefinitions="8,*"
+        <Grid ColumnDefinitions="6,*"
               ColumnSpacing="2">
           <ToggleButton x:Name="ExplorerExpandToggle"
                         Grid.Column="0"
@@ -84,7 +84,7 @@
         </Grid>
 
         <ItemsControl Classes="ProjectSidebarInlineTreeChildren"
-                      Margin="4,0,0,0"
+                      Margin="2,0,0,0"
                       ItemsSource="{Binding Children}"
                       IsVisible="{Binding IsExpanded}">
           <ItemsControl.ItemTemplate>

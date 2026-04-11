@@ -1014,7 +1014,7 @@
   </Style>
 
   <Style Selector="ToggleButton.ProjectSidebarTreeExpanderToggle">
-    <Setter Property="Width" Value="8" />
+    <Setter Property="Width" Value="6" />
     <Setter Property="Height" Value="20" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="Background" Value="Transparent" />
@@ -1024,7 +1024,7 @@
   </Style>
 
   <Style Selector="Border.ProjectSidebarTreeExpanderSpacer">
-    <Setter Property="Width" Value="4" />
+    <Setter Property="Width" Value="0" />
     <Setter Property="Height" Value="20" />
   </Style>
 
@@ -1033,7 +1033,7 @@
   </Style>
 
   <Style Selector="ItemsControl.ProjectSidebarInlineTreeChildren">
-    <Setter Property="Margin" Value="4,0,0,0" />
+    <Setter Property="Margin" Value="2,0,0,0" />
   </Style>
 
   <Style Selector="TextBlock.ProjectSidebarCatalogMeta">
