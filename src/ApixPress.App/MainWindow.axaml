@@ -411,7 +411,7 @@
                         </Grid>
                         <StackPanel Classes="ProjectSidebarModuleChildren">
                           <ToggleButton x:Name="InterfaceCatalogToggle"
-                                        Classes="ProjectSidebarCatalogToggleButton"
+                                        Classes="ProjectSidebarCatalogToggleButton ProjectSidebarCatalogActiveButton"
                                         IsChecked="{Binding IsInterfaceCatalogExpanded, Mode=TwoWay}">
                             <Grid ColumnDefinitions="Auto,Auto,*,Auto"
                                   ColumnSpacing="{StaticResource Space.2}">
@@ -563,7 +563,7 @@
                                        FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                        Text="&#xE945;" />
                             <TextBlock Grid.Column="2"
-                                       Classes="ProjectSidebarCatalogTitle"
+                                       Classes="ProjectSidebarSectionTitle"
                                        Text="快捷请求" />
                             <TextBlock Grid.Column="3"
                                        Classes="ProjectSidebarCatalogChevron"

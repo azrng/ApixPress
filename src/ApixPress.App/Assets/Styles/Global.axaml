@@ -988,6 +988,10 @@
   </Style>
 
   <Style Selector="ToggleButton.ProjectSidebarCatalogToggleButton:checked">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectSidebarCatalogActiveButton:checked">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
   </Style>
 
