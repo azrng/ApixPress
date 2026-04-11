@@ -911,7 +911,8 @@
   </Style>
 
   <Style Selector="Border.ProjectWorkspaceSidebarCard">
-    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+    <Setter Property="Padding" Value="14,16" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
   </Style>
 
   <Style Selector="Border.ProjectWorkspaceTreeSection">
@@ -1039,6 +1040,74 @@
     <Setter Property="MinHeight" Value="36" />
   </Style>
 
+  <Style Selector="ComboBox.ProjectSidebarEnvCombo">
+    <Setter Property="MinWidth" Value="110" />
+    <Setter Property="MinHeight" Value="34" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="TextBox.ProjectSidebarSearchBox">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="12,8" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="MinHeight" Value="36" />
+  </Style>
+
+  <Style Selector="Button.ProjectSidebarToolButton">
+    <Setter Property="Width" Value="36" />
+    <Setter Property="Height" Value="36" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="Button.ProjectSidebarToolButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Button.ProjectSidebarAddButton">
+    <Setter Property="Width" Value="36" />
+    <Setter Property="Height" Value="36" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="#8B6AE6" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+  </Style>
+
+  <Style Selector="Button.ProjectSidebarAddButton:pointerover">
+    <Setter Property="Opacity" Value="0.92" />
+  </Style>
+
+  <Style Selector="Button.ProjectSidebarGhostButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="0,10" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+  </Style>
+
+  <Style Selector="Button.ProjectSidebarGhostButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="TextBlock.ProjectSidebarEmptyHint">
+    <Setter Property="Margin" Value="0,2,0,2" />
+  </Style>
+
   <Style Selector="Button.ProjectWorkspaceToolbarButton">
     <Setter Property="Padding" Value="10,8" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
@@ -1158,6 +1227,10 @@
     <Setter Property="Padding" Value="0" />
   </Style>
 
+  <Style Selector="TreeView.ProjectSidebarTree">
+    <Setter Property="Margin" Value="0,2,0,0" />
+  </Style>
+
   <Style Selector="TreeView.WorkspaceTreeView TreeViewItem">
     <Setter Property="Margin" Value="0,0,0,2" />
     <Setter Property="Padding" Value="0" />
@@ -1174,7 +1247,7 @@
   <Style Selector="Button.WorkspaceTreeNodeButton">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Padding" Value="4,3" />
+    <Setter Property="Padding" Value="3,2" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />

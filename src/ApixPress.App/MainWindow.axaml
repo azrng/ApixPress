@@ -333,7 +333,7 @@
               Margin="{StaticResource Pad.5}"
               RowDefinitions="*">
           <Grid
-                ColumnDefinitions="92,320,*"
+                ColumnDefinitions="92,286,*"
                 ColumnSpacing="{StaticResource Space.3}">
             <Border Grid.Column="0"
                     Classes="ProjectWorkspaceNavigationRail">
@@ -400,134 +400,138 @@
                 <Grid IsVisible="{Binding IsInterfaceManagementSection}"
                       RowDefinitions="Auto,Auto,*"
                       RowSpacing="{StaticResource Space.3}">
-                  <Grid ColumnDefinitions="*,Auto,Auto"
+                  <Grid ColumnDefinitions="*,124"
                         ColumnSpacing="{StaticResource Space.2}">
-                    <StackPanel Spacing="2">
+                    <StackPanel Spacing="4">
                       <TextBlock Classes="SectionTitle"
                                  Text="接口管理" />
-                      <TextBlock Classes="CaptionText"
-                                 Text="左侧保留默认模块接口树和快捷请求目录。" />
                     </StackPanel>
-                    <Button Grid.Column="1"
-                            Classes="SecondaryButton"
-                            Content="+ HTTP 接口"
-                            Command="{Binding OpenHttpInterfaceWorkspaceCommand}" />
-                    <Button Grid.Column="2"
-                            Classes="SecondaryButton"
-                            Content="+ 快捷请求"
-                            Command="{Binding OpenQuickRequestWorkspaceCommand}" />
+                    <ComboBox Grid.Column="1"
+                              SelectedIndex="0"
+                              Classes="ProjectSidebarEnvCombo">
+                      <ComboBoxItem Content="main" />
+                    </ComboBox>
                   </Grid>
 
-                  <Border Grid.Row="1"
-                          Classes="ProjectWorkspaceModuleCard">
-                    <StackPanel Spacing="{StaticResource Space.2}">
-                      <TextBlock Classes="CaptionText"
-                                 Text="{Binding InterfaceSectionHint}" />
-                      <TextBlock Classes="CaptionText"
-                                 Text="{Binding QuickRequestSectionHint}" />
-                    </StackPanel>
-                  </Border>
+                  <Grid Grid.Row="1"
+                        ColumnDefinitions="*,Auto,Auto"
+                        ColumnSpacing="{StaticResource Space.2}">
+                    <TextBox Grid.Column="0"
+                             Classes="ProjectSidebarSearchBox"
+                             Watermark="搜索" />
+                    <Button Grid.Column="1"
+                            Classes="ProjectSidebarToolButton"
+                            Command="{Binding OpenQuickRequestWorkspaceCommand}">
+                      <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                 Text="&#xE71C;" />
+                    </Button>
+                    <Button Grid.Column="2"
+                            Classes="ProjectSidebarAddButton"
+                            Command="{Binding OpenHttpInterfaceWorkspaceCommand}">
+                      <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                 Text="&#xE710;" />
+                    </Button>
+                  </Grid>
 
                   <ScrollViewer Grid.Row="2">
                     <StackPanel Spacing="{StaticResource Space.3}">
-                      <Border Classes="ProjectWorkspaceTreeSection">
-                        <StackPanel Spacing="{StaticResource Space.3}">
-                          <StackPanel Spacing="2">
-                            <TextBlock Classes="SectionTitle"
-                                       Text="默认模块" />
-                            <TextBlock Classes="CaptionText"
-                                       Text="接口目录树" />
-                          </StackPanel>
-                          <TextBlock Classes="CaptionText"
-                                     Text="当前还没有保存的 HTTP 接口"
-                                     IsVisible="{Binding ShowInterfaceEntriesEmptyState}" />
-                          <TreeView Classes="WorkspaceTreeView"
-                                    ItemsSource="{Binding InterfaceTreeItems}">
-                            <TreeView.ItemTemplate>
-                              <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
-                                                ItemsSource="{Binding Children}">
-                                <Button Classes="WorkspaceTreeNodeButton"
-                                        IsHitTestVisible="{Binding CanLoad}"
-                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
-                                        CommandParameter="{Binding}">
-                                  <StackPanel Spacing="2">
-                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-                                          ColumnSpacing="{StaticResource Space.2}">
-                                      <TextBlock Grid.Column="0"
-                                                 Classes="WorkspaceTreeNodeGlyph"
-                                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                                 Text="{Binding NodeGlyph}"
-                                                 IsVisible="{Binding ShowLeadingGlyph}" />
-                                      <u:Badge Grid.Column="1"
-                                               Header="{Binding MethodBadgeText}"
-                                               IsVisible="{Binding ShowMethodBadge}"
-                                               iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
-                                      <TextBlock Grid.Column="2"
-                                                 Text="{Binding Title}"
-                                                 VerticalAlignment="Center"
-                                                 TextWrapping="Wrap" />
-                                      <Border Grid.Column="3"
-                                              Classes="WorkspaceTreeStatusDot"
-                                              IsVisible="{Binding ShowTrailingDot}" />
-                                    </Grid>
-                                    <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
-                                               Text="{Binding Subtitle}"
-                                               IsVisible="{Binding HasSubtitle}" />
-                                  </StackPanel>
-                                </Button>
-                              </TreeDataTemplate>
-                            </TreeView.ItemTemplate>
-                          </TreeView>
-                        </StackPanel>
-                      </Border>
+                      <StackPanel Spacing="{StaticResource Space.2}">
+                        <TextBlock Classes="CaptionText"
+                                   Text="{Binding InterfaceSectionHint}" />
+                        <TextBlock Classes="CaptionText ProjectSidebarEmptyHint"
+                                   Text="当前还没有保存的 HTTP 接口"
+                                   IsVisible="{Binding ShowInterfaceEntriesEmptyState}" />
+                        <TreeView Classes="WorkspaceTreeView ProjectSidebarTree"
+                                  ItemsSource="{Binding InterfaceTreeItems}">
+                          <TreeView.ItemTemplate>
+                            <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
+                                              ItemsSource="{Binding Children}">
+                              <Button Classes="WorkspaceTreeNodeButton"
+                                      IsHitTestVisible="{Binding CanLoad}"
+                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
+                                      CommandParameter="{Binding}">
+                                <StackPanel Spacing="2">
+                                  <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+                                        ColumnSpacing="{StaticResource Space.2}">
+                                    <TextBlock Grid.Column="0"
+                                               Classes="WorkspaceTreeNodeGlyph"
+                                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                               Text="{Binding NodeGlyph}"
+                                               IsVisible="{Binding ShowLeadingGlyph}" />
+                                    <u:Badge Grid.Column="1"
+                                             Header="{Binding MethodBadgeText}"
+                                             IsVisible="{Binding ShowMethodBadge}"
+                                             iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Title}"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap" />
+                                    <Border Grid.Column="3"
+                                            Classes="WorkspaceTreeStatusDot"
+                                            IsVisible="{Binding ShowTrailingDot}" />
+                                  </Grid>
+                                  <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
+                                             Text="{Binding Subtitle}"
+                                             IsVisible="{Binding HasSubtitle}" />
+                                </StackPanel>
+                              </Button>
+                            </TreeDataTemplate>
+                          </TreeView.ItemTemplate>
+                        </TreeView>
+                      </StackPanel>
 
-                      <Border Classes="ProjectWorkspaceTreeSection">
-                        <StackPanel Spacing="{StaticResource Space.3}">
-                          <StackPanel Spacing="2">
-                            <TextBlock Classes="SectionTitle"
-                                       Text="快捷请求" />
-                            <TextBlock Classes="CaptionText"
-                                       Text="独立保存目录" />
-                          </StackPanel>
-                          <TreeView Classes="WorkspaceTreeView"
-                                    ItemsSource="{Binding QuickRequestTreeItems}">
-                            <TreeView.ItemTemplate>
-                              <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
-                                                ItemsSource="{Binding Children}">
-                                <Button Classes="WorkspaceTreeNodeButton"
-                                        IsHitTestVisible="{Binding CanLoad}"
-                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
-                                        CommandParameter="{Binding}">
-                                  <StackPanel Spacing="2">
-                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-                                          ColumnSpacing="{StaticResource Space.2}">
-                                      <TextBlock Grid.Column="0"
-                                                 Classes="WorkspaceTreeNodeGlyph"
-                                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                                 Text="{Binding NodeGlyph}"
-                                                 IsVisible="{Binding ShowLeadingGlyph}" />
-                                      <u:Badge Grid.Column="1"
-                                               Header="{Binding MethodBadgeText}"
-                                               IsVisible="{Binding ShowMethodBadge}"
-                                               iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
-                                      <TextBlock Grid.Column="2"
-                                                 Text="{Binding Title}"
-                                                 VerticalAlignment="Center"
-                                                 TextWrapping="Wrap" />
-                                      <Border Grid.Column="3"
-                                              Classes="WorkspaceTreeStatusDot"
-                                              IsVisible="{Binding ShowTrailingDot}" />
-                                    </Grid>
-                                    <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
-                                               Text="{Binding Subtitle}"
-                                               IsVisible="{Binding HasSubtitle}" />
-                                  </StackPanel>
-                                </Button>
-                              </TreeDataTemplate>
-                            </TreeView.ItemTemplate>
-                          </TreeView>
-                        </StackPanel>
-                      </Border>
+                      <StackPanel Spacing="{StaticResource Space.2}">
+                        <Grid ColumnDefinitions="Auto,*"
+                              ColumnSpacing="{StaticResource Space.2}">
+                          <TextBlock Grid.Column="0"
+                                     Classes="WorkspaceTreeNodeGlyph"
+                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                     Text="&#xE9D5;" />
+                          <TextBlock Grid.Column="1"
+                                     Text="快捷请求"
+                                     FontWeight="SemiBold" />
+                        </Grid>
+                        <Button Classes="ProjectSidebarGhostButton"
+                                Content="+ 新建"
+                                Command="{Binding OpenQuickRequestWorkspaceCommand}" />
+                        <TreeView Classes="WorkspaceTreeView ProjectSidebarTree"
+                                  ItemsSource="{Binding QuickRequestTreeItems}">
+                          <TreeView.ItemTemplate>
+                            <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
+                                              ItemsSource="{Binding Children}">
+                              <Button Classes="WorkspaceTreeNodeButton"
+                                      IsHitTestVisible="{Binding CanLoad}"
+                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
+                                      CommandParameter="{Binding}">
+                                <StackPanel Spacing="2">
+                                  <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+                                        ColumnSpacing="{StaticResource Space.2}">
+                                    <TextBlock Grid.Column="0"
+                                               Classes="WorkspaceTreeNodeGlyph"
+                                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                               Text="{Binding NodeGlyph}"
+                                               IsVisible="{Binding ShowLeadingGlyph}" />
+                                    <u:Badge Grid.Column="1"
+                                             Header="{Binding MethodBadgeText}"
+                                             IsVisible="{Binding ShowMethodBadge}"
+                                             iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Title}"
+                                               VerticalAlignment="Center"
+                                               TextWrapping="Wrap" />
+                                    <Border Grid.Column="3"
+                                            Classes="WorkspaceTreeStatusDot"
+                                            IsVisible="{Binding ShowTrailingDot}" />
+                                  </Grid>
+                                  <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
+                                             Text="{Binding Subtitle}"
+                                             IsVisible="{Binding HasSubtitle}" />
+                                </StackPanel>
+                              </Button>
+                            </TreeDataTemplate>
+                          </TreeView.ItemTemplate>
+                        </TreeView>
+                      </StackPanel>
                     </StackPanel>
                   </ScrollViewer>
                 </Grid>
