@@ -209,6 +209,15 @@ public partial class ProjectTabViewModel : ViewModelBase
     [ObservableProperty]
     private RequestWorkspaceTabViewModel? activeWorkspaceTab;
 
+    [ObservableProperty]
+    private bool isQuickRequestSaveDialogOpen;
+
+    [ObservableProperty]
+    private string quickRequestSaveName = string.Empty;
+
+    [ObservableProperty]
+    private string quickRequestSaveDescription = string.Empty;
+
     public async Task InitializeAsync()
     {
         if (_initialized)
@@ -295,7 +304,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             return;
         }
 
-        await SaveQuickRequestAsync(workspaceTab);
+        OpenQuickRequestSaveDialog(workspaceTab);
     }
 
     public async Task SaveHistoryAsQuickRequestAsync(RequestHistoryItemViewModel item)
@@ -365,6 +374,43 @@ public partial class ProjectTabViewModel : ViewModelBase
         else
         {
             StatusMessage = result.Message;
+        }
+
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void CloseQuickRequestSaveDialog()
+    {
+        IsQuickRequestSaveDialogOpen = false;
+        StatusMessage = "已取消保存快捷请求。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private async Task ConfirmQuickRequestSaveAsync()
+    {
+        var workspaceTab = ActiveWorkspaceTab;
+        if (workspaceTab is null || !workspaceTab.IsQuickRequestTab)
+        {
+            IsQuickRequestSaveDialogOpen = false;
+            NotifyShellState();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(QuickRequestSaveName))
+        {
+            StatusMessage = "请输入快捷请求名称。";
+            NotifyShellState();
+            return;
+        }
+
+        workspaceTab.ConfigTab.RequestName = QuickRequestSaveName.Trim();
+        workspaceTab.ConfigTab.RequestDescription = QuickRequestSaveDescription.Trim();
+        await SaveQuickRequestAsync(workspaceTab, workspaceTab.ConfigTab.RequestName);
+        if (!string.IsNullOrWhiteSpace(workspaceTab.EditingQuickRequestId))
+        {
+            IsQuickRequestSaveDialogOpen = false;
         }
 
         NotifyShellState();
@@ -547,15 +593,18 @@ public partial class ProjectTabViewModel : ViewModelBase
         NotifyShellState();
     }
 
-    private async Task SaveQuickRequestAsync(RequestWorkspaceTabViewModel workspaceTab)
+    private async Task SaveQuickRequestAsync(RequestWorkspaceTabViewModel workspaceTab, string? requestNameOverride = null)
     {
-        var snapshot = workspaceTab.BuildSnapshot();
+        var requestName = string.IsNullOrWhiteSpace(requestNameOverride)
+            ? workspaceTab.ResolveRequestName()
+            : requestNameOverride.Trim();
+        var snapshot = workspaceTab.BuildSnapshot(requestName);
         var result = await _requestCaseService.SaveAsync(new RequestCaseDto
         {
             Id = workspaceTab.EditingQuickRequestId,
             ProjectId = ProjectId,
             EntryType = RequestEntryTypes.QuickRequest,
-            Name = workspaceTab.ResolveRequestName(),
+            Name = requestName,
             GroupName = "快捷请求",
             Description = workspaceTab.ConfigTab.RequestDescription,
             RequestSnapshot = snapshot,
@@ -756,6 +805,18 @@ public partial class ProjectTabViewModel : ViewModelBase
         };
     }
 
+    private void OpenQuickRequestSaveDialog(RequestWorkspaceTabViewModel workspaceTab)
+    {
+        var fallbackName = string.IsNullOrWhiteSpace(workspaceTab.ConfigTab.RequestName)
+            ? workspaceTab.ResolveRequestName()
+            : workspaceTab.ConfigTab.RequestName.Trim();
+        QuickRequestSaveName = fallbackName;
+        QuickRequestSaveDescription = workspaceTab.ConfigTab.RequestDescription;
+        IsQuickRequestSaveDialogOpen = true;
+        StatusMessage = "请输入快捷请求名称后再保存。";
+        NotifyShellState();
+    }
+
     private RequestWorkspaceTabViewModel ReuseActiveLandingOrCreateWorkspace()
     {
         if (ActiveWorkspaceTab?.IsLandingTab == true)
@@ -947,6 +1008,11 @@ public partial class ProjectTabViewModel : ViewModelBase
         if (newValue is not null)
         {
             newValue.IsActive = true;
+        }
+
+        if (newValue is null || !newValue.IsQuickRequestTab)
+        {
+            IsQuickRequestSaveDialogOpen = false;
         }
 
         OnPropertyChanged(nameof(ConfigTab));

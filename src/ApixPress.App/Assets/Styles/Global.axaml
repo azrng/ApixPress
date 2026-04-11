@@ -1043,6 +1043,35 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
   </Style>
 
+  <Style Selector="Button.QuickRequestPrimaryButton">
+    <Setter Property="MinWidth" Value="82" />
+  </Style>
+
+  <Style Selector="Button.QuickRequestToolbarButton">
+    <Setter Property="MinWidth" Value="82" />
+  </Style>
+
+  <Style Selector="Border.QuickRequestConfigCard">
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="TabControl.QuickRequestInlineTabs TabItem">
+    <Setter Property="Padding" Value="12,10" />
+    <Setter Property="Margin" Value="0,0,8,0" />
+  </Style>
+
+  <Style Selector="TabControl.QuickRequestInlineTabs TabItem:selected">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderThickness" Value="0,0,0,2" />
+  </Style>
+
+  <Style Selector="Border.QuickRequestPlaceholderCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+    <Setter Property="Margin" Value="{StaticResource Pad.3}" />
+  </Style>
+
   <Style Selector="Button.ProjectLaunchButton">
     <Setter Property="Width" Value="240" />
     <Setter Property="Height" Value="220" />
@@ -1172,6 +1201,16 @@
     <Setter Property="BorderThickness" Value="0,0,0,1" />
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
     <Setter Property="CornerRadius" Value="12,12,0,0" />
+  </Style>
+
+  <Style Selector="Border.QuickRequestSaveDialogCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
+    <Setter Property="Width" Value="480" />
+    <Setter Property="BoxShadow" Value="0 24 60 0 #0F172A20" />
   </Style>
 
   <Style Selector="Border.ProjectSettingsInfoCard">

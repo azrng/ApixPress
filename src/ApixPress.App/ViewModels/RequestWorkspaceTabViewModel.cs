@@ -70,7 +70,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         : IsQuickRequestTab
             ? "快捷请求不固定 BaseUrl，可直接输入完整地址或自由组合变量。"
             : "从下方卡片中选择要创建的工作内容。";
-    public string PrimaryActionText => IsHttpInterfaceTab ? "保存接口" : "保存快捷请求";
+    public string PrimaryActionText => IsHttpInterfaceTab ? "保存接口" : "保存";
     public string UrlWatermark => IsHttpInterfaceTab ? "输入接口相对路径，例如 /users/{id}" : "输入完整地址或相对路径";
 
     public void ConfigureAsLanding()
@@ -165,10 +165,15 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         UpdateTabHeader();
     }
 
-    public RequestSnapshotDto BuildSnapshot()
+    public RequestSnapshotDto BuildSnapshot(string? requestNameOverride = null)
     {
-        ConfigTab.RequestName = ResolveRequestName();
-        return ConfigTab.BuildRequestSnapshot(string.Empty, SelectedMethod, RequestUrl);
+        var currentName = ConfigTab.RequestName;
+        ConfigTab.RequestName = string.IsNullOrWhiteSpace(requestNameOverride)
+            ? ResolveRequestName()
+            : requestNameOverride.Trim();
+        var snapshot = ConfigTab.BuildRequestSnapshot(string.Empty, SelectedMethod, RequestUrl);
+        ConfigTab.RequestName = currentName;
+        return snapshot;
     }
 
     public string ResolveRequestName()
