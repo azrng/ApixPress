@@ -23,10 +23,9 @@
     <DataTemplate x:Key="ProjectSidebarExplorerItemTemplate"
                   x:DataType="vm:ExplorerItemViewModel">
       <StackPanel Spacing="2">
-        <Grid ColumnDefinitions="4,*"
-              ColumnSpacing="1">
+        <StackPanel Orientation="Horizontal"
+                    Spacing="1">
           <ToggleButton x:Name="ExplorerExpandToggle"
-                        Grid.Column="0"
                         Classes="ProjectSidebarTreeExpanderToggle"
                         IsChecked="{Binding IsExpanded, Mode=TwoWay}"
                         IsVisible="{Binding HasChildren}">
@@ -41,11 +40,11 @@
                          Text="&#xE70D;" />
             </Grid>
           </ToggleButton>
-          <Border Grid.Column="0"
+          <Border
                   Classes="ProjectSidebarTreeExpanderSpacer"
                   IsVisible="{Binding !HasChildren}" />
 
-          <Button Grid.Column="1"
+          <Button
                   Classes="WorkspaceTreeNodeButton"
                   IsHitTestVisible="{Binding CanLoad}"
                   Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
@@ -81,7 +80,7 @@
                          IsVisible="{Binding HasSubtitle}" />
             </StackPanel>
           </Button>
-        </Grid>
+        </StackPanel>
 
         <ItemsControl Classes="ProjectSidebarInlineTreeChildren"
                       Margin="0,0,0,0"
