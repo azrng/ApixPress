@@ -945,9 +945,13 @@
     <Setter Property="Spacing" Value="{StaticResource Space.2}" />
   </Style>
 
+  <Style Selector="Grid.ProjectSidebarModuleHeader">
+    <Setter Property="MinHeight" Value="22" />
+  </Style>
+
   <Style Selector="StackPanel.ProjectSidebarModuleChildren">
-    <Setter Property="Spacing" Value="{StaticResource Space.3}" />
-    <Setter Property="Margin" Value="18,2,0,0" />
+    <Setter Property="Spacing" Value="{StaticResource Space.2}" />
+    <Setter Property="Margin" Value="12,4,0,0" />
   </Style>
 
   <Style Selector="StackPanel.ProjectSidebarNestedSection">
@@ -956,7 +960,7 @@
 
   <Style Selector="StackPanel.ProjectSidebarTopLevelSection">
     <Setter Property="Spacing" Value="{StaticResource Space.2}" />
-    <Setter Property="Margin" Value="0,2,0,0" />
+    <Setter Property="Margin" Value="0,4,0,0" />
   </Style>
 
   <Style Selector="Grid.ProjectSidebarTreeRow">
@@ -967,6 +971,57 @@
     <Setter Property="FontSize" Value="10" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
     <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectSidebarCatalogToggleButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectSidebarCatalogToggleButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectSidebarCatalogToggleButton:checked">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+
+  <Style Selector="StackPanel.ProjectSidebarCatalogContent">
+    <Setter Property="Spacing" Value="{StaticResource Space.2}" />
+    <Setter Property="Margin" Value="18,2,0,0" />
+  </Style>
+
+  <Style Selector="TextBlock.ProjectSidebarCatalogChevron">
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.ProjectSidebarCatalogTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Body}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.ProjectSidebarMiniActionButton">
+    <Setter Property="Width" Value="22" />
+    <Setter Property="Height" Value="22" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+  </Style>
+
+  <Style Selector="Button.ProjectSidebarMiniActionButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
 
   <Style Selector="Border.ProjectWorkspaceTreeSection">
@@ -1159,6 +1214,14 @@
     <Setter Property="MinWidth" Value="44" />
     <Setter Property="Padding" Value="8,6" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+  </Style>
+
+  <Style Selector="Button.ProjectSidebarBottomCreateButton">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="0,10" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
   </Style>
 
   <Style Selector="Button.ProjectSidebarGhostButton:pointerover">

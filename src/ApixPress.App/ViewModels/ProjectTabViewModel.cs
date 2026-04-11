@@ -101,6 +101,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     public ObservableCollection<ExplorerItemViewModel> InterfaceTreeItems { get; } = [];
     public ObservableCollection<ExplorerItemViewModel> QuickRequestTreeItems { get; } = [];
     public ObservableCollection<ProjectWorkspaceNavItemViewModel> WorkspaceNavigationItems { get; } = [];
+    public IReadOnlyList<ExplorerItemViewModel> InterfaceCatalogItems => InterfaceTreeItems.FirstOrDefault()?.Children ?? [];
     public ObservableCollection<RequestCaseItemViewModel> SavedRequests => UseCasesPanel.RequestCases;
     public ObservableCollection<RequestHistoryItemViewModel> RequestHistory => HistoryPanel.HistoryItems;
 
@@ -251,6 +252,18 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private ProjectWorkspaceNavItemViewModel? selectedWorkspaceNavigationItem;
+
+    [ObservableProperty]
+    private bool isInterfaceCatalogExpanded = true;
+
+    [ObservableProperty]
+    private bool isDataModelCatalogExpanded;
+
+    [ObservableProperty]
+    private bool isComponentLibraryCatalogExpanded;
+
+    [ObservableProperty]
+    private bool isQuickRequestCatalogExpanded = true;
 
     [ObservableProperty]
     private RequestWorkspaceTabViewModel? activeWorkspaceTab;
@@ -817,6 +830,8 @@ public partial class ProjectTabViewModel : ViewModelBase
                 SourceCase = item.SourceCase
             });
         }
+
+        OnPropertyChanged(nameof(InterfaceCatalogItems));
     }
 
     private ProjectEnvironmentDto BuildExecutionEnvironment()
