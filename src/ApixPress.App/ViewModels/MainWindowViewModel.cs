@@ -88,6 +88,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsWorkspaceMode => HasActiveProjectTab;
     public bool ShowProjectListEmptyState => IsHomeTabActive && !ProjectPanel.HasProjects;
     public bool HasEnvironmentContext => ActiveProjectTab?.HasEnvironmentContext ?? false;
+    public bool ShowQuickRequestSaveDialog => ActiveProjectTab?.IsQuickRequestSaveDialogOpen ?? false;
     public bool ShowGeneralSettingsSection => CurrentSettingsSection == SettingsSections.General;
     public bool ShowAboutSettingsSection => CurrentSettingsSection == SettingsSections.About;
     public bool HasUnreadNotifications => Notifications.Any(item => item.IsUnread);
@@ -735,6 +736,7 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsWorkspaceMode));
         OnPropertyChanged(nameof(ShowProjectListEmptyState));
         OnPropertyChanged(nameof(HasEnvironmentContext));
+        OnPropertyChanged(nameof(ShowQuickRequestSaveDialog));
         OnPropertyChanged(nameof(ShowGeneralSettingsSection));
         OnPropertyChanged(nameof(ShowAboutSettingsSection));
         OnPropertyChanged(nameof(HasUnreadNotifications));

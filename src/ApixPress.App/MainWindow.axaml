@@ -1909,7 +1909,7 @@
       </Border>
 
       <Border Classes="CreateProjectDialogBackdrop"
-              IsVisible="{Binding ActiveProjectTab.IsQuickRequestSaveDialogOpen}">
+              IsVisible="{Binding ShowQuickRequestSaveDialog}">
         <Grid HorizontalAlignment="Center"
               VerticalAlignment="Center">
           <Border Classes="QuickRequestSaveDialogCard">
