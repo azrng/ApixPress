@@ -372,152 +372,301 @@
         </Border>
 
           <Grid Grid.Row="1"
-                ColumnDefinitions="320,*"
-                ColumnSpacing="{StaticResource Space.4}">
-            <ScrollViewer Grid.Column="0">
-            <StackPanel Spacing="{StaticResource Space.3}">
-              <Border Classes="PanelCard WorkspaceAsideCard">
-                <StackPanel Spacing="{StaticResource Space.3}">
-                  <TextBlock Classes="SectionTitle"
-                             Text="项目概览" />
-                  <TextBlock Classes="CaptionText"
-                             Text="当前项目的快捷请求、环境变量、历史记录都会按项目隔离保存。" />
-                  <Border Classes="ProjectSummaryCard">
+                ColumnDefinitions="92,320,*"
+                ColumnSpacing="{StaticResource Space.3}">
+            <Border Grid.Column="0"
+                    Classes="ProjectWorkspaceNavigationRail">
+              <StackPanel Spacing="{StaticResource Space.2}">
+                <ToggleButton Classes="ProjectWorkspaceNavButton"
+                              Command="{Binding ShowInterfaceManagementCommand}"
+                              IsChecked="{Binding IsInterfaceManagementSection, Mode=OneWay}">
+                  <StackPanel Spacing="{StaticResource Space.2}">
+                    <Border Classes="ProjectWorkspaceNavIcon">
+                      <Path Width="18"
+                            Height="18"
+                            Stretch="Uniform"
+                            Fill="{DynamicResource Brush.Border.Focus}"
+                            Data="M4,5 L20,5 L20,7 L4,7 Z M4,10 L20,10 L20,12 L4,12 Z M4,15 L20,15 L20,17 L4,17 Z" />
+                    </Border>
+                    <TextBlock Classes="CaptionText"
+                               Text="接口管理"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                </ToggleButton>
+
+                <ToggleButton Classes="ProjectWorkspaceNavButton"
+                              Command="{Binding ShowRequestHistoryCommand}"
+                              IsChecked="{Binding IsRequestHistorySection, Mode=OneWay}">
+                  <StackPanel Spacing="{StaticResource Space.2}">
+                    <Border Classes="ProjectWorkspaceNavIcon">
+                      <Path Width="18"
+                            Height="18"
+                            Stretch="Uniform"
+                            Fill="{DynamicResource Brush.Border.Focus}"
+                            Data="M12,4 A8,8 0 1 0 20,12 A8,8 0 1 0 12,4 M12,7 L12,12 L15.5,14" />
+                    </Border>
+                    <TextBlock Classes="CaptionText"
+                               Text="请求历史"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                </ToggleButton>
+
+                <ToggleButton Classes="ProjectWorkspaceNavButton"
+                              Command="{Binding ShowProjectSettingsCommand}"
+                              IsChecked="{Binding IsProjectSettingsSection, Mode=OneWay}">
+                  <StackPanel Spacing="{StaticResource Space.2}">
+                    <Border Classes="ProjectWorkspaceNavIcon">
+                      <Path Width="18"
+                            Height="18"
+                            Stretch="Uniform"
+                            Fill="{DynamicResource Brush.Border.Focus}"
+                            Data="M12,8.5 A3.5,3.5 0 1 0 12,15.5 A3.5,3.5 0 1 0 12,8.5 M12,3 L13.2,3.3 L13.8,5 L15.5,5.5 L17,4.7 L18.3,6 L17.5,7.5 L18,9.2 L19.7,9.8 L20,11 L18.3,12.2 L18,13.8 L19.5,15 L18.3,16.3 L16.8,15.5 L15.2,16 L14.5,17.7 L13.3,18 L12,16.7 L10.7,18 L9.5,17.7 L8.8,16 L7.2,15.5 L5.7,16.3 L4.5,15 L6,13.8 L5.7,12.2 L4,11 L4.3,9.8 L6,9.2 L6.5,7.5 L5.7,6 L7,4.7 L8.5,5.5 L10.2,5 L10.8,3.3 Z" />
+                    </Border>
+                    <TextBlock Classes="CaptionText"
+                               Text="项目设置"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                </ToggleButton>
+              </StackPanel>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Classes="PanelCard ProjectWorkspaceSidebarCard">
+              <Grid>
+                <Grid IsVisible="{Binding IsInterfaceManagementSection}"
+                      RowDefinitions="Auto,Auto,*"
+                      RowSpacing="{StaticResource Space.3}">
+                  <Grid ColumnDefinitions="*,Auto"
+                        ColumnSpacing="{StaticResource Space.2}">
+                    <StackPanel Spacing="2">
+                      <TextBlock Classes="SectionTitle"
+                                 Text="接口管理" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="保留项目中的快捷请求入口和已保存接口草稿。" />
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Classes="SecondaryButton"
+                            Content="+ 快捷请求"
+                            Command="{Binding OpenQuickRequestWorkspaceCommand}" />
+                  </Grid>
+
+                  <Border Grid.Row="1"
+                          Classes="ProjectWorkspaceModuleCard">
+                    <StackPanel Spacing="{StaticResource Space.2}">
+                      <TextBlock Classes="CaptionText"
+                                 Text="{Binding InterfaceSectionHint}" />
+                      <Button Classes="ProjectTreeEntryButton"
+                              Content="快捷请求"
+                              Command="{Binding OpenQuickRequestWorkspaceCommand}" />
+                    </StackPanel>
+                  </Border>
+
+                  <ScrollViewer Grid.Row="2">
+                    <StackPanel Spacing="{StaticResource Space.2}">
+                      <TextBlock Classes="CaptionText"
+                                 Text="已保存接口"
+                                 IsVisible="{Binding HasSavedRequests}" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="当前还没有保存的接口草稿"
+                                 IsVisible="{Binding ShowSavedRequestsEmptyState}" />
+                      <ItemsControl ItemsSource="{Binding SavedRequests}"
+                                    IsVisible="{Binding HasSavedRequests}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="vm:RequestCaseItemViewModel">
+                            <Border Classes="SidebarListCard">
+                              <Grid ColumnDefinitions="*,Auto"
+                                    RowDefinitions="Auto,Auto"
+                                    ColumnSpacing="{StaticResource Space.2}"
+                                    RowSpacing="4">
+                                <TextBlock Text="{Binding Name}"
+                                           FontWeight="SemiBold"
+                                           TextTrimming="CharacterEllipsis" />
+                                <Button Grid.Column="1"
+                                        Classes="TextButton"
+                                        Content="载入"
+                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
+                                        CommandParameter="{Binding}" />
+                                <TextBlock Grid.Row="1"
+                                           Classes="CaptionText"
+                                           Text="{Binding GroupName}" />
+                                <TextBlock Grid.Row="1"
+                                           Grid.Column="1"
+                                           Classes="CaptionText"
+                                           Text="{Binding UpdatedAtText}" />
+                              </Grid>
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </ScrollViewer>
+                </Grid>
+
+                <Grid IsVisible="{Binding IsRequestHistorySection}"
+                      RowDefinitions="Auto,*"
+                      RowSpacing="{StaticResource Space.3}">
+                  <Grid ColumnDefinitions="*,Auto"
+                        ColumnSpacing="{StaticResource Space.2}">
+                    <StackPanel Spacing="2">
+                      <TextBlock Classes="SectionTitle"
+                                 Text="请求历史" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="可直接载入历史请求，或转存为接口草稿。" />
+                    </StackPanel>
+                    <u:PopConfirm Grid.Column="1"
+                                  PopupHeader="确认清空当前项目的请求历史？"
+                                  PopupContent="清空后无法恢复。"
+                                  ConfirmCommand="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearHistoryCommand}">
+                      <Button Classes="SecondaryButton"
+                              Content="清空" />
+                    </u:PopConfirm>
+                  </Grid>
+
+                  <ScrollViewer Grid.Row="1">
+                    <StackPanel Spacing="{StaticResource Space.2}">
+                      <TextBlock Classes="CaptionText"
+                                 Text="还没有发送记录"
+                                 IsVisible="{Binding ShowHistoryEmptyState}" />
+                      <ItemsControl ItemsSource="{Binding RequestHistory}"
+                                    IsVisible="{Binding HasHistory}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="vm:RequestHistoryItemViewModel">
+                            <Border Classes="SidebarListCard">
+                              <StackPanel Spacing="{StaticResource Space.2}">
+                                <Grid ColumnDefinitions="Auto,*"
+                                      ColumnSpacing="{StaticResource Space.2}">
+                                  <u:Badge Grid.Column="0"
+                                           Header="{Binding Method}"
+                                           iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
+                                  <TextBlock Grid.Column="1"
+                                             Text="{Binding Url}"
+                                             TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                                      ColumnSpacing="{StaticResource Space.2}">
+                                  <TextBlock Classes="CaptionText"
+                                             Text="{Binding StatusText}" />
+                                  <TextBlock Grid.Column="1"
+                                             Classes="CaptionText"
+                                             Text="{Binding TimestampText}" />
+                                  <Button Grid.Column="2"
+                                          Classes="TextButton"
+                                          Content="载入"
+                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadHistoryItemCommand}"
+                                          CommandParameter="{Binding}" />
+                                  <Button Grid.Column="3"
+                                          Classes="TextButton"
+                                          Content="转存"
+                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveHistoryAsCaseCommand}"
+                                          CommandParameter="{Binding}" />
+                                </Grid>
+                              </StackPanel>
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </ScrollViewer>
+                </Grid>
+
+                <Grid IsVisible="{Binding IsProjectSettingsSection}"
+                      RowDefinitions="Auto,Auto,*"
+                      RowSpacing="{StaticResource Space.3}">
+                  <StackPanel Spacing="2">
+                    <TextBlock Classes="SectionTitle"
+                               Text="项目设置" />
+                    <TextBlock Classes="CaptionText"
+                               Text="在这里查看项目说明、当前环境和设置入口。" />
+                  </StackPanel>
+
+                  <Border Grid.Row="1"
+                          Classes="ProjectWorkspaceModuleCard">
                     <StackPanel Spacing="{StaticResource Space.2}">
                       <TextBlock Text="{Binding Project.DisplayName}"
-                                 FontSize="{StaticResource Font.Size.BodyLarge}"
                                  FontWeight="SemiBold" />
-                      <TextBlock Classes="SubtleText"
-                                 Text="{Binding CurrentBaseUrlText}"
+                      <TextBlock Classes="CaptionText"
+                                 Text="{Binding ProjectSettingsDescription}"
                                  TextWrapping="Wrap" />
                     </StackPanel>
                   </Border>
-                </StackPanel>
-              </Border>
 
-              <Border Classes="PanelCard WorkspaceAsideCard">
-                <StackPanel Spacing="{StaticResource Space.3}">
-                  <Grid ColumnDefinitions="*,Auto"
-                        ColumnSpacing="{StaticResource Space.2}">
-                    <TextBlock Classes="SectionTitle"
-                               Text="保存请求" />
-                    <u:Badge Grid.Column="1"
-                             Header="{Binding SavedRequests.Count}"
-                             iri:ClassHelper.Classes="Light Primary" />
-                  </Grid>
-                  <TextBlock Classes="CaptionText"
-                             Text="这里保留当前项目里保存过的快捷请求，可随时回填到中间编辑区。" />
-                  <TextBlock Classes="CaptionText"
-                             Text="暂未保存请求"
-                             IsVisible="{Binding ShowSavedRequestsEmptyState}" />
-                  <ItemsControl ItemsSource="{Binding SavedRequests}"
-                                IsVisible="{Binding HasSavedRequests}">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate x:DataType="vm:RequestCaseItemViewModel">
-                        <Border Classes="SidebarListCard">
-                          <Grid ColumnDefinitions="*,Auto"
-                                RowDefinitions="Auto,Auto"
-                                ColumnSpacing="{StaticResource Space.2}"
-                                RowSpacing="4">
-                            <TextBlock Text="{Binding Name}"
-                                       FontWeight="SemiBold" />
-                            <Button Grid.Column="1"
-                                    Classes="TextButton"
-                                    Content="载入"
-                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
-                                    CommandParameter="{Binding}" />
-                            <TextBlock Grid.Row="1"
-                                       Classes="CaptionText"
-                                       Text="{Binding GroupName}" />
-                            <TextBlock Grid.Row="1"
-                                       Grid.Column="1"
-                                       Classes="CaptionText"
-                                       Text="{Binding UpdatedAtText}" />
-                          </Grid>
-                        </Border>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </StackPanel>
-              </Border>
+                  <StackPanel Grid.Row="2"
+                              Spacing="{StaticResource Space.2}">
+                    <Border Classes="SidebarListCard">
+                      <StackPanel Spacing="{StaticResource Space.2}">
+                        <TextBlock Text="环境数量"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="{Binding EnvironmentCountText, StringFormat='共 {0} 个环境'}" />
+                      </StackPanel>
+                    </Border>
+                    <Border Classes="SidebarListCard">
+                      <StackPanel Spacing="{StaticResource Space.2}">
+                        <TextBlock Text="当前 BaseUrl"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="{Binding CurrentBaseUrlText}"
+                                   TextWrapping="Wrap" />
+                      </StackPanel>
+                    </Border>
+                    <Button Classes="PrimaryButton"
+                            Content="打开环境设置"
+                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+                  </StackPanel>
+                </Grid>
+              </Grid>
+            </Border>
 
-              <Border Classes="PanelCard WorkspaceAsideCard">
-                <StackPanel Spacing="{StaticResource Space.3}">
-                  <Grid ColumnDefinitions="*,Auto"
-                        ColumnSpacing="{StaticResource Space.2}">
-                    <TextBlock Classes="SectionTitle"
-                               Text="最近历史" />
-                    <u:Badge Grid.Column="1"
-                             Header="{Binding RequestHistory.Count}"
-                             iri:ClassHelper.Classes="Light Secondary" />
-                  </Grid>
-                  <TextBlock Classes="CaptionText"
-                             Text="可以把最近请求再次载入，也能直接转存为保存请求。" />
-                  <TextBlock Classes="CaptionText"
-                             Text="还没有发送记录"
-                             IsVisible="{Binding ShowHistoryEmptyState}" />
-                  <ItemsControl ItemsSource="{Binding RequestHistory}"
-                                IsVisible="{Binding HasHistory}">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate x:DataType="vm:RequestHistoryItemViewModel">
-                        <Border Classes="SidebarListCard">
-                          <StackPanel Spacing="{StaticResource Space.2}">
-                            <Grid ColumnDefinitions="Auto,*"
-                                  ColumnSpacing="{StaticResource Space.2}">
-                              <u:Badge Grid.Column="0"
-                                       Header="{Binding Method}"
-                                       iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
-                              <TextBlock Grid.Column="1"
-                                         Text="{Binding Url}"
-                                         TextTrimming="CharacterEllipsis" />
-                            </Grid>
-                            <Grid ColumnDefinitions="Auto,*,Auto,Auto"
-                                  ColumnSpacing="{StaticResource Space.2}">
-                              <TextBlock Classes="CaptionText"
-                                         Text="{Binding StatusText}" />
-                              <TextBlock Grid.Column="1"
-                                         Classes="CaptionText"
-                                         Text="{Binding TimestampText}" />
-                              <Button Grid.Column="2"
-                                      Classes="TextButton"
-                                      Content="载入"
-                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadHistoryItemCommand}"
-                                      CommandParameter="{Binding}" />
-                              <Button Grid.Column="3"
-                                      Classes="TextButton"
-                                      Content="转存"
-                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveHistoryAsCaseCommand}"
-                                      CommandParameter="{Binding}" />
-                            </Grid>
-                          </StackPanel>
-                        </Border>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                  <u:PopConfirm PopupHeader="确认清空当前项目的请求历史？"
-                                PopupContent="清空后无法恢复。"
-                                ConfirmCommand="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ClearHistoryCommand}">
-                    <Button Classes="SecondaryButton"
-                            Content="清空历史" />
-                  </u:PopConfirm>
+            <Border Grid.Column="2"
+                    Classes="PanelCard ProjectWorkspaceCanvas"
+                    IsVisible="{Binding ShowInterfaceManagementLanding}">
+              <Grid>
+                <StackPanel HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="{StaticResource Space.4}">
+                  <Button Classes="ProjectLaunchButton"
+                          Command="{Binding OpenQuickRequestWorkspaceCommand}">
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="{StaticResource Space.3}">
+                      <Path Width="52"
+                            Height="52"
+                            Stretch="Uniform"
+                            Fill="{DynamicResource Brush.Border.Focus}"
+                            Data="M4,12 L16,4 L13,11 L20,11 L8,20 L11,13 L4,13 Z" />
+                      <TextBlock Classes="SectionTitle"
+                                 Text="快捷请求" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="中间区域只保留一个快捷请求入口，点击后进入真实请求编辑器。"
+                                 TextAlignment="Center"
+                                 TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Button>
                 </StackPanel>
-              </Border>
-            </StackPanel>
-            </ScrollViewer>
+              </Grid>
+            </Border>
 
-            <Grid Grid.Column="1"
+            <Grid Grid.Column="2"
+                  IsVisible="{Binding ShowQuickRequestWorkspace}"
                   RowDefinitions="Auto,Auto,*"
                   RowSpacing="{StaticResource Space.3}">
             <Border Classes="PanelCard QuickRequestIntroCard">
-              <Grid ColumnDefinitions="*,Auto"
+              <Grid ColumnDefinitions="Auto,*,Auto"
                     ColumnSpacing="{StaticResource Space.4}">
-                <StackPanel Spacing="{StaticResource Space.2}">
+                <Button Classes="SecondaryButton"
+                        Content="返回接口管理"
+                        Command="{Binding ReturnToInterfaceHomeCommand}" />
+                <StackPanel Grid.Column="1"
+                            Spacing="{StaticResource Space.2}">
                   <TextBlock Classes="SectionTitle"
                              Text="快捷请求" />
                   <TextBlock Classes="CaptionText"
-                             Text="首版工作区只保留一个可直接发送的快捷请求编辑器，环境变量会随当前环境一起解析。" />
+                             Text="这里保留真实可发送的请求编辑器，环境变量会随当前环境一起解析。" />
                 </StackPanel>
-                <Border Grid.Column="1"
+                <Border Grid.Column="2"
                         Classes="QuickRequestHintCard">
                   <StackPanel Spacing="2">
                     <TextBlock Classes="CaptionText"
@@ -805,6 +954,146 @@
                 </DockPanel>
               </Border>
             </Grid>
+
+            <Border Grid.Column="2"
+                    Classes="PanelCard ProjectWorkspaceCanvas"
+                    IsVisible="{Binding IsRequestHistorySection}">
+              <Grid RowDefinitions="Auto,*"
+                    RowSpacing="{StaticResource Space.3}">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="{StaticResource Space.2}">
+                  <StackPanel Spacing="2">
+                    <TextBlock Classes="SectionTitle"
+                               Text="请求历史详情" />
+                    <TextBlock Classes="CaptionText"
+                               Text="从左侧选择历史记录后，可在这里查看响应并一键回到快捷请求。" />
+                  </StackPanel>
+                  <Button Grid.Column="1"
+                          Classes="SecondaryButton"
+                          Content="打开快捷请求"
+                          Command="{Binding OpenQuickRequestWorkspaceCommand}" />
+                </Grid>
+
+                <Border Grid.Row="1"
+                        Classes="PanelCard ResponsePanelCard">
+                  <DockPanel>
+                    <Grid DockPanel.Dock="Top"
+                          ColumnDefinitions="*,Auto"
+                          Margin="0,0,0,12">
+                      <TextBlock Classes="SectionTitle"
+                                 Text="最近一次载入的响应" />
+                      <TextBlock Grid.Column="1"
+                                 Classes="CaptionText"
+                                 Text="{Binding CurrentEnvironmentLabel}"
+                                 VerticalAlignment="Center" />
+                    </Grid>
+
+                    <StackPanel IsVisible="{Binding ResponseSection.ShowPlaceholder}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="{StaticResource Space.2}">
+                      <TextBlock Classes="SubtleText"
+                                 Text="选择左侧历史记录后，可在这里查看最近一次载入的响应内容。" />
+                    </StackPanel>
+
+                    <Grid IsVisible="{Binding ResponseSection.HasResponse}"
+                          RowDefinitions="Auto,*"
+                          RowSpacing="{StaticResource Space.2}">
+                      <Grid ColumnDefinitions="Auto,Auto,Auto,*"
+                            ColumnSpacing="{StaticResource Space.3}">
+                        <u:Badge Grid.Column="0"
+                                 Header="{Binding ResponseSection.StatusText}"
+                                 iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
+                        <TextBlock Grid.Column="1"
+                                   Classes="CaptionText"
+                                   Text="{Binding ResponseSection.DurationText}" />
+                        <TextBlock Grid.Column="2"
+                                   Classes="CaptionText"
+                                   Text="{Binding ResponseSection.SizeText}" />
+                      </Grid>
+
+                      <TabControl Grid.Row="1"
+                                  Classes="ResponseTabs"
+                                  SelectedIndex="{Binding ResponseSection.SelectedResponseTab}">
+                        <TabItem Header="Body">
+                          <TextBox AcceptsReturn="True"
+                                   BorderThickness="0"
+                                   Background="Transparent"
+                                   IsReadOnly="True"
+                                   TextWrapping="Wrap"
+                                   VerticalContentAlignment="Top"
+                                   Text="{Binding ResponseSection.BodyText}"
+                                   FontFamily="{StaticResource Font.Monospace}" />
+                        </TabItem>
+                        <TabItem Header="Headers">
+                          <TextBox AcceptsReturn="True"
+                                   BorderThickness="0"
+                                   Background="Transparent"
+                                   IsReadOnly="True"
+                                   TextWrapping="Wrap"
+                                   VerticalContentAlignment="Top"
+                                   Text="{Binding ResponseSection.HeadersText}"
+                                   FontFamily="{StaticResource Font.Monospace}" />
+                        </TabItem>
+                      </TabControl>
+                    </Grid>
+                  </DockPanel>
+                </Border>
+              </Grid>
+            </Border>
+
+            <Border Grid.Column="2"
+                    Classes="PanelCard ProjectWorkspaceCanvas"
+                    IsVisible="{Binding IsProjectSettingsSection}">
+              <Grid RowDefinitions="Auto,*"
+                    RowSpacing="{StaticResource Space.4}">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="{StaticResource Space.3}">
+                  <StackPanel Spacing="2">
+                    <TextBlock Classes="SectionTitle"
+                               Text="项目设置" />
+                    <TextBlock Classes="CaptionText"
+                               Text="保持项目说明、环境切换和快捷请求工作区之间的关系清晰可见。" />
+                  </StackPanel>
+                  <Button Grid.Column="1"
+                          Classes="PrimaryButton"
+                          Content="打开环境设置"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+                </Grid>
+
+                <Grid Grid.Row="1"
+                      ColumnDefinitions="*,*"
+                      ColumnSpacing="{StaticResource Space.3}">
+                  <Border Classes="ProjectSettingsInfoCard">
+                    <StackPanel Spacing="{StaticResource Space.3}">
+                      <TextBlock Classes="SectionTitle"
+                                 Text="项目信息" />
+                      <TextBlock Text="{Binding Project.DisplayName}"
+                                 FontSize="{StaticResource Font.Size.BodyLarge}"
+                                 FontWeight="SemiBold" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="{Binding ProjectSettingsDescription}"
+                                 TextWrapping="Wrap" />
+                    </StackPanel>
+                  </Border>
+
+                  <Border Grid.Column="1"
+                          Classes="ProjectSettingsInfoCard">
+                    <StackPanel Spacing="{StaticResource Space.3}">
+                      <TextBlock Classes="SectionTitle"
+                                 Text="环境摘要" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="{Binding CurrentEnvironmentLabel, StringFormat='当前环境：{0}'}" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="{Binding CurrentBaseUrlText, StringFormat='BaseUrl：{0}'}"
+                                 TextWrapping="Wrap" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="{Binding EnvironmentCountText, StringFormat='环境数量：{0}'}" />
+                    </StackPanel>
+                  </Border>
+                </Grid>
+              </Grid>
+            </Border>
             </Grid>
           </Grid>
         </Grid>

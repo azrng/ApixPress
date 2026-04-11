@@ -10,6 +10,13 @@ namespace ApixPress.App.ViewModels;
 
 public partial class ProjectTabViewModel : ViewModelBase
 {
+    private static class WorkspaceSections
+    {
+        public const string InterfaceManagement = "interface-management";
+        public const string RequestHistory = "request-history";
+        public const string ProjectSettings = "project-settings";
+    }
+
     private readonly IRequestCaseService _requestCaseService;
     private readonly IRequestExecutionService _requestExecutionService;
     private readonly IRequestHistoryService _requestHistoryService;
@@ -43,6 +50,7 @@ public partial class ProjectTabViewModel : ViewModelBase
 
         Project.PropertyChanged += (_, _) => NotifyShellState();
         EnvironmentPanel.SelectedEnvironmentChanged += OnSelectedEnvironmentChanged;
+        EnvironmentPanel.Environments.CollectionChanged += (_, _) => NotifyShellState();
         UseCasesPanel.CaseApplied += OnCaseApplied;
         UseCasesPanel.RequestCases.CollectionChanged += (_, _) => NotifyShellState();
         HistoryPanel.HistoryItems.CollectionChanged += (_, _) => NotifyShellState();
@@ -70,6 +78,20 @@ public partial class ProjectTabViewModel : ViewModelBase
     public bool HasHistory => RequestHistory.Count > 0;
     public bool ShowSavedRequestsEmptyState => !HasSavedRequests;
     public bool ShowHistoryEmptyState => !HasHistory;
+    public bool IsInterfaceManagementSection => SelectedWorkspaceSection == WorkspaceSections.InterfaceManagement;
+    public bool IsRequestHistorySection => SelectedWorkspaceSection == WorkspaceSections.RequestHistory;
+    public bool IsProjectSettingsSection => SelectedWorkspaceSection == WorkspaceSections.ProjectSettings;
+    public bool ShowInterfaceManagementLanding => IsInterfaceManagementSection && !IsQuickRequestWorkspaceOpen;
+    public bool ShowQuickRequestWorkspace => IsInterfaceManagementSection && IsQuickRequestWorkspaceOpen;
+    public string SavedRequestCountText => SavedRequests.Count.ToString();
+    public string HistoryCountText => RequestHistory.Count.ToString();
+    public string EnvironmentCountText => EnvironmentPanel.Environments.Count.ToString();
+    public string ProjectSettingsDescription => string.IsNullOrWhiteSpace(Project.Description)
+        ? "当前项目还没有补充备注，可在这里继续维护环境与工作区说明。"
+        : Project.Description;
+    public string InterfaceSectionHint => HasSavedRequests
+        ? "默认模块"
+        : "默认模块下还没有保存的接口草稿";
 
     [ObservableProperty]
     private bool isActive;
@@ -85,6 +107,12 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private string requestUrl = string.Empty;
+
+    [ObservableProperty]
+    private string selectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
+
+    [ObservableProperty]
+    private bool isQuickRequestWorkspaceOpen;
 
     public IReadOnlyList<string> HttpMethods { get; } = ["GET", "POST", "PUT", "DELETE", "PATCH"];
 
@@ -122,6 +150,8 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     public async Task SendQuickRequestAsync()
     {
+        IsQuickRequestWorkspaceOpen = true;
+        SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
         var environment = EnvironmentPanel.GetSelectedEnvironmentDto();
         if (environment is null)
         {
@@ -155,6 +185,8 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     public async Task SaveQuickRequestAsync(string groupName)
     {
+        IsQuickRequestWorkspaceOpen = true;
+        SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
         var snapshot = BuildCurrentSnapshot();
         var requestName = BuildRequestName();
         var result = await _requestCaseService.SaveAsync(new RequestCaseDto
@@ -189,6 +221,8 @@ public partial class ProjectTabViewModel : ViewModelBase
             return;
         }
 
+        SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
+        IsQuickRequestWorkspaceOpen = true;
         ApplySnapshot(item.SourceCase.RequestSnapshot);
         StatusMessage = $"已加载保存请求：{item.Name}";
         NotifyShellState();
@@ -201,6 +235,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             return;
         }
 
+        SelectedWorkspaceSection = WorkspaceSections.RequestHistory;
         ApplySnapshot(item.RequestSnapshot);
         if (item.ResponseSnapshot is not null)
         {
@@ -218,6 +253,51 @@ public partial class ProjectTabViewModel : ViewModelBase
         await EnvironmentPanel.LoadProjectAsync(ProjectId, preferredEnvironmentId);
         await UseCasesPanel.LoadCasesAsync();
         await HistoryPanel.LoadHistoryAsync();
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ShowInterfaceManagement()
+    {
+        SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
+        IsQuickRequestWorkspaceOpen = false;
+        StatusMessage = "接口管理已就绪，可继续打开快捷请求。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ShowRequestHistory()
+    {
+        SelectedWorkspaceSection = WorkspaceSections.RequestHistory;
+        StatusMessage = HasHistory
+            ? "这里展示当前项目的请求历史。"
+            : "当前项目还没有请求历史。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ShowProjectSettings()
+    {
+        SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
+        StatusMessage = "这里可以查看项目说明并进入环境设置。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void OpenQuickRequestWorkspace()
+    {
+        SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
+        IsQuickRequestWorkspaceOpen = true;
+        StatusMessage = "快捷请求编辑器已打开。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ReturnToInterfaceHome()
+    {
+        SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
+        IsQuickRequestWorkspaceOpen = false;
+        StatusMessage = "已返回接口管理首页。";
         NotifyShellState();
     }
 
@@ -265,6 +345,21 @@ public partial class ProjectTabViewModel : ViewModelBase
         NotifyShellState();
     }
 
+    partial void OnSelectedWorkspaceSectionChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsInterfaceManagementSection));
+        OnPropertyChanged(nameof(IsRequestHistorySection));
+        OnPropertyChanged(nameof(IsProjectSettingsSection));
+        OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
+        OnPropertyChanged(nameof(ShowQuickRequestWorkspace));
+    }
+
+    partial void OnIsQuickRequestWorkspaceOpenChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
+        OnPropertyChanged(nameof(ShowQuickRequestWorkspace));
+    }
+
     private void NotifyShellState()
     {
         OnPropertyChanged(nameof(TabTitle));
@@ -276,6 +371,16 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasHistory));
         OnPropertyChanged(nameof(ShowSavedRequestsEmptyState));
         OnPropertyChanged(nameof(ShowHistoryEmptyState));
+        OnPropertyChanged(nameof(IsInterfaceManagementSection));
+        OnPropertyChanged(nameof(IsRequestHistorySection));
+        OnPropertyChanged(nameof(IsProjectSettingsSection));
+        OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
+        OnPropertyChanged(nameof(ShowQuickRequestWorkspace));
+        OnPropertyChanged(nameof(SavedRequestCountText));
+        OnPropertyChanged(nameof(HistoryCountText));
+        OnPropertyChanged(nameof(EnvironmentCountText));
+        OnPropertyChanged(nameof(ProjectSettingsDescription));
+        OnPropertyChanged(nameof(InterfaceSectionHint));
         ShellStateChanged?.Invoke(this);
     }
 }

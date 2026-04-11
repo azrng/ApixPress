@@ -873,6 +873,86 @@
     <Setter Property="BoxShadow" Value="0 16 36 0 #0F172A10" />
   </Style>
 
+  <Style Selector="Border.ProjectWorkspaceNavigationRail">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectWorkspaceNavButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectWorkspaceNavButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectWorkspaceNavButton:checked">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+  </Style>
+
+  <Style Selector="Border.ProjectWorkspaceNavIcon">
+    <Setter Property="Width" Value="40" />
+    <Setter Property="Height" Value="40" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Border.ProjectWorkspaceSidebarCard">
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+  </Style>
+
+  <Style Selector="Border.ProjectWorkspaceModuleCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Button.ProjectTreeEntryButton">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Button.ProjectTreeEntryButton:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+  </Style>
+
+  <Style Selector="Border.ProjectWorkspaceCanvas">
+    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="BoxShadow" Value="0 14 30 0 #0F172A0C" />
+  </Style>
+
+  <Style Selector="Button.ProjectLaunchButton">
+    <Setter Property="Width" Value="240" />
+    <Setter Property="Height" Value="220" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
+  </Style>
+
+  <Style Selector="Button.ProjectLaunchButton:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+
   <Style Selector="Border.EnvironmentSummaryPill">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
@@ -902,6 +982,14 @@
 
   <Style Selector="Border.ResponsePanelCard">
     <Setter Property="MinHeight" Value="320" />
+  </Style>
+
+  <Style Selector="Border.ProjectSettingsInfoCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
   <Style Selector="Border.EnvironmentManagerDialogCard">
