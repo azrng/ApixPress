@@ -393,7 +393,7 @@
 
                   <ScrollViewer Grid.Row="2">
                     <StackPanel Spacing="{StaticResource Space.3}">
-                      <StackPanel Spacing="{StaticResource Space.2}">
+                      <StackPanel Classes="ProjectSidebarModuleGroup">
                         <Grid ColumnDefinitions="Auto,*"
                               ColumnSpacing="{StaticResource Space.2}">
                           <TextBlock Grid.Column="0"
@@ -404,84 +404,88 @@
                                      Classes="ProjectSidebarSectionTitle"
                                      Text="默认模块" />
                         </Grid>
-                        <TextBlock Classes="CaptionText ProjectSidebarEmptyHint"
-                                   Text="当前还没有保存的 HTTP 接口"
-                                   IsVisible="{Binding ShowInterfaceEntriesEmptyState}" />
-                        <TreeView Classes="WorkspaceTreeView ProjectSidebarTree"
-                                  ItemsSource="{Binding InterfaceTreeItems}">
-                          <TreeView.ItemTemplate>
-                            <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
-                                              ItemsSource="{Binding Children}">
-                              <Button Classes="WorkspaceTreeNodeButton"
-                                      IsHitTestVisible="{Binding CanLoad}"
-                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
-                                      CommandParameter="{Binding}">
-                                <StackPanel Spacing="2">
-                                  <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-                                        ColumnSpacing="{StaticResource Space.1}">
-                                    <TextBlock Grid.Column="0"
-                                               Classes="WorkspaceTreeNodeGlyph"
-                                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                               Text="{Binding NodeGlyph}"
-                                               IsVisible="{Binding ShowLeadingGlyph}" />
-                                    <TextBlock Grid.Column="0"
-                                               Classes="WorkspaceTreeNodeGlyph WorkspaceTreeCaseGlyph"
-                                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                               Text="{Binding NodeGlyph}"
-                                               IsVisible="{Binding IsHttpCaseNode}" />
-                                    <u:Badge Grid.Column="1"
-                                             Margin="0,0,4,0"
-                                             Header="{Binding MethodBadgeText}"
-                                             IsVisible="{Binding ShowMethodBadge}"
-                                             iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
-                                    <TextBlock Grid.Column="2"
-                                               Text="{Binding Title}"
-                                               VerticalAlignment="Center"
-                                               TextWrapping="Wrap" />
-                                    <Border Grid.Column="3"
-                                            Classes="WorkspaceTreeStatusDot"
-                                            IsVisible="{Binding ShowTrailingDot}" />
-                                  </Grid>
-                                  <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
-                                             Text="{Binding Subtitle}"
-                                             IsVisible="{Binding HasSubtitle}" />
-                                </StackPanel>
-                              </Button>
-                            </TreeDataTemplate>
-                          </TreeView.ItemTemplate>
-                        </TreeView>
+                        <StackPanel Classes="ProjectSidebarModuleChildren">
+                          <StackPanel Classes="ProjectSidebarNestedSection">
+                            <TextBlock Classes="CaptionText ProjectSidebarEmptyHint"
+                                       Text="当前还没有保存的 HTTP 接口"
+                                       IsVisible="{Binding ShowInterfaceEntriesEmptyState}" />
+                            <TreeView Classes="WorkspaceTreeView ProjectSidebarTree"
+                                      ItemsSource="{Binding InterfaceTreeItems}">
+                              <TreeView.ItemTemplate>
+                                <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
+                                                  ItemsSource="{Binding Children}">
+                                  <Button Classes="WorkspaceTreeNodeButton"
+                                          IsHitTestVisible="{Binding CanLoad}"
+                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
+                                          CommandParameter="{Binding}">
+                                    <StackPanel Spacing="2">
+                                      <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+                                            ColumnSpacing="{StaticResource Space.1}">
+                                        <TextBlock Grid.Column="0"
+                                                   Classes="WorkspaceTreeNodeGlyph"
+                                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                                   Text="{Binding NodeGlyph}"
+                                                   IsVisible="{Binding ShowLeadingGlyph}" />
+                                        <TextBlock Grid.Column="0"
+                                                   Classes="WorkspaceTreeNodeGlyph WorkspaceTreeCaseGlyph"
+                                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                                   Text="{Binding NodeGlyph}"
+                                                   IsVisible="{Binding IsHttpCaseNode}" />
+                                        <u:Badge Grid.Column="1"
+                                                 Margin="0,0,4,0"
+                                                 Header="{Binding MethodBadgeText}"
+                                                 IsVisible="{Binding ShowMethodBadge}"
+                                                 iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding Title}"
+                                                   VerticalAlignment="Center"
+                                                   TextWrapping="Wrap" />
+                                        <Border Grid.Column="3"
+                                                Classes="WorkspaceTreeStatusDot"
+                                                IsVisible="{Binding ShowTrailingDot}" />
+                                      </Grid>
+                                      <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
+                                                 Text="{Binding Subtitle}"
+                                                 IsVisible="{Binding HasSubtitle}" />
+                                    </StackPanel>
+                                  </Button>
+                                </TreeDataTemplate>
+                              </TreeView.ItemTemplate>
+                            </TreeView>
+                          </StackPanel>
+
+                          <StackPanel Classes="ProjectSidebarNestedSection">
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="{StaticResource Space.2}">
+                              <TextBlock Grid.Column="0"
+                                         Classes="WorkspaceTreeNodeGlyph"
+                                         FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                         Text="&#xEC1A;" />
+                              <TextBlock Grid.Column="1"
+                                         Classes="ProjectSidebarSectionTitle"
+                                         Text="数据模型" />
+                            </Grid>
+                            <Button Classes="ProjectSidebarGhostButton ProjectSidebarNestedCreateButton"
+                                    Content="+ 新建"
+                                    IsEnabled="False" />
+                          </StackPanel>
+
+                          <StackPanel Classes="ProjectSidebarNestedSection">
+                            <Grid ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="{StaticResource Space.2}">
+                              <TextBlock Grid.Column="0"
+                                         Classes="WorkspaceTreeNodeGlyph"
+                                         FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                         Text="&#xE8FD;" />
+                              <TextBlock Grid.Column="1"
+                                         Classes="ProjectSidebarSectionTitle"
+                                         Text="组件库" />
+                            </Grid>
+                          </StackPanel>
+                        </StackPanel>
                       </StackPanel>
 
-                      <StackPanel Spacing="{StaticResource Space.2}">
-                        <Grid ColumnDefinitions="Auto,*"
-                              ColumnSpacing="{StaticResource Space.2}">
-                          <TextBlock Grid.Column="0"
-                                     Classes="WorkspaceTreeNodeGlyph"
-                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                     Text="&#xEC1A;" />
-                          <TextBlock Grid.Column="1"
-                                     Classes="ProjectSidebarSectionTitle"
-                                     Text="数据模型" />
-                        </Grid>
-                        <Button Classes="ProjectSidebarGhostButton"
-                                Content="+ 新建"
-                                IsEnabled="False" />
-                      </StackPanel>
-
-                      <StackPanel Spacing="{StaticResource Space.2}">
-                        <Grid ColumnDefinitions="Auto,*"
-                              ColumnSpacing="{StaticResource Space.2}">
-                          <TextBlock Grid.Column="0"
-                                     Classes="WorkspaceTreeNodeGlyph"
-                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                     Text="&#xE8FD;" />
-                          <TextBlock Grid.Column="1"
-                                     Classes="ProjectSidebarSectionTitle"
-                                     Text="组件库" />
-                        </Grid>
-                      </StackPanel>
-
-                      <StackPanel Spacing="{StaticResource Space.2}">
+                      <StackPanel Classes="ProjectSidebarTopLevelSection">
                         <Grid ColumnDefinitions="Auto,*"
                               ColumnSpacing="{StaticResource Space.2}">
                           <TextBlock Grid.Column="0"

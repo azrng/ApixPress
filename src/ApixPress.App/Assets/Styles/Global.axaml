@@ -941,6 +941,24 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
   </Style>
 
+  <Style Selector="StackPanel.ProjectSidebarModuleGroup">
+    <Setter Property="Spacing" Value="{StaticResource Space.2}" />
+  </Style>
+
+  <Style Selector="StackPanel.ProjectSidebarModuleChildren">
+    <Setter Property="Spacing" Value="{StaticResource Space.3}" />
+    <Setter Property="Margin" Value="20,4,0,0" />
+  </Style>
+
+  <Style Selector="StackPanel.ProjectSidebarNestedSection">
+    <Setter Property="Spacing" Value="{StaticResource Space.2}" />
+  </Style>
+
+  <Style Selector="StackPanel.ProjectSidebarTopLevelSection">
+    <Setter Property="Spacing" Value="{StaticResource Space.2}" />
+    <Setter Property="Margin" Value="0,2,0,0" />
+  </Style>
+
   <Style Selector="Border.ProjectWorkspaceTreeSection">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
@@ -1124,6 +1142,11 @@
     <Setter Property="Padding" Value="0,8" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
     <Setter Property="MinHeight" Value="34" />
+  </Style>
+
+  <Style Selector="Button.ProjectSidebarNestedCreateButton">
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="MinWidth" Value="74" />
   </Style>
 
   <Style Selector="Button.ProjectSidebarGhostButton:pointerover">
