@@ -394,13 +394,18 @@
                   <ScrollViewer Grid.Row="2">
                     <StackPanel Spacing="{StaticResource Space.3}">
                       <StackPanel Classes="ProjectSidebarModuleGroup">
-                        <Grid ColumnDefinitions="Auto,*"
+                        <Grid Classes="ProjectSidebarTreeRow"
+                              ColumnDefinitions="Auto,Auto,*"
                               ColumnSpacing="{StaticResource Space.2}">
                           <TextBlock Grid.Column="0"
+                                     Classes="ProjectSidebarTreeChevron"
+                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                     Text="&#xE70D;" />
+                          <TextBlock Grid.Column="1"
                                      Classes="WorkspaceTreeNodeGlyph"
                                      FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                      Text="&#xE8B7;" />
-                          <TextBlock Grid.Column="1"
+                          <TextBlock Grid.Column="2"
                                      Classes="ProjectSidebarSectionTitle"
                                      Text="默认模块" />
                         </Grid>
@@ -455,7 +460,8 @@
                           </StackPanel>
 
                           <StackPanel Classes="ProjectSidebarNestedSection">
-                            <Grid ColumnDefinitions="Auto,*"
+                            <Grid Classes="ProjectSidebarTreeRow"
+                                  ColumnDefinitions="Auto,*"
                                   ColumnSpacing="{StaticResource Space.2}">
                               <TextBlock Grid.Column="0"
                                          Classes="WorkspaceTreeNodeGlyph"
@@ -465,13 +471,14 @@
                                          Classes="ProjectSidebarSectionTitle"
                                          Text="数据模型" />
                             </Grid>
-                            <Button Classes="ProjectSidebarGhostButton ProjectSidebarNestedCreateButton"
+                            <Button Classes="ProjectSidebarGhostButton ProjectSidebarInlineCreateButton"
                                     Content="+ 新建"
                                     IsEnabled="False" />
                           </StackPanel>
 
                           <StackPanel Classes="ProjectSidebarNestedSection">
-                            <Grid ColumnDefinitions="Auto,*"
+                            <Grid Classes="ProjectSidebarTreeRow"
+                                  ColumnDefinitions="Auto,*"
                                   ColumnSpacing="{StaticResource Space.2}">
                               <TextBlock Grid.Column="0"
                                          Classes="WorkspaceTreeNodeGlyph"
@@ -486,7 +493,8 @@
                       </StackPanel>
 
                       <StackPanel Classes="ProjectSidebarTopLevelSection">
-                        <Grid ColumnDefinitions="Auto,*"
+                        <Grid Classes="ProjectSidebarTreeRow"
+                              ColumnDefinitions="Auto,*"
                               ColumnSpacing="{StaticResource Space.2}">
                           <TextBlock Grid.Column="0"
                                      Classes="WorkspaceTreeNodeGlyph"
@@ -496,7 +504,7 @@
                                      Classes="ProjectSidebarSectionTitle"
                                      Text="快捷请求" />
                         </Grid>
-                        <Button Classes="ProjectSidebarGhostButton"
+                        <Button Classes="ProjectSidebarGhostButton ProjectSidebarInlineCreateButton"
                                 Content="+ 新建"
                                 Command="{Binding OpenQuickRequestWorkspaceCommand}" />
                         <TextBlock Classes="CaptionText ProjectSidebarEmptyHint"
