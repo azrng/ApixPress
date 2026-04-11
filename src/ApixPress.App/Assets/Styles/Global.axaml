@@ -1108,6 +1108,12 @@
     <Setter Property="Margin" Value="0,2,0,2" />
   </Style>
 
+  <Style Selector="TextBlock.ProjectSidebarSectionTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Body}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
   <Style Selector="Button.ProjectWorkspaceToolbarButton">
     <Setter Property="Padding" Value="10,8" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
@@ -1228,7 +1234,7 @@
   </Style>
 
   <Style Selector="TreeView.ProjectSidebarTree">
-    <Setter Property="Margin" Value="0,2,0,0" />
+    <Setter Property="Margin" Value="0,0,0,0" />
   </Style>
 
   <Style Selector="TreeView.WorkspaceTreeView TreeViewItem">

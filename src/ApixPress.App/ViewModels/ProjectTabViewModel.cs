@@ -102,6 +102,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     public bool HasQuickRequestEntries => SavedRequests.Any(item => string.Equals(item.SourceCase.EntryType, RequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase));
     public bool HasInterfaceEntries => SavedRequests.Any(item => string.Equals(item.SourceCase.EntryType, RequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase));
     public bool ShowInterfaceEntriesEmptyState => !HasInterfaceEntries;
+    public bool ShowQuickRequestEntriesEmptyState => !HasQuickRequestEntries;
     public bool ShowSavedRequestsEmptyState => !HasQuickRequestEntries && !HasInterfaceEntries;
     public bool ShowHistoryEmptyState => !HasHistory;
     public bool IsInterfaceManagementSection => SelectedWorkspaceSection == WorkspaceSections.InterfaceManagement;
@@ -720,13 +721,6 @@ public partial class ProjectTabViewModel : ViewModelBase
             .ToList();
         var folderCounts = BuildFolderDescendantCounts(httpInterfaces);
 
-        var moduleNode = new ExplorerItemViewModel
-        {
-            Title = "默认模块",
-            Subtitle = string.Empty,
-            IsGroup = true,
-            NodeType = "module"
-        };
         var interfaceRoot = new ExplorerItemViewModel
         {
             Title = "接口",
@@ -734,8 +728,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             IsGroup = true,
             NodeType = "interface-root"
         };
-        moduleNode.Children.Add(interfaceRoot);
-        InterfaceTreeItems.Add(moduleNode);
+        InterfaceTreeItems.Add(interfaceRoot);
 
         var folderNodes = new Dictionary<string, ExplorerItemViewModel>(StringComparer.OrdinalIgnoreCase);
         foreach (var item in httpInterfaces)
@@ -792,16 +785,9 @@ public partial class ProjectTabViewModel : ViewModelBase
             }
         }
 
-        var quickRoot = new ExplorerItemViewModel
-        {
-            Title = "快捷请求",
-            Subtitle = quickRequests.Count == 0 ? "暂无快捷请求" : $"共 {quickRequests.Count} 条请求",
-            IsGroup = true,
-            NodeType = "quick-root"
-        };
         foreach (var item in quickRequests)
         {
-            quickRoot.Children.Add(new ExplorerItemViewModel
+            QuickRequestTreeItems.Add(new ExplorerItemViewModel
             {
                 Title = item.Name,
                 Subtitle = $"{item.SourceCase.RequestSnapshot.Method} {item.SourceCase.RequestSnapshot.Url}",
@@ -810,8 +796,6 @@ public partial class ProjectTabViewModel : ViewModelBase
                 SourceCase = item.SourceCase
             });
         }
-
-        QuickRequestTreeItems.Add(quickRoot);
     }
 
     private ProjectEnvironmentDto BuildExecutionEnvironment()
@@ -1098,6 +1082,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasQuickRequestEntries));
         OnPropertyChanged(nameof(HasInterfaceEntries));
         OnPropertyChanged(nameof(ShowInterfaceEntriesEmptyState));
+        OnPropertyChanged(nameof(ShowQuickRequestEntriesEmptyState));
         OnPropertyChanged(nameof(HasHistory));
         OnPropertyChanged(nameof(ShowSavedRequestsEmptyState));
         OnPropertyChanged(nameof(ShowHistoryEmptyState));

@@ -424,8 +424,16 @@
                   <ScrollViewer Grid.Row="2">
                     <StackPanel Spacing="{StaticResource Space.3}">
                       <StackPanel Spacing="{StaticResource Space.2}">
-                        <TextBlock Classes="CaptionText"
-                                   Text="{Binding InterfaceSectionHint}" />
+                        <Grid ColumnDefinitions="Auto,*"
+                              ColumnSpacing="{StaticResource Space.2}">
+                          <TextBlock Grid.Column="0"
+                                     Classes="WorkspaceTreeNodeGlyph"
+                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                     Text="&#xE8B7;" />
+                          <TextBlock Grid.Column="1"
+                                     Classes="ProjectSidebarSectionTitle"
+                                     Text="默认模块" />
+                        </Grid>
                         <TextBlock Classes="CaptionText ProjectSidebarEmptyHint"
                                    Text="当前还没有保存的 HTTP 接口"
                                    IsVisible="{Binding ShowInterfaceEntriesEmptyState}" />
@@ -476,12 +484,15 @@
                                      FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                      Text="&#xE9D5;" />
                           <TextBlock Grid.Column="1"
-                                     Text="快捷请求"
-                                     FontWeight="SemiBold" />
+                                     Classes="ProjectSidebarSectionTitle"
+                                     Text="快捷请求" />
                         </Grid>
                         <Button Classes="ProjectSidebarGhostButton"
                                 Content="+ 新建"
                                 Command="{Binding OpenQuickRequestWorkspaceCommand}" />
+                        <TextBlock Classes="CaptionText ProjectSidebarEmptyHint"
+                                   Text="暂无快捷请求"
+                                   IsVisible="{Binding ShowQuickRequestEntriesEmptyState}" />
                         <TreeView Classes="WorkspaceTreeView ProjectSidebarTree"
                                   ItemsSource="{Binding QuickRequestTreeItems}">
                           <TreeView.ItemTemplate>
