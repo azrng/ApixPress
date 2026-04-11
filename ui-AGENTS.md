@@ -82,6 +82,7 @@ src/AppName/
 
 ### 组件规则
 - 优先复用 `src/AppName/Views/Controls/` 下已有组件，禁止重复创建。
+- 若 `Irihi.Ursa` / `Ursa.Avalonia` 组件库已有可满足需求的现成组件，优先直接使用或轻量封装现有组件，避免重复实现同类基础控件与交互。
 - 只有确实有复用价值时才新增共享组件，避免为单次需求过度抽象。
 - 页面状态必须完整：`loading`、`empty`、`error`、`no-permission`。
 - 使用 Ursa.Avalonia 控件库优先，必要时使用 Avalonia 官方控件。
