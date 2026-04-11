@@ -334,42 +334,13 @@
               RowDefinitions="Auto,*"
               RowSpacing="{StaticResource Space.4}">
           <Border Classes="WorkspaceHeaderCard ProjectWorkspaceHero">
-          <Grid ColumnDefinitions="*,Auto"
-                ColumnSpacing="{StaticResource Space.4}">
             <StackPanel Spacing="{StaticResource Space.2}">
               <TextBlock Classes="HeroTitle"
                          Text="{Binding Project.Name}" />
               <TextBlock Classes="SubtleText"
                          Text="{Binding ProjectSummary}" />
             </StackPanel>
-            <StackPanel Grid.Column="1"
-                        Orientation="Horizontal"
-                        Spacing="{StaticResource Space.2}"
-                        VerticalAlignment="Center">
-              <Border Classes="EnvironmentSummaryPill">
-                <StackPanel Spacing="2">
-                  <TextBlock Classes="CaptionText"
-                             Text="当前环境" />
-                  <TextBlock Text="{Binding CurrentEnvironmentLabel}"
-                             FontWeight="SemiBold" />
-                </StackPanel>
-              </Border>
-              <ComboBox Width="220"
-                        Classes="SectionInput"
-                        ItemsSource="{Binding EnvironmentPanel.Environments}"
-                        SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}">
-                <ComboBox.ItemTemplate>
-                  <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
-                    <TextBlock Text="{Binding DisplayName}" />
-                  </DataTemplate>
-                </ComboBox.ItemTemplate>
-              </ComboBox>
-              <Button Classes="SecondaryButton"
-                      Content="环境设置"
-                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
-            </StackPanel>
-          </Grid>
-        </Border>
+          </Border>
 
           <Grid Grid.Row="1"
                 ColumnDefinitions="92,320,*"
@@ -623,8 +594,53 @@
             <Border Grid.Column="2"
                     Classes="PanelCard ProjectWorkspaceCanvas"
                     IsVisible="{Binding ShowInterfaceManagementLanding}">
-              <Grid>
-                <StackPanel HorizontalAlignment="Center"
+              <Grid RowDefinitions="Auto,*"
+                    RowSpacing="{StaticResource Space.4}">
+                <Border Classes="ProjectWorkspaceTopActionBar">
+                  <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                        ColumnSpacing="{StaticResource Space.3}">
+                    <Border Classes="ProjectWorkspaceEditorTabs">
+                      <StackPanel Orientation="Horizontal"
+                                  Spacing="0">
+                        <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonActive"
+                                Command="{Binding OpenQuickRequestWorkspaceCommand}">
+                          <StackPanel Orientation="Horizontal"
+                                      Spacing="{StaticResource Space.2}">
+                            <Path Width="16"
+                                  Height="16"
+                                  Stretch="Uniform"
+                                  Fill="{DynamicResource Brush.Status.Success.Text}"
+                                  Data="M4,12 L16,4 L13,11 L20,11 L8,20 L11,13 L4,13 Z" />
+                            <TextBlock Text="快捷请求" />
+                          </StackPanel>
+                        </Button>
+                        <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonGhost"
+                                Command="{Binding CreateNewQuickRequestDraftCommand}"
+                                Content="新建..." />
+                      </StackPanel>
+                    </Border>
+
+                    <ComboBox Grid.Column="2"
+                              Width="220"
+                              Classes="SectionInput ProjectWorkspaceToolbarComboBox"
+                              ItemsSource="{Binding EnvironmentPanel.Environments}"
+                              SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}">
+                      <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
+                          <TextBlock Text="{Binding DisplayName}" />
+                        </DataTemplate>
+                      </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <Button Grid.Column="3"
+                            Classes="SecondaryButton ProjectWorkspaceToolbarButton"
+                            Content="环境设置"
+                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+                  </Grid>
+                </Border>
+
+                <StackPanel Grid.Row="1"
+                            HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Spacing="{StaticResource Space.4}">
                   <Button Classes="ProjectLaunchButton"
@@ -653,29 +669,46 @@
                   IsVisible="{Binding ShowQuickRequestWorkspace}"
                   RowDefinitions="Auto,Auto,*"
                   RowSpacing="{StaticResource Space.3}">
-            <Border Classes="PanelCard QuickRequestIntroCard">
-              <Grid ColumnDefinitions="Auto,*,Auto"
-                    ColumnSpacing="{StaticResource Space.4}">
-                <Button Classes="SecondaryButton"
-                        Content="返回接口管理"
-                        Command="{Binding ReturnToInterfaceHomeCommand}" />
-                <StackPanel Grid.Column="1"
-                            Spacing="{StaticResource Space.2}">
-                  <TextBlock Classes="SectionTitle"
-                             Text="快捷请求" />
-                  <TextBlock Classes="CaptionText"
-                             Text="这里保留真实可发送的请求编辑器，环境变量会随当前环境一起解析。" />
-                </StackPanel>
-                <Border Grid.Column="2"
-                        Classes="QuickRequestHintCard">
-                  <StackPanel Spacing="2">
-                    <TextBlock Classes="CaptionText"
-                               Text="当前 BaseUrl" />
-                    <TextBlock Text="{Binding CurrentBaseUrlText}"
-                               MaxWidth="260"
-                               TextWrapping="Wrap" />
+            <Border Classes="ProjectWorkspaceTopActionBar">
+              <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                    ColumnSpacing="{StaticResource Space.3}">
+                <Border Classes="ProjectWorkspaceEditorTabs">
+                  <StackPanel Orientation="Horizontal"
+                              Spacing="0">
+                    <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonActive"
+                            Command="{Binding OpenQuickRequestWorkspaceCommand}">
+                      <StackPanel Orientation="Horizontal"
+                                  Spacing="{StaticResource Space.2}">
+                        <Path Width="16"
+                              Height="16"
+                              Stretch="Uniform"
+                              Fill="{DynamicResource Brush.Status.Success.Text}"
+                              Data="M4,12 L16,4 L13,11 L20,11 L8,20 L11,13 L4,13 Z" />
+                        <TextBlock Text="快捷请求" />
+                      </StackPanel>
+                    </Button>
+                    <Button Classes="ProjectWorkspaceEditorTabButton ProjectWorkspaceEditorTabButtonGhost"
+                            Command="{Binding CreateNewQuickRequestDraftCommand}"
+                            Content="新建..." />
                   </StackPanel>
                 </Border>
+
+                <ComboBox Grid.Column="2"
+                          Width="220"
+                          Classes="SectionInput ProjectWorkspaceToolbarComboBox"
+                          ItemsSource="{Binding EnvironmentPanel.Environments}"
+                          SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
+                      <TextBlock Text="{Binding DisplayName}" />
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <Button Grid.Column="3"
+                        Classes="SecondaryButton ProjectWorkspaceToolbarButton"
+                        Content="环境设置"
+                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
               </Grid>
             </Border>
 

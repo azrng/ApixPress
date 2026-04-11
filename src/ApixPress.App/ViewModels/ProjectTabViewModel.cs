@@ -293,6 +293,16 @@ public partial class ProjectTabViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void CreateNewQuickRequestDraft()
+    {
+        SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
+        IsQuickRequestWorkspaceOpen = true;
+        ResetQuickRequestDraft();
+        StatusMessage = "已新建快捷请求草稿。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
     private void ReturnToInterfaceHome()
     {
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
@@ -305,6 +315,14 @@ public partial class ProjectTabViewModel : ViewModelBase
     {
         ConfigTab.RequestName = BuildRequestName();
         return ConfigTab.BuildRequestSnapshot(string.Empty, SelectedMethod, RequestUrl);
+    }
+
+    private void ResetQuickRequestDraft()
+    {
+        SelectedMethod = "GET";
+        RequestUrl = string.Empty;
+        ConfigTab.Reset();
+        ResponseSection.Reset();
     }
 
     private string BuildRequestName()

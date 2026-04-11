@@ -938,6 +938,53 @@
     <Setter Property="BoxShadow" Value="0 14 30 0 #0F172A0C" />
   </Style>
 
+  <Style Selector="Border.ProjectWorkspaceTopActionBar">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+  </Style>
+
+  <Style Selector="Border.ProjectWorkspaceEditorTabs">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="2" />
+  </Style>
+
+  <Style Selector="Button.ProjectWorkspaceEditorTabButton">
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="14,12" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="Button.ProjectWorkspaceEditorTabButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+  </Style>
+
+  <Style Selector="Button.ProjectWorkspaceEditorTabButtonActive">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="Button.ProjectWorkspaceEditorTabButtonGhost">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="ComboBox.ProjectWorkspaceToolbarComboBox">
+    <Setter Property="MinWidth" Value="220" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+  </Style>
+
+  <Style Selector="Button.ProjectWorkspaceToolbarButton">
+    <Setter Property="Padding" Value="14,12" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+  </Style>
+
   <Style Selector="Button.ProjectLaunchButton">
     <Setter Property="Width" Value="240" />
     <Setter Property="Height" Value="220" />
