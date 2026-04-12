@@ -7,6 +7,12 @@
     <Setter Property="FontFamily" Value="{StaticResource Font.Default}" />
   </Style>
 
+  <Style Selector="TextBox">
+    <Setter Property="TextAlignment" Value="Left" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="VerticalContentAlignment" Value="Top" />
+  </Style>
+
   <Style Selector="Border.PanelCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
