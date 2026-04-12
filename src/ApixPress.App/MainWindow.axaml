@@ -879,80 +879,43 @@
                   </Grid>
                 </Border>
 
-                <Grid Grid.Row="1"
-                      ColumnDefinitions="*,280"
-                      ColumnSpacing="{StaticResource Space.4}">
-                  <Border Classes="WorkspaceLandingHeroCard">
-                    <Grid RowDefinitions="Auto,Auto,Auto"
-                          RowSpacing="{StaticResource Space.4}">
-                      <StackPanel Spacing="{StaticResource Space.2}">
-                        <Border Classes="WorkspaceLandingBadge">
-                          <TextBlock Classes="CaptionText"
-                                     Text="默认工作台" />
-                        </Border>
-                        <TextBlock Classes="HeroTitle"
-                                   Text="快捷请求" />
-                        <TextBlock Classes="SubtleText"
-                                   Text="默认进入快捷请求工作台，直接输入 URL 即可发送，不绑定固定 BaseUrl；保存后会进入左侧快捷请求目录。" />
-                      </StackPanel>
+                <Grid Grid.Row="1">
+                  <StackPanel Classes="WorkspaceLandingCenterStage"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="{StaticResource Space.4}"
+                                HorizontalAlignment="Center">
+                      <Button Classes="WorkspaceLandingChoiceButton"
+                              Command="{Binding OpenHttpInterfaceWorkspaceCommand}">
+                        <StackPanel Spacing="{StaticResource Space.3}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                          <TextBlock Classes="WorkspaceLandingChoiceIcon"
+                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                     Text="&#xE8C8;" />
+                          <TextBlock Classes="WorkspaceLandingChoiceTitle"
+                                     Text="新建 HTTP 接口" />
+                        </StackPanel>
+                      </Button>
 
-                      <Border Grid.Row="1"
-                              Classes="WorkspaceLandingPreviewCard">
-                        <Grid ColumnDefinitions="90,*,Auto"
-                              ColumnSpacing="{StaticResource Space.2}">
-                          <Border Grid.Column="0"
-                                  Classes="WorkspaceLandingMethodPill">
-                            <TextBlock Text="GET" />
-                          </Border>
-                          <TextBlock Grid.Column="1"
-                                     VerticalAlignment="Center"
-                                     Text="https://api.example.com/users/42"
-                                     FontFamily="{StaticResource Font.Monospace}" />
-                          <Button Grid.Column="2"
-                                  Classes="SendButton"
-                                  Content="打开快捷请求"
-                                  Command="{Binding OpenQuickRequestWorkspaceCommand}" />
-                        </Grid>
-                      </Border>
+                      <Button Classes="WorkspaceLandingChoiceButton"
+                              Command="{Binding OpenQuickRequestWorkspaceCommand}">
+                        <StackPanel Spacing="{StaticResource Space.3}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                          <TextBlock Classes="WorkspaceLandingChoiceIcon WorkspaceLandingChoiceQuickIcon"
+                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                     Text="&#xE945;" />
+                          <TextBlock Classes="WorkspaceLandingChoiceTitle"
+                                     Text="快捷请求" />
+                        </StackPanel>
+                      </Button>
+                    </StackPanel>
 
-                      <StackPanel Grid.Row="2"
-                                  Orientation="Horizontal"
-                                  Spacing="{StaticResource Space.2}">
-                        <Button Classes="SecondaryButton WorkspaceLandingSwitchButton"
-                                Content="新建 HTTP 接口"
-                                Command="{Binding OpenHttpInterfaceWorkspaceCommand}" />
-                        <TextBlock Classes="CaptionText"
-                                   VerticalAlignment="Center"
-                                   Text="HTTP 接口会自动使用当前环境 BaseUrl，并保存到 默认模块 / 接口。" />
-                      </StackPanel>
-                    </Grid>
-                  </Border>
-
-                  <StackPanel Grid.Column="1"
-                              Spacing="{StaticResource Space.3}">
-                    <Border Classes="WorkspaceLandingAsideCard">
-                      <StackPanel Spacing="{StaticResource Space.2}">
-                        <TextBlock Classes="SectionTitle"
-                                   Text="当前环境" />
-                        <TextBlock Text="{Binding CurrentEnvironmentLabel}" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="{Binding CurrentBaseUrlText}"
-                                   TextWrapping="Wrap" />
-                      </StackPanel>
-                    </Border>
-
-                    <Border Classes="WorkspaceLandingAsideCard">
-                      <StackPanel Spacing="{StaticResource Space.2}">
-                        <TextBlock Classes="SectionTitle"
-                                   Text="保存规则" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="快捷请求保存到左侧快捷请求目录。" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="HTTP 接口保存到 默认模块 / 接口 目录树。" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="接口下可继续保存多个用例节点。" />
-                      </StackPanel>
-                    </Border>
+                    <TextBlock Classes="CaptionText WorkspaceLandingFootnote"
+                               Text="HTTP 接口会保存到 默认模块 / 接口；快捷请求会保存到左侧快捷请求目录。"
+                               TextAlignment="Center" />
                   </StackPanel>
                 </Grid>
               </Grid>

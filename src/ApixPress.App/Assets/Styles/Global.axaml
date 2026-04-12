@@ -1419,6 +1419,49 @@
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
+  <Style Selector="StackPanel.WorkspaceLandingCenterStage">
+    <Setter Property="Spacing" Value="{StaticResource Space.5}" />
+    <Setter Property="MaxWidth" Value="620" />
+  </Style>
+
+  <Style Selector="Button.WorkspaceLandingChoiceButton">
+    <Setter Property="Width" Value="220" />
+    <Setter Property="Height" Value="196" />
+    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+  </Style>
+
+  <Style Selector="Button.WorkspaceLandingChoiceButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <Style Selector="TextBlock.WorkspaceLandingChoiceIcon">
+    <Setter Property="FontSize" Value="38" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.WorkspaceLandingChoiceQuickIcon">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Success.Text}" />
+  </Style>
+
+  <Style Selector="TextBlock.WorkspaceLandingChoiceTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.WorkspaceLandingFootnote">
+    <Setter Property="MaxWidth" Value="520" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+
   <Style Selector="Border.BaseUrlPrefixCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
