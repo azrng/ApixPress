@@ -488,7 +488,7 @@
                           </Grid>
                           <StackPanel Classes="ProjectSidebarModuleChildren">
                             <ToggleButton x:Name="InterfaceCatalogToggle"
-                                          Classes="ProjectSidebarCatalogToggleButton ProjectSidebarCatalogActiveButton"
+                                          Classes="ProjectSidebarCatalogToggleButton ProjectSidebarCatalogActiveButton ProjectSidebarCatalogFlatButton"
                                           IsChecked="{Binding IsInterfaceCatalogExpanded, Mode=TwoWay}">
                               <Grid ColumnDefinitions="Auto,Auto,*,Auto"
                                     ColumnSpacing="{StaticResource Space.2}">
@@ -588,7 +588,7 @@
                       <Border Classes="ProjectSidebarSectionCard">
                         <StackPanel Classes="ProjectSidebarTopLevelSection">
                           <ToggleButton x:Name="QuickRequestCatalogToggle"
-                                        Classes="ProjectSidebarCatalogToggleButton"
+                                        Classes="ProjectSidebarCatalogToggleButton ProjectSidebarCatalogFlatButton"
                                         IsChecked="{Binding IsQuickRequestCatalogExpanded, Mode=TwoWay}">
                             <Grid ColumnDefinitions="Auto,Auto,*,Auto"
                                   ColumnSpacing="{StaticResource Space.2}">

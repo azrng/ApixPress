@@ -1024,9 +1024,32 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
   </Style>
 
+  <Style Selector="ToggleButton.ProjectSidebarCatalogFlatButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="4,6" />
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectSidebarCatalogFlatButton:pointerover">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectSidebarCatalogFlatButton:checked">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+  </Style>
+
   <Style Selector="ToggleButton.ProjectSidebarCatalogActiveButton:checked">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectSidebarCatalogFlatButton.ProjectSidebarCatalogActiveButton:checked">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
   </Style>
 
   <Style Selector="StackPanel.ProjectSidebarCatalogContent">
@@ -1035,11 +1058,11 @@
   </Style>
 
   <Style Selector="Border.ProjectSidebarCatalogBody">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
-    <Setter Property="BorderThickness" Value="1,0,0,0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="12,10,0,0" />
+    <Setter Property="Padding" Value="12,6,0,0" />
     <Setter Property="Margin" Value="12,2,0,0" />
   </Style>
 
@@ -1614,29 +1637,29 @@
   </Style>
 
   <Style Selector="ItemsControl.ProjectSidebarInlineTree Button.WorkspaceTreeNodeButton">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="8,7" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="Padding" Value="8,6" />
   </Style>
 
   <Style Selector="ItemsControl.ProjectSidebarInlineTree Button.WorkspaceTreeNodeButton:pointerover">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
   </Style>
 
   <Style Selector="TreeView.ProjectSidebarTree Button.WorkspaceTreeNodeButton">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="8,7" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="Padding" Value="8,6" />
   </Style>
 
   <Style Selector="TreeView.ProjectSidebarTree Button.WorkspaceTreeNodeButton:pointerover">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
   </Style>
 
   <Style Selector="TextBlock.WorkspaceTreeNodeGlyph">
