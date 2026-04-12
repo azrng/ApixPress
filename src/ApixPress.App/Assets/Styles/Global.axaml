@@ -922,6 +922,8 @@
 
   <Style Selector="u|NavMenu.ProjectWorkspaceNavMenu">
     <Setter Property="ExpandWidth" Value="68" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
   </Style>
 
   <Style Selector="u|NavMenu.ProjectWorkspaceNavMenu u|NavMenuItem">
