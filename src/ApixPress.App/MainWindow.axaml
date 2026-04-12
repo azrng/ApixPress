@@ -794,7 +794,7 @@
               <Grid RowDefinitions="Auto,*"
                     RowSpacing="{StaticResource Space.4}">
                 <Border Classes="ProjectWorkspaceTopActionBar">
-                  <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                  <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto"
                         ColumnSpacing="{StaticResource Space.3}">
                     <Border Classes="ProjectWorkspaceEditorTabs">
                       <ScrollViewer HorizontalScrollBarVisibility="Hidden"
@@ -838,15 +838,42 @@
                               </DataTemplate>
                             </ItemsControl.ItemTemplate>
                           </ItemsControl>
-
-                          <Button Classes="ProjectWorkspaceInnerTabAddButton"
-                                  Content="+"
-                                  Command="{Binding CreateWorkspaceTabCommand}" />
                         </StackPanel>
                       </ScrollViewer>
                     </Border>
 
-                    <ComboBox Grid.Column="2"
+                    <Grid Grid.Column="1"
+                          HorizontalAlignment="Left">
+                      <StackPanel Orientation="Horizontal"
+                                  Spacing="{StaticResource Space.1}">
+                        <Button Classes="ProjectWorkspaceInnerTabAddButton"
+                                Content="+"
+                                Command="{Binding CreateWorkspaceTabCommand}" />
+                        <Button Classes="ProjectWorkspaceInnerTabMoreButton"
+                                Content="..."
+                                Command="{Binding ToggleWorkspaceTabMenuCommand}" />
+                      </StackPanel>
+
+                      <Border Classes="WorkspaceTabMenuCard"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Top"
+                              Margin="0,34,0,0"
+                              IsVisible="{Binding IsWorkspaceTabMenuOpen}">
+                        <StackPanel Spacing="{StaticResource Space.1}">
+                          <Button Classes="WorkspaceTabMenuItem"
+                                  Content="关闭全部标签页"
+                                  Command="{Binding CloseAllWorkspaceTabsCommand}" />
+                          <Button Classes="WorkspaceTabMenuItem"
+                                  Content="关闭当前标签页"
+                                  Command="{Binding CloseCurrentWorkspaceFromMenuCommand}" />
+                          <Button Classes="WorkspaceTabMenuItem"
+                                  Content="关闭其它标签页"
+                                  Command="{Binding CloseOtherWorkspaceTabsCommand}" />
+                        </StackPanel>
+                      </Border>
+                    </Grid>
+
+                    <ComboBox Grid.Column="3"
                               Width="220"
                               Classes="SectionInput ProjectWorkspaceToolbarComboBox"
                               ItemsSource="{Binding EnvironmentPanel.Environments}"
@@ -858,7 +885,7 @@
                       </ComboBox.ItemTemplate>
                     </ComboBox>
 
-                    <StackPanel Grid.Column="3"
+                    <StackPanel Grid.Column="4"
                                 Orientation="Horizontal"
                                 Spacing="{StaticResource Space.2}">
                       <Button Classes="SecondaryButton ProjectWorkspaceToolbarButton"
@@ -909,7 +936,7 @@
                   RowDefinitions="Auto,Auto,*"
                   RowSpacing="{StaticResource Space.3}">
               <Border Classes="ProjectWorkspaceTopActionBar">
-                <Grid ColumnDefinitions="Auto,*,Auto"
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto"
                       ColumnSpacing="{StaticResource Space.3}">
                   <Border Classes="ProjectWorkspaceEditorTabs">
                     <ScrollViewer HorizontalScrollBarVisibility="Hidden"
@@ -953,15 +980,42 @@
                             </DataTemplate>
                           </ItemsControl.ItemTemplate>
                         </ItemsControl>
-
-                        <Button Classes="ProjectWorkspaceInnerTabAddButton"
-                                Content="+"
-                                Command="{Binding CreateWorkspaceTabCommand}" />
                       </StackPanel>
                     </ScrollViewer>
                   </Border>
 
-                  <ComboBox Grid.Column="1"
+                  <Grid Grid.Column="1"
+                        HorizontalAlignment="Left">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="{StaticResource Space.1}">
+                      <Button Classes="ProjectWorkspaceInnerTabAddButton"
+                              Content="+"
+                              Command="{Binding CreateWorkspaceTabCommand}" />
+                      <Button Classes="ProjectWorkspaceInnerTabMoreButton"
+                              Content="..."
+                              Command="{Binding ToggleWorkspaceTabMenuCommand}" />
+                    </StackPanel>
+
+                    <Border Classes="WorkspaceTabMenuCard"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Margin="0,34,0,0"
+                            IsVisible="{Binding IsWorkspaceTabMenuOpen}">
+                      <StackPanel Spacing="{StaticResource Space.1}">
+                        <Button Classes="WorkspaceTabMenuItem"
+                                Content="关闭全部标签页"
+                                Command="{Binding CloseAllWorkspaceTabsCommand}" />
+                        <Button Classes="WorkspaceTabMenuItem"
+                                Content="关闭当前标签页"
+                                Command="{Binding CloseCurrentWorkspaceFromMenuCommand}" />
+                        <Button Classes="WorkspaceTabMenuItem"
+                                Content="关闭其它标签页"
+                                Command="{Binding CloseOtherWorkspaceTabsCommand}" />
+                      </StackPanel>
+                    </Border>
+                  </Grid>
+
+                  <ComboBox Grid.Column="3"
                             Width="220"
                             Classes="SectionInput ProjectWorkspaceToolbarComboBox"
                             HorizontalAlignment="Right"
@@ -974,7 +1028,7 @@
                     </ComboBox.ItemTemplate>
                   </ComboBox>
 
-                  <StackPanel Grid.Column="2"
+                  <StackPanel Grid.Column="4"
                               Orientation="Horizontal"
                               Spacing="{StaticResource Space.2}">
                     <Button Classes="SecondaryButton ProjectWorkspaceToolbarButton"

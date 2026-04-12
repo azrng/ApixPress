@@ -1226,6 +1226,45 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
   </Style>
 
+  <Style Selector="Button.ProjectWorkspaceInnerTabMoreButton">
+    <Setter Property="Width" Value="32" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="Button.ProjectWorkspaceInnerTabMoreButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Border.WorkspaceTabMenuCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="6" />
+    <Setter Property="BoxShadow" Value="0 18 36 0 #0F172A18" />
+    <Setter Property="MinWidth" Value="160" />
+  </Style>
+
+  <Style Selector="Button.WorkspaceTabMenuItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Padding" Value="12,10" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Button.WorkspaceTabMenuItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+
   <Style Selector="ComboBox.ProjectWorkspaceToolbarComboBox">
     <Setter Property="MinWidth" Value="220" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />

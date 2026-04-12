@@ -343,6 +343,9 @@ public partial class ProjectTabViewModel : ViewModelBase
     [ObservableProperty]
     private bool responseValidationEnabled = true;
 
+    [ObservableProperty]
+    private bool isWorkspaceTabMenuOpen;
+
     public async Task InitializeAsync()
     {
         if (_initialized)
@@ -680,6 +683,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
         var tab = ReuseActiveLandingOrCreateWorkspace();
         tab.ConfigureAsQuickRequest();
+        IsWorkspaceTabMenuOpen = false;
         ActivateWorkspaceTabCore(tab);
         StatusMessage = "快捷请求标签已打开。";
         NotifyShellState();
@@ -691,6 +695,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
         var tab = ReuseActiveLandingOrCreateWorkspace();
         tab.ConfigureAsHttpInterface();
+        IsWorkspaceTabMenuOpen = false;
         ActivateWorkspaceTabCore(tab);
         StatusMessage = "HTTP 接口标签已打开。";
         NotifyShellState();
@@ -703,6 +708,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         var landingTab = FindLandingWorkspaceTab() ?? CreateWorkspaceTab(activate: false);
         landingTab.ConfigureAsLanding();
         ActivateWorkspaceTabCore(landingTab);
+        IsWorkspaceTabMenuOpen = false;
         StatusMessage = "已返回新建页。";
         NotifyShellState();
     }
@@ -712,8 +718,74 @@ public partial class ProjectTabViewModel : ViewModelBase
     {
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
         var tab = CreateWorkspaceTab(activate: true);
-        tab.ConfigureAsLanding();
-        StatusMessage = "已新建一个工作标签。";
+        tab.ConfigureAsHttpInterface();
+        IsWorkspaceTabMenuOpen = false;
+        StatusMessage = "已新建一个 HTTP 接口标签。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ToggleWorkspaceTabMenu()
+    {
+        IsWorkspaceTabMenuOpen = !IsWorkspaceTabMenuOpen;
+    }
+
+    [RelayCommand]
+    private void CloseCurrentWorkspaceFromMenu()
+    {
+        IsWorkspaceTabMenuOpen = false;
+        CloseWorkspaceTab(ActiveWorkspaceTab);
+    }
+
+    [RelayCommand]
+    private void CloseOtherWorkspaceTabs()
+    {
+        IsWorkspaceTabMenuOpen = false;
+        if (ActiveWorkspaceTab is null)
+        {
+            return;
+        }
+
+        var tabsToRemove = WorkspaceTabs
+            .Where(item => !ReferenceEquals(item, ActiveWorkspaceTab))
+            .ToList();
+        foreach (var tab in tabsToRemove)
+        {
+            DetachWorkspaceTab(tab);
+            WorkspaceTabs.Remove(tab);
+        }
+
+        if (!WorkspaceTabs.Contains(ActiveWorkspaceTab))
+        {
+            EnsureLandingWorkspaceTab();
+        }
+        else
+        {
+            ActivateWorkspaceTabCore(ActiveWorkspaceTab);
+        }
+
+        StatusMessage = tabsToRemove.Count == 0 ? "当前没有其它标签页可关闭。" : "已关闭其它标签页。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void CloseAllWorkspaceTabs()
+    {
+        IsWorkspaceTabMenuOpen = false;
+        if (WorkspaceTabs.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var tab in WorkspaceTabs.ToList())
+        {
+            DetachWorkspaceTab(tab);
+        }
+
+        WorkspaceTabs.Clear();
+        ActiveWorkspaceTab = null;
+        EnsureLandingWorkspaceTab();
+        StatusMessage = "已关闭全部标签页。";
         NotifyShellState();
     }
 
@@ -725,6 +797,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             return;
         }
 
+        IsWorkspaceTabMenuOpen = false;
         ActivateWorkspaceTabCore(tab);
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
         StatusMessage = tab.IsLandingTab ? "已切换到新建页。" : $"已切换到标签：{tab.HeaderText}";
@@ -739,6 +812,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             return;
         }
 
+        IsWorkspaceTabMenuOpen = false;
         var removedIndex = WorkspaceTabs.IndexOf(tab);
         DetachWorkspaceTab(tab);
         WorkspaceTabs.Remove(tab);
@@ -1014,6 +1088,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         if (WorkspaceTabs.Count == 0)
         {
             var tab = CreateWorkspaceTab(activate: false);
+            tab.ConfigureAsHttpInterface();
             ActivateWorkspaceTabCore(tab);
             return;
         }
