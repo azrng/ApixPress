@@ -843,7 +843,10 @@
                     </Border>
 
                     <Grid Grid.Column="1"
-                          HorizontalAlignment="Left">
+                          Width="72"
+                          Height="28"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Top">
                       <StackPanel Orientation="Horizontal"
                                   Spacing="{StaticResource Space.1}">
                         <Button Classes="ProjectWorkspaceInnerTabAddButton"
@@ -855,9 +858,9 @@
                       </StackPanel>
 
                       <Border Classes="WorkspaceTabMenuCard"
-                              HorizontalAlignment="Right"
+                              HorizontalAlignment="Left"
                               VerticalAlignment="Top"
-                              Margin="0,34,0,0"
+                              Margin="34,34,0,0"
                               IsVisible="{Binding IsWorkspaceTabMenuOpen}">
                         <StackPanel Spacing="{StaticResource Space.1}">
                           <Button Classes="WorkspaceTabMenuItem"
@@ -985,7 +988,10 @@
                   </Border>
 
                   <Grid Grid.Column="1"
-                        HorizontalAlignment="Left">
+                        Width="72"
+                        Height="28"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top">
                     <StackPanel Orientation="Horizontal"
                                 Spacing="{StaticResource Space.1}">
                       <Button Classes="ProjectWorkspaceInnerTabAddButton"
@@ -997,9 +1003,9 @@
                     </StackPanel>
 
                     <Border Classes="WorkspaceTabMenuCard"
-                            HorizontalAlignment="Right"
+                            HorizontalAlignment="Left"
                             VerticalAlignment="Top"
-                            Margin="0,34,0,0"
+                            Margin="34,34,0,0"
                             IsVisible="{Binding IsWorkspaceTabMenuOpen}">
                       <StackPanel Spacing="{StaticResource Space.1}">
                         <Button Classes="WorkspaceTabMenuItem"
