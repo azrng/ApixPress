@@ -1372,23 +1372,22 @@
                         Classes="PanelCard ResponsePanelCard">
                   <DockPanel>
                     <Grid DockPanel.Dock="Top"
-                          ColumnDefinitions="*,Auto"
                           Margin="0,0,0,12">
                       <TextBlock Classes="SectionTitle"
                                  Text="返回响应" />
-                      <TextBlock Grid.Column="1"
-                                 Classes="CaptionText"
-                                 Text="{Binding CurrentEnvironmentLabel}"
-                                 VerticalAlignment="Center" />
                     </Grid>
 
-                    <StackPanel IsVisible="{Binding ResponseSection.ShowPlaceholder}"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Spacing="{StaticResource Space.2}">
-                      <TextBlock Classes="SubtleText"
-                                 Text="点击“发送”按钮获取返回结果" />
-                    </StackPanel>
+                    <Grid IsVisible="{Binding ResponseSection.ShowPlaceholder}">
+                      <StackPanel HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Spacing="{StaticResource Space.2}">
+                        <TextBlock Classes="HttpResponsePlaceholderIcon"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   Text="&#xE7C3;" />
+                        <TextBlock Classes="SubtleText"
+                                   Text="点击“发送”按钮获取返回结果" />
+                      </StackPanel>
+                    </Grid>
 
                     <Grid IsVisible="{Binding ResponseSection.HasResponse}"
                           RowDefinitions="Auto,*"
@@ -1467,34 +1466,22 @@
                         Classes="PanelCard HttpResponseCard">
                   <DockPanel>
                     <Grid DockPanel.Dock="Top"
-                          ColumnDefinitions="*,Auto,Auto,Auto"
-                          ColumnSpacing="{StaticResource Space.2}"
                           Margin="0,0,0,12">
                       <TextBlock Classes="SectionTitle"
                                  Text="返回响应" />
-                      <TextBlock Grid.Column="1"
-                                 Classes="CaptionText"
-                                 Text="校验响应"
-                                 VerticalAlignment="Center" />
-                      <ToggleSwitch Grid.Column="2"
-                                    IsChecked="{Binding ResponseValidationEnabled}"
-                                    VerticalAlignment="Center" />
-                      <TextBlock Grid.Column="3"
-                                 Classes="CaptionText"
-                                 Text="{Binding CurrentResponseValidationResultText}"
-                                 VerticalAlignment="Center" />
                     </Grid>
 
-                    <StackPanel IsVisible="{Binding ResponseSection.ShowPlaceholder}"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Spacing="{StaticResource Space.2}">
-                      <TextBlock Classes="HttpResponsePlaceholderIcon"
-                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                 Text="&#xE7C3;" />
-                      <TextBlock Classes="SubtleText"
-                                 Text="点击“发送”按钮获取返回结果" />
-                    </StackPanel>
+                    <Grid IsVisible="{Binding ResponseSection.ShowPlaceholder}">
+                      <StackPanel HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Spacing="{StaticResource Space.2}">
+                        <TextBlock Classes="HttpResponsePlaceholderIcon"
+                                   FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   Text="&#xE7C3;" />
+                        <TextBlock Classes="SubtleText"
+                                   Text="点击“发送”按钮获取返回结果" />
+                      </StackPanel>
+                    </Grid>
 
                     <Grid IsVisible="{Binding ResponseSection.HasResponse}"
                           RowDefinitions="Auto,*"
