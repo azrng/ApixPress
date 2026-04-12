@@ -60,6 +60,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     private bool isActive;
 
     [ObservableProperty]
+    private bool showInTabStrip = true;
+
+    [ObservableProperty]
     private string headerText = "新建...";
 
     public bool IsLandingTab => EntryType == WorkspaceEntryTypes.Landing;

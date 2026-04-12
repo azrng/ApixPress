@@ -104,7 +104,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     public ObservableCollection<ProjectWorkspaceNavItemViewModel> WorkspaceNavigationItems { get; } = [];
     public IReadOnlyList<ExplorerItemViewModel> InterfaceCatalogItems => InterfaceTreeItems.FirstOrDefault()?.Children ?? [];
     public IReadOnlyList<RequestWorkspaceTabViewModel> VisibleWorkspaceTabs => WorkspaceTabs
-        .Where(item => !item.IsLandingTab)
+        .Where(item => !item.IsLandingTab || item.ShowInTabStrip)
         .ToList();
     public ObservableCollection<RequestCaseItemViewModel> SavedRequests => UseCasesPanel.RequestCases;
     public ObservableCollection<RequestHistoryItemViewModel> RequestHistory => HistoryPanel.HistoryItems;
@@ -710,6 +710,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
         var landingTab = FindLandingWorkspaceTab() ?? CreateWorkspaceTab(activate: false);
         landingTab.ConfigureAsLanding();
+        landingTab.ShowInTabStrip = true;
         ActivateWorkspaceTabCore(landingTab);
         IsWorkspaceTabMenuOpen = false;
         StatusMessage = "已返回新建页。";
@@ -720,7 +721,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     private void CreateWorkspaceTab()
     {
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-        var tab = CreateWorkspaceTab(activate: true);
+        var tab = CreateWorkspaceTab(activate: true, showInTabStrip: true);
         tab.ConfigureAsLanding();
         IsWorkspaceTabMenuOpen = false;
         StatusMessage = "已新建一个工作标签。";
@@ -1072,10 +1073,11 @@ public partial class ProjectTabViewModel : ViewModelBase
         return CreateWorkspaceTab(activate: false);
     }
 
-    private RequestWorkspaceTabViewModel CreateWorkspaceTab(bool activate)
+    private RequestWorkspaceTabViewModel CreateWorkspaceTab(bool activate, bool showInTabStrip = true)
     {
         var tab = new RequestWorkspaceTabViewModel();
         tab.ConfigureAsLanding();
+        tab.ShowInTabStrip = showInTabStrip;
         AttachWorkspaceTab(tab);
         WorkspaceTabs.Add(tab);
         if (activate)
@@ -1090,8 +1092,9 @@ public partial class ProjectTabViewModel : ViewModelBase
     {
         if (WorkspaceTabs.Count == 0)
         {
-            var tab = CreateWorkspaceTab(activate: false);
+            var tab = CreateWorkspaceTab(activate: false, showInTabStrip: false);
             tab.ConfigureAsLanding();
+            tab.ShowInTabStrip = false;
             ActivateWorkspaceTabCore(tab);
             return;
         }
@@ -1104,7 +1107,10 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     private RequestWorkspaceTabViewModel? FindLandingWorkspaceTab()
     {
-        return WorkspaceTabs.FirstOrDefault(item => item.IsLandingTab);
+        return WorkspaceTabs
+            .Where(item => item.IsLandingTab)
+            .OrderByDescending(item => item.ShowInTabStrip)
+            .FirstOrDefault();
     }
 
     private RequestWorkspaceTabViewModel? FindFirstQuickRequestTab()
@@ -1365,6 +1371,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             or nameof(RequestWorkspaceTabViewModel.InterfaceFolderPath)
             or nameof(RequestWorkspaceTabViewModel.HttpCaseName)
             or nameof(RequestWorkspaceTabViewModel.EntryType)
+            or nameof(RequestWorkspaceTabViewModel.ShowInTabStrip)
             or nameof(RequestWorkspaceTabViewModel.HeaderText))
         {
             OnPropertyChanged(nameof(VisibleWorkspaceTabs));
