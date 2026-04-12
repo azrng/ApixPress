@@ -883,39 +883,33 @@
                   <StackPanel Classes="WorkspaceLandingCenterStage"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="{StaticResource Space.4}"
+                    <StackPanel Classes="WorkspaceLandingChoicePanel"
+                                Orientation="Horizontal"
                                 HorizontalAlignment="Center">
                       <Button Classes="WorkspaceLandingChoiceButton"
                               Command="{Binding OpenHttpInterfaceWorkspaceCommand}">
-                        <StackPanel Spacing="{StaticResource Space.3}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center">
+                        <Grid RowDefinitions="*,Auto">
                           <TextBlock Classes="WorkspaceLandingChoiceIcon"
                                      FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                      Text="&#xE8C8;" />
-                          <TextBlock Classes="WorkspaceLandingChoiceTitle"
+                          <TextBlock Grid.Row="1"
+                                     Classes="WorkspaceLandingChoiceTitle"
                                      Text="新建 HTTP 接口" />
-                        </StackPanel>
+                        </Grid>
                       </Button>
 
                       <Button Classes="WorkspaceLandingChoiceButton"
                               Command="{Binding OpenQuickRequestWorkspaceCommand}">
-                        <StackPanel Spacing="{StaticResource Space.3}"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center">
+                        <Grid RowDefinitions="*,Auto">
                           <TextBlock Classes="WorkspaceLandingChoiceIcon WorkspaceLandingChoiceQuickIcon"
                                      FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                      Text="&#xE945;" />
-                          <TextBlock Classes="WorkspaceLandingChoiceTitle"
+                          <TextBlock Grid.Row="1"
+                                     Classes="WorkspaceLandingChoiceTitle"
                                      Text="快捷请求" />
-                        </StackPanel>
+                        </Grid>
                       </Button>
                     </StackPanel>
-
-                    <TextBlock Classes="CaptionText WorkspaceLandingFootnote"
-                               Text="HTTP 接口会保存到 默认模块 / 接口；快捷请求会保存到左侧快捷请求目录。"
-                               TextAlignment="Center" />
                   </StackPanel>
                 </Grid>
               </Grid>
