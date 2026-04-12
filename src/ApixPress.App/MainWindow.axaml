@@ -1042,9 +1042,6 @@
                               Orientation="Horizontal"
                               Spacing="{StaticResource Space.2}">
                     <Button Classes="SecondaryButton ProjectWorkspaceToolbarButton"
-                            Content="新建页"
-                            Command="{Binding ReturnToInterfaceHomeCommand}" />
-                    <Button Classes="SecondaryButton ProjectWorkspaceToolbarButton"
                             Content="环境设置"
                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
                   </StackPanel>
