@@ -1441,62 +1441,25 @@
                 <Border Grid.Row="0"
                         Classes="PanelCard HttpDesignMetaCard"
                         IsVisible="{Binding IsHttpDesignEditorMode}">
-                  <Grid RowDefinitions="Auto,Auto"
-                        RowSpacing="{StaticResource Space.3}">
-                    <Grid ColumnDefinitions="*,Auto"
-                          ColumnSpacing="{StaticResource Space.3}">
-                      <StackPanel Spacing="2">
-                        <TextBlock Classes="SectionTitle"
-                                   Text="接口设计" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="补充接口说明、负责人和标签后，可直接切换到文档预览查看展示效果。" />
-                      </StackPanel>
-                      <Border Grid.Column="1"
-                              Classes="HttpDesignSummaryCard">
-                        <StackPanel Spacing="2">
-                          <TextBlock Classes="CaptionText"
-                                     Text="当前摘要" />
-                          <TextBlock FontWeight="SemiBold"
-                                     Text="{Binding CurrentHttpInterfaceDisplayName}" />
-                          <TextBlock Classes="CaptionText"
-                                     Text="{Binding SelectedMethod}" />
-                          <TextBlock Classes="CaptionText"
-                                     Text="{Binding CurrentHttpDocumentUrl}"
-                                     TextWrapping="Wrap" />
-                        </StackPanel>
-                      </Border>
-                    </Grid>
+                  <StackPanel Spacing="{StaticResource Space.3}">
+                    <StackPanel Spacing="2">
+                      <TextBlock Classes="SectionTitle"
+                                 Text="接口设计" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="这里只保留接口说明，用于补充接口用途、前置条件和返回约定。" />
+                    </StackPanel>
 
-                    <Grid Grid.Row="1"
-                          ColumnDefinitions="1.7*,*"
-                          ColumnSpacing="{StaticResource Space.3}">
-                      <StackPanel Grid.Column="0"
-                                  Spacing="{StaticResource Space.2}">
-                        <TextBlock Classes="CaptionText"
-                                   Text="接口说明" />
-                        <TextBox Classes="SectionInput HttpDesignMultilineInput"
-                                 AcceptsReturn="True"
-                                 Text="{Binding ConfigTab.RequestDescription}"
-                                 TextWrapping="Wrap"
-                                 VerticalContentAlignment="Top"
-                                 Watermark="补充接口用途、前置条件和返回约定" />
-                      </StackPanel>
-
-                      <StackPanel Grid.Column="1"
-                                  Spacing="{StaticResource Space.2}">
-                        <TextBlock Classes="CaptionText"
-                                   Text="补充信息" />
-                        <TextBox Classes="SectionInput"
-                                 Text="{Binding CurrentInterfaceFolderPath}"
-                                 Watermark="接口目录，如 用户/资料" />
-                        <TextBox Classes="SectionInput"
-                                 Text="{Binding CurrentHttpCaseName}"
-                                 Watermark="默认用例名，如 成功" />
-                        <CheckBox IsChecked="{Binding ConfigTab.IgnoreSslErrors}"
-                                  Content="发送时忽略 SSL 证书校验" />
-                      </StackPanel>
-                    </Grid>
-                  </Grid>
+                    <StackPanel Spacing="{StaticResource Space.2}">
+                      <TextBlock Classes="CaptionText"
+                                 Text="接口说明" />
+                      <TextBox Classes="SectionInput HttpDesignMultilineInput"
+                               AcceptsReturn="True"
+                               Text="{Binding ConfigTab.RequestDescription}"
+                               TextWrapping="Wrap"
+                               VerticalContentAlignment="Top"
+                               Watermark="补充接口用途、前置条件和返回约定" />
+                    </StackPanel>
+                  </StackPanel>
                 </Border>
 
                 <Border Grid.Row="2"
