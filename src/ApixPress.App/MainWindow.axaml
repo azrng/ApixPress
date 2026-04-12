@@ -15,6 +15,7 @@
         Height="920"
         MinWidth="1280"
         MinHeight="800"
+        WindowState="Maximized"
         SystemDecorations="None"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome"
