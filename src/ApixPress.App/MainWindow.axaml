@@ -1140,7 +1140,7 @@
               </Grid>
 
               <Grid Grid.Row="2"
-                    RowDefinitions="Auto,*"
+                    RowDefinitions="4*,3*"
                     RowSpacing="{StaticResource Space.3}"
                     IsVisible="{Binding IsQuickRequestEditor}">
                 <Border Classes="PanelCard QuickRequestConfigCard"
