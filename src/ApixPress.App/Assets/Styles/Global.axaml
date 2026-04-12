@@ -1116,7 +1116,7 @@
   </Style>
 
   <Style Selector="ItemsControl.ProjectSidebarInlineTreeChildren">
-    <Setter Property="Margin" Value="18,4,0,0" />
+    <Setter Property="Margin" Value="18,0,0,0" />
   </Style>
 
   <Style Selector="ToggleButton.ProjectSidebarTreeExpanderToggle TextBlock.ProjectSidebarCatalogChevron">

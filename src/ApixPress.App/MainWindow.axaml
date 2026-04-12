@@ -23,7 +23,7 @@
   <Window.Resources>
     <DataTemplate x:Key="ProjectSidebarExplorerItemTemplate"
                   x:DataType="vm:ExplorerItemViewModel">
-      <StackPanel Spacing="2">
+      <StackPanel Spacing="0">
         <StackPanel Orientation="Horizontal"
                     Spacing="1">
           <ToggleButton x:Name="ExplorerExpandToggle"
@@ -50,7 +50,7 @@
                   IsHitTestVisible="{Binding IsClickable}"
                   Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
                   CommandParameter="{Binding}">
-            <StackPanel Spacing="2">
+            <StackPanel Spacing="1">
               <Grid ColumnDefinitions="Auto,Auto,*,Auto"
                     ColumnSpacing="2">
                 <TextBlock Grid.Column="0"
