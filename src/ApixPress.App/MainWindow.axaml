@@ -846,14 +846,6 @@
                       </ScrollViewer>
                     </Border>
 
-                    <StackPanel Grid.Column="1"
-                                Spacing="2">
-                      <TextBlock Classes="SectionTitle"
-                                 Text="{Binding CurrentEditorTitle}" />
-                      <TextBlock Classes="CaptionText"
-                                 Text="{Binding CurrentEditorDescription}" />
-                    </StackPanel>
-
                     <ComboBox Grid.Column="2"
                               Width="220"
                               Classes="SectionInput ProjectWorkspaceToolbarComboBox"
@@ -869,9 +861,6 @@
                     <StackPanel Grid.Column="3"
                                 Orientation="Horizontal"
                                 Spacing="{StaticResource Space.2}">
-                      <Button Classes="SecondaryButton ProjectWorkspaceToolbarButton"
-                              Content="新建页"
-                              Command="{Binding ReturnToInterfaceHomeCommand}" />
                       <Button Classes="SecondaryButton ProjectWorkspaceToolbarButton"
                               Content="环境设置"
                               Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
