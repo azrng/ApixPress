@@ -999,8 +999,12 @@
                     <StackPanel Orientation="Horizontal"
                                 Spacing="{StaticResource Space.1}">
                       <Button Classes="ProjectWorkspaceInnerTabAddButton"
-                              Content="+"
-                              Command="{Binding CreateWorkspaceTabCommand}" />
+                              Command="{Binding CreateWorkspaceTabCommand}">
+                        <TextBlock Text="+"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   TextAlignment="Center" />
+                      </Button>
                       <Button x:Name="EditorWorkspaceTabMenuButton"
                               Classes="ProjectWorkspaceInnerTabMoreButton"
                               Content="..."
