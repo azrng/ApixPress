@@ -1022,7 +1022,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             QuickRequestTreeItems.Add(new ExplorerItemViewModel
             {
                 Title = item.Name,
-                Subtitle = $"{item.SourceCase.RequestSnapshot.Method} {item.SourceCase.RequestSnapshot.Url}",
+                Subtitle = string.Empty,
                 NodeType = RequestEntryTypes.QuickRequest,
                 CanLoad = true,
                 SourceCase = item.SourceCase
