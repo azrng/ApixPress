@@ -259,8 +259,33 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         HeaderText = EntryType switch
         {
             WorkspaceEntryTypes.Landing => "新建...",
-            WorkspaceEntryTypes.HttpInterface => ResolveRequestName(),
+            WorkspaceEntryTypes.HttpInterface => ResolveHttpInterfaceTabHeader(),
+            WorkspaceEntryTypes.QuickRequest => ResolveQuickRequestTabHeader(),
             _ => ResolveRequestName()
         };
+    }
+
+    private string ResolveHttpInterfaceTabHeader()
+    {
+        if (!string.IsNullOrWhiteSpace(ConfigTab.RequestName))
+        {
+            return ConfigTab.RequestName.Trim();
+        }
+
+        return string.IsNullOrWhiteSpace(EditingInterfaceId) && string.IsNullOrWhiteSpace(EditingCaseId)
+            ? "新建 HTTP 接口"
+            : ResolveGeneratedRequestName();
+    }
+
+    private string ResolveQuickRequestTabHeader()
+    {
+        if (!string.IsNullOrWhiteSpace(ConfigTab.RequestName))
+        {
+            return ConfigTab.RequestName.Trim();
+        }
+
+        return string.IsNullOrWhiteSpace(EditingQuickRequestId)
+            ? "快捷请求"
+            : ResolveGeneratedRequestName();
     }
 }
