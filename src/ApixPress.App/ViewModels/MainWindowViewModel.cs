@@ -462,7 +462,19 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void LoadSavedRequest(ExplorerItemViewModel? item)
     {
-        if (ActiveProjectTab is null || item is null)
+        if (item is null)
+        {
+            return;
+        }
+
+        if (item.HasChildren && !item.CanLoad)
+        {
+            item.IsExpanded = !item.IsExpanded;
+            NotifyShellState();
+            return;
+        }
+
+        if (ActiveProjectTab is null)
         {
             return;
         }

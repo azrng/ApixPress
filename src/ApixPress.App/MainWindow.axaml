@@ -46,7 +46,7 @@
 
           <Button
                   Classes="WorkspaceTreeNodeButton"
-                  IsHitTestVisible="{Binding CanLoad}"
+                  IsHitTestVisible="{Binding IsClickable}"
                   Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
                   CommandParameter="{Binding}">
             <StackPanel Spacing="2">

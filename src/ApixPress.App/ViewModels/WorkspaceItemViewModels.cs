@@ -9,7 +9,11 @@ public partial class ExplorerItemViewModel : ViewModelBase
 {
     public ExplorerItemViewModel()
     {
-        Children.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasChildren));
+        Children.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HasChildren));
+            OnPropertyChanged(nameof(IsClickable));
+        };
     }
 
     [ObservableProperty]
@@ -32,6 +36,7 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public ObservableCollection<ExplorerItemViewModel> Children { get; } = [];
     public bool HasChildren => Children.Count > 0;
+    public bool IsClickable => CanLoad || HasChildren;
     public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
     public bool ShowMethodBadge => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase);
     public bool ShowLeadingGlyph => !ShowMethodBadge && !IsHttpCaseNode;
@@ -61,6 +66,16 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public RequestCaseDto? SourceCase { get; init; }
     public ApiEndpointDto? Endpoint { get; init; }
+
+    partial void OnCanLoadChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsClickable));
+    }
+
+    partial void OnIsExpandedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsExpanded));
+    }
 }
 
 public partial class RequestParameterItemViewModel : ViewModelBase
