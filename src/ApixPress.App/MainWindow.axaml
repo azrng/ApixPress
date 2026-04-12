@@ -617,19 +617,19 @@
                                          IsVisible="False" />
                             </Grid>
                           </ToggleButton>
-                          <Border Classes="ProjectSidebarCatalogBody"
+                          <Border Classes="ProjectSidebarCatalogBody QuickRequestCatalogBody"
                                   IsVisible="{Binding IsQuickRequestCatalogExpanded}">
-                            <StackPanel Classes="ProjectSidebarCatalogContent">
-                              <TreeView Classes="WorkspaceTreeView ProjectSidebarTree"
+                            <StackPanel Classes="ProjectSidebarCatalogContent QuickRequestCatalogContent">
+                              <TreeView Classes="WorkspaceTreeView ProjectSidebarTree QuickRequestSidebarTree"
                                         ItemsSource="{Binding QuickRequestTreeItems}">
                                 <TreeView.ItemTemplate>
                                   <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
                                                     ItemsSource="{Binding Children}">
-                                    <Button Classes="WorkspaceTreeNodeButton"
+                                    <Button Classes="WorkspaceTreeNodeButton QuickRequestTreeNodeButton"
                                             IsHitTestVisible="{Binding CanLoad}"
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
                                             CommandParameter="{Binding}">
-                                      <StackPanel Spacing="2">
+                                      <StackPanel Classes="QuickRequestTreeNodeContent">
                                         <Grid ColumnDefinitions="Auto,Auto,*,Auto"
                                               ColumnSpacing="{StaticResource Space.1}">
                                           <TextBlock Grid.Column="0"
@@ -663,7 +663,7 @@
                                   </TreeDataTemplate>
                                 </TreeView.ItemTemplate>
                               </TreeView>
-                              <Button Classes="ProjectSidebarGhostButton ProjectSidebarBottomCreateButton"
+                              <Button Classes="ProjectSidebarGhostButton ProjectSidebarBottomCreateButton QuickRequestBottomCreateButton"
                                       Content="+ 新建"
                                       Command="{Binding OpenQuickRequestWorkspaceCommand}" />
                             </StackPanel>
@@ -1217,7 +1217,8 @@
                           </u:SelectionList.ItemTemplate>
                         </u:SelectionList>
 
-                        <DockPanel IsVisible="{Binding ConfigTab.IsBodyModeFormData}">
+                        <DockPanel Classes="QuickRequestBodyFieldPanel"
+                                   IsVisible="{Binding ConfigTab.IsBodyModeFormData}">
                           <Border DockPanel.Dock="Top"
                                   Classes="ParameterHeader">
                             <Grid ColumnDefinitions="2*,3*,Auto">
@@ -1230,12 +1231,12 @@
                             </Grid>
                           </Border>
                           <Button DockPanel.Dock="Bottom"
-                                  Classes="AddButton"
+                                  Classes="AddButton QuickRequestBodyAddButton"
                                   HorizontalAlignment="Left"
-                                  Margin="0,8,0,0"
                                   Content="+ 添加字段"
                                   Command="{Binding ConfigTab.AddFormFieldCommand}" />
-                          <ScrollViewer>
+                          <ScrollViewer Classes="QuickRequestBodyFieldScroller"
+                                        VerticalScrollBarVisibility="Auto">
                             <ItemsControl ItemsSource="{Binding ConfigTab.FormFields}">
                               <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
