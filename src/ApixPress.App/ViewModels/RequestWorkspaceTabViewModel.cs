@@ -68,10 +68,10 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     public string EditorDescription => IsHttpInterfaceTab
         ? "HTTP 接口会自动使用当前环境的 BaseUrl，请在右侧输入相对路径。"
         : IsQuickRequestTab
-            ? "快捷请求不固定 BaseUrl，可直接输入完整地址或自由组合变量。"
+            ? "快捷请求不固定 BaseUrl，请输入完整的 http:// 或 https:// 地址。"
             : "从下方卡片中选择要创建的工作内容。";
     public string PrimaryActionText => IsHttpInterfaceTab ? "保存接口" : "保存";
-    public string UrlWatermark => IsHttpInterfaceTab ? "接口路径，如 /起始" : "输入完整地址或相对路径";
+    public string UrlWatermark => IsHttpInterfaceTab ? "接口路径，如 /起始" : "输入完整地址，如 https://api.example.com/users";
 
     public void ConfigureAsLanding()
     {

@@ -330,6 +330,13 @@ public partial class ProjectTabViewModel : ViewModelBase
             return;
         }
 
+        if (workspaceTab.IsQuickRequestTab && !HasAbsoluteHttpUrl(workspaceTab.RequestUrl))
+        {
+            StatusMessage = "快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。";
+            NotifyShellState();
+            return;
+        }
+
         IsBusy = true;
         var snapshot = workspaceTab.BuildSnapshot();
         var environment = BuildExecutionEnvironment();
@@ -363,6 +370,13 @@ public partial class ProjectTabViewModel : ViewModelBase
         if (workspaceTab.IsHttpInterfaceTab)
         {
             await SaveHttpInterfaceAsync(workspaceTab);
+            return;
+        }
+
+        if (!HasAbsoluteHttpUrl(workspaceTab.RequestUrl))
+        {
+            StatusMessage = "快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。";
+            NotifyShellState();
             return;
         }
 
@@ -657,6 +671,13 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     private async Task SaveQuickRequestAsync(RequestWorkspaceTabViewModel workspaceTab, string? requestNameOverride = null)
     {
+        if (!HasAbsoluteHttpUrl(workspaceTab.RequestUrl))
+        {
+            StatusMessage = "快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。";
+            NotifyShellState();
+            return;
+        }
+
         var requestName = string.IsNullOrWhiteSpace(requestNameOverride)
             ? workspaceTab.ResolveRequestName()
             : requestNameOverride.Trim();
@@ -962,6 +983,17 @@ public partial class ProjectTabViewModel : ViewModelBase
         return string.IsNullOrWhiteSpace(workspaceTab.HttpCaseName)
             ? "成功"
             : workspaceTab.HttpCaseName.Trim();
+    }
+
+    private static bool HasAbsoluteHttpUrl(string? value)
+    {
+        if (!Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        return string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string NormalizeFolderPath(string folderPath)

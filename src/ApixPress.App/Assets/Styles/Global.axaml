@@ -692,10 +692,10 @@
 
   <!-- Method Selector (ComboBox) -->
   <Style Selector="ComboBox.MethodSelector">
-    <Setter Property="Background" Value="{DynamicResource Brush.Status.Success.Background}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="Foreground" Value="White" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
     <Setter Property="Padding" Value="12,8" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="FontWeight" Value="SemiBold" />
@@ -1580,10 +1580,10 @@
   </Style>
 
   <Style Selector="ComboBox.HttpMethodSelector">
-    <Setter Property="Background" Value="{DynamicResource Brush.Status.Success.Background}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Success.Background}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Success.Text}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
     <Setter Property="Padding" Value="8,6" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="MinWidth" Value="76" />
