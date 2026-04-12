@@ -24,14 +24,17 @@ public partial class ProjectEnvironmentItemViewModel : ViewModelBase
     private int sortOrder;
 
     public string DisplayName => IsActive ? $"{Name}（当前）" : Name;
+    public string CompactDisplayName => Name;
 
     partial void OnNameChanged(string value)
     {
         OnPropertyChanged(nameof(DisplayName));
+        OnPropertyChanged(nameof(CompactDisplayName));
     }
 
     partial void OnIsActiveChanged(bool value)
     {
         OnPropertyChanged(nameof(DisplayName));
+        OnPropertyChanged(nameof(CompactDisplayName));
     }
 }

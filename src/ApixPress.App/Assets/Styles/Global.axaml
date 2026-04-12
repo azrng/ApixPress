@@ -1266,9 +1266,18 @@
   </Style>
 
   <Style Selector="ComboBox.ProjectWorkspaceToolbarComboBox">
-    <Setter Property="MinWidth" Value="220" />
+    <Setter Property="MinWidth" Value="156" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="MinHeight" Value="36" />
+  </Style>
+
+  <Style Selector="Button.ProjectWorkspaceToolbarIconButton">
+    <Setter Property="Width" Value="40" />
+    <Setter Property="Height" Value="36" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
   <Style Selector="ComboBox.ProjectSidebarEnvCombo">
