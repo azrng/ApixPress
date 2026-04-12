@@ -185,13 +185,8 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         return snapshot;
     }
 
-    public string ResolveRequestName()
+    public string ResolveGeneratedRequestName()
     {
-        if (!string.IsNullOrWhiteSpace(ConfigTab.RequestName))
-        {
-            return ConfigTab.RequestName.Trim();
-        }
-
         var target = RequestUrl.Trim();
         if (IsHttpInterfaceTab)
         {
@@ -203,6 +198,16 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         return string.IsNullOrWhiteSpace(target)
             ? "快捷请求"
             : $"{SelectedMethod} {target}";
+    }
+
+    public string ResolveRequestName()
+    {
+        if (!string.IsNullOrWhiteSpace(ConfigTab.RequestName))
+        {
+            return ConfigTab.RequestName.Trim();
+        }
+
+        return ResolveGeneratedRequestName();
     }
 
     private void OnConfigTabPropertyChanged(object? sender, PropertyChangedEventArgs e)

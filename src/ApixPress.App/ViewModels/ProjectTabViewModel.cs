@@ -152,15 +152,40 @@ public partial class ProjectTabViewModel : ViewModelBase
     public string CurrentHttpInterfaceBaseUrl => IsHttpInterfaceEditor ? EnvironmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty : string.Empty;
     public string CurrentHttpInterfaceName
     {
-        get => ActiveWorkspaceTab?.ConfigTab.RequestName ?? string.Empty;
+        get
+        {
+            if (ActiveWorkspaceTab is null)
+            {
+                return string.Empty;
+            }
+
+            var currentName = ActiveWorkspaceTab.ConfigTab.RequestName?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(currentName))
+            {
+                return "未命名接口";
+            }
+
+            return ActiveWorkspaceTab.IsHttpInterfaceTab
+                && string.Equals(currentName, ActiveWorkspaceTab.ResolveGeneratedRequestName(), StringComparison.Ordinal)
+                ? "未命名接口"
+                : currentName;
+        }
         set
         {
-            if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.ConfigTab.RequestName == value)
+            if (ActiveWorkspaceTab is null)
             {
                 return;
             }
 
-            ActiveWorkspaceTab.ConfigTab.RequestName = value;
+            var normalizedValue = string.Equals(value?.Trim(), "未命名接口", StringComparison.Ordinal)
+                ? string.Empty
+                : value?.Trim() ?? string.Empty;
+            if (ActiveWorkspaceTab.ConfigTab.RequestName == normalizedValue)
+            {
+                return;
+            }
+
+            ActiveWorkspaceTab.ConfigTab.RequestName = normalizedValue;
             NotifyWorkspaceEditorState();
         }
     }
