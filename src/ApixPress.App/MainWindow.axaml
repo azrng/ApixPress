@@ -909,7 +909,7 @@
                   RowDefinitions="Auto,Auto,*"
                   RowSpacing="{StaticResource Space.3}">
               <Border Classes="ProjectWorkspaceTopActionBar">
-                <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                <Grid ColumnDefinitions="Auto,*,Auto"
                       ColumnSpacing="{StaticResource Space.3}">
                   <Border Classes="ProjectWorkspaceEditorTabs">
                     <ScrollViewer HorizontalScrollBarVisibility="Hidden"
@@ -961,19 +961,10 @@
                     </ScrollViewer>
                   </Border>
 
-                  <StackPanel Grid.Column="1"
-                              Spacing="2"
-                              VerticalAlignment="Center"
-                              IsVisible="{Binding IsHttpInterfaceEditor}">
-                    <TextBlock Classes="SectionTitle"
-                               Text="{Binding CurrentEditorTitle}" />
-                    <TextBlock Classes="CaptionText"
-                               Text="{Binding CurrentEditorDescription}" />
-                  </StackPanel>
-
-                  <ComboBox Grid.Column="2"
+                  <ComboBox Grid.Column="1"
                             Width="220"
                             Classes="SectionInput ProjectWorkspaceToolbarComboBox"
+                            HorizontalAlignment="Right"
                             ItemsSource="{Binding EnvironmentPanel.Environments}"
                             SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}">
                     <ComboBox.ItemTemplate>
@@ -983,7 +974,7 @@
                     </ComboBox.ItemTemplate>
                   </ComboBox>
 
-                  <StackPanel Grid.Column="3"
+                  <StackPanel Grid.Column="2"
                               Orientation="Horizontal"
                               Spacing="{StaticResource Space.2}">
                     <Button Classes="SecondaryButton ProjectWorkspaceToolbarButton"
@@ -1019,38 +1010,70 @@
               </Grid>
 
               <Grid Grid.Row="1"
-                    ColumnDefinitions="*,Auto,Auto"
-                    ColumnSpacing="{StaticResource Space.2}"
+                    RowDefinitions="Auto,Auto"
+                    RowSpacing="{StaticResource Space.2}"
                     IsVisible="{Binding IsHttpInterfaceEditor}">
-                <Border Grid.Column="0"
-                        Classes="HttpRequestUrlShell">
-                  <Grid ColumnDefinitions="88,Auto,*"
-                        ColumnSpacing="{StaticResource Space.2}">
-                    <ComboBox Grid.Column="0"
-                              Classes="HttpMethodSelector"
-                              ItemsSource="{Binding HttpMethods}"
-                              SelectedItem="{Binding SelectedMethod}" />
-                    <Border Grid.Column="1"
-                            Classes="BaseUrlPrefixCard HttpBaseUrlPrefixCard">
-                      <TextBlock Classes="HttpBaseUrlPrefixText"
-                                 Text="{Binding CurrentEditorBaseUrlCaption}"
-                                 VerticalAlignment="Center"
-                                 TextTrimming="CharacterEllipsis" />
-                    </Border>
-                    <TextBox Grid.Column="2"
-                             Classes="HttpRequestPathInput"
-                             Watermark="{Binding CurrentEditorUrlWatermark}"
-                             Text="{Binding RequestUrl}" />
-                  </Grid>
-                </Border>
-                <Button Grid.Column="1"
-                        Classes="HttpSendButton"
-                        Content="发送"
-                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendRequestCommand}" />
-                <Button Grid.Column="2"
-                        Classes="HttpSaveButton"
-                        Content="保存"
-                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveCaseCommand}" />
+                <Grid ColumnDefinitions="Auto,*"
+                      ColumnSpacing="{StaticResource Space.3}">
+                  <Border Grid.Column="0"
+                          Classes="HttpEditorModeBar">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="{StaticResource Space.1}">
+                      <ToggleButton Classes="HttpEditorModeButton"
+                                    Command="{Binding ShowHttpDebugEditorModeCommand}"
+                                    Content="调试"
+                                    IsChecked="{Binding IsHttpDebugEditorMode, Mode=OneWay}" />
+                      <ToggleButton Classes="HttpEditorModeButton"
+                                    Command="{Binding ShowHttpDesignEditorModeCommand}"
+                                    Content="设计"
+                                    IsChecked="{Binding IsHttpDesignEditorMode, Mode=OneWay}" />
+                      <ToggleButton Classes="HttpEditorModeButton"
+                                    Command="{Binding ShowHttpDocumentPreviewModeCommand}"
+                                    Content="文档预览"
+                                    IsChecked="{Binding IsHttpDocumentPreviewMode, Mode=OneWay}" />
+                    </StackPanel>
+                  </Border>
+
+                  <TextBox Grid.Column="1"
+                           Classes="SectionInput HttpInterfaceNameInput"
+                           HorizontalAlignment="Stretch"
+                           Watermark="未命名接口"
+                           Text="{Binding CurrentHttpInterfaceName}" />
+                </Grid>
+
+                <Grid Grid.Row="1"
+                      ColumnDefinitions="*,Auto,Auto"
+                      ColumnSpacing="{StaticResource Space.2}">
+                  <Border Grid.Column="0"
+                          Classes="HttpRequestUrlShell">
+                    <Grid ColumnDefinitions="88,Auto,*"
+                          ColumnSpacing="{StaticResource Space.2}">
+                      <ComboBox Grid.Column="0"
+                                Classes="HttpMethodSelector"
+                                ItemsSource="{Binding HttpMethods}"
+                                SelectedItem="{Binding SelectedMethod}" />
+                      <Border Grid.Column="1"
+                              Classes="BaseUrlPrefixCard HttpBaseUrlPrefixCard">
+                        <TextBlock Classes="HttpBaseUrlPrefixText"
+                                   Text="{Binding CurrentEditorBaseUrlCaption}"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis" />
+                      </Border>
+                      <TextBox Grid.Column="2"
+                               Classes="HttpRequestPathInput"
+                               Watermark="{Binding CurrentEditorUrlWatermark}"
+                               Text="{Binding RequestUrl}" />
+                    </Grid>
+                  </Border>
+                  <Button Grid.Column="1"
+                          Classes="HttpSendButton"
+                          Content="发送"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendRequestCommand}" />
+                  <Button Grid.Column="2"
+                          Classes="HttpSaveButton"
+                          Content="保存"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveCaseCommand}" />
+                </Grid>
               </Grid>
 
               <Grid Grid.Row="2"
@@ -1349,10 +1372,85 @@
               </Grid>
 
               <Grid Grid.Row="2"
-                    RowDefinitions="3*,2*"
-                    RowSpacing="{StaticResource Space.2}"
-                    IsVisible="{Binding IsHttpInterfaceEditor}">
-                <Border Grid.Row="1"
+                    RowDefinitions="Auto,3*,2*"
+                    RowSpacing="{StaticResource Space.3}"
+                    IsVisible="{Binding ShowHttpWorkbenchContent}">
+                <Border Grid.Row="0"
+                        Classes="PanelCard HttpDesignMetaCard"
+                        IsVisible="{Binding IsHttpDesignEditorMode}">
+                  <Grid RowDefinitions="Auto,Auto"
+                        RowSpacing="{StaticResource Space.3}">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="{StaticResource Space.3}">
+                      <StackPanel Spacing="2">
+                        <TextBlock Classes="SectionTitle"
+                                   Text="接口设计" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="补充接口说明、负责人和标签后，可直接切换到文档预览查看展示效果。" />
+                      </StackPanel>
+                      <Border Grid.Column="1"
+                              Classes="HttpDesignSummaryCard">
+                        <StackPanel Spacing="2">
+                          <TextBlock Classes="CaptionText"
+                                     Text="当前摘要" />
+                          <TextBlock FontWeight="SemiBold"
+                                     Text="{Binding CurrentHttpInterfaceDisplayName}" />
+                          <TextBlock Classes="CaptionText"
+                                     Text="{Binding SelectedMethod}" />
+                          <TextBlock Classes="CaptionText"
+                                     Text="{Binding CurrentHttpDocumentUrl}"
+                                     TextWrapping="Wrap" />
+                        </StackPanel>
+                      </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="1"
+                          ColumnDefinitions="1.5*,*,*"
+                          ColumnSpacing="{StaticResource Space.3}">
+                      <StackPanel Grid.Column="0"
+                                  Spacing="{StaticResource Space.2}">
+                        <TextBlock Classes="CaptionText"
+                                   Text="接口说明" />
+                        <TextBox Classes="SectionInput HttpDesignMultilineInput"
+                                 AcceptsReturn="True"
+                                 Text="{Binding ConfigTab.RequestDescription}"
+                                 TextWrapping="Wrap"
+                                 VerticalContentAlignment="Top"
+                                 Watermark="补充接口用途、前置条件和返回约定" />
+                      </StackPanel>
+
+                      <StackPanel Grid.Column="1"
+                                  Spacing="{StaticResource Space.2}">
+                        <TextBlock Classes="CaptionText"
+                                   Text="负责人" />
+                        <TextBox Classes="SectionInput"
+                                 Text="{Binding CurrentHttpDesignOwner}"
+                                 Watermark="如 网关服务组" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="标签" />
+                        <TextBox Classes="SectionInput"
+                                 Text="{Binding CurrentHttpDesignTags}"
+                                 Watermark="如 用户中心, 登录" />
+                      </StackPanel>
+
+                      <StackPanel Grid.Column="2"
+                                  Spacing="{StaticResource Space.2}">
+                        <TextBlock Classes="CaptionText"
+                                   Text="补充信息" />
+                        <TextBox Classes="SectionInput"
+                                 Text="{Binding CurrentInterfaceFolderPath}"
+                                 Watermark="接口目录，如 用户/资料" />
+                        <TextBox Classes="SectionInput"
+                                 Text="{Binding CurrentHttpCaseName}"
+                                 Watermark="默认用例名，如 成功" />
+                        <CheckBox IsChecked="{Binding ConfigTab.IgnoreSslErrors}"
+                                  Content="发送时忽略 SSL 证书校验" />
+                      </StackPanel>
+                    </Grid>
+                  </Grid>
+                </Border>
+
+                <Border Grid.Row="2"
                         Classes="PanelCard HttpResponseCard">
                   <DockPanel>
                     <Grid DockPanel.Dock="Top"
@@ -1429,7 +1527,7 @@
                   </DockPanel>
                 </Border>
 
-                <Border Grid.Row="0"
+                <Border Grid.Row="1"
                         Classes="PanelCard ProjectWorkspaceSettingsCard"
                         Padding="0">
                   <Grid RowDefinitions="*">
@@ -1731,6 +1829,169 @@
                   </Grid>
                 </Border>
               </Grid>
+
+              <ScrollViewer Grid.Row="2"
+                            HorizontalScrollBarVisibility="Disabled"
+                            IsVisible="{Binding ShowHttpDocumentPreviewContent}">
+                <StackPanel Spacing="{StaticResource Space.4}">
+                  <Border Classes="PanelCard HttpDocumentHeroCard">
+                    <StackPanel Spacing="{StaticResource Space.3}">
+                      <StackPanel Orientation="Horizontal"
+                                  Spacing="{StaticResource Space.2}">
+                        <Border Classes="HttpDocumentMethodBadge">
+                          <TextBlock Text="{Binding SelectedMethod}" />
+                        </Border>
+                        <Border Classes="HttpDocumentStatusBadge">
+                          <TextBlock Text="{Binding CurrentResponseValidationResultText}" />
+                        </Border>
+                      </StackPanel>
+
+                      <StackPanel Spacing="4">
+                        <TextBlock Classes="PageTitle"
+                                   Text="{Binding CurrentHttpInterfaceDisplayName}" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="{Binding ConfigTab.RequestDescription}"
+                                   TextWrapping="Wrap" />
+                      </StackPanel>
+
+                      <Border Classes="HttpDocumentUrlCard">
+                        <StackPanel Spacing="4">
+                          <TextBlock Classes="CaptionText"
+                                     Text="请求地址" />
+                          <TextBlock Text="{Binding CurrentHttpDocumentUrl}"
+                                     TextWrapping="Wrap" />
+                        </StackPanel>
+                      </Border>
+                    </StackPanel>
+                  </Border>
+
+                  <Grid ColumnDefinitions="1.3*,*"
+                        ColumnSpacing="{StaticResource Space.3}">
+                    <StackPanel Spacing="{StaticResource Space.3}">
+                      <Border Classes="PanelCard HttpDocumentPreviewCard">
+                        <StackPanel Spacing="{StaticResource Space.3}">
+                          <TextBlock Classes="SectionTitle"
+                                     Text="请求概览" />
+                          <Grid ColumnDefinitions="Auto,*"
+                                ColumnSpacing="{StaticResource Space.3}"
+                                RowDefinitions="Auto,Auto,Auto,Auto"
+                                RowSpacing="{StaticResource Space.2}">
+                            <TextBlock Grid.Row="0"
+                                       Classes="CaptionText"
+                                       Text="接口目录" />
+                            <TextBlock Grid.Row="0"
+                                       Grid.Column="1"
+                                       Text="{Binding CurrentInterfaceFolderPath}" />
+                            <TextBlock Grid.Row="1"
+                                       Classes="CaptionText"
+                                       Text="负责人" />
+                            <TextBlock Grid.Row="1"
+                                       Grid.Column="1"
+                                       Text="{Binding CurrentHttpDesignOwner}" />
+                            <TextBlock Grid.Row="2"
+                                       Classes="CaptionText"
+                                       Text="标签" />
+                            <TextBlock Grid.Row="2"
+                                       Grid.Column="1"
+                                       Text="{Binding CurrentHttpDesignTags}" />
+                            <TextBlock Grid.Row="3"
+                                       Classes="CaptionText"
+                                       Text="Body 模式" />
+                            <TextBlock Grid.Row="3"
+                                       Grid.Column="1"
+                                       Text="{Binding CurrentHttpDocumentBodyModeText}" />
+                          </Grid>
+
+                          <TextBlock Classes="CaptionText"
+                                     IsVisible="{Binding ShowHttpDocumentRequestEmpty}"
+                                     Text="当前还没有补充参数、Header 或请求体内容。" />
+                        </StackPanel>
+                      </Border>
+
+                      <Border Classes="PanelCard HttpDocumentPreviewCard"
+                              IsVisible="{Binding HasHttpDocumentParameters}">
+                        <StackPanel Spacing="{StaticResource Space.3}">
+                          <TextBlock Classes="SectionTitle"
+                                     Text="Query 参数" />
+                          <ItemsControl ItemsSource="{Binding ConfigTab.QueryParameters}">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
+                                <Border Classes="HttpDocumentKeyValueRow">
+                                  <Grid ColumnDefinitions="*,*"
+                                        ColumnSpacing="{StaticResource Space.3}">
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Name}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="CaptionText"
+                                               Text="{Binding Value}"
+                                               TextWrapping="Wrap" />
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                        </StackPanel>
+                      </Border>
+
+                      <Border Classes="PanelCard HttpDocumentPreviewCard"
+                              IsVisible="{Binding HasHttpDocumentHeaders}">
+                        <StackPanel Spacing="{StaticResource Space.3}">
+                          <TextBlock Classes="SectionTitle"
+                                     Text="Headers" />
+                          <ItemsControl ItemsSource="{Binding ConfigTab.Headers}">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
+                                <Border Classes="HttpDocumentKeyValueRow">
+                                  <Grid ColumnDefinitions="*,*"
+                                        ColumnSpacing="{StaticResource Space.3}">
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Name}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="CaptionText"
+                                               Text="{Binding Value}"
+                                               TextWrapping="Wrap" />
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                        </StackPanel>
+                      </Border>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1"
+                                Spacing="{StaticResource Space.3}">
+                      <Border Classes="PanelCard HttpDocumentPreviewCard">
+                        <StackPanel Spacing="{StaticResource Space.3}">
+                          <TextBlock Classes="SectionTitle"
+                                     Text="响应示例" />
+                          <TextBlock Classes="CaptionText"
+                                     Text="{Binding CurrentHttpDocumentResponseSummary}" />
+                          <TextBox Classes="HttpDocumentReadonlyCode"
+                                   AcceptsReturn="True"
+                                   IsReadOnly="True"
+                                   Text="{Binding CurrentHttpDocumentBodyPreview}"
+                                   TextWrapping="Wrap"
+                                   VerticalContentAlignment="Top" />
+                        </StackPanel>
+                      </Border>
+
+                      <Border Classes="PanelCard HttpDocumentPreviewCard">
+                        <StackPanel Spacing="{StaticResource Space.3}">
+                          <TextBlock Classes="SectionTitle"
+                                     Text="请求示例" />
+                          <TextBox Classes="HttpDocumentReadonlyCode"
+                                   AcceptsReturn="True"
+                                   IsReadOnly="True"
+                                   Text="{Binding CurrentHttpDocumentCurlSnippet}"
+                                   TextWrapping="Wrap"
+                                   VerticalContentAlignment="Top" />
+                        </StackPanel>
+                      </Border>
+                    </StackPanel>
+                  </Grid>
+                </StackPanel>
+              </ScrollViewer>
 
             <Border Grid.Column="2"
                     Classes="PanelCard ProjectWorkspaceCanvas"

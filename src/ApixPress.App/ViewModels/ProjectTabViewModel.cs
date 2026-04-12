@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
+using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Models.DTOs;
@@ -149,10 +150,75 @@ public partial class ProjectTabViewModel : ViewModelBase
     public bool ShowEditorBaseUrlPrefix => IsHttpInterfaceEditor;
     public string CurrentEditorBaseUrlPrefix => IsHttpInterfaceEditor ? EnvironmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty : string.Empty;
     public string CurrentHttpInterfaceBaseUrl => IsHttpInterfaceEditor ? EnvironmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty : string.Empty;
+    public string CurrentHttpInterfaceName
+    {
+        get => ActiveWorkspaceTab?.ConfigTab.RequestName ?? string.Empty;
+        set
+        {
+            if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.ConfigTab.RequestName == value)
+            {
+                return;
+            }
+
+            ActiveWorkspaceTab.ConfigTab.RequestName = value;
+            NotifyWorkspaceEditorState();
+        }
+    }
+    public string CurrentHttpInterfaceDisplayName => string.IsNullOrWhiteSpace(CurrentHttpInterfaceName)
+        ? "未命名接口"
+        : CurrentHttpInterfaceName.Trim();
+    public string CurrentHttpDesignOwner
+    {
+        get => ActiveWorkspaceTab?.DesignOwner ?? string.Empty;
+        set
+        {
+            if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.DesignOwner == value)
+            {
+                return;
+            }
+
+            ActiveWorkspaceTab.DesignOwner = value;
+            NotifyWorkspaceEditorState();
+        }
+    }
+    public string CurrentHttpDesignTags
+    {
+        get => ActiveWorkspaceTab?.DesignTags ?? string.Empty;
+        set
+        {
+            if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.DesignTags == value)
+            {
+                return;
+            }
+
+            ActiveWorkspaceTab.DesignTags = value;
+            NotifyWorkspaceEditorState();
+        }
+    }
+    public bool IsHttpDebugEditorMode => ActiveWorkspaceTab?.IsHttpDebugView ?? false;
+    public bool IsHttpDesignEditorMode => ActiveWorkspaceTab?.IsHttpDesignView ?? false;
+    public bool IsHttpDocumentPreviewMode => ActiveWorkspaceTab?.IsHttpDocumentPreviewView ?? false;
+    public bool ShowHttpWorkbenchContent => IsHttpInterfaceEditor && !IsHttpDocumentPreviewMode;
+    public bool ShowHttpDocumentPreviewContent => IsHttpInterfaceEditor && IsHttpDocumentPreviewMode;
     public bool ShowSaveHttpCaseAction => IsHttpInterfaceEditor;
     public string CurrentEditorBaseUrlCaption => IsHttpInterfaceEditor
         ? (string.IsNullOrWhiteSpace(EnvironmentPanel.SelectedEnvironment?.BaseUrl) ? "当前环境未配置 BaseUrl" : EnvironmentPanel.SelectedEnvironment.BaseUrl)
         : "快捷请求不固定 BaseUrl";
+    public bool HasHttpDocumentParameters => ConfigTab.QueryParameters.Count > 0;
+    public bool HasHttpDocumentHeaders => ConfigTab.Headers.Count > 0;
+    public bool HasHttpDocumentRequestDetails => HasHttpDocumentParameters || HasHttpDocumentHeaders || ConfigTab.HasBodyContent;
+    public bool ShowHttpDocumentRequestEmpty => !HasHttpDocumentRequestDetails;
+    public string CurrentHttpDocumentBodyModeText => ConfigTab.HasBodyContent
+        ? (ConfigTab.SelectedBodyModeOption?.DisplayName ?? ConfigTab.SelectedBodyMode)
+        : "无";
+    public string CurrentHttpDocumentUrl => BuildHttpDocumentUrl();
+    public string CurrentHttpDocumentResponseSummary => ResponseSection.HasResponse
+        ? CurrentResponseValidationResultText
+        : "等待调试后生成响应示例";
+    public string CurrentHttpDocumentBodyPreview => ResponseSection.HasResponse && !string.IsNullOrWhiteSpace(ResponseSection.BodyText)
+        ? ResponseSection.BodyText
+        : "{ }";
+    public string CurrentHttpDocumentCurlSnippet => BuildHttpDocumentCurlSnippet();
     public string CurrentResponseValidationResultText
     {
         get
@@ -546,6 +612,42 @@ public partial class ProjectTabViewModel : ViewModelBase
         SelectedWorkspaceSection = WorkspaceSections.RequestHistory;
         StatusMessage = $"已加载历史请求：{item.Method} {item.Url}";
         NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ShowHttpDebugEditorMode()
+    {
+        if (ActiveWorkspaceTab is null || !ActiveWorkspaceTab.IsHttpInterfaceTab)
+        {
+            return;
+        }
+
+        ActiveWorkspaceTab.HttpEditorViewIndex = 0;
+        NotifyWorkspaceEditorState();
+    }
+
+    [RelayCommand]
+    private void ShowHttpDesignEditorMode()
+    {
+        if (ActiveWorkspaceTab is null || !ActiveWorkspaceTab.IsHttpInterfaceTab)
+        {
+            return;
+        }
+
+        ActiveWorkspaceTab.HttpEditorViewIndex = 1;
+        NotifyWorkspaceEditorState();
+    }
+
+    [RelayCommand]
+    private void ShowHttpDocumentPreviewMode()
+    {
+        if (ActiveWorkspaceTab is null || !ActiveWorkspaceTab.IsHttpInterfaceTab)
+        {
+            return;
+        }
+
+        ActiveWorkspaceTab.HttpEditorViewIndex = 2;
+        NotifyWorkspaceEditorState();
     }
 
     [RelayCommand]
@@ -948,11 +1050,19 @@ public partial class ProjectTabViewModel : ViewModelBase
     private void AttachWorkspaceTab(RequestWorkspaceTabViewModel tab)
     {
         tab.PropertyChanged += OnWorkspaceTabPropertyChanged;
+        tab.ConfigTab.PropertyChanged += OnWorkspaceConfigPropertyChanged;
+        tab.ConfigTab.QueryParameters.CollectionChanged += OnWorkspaceConfigCollectionChanged;
+        tab.ConfigTab.Headers.CollectionChanged += OnWorkspaceConfigCollectionChanged;
+        tab.ConfigTab.FormFields.CollectionChanged += OnWorkspaceConfigCollectionChanged;
     }
 
     private void DetachWorkspaceTab(RequestWorkspaceTabViewModel tab)
     {
         tab.PropertyChanged -= OnWorkspaceTabPropertyChanged;
+        tab.ConfigTab.PropertyChanged -= OnWorkspaceConfigPropertyChanged;
+        tab.ConfigTab.QueryParameters.CollectionChanged -= OnWorkspaceConfigCollectionChanged;
+        tab.ConfigTab.Headers.CollectionChanged -= OnWorkspaceConfigCollectionChanged;
+        tab.ConfigTab.FormFields.CollectionChanged -= OnWorkspaceConfigCollectionChanged;
     }
 
     private void ActivateWorkspaceTabCore(RequestWorkspaceTabViewModel tab)
@@ -994,6 +1104,97 @@ public partial class ProjectTabViewModel : ViewModelBase
 
         return string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
             || string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string BuildHttpDocumentUrl()
+    {
+        var path = RequestUrl.Trim();
+        string resolvedUrl;
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            resolvedUrl = string.IsNullOrWhiteSpace(CurrentHttpInterfaceBaseUrl)
+                ? "未配置 BaseUrl / 未填写路径"
+                : $"{CurrentHttpInterfaceBaseUrl.TrimEnd('/')}/";
+        }
+        else if (Uri.TryCreate(path, UriKind.Absolute, out _))
+        {
+            resolvedUrl = path;
+        }
+        else if (string.IsNullOrWhiteSpace(CurrentHttpInterfaceBaseUrl))
+        {
+            resolvedUrl = $"未配置 BaseUrl {path}";
+        }
+        else
+        {
+            resolvedUrl = $"{CurrentHttpInterfaceBaseUrl.TrimEnd('/')}/{path.TrimStart('/')}";
+        }
+
+        var queryString = string.Join("&", ConfigTab.QueryParameters
+            .Where(item => !string.IsNullOrWhiteSpace(item.Name))
+            .Select(item =>
+                $"{Uri.EscapeDataString(item.Name.Trim())}={Uri.EscapeDataString((item.Value ?? string.Empty).Trim())}"));
+
+        if (string.IsNullOrWhiteSpace(queryString))
+        {
+            return resolvedUrl;
+        }
+
+        return resolvedUrl.Contains('?', StringComparison.Ordinal)
+            ? $"{resolvedUrl}&{queryString}"
+            : $"{resolvedUrl}?{queryString}";
+    }
+
+    private string BuildHttpDocumentCurlSnippet()
+    {
+        var url = BuildHttpDocumentUrl();
+        var resolvedUrl = url.StartsWith("未配置", StringComparison.OrdinalIgnoreCase)
+            ? RequestUrl.Trim()
+            : url;
+
+        var builder = new StringBuilder();
+        builder.Append("curl --request ")
+            .Append(SelectedMethod)
+            .Append(" \"")
+            .Append(EscapeCurlValue(resolvedUrl))
+            .Append('"');
+
+        foreach (var header in ConfigTab.Headers.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
+        {
+            builder.Append(" \\\n  --header \"")
+                .Append(EscapeCurlValue(header.Name.Trim()))
+                .Append(": ")
+                .Append(EscapeCurlValue((header.Value ?? string.Empty).Trim()))
+                .Append('"');
+        }
+
+        var bodyContent = ResolveHttpDocumentBodyContent();
+        if (!string.IsNullOrWhiteSpace(bodyContent))
+        {
+            builder.Append(" \\\n  --data-raw \"")
+                .Append(EscapeCurlValue(bodyContent))
+                .Append('"');
+        }
+
+        return builder.ToString();
+    }
+
+    private string ResolveHttpDocumentBodyContent()
+    {
+        if (ConfigTab.SelectedBodyMode is BodyModes.FormData or BodyModes.FormUrlEncoded)
+        {
+            return string.Join("&", ConfigTab.FormFields
+                .Where(item => !string.IsNullOrWhiteSpace(item.Name))
+                .Select(item =>
+                    $"{Uri.EscapeDataString(item.Name.Trim())}={Uri.EscapeDataString((item.Value ?? string.Empty).Trim())}"));
+        }
+
+        return ConfigTab.HasBodyContent ? ConfigTab.RequestBody.Trim() : string.Empty;
+    }
+
+    private static string EscapeCurlValue(string value)
+    {
+        return value.Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal);
     }
 
     private static string NormalizeFolderPath(string folderPath)
@@ -1048,7 +1249,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         StatusMessage = environment is null
             ? "当前项目尚未配置环境。"
             : $"当前环境已切换为：{environment.Name}";
-        NotifyShellState();
+        NotifyWorkspaceEditorState();
     }
 
     private void OnWorkspaceTabsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -1093,6 +1294,31 @@ public partial class ProjectTabViewModel : ViewModelBase
         }
     }
 
+    private void OnWorkspaceConfigPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        var tab = WorkspaceTabs.FirstOrDefault(item => ReferenceEquals(item.ConfigTab, sender));
+        if (tab is null || !ReferenceEquals(tab, ActiveWorkspaceTab))
+        {
+            return;
+        }
+
+        NotifyWorkspaceEditorState();
+    }
+
+    private void OnWorkspaceConfigCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        var tab = WorkspaceTabs.FirstOrDefault(item =>
+            ReferenceEquals(item.ConfigTab.QueryParameters, sender)
+            || ReferenceEquals(item.ConfigTab.Headers, sender)
+            || ReferenceEquals(item.ConfigTab.FormFields, sender));
+        if (tab is null || !ReferenceEquals(tab, ActiveWorkspaceTab))
+        {
+            return;
+        }
+
+        NotifyWorkspaceEditorState();
+    }
+
     private void NotifyWorkspaceEditorState()
     {
         OnPropertyChanged(nameof(ConfigTab));
@@ -1101,6 +1327,24 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(RequestUrl));
         OnPropertyChanged(nameof(CurrentInterfaceFolderPath));
         OnPropertyChanged(nameof(CurrentHttpCaseName));
+        OnPropertyChanged(nameof(CurrentHttpInterfaceName));
+        OnPropertyChanged(nameof(CurrentHttpInterfaceDisplayName));
+        OnPropertyChanged(nameof(CurrentHttpDesignOwner));
+        OnPropertyChanged(nameof(CurrentHttpDesignTags));
+        OnPropertyChanged(nameof(IsHttpDebugEditorMode));
+        OnPropertyChanged(nameof(IsHttpDesignEditorMode));
+        OnPropertyChanged(nameof(IsHttpDocumentPreviewMode));
+        OnPropertyChanged(nameof(ShowHttpWorkbenchContent));
+        OnPropertyChanged(nameof(ShowHttpDocumentPreviewContent));
+        OnPropertyChanged(nameof(HasHttpDocumentParameters));
+        OnPropertyChanged(nameof(HasHttpDocumentHeaders));
+        OnPropertyChanged(nameof(HasHttpDocumentRequestDetails));
+        OnPropertyChanged(nameof(ShowHttpDocumentRequestEmpty));
+        OnPropertyChanged(nameof(CurrentHttpDocumentBodyModeText));
+        OnPropertyChanged(nameof(CurrentHttpDocumentUrl));
+        OnPropertyChanged(nameof(CurrentHttpDocumentResponseSummary));
+        OnPropertyChanged(nameof(CurrentHttpDocumentBodyPreview));
+        OnPropertyChanged(nameof(CurrentHttpDocumentCurlSnippet));
         NotifyShellState();
     }
 
@@ -1131,13 +1375,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             IsQuickRequestSaveDialogOpen = false;
         }
 
-        OnPropertyChanged(nameof(ConfigTab));
-        OnPropertyChanged(nameof(ResponseSection));
-        OnPropertyChanged(nameof(SelectedMethod));
-        OnPropertyChanged(nameof(RequestUrl));
-        OnPropertyChanged(nameof(CurrentInterfaceFolderPath));
-        OnPropertyChanged(nameof(CurrentHttpCaseName));
-        NotifyShellState();
+        NotifyWorkspaceEditorState();
     }
 
     private void NotifyShellState()

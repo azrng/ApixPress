@@ -54,6 +54,15 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     private string editingCaseId = string.Empty;
 
     [ObservableProperty]
+    private int httpEditorViewIndex;
+
+    [ObservableProperty]
+    private string designOwner = string.Empty;
+
+    [ObservableProperty]
+    private string designTags = string.Empty;
+
+    [ObservableProperty]
     private bool isActive;
 
     [ObservableProperty]
@@ -62,6 +71,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     public bool IsLandingTab => EntryType == WorkspaceEntryTypes.Landing;
     public bool IsQuickRequestTab => EntryType == WorkspaceEntryTypes.QuickRequest;
     public bool IsHttpInterfaceTab => EntryType == WorkspaceEntryTypes.HttpInterface;
+    public bool IsHttpDebugView => IsHttpInterfaceTab && HttpEditorViewIndex == 0;
+    public bool IsHttpDesignView => IsHttpInterfaceTab && HttpEditorViewIndex == 1;
+    public bool IsHttpDocumentPreviewView => IsHttpInterfaceTab && HttpEditorViewIndex == 2;
     public bool ShowMethodBadge => IsHttpInterfaceTab;
     public string MethodBadgeText => SelectedMethod;
     public string EditorTitle => IsHttpInterfaceTab ? "HTTP 接口" : IsQuickRequestTab ? "快捷请求" : "新建...";
@@ -83,6 +95,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         EditingQuickRequestId = string.Empty;
         EditingInterfaceId = string.Empty;
         EditingCaseId = string.Empty;
+        HttpEditorViewIndex = 0;
+        DesignOwner = string.Empty;
+        DesignTags = string.Empty;
         ConfigTab.Reset();
         ResponseSection.Reset();
         UpdateTabHeader();
@@ -98,6 +113,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         EditingQuickRequestId = string.Empty;
         EditingInterfaceId = string.Empty;
         EditingCaseId = string.Empty;
+        HttpEditorViewIndex = 0;
+        DesignOwner = string.Empty;
+        DesignTags = string.Empty;
         ConfigTab.Reset();
         ResponseSection.Reset();
         UpdateTabHeader();
@@ -113,6 +131,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         EditingQuickRequestId = string.Empty;
         EditingInterfaceId = string.Empty;
         EditingCaseId = string.Empty;
+        HttpEditorViewIndex = 0;
+        DesignOwner = string.Empty;
+        DesignTags = string.Empty;
         ConfigTab.Reset();
         ResponseSection.Reset();
         UpdateTabHeader();
@@ -210,6 +231,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsLandingTab));
         OnPropertyChanged(nameof(IsQuickRequestTab));
         OnPropertyChanged(nameof(IsHttpInterfaceTab));
+        OnPropertyChanged(nameof(IsHttpDebugView));
+        OnPropertyChanged(nameof(IsHttpDesignView));
+        OnPropertyChanged(nameof(IsHttpDocumentPreviewView));
         OnPropertyChanged(nameof(ShowMethodBadge));
         OnPropertyChanged(nameof(MethodBadgeText));
         OnPropertyChanged(nameof(EditorTitle));
@@ -228,6 +252,13 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     partial void OnRequestUrlChanged(string value)
     {
         UpdateTabHeader();
+    }
+
+    partial void OnHttpEditorViewIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(IsHttpDebugView));
+        OnPropertyChanged(nameof(IsHttpDesignView));
+        OnPropertyChanged(nameof(IsHttpDocumentPreviewView));
     }
 
     private void UpdateTabHeader()
