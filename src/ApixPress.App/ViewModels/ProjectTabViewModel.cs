@@ -103,6 +103,9 @@ public partial class ProjectTabViewModel : ViewModelBase
     public ObservableCollection<ExplorerItemViewModel> QuickRequestTreeItems { get; } = [];
     public ObservableCollection<ProjectWorkspaceNavItemViewModel> WorkspaceNavigationItems { get; } = [];
     public IReadOnlyList<ExplorerItemViewModel> InterfaceCatalogItems => InterfaceTreeItems.FirstOrDefault()?.Children ?? [];
+    public IReadOnlyList<RequestWorkspaceTabViewModel> VisibleWorkspaceTabs => WorkspaceTabs
+        .Where(item => !item.IsLandingTab)
+        .ToList();
     public ObservableCollection<RequestCaseItemViewModel> SavedRequests => UseCasesPanel.RequestCases;
     public ObservableCollection<RequestHistoryItemViewModel> RequestHistory => HistoryPanel.HistoryItems;
 
@@ -718,9 +721,9 @@ public partial class ProjectTabViewModel : ViewModelBase
     {
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
         var tab = CreateWorkspaceTab(activate: true);
-        tab.ConfigureAsHttpInterface();
+        tab.ConfigureAsLanding();
         IsWorkspaceTabMenuOpen = false;
-        StatusMessage = "已新建一个 HTTP 接口标签。";
+        StatusMessage = "已新建一个工作标签。";
         NotifyShellState();
     }
 
@@ -1088,7 +1091,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         if (WorkspaceTabs.Count == 0)
         {
             var tab = CreateWorkspaceTab(activate: false);
-            tab.ConfigureAsHttpInterface();
+            tab.ConfigureAsLanding();
             ActivateWorkspaceTabCore(tab);
             return;
         }
@@ -1335,6 +1338,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         }
 
         OnPropertyChanged(nameof(WorkspaceTabs));
+        OnPropertyChanged(nameof(VisibleWorkspaceTabs));
         NotifyShellState();
     }
 
@@ -1349,6 +1353,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         {
             if (e.PropertyName == nameof(RequestWorkspaceTabViewModel.HeaderText))
             {
+                OnPropertyChanged(nameof(VisibleWorkspaceTabs));
                 NotifyShellState();
             }
 
@@ -1362,6 +1367,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             or nameof(RequestWorkspaceTabViewModel.EntryType)
             or nameof(RequestWorkspaceTabViewModel.HeaderText))
         {
+            OnPropertyChanged(nameof(VisibleWorkspaceTabs));
             NotifyWorkspaceEditorState();
         }
     }
@@ -1456,6 +1462,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentBaseUrlText));
         OnPropertyChanged(nameof(HasEnvironmentContext));
         OnPropertyChanged(nameof(HasSavedRequests));
+        OnPropertyChanged(nameof(VisibleWorkspaceTabs));
         OnPropertyChanged(nameof(HasQuickRequestEntries));
         OnPropertyChanged(nameof(HasInterfaceEntries));
         OnPropertyChanged(nameof(ShowInterfaceEntriesEmptyState));

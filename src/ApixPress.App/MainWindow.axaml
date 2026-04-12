@@ -801,7 +801,7 @@
                                     VerticalScrollBarVisibility="Disabled">
                         <StackPanel Orientation="Horizontal"
                                     Spacing="{StaticResource Space.2}">
-                          <ItemsControl ItemsSource="{Binding WorkspaceTabs}">
+                          <ItemsControl ItemsSource="{Binding VisibleWorkspaceTabs}">
                             <ItemsControl.ItemsPanel>
                               <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal"
@@ -852,28 +852,30 @@
                         <Button Classes="ProjectWorkspaceInnerTabAddButton"
                                 Content="+"
                                 Command="{Binding CreateWorkspaceTabCommand}" />
-                        <Button Classes="ProjectWorkspaceInnerTabMoreButton"
+                        <Button x:Name="LandingWorkspaceTabMenuButton"
+                                Classes="ProjectWorkspaceInnerTabMoreButton"
                                 Content="..."
                                 Command="{Binding ToggleWorkspaceTabMenuCommand}" />
                       </StackPanel>
 
-                      <Border Classes="WorkspaceTabMenuCard"
-                              HorizontalAlignment="Left"
-                              VerticalAlignment="Top"
-                              Margin="34,34,0,0"
-                              IsVisible="{Binding IsWorkspaceTabMenuOpen}">
-                        <StackPanel Spacing="{StaticResource Space.1}">
-                          <Button Classes="WorkspaceTabMenuItem"
-                                  Content="关闭全部标签页"
-                                  Command="{Binding CloseAllWorkspaceTabsCommand}" />
-                          <Button Classes="WorkspaceTabMenuItem"
-                                  Content="关闭当前标签页"
-                                  Command="{Binding CloseCurrentWorkspaceFromMenuCommand}" />
-                          <Button Classes="WorkspaceTabMenuItem"
-                                  Content="关闭其它标签页"
-                                  Command="{Binding CloseOtherWorkspaceTabsCommand}" />
-                        </StackPanel>
-                      </Border>
+                      <Popup IsOpen="{Binding IsWorkspaceTabMenuOpen}"
+                             PlacementTarget="{Binding #LandingWorkspaceTabMenuButton}"
+                             Placement="Bottom"
+                             VerticalOffset="6">
+                        <Border Classes="WorkspaceTabMenuCard">
+                          <StackPanel Spacing="{StaticResource Space.1}">
+                            <Button Classes="WorkspaceTabMenuItem"
+                                    Content="关闭全部标签页"
+                                    Command="{Binding CloseAllWorkspaceTabsCommand}" />
+                            <Button Classes="WorkspaceTabMenuItem"
+                                    Content="关闭当前标签页"
+                                    Command="{Binding CloseCurrentWorkspaceFromMenuCommand}" />
+                            <Button Classes="WorkspaceTabMenuItem"
+                                    Content="关闭其它标签页"
+                                    Command="{Binding CloseOtherWorkspaceTabsCommand}" />
+                          </StackPanel>
+                        </Border>
+                      </Popup>
                     </Grid>
 
                     <ComboBox Grid.Column="3"
@@ -946,7 +948,7 @@
                                   VerticalScrollBarVisibility="Disabled">
                       <StackPanel Orientation="Horizontal"
                                   Spacing="{StaticResource Space.2}">
-                        <ItemsControl ItemsSource="{Binding WorkspaceTabs}">
+                        <ItemsControl ItemsSource="{Binding VisibleWorkspaceTabs}">
                           <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                               <StackPanel Orientation="Horizontal"
@@ -997,28 +999,30 @@
                       <Button Classes="ProjectWorkspaceInnerTabAddButton"
                               Content="+"
                               Command="{Binding CreateWorkspaceTabCommand}" />
-                      <Button Classes="ProjectWorkspaceInnerTabMoreButton"
+                      <Button x:Name="EditorWorkspaceTabMenuButton"
+                              Classes="ProjectWorkspaceInnerTabMoreButton"
                               Content="..."
                               Command="{Binding ToggleWorkspaceTabMenuCommand}" />
                     </StackPanel>
 
-                    <Border Classes="WorkspaceTabMenuCard"
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Top"
-                            Margin="34,34,0,0"
-                            IsVisible="{Binding IsWorkspaceTabMenuOpen}">
-                      <StackPanel Spacing="{StaticResource Space.1}">
-                        <Button Classes="WorkspaceTabMenuItem"
-                                Content="关闭全部标签页"
-                                Command="{Binding CloseAllWorkspaceTabsCommand}" />
-                        <Button Classes="WorkspaceTabMenuItem"
-                                Content="关闭当前标签页"
-                                Command="{Binding CloseCurrentWorkspaceFromMenuCommand}" />
-                        <Button Classes="WorkspaceTabMenuItem"
-                                Content="关闭其它标签页"
-                                Command="{Binding CloseOtherWorkspaceTabsCommand}" />
-                      </StackPanel>
-                    </Border>
+                    <Popup IsOpen="{Binding IsWorkspaceTabMenuOpen}"
+                           PlacementTarget="{Binding #EditorWorkspaceTabMenuButton}"
+                           Placement="Bottom"
+                           VerticalOffset="6">
+                      <Border Classes="WorkspaceTabMenuCard">
+                        <StackPanel Spacing="{StaticResource Space.1}">
+                          <Button Classes="WorkspaceTabMenuItem"
+                                  Content="关闭全部标签页"
+                                  Command="{Binding CloseAllWorkspaceTabsCommand}" />
+                          <Button Classes="WorkspaceTabMenuItem"
+                                  Content="关闭当前标签页"
+                                  Command="{Binding CloseCurrentWorkspaceFromMenuCommand}" />
+                          <Button Classes="WorkspaceTabMenuItem"
+                                  Content="关闭其它标签页"
+                                  Command="{Binding CloseOtherWorkspaceTabsCommand}" />
+                        </StackPanel>
+                      </Border>
+                    </Popup>
                   </Grid>
 
                   <ComboBox Grid.Column="3"
