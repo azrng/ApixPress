@@ -1471,7 +1471,8 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="MinHeight" Value="240" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="MaxHeight" Value="360" />
   </Style>
 
   <Style Selector="TabControl.QuickRequestInlineTabs TabItem">
