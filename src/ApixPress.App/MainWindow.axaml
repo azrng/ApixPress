@@ -1436,7 +1436,7 @@
               </Grid>
 
               <Grid Grid.Row="2"
-                    RowDefinitions="Auto,3*,2*"
+                    RowDefinitions="Auto,2*,3*"
                     RowSpacing="{StaticResource Space.3}"
                     IsVisible="{Binding ShowHttpWorkbenchContent}">
                 <Border Grid.Row="0"
@@ -1541,7 +1541,7 @@
                 </Border>
 
                 <Border Grid.Row="1"
-                        Classes="PanelCard ProjectWorkspaceSettingsCard"
+                        Classes="PanelCard ProjectWorkspaceSettingsCard HttpWorkbenchConfigCard"
                         Padding="0">
                   <Grid RowDefinitions="*">
                     <TabControl Grid.Row="0"

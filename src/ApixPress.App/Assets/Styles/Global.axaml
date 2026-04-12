@@ -1424,14 +1424,14 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="4" />
+    <Setter Property="Padding" Value="2" />
   </Style>
 
   <Style Selector="ToggleButton.HttpEditorModeButton">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="12,8" />
+    <Setter Property="Padding" Value="10,6" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 
@@ -1448,8 +1448,8 @@
   </Style>
 
   <Style Selector="TextBox.HttpInterfaceNameInput">
-    <Setter Property="MinHeight" Value="40" />
-    <Setter Property="Padding" Value="12,8" />
+    <Setter Property="MinHeight" Value="36" />
+    <Setter Property="Padding" Value="10,6" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
   </Style>
 
@@ -1719,10 +1719,10 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-    <Setter Property="Padding" Value="8,5" />
+    <Setter Property="Padding" Value="8,4" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
-    <Setter Property="MinWidth" Value="80" />
-    <Setter Property="MinHeight" Value="34" />
+    <Setter Property="MinWidth" Value="72" />
+    <Setter Property="MinHeight" Value="32" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
@@ -1747,22 +1747,22 @@
   <Style Selector="Border.HttpBaseUrlPrefixCard">
     <Setter Property="Margin" Value="2,0,0,0" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="Padding" Value="10,8" />
-    <Setter Property="MinHeight" Value="38" />
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="MinHeight" Value="34" />
   </Style>
 
   <Style Selector="TextBox.HttpRequestPathInput">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Padding" Value="4,8" />
-    <Setter Property="MinHeight" Value="38" />
+    <Setter Property="Padding" Value="4,6" />
+    <Setter Property="MinHeight" Value="34" />
   </Style>
 
   <Style Selector="Button.HttpSendButton">
     <Setter Property="Background" Value="#8B6AE6" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
-    <Setter Property="Padding" Value="18,10" />
+    <Setter Property="Padding" Value="16,8" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="MinWidth" Value="88" />
@@ -1773,7 +1773,7 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="Padding" Value="18,10" />
+    <Setter Property="Padding" Value="16,8" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="MinWidth" Value="78" />
   </Style>
@@ -1835,7 +1835,7 @@
   </Style>
 
   <Style Selector="Border.HttpResponseCard">
-    <Setter Property="MinHeight" Value="300" />
+    <Setter Property="MinHeight" Value="420" />
   </Style>
 
   <Style Selector="Border.HttpDocumentHeroCard">
@@ -1924,6 +1924,11 @@
 
   <Style Selector="Border.ProjectWorkspaceSettingsCard">
     <Setter Property="MinHeight" Value="320" />
+  </Style>
+
+  <Style Selector="Border.HttpWorkbenchConfigCard">
+    <Setter Property="MinHeight" Value="220" />
+    <Setter Property="MaxHeight" Value="340" />
   </Style>
 
   <Style Selector="Border.ProjectWorkspaceSettingsHeader">
