@@ -1328,44 +1328,6 @@
                       </DockPanel>
                     </TabItem>
 
-                    <TabItem Header="Cookies">
-                      <Border Classes="QuickRequestPlaceholderCard">
-                        <TextBlock Classes="CaptionText"
-                                   Text="Cookies 配置后续补充，当前快捷请求先保留请求发送主链路。" />
-                      </Border>
-                    </TabItem>
-
-                    <TabItem Header="Auth">
-                      <Border Classes="QuickRequestPlaceholderCard">
-                        <TextBlock Classes="CaptionText"
-                                   Text="认证配置入口已预留，后续会补充 Bearer、Basic 等方案。" />
-                      </Border>
-                    </TabItem>
-
-                    <TabItem Header="前置操作">
-                      <Border Classes="QuickRequestPlaceholderCard">
-                        <TextBlock Classes="CaptionText"
-                                   Text="前置脚本区域已预留，当前版本先聚焦请求与响应工作流。" />
-                      </Border>
-                    </TabItem>
-
-                    <TabItem Header="后置操作">
-                      <Border Classes="QuickRequestPlaceholderCard">
-                        <TextBlock Classes="CaptionText"
-                                   Text="后置脚本区域已预留，后续会接入响应断言与变量提取。" />
-                      </Border>
-                    </TabItem>
-
-                    <TabItem Header="设置">
-                      <Border Classes="QuickRequestPlaceholderCard">
-                        <StackPanel Spacing="{StaticResource Space.2}">
-                          <TextBlock Classes="CaptionText"
-                                     Text="忽略 SSL 证书错误" />
-                          <CheckBox IsChecked="{Binding ConfigTab.IgnoreSslErrors}"
-                                    Content="发送时忽略证书校验" />
-                        </StackPanel>
-                      </Border>
-                    </TabItem>
                   </TabControl>
                 </Border>
 
@@ -1757,74 +1719,6 @@
                             </ItemsControl>
                           </ScrollViewer>
                         </DockPanel>
-                      </TabItem>
-                      <TabItem Header="Cookies">
-                        <Border Classes="HttpRequestPlaceholderCard">
-                          <TextBlock Classes="CaptionText"
-                                     Text="Cookies 配置入口已预留，后续会补充站点级 Cookie 选择与注入规则。" />
-                        </Border>
-                      </TabItem>
-                      <TabItem Header="Auth">
-                        <Border Classes="HttpRequestPlaceholderCard">
-                          <TextBlock Classes="CaptionText"
-                                     Text="认证配置入口已预留，后续会补充 Bearer、Basic 与项目级鉴权方案。" />
-                        </Border>
-                      </TabItem>
-                      <TabItem Header="前置操作">
-                        <Border Classes="HttpRequestPlaceholderCard">
-                          <TextBlock Classes="CaptionText"
-                                     Text="前置操作区域已预留，后续可接入脚本、变量初始化与参数预处理。" />
-                        </Border>
-                      </TabItem>
-                      <TabItem Header="后置操作">
-                        <Border Classes="HttpRequestPlaceholderCard">
-                          <TextBlock Classes="CaptionText"
-                                     Text="后置操作区域已预留，后续可接入断言、提取变量与用例回写能力。" />
-                        </Border>
-                      </TabItem>
-                      <TabItem Header="设置">
-                        <Border Classes="HttpRequestPlaceholderCard">
-                          <StackPanel Spacing="{StaticResource Space.3}">
-                            <Grid ColumnDefinitions="Auto,*"
-                                  ColumnSpacing="{StaticResource Space.3}">
-                              <TextBlock Grid.Column="0"
-                                         VerticalAlignment="Center"
-                                         Text="接口目录" />
-                              <TextBox Grid.Column="1"
-                                       Classes="SectionInput"
-                                       Watermark="如 用户/资料"
-                                       Text="{Binding CurrentInterfaceFolderPath}" />
-                            </Grid>
-                            <Grid ColumnDefinitions="Auto,*"
-                                  ColumnSpacing="{StaticResource Space.3}">
-                              <TextBlock Grid.Column="0"
-                                         VerticalAlignment="Center"
-                                         Text="接口名称" />
-                              <TextBox Grid.Column="1"
-                                       Classes="SectionInput"
-                                       Watermark="接口名称"
-                                       Text="{Binding ConfigTab.RequestName}" />
-                            </Grid>
-                            <Grid ColumnDefinitions="Auto,*,Auto"
-                                  ColumnSpacing="{StaticResource Space.3}">
-                              <TextBlock Grid.Column="0"
-                                         VerticalAlignment="Center"
-                                         Text="接口用例" />
-                              <TextBox Grid.Column="1"
-                                       Classes="SectionInput"
-                                       Watermark="默认成功"
-                                       Text="{Binding CurrentHttpCaseName}" />
-                              <Button Grid.Column="2"
-                                      Classes="SecondaryButton"
-                                      Content="保存当前用例"
-                                      Command="{Binding SaveHttpCaseCommand}" />
-                            </Grid>
-                            <CheckBox IsChecked="{Binding ConfigTab.IgnoreSslErrors}"
-                                      Content="发送时忽略 SSL 证书校验" />
-                            <TextBlock Classes="CaptionText"
-                                       Text="{Binding CurrentEditorBaseUrlCaption}" />
-                          </StackPanel>
-                        </Border>
                       </TabItem>
                     </TabControl>
                   </Grid>
