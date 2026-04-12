@@ -32,6 +32,7 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
         Opened += OnOpened;
         Closed += OnClosed;
+        KeyDown += OnWindowKeyDown;
     }
 
     private async void OnOpened(object? sender, System.EventArgs e)
@@ -47,6 +48,17 @@ public partial class MainWindow : Window
         {
             _windowHostService.MainWindow = null;
         }
+    }
+
+    private async void OnWindowKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Handled || e.Key != Key.S || !e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            return;
+        }
+
+        e.Handled = true;
+        await _viewModel.SaveCaseCommand.ExecuteAsync(null);
     }
 
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)

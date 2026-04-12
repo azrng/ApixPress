@@ -221,8 +221,13 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                            ) values (
                                @Id, @ProjectId, @EntryType, @Name, @GroupName, @FolderPath, @ParentId, @TagsJson, @Description, @RequestSnapshotJson, @UpdatedAt
                            )
-                           on conflict(project_id, entry_type, group_name, folder_path, parent_id, name) do update set
-                               id = excluded.id,
+                           on conflict(id) do update set
+                               project_id = excluded.project_id,
+                               entry_type = excluded.entry_type,
+                               name = excluded.name,
+                               group_name = excluded.group_name,
+                               folder_path = excluded.folder_path,
+                               parent_id = excluded.parent_id,
                                tags_json = excluded.tags_json,
                                description = excluded.description,
                                request_snapshot_json = excluded.request_snapshot_json,
