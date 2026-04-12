@@ -167,34 +167,6 @@ public partial class ProjectTabViewModel : ViewModelBase
     public string CurrentHttpInterfaceDisplayName => string.IsNullOrWhiteSpace(CurrentHttpInterfaceName)
         ? "未命名接口"
         : CurrentHttpInterfaceName.Trim();
-    public string CurrentHttpDesignOwner
-    {
-        get => ActiveWorkspaceTab?.DesignOwner ?? string.Empty;
-        set
-        {
-            if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.DesignOwner == value)
-            {
-                return;
-            }
-
-            ActiveWorkspaceTab.DesignOwner = value;
-            NotifyWorkspaceEditorState();
-        }
-    }
-    public string CurrentHttpDesignTags
-    {
-        get => ActiveWorkspaceTab?.DesignTags ?? string.Empty;
-        set
-        {
-            if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.DesignTags == value)
-            {
-                return;
-            }
-
-            ActiveWorkspaceTab.DesignTags = value;
-            NotifyWorkspaceEditorState();
-        }
-    }
     public bool IsHttpDebugEditorMode => ActiveWorkspaceTab?.IsHttpDebugView ?? false;
     public bool IsHttpDesignEditorMode => ActiveWorkspaceTab?.IsHttpDesignView ?? false;
     public bool IsHttpDocumentPreviewMode => ActiveWorkspaceTab?.IsHttpDocumentPreviewView ?? false;
@@ -1329,8 +1301,6 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentHttpCaseName));
         OnPropertyChanged(nameof(CurrentHttpInterfaceName));
         OnPropertyChanged(nameof(CurrentHttpInterfaceDisplayName));
-        OnPropertyChanged(nameof(CurrentHttpDesignOwner));
-        OnPropertyChanged(nameof(CurrentHttpDesignTags));
         OnPropertyChanged(nameof(IsHttpDebugEditorMode));
         OnPropertyChanged(nameof(IsHttpDesignEditorMode));
         OnPropertyChanged(nameof(IsHttpDocumentPreviewMode));

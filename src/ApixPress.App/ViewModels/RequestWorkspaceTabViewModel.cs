@@ -57,12 +57,6 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     private int httpEditorViewIndex;
 
     [ObservableProperty]
-    private string designOwner = string.Empty;
-
-    [ObservableProperty]
-    private string designTags = string.Empty;
-
-    [ObservableProperty]
     private bool isActive;
 
     [ObservableProperty]
@@ -96,8 +90,6 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         EditingInterfaceId = string.Empty;
         EditingCaseId = string.Empty;
         HttpEditorViewIndex = 0;
-        DesignOwner = string.Empty;
-        DesignTags = string.Empty;
         ConfigTab.Reset();
         ResponseSection.Reset();
         UpdateTabHeader();
@@ -114,8 +106,6 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         EditingInterfaceId = string.Empty;
         EditingCaseId = string.Empty;
         HttpEditorViewIndex = 0;
-        DesignOwner = string.Empty;
-        DesignTags = string.Empty;
         ConfigTab.Reset();
         ResponseSection.Reset();
         UpdateTabHeader();
@@ -132,8 +122,6 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         EditingInterfaceId = string.Empty;
         EditingCaseId = string.Empty;
         HttpEditorViewIndex = 0;
-        DesignOwner = string.Empty;
-        DesignTags = string.Empty;
         ConfigTab.Reset();
         ResponseSection.Reset();
         UpdateTabHeader();

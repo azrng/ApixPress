@@ -1405,7 +1405,7 @@
                     </Grid>
 
                     <Grid Grid.Row="1"
-                          ColumnDefinitions="1.5*,*,*"
+                          ColumnDefinitions="1.7*,*"
                           ColumnSpacing="{StaticResource Space.3}">
                       <StackPanel Grid.Column="0"
                                   Spacing="{StaticResource Space.2}">
@@ -1420,20 +1420,6 @@
                       </StackPanel>
 
                       <StackPanel Grid.Column="1"
-                                  Spacing="{StaticResource Space.2}">
-                        <TextBlock Classes="CaptionText"
-                                   Text="负责人" />
-                        <TextBox Classes="SectionInput"
-                                 Text="{Binding CurrentHttpDesignOwner}"
-                                 Watermark="如 网关服务组" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="标签" />
-                        <TextBox Classes="SectionInput"
-                                 Text="{Binding CurrentHttpDesignTags}"
-                                 Watermark="如 用户中心, 登录" />
-                      </StackPanel>
-
-                      <StackPanel Grid.Column="2"
                                   Spacing="{StaticResource Space.2}">
                         <TextBlock Classes="CaptionText"
                                    Text="补充信息" />
@@ -1884,16 +1870,17 @@
                                        Text="{Binding CurrentInterfaceFolderPath}" />
                             <TextBlock Grid.Row="1"
                                        Classes="CaptionText"
-                                       Text="负责人" />
+                                       Text="BaseUrl" />
                             <TextBlock Grid.Row="1"
                                        Grid.Column="1"
-                                       Text="{Binding CurrentHttpDesignOwner}" />
+                                       Text="{Binding CurrentEditorBaseUrlCaption}"
+                                       TextWrapping="Wrap" />
                             <TextBlock Grid.Row="2"
                                        Classes="CaptionText"
-                                       Text="标签" />
+                                       Text="接口用例" />
                             <TextBlock Grid.Row="2"
                                        Grid.Column="1"
-                                       Text="{Binding CurrentHttpDesignTags}" />
+                                       Text="{Binding CurrentHttpCaseName}" />
                             <TextBlock Grid.Row="3"
                                        Classes="CaptionText"
                                        Text="Body 模式" />
