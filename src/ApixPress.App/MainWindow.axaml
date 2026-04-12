@@ -236,64 +236,66 @@
     <Grid Grid.Row="1">
       <ScrollViewer IsVisible="{Binding IsHomeTabActive}">
         <Grid Margin="{StaticResource Pad.6}"
-              RowDefinitions="Auto,Auto,*"
+              RowDefinitions="Auto,*"
               RowSpacing="{StaticResource Space.5}">
           <Border Classes="HomeHeroCard">
-            <Grid ColumnDefinitions="*,Auto"
-                  ColumnSpacing="{StaticResource Space.5}">
-              <StackPanel Spacing="{StaticResource Space.2}">
-                <TextBlock Classes="HeroTitle"
-                           Text="项目首页" />
-                <TextBlock Classes="SubtleText"
-                           Text="默认打开这里查看全部项目。点击任意项目后，会在顶部以新标签页打开对应的快捷请求工作区。" />
-              </StackPanel>
-              <StackPanel Grid.Column="1"
-                          Orientation="Horizontal"
-                          Spacing="{StaticResource Space.3}"
-                          VerticalAlignment="Center">
-                <Border Classes="DashboardStatCard">
-                  <StackPanel Spacing="4">
-                    <TextBlock Classes="CaptionText"
-                               Text="项目总数" />
-                    <TextBlock Classes="SectionTitle"
-                               Text="{Binding ProjectPanel.Projects.Count}" />
-                  </StackPanel>
-                </Border>
-                <Border Classes="DashboardStatCard">
-                  <StackPanel Spacing="4">
-                    <TextBlock Classes="CaptionText"
-                               Text="当前模式" />
-                    <TextBlock Classes="SectionTitle"
-                               Text="多项目 Tab" />
-                  </StackPanel>
-                </Border>
-              </StackPanel>
+            <Grid RowDefinitions="Auto,Auto">
+              <Grid ColumnDefinitions="*,Auto"
+                    ColumnSpacing="{StaticResource Space.5}">
+                <StackPanel Spacing="{StaticResource Space.2}">
+                  <TextBlock Classes="HeroTitle"
+                             Text="项目首页" />
+                  <TextBlock Classes="SubtleText"
+                             Text="默认打开这里查看全部项目。点击任意项目后，会在顶部以新标签页打开对应的快捷请求工作区。" />
+                </StackPanel>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="{StaticResource Space.3}"
+                            VerticalAlignment="Center">
+                  <Border Classes="DashboardStatCard">
+                    <StackPanel Spacing="4">
+                      <TextBlock Classes="CaptionText"
+                                 Text="项目总数" />
+                      <TextBlock Classes="SectionTitle"
+                                 Text="{Binding ProjectPanel.Projects.Count}" />
+                    </StackPanel>
+                  </Border>
+                  <Border Classes="DashboardStatCard">
+                    <StackPanel Spacing="4">
+                      <TextBlock Classes="CaptionText"
+                                 Text="当前模式" />
+                      <TextBlock Classes="SectionTitle"
+                                 Text="多项目 Tab" />
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+              </Grid>
+
+              <Border Grid.Row="1"
+                      Classes="HomeOverviewToolbarSection">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="{StaticResource Space.4}">
+                  <TextBlock Classes="SectionTitle"
+                             VerticalAlignment="Center"
+                             Text="项目列表" />
+                  <Grid Grid.Column="1"
+                        ColumnDefinitions="280,Auto"
+                        ColumnSpacing="{StaticResource Space.2}">
+                    <TextBox Grid.Column="0"
+                             Classes="ToolbarSearchBox"
+                             Watermark="搜索项目名称或备注"
+                             Text="{Binding ProjectPanel.SearchText}" />
+                    <Button Grid.Column="1"
+                            Classes="PrimaryButton"
+                            Content="新建项目"
+                            Command="{Binding OpenCreateProjectDialogCommand}" />
+                  </Grid>
+                </Grid>
+              </Border>
             </Grid>
           </Border>
 
           <Border Grid.Row="1"
-                  Classes="BrowserToolbarCard">
-            <Grid ColumnDefinitions="*,Auto"
-                  ColumnSpacing="{StaticResource Space.4}">
-              <TextBlock Classes="SectionTitle"
-                         VerticalAlignment="Center"
-                         Text="项目列表" />
-              <Grid Grid.Column="1"
-                    ColumnDefinitions="280,Auto"
-                    ColumnSpacing="{StaticResource Space.2}">
-                <TextBox Grid.Column="0"
-                         Classes="ToolbarSearchBox"
-                         Watermark="搜索项目名称或备注"
-                         Text="{Binding ProjectPanel.SearchText}" />
-                <Button Grid.Column="1"
-                        Classes="PrimaryButton"
-                        Content="新建项目"
-                        Command="{Binding OpenCreateProjectDialogCommand}" />
-              </Grid>
-            </Grid>
-          </Border>
-
-          <Border Grid.Row="2"
                   Classes="EmptyStateCard"
                   IsVisible="{Binding ShowProjectListEmptyState}">
             <StackPanel Spacing="{StaticResource Space.3}"
@@ -309,7 +311,7 @@
             </StackPanel>
           </Border>
 
-          <Border Grid.Row="2"
+          <Border Grid.Row="1"
                   Classes="ProjectGridHost"
                   IsVisible="{Binding ProjectPanel.HasProjects}">
             <ItemsControl ItemsSource="{Binding ProjectPanel.FilteredProjects}">

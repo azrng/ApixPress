@@ -874,6 +874,12 @@
     <Setter Property="MinWidth" Value="132" />
   </Style>
 
+  <Style Selector="Border.HomeOverviewToolbarSection">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+    <Setter Property="Padding" Value="0,20,0,0" />
+  </Style>
+
   <Style Selector="Border.ProjectWorkspaceHero">
     <Setter Property="BoxShadow" Value="0 16 36 0 #0F172A10" />
   </Style>
