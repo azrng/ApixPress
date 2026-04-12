@@ -469,45 +469,146 @@
 
                   <ScrollViewer Grid.Row="2">
                     <StackPanel Spacing="{StaticResource Space.3}">
-                      <StackPanel Classes="ProjectSidebarModuleGroup">
-                        <Grid Classes="ProjectSidebarModuleHeader"
-                              ColumnDefinitions="Auto,Auto,*"
-                              ColumnSpacing="{StaticResource Space.2}">
-                          <TextBlock Grid.Column="0"
-                                     Classes="ProjectSidebarTreeChevron"
-                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                     Text="&#xE70D;" />
-                          <TextBlock Grid.Column="1"
-                                     Classes="WorkspaceTreeNodeGlyph"
-                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                     Text="&#xE8B7;" />
-                          <TextBlock Grid.Column="2"
-                                     Classes="ProjectSidebarSectionTitle"
-                                     Text="默认模块" />
-                        </Grid>
-                        <StackPanel Classes="ProjectSidebarModuleChildren">
-                          <ToggleButton x:Name="InterfaceCatalogToggle"
-                                        Classes="ProjectSidebarCatalogToggleButton ProjectSidebarCatalogActiveButton"
-                                        IsChecked="{Binding IsInterfaceCatalogExpanded, Mode=TwoWay}">
+                      <Border Classes="ProjectSidebarSectionCard ProjectSidebarModuleSectionCard">
+                        <StackPanel Classes="ProjectSidebarModuleGroup">
+                          <Grid Classes="ProjectSidebarModuleHeader"
+                                ColumnDefinitions="Auto,Auto,*"
+                                ColumnSpacing="{StaticResource Space.2}">
+                            <TextBlock Grid.Column="0"
+                                       Classes="ProjectSidebarTreeChevron"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                       Text="&#xE70D;" />
+                            <TextBlock Grid.Column="1"
+                                       Classes="WorkspaceTreeNodeGlyph"
+                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                       Text="&#xE8B7;" />
+                            <TextBlock Grid.Column="2"
+                                       Classes="ProjectSidebarSectionTitle"
+                                       Text="默认模块" />
+                          </Grid>
+                          <StackPanel Classes="ProjectSidebarModuleChildren">
+                            <ToggleButton x:Name="InterfaceCatalogToggle"
+                                          Classes="ProjectSidebarCatalogToggleButton ProjectSidebarCatalogActiveButton"
+                                          IsChecked="{Binding IsInterfaceCatalogExpanded, Mode=TwoWay}">
+                              <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+                                    ColumnSpacing="{StaticResource Space.2}">
+                                <TextBlock Grid.Column="0"
+                                           Classes="ProjectSidebarCatalogChevron"
+                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           IsVisible="{Binding !#InterfaceCatalogToggle.IsChecked}"
+                                           Text="&#xE76C;" />
+                                <TextBlock Grid.Column="0"
+                                           Classes="ProjectSidebarCatalogChevron"
+                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           IsVisible="{Binding #InterfaceCatalogToggle.IsChecked}"
+                                           Text="&#xE70D;" />
+                                <TextBlock Grid.Column="1"
+                                           Classes="WorkspaceTreeNodeGlyph"
+                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           Text="&#xE8C8;" />
+                                <TextBlock Grid.Column="2"
+                                           Classes="ProjectSidebarCatalogTitle"
+                                           Text="接口" />
+                                <TextBlock Grid.Column="3"
+                                           Classes="ProjectSidebarCatalogChevron"
+                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           Text="&#xE70E;"
+                                           IsVisible="False" />
+                              </Grid>
+                            </ToggleButton>
+
+                            <Border Classes="ProjectSidebarCatalogBody"
+                                    IsVisible="{Binding IsInterfaceCatalogExpanded}">
+                              <StackPanel Classes="ProjectSidebarCatalogContent">
+                                <TextBlock Classes="CaptionText ProjectSidebarEmptyHint"
+                                           Text="当前还没有保存的 HTTP 接口"
+                                           IsVisible="{Binding ShowInterfaceEntriesEmptyState}" />
+                                <ItemsControl Classes="ProjectSidebarInlineTree"
+                                              ItemsSource="{Binding InterfaceCatalogItems}">
+                                  <ItemsControl.ItemTemplate>
+                                    <StaticResource ResourceKey="ProjectSidebarExplorerItemTemplate" />
+                                  </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                              </StackPanel>
+                            </Border>
+
+                            <ToggleButton x:Name="DataModelCatalogToggle"
+                                          Classes="ProjectSidebarCatalogToggleButton"
+                                          IsChecked="{Binding IsDataModelCatalogExpanded, Mode=TwoWay}">
+                              <Grid ColumnDefinitions="Auto,*,Auto"
+                                    ColumnSpacing="{StaticResource Space.2}">
+                                <TextBlock Grid.Column="0"
+                                           Classes="WorkspaceTreeNodeGlyph"
+                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           Text="&#xEC1A;" />
+                                <TextBlock Grid.Column="1"
+                                           Classes="ProjectSidebarSectionTitle"
+                                           Text="数据模型" />
+                                <TextBlock Grid.Column="2"
+                                           Classes="ProjectSidebarCatalogChevron"
+                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           IsVisible="{Binding !#DataModelCatalogToggle.IsChecked}"
+                                           Text="&#xE76C;" />
+                                <TextBlock Grid.Column="2"
+                                           Classes="ProjectSidebarCatalogChevron"
+                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           IsVisible="{Binding #DataModelCatalogToggle.IsChecked}"
+                                           Text="&#xE70D;" />
+                              </Grid>
+                            </ToggleButton>
+
+                            <ToggleButton x:Name="ComponentCatalogToggle"
+                                          Classes="ProjectSidebarCatalogToggleButton"
+                                          IsChecked="{Binding IsComponentLibraryCatalogExpanded, Mode=TwoWay}">
+                              <Grid ColumnDefinitions="Auto,*,Auto"
+                                    ColumnSpacing="{StaticResource Space.2}">
+                                <TextBlock Grid.Column="0"
+                                           Classes="WorkspaceTreeNodeGlyph"
+                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           Text="&#xE8FD;" />
+                                <TextBlock Grid.Column="1"
+                                           Classes="ProjectSidebarSectionTitle"
+                                           Text="组件库" />
+                                <TextBlock Grid.Column="2"
+                                           Classes="ProjectSidebarCatalogChevron"
+                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           IsVisible="{Binding !#ComponentCatalogToggle.IsChecked}"
+                                           Text="&#xE76C;" />
+                                <TextBlock Grid.Column="2"
+                                           Classes="ProjectSidebarCatalogChevron"
+                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                           IsVisible="{Binding #ComponentCatalogToggle.IsChecked}"
+                                           Text="&#xE70D;" />
+                              </Grid>
+                            </ToggleButton>
+                          </StackPanel>
+                        </StackPanel>
+                      </Border>
+
+                      <Border Classes="ProjectSidebarSectionCard">
+                        <StackPanel Classes="ProjectSidebarTopLevelSection">
+                          <ToggleButton x:Name="QuickRequestCatalogToggle"
+                                        Classes="ProjectSidebarCatalogToggleButton"
+                                        IsChecked="{Binding IsQuickRequestCatalogExpanded, Mode=TwoWay}">
                             <Grid ColumnDefinitions="Auto,Auto,*,Auto"
                                   ColumnSpacing="{StaticResource Space.2}">
                               <TextBlock Grid.Column="0"
                                          Classes="ProjectSidebarCatalogChevron"
                                          FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                         IsVisible="{Binding !#InterfaceCatalogToggle.IsChecked}"
+                                         IsVisible="{Binding !#QuickRequestCatalogToggle.IsChecked}"
                                          Text="&#xE76C;" />
                               <TextBlock Grid.Column="0"
                                          Classes="ProjectSidebarCatalogChevron"
                                          FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                         IsVisible="{Binding #InterfaceCatalogToggle.IsChecked}"
+                                         IsVisible="{Binding #QuickRequestCatalogToggle.IsChecked}"
                                          Text="&#xE70D;" />
                               <TextBlock Grid.Column="1"
                                          Classes="WorkspaceTreeNodeGlyph"
                                          FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                         Text="&#xE8C8;" />
+                                         Text="&#xE945;" />
                               <TextBlock Grid.Column="2"
-                                         Classes="ProjectSidebarCatalogTitle"
-                                         Text="接口" />
+                                         Classes="ProjectSidebarSectionTitle"
+                                         Text="快捷请求" />
                               <TextBlock Grid.Column="3"
                                          Classes="ProjectSidebarCatalogChevron"
                                          FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
@@ -515,152 +616,59 @@
                                          IsVisible="False" />
                             </Grid>
                           </ToggleButton>
-
-                          <StackPanel Classes="ProjectSidebarCatalogContent"
-                                      IsVisible="{Binding IsInterfaceCatalogExpanded}">
-                            <TextBlock Classes="CaptionText ProjectSidebarEmptyHint"
-                                       Text="当前还没有保存的 HTTP 接口"
-                                       IsVisible="{Binding ShowInterfaceEntriesEmptyState}" />
-                            <ItemsControl Classes="ProjectSidebarInlineTree"
-                                          ItemsSource="{Binding InterfaceCatalogItems}">
-                              <ItemsControl.ItemTemplate>
-                                <StaticResource ResourceKey="ProjectSidebarExplorerItemTemplate" />
-                              </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                          </StackPanel>
-
-                          <ToggleButton x:Name="DataModelCatalogToggle"
-                                        Classes="ProjectSidebarCatalogToggleButton"
-                                        IsChecked="{Binding IsDataModelCatalogExpanded, Mode=TwoWay}">
-                            <Grid ColumnDefinitions="Auto,*,Auto"
-                                  ColumnSpacing="{StaticResource Space.2}">
-                              <TextBlock Grid.Column="0"
-                                         Classes="WorkspaceTreeNodeGlyph"
-                                         FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                         Text="&#xEC1A;" />
-                              <TextBlock Grid.Column="1"
-                                         Classes="ProjectSidebarSectionTitle"
-                                         Text="数据模型" />
-                              <TextBlock Grid.Column="2"
-                                         Classes="ProjectSidebarCatalogChevron"
-                                         FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                         IsVisible="{Binding !#DataModelCatalogToggle.IsChecked}"
-                                         Text="&#xE76C;" />
-                              <TextBlock Grid.Column="2"
-                                         Classes="ProjectSidebarCatalogChevron"
-                                         FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                         IsVisible="{Binding #DataModelCatalogToggle.IsChecked}"
-                                         Text="&#xE70D;" />
-                            </Grid>
-                          </ToggleButton>
-
-                          <ToggleButton x:Name="ComponentCatalogToggle"
-                                        Classes="ProjectSidebarCatalogToggleButton"
-                                        IsChecked="{Binding IsComponentLibraryCatalogExpanded, Mode=TwoWay}">
-                            <Grid ColumnDefinitions="Auto,*,Auto"
-                                  ColumnSpacing="{StaticResource Space.2}">
-                              <TextBlock Grid.Column="0"
-                                         Classes="WorkspaceTreeNodeGlyph"
-                                         FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                         Text="&#xE8FD;" />
-                              <TextBlock Grid.Column="1"
-                                         Classes="ProjectSidebarSectionTitle"
-                                         Text="组件库" />
-                              <TextBlock Grid.Column="2"
-                                         Classes="ProjectSidebarCatalogChevron"
-                                         FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                         IsVisible="{Binding !#ComponentCatalogToggle.IsChecked}"
-                                         Text="&#xE76C;" />
-                              <TextBlock Grid.Column="2"
-                                         Classes="ProjectSidebarCatalogChevron"
-                                         FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                         IsVisible="{Binding #ComponentCatalogToggle.IsChecked}"
-                                         Text="&#xE70D;" />
-                            </Grid>
-                          </ToggleButton>
+                          <Border Classes="ProjectSidebarCatalogBody"
+                                  IsVisible="{Binding IsQuickRequestCatalogExpanded}">
+                            <StackPanel Classes="ProjectSidebarCatalogContent">
+                              <TreeView Classes="WorkspaceTreeView ProjectSidebarTree"
+                                        ItemsSource="{Binding QuickRequestTreeItems}">
+                                <TreeView.ItemTemplate>
+                                  <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
+                                                    ItemsSource="{Binding Children}">
+                                    <Button Classes="WorkspaceTreeNodeButton"
+                                            IsHitTestVisible="{Binding CanLoad}"
+                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
+                                            CommandParameter="{Binding}">
+                                      <StackPanel Spacing="2">
+                                        <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+                                              ColumnSpacing="{StaticResource Space.1}">
+                                          <TextBlock Grid.Column="0"
+                                                     Classes="WorkspaceTreeNodeGlyph"
+                                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                                     Text="{Binding NodeGlyph}"
+                                                     IsVisible="{Binding ShowLeadingGlyph}" />
+                                          <TextBlock Grid.Column="0"
+                                                     Classes="WorkspaceTreeNodeGlyph WorkspaceTreeCaseGlyph"
+                                                     FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                                     Text="{Binding NodeGlyph}"
+                                                     IsVisible="{Binding IsHttpCaseNode}" />
+                                          <u:Badge Grid.Column="1"
+                                                   Margin="0,0,4,0"
+                                                   Header="{Binding MethodBadgeText}"
+                                                   IsVisible="{Binding ShowMethodBadge}"
+                                                   iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
+                                          <TextBlock Grid.Column="2"
+                                                     Text="{Binding Title}"
+                                                     VerticalAlignment="Center"
+                                                     TextWrapping="Wrap" />
+                                          <Border Grid.Column="3"
+                                                  Classes="WorkspaceTreeStatusDot"
+                                                  IsVisible="{Binding ShowTrailingDot}" />
+                                        </Grid>
+                                        <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
+                                                   Text="{Binding Subtitle}"
+                                                   IsVisible="{Binding HasSubtitle}" />
+                                      </StackPanel>
+                                    </Button>
+                                  </TreeDataTemplate>
+                                </TreeView.ItemTemplate>
+                              </TreeView>
+                              <Button Classes="ProjectSidebarGhostButton ProjectSidebarBottomCreateButton"
+                                      Content="+ 新建"
+                                      Command="{Binding OpenQuickRequestWorkspaceCommand}" />
+                            </StackPanel>
+                          </Border>
                         </StackPanel>
-                      </StackPanel>
-
-                      <StackPanel Classes="ProjectSidebarTopLevelSection">
-                          <ToggleButton x:Name="QuickRequestCatalogToggle"
-                                      Classes="ProjectSidebarCatalogToggleButton"
-                                      IsChecked="{Binding IsQuickRequestCatalogExpanded, Mode=TwoWay}">
-                          <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-                                ColumnSpacing="{StaticResource Space.2}">
-                            <TextBlock Grid.Column="0"
-                                       Classes="ProjectSidebarCatalogChevron"
-                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                       IsVisible="{Binding !#QuickRequestCatalogToggle.IsChecked}"
-                                       Text="&#xE76C;" />
-                            <TextBlock Grid.Column="0"
-                                       Classes="ProjectSidebarCatalogChevron"
-                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                       IsVisible="{Binding #QuickRequestCatalogToggle.IsChecked}"
-                                       Text="&#xE70D;" />
-                            <TextBlock Grid.Column="1"
-                                       Classes="WorkspaceTreeNodeGlyph"
-                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                       Text="&#xE945;" />
-                            <TextBlock Grid.Column="2"
-                                       Classes="ProjectSidebarSectionTitle"
-                                       Text="快捷请求" />
-                            <TextBlock Grid.Column="3"
-                                       Classes="ProjectSidebarCatalogChevron"
-                                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                       Text="&#xE70E;"
-                                       IsVisible="False" />
-                          </Grid>
-                        </ToggleButton>
-                        <StackPanel Classes="ProjectSidebarCatalogContent"
-                                    IsVisible="{Binding IsQuickRequestCatalogExpanded}">
-                          <TreeView Classes="WorkspaceTreeView ProjectSidebarTree"
-                                    ItemsSource="{Binding QuickRequestTreeItems}">
-                            <TreeView.ItemTemplate>
-                              <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
-                                                ItemsSource="{Binding Children}">
-                                <Button Classes="WorkspaceTreeNodeButton"
-                                        IsHitTestVisible="{Binding CanLoad}"
-                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
-                                        CommandParameter="{Binding}">
-                                  <StackPanel Spacing="2">
-                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-                                          ColumnSpacing="{StaticResource Space.1}">
-                                      <TextBlock Grid.Column="0"
-                                                 Classes="WorkspaceTreeNodeGlyph"
-                                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                                 Text="{Binding NodeGlyph}"
-                                                 IsVisible="{Binding ShowLeadingGlyph}" />
-                                      <TextBlock Grid.Column="0"
-                                                 Classes="WorkspaceTreeNodeGlyph WorkspaceTreeCaseGlyph"
-                                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                                 Text="{Binding NodeGlyph}"
-                                                 IsVisible="{Binding IsHttpCaseNode}" />
-                                      <u:Badge Grid.Column="1"
-                                               Margin="0,0,4,0"
-                                               Header="{Binding MethodBadgeText}"
-                                               IsVisible="{Binding ShowMethodBadge}"
-                                               iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
-                                      <TextBlock Grid.Column="2"
-                                                 Text="{Binding Title}"
-                                                 VerticalAlignment="Center"
-                                                 TextWrapping="Wrap" />
-                                      <Border Grid.Column="3"
-                                              Classes="WorkspaceTreeStatusDot"
-                                              IsVisible="{Binding ShowTrailingDot}" />
-                                    </Grid>
-                                    <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
-                                               Text="{Binding Subtitle}"
-                                               IsVisible="{Binding HasSubtitle}" />
-                                  </StackPanel>
-                                </Button>
-                              </TreeDataTemplate>
-                            </TreeView.ItemTemplate>
-                          </TreeView>
-                          <Button Classes="ProjectSidebarGhostButton ProjectSidebarBottomCreateButton"
-                                  Content="+ 新建"
-                                  Command="{Binding OpenQuickRequestWorkspaceCommand}" />
-                        </StackPanel>
-                      </StackPanel>
+                      </Border>
                     </StackPanel>
                   </ScrollViewer>
                 </Grid>
