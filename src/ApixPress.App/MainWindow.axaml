@@ -1030,11 +1030,13 @@
                               Classes="HttpMethodSelector"
                               ItemsSource="{Binding HttpMethods}"
                               SelectedItem="{Binding SelectedMethod}" />
-                    <TextBlock Grid.Column="1"
-                               Classes="HttpBaseUrlPrefixText"
-                               Text="{Binding CurrentHttpInterfaceBaseUrl}"
-                               VerticalAlignment="Center"
-                               TextTrimming="CharacterEllipsis" />
+                    <Border Grid.Column="1"
+                            Classes="BaseUrlPrefixCard HttpBaseUrlPrefixCard">
+                      <TextBlock Classes="HttpBaseUrlPrefixText"
+                                 Text="{Binding CurrentEditorBaseUrlCaption}"
+                                 VerticalAlignment="Center"
+                                 TextTrimming="CharacterEllipsis" />
+                    </Border>
                     <TextBox Grid.Column="2"
                              Classes="HttpRequestPathInput"
                              Watermark="{Binding CurrentEditorUrlWatermark}"

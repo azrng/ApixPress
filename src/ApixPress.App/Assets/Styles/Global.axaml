@@ -1614,8 +1614,17 @@
   </Style>
 
   <Style Selector="TextBlock.HttpBaseUrlPrefixText">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-    <Setter Property="Margin" Value="8,0,4,0" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="MaxWidth" Value="280" />
+  </Style>
+
+  <Style Selector="Border.HttpBaseUrlPrefixCard">
+    <Setter Property="Margin" Value="2,0,0,0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="MinHeight" Value="38" />
   </Style>
 
   <Style Selector="TextBox.HttpRequestPathInput">
