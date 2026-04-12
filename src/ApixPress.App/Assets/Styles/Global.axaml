@@ -1471,7 +1471,7 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="MinHeight" Value="320" />
+    <Setter Property="MinHeight" Value="240" />
   </Style>
 
   <Style Selector="TabControl.QuickRequestInlineTabs TabItem">
@@ -1918,7 +1918,7 @@
   </Style>
 
   <Style Selector="Border.ResponsePanelCard">
-    <Setter Property="MinHeight" Value="420" />
+    <Setter Property="MinHeight" Value="520" />
   </Style>
 
   <Style Selector="Border.ProjectWorkspaceSettingsCard">
