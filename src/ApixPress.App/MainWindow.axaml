@@ -1051,7 +1051,7 @@
               </Border>
 
               <Grid Grid.Row="1"
-                    ColumnDefinitions="110,*,Auto,Auto"
+                    ColumnDefinitions="Auto,*,Auto,Auto"
                     ColumnSpacing="{StaticResource Space.2}"
                     IsVisible="{Binding IsQuickRequestEditor}">
                 <ComboBox Grid.Column="0"

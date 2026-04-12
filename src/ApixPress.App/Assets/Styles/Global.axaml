@@ -713,10 +713,10 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="Padding" Value="8,6" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="MinWidth" Value="88" />
+    <Setter Property="MinWidth" Value="74" />
     <Setter Property="MinHeight" Value="40" />
   </Style>
 
@@ -725,7 +725,7 @@
   </Style>
 
   <Style Selector="ComboBox.MethodSelector /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Margin" Value="2,0,18,0" />
+    <Setter Property="Margin" Value="2,0,14,0" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
