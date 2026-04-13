@@ -760,11 +760,11 @@
                       <StackPanel Spacing="{StaticResource Space.4}">
                         <StackPanel Spacing="{StaticResource Space.2}">
                           <TextBlock Classes="ProjectSettingsGroupTitle"
-                                     Text="项目概览" />
+                                     Text="基本设置" />
                           <Button Classes="ProjectSettingsSidebarItemButton"
                                   Classes.ProjectSettingsSidebarItemSelected="{Binding IsProjectSettingsOverviewSelected}"
                                   Command="{Binding ShowProjectOverviewSettingsCommand}">
-                            <TextBlock Text="概览信息" />
+                            <TextBlock Text="基本设置" />
                           </Button>
                         </StackPanel>
 
@@ -1997,7 +1997,8 @@
                     <TextBlock Classes="SectionTitle"
                                Text="{Binding CurrentProjectSettingsTitle}" />
                     <TextBlock Classes="CaptionText"
-                               Text="{Binding CurrentProjectSettingsSubtitle}" />
+                               Text="{Binding CurrentProjectSettingsSubtitle}"
+                               IsVisible="{Binding ShowProjectSettingsImportDataSection}" />
                   </StackPanel>
                   <StackPanel Grid.Column="1"
                               Orientation="Horizontal"
@@ -2008,42 +2009,65 @@
                             IsVisible="{Binding ShowProjectSettingsImportDataSection}" />
                     <Button Classes="PrimaryButton"
                             Content="打开环境设置"
-                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}"
+                            IsVisible="{Binding ShowProjectSettingsImportDataSection}" />
                   </StackPanel>
                 </Grid>
 
-                <Grid Grid.Row="1"
-                      ColumnDefinitions="*,*"
-                      ColumnSpacing="{StaticResource Space.3}"
-                      IsVisible="{Binding ShowProjectSettingsOverviewSection}">
-                  <Border Classes="ProjectSettingsInfoCard">
-                    <StackPanel Spacing="{StaticResource Space.3}">
-                      <TextBlock Classes="SectionTitle"
-                                 Text="项目信息" />
-                      <TextBlock Text="{Binding Project.DisplayName}"
-                                 FontSize="{StaticResource Font.Size.BodyLarge}"
-                                 FontWeight="SemiBold" />
-                      <TextBlock Classes="CaptionText"
-                                 Text="{Binding ProjectSettingsDescription}"
-                                 TextWrapping="Wrap" />
-                    </StackPanel>
-                  </Border>
+                <StackPanel Grid.Row="1"
+                            Spacing="{StaticResource Space.4}"
+                            IsVisible="{Binding ShowProjectSettingsOverviewSection}">
+                  <Border Classes="ProjectSettingsSectionDivider" />
+                  <StackPanel Spacing="{StaticResource Space.3}">
+                    <TextBlock Classes="SectionTitle"
+                               Text="基本信息" />
+                    <Border Classes="ProjectSettingsBasicCard">
+                      <StackPanel>
+                        <Border Classes="ProjectSettingsBasicRow">
+                          <Grid ColumnDefinitions="180,*,Auto"
+                                ColumnSpacing="{StaticResource Space.4}">
+                            <TextBlock Classes="ProjectSettingsRowLabel"
+                                       Text="项目名称" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Project.Name}"
+                                       VerticalAlignment="Center" />
+                            <Button Grid.Column="2"
+                                    Classes="ProjectSettingsInlineActionButton"
+                                    Click="OnOpenProjectDrawer"
+                                    Content="编辑" />
+                          </Grid>
+                        </Border>
 
-                  <Border Grid.Column="1"
-                          Classes="ProjectSettingsInfoCard">
-                    <StackPanel Spacing="{StaticResource Space.3}">
-                      <TextBlock Classes="SectionTitle"
-                                 Text="环境摘要" />
-                      <TextBlock Classes="CaptionText"
-                                 Text="{Binding CurrentEnvironmentLabel, StringFormat='当前环境：{0}'}" />
-                      <TextBlock Classes="CaptionText"
-                                 Text="{Binding CurrentBaseUrlText, StringFormat='BaseUrl：{0}'}"
-                                 TextWrapping="Wrap" />
-                      <TextBlock Classes="CaptionText"
-                                 Text="{Binding EnvironmentCountText, StringFormat='环境数量：{0}'}" />
-                    </StackPanel>
-                  </Border>
-                </Grid>
+                        <Border Classes="ProjectSettingsBasicRow">
+                          <Grid ColumnDefinitions="180,*"
+                                ColumnSpacing="{StaticResource Space.4}">
+                            <TextBlock Classes="ProjectSettingsRowLabel"
+                                       Text="项目 ID" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding ProjectId}"
+                                       VerticalAlignment="Center" />
+                          </Grid>
+                        </Border>
+
+                        <Border Classes="ProjectSettingsBasicRow ProjectSettingsBasicRowLast">
+                          <Grid ColumnDefinitions="180,*,Auto"
+                                ColumnSpacing="{StaticResource Space.4}">
+                            <TextBlock Classes="ProjectSettingsRowLabel"
+                                       Text="简介" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding ProjectSettingsDescription}"
+                                       TextWrapping="Wrap"
+                                       VerticalAlignment="Center" />
+                            <Button Grid.Column="2"
+                                    Classes="ProjectSettingsInlineActionButton"
+                                    Click="OnOpenProjectDrawer"
+                                    Content="编辑" />
+                          </Grid>
+                        </Border>
+                      </StackPanel>
+                    </Border>
+                  </StackPanel>
+                </StackPanel>
 
                 <ScrollViewer Grid.Row="1"
                               IsVisible="{Binding ShowProjectSettingsImportDataSection}">

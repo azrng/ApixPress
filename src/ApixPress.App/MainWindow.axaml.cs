@@ -123,6 +123,13 @@ public partial class MainWindow : Window
             return;
         }
 
+        var activeProjectId = _viewModel.ActiveProjectTab?.ProjectId;
+        if (!string.IsNullOrWhiteSpace(activeProjectId))
+        {
+            _viewModel.ProjectPanel.SelectedProject = _viewModel.ProjectPanel.Projects.FirstOrDefault(item =>
+                string.Equals(item.Id, activeProjectId, StringComparison.OrdinalIgnoreCase));
+        }
+
         _isProjectDrawerOpen = true;
         try
         {

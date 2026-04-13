@@ -189,10 +189,10 @@ public partial class ProjectTabViewModel : ViewModelBase
     public string ProjectSettingsDescription => string.IsNullOrWhiteSpace(Project.Description)
         ? "当前项目还没有补充备注，可在这里继续维护环境与工作区说明。"
         : Project.Description;
-    public string CurrentProjectSettingsTitle => IsProjectSettingsImportDataSelected ? "导入数据" : "项目设置";
+    public string CurrentProjectSettingsTitle => IsProjectSettingsImportDataSelected ? "导入数据" : "基本设置";
     public string CurrentProjectSettingsSubtitle => IsProjectSettingsImportDataSelected
         ? "支持 Swagger 文件上传和 URL 导入，导入结果会持久化保存到当前项目。"
-        : "保持项目说明、环境切换和快捷请求工作区之间的关系清晰可见。";
+        : string.Empty;
     public string InterfaceSectionHint => HasInterfaceEntries ? "默认模块 / 接口" : "默认模块下还没有保存的 HTTP 接口";
     public string QuickRequestSectionHint => HasQuickRequestEntries ? "保存到左侧快捷请求目录" : "左侧快捷请求目录还是空的";
     public string CurrentEditorTitle => ActiveWorkspaceTab?.EditorTitle ?? "新建...";
@@ -751,7 +751,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
         StatusMessage = ShowProjectSettingsImportDataSection
             ? "这里可以导入 Swagger 文档并查看已导入数据。"
-            : "这里可以查看项目说明并进入环境设置。";
+            : "这里可以查看当前项目的基本设置。";
         NotifyShellState();
     }
 
@@ -760,7 +760,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     {
         SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
         SelectedProjectSettingsSection = ProjectSettingsSections.Overview;
-        StatusMessage = "这里可以查看项目说明、环境摘要和设置入口。";
+        StatusMessage = "这里可以查看项目名称、项目 ID 和简介。";
         NotifyShellState();
     }
 
