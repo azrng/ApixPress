@@ -414,7 +414,7 @@
                 ColumnSpacing="{StaticResource Space.3}">
             <Border Grid.Column="0"
                     Classes="ProjectWorkspaceNavigationRail">
-              <Grid VerticalAlignment="Center"
+              <Grid VerticalAlignment="Top"
                     HorizontalAlignment="Center">
                 <u:NavMenu Classes="ProjectWorkspaceNavMenu"
                            ExpandWidth="68"
