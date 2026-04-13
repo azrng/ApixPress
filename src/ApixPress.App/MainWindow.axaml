@@ -414,31 +414,33 @@
                 ColumnSpacing="{StaticResource Space.3}">
             <Border Grid.Column="0"
                     Classes="ProjectWorkspaceNavigationRail">
-              <u:NavMenu Classes="ProjectWorkspaceNavMenu"
-                         ExpandWidth="68"
-                         CommandBinding="{Binding Command}"
-                         HeaderBinding="{Binding}"
-                         ItemsSource="{Binding WorkspaceNavigationItems}"
-                         SelectedItem="{Binding SelectedWorkspaceNavigationItem, Mode=TwoWay}">
-                <u:NavMenu.HeaderTemplate>
-                  <DataTemplate x:DataType="vm:ProjectWorkspaceNavItemViewModel">
-                    <StackPanel HorizontalAlignment="Center"
-                                Spacing="6">
-                      <Border Classes="ProjectWorkspaceNavIcon">
-                        <Path Width="18"
-                              Height="18"
-                              Stretch="Uniform"
-                              Fill="{DynamicResource Brush.Border.Focus}"
-                              Data="{Binding IconData}" />
-                      </Border>
-                      <TextBlock Classes="ProjectWorkspaceNavText"
-                                 Text="{Binding Title}"
-                                 TextAlignment="Center"
-                                 TextWrapping="Wrap" />
-                    </StackPanel>
-                  </DataTemplate>
-                </u:NavMenu.HeaderTemplate>
-              </u:NavMenu>
+              <Grid VerticalAlignment="Center">
+                <u:NavMenu Classes="ProjectWorkspaceNavMenu"
+                           ExpandWidth="68"
+                           CommandBinding="{Binding Command}"
+                           HeaderBinding="{Binding}"
+                           ItemsSource="{Binding WorkspaceNavigationItems}"
+                           SelectedItem="{Binding SelectedWorkspaceNavigationItem, Mode=TwoWay}">
+                  <u:NavMenu.HeaderTemplate>
+                    <DataTemplate x:DataType="vm:ProjectWorkspaceNavItemViewModel">
+                      <StackPanel HorizontalAlignment="Center"
+                                  Spacing="6">
+                        <Border Classes="ProjectWorkspaceNavIcon">
+                          <Path Width="18"
+                                Height="18"
+                                Stretch="Uniform"
+                                Fill="{DynamicResource Brush.Border.Focus}"
+                                Data="{Binding IconData}" />
+                        </Border>
+                        <TextBlock Classes="ProjectWorkspaceNavText"
+                                   Text="{Binding Title}"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </u:NavMenu.HeaderTemplate>
+                </u:NavMenu>
+              </Grid>
             </Border>
 
             <Border Grid.Column="1"
@@ -758,21 +760,21 @@
                         <StackPanel Spacing="{StaticResource Space.2}">
                           <TextBlock Classes="ProjectSettingsGroupTitle"
                                      Text="项目概览" />
-                          <ToggleButton Classes="ProjectSettingsSidebarItemButton"
-                                        Command="{Binding ShowProjectOverviewSettingsCommand}"
-                                        IsChecked="{Binding IsProjectSettingsOverviewSelected, Mode=OneWay}">
+                          <Button Classes="ProjectSettingsSidebarItemButton"
+                                  Classes.ProjectSettingsSidebarItemSelected="{Binding IsProjectSettingsOverviewSelected}"
+                                  Command="{Binding ShowProjectOverviewSettingsCommand}">
                             <TextBlock Text="概览信息" />
-                          </ToggleButton>
+                          </Button>
                         </StackPanel>
 
                         <StackPanel Spacing="{StaticResource Space.2}">
                           <TextBlock Classes="ProjectSettingsGroupTitle"
                                      Text="数据管理" />
-                          <ToggleButton Classes="ProjectSettingsSidebarItemButton"
-                                        Command="{Binding ShowProjectImportDataSettingsCommand}"
-                                        IsChecked="{Binding IsProjectSettingsImportDataSelected, Mode=OneWay}">
+                          <Button Classes="ProjectSettingsSidebarItemButton"
+                                  Classes.ProjectSettingsSidebarItemSelected="{Binding IsProjectSettingsImportDataSelected}"
+                                  Command="{Binding ShowProjectImportDataSettingsCommand}">
                             <TextBlock Text="导入数据" />
-                          </ToggleButton>
+                          </Button>
                         </StackPanel>
 
                         <Border Classes="ProjectSettingsSidebarMetaCard">
