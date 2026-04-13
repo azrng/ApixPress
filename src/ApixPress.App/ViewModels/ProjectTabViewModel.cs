@@ -244,6 +244,45 @@ public partial class ProjectTabViewModel : ViewModelBase
     public string CurrentHttpInterfaceDisplayName => string.IsNullOrWhiteSpace(CurrentHttpInterfaceName)
         ? "未命名接口"
         : CurrentHttpInterfaceName.Trim();
+    public string CurrentQuickRequestName
+    {
+        get
+        {
+            if (ActiveWorkspaceTab is null)
+            {
+                return string.Empty;
+            }
+
+            var currentName = ActiveWorkspaceTab.ConfigTab.RequestName?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(currentName))
+            {
+                return "未命名请求";
+            }
+
+            return ActiveWorkspaceTab.IsQuickRequestTab
+                && string.Equals(currentName, ActiveWorkspaceTab.ResolveGeneratedRequestName(), StringComparison.Ordinal)
+                ? "未命名请求"
+                : currentName;
+        }
+        set
+        {
+            if (ActiveWorkspaceTab is null)
+            {
+                return;
+            }
+
+            var normalizedValue = string.Equals(value?.Trim(), "未命名请求", StringComparison.Ordinal)
+                ? string.Empty
+                : value?.Trim() ?? string.Empty;
+            if (ActiveWorkspaceTab.ConfigTab.RequestName == normalizedValue)
+            {
+                return;
+            }
+
+            ActiveWorkspaceTab.ConfigTab.RequestName = normalizedValue;
+            NotifyWorkspaceEditorState();
+        }
+    }
     public bool IsHttpDebugEditorMode => ActiveWorkspaceTab?.IsHttpDebugView ?? false;
     public bool IsHttpDesignEditorMode => ActiveWorkspaceTab?.IsHttpDesignView ?? false;
     public bool IsHttpDocumentPreviewMode => ActiveWorkspaceTab?.IsHttpDocumentPreviewView ?? false;
@@ -252,7 +291,9 @@ public partial class ProjectTabViewModel : ViewModelBase
     public bool ShowSaveHttpCaseAction => IsHttpInterfaceEditor;
     public string CurrentEditorBaseUrlCaption => IsHttpInterfaceEditor
         ? (string.IsNullOrWhiteSpace(EnvironmentPanel.SelectedEnvironment?.BaseUrl) ? "当前环境未配置 BaseUrl" : EnvironmentPanel.SelectedEnvironment.BaseUrl)
-        : "快捷请求不固定 BaseUrl";
+        : IsQuickRequestEditor
+            ? "完整地址"
+            : string.Empty;
     public bool HasHttpDocumentParameters => ConfigTab.QueryParameters.Count > 0;
     public bool HasHttpDocumentHeaders => ConfigTab.Headers.Count > 0;
     public bool HasHttpDocumentRequestDetails => HasHttpDocumentParameters || HasHttpDocumentHeaders || ConfigTab.HasBodyContent;
@@ -1701,6 +1742,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentHttpCaseName));
         OnPropertyChanged(nameof(CurrentHttpInterfaceName));
         OnPropertyChanged(nameof(CurrentHttpInterfaceDisplayName));
+        OnPropertyChanged(nameof(CurrentQuickRequestName));
         OnPropertyChanged(nameof(IsHttpDebugEditorMode));
         OnPropertyChanged(nameof(IsHttpDesignEditorMode));
         OnPropertyChanged(nameof(IsHttpDocumentPreviewMode));
