@@ -2073,7 +2073,7 @@
 
                 <StackPanel Grid.Row="1"
                             Spacing="{StaticResource Space.4}"
-                            IsVisible="{Binding ShowProjectSettingsOverviewSection}">
+                            IsVisible="{Binding IsProjectSettingsOverviewSelected}">
                   <Border Classes="ProjectSettingsSectionDivider" />
                   <StackPanel Spacing="{StaticResource Space.3}">
                     <TextBlock Classes="SectionTitle"
@@ -2127,7 +2127,7 @@
                 </StackPanel>
 
                 <ScrollViewer Grid.Row="1"
-                              IsVisible="{Binding ShowProjectSettingsImportDataSection}">
+                              IsVisible="{Binding IsProjectSettingsImportDataSelected}">
                   <StackPanel Spacing="{StaticResource Space.4}">
                     <Border Classes="ProjectSettingsInfoCard">
                       <StackPanel Spacing="{StaticResource Space.3}">
