@@ -742,7 +742,7 @@
                 </Grid>
 
                 <Grid IsVisible="{Binding IsProjectSettingsSection}"
-                      RowDefinitions="Auto,Auto,Auto,*"
+                      RowDefinitions="Auto,*"
                       RowSpacing="{StaticResource Space.3}">
                   <StackPanel Spacing="2">
                     <TextBlock Classes="SectionTitle"
@@ -751,64 +751,43 @@
                                Text="在这里管理项目设置、环境和导入数据入口。" />
                   </StackPanel>
 
-                  <Border Grid.Row="1"
-                          Classes="SidebarListCard ProjectSettingsSidebarSection">
-                    <StackPanel Spacing="{StaticResource Space.2}">
-                      <TextBlock Text="项目信息"
-                                 FontWeight="SemiBold" />
-                      <ToggleButton Classes="SettingsNavButton ProjectSettingsNavButton"
-                                    Command="{Binding ShowProjectOverviewSettingsCommand}"
-                                    IsChecked="{Binding IsProjectSettingsOverviewSelected, Mode=OneWay}">
-                        <TextBlock Text="概览信息" />
-                      </ToggleButton>
-                    </StackPanel>
-                  </Border>
+                  <ScrollViewer Grid.Row="1"
+                                HorizontalScrollBarVisibility="Disabled">
+                    <Border Classes="ProjectSettingsSidebarCard">
+                      <StackPanel Spacing="{StaticResource Space.4}">
+                        <StackPanel Spacing="{StaticResource Space.2}">
+                          <TextBlock Classes="ProjectSettingsGroupTitle"
+                                     Text="项目概览" />
+                          <ToggleButton Classes="ProjectSettingsSidebarItemButton"
+                                        Command="{Binding ShowProjectOverviewSettingsCommand}"
+                                        IsChecked="{Binding IsProjectSettingsOverviewSelected, Mode=OneWay}">
+                            <TextBlock Text="概览信息" />
+                          </ToggleButton>
+                        </StackPanel>
 
-                  <Border Grid.Row="2"
-                          Classes="SidebarListCard ProjectSettingsSidebarSection">
-                    <StackPanel Spacing="{StaticResource Space.2}">
-                      <TextBlock Text="数据管理"
-                                 FontWeight="SemiBold" />
-                      <ToggleButton Classes="SettingsNavButton ProjectSettingsNavButton"
-                                    Command="{Binding ShowProjectImportDataSettingsCommand}"
-                                    IsChecked="{Binding IsProjectSettingsImportDataSelected, Mode=OneWay}">
-                        <TextBlock Text="导入数据" />
-                      </ToggleButton>
-                    </StackPanel>
-                  </Border>
+                        <StackPanel Spacing="{StaticResource Space.2}">
+                          <TextBlock Classes="ProjectSettingsGroupTitle"
+                                     Text="数据管理" />
+                          <ToggleButton Classes="ProjectSettingsSidebarItemButton"
+                                        Command="{Binding ShowProjectImportDataSettingsCommand}"
+                                        IsChecked="{Binding IsProjectSettingsImportDataSelected, Mode=OneWay}">
+                            <TextBlock Text="导入数据" />
+                          </ToggleButton>
+                        </StackPanel>
 
-                  <StackPanel Grid.Row="3"
-                              Spacing="{StaticResource Space.2}">
-                    <Border Classes="SidebarListCard">
-                      <StackPanel Spacing="{StaticResource Space.2}">
-                        <TextBlock Text="{Binding Project.DisplayName}"
-                                   FontWeight="SemiBold" />
-                      <TextBlock Classes="CaptionText"
-                                 Text="{Binding ProjectSettingsDescription}"
-                                 TextWrapping="Wrap" />
-                    </StackPanel>
-                  </Border>
-                    <Border Classes="SidebarListCard">
-                      <StackPanel Spacing="{StaticResource Space.2}">
-                        <TextBlock Text="环境数量"
-                                   FontWeight="SemiBold" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="{Binding EnvironmentCountText, StringFormat='共 {0} 个环境'}" />
+                        <Border Classes="ProjectSettingsSidebarMetaCard">
+                          <StackPanel Spacing="{StaticResource Space.2}">
+                            <TextBlock Text="{Binding Project.DisplayName}"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Classes="CaptionText"
+                                       Text="{Binding CurrentEnvironmentLabel, StringFormat='当前环境：{0}'}" />
+                            <TextBlock Classes="CaptionText"
+                                       Text="{Binding ImportedApiDocumentCountText, StringFormat='已导入：{0} 份文档'}" />
+                          </StackPanel>
+                        </Border>
                       </StackPanel>
                     </Border>
-                    <Border Classes="SidebarListCard">
-                      <StackPanel Spacing="{StaticResource Space.2}">
-                        <TextBlock Text="当前 BaseUrl"
-                                   FontWeight="SemiBold" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="{Binding CurrentBaseUrlText}"
-                                   TextWrapping="Wrap" />
-                      </StackPanel>
-                    </Border>
-                    <Button Classes="PrimaryButton"
-                            Content="打开环境设置"
-                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
-                  </StackPanel>
+                  </ScrollViewer>
                 </Grid>
               </Grid>
             </Border>

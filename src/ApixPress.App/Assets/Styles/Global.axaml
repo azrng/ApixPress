@@ -2018,13 +2018,46 @@
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
-  <Style Selector="Border.ProjectSettingsSidebarSection">
-    <Setter Property="Margin" Value="0,0,0,2" />
+  <Style Selector="Border.ProjectSettingsSidebarCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
 
-  <Style Selector="ToggleButton.ProjectSettingsNavButton">
+  <Style Selector="TextBlock.ProjectSettingsGroupTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="Margin" Value="2,0,0,0" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectSettingsSidebarItemButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="Padding" Value="12,10" />
-    <Setter Property="MinHeight" Value="40" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectSettingsSidebarItemButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectSettingsSidebarItemButton:checked">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="Border.ProjectSettingsSidebarMetaCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
 
   <Style Selector="ToggleButton.ProjectImportModeButton">
