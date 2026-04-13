@@ -43,7 +43,9 @@ public partial class ExplorerItemViewModel : ViewModelBase
     public bool IsHttpCaseNode => string.Equals(NodeType, "http-case", StringComparison.OrdinalIgnoreCase);
     public bool IsQuickRequestNode => string.Equals(NodeType, "quick-request", StringComparison.OrdinalIgnoreCase);
     public bool ShowTrailingDot => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase) && HasChildren;
-    public string MethodBadgeText => SourceCase?.RequestSnapshot.Method?.ToUpperInvariant() ?? string.Empty;
+    public string MethodBadgeText => SourceCase?.RequestSnapshot.Method?.ToUpperInvariant()
+        ?? Endpoint?.Method?.ToUpperInvariant()
+        ?? string.Empty;
     public string MethodBadgeClass => MethodBadgeText switch
     {
         "GET" => "Light Success",

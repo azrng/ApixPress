@@ -343,6 +343,82 @@ public sealed class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task ApiWorkspaceService_ShouldReplacePreviousImportedDocumentsWithinProject()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var repository = new ApiDocumentRepository(factory);
+        var service = new ApiWorkspaceService(repository);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "覆盖导入项目"
+        }, CancellationToken.None)).Data!;
+        var firstFile = Path.Combine(Path.GetTempPath(), $"swagger-first-{Guid.NewGuid():N}.json");
+        var secondFile = Path.Combine(Path.GetTempPath(), $"swagger-second-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            await File.WriteAllTextAsync(firstFile, """
+                                                  {
+                                                    "openapi": "3.0.1",
+                                                    "info": { "title": "First Import" },
+                                                    "paths": {
+                                                      "/health": {
+                                                        "get": {
+                                                          "summary": "健康检查"
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                  """);
+            await File.WriteAllTextAsync(secondFile, """
+                                                   {
+                                                     "openapi": "3.0.1",
+                                                     "info": { "title": "Second Import" },
+                                                     "paths": {
+                                                       "/users": {
+                                                         "post": {
+                                                           "summary": "创建用户"
+                                                         }
+                                                       }
+                                                     }
+                                                   }
+                                                   """);
+
+            var firstResult = await service.ImportFromFileAsync(project.Id, firstFile, CancellationToken.None);
+            var secondResult = await service.ImportFromFileAsync(project.Id, secondFile, CancellationToken.None);
+
+            Assert.True(firstResult.IsSuccess);
+            Assert.True(secondResult.IsSuccess);
+
+            var documents = await service.GetDocumentsAsync(project.Id, CancellationToken.None);
+            var document = Assert.Single(documents);
+            Assert.Equal("Second Import", document.Name);
+
+            var endpoints = await service.GetEndpointsAsync(document.Id, CancellationToken.None);
+            var endpoint = Assert.Single(endpoints);
+            Assert.Equal("POST", endpoint.Method);
+            Assert.Equal("/users", endpoint.Path);
+        }
+        finally
+        {
+            if (File.Exists(firstFile))
+            {
+                File.Delete(firstFile);
+            }
+
+            if (File.Exists(secondFile))
+            {
+                File.Delete(secondFile);
+            }
+        }
+    }
+
+    [Fact]
     public async Task ApiWorkspaceService_ShouldFallbackBaseUrlForLegacyUrlImportedDocuments()
     {
         using var factory = new TestSqliteConnectionFactory();

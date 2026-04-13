@@ -26,6 +26,23 @@ public sealed class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_ShouldShowImportedEndpointsInInterfaceCatalog()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 2);
+
+        var viewModel = CreateViewModel(apiWorkspaceService);
+
+        await viewModel.InitializeAsync();
+
+        var titles = FlattenExplorerTitles(viewModel.InterfaceCatalogItems).ToList();
+
+        Assert.Contains("默认分组 (2)", titles);
+        Assert.Contains("接口 1", titles);
+        Assert.Contains("接口 2", titles);
+    }
+
+    [Fact]
     public async Task ImportSwaggerUrlCommand_ShouldRefreshImportedDocumentList()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
@@ -43,6 +60,24 @@ public sealed class ProjectTabViewModelTests
         Assert.Equal("URL 导入", imported.SourceTypeText);
         Assert.True(viewModel.ShowImportStatusSuccess);
         Assert.Equal("https://demo.local/swagger.json", apiWorkspaceService.LastImportedUrl);
+    }
+
+    [Fact]
+    public async Task ImportSwaggerUrlCommand_ShouldReplaceImportedDocumentHistory()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        apiWorkspaceService.SeedDocument("project-1", "旧文档", "FILE", @"C:\temp\legacy-swagger.json", "https://legacy.demo.local", 1);
+        var viewModel = CreateViewModel(apiWorkspaceService);
+        await viewModel.InitializeAsync();
+
+        viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
+        viewModel.ImportUrl = "https://demo.local/swagger.json";
+
+        await viewModel.ImportSwaggerUrlCommand.ExecuteAsync(null);
+
+        var imported = Assert.Single(viewModel.ImportedApiDocuments);
+        Assert.Equal("远程订单服务", imported.Name);
+        Assert.Equal("1", viewModel.ImportedApiDocumentCountText);
     }
 
     [Fact]
@@ -115,6 +150,18 @@ public sealed class ProjectTabViewModelTests
             new FakeFilePickerService());
     }
 
+    private static IEnumerable<string> FlattenExplorerTitles(IEnumerable<ExplorerItemViewModel> items)
+    {
+        foreach (var item in items)
+        {
+            yield return item.Title;
+            foreach (var child in FlattenExplorerTitles(item.Children))
+            {
+                yield return child;
+            }
+        }
+    }
+
     private sealed class FakeApiWorkspaceService : IApiWorkspaceService
     {
         private readonly Dictionary<string, List<ApiDocumentDto>> _documentsByProject = new(StringComparer.OrdinalIgnoreCase);
@@ -141,7 +188,13 @@ public sealed class ProjectTabViewModelTests
                 _documentsByProject[projectId] = documents;
             }
 
-            documents.Insert(0, document);
+            foreach (var existingDocument in documents.ToList())
+            {
+                _endpointsByDocument.Remove(existingDocument.Id);
+            }
+
+            documents.Clear();
+            documents.Add(document);
             _endpointsByDocument[document.Id] = Enumerable.Range(1, endpointCount)
                 .Select(index => new ApiEndpointDto
                 {

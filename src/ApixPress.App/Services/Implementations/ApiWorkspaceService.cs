@@ -23,7 +23,11 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     public async Task<IReadOnlyList<ApiDocumentDto>> GetDocumentsAsync(string projectId, CancellationToken cancellationToken)
     {
         var documents = await _apiDocumentRepository.GetDocumentsAsync(projectId, cancellationToken);
-        return documents.Select(ToDocumentDto).ToList();
+        return documents
+            .OrderByDescending(item => item.ImportedAt)
+            .Take(1)
+            .Select(ToDocumentDto)
+            .ToList();
     }
 
     public async Task<IReadOnlyList<ApiEndpointDto>> GetEndpointsAsync(string documentId, CancellationToken cancellationToken)

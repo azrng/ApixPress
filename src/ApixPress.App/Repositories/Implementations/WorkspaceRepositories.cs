@@ -117,6 +117,11 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
         IReadOnlyList<RequestParameterEntity> parameters,
         CancellationToken cancellationToken)
     {
+        const string deleteProjectDocumentsSql = """
+                                                 delete from api_documents
+                                                 where project_id = @ProjectId
+                                                 """;
+
         const string insertDocumentSql = """
                                          insert into api_documents (
                                              id, project_id, name, source_type, source_value, base_url, raw_json, imported_at
@@ -145,6 +150,11 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
         connection.Open();
         using var transaction = connection.BeginTransaction();
 
+        await connection.ExecuteAsync(new CommandDefinition(
+            deleteProjectDocumentsSql,
+            new { document.ProjectId },
+            transaction,
+            cancellationToken: cancellationToken));
         await connection.ExecuteAsync(new CommandDefinition(insertDocumentSql, document, transaction, cancellationToken: cancellationToken));
         await connection.ExecuteAsync(new CommandDefinition(insertEndpointSql, endpoints, transaction, cancellationToken: cancellationToken));
         await connection.ExecuteAsync(new CommandDefinition(insertParameterSql, parameters, transaction, cancellationToken: cancellationToken));
