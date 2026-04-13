@@ -501,6 +501,78 @@ public sealed class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task ApiWorkspaceService_ShouldDeleteImportedEndpointsFromStoredDocument()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var repository = new ApiDocumentRepository(factory);
+        var service = new ApiWorkspaceService(repository);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "删除导入接口项目"
+        }, CancellationToken.None)).Data!;
+        var tempFile = Path.Combine(Path.GetTempPath(), $"swagger-delete-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, """
+                                                 {
+                                                   "openapi": "3.0.1",
+                                                   "info": { "title": "Delete Demo" },
+                                                   "paths": {
+                                                     "/users": {
+                                                       "get": {
+                                                         "summary": "查询用户列表"
+                                                       }
+                                                     },
+                                                     "/orders": {
+                                                       "post": {
+                                                         "summary": "创建订单"
+                                                       }
+                                                     }
+                                                   }
+                                                 }
+                                                 """);
+
+            var importResult = await service.ImportFromFileAsync(project.Id, tempFile, CancellationToken.None);
+            Assert.True(importResult.IsSuccess);
+
+            var document = Assert.Single(await service.GetDocumentsAsync(project.Id, CancellationToken.None));
+            await service.DeleteImportedHttpInterfacesAsync(project.Id,
+            [
+                new RequestCaseDto
+                {
+                    ProjectId = project.Id,
+                    EntryType = "http-interface",
+                    Name = "查询用户列表",
+                    RequestSnapshot = new RequestSnapshotDto
+                    {
+                        EndpointId = "swagger-import:GET /users",
+                        Method = "GET",
+                        Url = "/users"
+                    }
+                }
+            ], CancellationToken.None);
+
+            var endpoints = await service.GetEndpointsAsync(document.Id, CancellationToken.None);
+            var endpoint = Assert.Single(endpoints);
+            Assert.Equal("POST", endpoint.Method);
+            Assert.Equal("/orders", endpoint.Path);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
+
+    [Fact]
     public async Task ApiWorkspaceService_ShouldFallbackBaseUrlForLegacyUrlImportedDocuments()
     {
         using var factory = new TestSqliteConnectionFactory();

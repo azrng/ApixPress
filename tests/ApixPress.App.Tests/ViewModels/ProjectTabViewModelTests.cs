@@ -132,6 +132,27 @@ public sealed class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task DeleteWorkspaceItemAsync_ShouldDeleteFolderAndImportedEndpoints()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 2);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        var folderItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (2)");
+        Assert.NotNull(folderItem);
+
+        await viewModel.DeleteWorkspaceItemAsync(folderItem);
+
+        Assert.Empty(viewModel.InterfaceCatalogItems);
+        Assert.Empty(requestCaseService.Cases);
+        var remainingDocument = Assert.Single(viewModel.ImportedApiDocuments);
+        Assert.Equal("0", remainingDocument.EndpointCountText);
+    }
+
+    [Fact]
     public void ProjectSettingsCommands_ShouldSwitchBetweenOverviewAndImportDataSections()
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
@@ -355,6 +376,28 @@ public sealed class ProjectTabViewModelTests
             SeedDocument(projectId, "本地订单服务", "FILE", filePath, "https://order.demo.local", 1);
             var document = _documentsByProject[projectId][0];
             return Task.FromResult<IResultModel<ApiDocumentDto>>(ResultModel<ApiDocumentDto>.Success(document));
+        }
+
+        public Task DeleteImportedHttpInterfacesAsync(string projectId, IReadOnlyList<RequestCaseDto> requestCases, CancellationToken cancellationToken)
+        {
+            if (!_documentsByProject.TryGetValue(projectId, out var documents))
+            {
+                return Task.CompletedTask;
+            }
+
+            foreach (var document in documents)
+            {
+                if (!_endpointsByDocument.TryGetValue(document.Id, out var endpoints))
+                {
+                    continue;
+                }
+
+                endpoints.RemoveAll(endpoint => requestCases.Any(requestCase =>
+                    string.Equals(requestCase.RequestSnapshot.Method, endpoint.Method, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(requestCase.RequestSnapshot.Url, endpoint.Path, StringComparison.OrdinalIgnoreCase)));
+            }
+
+            return Task.CompletedTask;
         }
     }
 

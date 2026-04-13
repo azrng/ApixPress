@@ -50,6 +50,14 @@
                   IsHitTestVisible="{Binding IsClickable}"
                   Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
                   CommandParameter="{Binding}">
+            <Button.ContextMenu>
+              <ContextMenu DataContext="{Binding}">
+                <MenuItem Header="删除"
+                          IsEnabled="{Binding CanDelete}"
+                          Command="{Binding DeleteCommand}"
+                          CommandParameter="{Binding}" />
+              </ContextMenu>
+            </Button.ContextMenu>
             <StackPanel Spacing="1">
               <Grid ColumnDefinitions="Auto,Auto,*,Auto"
                     ColumnSpacing="2">
@@ -671,6 +679,14 @@
                                             IsHitTestVisible="{Binding CanLoad}"
                                             Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
                                             CommandParameter="{Binding}">
+                                      <Button.ContextMenu>
+                                        <ContextMenu DataContext="{Binding}">
+                                          <MenuItem Header="删除"
+                                                    IsEnabled="{Binding CanDelete}"
+                                                    Command="{Binding DeleteCommand}"
+                                                    CommandParameter="{Binding}" />
+                                        </ContextMenu>
+                                      </Button.ContextMenu>
                                       <StackPanel Classes="QuickRequestTreeNodeContent">
                                         <Grid ColumnDefinitions="Auto,Auto,*,Auto"
                                               ColumnSpacing="{StaticResource Space.1}">

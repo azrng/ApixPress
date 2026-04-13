@@ -101,6 +101,30 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         }
     }
 
+    public async Task DeleteImportedHttpInterfacesAsync(string projectId, IReadOnlyList<RequestCaseDto> requestCases, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(projectId) || requestCases.Count == 0)
+        {
+            return;
+        }
+
+        var endpointIds = new List<string>();
+        var documents = await _apiDocumentRepository.GetDocumentsAsync(projectId, cancellationToken);
+        foreach (var document in documents)
+        {
+            var endpoints = await _apiDocumentRepository.GetEndpointsByDocumentIdAsync(document.Id, cancellationToken);
+            foreach (var endpoint in endpoints)
+            {
+                if (requestCases.Any(requestCase => MatchesImportedInterface(endpoint, requestCase)))
+                {
+                    endpointIds.Add(endpoint.Id);
+                }
+            }
+        }
+
+        await _apiDocumentRepository.DeleteEndpointsByIdsAsync(endpointIds, cancellationToken);
+    }
+
     private async Task<IResultModel<ApiDocumentDto>> ImportCoreAsync(string projectId, string sourceType, string sourceValue, string json, CancellationToken cancellationToken)
     {
         try
@@ -152,5 +176,17 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
             Description = entity.Description,
             Required = entity.Required
         };
+    }
+
+    private static bool MatchesImportedInterface(ApiEndpointEntity endpoint, RequestCaseDto requestCase)
+    {
+        var endpointKey = $"swagger-import:{endpoint.Method.ToUpperInvariant()} {endpoint.Path}";
+        if (string.Equals(requestCase.RequestSnapshot.EndpointId, endpointKey, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return string.Equals(requestCase.RequestSnapshot.Method, endpoint.Method, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(requestCase.RequestSnapshot.Url, endpoint.Path, StringComparison.OrdinalIgnoreCase);
     }
 }

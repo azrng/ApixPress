@@ -492,6 +492,19 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private async Task DeleteSavedRequestAsync(ExplorerItemViewModel? item)
+    {
+        if (ActiveProjectTab is null || item is null)
+        {
+            return;
+        }
+
+        await ActiveProjectTab.DeleteWorkspaceItemAsync(item);
+        StatusMessage = ActiveProjectTab.StatusMessage;
+        NotifyShellState();
+    }
+
+    [RelayCommand]
     private void LoadHistoryItem(RequestHistoryItemViewModel? item)
     {
         if (ActiveProjectTab is null || item is null)

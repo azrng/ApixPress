@@ -14,6 +14,8 @@ namespace ApixPress.App.ViewModels;
 
 public partial class ProjectTabViewModel : ViewModelBase
 {
+    private const string ImportedEndpointKeyPrefix = "swagger-import:";
+
     private static class WorkspaceSections
     {
         public const string InterfaceManagement = "interface-management";
@@ -737,6 +739,61 @@ public partial class ProjectTabViewModel : ViewModelBase
         NotifyShellState();
     }
 
+    public async Task DeleteWorkspaceItemAsync(ExplorerItemViewModel? item)
+    {
+        if (item is null)
+        {
+            return;
+        }
+
+        var targets = CollectDeletableSourceCases(item)
+            .DistinctBy(source => source.Id, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        if (targets.Count == 0)
+        {
+            StatusMessage = "当前节点没有可删除的内容。";
+            NotifyShellState();
+            return;
+        }
+
+        var importedInterfaces = targets
+            .Where(source => string.Equals(source.EntryType, RequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase))
+            .Where(IsImportedInterface)
+            .ToList();
+        if (importedInterfaces.Count > 0)
+        {
+            await _apiWorkspaceService.DeleteImportedHttpInterfacesAsync(ProjectId, importedInterfaces, CancellationToken.None);
+        }
+
+        foreach (var source in targets
+                     .OrderBy(source => ResolveDeletePriority(source.EntryType))
+                     .ThenBy(source => source.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            await _requestCaseService.DeleteAsync(ProjectId, source.Id, CancellationToken.None);
+        }
+
+        CloseWorkspaceTabsForDeletedCases(targets);
+        if (importedInterfaces.Count > 0)
+        {
+            await LoadImportedDocumentsAsync(manageBusyState: false);
+        }
+        else
+        {
+            await ReloadSavedRequestsAsync();
+        }
+
+        StatusMessage = targets.Count == 1
+            ? $"已删除：{targets[0].Name}"
+            : $"已删除 {targets.Count} 项内容。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private async Task DeleteWorkspaceTreeItemAsync(ExplorerItemViewModel? item)
+    {
+        await DeleteWorkspaceItemAsync(item);
+    }
+
     [RelayCommand]
     private void ShowHttpDebugEditorMode()
     {
@@ -1293,7 +1350,8 @@ public partial class ProjectTabViewModel : ViewModelBase
             Title = "接口",
             Subtitle = string.Empty,
             IsGroup = true,
-            NodeType = "interface-root"
+            NodeType = "interface-root",
+            DeleteCommand = DeleteWorkspaceTreeItemCommand
         };
         InterfaceTreeItems.Add(interfaceRoot);
 
@@ -1316,7 +1374,8 @@ public partial class ProjectTabViewModel : ViewModelBase
                             Title = BuildFolderTitle(segment, currentPath, folderCounts),
                             Subtitle = string.Empty,
                             IsGroup = true,
-                            NodeType = "folder"
+                            NodeType = "folder",
+                            DeleteCommand = DeleteWorkspaceTreeItemCommand
                         };
                         folderNodes[currentPath] = folderNode;
                         parentNode.Children.Add(folderNode);
@@ -1332,6 +1391,7 @@ public partial class ProjectTabViewModel : ViewModelBase
                 Subtitle = string.Empty,
                 NodeType = RequestEntryTypes.HttpInterface,
                 CanLoad = true,
+                DeleteCommand = DeleteWorkspaceTreeItemCommand,
                 SourceCase = item.SourceCase
             };
             parentNode.Children.Add(interfaceNode);
@@ -1346,6 +1406,7 @@ public partial class ProjectTabViewModel : ViewModelBase
                         Subtitle = string.Empty,
                         NodeType = RequestEntryTypes.HttpCase,
                         CanLoad = true,
+                        DeleteCommand = DeleteWorkspaceTreeItemCommand,
                         SourceCase = caseItem.SourceCase
                     });
                 }
@@ -1360,11 +1421,50 @@ public partial class ProjectTabViewModel : ViewModelBase
                 Subtitle = string.Empty,
                 NodeType = RequestEntryTypes.QuickRequest,
                 CanLoad = true,
+                DeleteCommand = DeleteWorkspaceTreeItemCommand,
                 SourceCase = item.SourceCase
             });
         }
 
         OnPropertyChanged(nameof(InterfaceCatalogItems));
+    }
+
+    private IEnumerable<RequestCaseDto> CollectDeletableSourceCases(ExplorerItemViewModel item)
+    {
+        if (item.SourceCase is not null)
+        {
+            yield return item.SourceCase;
+        }
+
+        foreach (var child in item.Children)
+        {
+            foreach (var descendant in CollectDeletableSourceCases(child))
+            {
+                yield return descendant;
+            }
+        }
+    }
+
+    private void CloseWorkspaceTabsForDeletedCases(IReadOnlyCollection<RequestCaseDto> deletedCases)
+    {
+        var deletedIds = deletedCases
+            .Select(item => item.Id)
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (deletedIds.Count == 0)
+        {
+            return;
+        }
+
+        var tabsToClose = WorkspaceTabs
+            .Where(tab => deletedIds.Contains(tab.EditingQuickRequestId)
+                || deletedIds.Contains(tab.EditingInterfaceId)
+                || deletedIds.Contains(tab.EditingCaseId))
+            .ToList();
+        foreach (var tab in tabsToClose)
+        {
+            CloseWorkspaceTab(tab);
+        }
     }
 
     private ProjectEnvironmentDto BuildExecutionEnvironment()
@@ -1671,6 +1771,22 @@ public partial class ProjectTabViewModel : ViewModelBase
     private static string BuildInterfaceTitle(string name, int caseCount)
     {
         return caseCount > 0 ? $"{name} ({caseCount})" : name;
+    }
+
+    private static bool IsImportedInterface(RequestCaseDto requestCase)
+    {
+        return requestCase.RequestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static int ResolveDeletePriority(string entryType)
+    {
+        return entryType switch
+        {
+            RequestEntryTypes.HttpCase => 0,
+            RequestEntryTypes.QuickRequest => 1,
+            RequestEntryTypes.HttpInterface => 2,
+            _ => 3
+        };
     }
 
     private void OnSelectedEnvironmentChanged(ProjectEnvironmentItemViewModel? environment)

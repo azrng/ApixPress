@@ -111,6 +111,45 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
         return items.ToList();
     }
 
+    public async Task DeleteEndpointsByIdsAsync(IEnumerable<string> endpointIds, CancellationToken cancellationToken)
+    {
+        var ids = endpointIds
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (ids.Length == 0)
+        {
+            return;
+        }
+
+        const string deleteParametersSql = """
+                                           delete from request_parameters
+                                           where endpoint_id in @EndpointIds
+                                           """;
+
+        const string deleteEndpointsSql = """
+                                         delete from api_endpoints
+                                         where id in @EndpointIds
+                                         """;
+
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
+        using var transaction = connection.BeginTransaction();
+
+        await connection.ExecuteAsync(new CommandDefinition(
+            deleteParametersSql,
+            new { EndpointIds = ids },
+            transaction,
+            cancellationToken: cancellationToken));
+        await connection.ExecuteAsync(new CommandDefinition(
+            deleteEndpointsSql,
+            new { EndpointIds = ids },
+            transaction,
+            cancellationToken: cancellationToken));
+
+        transaction.Commit();
+    }
+
     public async Task SaveDocumentGraphAsync(
         ApiDocumentEntity document,
         IReadOnlyList<ApiEndpointEntity> endpoints,

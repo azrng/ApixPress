@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels.Base;
@@ -13,6 +14,7 @@ public partial class ExplorerItemViewModel : ViewModelBase
         {
             OnPropertyChanged(nameof(HasChildren));
             OnPropertyChanged(nameof(IsClickable));
+            OnPropertyChanged(nameof(CanDelete));
         };
     }
 
@@ -37,6 +39,7 @@ public partial class ExplorerItemViewModel : ViewModelBase
     public ObservableCollection<ExplorerItemViewModel> Children { get; } = [];
     public bool HasChildren => Children.Count > 0;
     public bool IsClickable => CanLoad || HasChildren;
+    public bool CanDelete => SourceCase is not null || Children.Any(child => child.CanDelete);
     public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
     public bool ShowMethodBadge => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase);
     public bool ShowLeadingGlyph => !ShowMethodBadge && !IsHttpCaseNode;
@@ -66,6 +69,7 @@ public partial class ExplorerItemViewModel : ViewModelBase
         _ => "\uE8A5"
     };
 
+    public ICommand? DeleteCommand { get; init; }
     public RequestCaseDto? SourceCase { get; init; }
     public ApiEndpointDto? Endpoint { get; init; }
 

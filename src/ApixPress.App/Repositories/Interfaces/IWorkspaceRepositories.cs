@@ -12,6 +12,8 @@ public interface IApiDocumentRepository
 
     Task<IReadOnlyList<RequestParameterEntity>> GetParametersByEndpointIdsAsync(IEnumerable<string> endpointIds, CancellationToken cancellationToken);
 
+    Task DeleteEndpointsByIdsAsync(IEnumerable<string> endpointIds, CancellationToken cancellationToken);
+
     Task SaveDocumentGraphAsync(
         ApiDocumentEntity document,
         IReadOnlyList<ApiEndpointEntity> endpoints,
