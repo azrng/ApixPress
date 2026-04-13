@@ -45,6 +45,27 @@ public sealed class ProjectTabViewModelTests
         Assert.Equal("https://demo.local/swagger.json", apiWorkspaceService.LastImportedUrl);
     }
 
+    [Fact]
+    public void ProjectSettingsCommands_ShouldSwitchBetweenOverviewAndImportDataSections()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        viewModel.ShowProjectSettingsCommand.Execute(null);
+        viewModel.ShowProjectOverviewSettingsCommand.Execute(null);
+
+        Assert.True(viewModel.IsProjectSettingsSection);
+        Assert.True(viewModel.IsProjectSettingsOverviewSelected);
+        Assert.False(viewModel.IsProjectSettingsImportDataSelected);
+        Assert.Equal("基本设置", viewModel.CurrentProjectSettingsTitle);
+
+        viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
+
+        Assert.True(viewModel.IsProjectSettingsSection);
+        Assert.False(viewModel.IsProjectSettingsOverviewSelected);
+        Assert.True(viewModel.IsProjectSettingsImportDataSelected);
+        Assert.Equal("导入数据", viewModel.CurrentProjectSettingsTitle);
+    }
+
     private static ProjectTabViewModel CreateViewModel(FakeApiWorkspaceService apiWorkspaceService)
     {
         return new ProjectTabViewModel(
