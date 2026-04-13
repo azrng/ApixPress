@@ -57,4 +57,28 @@ public sealed class OpenApiJsonParserTests
         Assert.Contains(result.Parameters, item => item.ParameterType == "Path" && item.Name == "id");
         Assert.Contains(result.Parameters, item => item.ParameterType == "Query" && item.Name == "expand" && item.DefaultValue == "profile");
     }
+
+    [Fact]
+    public void Parse_ShouldFallbackBaseUrlFromImportUrl_WhenDocumentDoesNotDeclareServer()
+    {
+        const string json = """
+                            {
+                              "openapi": "3.0.4",
+                              "info": {
+                                "title": "SwaggerAPI"
+                              },
+                              "paths": {
+                                "/api/users": {
+                                  "get": {
+                                    "summary": "获取用户列表"
+                                  }
+                                }
+                              }
+                            }
+                            """;
+
+        var result = OpenApiJsonParser.Parse(json, "URL", "http://localhost:5000/swagger/v1/swagger.json");
+
+        Assert.Equal("http://localhost:5000", result.Document.BaseUrl);
+    }
 }

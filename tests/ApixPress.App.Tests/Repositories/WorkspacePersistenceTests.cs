@@ -1,4 +1,5 @@
 using ApixPress.App.Models.DTOs;
+using ApixPress.App.Models.Entities;
 using ApixPress.App.Repositories.Implementations;
 using ApixPress.App.Services.Implementations;
 using Azrng.Core.Json;
@@ -339,5 +340,43 @@ public sealed class WorkspacePersistenceTests
                 File.Delete(tempFile);
             }
         }
+    }
+
+    [Fact]
+    public async Task ApiWorkspaceService_ShouldFallbackBaseUrlForLegacyUrlImportedDocuments()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var repository = new ApiDocumentRepository(factory);
+        var service = new ApiWorkspaceService(repository);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "旧文档回填项目"
+        }, CancellationToken.None)).Data!;
+
+        await repository.SaveDocumentGraphAsync(
+            new ApiDocumentEntity
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                ProjectId = project.Id,
+                Name = "SwaggerAPI",
+                SourceType = "URL",
+                SourceValue = "http://localhost:5000/swagger/v1/swagger.json",
+                BaseUrl = string.Empty,
+                RawJson = "{}",
+                ImportedAt = DateTime.UtcNow
+            },
+            [],
+            [],
+            CancellationToken.None);
+
+        var documents = await service.GetDocumentsAsync(project.Id, CancellationToken.None);
+        var document = Assert.Single(documents);
+
+        Assert.Equal("http://localhost:5000", document.BaseUrl);
     }
 }

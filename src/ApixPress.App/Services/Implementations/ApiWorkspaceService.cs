@@ -118,6 +118,10 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
 
     private static ApiDocumentDto ToDocumentDto(ApiDocumentEntity entity)
     {
+        var resolvedBaseUrl = string.IsNullOrWhiteSpace(entity.BaseUrl)
+            ? OpenApiJsonParser.InferBaseUrlFromImportSource(entity.SourceType, entity.SourceValue)
+            : entity.BaseUrl;
+
         return new ApiDocumentDto
         {
             Id = entity.Id,
@@ -125,7 +129,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
             Name = entity.Name,
             SourceType = entity.SourceType,
             SourceValue = entity.SourceValue,
-            BaseUrl = entity.BaseUrl,
+            BaseUrl = resolvedBaseUrl,
             ImportedAt = entity.ImportedAt
         };
     }

@@ -36,7 +36,7 @@ public static class OpenApiJsonParser
             Name = ResolveDocumentName(root, sourceValue),
             SourceType = sourceType,
             SourceValue = sourceValue,
-            BaseUrl = ResolveBaseUrl(root),
+            BaseUrl = ResolveBaseUrl(root, sourceType, sourceValue),
             RawJson = json,
             ImportedAt = DateTime.UtcNow
         };
@@ -104,7 +104,7 @@ public static class OpenApiJsonParser
         };
     }
 
-    private static string ResolveBaseUrl(JsonElement root)
+    private static string ResolveBaseUrl(JsonElement root, string sourceType, string sourceValue)
     {
         if (root.TryGetProperty("servers", out var servers)
             && servers.ValueKind == JsonValueKind.Array
@@ -134,7 +134,51 @@ public static class OpenApiJsonParser
             return $"{scheme}://{host.GetString()}{basePath}";
         }
 
-        return string.Empty;
+        return InferBaseUrlFromImportSource(sourceType, sourceValue);
+    }
+
+    public static string InferBaseUrlFromImportSource(string sourceType, string sourceValue)
+    {
+        if (!string.Equals(sourceType, "URL", StringComparison.OrdinalIgnoreCase)
+            || !Uri.TryCreate(sourceValue, UriKind.Absolute, out var sourceUri))
+        {
+            return string.Empty;
+        }
+
+        var origin = sourceUri.GetLeftPart(UriPartial.Authority);
+        var absolutePath = sourceUri.AbsolutePath;
+        var markerIndex = absolutePath.IndexOf("/swagger/", StringComparison.OrdinalIgnoreCase);
+        if (markerIndex >= 0)
+        {
+            return CombineBaseUrl(origin, absolutePath[..markerIndex]);
+        }
+
+        var knownSuffixes = new[]
+        {
+            "/swagger.json",
+            "/openapi.json",
+            "/v3/api-docs",
+            "/v2/api-docs",
+            "/api-docs"
+        };
+
+        foreach (var suffix in knownSuffixes)
+        {
+            if (absolutePath.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+            {
+                return CombineBaseUrl(origin, absolutePath[..^suffix.Length]);
+            }
+        }
+
+        return origin;
+    }
+
+    private static string CombineBaseUrl(string origin, string prefixPath)
+    {
+        var normalizedPrefix = prefixPath.TrimEnd('/');
+        return string.IsNullOrWhiteSpace(normalizedPrefix)
+            ? origin
+            : $"{origin}{normalizedPrefix}";
     }
 
     private static string ResolveGroupName(JsonElement operationElement, string path)
