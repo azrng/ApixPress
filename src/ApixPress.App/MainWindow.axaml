@@ -773,7 +773,7 @@
                                      Text="数据管理" />
                           <Button Classes="ProjectSettingsSidebarItemButton"
                                   Classes.ProjectSettingsSidebarItemSelected="{Binding IsProjectSettingsImportDataSelected}"
-                                  Command="{Binding OpenProjectImportDialogCommand}">
+                                  Command="{Binding ShowProjectImportDataSettingsCommand}">
                             <TextBlock Text="导入数据" />
                           </Button>
                         </StackPanel>
@@ -2061,26 +2061,13 @@
                     IsVisible="{Binding IsProjectSettingsSection}">
               <Grid RowDefinitions="Auto,*"
                     RowSpacing="{StaticResource Space.4}">
-                <Grid ColumnDefinitions="*,Auto"
-                      ColumnSpacing="{StaticResource Space.3}">
+                <Grid>
                   <StackPanel Spacing="2">
                     <TextBlock Classes="SectionTitle"
                                Text="{Binding CurrentProjectSettingsTitle}" />
                     <TextBlock Classes="CaptionText"
                                Text="{Binding CurrentProjectSettingsSubtitle}"
                                IsVisible="{Binding ShowProjectSettingsImportDataSection}" />
-                  </StackPanel>
-                  <StackPanel Grid.Column="1"
-                              Orientation="Horizontal"
-                              Spacing="{StaticResource Space.2}">
-                    <Button Classes="SecondaryButton"
-                            Content="刷新数据"
-                            Command="{Binding RefreshImportedApiDocumentsCommand}"
-                            IsVisible="{Binding ShowProjectSettingsImportDataSection}" />
-                    <Button Classes="PrimaryButton"
-                            Content="打开环境设置"
-                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}"
-                            IsVisible="{Binding ShowProjectSettingsImportDataSection}" />
                   </StackPanel>
                 </Grid>
 
@@ -2144,10 +2131,13 @@
                   <StackPanel Spacing="{StaticResource Space.4}">
                     <Border Classes="ProjectSettingsInfoCard">
                       <StackPanel Spacing="{StaticResource Space.3}">
-                        <TextBlock Classes="SectionTitle"
-                                   Text="导入 API 数据" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="当前项目仅保留 OpenAPI / Swagger 导入入口，点击后可选择上传文件或 URL 导入。" />
+                        <Border Classes="ProjectSettingsSectionDivider" />
+                        <StackPanel Spacing="2">
+                          <TextBlock Classes="SectionTitle"
+                                     Text="导入 API 数据" />
+                          <TextBlock Classes="CaptionText"
+                                     Text="请选择要导入的数据源格式" />
+                        </StackPanel>
                         <Button Classes="ProjectImportCatalogButton"
                                 Command="{Binding OpenProjectImportDialogCommand}">
                           <Grid ColumnDefinitions="Auto,*"
@@ -2167,7 +2157,7 @@
                               <TextBlock Text="OpenAPI / Swagger"
                                          FontWeight="SemiBold" />
                               <TextBlock Classes="CaptionText"
-                                         Text="支持导入 OpenAPI 3.x 与 Swagger 2.0 的 JSON 或 YAML 文档。" />
+                                         Text="支持导入 OpenAPI 3.x 与 Swagger 2.0 的 JSON 或 YAML 文档" />
                             </StackPanel>
                           </Grid>
                         </Button>
