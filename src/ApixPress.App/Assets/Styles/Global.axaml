@@ -932,6 +932,24 @@
     <Setter Property="HorizontalAlignment" Value="Center" />
   </Style>
 
+  <Style Selector="ToggleButton.ProjectWorkspaceNavButton">
+    <Setter Property="Width" Value="68" />
+    <Setter Property="MinHeight" Value="60" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="8,8,8,10" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectWorkspaceNavButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectWorkspaceNavButton:checked">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+  </Style>
+
   <Style Selector="u|NavMenu.ProjectWorkspaceNavMenu u|NavMenuItem">
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Margin" Value="0,0,0,8" />
@@ -961,6 +979,10 @@
     <Setter Property="FontWeight" Value="Medium" />
   </Style>
 
+  <Style Selector="ToggleButton.ProjectWorkspaceNavButton:checked TextBlock.ProjectWorkspaceNavText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
   <Style Selector="u|NavMenu.ProjectWorkspaceNavMenu u|NavMenuItem:selected TextBlock.ProjectWorkspaceNavText">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
@@ -975,6 +997,10 @@
   </Style>
 
   <Style Selector="u|NavMenu.ProjectWorkspaceNavMenu u|NavMenuItem:selected Border.ProjectWorkspaceNavIcon">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectWorkspaceNavButton:checked Border.ProjectWorkspaceNavIcon">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
   </Style>
 

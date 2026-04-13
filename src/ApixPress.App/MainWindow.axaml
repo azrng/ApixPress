@@ -416,31 +416,36 @@
                     Classes="ProjectWorkspaceNavigationRail">
               <Grid VerticalAlignment="Top"
                     HorizontalAlignment="Center">
-                <u:NavMenu Classes="ProjectWorkspaceNavMenu"
-                           ExpandWidth="68"
-                           CommandBinding="{Binding Command}"
-                           HeaderBinding="{Binding}"
-                           ItemsSource="{Binding WorkspaceNavigationItems}"
-                           SelectedItem="{Binding SelectedWorkspaceNavigationItem, Mode=TwoWay}">
-                  <u:NavMenu.HeaderTemplate>
+                <ItemsControl ItemsSource="{Binding WorkspaceNavigationItems}">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <StackPanel Orientation="Vertical"
+                                  Spacing="{StaticResource Space.2}" />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:ProjectWorkspaceNavItemViewModel">
-                      <StackPanel HorizontalAlignment="Center"
-                                  Spacing="6">
-                        <Border Classes="ProjectWorkspaceNavIcon">
-                          <Path Width="18"
-                                Height="18"
-                                Stretch="Uniform"
-                                Fill="{DynamicResource Brush.Border.Focus}"
-                                Data="{Binding IconData}" />
-                        </Border>
-                        <TextBlock Classes="ProjectWorkspaceNavText"
-                                   Text="{Binding Title}"
-                                   TextAlignment="Center"
-                                   TextWrapping="Wrap" />
-                      </StackPanel>
+                      <ToggleButton Classes="ProjectWorkspaceNavButton"
+                                    Command="{Binding Command}"
+                                    IsChecked="{Binding IsSelected, Mode=OneWay}">
+                        <StackPanel HorizontalAlignment="Center"
+                                    Spacing="6">
+                          <Border Classes="ProjectWorkspaceNavIcon">
+                            <Path Width="18"
+                                  Height="18"
+                                  Stretch="Uniform"
+                                  Fill="{DynamicResource Brush.Border.Focus}"
+                                  Data="{Binding IconData}" />
+                          </Border>
+                          <TextBlock Classes="ProjectWorkspaceNavText"
+                                     Text="{Binding Title}"
+                                     TextAlignment="Center"
+                                     TextWrapping="Wrap" />
+                        </StackPanel>
+                      </ToggleButton>
                     </DataTemplate>
-                  </u:NavMenu.HeaderTemplate>
-                </u:NavMenu>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
               </Grid>
             </Border>
 

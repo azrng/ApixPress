@@ -1901,6 +1901,12 @@ public partial class ProjectTabViewModel : ViewModelBase
     {
         var selectedItem = WorkspaceNavigationItems.FirstOrDefault(item =>
             string.Equals(item.SectionKey, SelectedWorkspaceSection, StringComparison.OrdinalIgnoreCase));
+
+        foreach (var navigationItem in WorkspaceNavigationItems)
+        {
+            navigationItem.IsSelected = ReferenceEquals(navigationItem, selectedItem);
+        }
+
         if (!ReferenceEquals(SelectedWorkspaceNavigationItem, selectedItem))
         {
             SelectedWorkspaceNavigationItem = selectedItem;
