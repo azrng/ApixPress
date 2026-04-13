@@ -2533,6 +2533,43 @@
         </Grid>
       </Border>
 
+      <Border Classes="CreateProjectDialogBackdrop"
+              IsVisible="{Binding ShowWorkspaceDeleteConfirmDialog}">
+        <Grid HorizontalAlignment="Center"
+              VerticalAlignment="Center">
+          <Border Classes="QuickRequestSaveDialogCard">
+            <Grid RowDefinitions="Auto,Auto,Auto"
+                  RowSpacing="{StaticResource Space.3}">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="DialogTitle"
+                           Text="确认删除" />
+                <TextBlock Classes="CaptionText"
+                           Text="{Binding ActiveProjectTab.PendingWorkspaceDeleteTitle, StringFormat='即将删除：{0}'}"
+                           IsVisible="{Binding ActiveProjectTab.HasPendingWorkspaceDeleteTarget}" />
+              </StackPanel>
+
+              <Border Grid.Row="1"
+                      Classes="CreateProjectFormShell">
+                <TextBlock Text="{Binding ActiveProjectTab.PendingWorkspaceDeleteDescription}"
+                           TextWrapping="Wrap" />
+              </Border>
+
+              <StackPanel Grid.Row="2"
+                          Orientation="Horizontal"
+                          HorizontalAlignment="Right"
+                          Spacing="{StaticResource Space.2}">
+                <Button Classes="DialogSecondaryButton"
+                        Content="取消"
+                        Command="{Binding ActiveProjectTab.CancelWorkspaceItemDeleteCommand}" />
+                <Button Classes="DialogPrimaryButton"
+                        Content="确认删除"
+                        Command="{Binding ActiveProjectTab.ConfirmWorkspaceItemDeleteCommand}" />
+              </StackPanel>
+            </Grid>
+          </Border>
+        </Grid>
+      </Border>
+
       <Border Classes="SettingsDialogBackdrop"
               IsVisible="{Binding ShowProjectImportDialog}">
         <Grid HorizontalAlignment="Center"

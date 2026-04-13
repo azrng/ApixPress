@@ -291,6 +291,28 @@ public partial class ProjectTabViewModel : ViewModelBase
     public bool ShowHttpWorkbenchContent => IsHttpInterfaceEditor && !IsHttpDocumentPreviewMode;
     public bool ShowHttpDocumentPreviewContent => IsHttpInterfaceEditor && IsHttpDocumentPreviewMode;
     public bool ShowSaveHttpCaseAction => IsHttpInterfaceEditor;
+    public bool HasPendingWorkspaceDeleteTarget => PendingDeleteWorkspaceItem is not null;
+    public string PendingWorkspaceDeleteTitle => PendingDeleteWorkspaceItem?.Title ?? string.Empty;
+    public string PendingWorkspaceDeleteDescription
+    {
+        get
+        {
+            if (PendingDeleteWorkspaceItem is null)
+            {
+                return string.Empty;
+            }
+
+            var count = CollectDeletableSourceCases(PendingDeleteWorkspaceItem)
+                .Select(item => item.Id)
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
+
+            return count <= 1
+                ? "删除后无法恢复，请确认当前已不再需要。"
+                : $"该节点下共 {count} 项内容会被一起删除，删除后无法恢复。";
+        }
+    }
     public string CurrentEditorBaseUrlCaption => IsHttpInterfaceEditor
         ? (string.IsNullOrWhiteSpace(EnvironmentPanel.SelectedEnvironment?.BaseUrl) ? "当前环境未配置 BaseUrl" : EnvironmentPanel.SelectedEnvironment.BaseUrl)
         : IsQuickRequestEditor
@@ -454,6 +476,9 @@ public partial class ProjectTabViewModel : ViewModelBase
     private bool isProjectImportDialogOpen;
 
     [ObservableProperty]
+    private bool isWorkspaceDeleteConfirmDialogOpen;
+
+    [ObservableProperty]
     private string quickRequestSaveName = string.Empty;
 
     [ObservableProperty]
@@ -464,6 +489,9 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool isWorkspaceTabMenuOpen;
+
+    [ObservableProperty]
+    private ExplorerItemViewModel? pendingDeleteWorkspaceItem;
 
     public async Task InitializeAsync()
     {
@@ -789,8 +817,41 @@ public partial class ProjectTabViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task DeleteWorkspaceTreeItemAsync(ExplorerItemViewModel? item)
+    private void RequestDeleteWorkspaceTreeItem(ExplorerItemViewModel? item)
     {
+        if (item is null || !item.CanDelete)
+        {
+            return;
+        }
+
+        PendingDeleteWorkspaceItem = item;
+        IsWorkspaceDeleteConfirmDialogOpen = true;
+        StatusMessage = $"准备删除：{item.Title}";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void CancelWorkspaceItemDelete()
+    {
+        PendingDeleteWorkspaceItem = null;
+        IsWorkspaceDeleteConfirmDialogOpen = false;
+        StatusMessage = "已取消删除。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private async Task ConfirmWorkspaceItemDeleteAsync()
+    {
+        if (PendingDeleteWorkspaceItem is null)
+        {
+            IsWorkspaceDeleteConfirmDialogOpen = false;
+            NotifyShellState();
+            return;
+        }
+
+        var item = PendingDeleteWorkspaceItem;
+        PendingDeleteWorkspaceItem = null;
+        IsWorkspaceDeleteConfirmDialogOpen = false;
         await DeleteWorkspaceItemAsync(item);
     }
 
@@ -1351,7 +1412,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             Subtitle = string.Empty,
             IsGroup = true,
             NodeType = "interface-root",
-            DeleteCommand = DeleteWorkspaceTreeItemCommand
+            DeleteCommand = RequestDeleteWorkspaceTreeItemCommand
         };
         InterfaceTreeItems.Add(interfaceRoot);
 
@@ -1375,7 +1436,7 @@ public partial class ProjectTabViewModel : ViewModelBase
                             Subtitle = string.Empty,
                             IsGroup = true,
                             NodeType = "folder",
-                            DeleteCommand = DeleteWorkspaceTreeItemCommand
+                            DeleteCommand = RequestDeleteWorkspaceTreeItemCommand
                         };
                         folderNodes[currentPath] = folderNode;
                         parentNode.Children.Add(folderNode);
@@ -1391,7 +1452,7 @@ public partial class ProjectTabViewModel : ViewModelBase
                 Subtitle = string.Empty,
                 NodeType = RequestEntryTypes.HttpInterface,
                 CanLoad = true,
-                DeleteCommand = DeleteWorkspaceTreeItemCommand,
+                DeleteCommand = RequestDeleteWorkspaceTreeItemCommand,
                 SourceCase = item.SourceCase
             };
             parentNode.Children.Add(interfaceNode);
@@ -1406,7 +1467,7 @@ public partial class ProjectTabViewModel : ViewModelBase
                         Subtitle = string.Empty,
                         NodeType = RequestEntryTypes.HttpCase,
                         CanLoad = true,
-                        DeleteCommand = DeleteWorkspaceTreeItemCommand,
+                        DeleteCommand = RequestDeleteWorkspaceTreeItemCommand,
                         SourceCase = caseItem.SourceCase
                     });
                 }
@@ -1421,7 +1482,7 @@ public partial class ProjectTabViewModel : ViewModelBase
                 Subtitle = string.Empty,
                 NodeType = RequestEntryTypes.QuickRequest,
                 CanLoad = true,
-                DeleteCommand = DeleteWorkspaceTreeItemCommand,
+                DeleteCommand = RequestDeleteWorkspaceTreeItemCommand,
                 SourceCase = item.SourceCase
             });
         }
@@ -1949,6 +2010,13 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowProjectImportDialogStatus));
     }
 
+    partial void OnPendingDeleteWorkspaceItemChanged(ExplorerItemViewModel? value)
+    {
+        OnPropertyChanged(nameof(HasPendingWorkspaceDeleteTarget));
+        OnPropertyChanged(nameof(PendingWorkspaceDeleteTitle));
+        OnPropertyChanged(nameof(PendingWorkspaceDeleteDescription));
+    }
+
     partial void OnActiveWorkspaceTabChanged(RequestWorkspaceTabViewModel? oldValue, RequestWorkspaceTabViewModel? newValue)
     {
         if (oldValue is not null)
@@ -2027,6 +2095,9 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowSaveHttpCaseAction));
         OnPropertyChanged(nameof(CurrentEditorBaseUrlCaption));
         OnPropertyChanged(nameof(CurrentResponseValidationResultText));
+        OnPropertyChanged(nameof(HasPendingWorkspaceDeleteTarget));
+        OnPropertyChanged(nameof(PendingWorkspaceDeleteTitle));
+        OnPropertyChanged(nameof(PendingWorkspaceDeleteDescription));
         ShellStateChanged?.Invoke(this);
     }
 

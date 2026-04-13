@@ -153,6 +153,48 @@ public sealed class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task RequestDeleteWorkspaceTreeItemCommand_ShouldOpenDeleteConfirmDialog()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 1);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        var interfaceItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 1");
+        Assert.NotNull(interfaceItem);
+
+        viewModel.RequestDeleteWorkspaceTreeItemCommand.Execute(interfaceItem);
+
+        Assert.True(viewModel.IsWorkspaceDeleteConfirmDialogOpen);
+        Assert.Equal("接口 1", viewModel.PendingWorkspaceDeleteTitle);
+        Assert.Contains("删除后无法恢复", viewModel.PendingWorkspaceDeleteDescription);
+    }
+
+    [Fact]
+    public async Task ConfirmWorkspaceItemDeleteCommand_ShouldDeleteAfterConfirmation()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 1);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        var interfaceItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 1");
+        Assert.NotNull(interfaceItem);
+
+        viewModel.RequestDeleteWorkspaceTreeItemCommand.Execute(interfaceItem);
+        await viewModel.ConfirmWorkspaceItemDeleteCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.IsWorkspaceDeleteConfirmDialogOpen);
+        Assert.Null(viewModel.PendingDeleteWorkspaceItem);
+        Assert.Empty(viewModel.InterfaceCatalogItems);
+        Assert.Empty(requestCaseService.Cases);
+    }
+
+    [Fact]
     public void ProjectSettingsCommands_ShouldSwitchBetweenOverviewAndImportDataSections()
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
