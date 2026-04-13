@@ -7,6 +7,8 @@ namespace ApixPress.App.ViewModels;
 
 public partial class RequestWorkspaceTabViewModel : ViewModelBase
 {
+    private const string DefaultInterfaceFolderName = "默认模块";
+
     private static class WorkspaceEntryTypes
     {
         public const string Landing = "landing";
@@ -39,10 +41,13 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     private string requestUrl = string.Empty;
 
     [ObservableProperty]
-    private string interfaceFolderPath = "用户";
+    private string interfaceFolderPath = DefaultInterfaceFolderName;
 
     [ObservableProperty]
     private string httpCaseName = "成功";
+
+    [ObservableProperty]
+    private string sourceEndpointId = string.Empty;
 
     [ObservableProperty]
     private string editingQuickRequestId = string.Empty;
@@ -87,8 +92,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         EntryType = WorkspaceEntryTypes.Landing;
         SelectedMethod = "GET";
         RequestUrl = string.Empty;
-        InterfaceFolderPath = "用户";
+        InterfaceFolderPath = DefaultInterfaceFolderName;
         HttpCaseName = "成功";
+        SourceEndpointId = string.Empty;
         EditingQuickRequestId = string.Empty;
         EditingInterfaceId = string.Empty;
         EditingCaseId = string.Empty;
@@ -103,8 +109,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         EntryType = WorkspaceEntryTypes.QuickRequest;
         SelectedMethod = "GET";
         RequestUrl = string.Empty;
-        InterfaceFolderPath = "用户";
+        InterfaceFolderPath = DefaultInterfaceFolderName;
         HttpCaseName = "成功";
+        SourceEndpointId = string.Empty;
         EditingQuickRequestId = string.Empty;
         EditingInterfaceId = string.Empty;
         EditingCaseId = string.Empty;
@@ -119,8 +126,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         EntryType = WorkspaceEntryTypes.HttpInterface;
         SelectedMethod = "GET";
         RequestUrl = string.Empty;
-        InterfaceFolderPath = "用户";
+        InterfaceFolderPath = DefaultInterfaceFolderName;
         HttpCaseName = "成功";
+        SourceEndpointId = string.Empty;
         EditingQuickRequestId = string.Empty;
         EditingInterfaceId = string.Empty;
         EditingCaseId = string.Empty;
@@ -139,24 +147,33 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
                 EditingInterfaceId = source.Id;
                 EditingCaseId = string.Empty;
                 EditingQuickRequestId = string.Empty;
-                InterfaceFolderPath = string.IsNullOrWhiteSpace(source.FolderPath) ? "用户" : source.FolderPath;
+                InterfaceFolderPath = string.IsNullOrWhiteSpace(source.FolderPath) ? DefaultInterfaceFolderName : source.FolderPath;
                 HttpCaseName = "成功";
+                SourceEndpointId = source.RequestSnapshot.EndpointId;
                 break;
             case "http-case":
                 EntryType = WorkspaceEntryTypes.HttpInterface;
                 EditingCaseId = source.Id;
                 EditingQuickRequestId = string.Empty;
                 EditingInterfaceId = parentInterface?.Id ?? source.ParentId;
-                InterfaceFolderPath = !string.IsNullOrWhiteSpace(parentInterface?.FolderPath) ? parentInterface.FolderPath : source.FolderPath;
+                InterfaceFolderPath = !string.IsNullOrWhiteSpace(parentInterface?.FolderPath)
+                    ? parentInterface.FolderPath
+                    : string.IsNullOrWhiteSpace(source.FolderPath)
+                        ? DefaultInterfaceFolderName
+                        : source.FolderPath;
                 HttpCaseName = source.Name;
+                SourceEndpointId = !string.IsNullOrWhiteSpace(source.RequestSnapshot.EndpointId)
+                    ? source.RequestSnapshot.EndpointId
+                    : parentInterface?.RequestSnapshot.EndpointId ?? string.Empty;
                 break;
             default:
                 EntryType = WorkspaceEntryTypes.QuickRequest;
                 EditingQuickRequestId = source.Id;
                 EditingInterfaceId = string.Empty;
                 EditingCaseId = string.Empty;
-                InterfaceFolderPath = "用户";
+                InterfaceFolderPath = DefaultInterfaceFolderName;
                 HttpCaseName = "成功";
+                SourceEndpointId = source.RequestSnapshot.EndpointId;
                 break;
         }
 
@@ -183,7 +200,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         ConfigTab.RequestName = string.IsNullOrWhiteSpace(requestNameOverride)
             ? ResolveRequestName()
             : requestNameOverride.Trim();
-        var snapshot = ConfigTab.BuildRequestSnapshot(string.Empty, SelectedMethod, RequestUrl);
+        var snapshot = ConfigTab.BuildRequestSnapshot(SourceEndpointId, SelectedMethod, RequestUrl);
         ConfigTab.RequestName = currentName;
         return snapshot;
     }

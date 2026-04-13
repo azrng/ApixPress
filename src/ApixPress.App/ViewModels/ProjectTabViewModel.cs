@@ -364,7 +364,7 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     public string CurrentInterfaceFolderPath
     {
-        get => ActiveWorkspaceTab?.InterfaceFolderPath ?? "用户";
+        get => ActiveWorkspaceTab?.InterfaceFolderPath ?? "默认模块";
         set
         {
             if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.InterfaceFolderPath == value)
@@ -627,6 +627,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         if (result.IsSuccess && result.Data is not null)
         {
             workspaceTab.EditingCaseId = result.Data.Id;
+            workspaceTab.SourceEndpointId = result.Data.RequestSnapshot.EndpointId;
             await ReloadSavedRequestsAsync();
             StatusMessage = "HTTP 接口用例已保存。";
         }
@@ -1252,6 +1253,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         }
 
         workspaceTab.EditingInterfaceId = result.Data.Id;
+        workspaceTab.SourceEndpointId = result.Data.RequestSnapshot.EndpointId;
         if (reloadAfterSave)
         {
             await ReloadSavedRequestsAsync();

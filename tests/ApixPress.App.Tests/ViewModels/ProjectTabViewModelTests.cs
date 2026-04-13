@@ -86,6 +86,52 @@ public sealed class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task SaveCurrentEditorAsync_ShouldKeepImportedEndpointIdentity()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 1);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        var interfaceItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 1");
+        Assert.NotNull(interfaceItem);
+
+        viewModel.LoadWorkspaceItem(interfaceItem);
+        viewModel.CurrentHttpInterfaceName = "接口 1 已编辑";
+
+        await viewModel.SaveCurrentEditorAsync();
+
+        var savedInterface = Assert.Single(requestCaseService.Cases, item => item.EntryType == "http-interface");
+        Assert.Equal("接口 1 已编辑", savedInterface.Name);
+        Assert.Equal("swagger-import:GET /endpoint-1", savedInterface.RequestSnapshot.EndpointId);
+
+        await requestCaseService.SyncImportedHttpInterfacesAsync("project-1",
+        [
+            new ApiEndpointDto
+            {
+                GroupName = "默认分组",
+                Name = "接口 1",
+                Method = "GET",
+                Path = "/endpoint-1"
+            }
+        ], CancellationToken.None);
+
+        Assert.Equal(1, requestCaseService.Cases.Count(item => item.EntryType == "http-interface"));
+    }
+
+    [Fact]
+    public void OpenHttpInterfaceWorkspace_ShouldUseDefaultModuleFolder()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        viewModel.OpenHttpInterfaceWorkspaceCommand.Execute(null);
+
+        Assert.Equal("默认模块", viewModel.CurrentInterfaceFolderPath);
+    }
+
+    [Fact]
     public void ProjectSettingsCommands_ShouldSwitchBetweenOverviewAndImportDataSections()
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
@@ -165,6 +211,25 @@ public sealed class ProjectTabViewModelTests
                 yield return child;
             }
         }
+    }
+
+    private static ExplorerItemViewModel? FindExplorerItemByTitle(IEnumerable<ExplorerItemViewModel> items, string title)
+    {
+        foreach (var item in items)
+        {
+            if (string.Equals(item.Title, title, StringComparison.Ordinal))
+            {
+                return item;
+            }
+
+            var child = FindExplorerItemByTitle(item.Children, title);
+            if (child is not null)
+            {
+                return child;
+            }
+        }
+
+        return null;
     }
 
     private sealed class FakeApiWorkspaceService : IApiWorkspaceService
