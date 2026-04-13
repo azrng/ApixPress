@@ -773,7 +773,7 @@
                                      Text="数据管理" />
                           <Button Classes="ProjectSettingsSidebarItemButton"
                                   Classes.ProjectSettingsSidebarItemSelected="{Binding IsProjectSettingsImportDataSelected}"
-                                  Command="{Binding ShowProjectImportDataSettingsCommand}">
+                                  Command="{Binding OpenProjectImportDialogCommand}">
                             <TextBlock Text="导入数据" />
                           </Button>
                         </StackPanel>
