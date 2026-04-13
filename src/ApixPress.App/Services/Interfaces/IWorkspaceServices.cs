@@ -31,6 +31,8 @@ public interface IRequestCaseService
 
     Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken);
 
+    Task SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken);
+
     Task<IResultModel<RequestCaseDto>> DuplicateAsync(string projectId, string id, CancellationToken cancellationToken);
 
     Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken);

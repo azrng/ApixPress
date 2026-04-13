@@ -13,6 +13,8 @@ namespace ApixPress.App.Services.Implementations;
 
 public sealed class RequestCaseService : IRequestCaseService, ITransientDependency
 {
+    private const string ImportedEndpointKeyPrefix = "swagger-import:";
+
     private readonly IRequestCaseRepository _requestCaseRepository;
     private readonly IJsonSerializer _serializer;
 
@@ -55,6 +57,65 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         return ResultModel<RequestCaseDto>.Success(ToDto(entity));
     }
 
+    public async Task SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(projectId))
+        {
+            return;
+        }
+
+        var existingCases = await GetCasesAsync(projectId, cancellationToken);
+        var importedInterfaces = existingCases
+            .Where(item => string.Equals(item.EntryType, "http-interface", StringComparison.OrdinalIgnoreCase))
+            .Where(item => IsImportedInterface(item))
+            .ToDictionary(item => item.RequestSnapshot.EndpointId, StringComparer.OrdinalIgnoreCase);
+        var importedInterfaceIds = importedInterfaces.Values
+            .Select(item => item.Id)
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var importedCases = existingCases
+            .Where(item => string.Equals(item.EntryType, "http-case", StringComparison.OrdinalIgnoreCase))
+            .Where(item => importedInterfaceIds.Contains(item.ParentId))
+            .ToList();
+        var normalizedEndpoints = endpoints
+            .GroupBy(BuildImportedEndpointKey, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.Last())
+            .ToList();
+        var targetKeys = normalizedEndpoints
+            .Select(BuildImportedEndpointKey)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var removedCase in importedCases.Where(item => !targetKeys.Contains(BuildImportedEndpointKey(item.ParentId, importedInterfaces))).ToList())
+        {
+            await DeleteAsync(projectId, removedCase.Id, cancellationToken);
+        }
+
+        foreach (var removedInterface in importedInterfaces.Values.Where(item => !targetKeys.Contains(item.RequestSnapshot.EndpointId)).ToList())
+        {
+            await DeleteAsync(projectId, removedInterface.Id, cancellationToken);
+        }
+
+        foreach (var endpoint in normalizedEndpoints)
+        {
+            var endpointKey = BuildImportedEndpointKey(endpoint);
+            importedInterfaces.TryGetValue(endpointKey, out var existingInterface);
+
+            var snapshot = BuildImportedSnapshot(endpoint, endpointKey);
+            await SaveAsync(new RequestCaseDto
+            {
+                Id = existingInterface?.Id ?? string.Empty,
+                ProjectId = projectId,
+                EntryType = "http-interface",
+                Name = endpoint.Name,
+                GroupName = "接口",
+                FolderPath = NormalizeFolderPath(endpoint.GroupName),
+                Description = endpoint.Description,
+                RequestSnapshot = snapshot,
+                UpdatedAt = DateTime.UtcNow
+            }, cancellationToken);
+        }
+    }
+
     public async Task<IResultModel<RequestCaseDto>> DuplicateAsync(string projectId, string id, CancellationToken cancellationToken)
     {
         var source = await _requestCaseRepository.GetByIdAsync(projectId, id, cancellationToken);
@@ -87,6 +148,71 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
     {
         await _requestCaseRepository.DeleteAsync(projectId, id, cancellationToken);
         return ResultModel<bool>.Success(true);
+    }
+
+    private static bool IsImportedInterface(RequestCaseDto requestCase)
+    {
+        return requestCase.RequestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string BuildImportedEndpointKey(ApiEndpointDto endpoint)
+    {
+        var method = string.IsNullOrWhiteSpace(endpoint.Method) ? "GET" : endpoint.Method.Trim().ToUpperInvariant();
+        var path = string.IsNullOrWhiteSpace(endpoint.Path) ? "/" : endpoint.Path.Trim();
+        return $"{ImportedEndpointKeyPrefix}{method} {path}";
+    }
+
+    private static string BuildImportedEndpointKey(string interfaceId, IReadOnlyDictionary<string, RequestCaseDto> importedInterfaces)
+    {
+        var requestCase = importedInterfaces.Values.FirstOrDefault(item => string.Equals(item.Id, interfaceId, StringComparison.OrdinalIgnoreCase));
+        return requestCase?.RequestSnapshot.EndpointId ?? string.Empty;
+    }
+
+    private static RequestSnapshotDto BuildImportedSnapshot(ApiEndpointDto endpoint, string endpointKey)
+    {
+        return new RequestSnapshotDto
+        {
+            EndpointId = endpointKey,
+            Name = endpoint.Name,
+            Method = string.IsNullOrWhiteSpace(endpoint.Method) ? "GET" : endpoint.Method.Trim().ToUpperInvariant(),
+            Url = endpoint.Path,
+            Description = endpoint.Description,
+            BodyMode = string.IsNullOrWhiteSpace(endpoint.RequestBodyTemplate) ? BodyModes.None : BodyModes.RawJson,
+            BodyContent = endpoint.RequestBodyTemplate,
+            Headers = endpoint.Parameters
+                .Where(item => item.ParameterType == RequestParameterKind.Header)
+                .Select(ToKeyValue)
+                .ToList(),
+            QueryParameters = endpoint.Parameters
+                .Where(item => item.ParameterType == RequestParameterKind.Query)
+                .Select(ToKeyValue)
+                .ToList(),
+            PathParameters = endpoint.Parameters
+                .Where(item => item.ParameterType == RequestParameterKind.Path)
+                .Select(ToKeyValue)
+                .ToList()
+        };
+    }
+
+    private static string NormalizeFolderPath(string folderPath)
+    {
+        if (string.IsNullOrWhiteSpace(folderPath))
+        {
+            return "默认模块";
+        }
+
+        return string.Join('/',
+            folderPath.Replace('\\', '/')
+                .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+    }
+
+    private static RequestKeyValueDto ToKeyValue(RequestParameterDto parameter)
+    {
+        return new RequestKeyValueDto
+        {
+            Name = parameter.Name,
+            Value = parameter.DefaultValue
+        };
     }
 
     private RequestCaseDto ToDto(RequestCaseEntity entity)

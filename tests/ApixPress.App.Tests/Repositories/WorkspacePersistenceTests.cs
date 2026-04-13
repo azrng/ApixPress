@@ -228,6 +228,88 @@ public sealed class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task RequestCaseService_ShouldSyncImportedHttpInterfacesByMethodAndPath()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var serializer = CreateSerializer();
+        var caseRepository = new RequestCaseRepository(factory);
+        var caseService = new RequestCaseService(caseRepository, serializer);
+
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "导入同步项目"
+        }, CancellationToken.None)).Data!;
+
+        await caseService.SyncImportedHttpInterfacesAsync(project.Id,
+        [
+            new ApiEndpointDto
+            {
+                GroupName = "用户",
+                Name = "查询用户列表",
+                Method = "GET",
+                Path = "/users"
+            },
+            new ApiEndpointDto
+            {
+                GroupName = "订单",
+                Name = "创建订单",
+                Method = "POST",
+                Path = "/orders",
+                Description = "从 Swagger 导入"
+            }
+        ], CancellationToken.None);
+
+        var initialCases = await caseService.GetCasesAsync(project.Id, CancellationToken.None);
+        Assert.Equal(2, initialCases.Count);
+        var importedUserInterface = Assert.Single(initialCases, item => item.RequestSnapshot.Url == "/users");
+
+        await caseService.SaveAsync(new RequestCaseDto
+        {
+            ProjectId = project.Id,
+            EntryType = "http-case",
+            ParentId = importedUserInterface.Id,
+            Name = "成功",
+            GroupName = "用例",
+            FolderPath = "用户",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "/users"
+            },
+            UpdatedAt = DateTime.UtcNow
+        }, CancellationToken.None);
+
+        await caseService.SyncImportedHttpInterfacesAsync(project.Id,
+        [
+            new ApiEndpointDto
+            {
+                GroupName = "用户中心",
+                Name = "获取用户列表",
+                Method = "GET",
+                Path = "/users",
+                Description = "已更新"
+            }
+        ], CancellationToken.None);
+
+        var syncedCases = await caseService.GetCasesAsync(project.Id, CancellationToken.None);
+        var syncedInterface = Assert.Single(syncedCases, item => item.EntryType == "http-interface");
+
+        Assert.Equal(importedUserInterface.Id, syncedInterface.Id);
+        Assert.Equal("获取用户列表", syncedInterface.Name);
+        Assert.Equal("用户中心", syncedInterface.FolderPath);
+        Assert.Equal("已更新", syncedInterface.Description);
+        Assert.Equal("swagger-import:GET /users", syncedInterface.RequestSnapshot.EndpointId);
+        Assert.DoesNotContain(syncedCases, item => item.RequestSnapshot.Url == "/orders");
+        var syncedCase = Assert.Single(syncedCases, item => item.EntryType == "http-case");
+        Assert.Equal(syncedInterface.Id, syncedCase.ParentId);
+    }
+
+    [Fact]
     public async Task EnvironmentVariableService_ShouldReturnEnabledDictionaryForActiveEnvironment()
     {
         using var factory = new TestSqliteConnectionFactory();

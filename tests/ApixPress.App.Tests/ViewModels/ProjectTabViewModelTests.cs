@@ -29,9 +29,10 @@ public sealed class ProjectTabViewModelTests
     public async Task InitializeAsync_ShouldShowImportedEndpointsInInterfaceCatalog()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
         apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 2);
 
-        var viewModel = CreateViewModel(apiWorkspaceService);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
 
         await viewModel.InitializeAsync();
 
@@ -40,6 +41,7 @@ public sealed class ProjectTabViewModelTests
         Assert.Contains("默认分组 (2)", titles);
         Assert.Contains("接口 1", titles);
         Assert.Contains("接口 2", titles);
+        Assert.Equal(2, requestCaseService.Cases.Count(item => item.EntryType == "http-interface"));
     }
 
     [Fact]
@@ -66,8 +68,9 @@ public sealed class ProjectTabViewModelTests
     public async Task ImportSwaggerUrlCommand_ShouldReplaceImportedDocumentHistory()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
         apiWorkspaceService.SeedDocument("project-1", "旧文档", "FILE", @"C:\temp\legacy-swagger.json", "https://legacy.demo.local", 1);
-        var viewModel = CreateViewModel(apiWorkspaceService);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
         await viewModel.InitializeAsync();
 
         viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
@@ -78,6 +81,8 @@ public sealed class ProjectTabViewModelTests
         var imported = Assert.Single(viewModel.ImportedApiDocuments);
         Assert.Equal("远程订单服务", imported.Name);
         Assert.Equal("1", viewModel.ImportedApiDocumentCountText);
+        Assert.Equal(2, requestCaseService.Cases.Count(item => item.EntryType == "http-interface"));
+        Assert.DoesNotContain(requestCaseService.Cases, item => item.Name == "接口 1" && item.RequestSnapshot.Url == "/endpoint-1");
     }
 
     [Fact]
@@ -133,7 +138,7 @@ public sealed class ProjectTabViewModelTests
         Assert.True(projectSettingsItem.IsSelected);
     }
 
-    private static ProjectTabViewModel CreateViewModel(FakeApiWorkspaceService apiWorkspaceService)
+    private static ProjectTabViewModel CreateViewModel(FakeApiWorkspaceService apiWorkspaceService, FakeRequestCaseService? requestCaseService = null)
     {
         return new ProjectTabViewModel(
             new ProjectWorkspaceItemViewModel
@@ -143,7 +148,7 @@ public sealed class ProjectTabViewModelTests
                 Description = "用于验证项目设置数据管理"
             },
             new FakeRequestExecutionService(),
-            new FakeRequestCaseService(),
+            requestCaseService ?? new FakeRequestCaseService(),
             new FakeRequestHistoryService(),
             new FakeEnvironmentVariableService(),
             apiWorkspaceService,
@@ -235,7 +240,47 @@ public sealed class ProjectTabViewModelTests
         public Task<IResultModel<ApiDocumentDto>> ImportFromUrlAsync(string projectId, string url, CancellationToken cancellationToken)
         {
             LastImportedUrl = url;
-            SeedDocument(projectId, "远程订单服务", "URL", url, "https://order.demo.local", 2);
+            var importedDocument = new ApiDocumentDto
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                ProjectId = projectId,
+                Name = "远程订单服务",
+                SourceType = "URL",
+                SourceValue = url,
+                BaseUrl = "https://order.demo.local",
+                ImportedAt = DateTime.UtcNow
+            };
+
+            if (_documentsByProject.TryGetValue(projectId, out var existingDocuments))
+            {
+                foreach (var existingDocument in existingDocuments)
+                {
+                    _endpointsByDocument.Remove(existingDocument.Id);
+                }
+            }
+
+            _documentsByProject[projectId] = [importedDocument];
+            _endpointsByDocument[importedDocument.Id] =
+            [
+                new ApiEndpointDto
+                {
+                    Id = $"{importedDocument.Id}-remote-1",
+                    DocumentId = importedDocument.Id,
+                    GroupName = "订单",
+                    Name = "查询订单列表",
+                    Method = "GET",
+                    Path = "/orders"
+                },
+                new ApiEndpointDto
+                {
+                    Id = $"{importedDocument.Id}-remote-2",
+                    DocumentId = importedDocument.Id,
+                    GroupName = "订单",
+                    Name = "创建订单",
+                    Method = "POST",
+                    Path = "/orders"
+                }
+            ];
             var document = _documentsByProject[projectId][0];
             return Task.FromResult<IResultModel<ApiDocumentDto>>(ResultModel<ApiDocumentDto>.Success(document));
         }
@@ -314,14 +359,113 @@ public sealed class ProjectTabViewModelTests
 
     private sealed class FakeRequestCaseService : IRequestCaseService
     {
+        private const string ImportedEndpointKeyPrefix = "swagger-import:";
+
+        public List<RequestCaseDto> Cases { get; } = [];
+
         public Task<IReadOnlyList<RequestCaseDto>> GetCasesAsync(string projectId, CancellationToken cancellationToken)
         {
-            return Task.FromResult<IReadOnlyList<RequestCaseDto>>([]);
+            return Task.FromResult<IReadOnlyList<RequestCaseDto>>(Cases
+                .Where(item => string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(item => item.EntryType, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(item => item.FolderPath, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList());
         }
 
         public Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
         {
-            return Task.FromResult<IResultModel<RequestCaseDto>>(ResultModel<RequestCaseDto>.Success(requestCase));
+            var saved = new RequestCaseDto
+            {
+                Id = requestCase.Id,
+                ProjectId = requestCase.ProjectId,
+                EntryType = requestCase.EntryType,
+                Name = requestCase.Name,
+                GroupName = requestCase.GroupName,
+                FolderPath = requestCase.FolderPath,
+                ParentId = requestCase.ParentId,
+                Tags = requestCase.Tags.ToList(),
+                Description = requestCase.Description,
+                RequestSnapshot = new RequestSnapshotDto
+                {
+                    EndpointId = requestCase.RequestSnapshot.EndpointId,
+                    Name = requestCase.RequestSnapshot.Name,
+                    Method = requestCase.RequestSnapshot.Method,
+                    Url = requestCase.RequestSnapshot.Url,
+                    Description = requestCase.RequestSnapshot.Description,
+                    BodyMode = requestCase.RequestSnapshot.BodyMode,
+                    BodyContent = requestCase.RequestSnapshot.BodyContent,
+                    IgnoreSslErrors = requestCase.RequestSnapshot.IgnoreSslErrors,
+                    QueryParameters = requestCase.RequestSnapshot.QueryParameters.ToList(),
+                    PathParameters = requestCase.RequestSnapshot.PathParameters.ToList(),
+                    Headers = requestCase.RequestSnapshot.Headers.ToList()
+                },
+                UpdatedAt = requestCase.UpdatedAt
+            };
+            if (string.IsNullOrWhiteSpace(saved.Id))
+            {
+                saved = new RequestCaseDto
+                {
+                    Id = Guid.NewGuid().ToString("N"),
+                    ProjectId = saved.ProjectId,
+                    EntryType = saved.EntryType,
+                    Name = saved.Name,
+                    GroupName = saved.GroupName,
+                    FolderPath = saved.FolderPath,
+                    ParentId = saved.ParentId,
+                    Tags = saved.Tags.ToList(),
+                    Description = saved.Description,
+                    RequestSnapshot = saved.RequestSnapshot,
+                    UpdatedAt = saved.UpdatedAt
+                };
+            }
+
+            Cases.RemoveAll(item => string.Equals(item.Id, saved.Id, StringComparison.OrdinalIgnoreCase));
+            Cases.Add(saved);
+            return Task.FromResult<IResultModel<RequestCaseDto>>(ResultModel<RequestCaseDto>.Success(saved));
+        }
+
+        public async Task SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
+        {
+            var existingImported = Cases
+                .Where(item => string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase))
+                .Where(item => string.Equals(item.EntryType, "http-interface", StringComparison.OrdinalIgnoreCase))
+                .Where(item => item.RequestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase))
+                .ToDictionary(item => item.RequestSnapshot.EndpointId, StringComparer.OrdinalIgnoreCase);
+            var targetKeys = endpoints
+                .Select(BuildImportedEndpointKey)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            Cases.RemoveAll(item =>
+                string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(item.EntryType, "http-interface", StringComparison.OrdinalIgnoreCase)
+                && item.RequestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase)
+                && !targetKeys.Contains(item.RequestSnapshot.EndpointId));
+
+            foreach (var endpoint in endpoints)
+            {
+                var key = BuildImportedEndpointKey(endpoint);
+                existingImported.TryGetValue(key, out var existing);
+                await SaveAsync(new RequestCaseDto
+                {
+                    Id = existing?.Id ?? string.Empty,
+                    ProjectId = projectId,
+                    EntryType = "http-interface",
+                    Name = endpoint.Name,
+                    GroupName = "接口",
+                    FolderPath = endpoint.GroupName,
+                    Description = endpoint.Description,
+                    RequestSnapshot = new RequestSnapshotDto
+                    {
+                        EndpointId = key,
+                        Name = endpoint.Name,
+                        Method = endpoint.Method,
+                        Url = endpoint.Path,
+                        Description = endpoint.Description
+                    },
+                    UpdatedAt = DateTime.UtcNow
+                }, cancellationToken);
+            }
         }
 
         public Task<IResultModel<RequestCaseDto>> DuplicateAsync(string projectId, string id, CancellationToken cancellationToken)
@@ -331,7 +475,14 @@ public sealed class ProjectTabViewModelTests
 
         public Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
         {
+            Cases.RemoveAll(item => string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase));
             return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
+        }
+
+        private static string BuildImportedEndpointKey(ApiEndpointDto endpoint)
+        {
+            return $"{ImportedEndpointKeyPrefix}{endpoint.Method.ToUpperInvariant()} {endpoint.Path}";
         }
     }
 

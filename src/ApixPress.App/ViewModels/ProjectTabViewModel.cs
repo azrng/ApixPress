@@ -53,7 +53,6 @@ public partial class ProjectTabViewModel : ViewModelBase
     private readonly IApiWorkspaceService _apiWorkspaceService;
     private readonly IFilePickerService _filePickerService;
     private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
-    private List<ApiEndpointDto> _importedApiEndpoints = [];
     private bool _initialized;
 
     public event Action<ProjectTabViewModel>? ShellStateChanged;
@@ -683,12 +682,6 @@ public partial class ProjectTabViewModel : ViewModelBase
             return;
         }
 
-        if (item.Endpoint is not null)
-        {
-            LoadImportedEndpoint(item.Endpoint);
-            return;
-        }
-
         if (item.SourceCase is null)
         {
             return;
@@ -715,25 +708,6 @@ public partial class ProjectTabViewModel : ViewModelBase
             RequestEntryTypes.HttpCase => $"已加载接口用例：{source.Name}",
             _ => $"已加载快捷请求：{source.Name}"
         };
-        NotifyShellState();
-    }
-
-    private void LoadImportedEndpoint(ApiEndpointDto endpoint)
-    {
-        SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-        var targetTab = ActiveWorkspaceTab?.IsLandingTab == true
-            ? ActiveWorkspaceTab
-            : CreateWorkspaceTab(activate: false);
-
-        targetTab ??= CreateWorkspaceTab(activate: false);
-        targetTab.ConfigureAsHttpInterface();
-        targetTab.SelectedMethod = endpoint.Method;
-        targetTab.RequestUrl = endpoint.Path;
-        targetTab.InterfaceFolderPath = string.IsNullOrWhiteSpace(endpoint.GroupName) ? "默认模块" : endpoint.GroupName;
-        targetTab.HttpCaseName = "成功";
-        targetTab.ConfigTab.PopulateFromEndpoint(endpoint);
-        ActivateWorkspaceTabCore(targetTab);
-        StatusMessage = $"已加载导入接口：{endpoint.Name}";
         NotifyShellState();
     }
 
@@ -1178,17 +1152,12 @@ public partial class ProjectTabViewModel : ViewModelBase
             });
 
             var results = await Task.WhenAll(documentTasks);
-            _importedApiEndpoints = results
-                .SelectMany(result => result.Endpoints)
-                .OrderBy(item => item.GroupName, StringComparer.OrdinalIgnoreCase)
-                .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            await SyncImportedInterfacesAsync(results.SelectMany(result => result.Endpoints).ToList());
             ImportedApiDocuments.Clear();
             foreach (var item in results.Select(result => result.Item))
             {
                 ImportedApiDocuments.Add(item);
             }
-            RebuildWorkspaceNavigation();
 
             if (!HasImportedApiDocuments && ImportDataStatusState == ImportStatusStates.Info)
             {
@@ -1202,6 +1171,12 @@ public partial class ProjectTabViewModel : ViewModelBase
                 IsImportDataBusy = false;
             }
         }
+    }
+
+    private async Task SyncImportedInterfacesAsync(IReadOnlyList<ApiEndpointDto> endpoints)
+    {
+        await _requestCaseService.SyncImportedHttpInterfacesAsync(ProjectId, endpoints, CancellationToken.None);
+        await ReloadSavedRequestsAsync();
     }
 
     private async Task SaveQuickRequestAsync(RequestWorkspaceTabViewModel workspaceTab, string? requestNameOverride = null)
@@ -1309,13 +1284,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             .Where(item => string.Equals(item.SourceCase.EntryType, RequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(item => item.UpdatedAt)
             .ToList();
-        var importedEndpoints = _importedApiEndpoints
-            .OrderBy(item => item.GroupName, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-        var folderCounts = BuildFolderDescendantCounts(
-            httpInterfaces.Select(item => item.SourceCase.FolderPath)
-                .Concat(importedEndpoints.Select(item => item.GroupName)));
+        var folderCounts = BuildFolderDescendantCounts(httpInterfaces.Select(item => item.SourceCase.FolderPath));
 
         var interfaceRoot = new ExplorerItemViewModel
         {
@@ -1379,44 +1348,6 @@ public partial class ProjectTabViewModel : ViewModelBase
                     });
                 }
             }
-        }
-
-        foreach (var endpoint in importedEndpoints)
-        {
-            var parentNode = interfaceRoot;
-            var folderPath = NormalizeFolderPath(endpoint.GroupName);
-            if (!string.IsNullOrWhiteSpace(folderPath))
-            {
-                var segments = folderPath.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                var currentPath = string.Empty;
-                foreach (var segment in segments)
-                {
-                    currentPath = string.IsNullOrWhiteSpace(currentPath) ? segment : $"{currentPath}/{segment}";
-                    if (!folderNodes.TryGetValue(currentPath, out var folderNode))
-                    {
-                        folderNode = new ExplorerItemViewModel
-                        {
-                            Title = BuildFolderTitle(segment, currentPath, folderCounts),
-                            Subtitle = string.Empty,
-                            IsGroup = true,
-                            NodeType = "folder"
-                        };
-                        folderNodes[currentPath] = folderNode;
-                        parentNode.Children.Add(folderNode);
-                    }
-
-                    parentNode = folderNode;
-                }
-            }
-
-            parentNode.Children.Add(new ExplorerItemViewModel
-            {
-                Title = endpoint.Name,
-                Subtitle = endpoint.Path,
-                NodeType = RequestEntryTypes.HttpInterface,
-                CanLoad = true,
-                Endpoint = endpoint
-            });
         }
 
         foreach (var item in quickRequests)
