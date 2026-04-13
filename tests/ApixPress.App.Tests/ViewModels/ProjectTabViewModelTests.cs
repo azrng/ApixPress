@@ -78,6 +78,19 @@ public sealed class ProjectTabViewModelTests
         Assert.Equal(projectSettingsItem, viewModel.SelectedWorkspaceNavigationItem);
     }
 
+    [Fact]
+    public void ExecutingProjectSettingsNavCommand_ShouldSwitchWorkspaceSection()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+        var projectSettingsItem = Assert.Single(viewModel.WorkspaceNavigationItems, item => item.SectionKey == "project-settings");
+
+        projectSettingsItem.Command.Execute(null);
+
+        Assert.True(viewModel.IsProjectSettingsSection);
+        Assert.Equal(projectSettingsItem, viewModel.SelectedWorkspaceNavigationItem);
+        Assert.True(projectSettingsItem.IsSelected);
+    }
+
     private static ProjectTabViewModel CreateViewModel(FakeApiWorkspaceService apiWorkspaceService)
     {
         return new ProjectTabViewModel(

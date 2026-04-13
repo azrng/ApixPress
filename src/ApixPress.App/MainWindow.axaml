@@ -425,9 +425,9 @@
                   </ItemsControl.ItemsPanel>
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:ProjectWorkspaceNavItemViewModel">
-                      <ToggleButton Classes="ProjectWorkspaceNavButton"
-                                    Command="{Binding Command}"
-                                    IsChecked="{Binding IsSelected, Mode=OneWay}">
+                      <Button Classes="ProjectWorkspaceNavButton"
+                              Classes.ProjectWorkspaceNavButtonSelected="{Binding IsSelected}"
+                              Command="{Binding Command}">
                         <StackPanel HorizontalAlignment="Center"
                                     Spacing="6">
                           <Border Classes="ProjectWorkspaceNavIcon">
@@ -442,7 +442,7 @@
                                      TextAlignment="Center"
                                      TextWrapping="Wrap" />
                         </StackPanel>
-                      </ToggleButton>
+                      </Button>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>

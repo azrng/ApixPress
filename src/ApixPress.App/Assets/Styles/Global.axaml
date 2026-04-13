@@ -932,7 +932,7 @@
     <Setter Property="HorizontalAlignment" Value="Center" />
   </Style>
 
-  <Style Selector="ToggleButton.ProjectWorkspaceNavButton">
+  <Style Selector="Button.ProjectWorkspaceNavButton">
     <Setter Property="Width" Value="68" />
     <Setter Property="MinHeight" Value="60" />
     <Setter Property="Background" Value="Transparent" />
@@ -942,11 +942,11 @@
     <Setter Property="HorizontalContentAlignment" Value="Center" />
   </Style>
 
-  <Style Selector="ToggleButton.ProjectWorkspaceNavButton:pointerover">
+  <Style Selector="Button.ProjectWorkspaceNavButton:pointerover">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
   </Style>
 
-  <Style Selector="ToggleButton.ProjectWorkspaceNavButton:checked">
+  <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
   </Style>
 
@@ -979,7 +979,7 @@
     <Setter Property="FontWeight" Value="Medium" />
   </Style>
 
-  <Style Selector="ToggleButton.ProjectWorkspaceNavButton:checked TextBlock.ProjectWorkspaceNavText">
+  <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected TextBlock.ProjectWorkspaceNavText">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
 
@@ -1000,7 +1000,7 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
   </Style>
 
-  <Style Selector="ToggleButton.ProjectWorkspaceNavButton:checked Border.ProjectWorkspaceNavIcon">
+  <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected Border.ProjectWorkspaceNavIcon">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
   </Style>
 
