@@ -445,7 +445,8 @@
             </Border>
 
             <Border Grid.Column="1"
-                    Classes="PanelCard ProjectWorkspaceSidebarCard">
+                    Classes="PanelCard ProjectWorkspaceSidebarCard"
+                    IsVisible="{Binding !IsProjectSettingsSection}">
               <Grid>
                 <Grid IsVisible="{Binding IsInterfaceManagementSection}"
                       RowDefinitions="Auto,Auto,*"
