@@ -799,7 +799,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         SelectedProjectSettingsSection = ProjectSettingsSections.Overview;
         IsProjectImportDialogOpen = false;
         StatusMessage = ShowProjectSettingsImportDataSection
-            ? "这里可以导入 Swagger 文档并查看已导入数据。"
+            ? "这里可以导入 Swagger 文档。"
             : "这里可以查看当前项目的基本设置。";
         NotifyShellState();
     }
@@ -820,7 +820,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
         SelectedProjectSettingsSection = ProjectSettingsSections.ImportData;
         IsProjectImportDialogOpen = false;
-        StatusMessage = "这里可以导入 Swagger 文档并查看已导入数据。";
+        StatusMessage = "这里可以导入 Swagger 文档。";
         NotifyShellState();
     }
 
