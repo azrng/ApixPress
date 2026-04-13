@@ -64,6 +64,13 @@ public sealed class ProjectTabViewModelTests
         Assert.False(viewModel.IsProjectSettingsOverviewSelected);
         Assert.True(viewModel.IsProjectSettingsImportDataSelected);
         Assert.Equal("导入数据", viewModel.CurrentProjectSettingsTitle);
+
+        viewModel.ShowProjectSettingsCommand.Execute(null);
+
+        Assert.True(viewModel.IsProjectSettingsSection);
+        Assert.True(viewModel.IsProjectSettingsOverviewSelected);
+        Assert.False(viewModel.IsProjectSettingsImportDataSelected);
+        Assert.Equal("基本设置", viewModel.CurrentProjectSettingsTitle);
     }
 
     [Fact]

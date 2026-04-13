@@ -790,6 +790,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     private void ShowProjectSettings()
     {
         SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
+        SelectedProjectSettingsSection = ProjectSettingsSections.Overview;
         IsProjectImportDialogOpen = false;
         StatusMessage = ShowProjectSettingsImportDataSection
             ? "这里可以导入 Swagger 文档并查看已导入数据。"
