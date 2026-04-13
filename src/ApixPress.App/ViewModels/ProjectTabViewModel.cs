@@ -164,6 +164,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     public bool ShowProjectSettingsImportDataSection => IsProjectSettingsSection && IsProjectSettingsImportDataSelected;
     public bool IsImportFileMode => SelectedImportDataMode == ImportDataModes.File;
     public bool IsImportUrlMode => SelectedImportDataMode == ImportDataModes.Url;
+    public bool ShowProjectImportDialogStatus => ShowImportStatusInfo || ShowImportStatusSuccess || ShowImportStatusError;
     public bool HasSelectedImportFile => !string.IsNullOrWhiteSpace(SelectedImportFilePath);
     public string SelectedImportFileName => HasSelectedImportFile ? Path.GetFileName(SelectedImportFilePath) : "尚未选择 Swagger 文件";
     public string SelectedImportFileSummary => HasSelectedImportFile
@@ -405,6 +406,9 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool isQuickRequestSaveDialogOpen;
+
+    [ObservableProperty]
+    private bool isProjectImportDialogOpen;
 
     [ObservableProperty]
     private string quickRequestSaveName = string.Empty;
@@ -770,6 +774,25 @@ public partial class ProjectTabViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void OpenProjectImportDialog()
+    {
+        SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
+        SelectedProjectSettingsSection = ProjectSettingsSections.ImportData;
+        SelectedImportDataMode = ImportDataModes.File;
+        IsProjectImportDialogOpen = true;
+        StatusMessage = "请选择 OpenAPI / Swagger 导入方式。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void CloseProjectImportDialog()
+    {
+        IsProjectImportDialogOpen = false;
+        StatusMessage = "已返回导入数据页面。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
     private void ShowImportFileMode()
     {
         SelectedImportDataMode = ImportDataModes.File;
@@ -1041,6 +1064,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             await LoadImportedDocumentsAsync(manageBusyState: false);
             var successMessage = buildSuccessMessage(result.Data);
             SetImportDataStatus(successMessage, ImportStatusStates.Success);
+            IsProjectImportDialogOpen = false;
             StatusMessage = successMessage;
         }
         finally
@@ -1734,6 +1758,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowImportStatusInfo));
         OnPropertyChanged(nameof(ShowImportStatusSuccess));
         OnPropertyChanged(nameof(ShowImportStatusError));
+        OnPropertyChanged(nameof(ShowProjectImportDialogStatus));
     }
 
     partial void OnActiveWorkspaceTabChanged(RequestWorkspaceTabViewModel? oldValue, RequestWorkspaceTabViewModel? newValue)
@@ -1781,6 +1806,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowProjectSettingsImportDataSection));
         OnPropertyChanged(nameof(IsImportFileMode));
         OnPropertyChanged(nameof(IsImportUrlMode));
+        OnPropertyChanged(nameof(ShowProjectImportDialogStatus));
         OnPropertyChanged(nameof(HasSelectedImportFile));
         OnPropertyChanged(nameof(SelectedImportFileName));
         OnPropertyChanged(nameof(SelectedImportFileSummary));
