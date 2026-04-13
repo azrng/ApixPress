@@ -66,6 +66,18 @@ public sealed class ProjectTabViewModelTests
         Assert.Equal("导入数据", viewModel.CurrentProjectSettingsTitle);
     }
 
+    [Fact]
+    public void SelectingWorkspaceNavigationItem_ShouldSwitchWorkspaceSection()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+        var projectSettingsItem = Assert.Single(viewModel.WorkspaceNavigationItems, item => item.SectionKey == "project-settings");
+
+        viewModel.SelectedWorkspaceNavigationItem = projectSettingsItem;
+
+        Assert.True(viewModel.IsProjectSettingsSection);
+        Assert.Equal(projectSettingsItem, viewModel.SelectedWorkspaceNavigationItem);
+    }
+
     private static ProjectTabViewModel CreateViewModel(FakeApiWorkspaceService apiWorkspaceService)
     {
         return new ProjectTabViewModel(

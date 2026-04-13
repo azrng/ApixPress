@@ -1785,6 +1785,16 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentProjectSettingsSubtitle));
     }
 
+    partial void OnSelectedWorkspaceNavigationItemChanged(ProjectWorkspaceNavItemViewModel? value)
+    {
+        if (value is null || string.Equals(SelectedWorkspaceSection, value.SectionKey, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        SelectedWorkspaceSection = value.SectionKey;
+    }
+
     partial void OnSelectedImportDataModeChanged(string value)
     {
         OnPropertyChanged(nameof(IsImportFileMode));
