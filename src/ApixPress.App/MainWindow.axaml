@@ -2642,21 +2642,22 @@
 
               <StackPanel Grid.Row="3"
                           Spacing="{StaticResource Space.3}">
-                <Grid ColumnDefinitions="*,*"
-                      ColumnSpacing="{StaticResource Space.2}">
-                  <ToggleButton Grid.Column="0"
-                                Classes="SettingsNavButton ProjectImportModeButton"
-                                Command="{Binding ActiveProjectTab.ShowImportFileModeCommand}"
-                                IsChecked="{Binding ActiveProjectTab.IsImportFileMode, Mode=OneWay}">
-                    <TextBlock Text="上传文件" />
-                  </ToggleButton>
-                  <ToggleButton Grid.Column="1"
-                                Classes="SettingsNavButton ProjectImportModeButton"
-                                Command="{Binding ActiveProjectTab.ShowImportUrlModeCommand}"
-                                IsChecked="{Binding ActiveProjectTab.IsImportUrlMode, Mode=OneWay}">
-                    <TextBlock Text="URL 导入" />
-                  </ToggleButton>
-                </Grid>
+                <Border Classes="ProjectImportTabStrip">
+                  <Grid ColumnDefinitions="*,*">
+                    <ToggleButton Grid.Column="0"
+                                  Classes="ProjectImportModeTab"
+                                  Command="{Binding ActiveProjectTab.ShowImportFileModeCommand}"
+                                  IsChecked="{Binding ActiveProjectTab.IsImportFileMode, Mode=OneWay}">
+                      <TextBlock Text="上传文件" />
+                    </ToggleButton>
+                    <ToggleButton Grid.Column="1"
+                                  Classes="ProjectImportModeTab"
+                                  Command="{Binding ActiveProjectTab.ShowImportUrlModeCommand}"
+                                  IsChecked="{Binding ActiveProjectTab.IsImportUrlMode, Mode=OneWay}">
+                      <TextBlock Text="URL 导入" />
+                    </ToggleButton>
+                  </Grid>
+                </Border>
 
                 <Border Classes="StatusInfo"
                         IsVisible="{Binding ActiveProjectTab.ShowImportStatusInfo}">
