@@ -23,6 +23,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IRequestCaseService _requestCaseService;
     private readonly IRequestExecutionService _requestExecutionService;
     private readonly IRequestHistoryService _requestHistoryService;
+    private readonly IApiWorkspaceService _apiWorkspaceService;
+    private readonly IFilePickerService _filePickerService;
     private readonly RequestConfigTabViewModel _fallbackConfigTab;
     private readonly ResponseSectionViewModel _fallbackResponseSection;
     private readonly EnvironmentPanelViewModel _fallbackEnvironmentPanel;
@@ -37,13 +39,17 @@ public partial class MainWindowViewModel : ViewModelBase
         IRequestHistoryService requestHistoryService,
         IEnvironmentVariableService environmentVariableService,
         IProjectWorkspaceService projectWorkspaceService,
-        IAppShellSettingsService appShellSettingsService)
+        IAppShellSettingsService appShellSettingsService,
+        IApiWorkspaceService apiWorkspaceService,
+        IFilePickerService filePickerService)
     {
         _requestExecutionService = requestExecutionService;
         _requestCaseService = requestCaseService;
         _requestHistoryService = requestHistoryService;
         _environmentVariableService = environmentVariableService;
         _appShellSettingsService = appShellSettingsService;
+        _apiWorkspaceService = apiWorkspaceService;
+        _filePickerService = filePickerService;
 
         _fallbackConfigTab = new RequestConfigTabViewModel(null);
         _fallbackResponseSection = new ResponseSectionViewModel();
@@ -634,7 +640,9 @@ public partial class MainWindowViewModel : ViewModelBase
             _requestExecutionService,
             _requestCaseService,
             _requestHistoryService,
-            _environmentVariableService);
+            _environmentVariableService,
+            _apiWorkspaceService,
+            _filePickerService);
         tab.ShellStateChanged += OnProjectTabShellStateChanged;
         return tab;
     }

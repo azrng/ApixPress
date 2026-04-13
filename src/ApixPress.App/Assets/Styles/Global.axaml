@@ -203,6 +203,12 @@
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
 
+  <Style Selector="Border.StatusError">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.Background}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
   <Style Selector="Button.SendButton">
     <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
@@ -2010,6 +2016,58 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+  </Style>
+
+  <Style Selector="Border.ProjectSettingsSidebarSection">
+    <Setter Property="Margin" Value="0,0,0,2" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectSettingsNavButton">
+    <Setter Property="Padding" Value="12,10" />
+    <Setter Property="MinHeight" Value="40" />
+  </Style>
+
+  <Style Selector="ToggleButton.ProjectImportModeButton">
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Border.ProjectImportFormatCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Border.ProjectImportFormatIcon">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+  </Style>
+
+  <Style Selector="Border.ProjectImportInputCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Border.ProjectImportDocumentCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+    <Setter Property="Margin" Value="0,0,0,12" />
+  </Style>
+
+  <Style Selector="Border.ProjectImportCountBadge">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="12,10" />
+    <Setter Property="MinWidth" Value="92" />
   </Style>
 
   <Style Selector="Border.EnvironmentManagerDialogCard">

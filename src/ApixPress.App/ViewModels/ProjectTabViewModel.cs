@@ -21,6 +21,25 @@ public partial class ProjectTabViewModel : ViewModelBase
         public const string ProjectSettings = "project-settings";
     }
 
+    private static class ProjectSettingsSections
+    {
+        public const string Overview = "overview";
+        public const string ImportData = "import-data";
+    }
+
+    private static class ImportDataModes
+    {
+        public const string File = "file";
+        public const string Url = "url";
+    }
+
+    private static class ImportStatusStates
+    {
+        public const string Info = "info";
+        public const string Success = "success";
+        public const string Error = "error";
+    }
+
     private static class RequestEntryTypes
     {
         public const string QuickRequest = "quick-request";
@@ -31,6 +50,8 @@ public partial class ProjectTabViewModel : ViewModelBase
     private readonly IRequestCaseService _requestCaseService;
     private readonly IRequestExecutionService _requestExecutionService;
     private readonly IRequestHistoryService _requestHistoryService;
+    private readonly IApiWorkspaceService _apiWorkspaceService;
+    private readonly IFilePickerService _filePickerService;
     private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
     private bool _initialized;
 
@@ -41,7 +62,9 @@ public partial class ProjectTabViewModel : ViewModelBase
         IRequestExecutionService requestExecutionService,
         IRequestCaseService requestCaseService,
         IRequestHistoryService requestHistoryService,
-        IEnvironmentVariableService environmentVariableService)
+        IEnvironmentVariableService environmentVariableService,
+        IApiWorkspaceService apiWorkspaceService,
+        IFilePickerService filePickerService)
     {
         Project = new ProjectWorkspaceItemViewModel
         {
@@ -54,6 +77,8 @@ public partial class ProjectTabViewModel : ViewModelBase
         _requestExecutionService = requestExecutionService;
         _requestCaseService = requestCaseService;
         _requestHistoryService = requestHistoryService;
+        _apiWorkspaceService = apiWorkspaceService;
+        _filePickerService = filePickerService;
 
         _fallbackWorkspaceTab = new RequestWorkspaceTabViewModel();
         _fallbackWorkspaceTab.ConfigureAsLanding();
@@ -72,6 +97,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         };
         HistoryPanel.HistoryItems.CollectionChanged += (_, _) => NotifyShellState();
         WorkspaceTabs.CollectionChanged += OnWorkspaceTabsCollectionChanged;
+        ImportedApiDocuments.CollectionChanged += (_, _) => NotifyShellState();
 
         WorkspaceNavigationItems.Add(new ProjectWorkspaceNavItemViewModel(
             WorkspaceSections.InterfaceManagement,
@@ -102,6 +128,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     public ObservableCollection<ExplorerItemViewModel> InterfaceTreeItems { get; } = [];
     public ObservableCollection<ExplorerItemViewModel> QuickRequestTreeItems { get; } = [];
     public ObservableCollection<ProjectWorkspaceNavItemViewModel> WorkspaceNavigationItems { get; } = [];
+    public ObservableCollection<ProjectImportedDocumentItemViewModel> ImportedApiDocuments { get; } = [];
     public IReadOnlyList<ExplorerItemViewModel> InterfaceCatalogItems => InterfaceTreeItems.FirstOrDefault()?.Children ?? [];
     public IReadOnlyList<RequestWorkspaceTabViewModel> VisibleWorkspaceTabs => WorkspaceTabs
         .Where(item => !item.IsLandingTab || item.ShowInTabStrip)
@@ -131,6 +158,22 @@ public partial class ProjectTabViewModel : ViewModelBase
     public bool IsInterfaceManagementSection => SelectedWorkspaceSection == WorkspaceSections.InterfaceManagement;
     public bool IsRequestHistorySection => SelectedWorkspaceSection == WorkspaceSections.RequestHistory;
     public bool IsProjectSettingsSection => SelectedWorkspaceSection == WorkspaceSections.ProjectSettings;
+    public bool IsProjectSettingsOverviewSelected => SelectedProjectSettingsSection == ProjectSettingsSections.Overview;
+    public bool IsProjectSettingsImportDataSelected => SelectedProjectSettingsSection == ProjectSettingsSections.ImportData;
+    public bool ShowProjectSettingsOverviewSection => IsProjectSettingsSection && IsProjectSettingsOverviewSelected;
+    public bool ShowProjectSettingsImportDataSection => IsProjectSettingsSection && IsProjectSettingsImportDataSelected;
+    public bool IsImportFileMode => SelectedImportDataMode == ImportDataModes.File;
+    public bool IsImportUrlMode => SelectedImportDataMode == ImportDataModes.Url;
+    public bool HasSelectedImportFile => !string.IsNullOrWhiteSpace(SelectedImportFilePath);
+    public string SelectedImportFileName => HasSelectedImportFile ? Path.GetFileName(SelectedImportFilePath) : "尚未选择 Swagger 文件";
+    public string SelectedImportFileSummary => HasSelectedImportFile
+        ? SelectedImportFilePath
+        : "请选择本地 Swagger/OpenAPI JSON 文件后再执行导入。";
+    public bool HasImportedApiDocuments => ImportedApiDocuments.Count > 0;
+    public bool ShowImportedApiDocumentsEmptyState => !IsImportDataBusy && !HasImportedApiDocuments;
+    public bool ShowImportStatusInfo => ImportDataStatusState == ImportStatusStates.Info;
+    public bool ShowImportStatusSuccess => ImportDataStatusState == ImportStatusStates.Success;
+    public bool ShowImportStatusError => ImportDataStatusState == ImportStatusStates.Error;
     public bool IsQuickRequestEditor => ActiveWorkspaceTab?.IsQuickRequestTab ?? false;
     public bool IsHttpInterfaceEditor => ActiveWorkspaceTab?.IsHttpInterfaceTab ?? false;
     public bool IsRequestEditorOpen => ActiveWorkspaceTab is not null && !ActiveWorkspaceTab.IsLandingTab;
@@ -141,9 +184,14 @@ public partial class ProjectTabViewModel : ViewModelBase
         || string.Equals(item.SourceCase.EntryType, RequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase)).ToString();
     public string HistoryCountText => RequestHistory.Count.ToString();
     public string EnvironmentCountText => EnvironmentPanel.Environments.Count.ToString();
+    public string ImportedApiDocumentCountText => ImportedApiDocuments.Count.ToString();
     public string ProjectSettingsDescription => string.IsNullOrWhiteSpace(Project.Description)
         ? "当前项目还没有补充备注，可在这里继续维护环境与工作区说明。"
         : Project.Description;
+    public string CurrentProjectSettingsTitle => IsProjectSettingsImportDataSelected ? "导入数据" : "项目设置";
+    public string CurrentProjectSettingsSubtitle => IsProjectSettingsImportDataSelected
+        ? "支持 Swagger 文件上传和 URL 导入，导入结果会持久化保存到当前项目。"
+        : "保持项目说明、环境切换和快捷请求工作区之间的关系清晰可见。";
     public string InterfaceSectionHint => HasInterfaceEntries ? "默认模块 / 接口" : "默认模块下还没有保存的 HTTP 接口";
     public string QuickRequestSectionHint => HasQuickRequestEntries ? "保存到左侧快捷请求目录" : "左侧快捷请求目录还是空的";
     public string CurrentEditorTitle => ActiveWorkspaceTab?.EditorTitle ?? "新建...";
@@ -318,6 +366,27 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private ProjectWorkspaceNavItemViewModel? selectedWorkspaceNavigationItem;
+
+    [ObservableProperty]
+    private string selectedProjectSettingsSection = ProjectSettingsSections.Overview;
+
+    [ObservableProperty]
+    private string selectedImportDataMode = ImportDataModes.File;
+
+    [ObservableProperty]
+    private string selectedImportFilePath = string.Empty;
+
+    [ObservableProperty]
+    private string importUrl = string.Empty;
+
+    [ObservableProperty]
+    private bool isImportDataBusy;
+
+    [ObservableProperty]
+    private string importDataStatusText = "请选择 Swagger/OpenAPI JSON 文件，或输入可访问的文档 URL。";
+
+    [ObservableProperty]
+    private string importDataStatusState = ImportStatusStates.Info;
 
     [ObservableProperty]
     private bool isInterfaceCatalogExpanded = true;
@@ -676,7 +745,106 @@ public partial class ProjectTabViewModel : ViewModelBase
     private void ShowProjectSettings()
     {
         SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
-        StatusMessage = "这里可以查看项目说明并进入环境设置。";
+        StatusMessage = ShowProjectSettingsImportDataSection
+            ? "这里可以导入 Swagger 文档并查看已导入数据。"
+            : "这里可以查看项目说明并进入环境设置。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ShowProjectOverviewSettings()
+    {
+        SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
+        SelectedProjectSettingsSection = ProjectSettingsSections.Overview;
+        StatusMessage = "这里可以查看项目说明、环境摘要和设置入口。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ShowProjectImportDataSettings()
+    {
+        SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
+        SelectedProjectSettingsSection = ProjectSettingsSections.ImportData;
+        StatusMessage = "这里可以导入 Swagger 文档并查看已导入数据。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ShowImportFileMode()
+    {
+        SelectedImportDataMode = ImportDataModes.File;
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private void ShowImportUrlMode()
+    {
+        SelectedImportDataMode = ImportDataModes.Url;
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private async Task PickSwaggerImportFileAsync()
+    {
+        if (IsImportDataBusy)
+        {
+            return;
+        }
+
+        var filePath = await _filePickerService.PickSwaggerJsonFileAsync(CancellationToken.None);
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            SetImportDataStatus("未选择文件，当前保持原有导入配置。", ImportStatusStates.Info);
+            NotifyShellState();
+            return;
+        }
+
+        SelectedImportFilePath = filePath;
+        SetImportDataStatus($"已选择 Swagger 文件：{Path.GetFileName(filePath)}", ImportStatusStates.Info);
+        StatusMessage = $"已选择 Swagger 文件：{Path.GetFileName(filePath)}";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private async Task ImportSwaggerFileAsync()
+    {
+        if (!HasSelectedImportFile)
+        {
+            SetImportDataStatus("请先选择要导入的 Swagger/OpenAPI JSON 文件。", ImportStatusStates.Error);
+            StatusMessage = "请先选择要导入的 Swagger 文件。";
+            NotifyShellState();
+            return;
+        }
+
+        await ImportSwaggerAsync(
+            () => _apiWorkspaceService.ImportFromFileAsync(ProjectId, SelectedImportFilePath.Trim(), CancellationToken.None),
+            document => $"Swagger 文件导入成功：{document.Name}");
+    }
+
+    [RelayCommand]
+    private async Task ImportSwaggerUrlAsync()
+    {
+        var importTargetUrl = ImportUrl.Trim();
+        if (string.IsNullOrWhiteSpace(importTargetUrl))
+        {
+            SetImportDataStatus("请输入 Swagger/OpenAPI 文档 URL。", ImportStatusStates.Error);
+            StatusMessage = "请输入 Swagger 文档 URL。";
+            NotifyShellState();
+            return;
+        }
+
+        await ImportSwaggerAsync(
+            () => _apiWorkspaceService.ImportFromUrlAsync(ProjectId, importTargetUrl, CancellationToken.None),
+            document => $"Swagger URL 导入成功：{document.Name}");
+    }
+
+    [RelayCommand]
+    private async Task RefreshImportedApiDocumentsAsync()
+    {
+        await LoadImportedDocumentsAsync();
+        StatusMessage = HasImportedApiDocuments
+            ? $"已刷新已导入数据，共 {ImportedApiDocuments.Count} 份文档。"
+            : "已刷新导入数据，当前项目还没有 Swagger 文档。";
         NotifyShellState();
     }
 
@@ -842,8 +1010,90 @@ public partial class ProjectTabViewModel : ViewModelBase
         await EnvironmentPanel.LoadProjectAsync(ProjectId, preferredEnvironmentId);
         await ReloadSavedRequestsAsync();
         await HistoryPanel.LoadHistoryAsync();
+        await LoadImportedDocumentsAsync(manageBusyState: false);
         EnsureLandingWorkspaceTab();
         NotifyShellState();
+    }
+
+    private async Task ImportSwaggerAsync(
+        Func<Task<IResultModel<ApiDocumentDto>>> importAction,
+        Func<ApiDocumentDto, string> buildSuccessMessage)
+    {
+        if (IsImportDataBusy)
+        {
+            return;
+        }
+
+        IsImportDataBusy = true;
+        try
+        {
+            var result = await importAction();
+            if (!result.IsSuccess || result.Data is null)
+            {
+                var failureMessage = string.IsNullOrWhiteSpace(result.Message)
+                    ? "Swagger 导入失败，请检查文档格式后重试。"
+                    : result.Message;
+                SetImportDataStatus(failureMessage, ImportStatusStates.Error);
+                StatusMessage = failureMessage;
+                return;
+            }
+
+            await LoadImportedDocumentsAsync(manageBusyState: false);
+            var successMessage = buildSuccessMessage(result.Data);
+            SetImportDataStatus(successMessage, ImportStatusStates.Success);
+            StatusMessage = successMessage;
+        }
+        finally
+        {
+            IsImportDataBusy = false;
+            NotifyShellState();
+        }
+    }
+
+    private async Task LoadImportedDocumentsAsync(bool manageBusyState = true)
+    {
+        if (manageBusyState)
+        {
+            IsImportDataBusy = true;
+        }
+
+        try
+        {
+            var documents = await _apiWorkspaceService.GetDocumentsAsync(ProjectId, CancellationToken.None);
+            var documentTasks = documents.Select(async document =>
+            {
+                var endpoints = await _apiWorkspaceService.GetEndpointsAsync(document.Id, CancellationToken.None);
+                return new ProjectImportedDocumentItemViewModel
+                {
+                    Id = document.Id,
+                    Name = document.Name,
+                    SourceTypeText = ResolveImportSourceTypeText(document.SourceType),
+                    SourceValueText = string.IsNullOrWhiteSpace(document.SourceValue) ? "-" : document.SourceValue,
+                    BaseUrlText = string.IsNullOrWhiteSpace(document.BaseUrl) ? "未解析出 BaseUrl" : document.BaseUrl,
+                    ImportedAtText = document.ImportedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
+                    EndpointCount = endpoints.Count
+                };
+            });
+
+            var items = await Task.WhenAll(documentTasks);
+            ImportedApiDocuments.Clear();
+            foreach (var item in items)
+            {
+                ImportedApiDocuments.Add(item);
+            }
+
+            if (!HasImportedApiDocuments && ImportDataStatusState == ImportStatusStates.Info)
+            {
+                SetImportDataStatus("当前项目还没有导入 Swagger 数据，可先从文件或 URL 开始导入。", ImportStatusStates.Info);
+            }
+        }
+        finally
+        {
+            if (manageBusyState)
+            {
+                IsImportDataBusy = false;
+            }
+        }
     }
 
     private async Task SaveQuickRequestAsync(RequestWorkspaceTabViewModel workspaceTab, string? requestNameOverride = null)
@@ -1049,6 +1299,19 @@ public partial class ProjectTabViewModel : ViewModelBase
             IsActive = false,
             SortOrder = 0
         };
+    }
+
+    private void SetImportDataStatus(string message, string statusState)
+    {
+        ImportDataStatusText = message;
+        ImportDataStatusState = statusState;
+    }
+
+    private static string ResolveImportSourceTypeText(string sourceType)
+    {
+        return string.Equals(sourceType, "URL", StringComparison.OrdinalIgnoreCase)
+            ? "URL 导入"
+            : "文件上传";
     }
 
     private void OpenQuickRequestSaveDialog(RequestWorkspaceTabViewModel workspaceTab)
@@ -1437,8 +1700,40 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsInterfaceManagementSection));
         OnPropertyChanged(nameof(IsRequestHistorySection));
         OnPropertyChanged(nameof(IsProjectSettingsSection));
+        OnPropertyChanged(nameof(ShowProjectSettingsOverviewSection));
+        OnPropertyChanged(nameof(ShowProjectSettingsImportDataSection));
         OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
         OnPropertyChanged(nameof(ShowRequestEditorWorkspace));
+    }
+
+    partial void OnSelectedProjectSettingsSectionChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsProjectSettingsOverviewSelected));
+        OnPropertyChanged(nameof(IsProjectSettingsImportDataSelected));
+        OnPropertyChanged(nameof(ShowProjectSettingsOverviewSection));
+        OnPropertyChanged(nameof(ShowProjectSettingsImportDataSection));
+        OnPropertyChanged(nameof(CurrentProjectSettingsTitle));
+        OnPropertyChanged(nameof(CurrentProjectSettingsSubtitle));
+    }
+
+    partial void OnSelectedImportDataModeChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsImportFileMode));
+        OnPropertyChanged(nameof(IsImportUrlMode));
+    }
+
+    partial void OnSelectedImportFilePathChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasSelectedImportFile));
+        OnPropertyChanged(nameof(SelectedImportFileName));
+        OnPropertyChanged(nameof(SelectedImportFileSummary));
+    }
+
+    partial void OnImportDataStatusStateChanged(string value)
+    {
+        OnPropertyChanged(nameof(ShowImportStatusInfo));
+        OnPropertyChanged(nameof(ShowImportStatusSuccess));
+        OnPropertyChanged(nameof(ShowImportStatusError));
     }
 
     partial void OnActiveWorkspaceTabChanged(RequestWorkspaceTabViewModel? oldValue, RequestWorkspaceTabViewModel? newValue)
@@ -1480,6 +1775,23 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsInterfaceManagementSection));
         OnPropertyChanged(nameof(IsRequestHistorySection));
         OnPropertyChanged(nameof(IsProjectSettingsSection));
+        OnPropertyChanged(nameof(IsProjectSettingsOverviewSelected));
+        OnPropertyChanged(nameof(IsProjectSettingsImportDataSelected));
+        OnPropertyChanged(nameof(ShowProjectSettingsOverviewSection));
+        OnPropertyChanged(nameof(ShowProjectSettingsImportDataSection));
+        OnPropertyChanged(nameof(IsImportFileMode));
+        OnPropertyChanged(nameof(IsImportUrlMode));
+        OnPropertyChanged(nameof(HasSelectedImportFile));
+        OnPropertyChanged(nameof(SelectedImportFileName));
+        OnPropertyChanged(nameof(SelectedImportFileSummary));
+        OnPropertyChanged(nameof(HasImportedApiDocuments));
+        OnPropertyChanged(nameof(ShowImportedApiDocumentsEmptyState));
+        OnPropertyChanged(nameof(ImportedApiDocumentCountText));
+        OnPropertyChanged(nameof(CurrentProjectSettingsTitle));
+        OnPropertyChanged(nameof(CurrentProjectSettingsSubtitle));
+        OnPropertyChanged(nameof(ShowImportStatusInfo));
+        OnPropertyChanged(nameof(ShowImportStatusSuccess));
+        OnPropertyChanged(nameof(ShowImportStatusError));
         OnPropertyChanged(nameof(IsQuickRequestEditor));
         OnPropertyChanged(nameof(IsHttpInterfaceEditor));
         OnPropertyChanged(nameof(IsRequestEditorOpen));

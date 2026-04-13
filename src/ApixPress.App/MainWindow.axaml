@@ -742,28 +742,52 @@
                 </Grid>
 
                 <Grid IsVisible="{Binding IsProjectSettingsSection}"
-                      RowDefinitions="Auto,Auto,*"
+                      RowDefinitions="Auto,Auto,Auto,*"
                       RowSpacing="{StaticResource Space.3}">
                   <StackPanel Spacing="2">
                     <TextBlock Classes="SectionTitle"
                                Text="项目设置" />
                     <TextBlock Classes="CaptionText"
-                               Text="在这里查看项目说明、当前环境和设置入口。" />
+                               Text="在这里管理项目设置、环境和导入数据入口。" />
                   </StackPanel>
 
                   <Border Grid.Row="1"
-                          Classes="ProjectWorkspaceModuleCard">
+                          Classes="SidebarListCard ProjectSettingsSidebarSection">
                     <StackPanel Spacing="{StaticResource Space.2}">
-                      <TextBlock Text="{Binding Project.DisplayName}"
+                      <TextBlock Text="项目信息"
                                  FontWeight="SemiBold" />
+                      <ToggleButton Classes="SettingsNavButton ProjectSettingsNavButton"
+                                    Command="{Binding ShowProjectOverviewSettingsCommand}"
+                                    IsChecked="{Binding IsProjectSettingsOverviewSelected, Mode=OneWay}">
+                        <TextBlock Text="概览信息" />
+                      </ToggleButton>
+                    </StackPanel>
+                  </Border>
+
+                  <Border Grid.Row="2"
+                          Classes="SidebarListCard ProjectSettingsSidebarSection">
+                    <StackPanel Spacing="{StaticResource Space.2}">
+                      <TextBlock Text="数据管理"
+                                 FontWeight="SemiBold" />
+                      <ToggleButton Classes="SettingsNavButton ProjectSettingsNavButton"
+                                    Command="{Binding ShowProjectImportDataSettingsCommand}"
+                                    IsChecked="{Binding IsProjectSettingsImportDataSelected, Mode=OneWay}">
+                        <TextBlock Text="导入数据" />
+                      </ToggleButton>
+                    </StackPanel>
+                  </Border>
+
+                  <StackPanel Grid.Row="3"
+                              Spacing="{StaticResource Space.2}">
+                    <Border Classes="SidebarListCard">
+                      <StackPanel Spacing="{StaticResource Space.2}">
+                        <TextBlock Text="{Binding Project.DisplayName}"
+                                   FontWeight="SemiBold" />
                       <TextBlock Classes="CaptionText"
                                  Text="{Binding ProjectSettingsDescription}"
                                  TextWrapping="Wrap" />
                     </StackPanel>
                   </Border>
-
-                  <StackPanel Grid.Row="2"
-                              Spacing="{StaticResource Space.2}">
                     <Border Classes="SidebarListCard">
                       <StackPanel Spacing="{StaticResource Space.2}">
                         <TextBlock Text="环境数量"
@@ -1989,19 +2013,27 @@
                       ColumnSpacing="{StaticResource Space.3}">
                   <StackPanel Spacing="2">
                     <TextBlock Classes="SectionTitle"
-                               Text="项目设置" />
+                               Text="{Binding CurrentProjectSettingsTitle}" />
                     <TextBlock Classes="CaptionText"
-                               Text="保持项目说明、环境切换和快捷请求工作区之间的关系清晰可见。" />
+                               Text="{Binding CurrentProjectSettingsSubtitle}" />
                   </StackPanel>
-                  <Button Grid.Column="1"
-                          Classes="PrimaryButton"
-                          Content="打开环境设置"
-                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+                  <StackPanel Grid.Column="1"
+                              Orientation="Horizontal"
+                              Spacing="{StaticResource Space.2}">
+                    <Button Classes="SecondaryButton"
+                            Content="刷新数据"
+                            Command="{Binding RefreshImportedApiDocumentsCommand}"
+                            IsVisible="{Binding ShowProjectSettingsImportDataSection}" />
+                    <Button Classes="PrimaryButton"
+                            Content="打开环境设置"
+                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+                  </StackPanel>
                 </Grid>
 
                 <Grid Grid.Row="1"
                       ColumnDefinitions="*,*"
-                      ColumnSpacing="{StaticResource Space.3}">
+                      ColumnSpacing="{StaticResource Space.3}"
+                      IsVisible="{Binding ShowProjectSettingsOverviewSection}">
                   <Border Classes="ProjectSettingsInfoCard">
                     <StackPanel Spacing="{StaticResource Space.3}">
                       <TextBlock Classes="SectionTitle"
@@ -2030,6 +2062,195 @@
                     </StackPanel>
                   </Border>
                 </Grid>
+
+                <ScrollViewer Grid.Row="1"
+                              IsVisible="{Binding ShowProjectSettingsImportDataSection}">
+                  <StackPanel Spacing="{StaticResource Space.4}">
+                    <Border Classes="ProjectSettingsInfoCard">
+                      <StackPanel Spacing="{StaticResource Space.3}">
+                        <TextBlock Classes="SectionTitle"
+                                   Text="导入 API 数据" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="当前仅支持 Swagger / OpenAPI JSON 文档，导入后会按项目持久化保存。" />
+                        <Border Classes="ProjectImportFormatCard">
+                          <Grid ColumnDefinitions="Auto,*"
+                                ColumnSpacing="{StaticResource Space.3}">
+                            <Border Width="40"
+                                    Height="40"
+                                    Classes="ProjectImportFormatIcon">
+                              <TextBlock HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         FontSize="{StaticResource Font.Size.BodyLarge}"
+                                         FontWeight="Bold"
+                                         Text="S" />
+                            </Border>
+                            <StackPanel Grid.Column="1"
+                                        Spacing="2">
+                              <TextBlock Text="OpenAPI / Swagger"
+                                         FontWeight="SemiBold" />
+                              <TextBlock Classes="CaptionText"
+                                         Text="支持通过文件上传或 URL 导入到当前项目的数据管理区。" />
+                            </StackPanel>
+                          </Grid>
+                        </Border>
+                        <Grid ColumnDefinitions="*,*"
+                              ColumnSpacing="{StaticResource Space.2}">
+                          <ToggleButton Grid.Column="0"
+                                        Classes="SettingsNavButton ProjectImportModeButton"
+                                        Command="{Binding ShowImportFileModeCommand}"
+                                        IsChecked="{Binding IsImportFileMode, Mode=OneWay}">
+                            <TextBlock Text="上传文件" />
+                          </ToggleButton>
+                          <ToggleButton Grid.Column="1"
+                                        Classes="SettingsNavButton ProjectImportModeButton"
+                                        Command="{Binding ShowImportUrlModeCommand}"
+                                        IsChecked="{Binding IsImportUrlMode, Mode=OneWay}">
+                            <TextBlock Text="URL 导入" />
+                          </ToggleButton>
+                        </Grid>
+                      </StackPanel>
+                    </Border>
+
+                    <Border Classes="StatusInfo"
+                            IsVisible="{Binding ShowImportStatusInfo}">
+                      <TextBlock Text="{Binding ImportDataStatusText}"
+                                 TextWrapping="Wrap" />
+                    </Border>
+                    <Border Classes="StatusSuccess"
+                            IsVisible="{Binding ShowImportStatusSuccess}">
+                      <TextBlock Text="{Binding ImportDataStatusText}"
+                                 TextWrapping="Wrap" />
+                    </Border>
+                    <Border Classes="StatusError"
+                            IsVisible="{Binding ShowImportStatusError}">
+                      <TextBlock Text="{Binding ImportDataStatusText}"
+                                 TextWrapping="Wrap" />
+                    </Border>
+
+                    <Border Classes="ProjectSettingsInfoCard"
+                            IsVisible="{Binding IsImportFileMode}">
+                      <StackPanel Spacing="{StaticResource Space.3}">
+                        <TextBlock Classes="SectionTitle"
+                                   Text="上传 Swagger 文件" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="先选择本地 Swagger/OpenAPI JSON 文件，再执行导入。" />
+                        <Border Classes="ProjectImportInputCard">
+                          <StackPanel Spacing="{StaticResource Space.2}">
+                            <TextBlock Text="{Binding SelectedImportFileName}"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Classes="CaptionText"
+                                       Text="{Binding SelectedImportFileSummary}"
+                                       TextWrapping="Wrap" />
+                          </StackPanel>
+                        </Border>
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="{StaticResource Space.2}">
+                          <Button Classes="SecondaryButton"
+                                  Content="选择文件"
+                                  Command="{Binding PickSwaggerImportFileCommand}" />
+                          <Button Classes="PrimaryButton"
+                                  Content="开始导入"
+                                  Command="{Binding ImportSwaggerFileCommand}" />
+                        </StackPanel>
+                      </StackPanel>
+                    </Border>
+
+                    <Border Classes="ProjectSettingsInfoCard"
+                            IsVisible="{Binding IsImportUrlMode}">
+                      <StackPanel Spacing="{StaticResource Space.3}">
+                        <TextBlock Classes="SectionTitle"
+                                   Text="通过 URL 导入" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="输入可直接访问的 Swagger/OpenAPI JSON 文档地址。" />
+                        <TextBox Classes="SectionInput"
+                                 Watermark="https://example.com/swagger/v1/swagger.json"
+                                 Text="{Binding ImportUrl}" />
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="{StaticResource Space.2}">
+                          <Button Classes="PrimaryButton"
+                                  Content="导入 URL"
+                                  Command="{Binding ImportSwaggerUrlCommand}" />
+                        </StackPanel>
+                      </StackPanel>
+                    </Border>
+
+                    <Border Classes="ProjectSettingsInfoCard">
+                      <Grid RowDefinitions="Auto,Auto,*"
+                            RowSpacing="{StaticResource Space.3}">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="{StaticResource Space.2}">
+                          <StackPanel Spacing="2">
+                            <TextBlock Classes="SectionTitle"
+                                       Text="已导入数据" />
+                            <TextBlock Classes="CaptionText"
+                                       Text="{Binding ImportedApiDocumentCountText, StringFormat='当前项目共保存 {0} 份 Swagger 文档'}" />
+                          </StackPanel>
+                          <Button Grid.Column="1"
+                                  Classes="SecondaryButton"
+                                  Content="刷新列表"
+                                  Command="{Binding RefreshImportedApiDocumentsCommand}" />
+                        </Grid>
+
+                        <Border Grid.Row="1"
+                                Classes="EmptyStateCard"
+                                IsVisible="{Binding ShowImportedApiDocumentsEmptyState}">
+                          <StackPanel Spacing="{StaticResource Space.2}"
+                                      HorizontalAlignment="Center">
+                            <TextBlock Classes="SectionTitle"
+                                       Text="还没有导入数据" />
+                            <TextBlock Classes="CaptionText"
+                                       Text="选择文件上传或 URL 导入后，文档会出现在这里并持久化保存。" />
+                          </StackPanel>
+                        </Border>
+
+                        <ItemsControl Grid.Row="2"
+                                      ItemsSource="{Binding ImportedApiDocuments}"
+                                      IsVisible="{Binding HasImportedApiDocuments}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ProjectImportedDocumentItemViewModel">
+                              <Border Classes="ProjectImportDocumentCard">
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="{StaticResource Space.3}">
+                                  <StackPanel Spacing="{StaticResource Space.2}">
+                                    <Grid ColumnDefinitions="Auto,*"
+                                          ColumnSpacing="{StaticResource Space.2}">
+                                      <u:Badge Grid.Column="0"
+                                               Header="{Binding SourceTypeText}"
+                                               iri:ClassHelper.Classes="Light Primary" />
+                                      <TextBlock Grid.Column="1"
+                                                 Text="{Binding Name}"
+                                                 FontWeight="SemiBold"
+                                                 VerticalAlignment="Center" />
+                                    </Grid>
+                                    <TextBlock Classes="CaptionText"
+                                               Text="{Binding SourceValueText}"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Classes="CaptionText"
+                                               Text="{Binding BaseUrlText, StringFormat='BaseUrl：{0}'}"
+                                               TextWrapping="Wrap" />
+                                    <TextBlock Classes="CaptionText"
+                                               Text="{Binding ImportedAtText, StringFormat='导入时间：{0}'}" />
+                                  </StackPanel>
+                                  <Border Grid.Column="1"
+                                          Classes="ProjectImportCountBadge">
+                                    <StackPanel Spacing="2">
+                                      <TextBlock Classes="CaptionText"
+                                                 HorizontalAlignment="Center"
+                                                 Text="接口数" />
+                                      <TextBlock Classes="SectionTitle"
+                                                 HorizontalAlignment="Center"
+                                                 Text="{Binding EndpointCountText}" />
+                                    </StackPanel>
+                                  </Border>
+                                </Grid>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </Grid>
+                    </Border>
+                  </StackPanel>
+                </ScrollViewer>
               </Grid>
             </Border>
             </Grid>
