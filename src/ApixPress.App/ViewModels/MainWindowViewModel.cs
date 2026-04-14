@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using Avalonia.Controls;
+using ApixPress.App.Helpers;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Models.DTOs;
@@ -30,6 +31,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly EnvironmentPanelViewModel _fallbackEnvironmentPanel;
     private readonly UseCasesPanelViewModel _fallbackUseCasesPanel;
     private readonly RequestHistoryPanelViewModel _fallbackHistoryPanel;
+    private readonly SemaphoreSlim _shellSettingsSaveSemaphore = new(1, 1);
+    private CancellationTokenSource? _shellSettingsSaveCancellationTokenSource;
     private bool _initialized;
     private bool _isApplyingShellSettings;
 
@@ -96,6 +99,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool HasEnvironmentContext => ActiveProjectTab?.HasEnvironmentContext ?? false;
     public bool ShowQuickRequestSaveDialog => ActiveProjectTab?.IsQuickRequestSaveDialogOpen ?? false;
     public bool ShowProjectImportDialog => ActiveProjectTab?.IsProjectImportDialogOpen ?? false;
+    public bool ShowProjectImportOverwriteConfirmDialog => ActiveProjectTab?.IsImportOverwriteConfirmDialogOpen ?? false;
     public bool ShowWorkspaceDeleteConfirmDialog => ActiveProjectTab?.IsWorkspaceDeleteConfirmDialogOpen ?? false;
     public bool ShowGeneralSettingsSection => CurrentSettingsSection == SettingsSections.General;
     public bool ShowAboutSettingsSection => CurrentSettingsSection == SettingsSections.About;
@@ -627,25 +631,46 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        _ = SaveShellSettingsAsync();
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _shellSettingsSaveCancellationTokenSource).Token;
+        _ = SaveShellSettingsDeferredAsync(cancellationToken);
     }
 
-    private async Task SaveShellSettingsAsync()
+    private async Task SaveShellSettingsDeferredAsync(CancellationToken cancellationToken)
     {
-        var result = await _appShellSettingsService.SaveAsync(new AppShellSettingsDto
+        try
         {
-            RequestTimeoutMilliseconds = (int)RequestTimeoutMilliseconds,
-            ValidateSslCertificate = ValidateSslCertificate,
-            AutoFollowRedirects = AutoFollowRedirects,
-            SendNoCacheHeader = SendNoCacheHeader,
-            EnableVerboseLogging = EnableVerboseLogging,
-            EnableUpdateReminder = EnableUpdateReminder
-        }, CancellationToken.None);
+            await Task.Delay(250, cancellationToken);
+            await SaveShellSettingsAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+    }
 
-        GeneralSettingsSaveStatus = result.IsSuccess
-            ? $"已自动保存 {DateTime.Now:HH:mm:ss}"
-            : $"保存失败：{result.Message}";
-        NotifyShellState();
+    private async Task SaveShellSettingsAsync(CancellationToken cancellationToken)
+    {
+        await _shellSettingsSaveSemaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var result = await _appShellSettingsService.SaveAsync(new AppShellSettingsDto
+            {
+                RequestTimeoutMilliseconds = (int)RequestTimeoutMilliseconds,
+                ValidateSslCertificate = ValidateSslCertificate,
+                AutoFollowRedirects = AutoFollowRedirects,
+                SendNoCacheHeader = SendNoCacheHeader,
+                EnableVerboseLogging = EnableVerboseLogging,
+                EnableUpdateReminder = EnableUpdateReminder
+            }, cancellationToken);
+
+            GeneralSettingsSaveStatus = result.IsSuccess
+                ? $"已自动保存 {DateTime.Now:HH:mm:ss}"
+                : $"保存失败：{result.Message}";
+            NotifyShellState();
+        }
+        finally
+        {
+            _shellSettingsSaveSemaphore.Release();
+        }
     }
 
     private ProjectTabViewModel CreateProjectTab(ProjectWorkspaceItemViewModel project)
@@ -773,6 +798,7 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasEnvironmentContext));
         OnPropertyChanged(nameof(ShowQuickRequestSaveDialog));
         OnPropertyChanged(nameof(ShowProjectImportDialog));
+        OnPropertyChanged(nameof(ShowProjectImportOverwriteConfirmDialog));
         OnPropertyChanged(nameof(ShowWorkspaceDeleteConfirmDialog));
         OnPropertyChanged(nameof(ShowGeneralSettingsSection));
         OnPropertyChanged(nameof(ShowAboutSettingsSection));

@@ -2675,6 +2675,49 @@
         </Grid>
       </Border>
 
+      <Border Classes="CreateProjectDialogBackdrop"
+              IsVisible="{Binding ShowProjectImportOverwriteConfirmDialog}">
+        <Grid HorizontalAlignment="Center"
+              VerticalAlignment="Center">
+          <Border Classes="QuickRequestSaveDialogCard">
+            <Grid RowDefinitions="Auto,Auto,Auto"
+                  RowSpacing="{StaticResource Space.3}">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="DialogTitle"
+                           Text="确认覆盖接口" />
+                <TextBlock Classes="CaptionText"
+                           Text="{Binding ActiveProjectTab.PendingImportOverwriteTitle, StringFormat='导入文档：{0}'}"
+                           IsVisible="{Binding ActiveProjectTab.HasPendingImportPreview}" />
+              </StackPanel>
+
+              <StackPanel Grid.Row="1"
+                          Spacing="{StaticResource Space.2}">
+                <Border Classes="CreateProjectFormShell">
+                  <TextBlock Text="{Binding ActiveProjectTab.PendingImportOverwriteSummary}"
+                             TextWrapping="Wrap" />
+                </Border>
+                <Border Classes="CreateProjectFormShell">
+                  <TextBlock Text="{Binding ActiveProjectTab.PendingImportOverwriteDetailText}"
+                             TextWrapping="Wrap" />
+                </Border>
+              </StackPanel>
+
+              <StackPanel Grid.Row="2"
+                          Orientation="Horizontal"
+                          HorizontalAlignment="Right"
+                          Spacing="{StaticResource Space.2}">
+                <Button Classes="DialogSecondaryButton"
+                        Content="取消"
+                        Command="{Binding ActiveProjectTab.CancelImportOverwriteConfirmCommand}" />
+                <Button Classes="DialogPrimaryButton"
+                        Content="确认覆盖"
+                        Command="{Binding ActiveProjectTab.ConfirmImportOverwriteCommand}" />
+              </StackPanel>
+            </Grid>
+          </Border>
+        </Grid>
+      </Border>
+
       <Border Classes="SettingsDialogBackdrop"
               IsVisible="{Binding IsSettingsDialogOpen}">
         <Grid HorizontalAlignment="Center"

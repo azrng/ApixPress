@@ -3,7 +3,6 @@ using Avalonia.Input;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
 using ApixPress.App.Views.Controls;
-using Microsoft.Extensions.DependencyInjection;
 using Ursa.Common;
 using Ursa.Controls;
 using Ursa.Controls.Options;
@@ -20,8 +19,15 @@ public partial class MainWindow : Window
     private bool _isUseCasesDrawerOpen;
 
     public MainWindow()
-        : this(App.Services.GetRequiredService<MainWindowViewModel>(), App.Services.GetRequiredService<IWindowHostService>())
     {
+        if (!Avalonia.Controls.Design.IsDesignMode)
+        {
+            throw new InvalidOperationException("MainWindow 必须通过依赖注入创建。");
+        }
+
+        _viewModel = null!;
+        _windowHostService = null!;
+        InitializeComponent();
     }
 
     public MainWindow(MainWindowViewModel viewModel, IWindowHostService windowHostService)
@@ -35,11 +41,14 @@ public partial class MainWindow : Window
         KeyDown += OnWindowKeyDown;
     }
 
-    private async void OnOpened(object? sender, System.EventArgs e)
+    private void OnOpened(object? sender, System.EventArgs e)
     {
-        _windowHostService.MainWindow = this;
-        _viewModel.UpdateWindowState(WindowState);
-        await _viewModel.InitializeAsync();
+        _ = RunUiActionAsync(async () =>
+        {
+            _windowHostService.MainWindow = this;
+            _viewModel.UpdateWindowState(WindowState);
+            await _viewModel.InitializeAsync();
+        });
     }
 
     private void OnClosed(object? sender, System.EventArgs e)
@@ -50,7 +59,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private async void OnWindowKeyDown(object? sender, KeyEventArgs e)
+    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Handled || e.Key != Key.S || !e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
@@ -58,7 +67,7 @@ public partial class MainWindow : Window
         }
 
         e.Handled = true;
-        await _viewModel.SaveCaseCommand.ExecuteAsync(null);
+        _ = RunUiActionAsync(() => _viewModel.SaveCaseCommand.ExecuteAsync(null));
     }
 
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -85,38 +94,41 @@ public partial class MainWindow : Window
         Close();
     }
 
-    private async void OnOpenUseCasesDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void OnOpenUseCasesDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (_isUseCasesDrawerOpen)
         {
             return;
         }
 
-        _isUseCasesDrawerOpen = true;
-        try
+        _ = RunUiActionAsync(async () =>
         {
-            await Drawer.ShowModal(
-                new UseCasesDrawerView(),
-                _viewModel,
-                null,
-                new DrawerOptions
-                {
-                    Buttons = DialogButton.None,
-                    Title = "用例管理",
-                    Position = Ursa.Common.Position.Right,
-                    MinWidth = 420,
-                    MaxWidth = 460,
-                    CanResize = true,
-                    TopLevelHashCode = GetHashCode()
-                });
-        }
-        finally
-        {
-            _isUseCasesDrawerOpen = false;
-        }
+            _isUseCasesDrawerOpen = true;
+            try
+            {
+                await Drawer.ShowModal(
+                    new UseCasesDrawerView(),
+                    _viewModel,
+                    null,
+                    new DrawerOptions
+                    {
+                        Buttons = DialogButton.None,
+                        Title = "用例管理",
+                        Position = Ursa.Common.Position.Right,
+                        MinWidth = 420,
+                        MaxWidth = 460,
+                        CanResize = true,
+                        TopLevelHashCode = GetHashCode()
+                    });
+            }
+            finally
+            {
+                _isUseCasesDrawerOpen = false;
+            }
+        });
     }
 
-    private async void OnOpenProjectDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void OnOpenProjectDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (_isProjectDrawerOpen)
         {
@@ -130,89 +142,110 @@ public partial class MainWindow : Window
                 string.Equals(item.Id, activeProjectId, StringComparison.OrdinalIgnoreCase));
         }
 
-        _isProjectDrawerOpen = true;
-        try
+        _ = RunUiActionAsync(async () =>
         {
-            await Drawer.ShowModal(
-                new ProjectDrawerView(),
-                _viewModel,
-                null,
-                new DrawerOptions
-                {
-                    Buttons = DialogButton.None,
-                    Title = "项目管理",
-                    Position = Ursa.Common.Position.Right,
-                    MinWidth = 920,
-                    MaxWidth = 1024,
-                    CanResize = true,
-                    TopLevelHashCode = GetHashCode()
-                });
-        }
-        finally
-        {
-            _isProjectDrawerOpen = false;
-        }
+            _isProjectDrawerOpen = true;
+            try
+            {
+                await Drawer.ShowModal(
+                    new ProjectDrawerView(),
+                    _viewModel,
+                    null,
+                    new DrawerOptions
+                    {
+                        Buttons = DialogButton.None,
+                        Title = "项目管理",
+                        Position = Ursa.Common.Position.Right,
+                        MinWidth = 920,
+                        MaxWidth = 1024,
+                        CanResize = true,
+                        TopLevelHashCode = GetHashCode()
+                    });
+            }
+            finally
+            {
+                _isProjectDrawerOpen = false;
+            }
+        });
     }
 
-    private async void OnOpenCreateProjectDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void OnOpenCreateProjectDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (_isCreateProjectDrawerOpen)
         {
             return;
         }
 
-        _isCreateProjectDrawerOpen = true;
-        try
+        _ = RunUiActionAsync(async () =>
         {
-            await Drawer.ShowModal(
-                new CreateProjectDrawerView(),
-                _viewModel,
-                null,
-                new DrawerOptions
-                {
-                    Buttons = DialogButton.None,
-                    Title = "新建项目",
-                    Position = Ursa.Common.Position.Right,
-                    MinWidth = 420,
-                    MaxWidth = 460,
-                    CanResize = true,
-                    TopLevelHashCode = GetHashCode()
-                });
-        }
-        finally
-        {
-            _isCreateProjectDrawerOpen = false;
-        }
+            _isCreateProjectDrawerOpen = true;
+            try
+            {
+                await Drawer.ShowModal(
+                    new CreateProjectDrawerView(),
+                    _viewModel,
+                    null,
+                    new DrawerOptions
+                    {
+                        Buttons = DialogButton.None,
+                        Title = "新建项目",
+                        Position = Ursa.Common.Position.Right,
+                        MinWidth = 420,
+                        MaxWidth = 460,
+                        CanResize = true,
+                        TopLevelHashCode = GetHashCode()
+                    });
+            }
+            finally
+            {
+                _isCreateProjectDrawerOpen = false;
+            }
+        });
     }
 
-    private async void OnOpenEnvironmentDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    private void OnOpenEnvironmentDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (_isEnvironmentDrawerOpen)
         {
             return;
         }
 
-        _isEnvironmentDrawerOpen = true;
+        _ = RunUiActionAsync(async () =>
+        {
+            _isEnvironmentDrawerOpen = true;
+            try
+            {
+                await Drawer.ShowModal(
+                    new EnvironmentDrawerView(),
+                    _viewModel,
+                    null,
+                    new DrawerOptions
+                    {
+                        Buttons = DialogButton.None,
+                        Title = "环境变量",
+                        Position = Ursa.Common.Position.Right,
+                        MinWidth = 420,
+                        MaxWidth = 460,
+                        CanResize = true,
+                        TopLevelHashCode = GetHashCode()
+                    });
+            }
+            finally
+            {
+                _isEnvironmentDrawerOpen = false;
+            }
+        });
+    }
+
+    private async Task RunUiActionAsync(Func<Task> action)
+    {
         try
         {
-            await Drawer.ShowModal(
-                new EnvironmentDrawerView(),
-                _viewModel,
-                null,
-                new DrawerOptions
-                {
-                    Buttons = DialogButton.None,
-                    Title = "环境变量",
-                    Position = Ursa.Common.Position.Right,
-                    MinWidth = 420,
-                    MaxWidth = 460,
-                    CanResize = true,
-                    TopLevelHashCode = GetHashCode()
-                });
+            await action();
         }
-        finally
+        catch (Exception exception)
         {
-            _isEnvironmentDrawerOpen = false;
+            System.Diagnostics.Debug.WriteLine(exception);
         }
     }
 }

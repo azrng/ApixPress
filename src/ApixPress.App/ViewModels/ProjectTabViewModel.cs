@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -55,6 +56,9 @@ public partial class ProjectTabViewModel : ViewModelBase
     private readonly IApiWorkspaceService _apiWorkspaceService;
     private readonly IFilePickerService _filePickerService;
     private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
+    private CancellationTokenSource? _importCancellationTokenSource;
+    private CancellationTokenSource? _sendRequestCancellationTokenSource;
+    private PendingImportRequest? _pendingImportRequest;
     private bool _initialized;
 
     public event Action<ProjectTabViewModel>? ShellStateChanged;
@@ -291,6 +295,43 @@ public partial class ProjectTabViewModel : ViewModelBase
     public bool ShowHttpWorkbenchContent => IsHttpInterfaceEditor && !IsHttpDocumentPreviewMode;
     public bool ShowHttpDocumentPreviewContent => IsHttpInterfaceEditor && IsHttpDocumentPreviewMode;
     public bool ShowSaveHttpCaseAction => IsHttpInterfaceEditor;
+    public bool HasPendingImportPreview => PendingImportPreview is not null;
+    public string PendingImportOverwriteTitle => PendingImportPreview?.DocumentName ?? string.Empty;
+    public string PendingImportOverwriteSummary
+    {
+        get
+        {
+            if (PendingImportPreview is null)
+            {
+                return string.Empty;
+            }
+
+            return PendingImportPreview.NewEndpointCount > 0
+                ? $"本次将新增 {PendingImportPreview.NewEndpointCount} 个接口，并覆盖 {PendingImportPreview.ConflictCount} 个同路径接口。"
+                : $"本次导入将覆盖当前项目中 {PendingImportPreview.ConflictCount} 个同路径接口。";
+        }
+    }
+    public string PendingImportOverwriteDetailText
+    {
+        get
+        {
+            if (PendingImportPreview is null || PendingImportPreview.ConflictItems.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var lines = PendingImportPreview.ConflictItems
+                .Take(5)
+                .Select(item => $"{item.Method} {item.Path} 现有：{item.ExistingDocumentName} / {item.ExistingEndpointName} -> 导入：{item.ImportedEndpointName}")
+                .ToList();
+            if (PendingImportPreview.ConflictItems.Count > lines.Count)
+            {
+                lines.Add($"另有 {PendingImportPreview.ConflictItems.Count - lines.Count} 个重复接口未展开。");
+            }
+
+            return string.Join(Environment.NewLine, lines);
+        }
+    }
     public bool HasPendingWorkspaceDeleteTarget => PendingDeleteWorkspaceItem is not null;
     public string PendingWorkspaceDeleteTitle => PendingDeleteWorkspaceItem?.Title ?? string.Empty;
     public string PendingWorkspaceDeleteDescription
@@ -479,6 +520,9 @@ public partial class ProjectTabViewModel : ViewModelBase
     private bool isWorkspaceDeleteConfirmDialogOpen;
 
     [ObservableProperty]
+    private bool isImportOverwriteConfirmDialogOpen;
+
+    [ObservableProperty]
     private string quickRequestSaveName = string.Empty;
 
     [ObservableProperty]
@@ -492,6 +536,9 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private ExplorerItemViewModel? pendingDeleteWorkspaceItem;
+
+    [ObservableProperty]
+    private ApiImportPreviewDto? pendingImportPreview;
 
     public async Task InitializeAsync()
     {
@@ -551,22 +598,33 @@ public partial class ProjectTabViewModel : ViewModelBase
         }
 
         IsBusy = true;
-        var snapshot = workspaceTab.BuildSnapshot();
-        var environment = BuildExecutionEnvironment();
-        var result = await _requestExecutionService.SendAsync(snapshot, environment, CancellationToken.None);
-        workspaceTab.ResponseSection.ApplyResult(result, snapshot);
-
-        if (result.IsSuccess || result.Data is not null)
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _sendRequestCancellationTokenSource).Token;
+        try
         {
-            await _requestHistoryService.AddAsync(ProjectId, snapshot, result.Data, CancellationToken.None);
-            await HistoryPanel.LoadHistoryAsync();
-        }
+            var snapshot = workspaceTab.BuildSnapshot();
+            var environment = BuildExecutionEnvironment();
+            var result = await _requestExecutionService.SendAsync(snapshot, environment, cancellationToken);
+            workspaceTab.ResponseSection.ApplyResult(result, snapshot);
 
-        IsBusy = false;
-        StatusMessage = result.IsSuccess
-            ? (workspaceTab.IsHttpInterfaceTab ? "HTTP 接口请求发送完成。" : "快捷请求发送完成。")
-            : result.Message;
-        NotifyShellState();
+            if (result.IsSuccess || result.Data is not null)
+            {
+                await _requestHistoryService.AddAsync(ProjectId, snapshot, result.Data, cancellationToken);
+                await HistoryPanel.LoadHistoryAsync();
+            }
+
+            StatusMessage = result.IsSuccess
+                ? (workspaceTab.IsHttpInterfaceTab ? "HTTP 接口请求发送完成。" : "快捷请求发送完成。")
+                : result.Message;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            StatusMessage = "已取消当前请求。";
+        }
+        finally
+        {
+            IsBusy = false;
+            NotifyShellState();
+        }
     }
 
     public async Task SaveCurrentEditorAsync()
@@ -916,6 +974,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
         SelectedProjectSettingsSection = ProjectSettingsSections.Overview;
         IsProjectImportDialogOpen = false;
+        ClearPendingImportConfirmation();
         StatusMessage = ShowProjectSettingsImportDataSection
             ? "这里可以导入 Swagger 文档。"
             : "这里可以查看当前项目的基本设置。";
@@ -928,6 +987,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
         SelectedProjectSettingsSection = ProjectSettingsSections.Overview;
         IsProjectImportDialogOpen = false;
+        ClearPendingImportConfirmation();
         StatusMessage = "这里可以查看项目名称、项目 ID 和简介。";
         NotifyShellState();
     }
@@ -938,6 +998,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
         SelectedProjectSettingsSection = ProjectSettingsSections.ImportData;
         IsProjectImportDialogOpen = false;
+        ClearPendingImportConfirmation();
         StatusMessage = "这里可以导入 Swagger 文档。";
         NotifyShellState();
     }
@@ -948,6 +1009,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
         SelectedProjectSettingsSection = ProjectSettingsSections.ImportData;
         SelectedImportDataMode = ImportDataModes.File;
+        ClearPendingImportConfirmation();
         IsProjectImportDialogOpen = true;
         StatusMessage = "请选择 OpenAPI / Swagger 导入方式。";
         NotifyShellState();
@@ -957,6 +1019,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     private void CloseProjectImportDialog()
     {
         IsProjectImportDialogOpen = false;
+        ClearPendingImportConfirmation();
         StatusMessage = "已返回导入数据页面。";
         NotifyShellState();
     }
@@ -1009,7 +1072,8 @@ public partial class ProjectTabViewModel : ViewModelBase
         }
 
         await ImportSwaggerAsync(
-            () => _apiWorkspaceService.ImportFromFileAsync(ProjectId, SelectedImportFilePath.Trim(), CancellationToken.None),
+            cancellationToken => _apiWorkspaceService.PreviewImportFromFileAsync(ProjectId, SelectedImportFilePath.Trim(), cancellationToken),
+            cancellationToken => _apiWorkspaceService.ImportFromFileAsync(ProjectId, SelectedImportFilePath.Trim(), cancellationToken),
             document => $"Swagger 文件导入成功：{document.Name}");
     }
 
@@ -1026,7 +1090,8 @@ public partial class ProjectTabViewModel : ViewModelBase
         }
 
         await ImportSwaggerAsync(
-            () => _apiWorkspaceService.ImportFromUrlAsync(ProjectId, importTargetUrl, CancellationToken.None),
+            cancellationToken => _apiWorkspaceService.PreviewImportFromUrlAsync(ProjectId, importTargetUrl, cancellationToken),
+            cancellationToken => _apiWorkspaceService.ImportFromUrlAsync(ProjectId, importTargetUrl, cancellationToken),
             document => $"Swagger URL 导入成功：{document.Name}");
     }
 
@@ -1208,7 +1273,8 @@ public partial class ProjectTabViewModel : ViewModelBase
     }
 
     private async Task ImportSwaggerAsync(
-        Func<Task<IResultModel<ApiDocumentDto>>> importAction,
+        Func<CancellationToken, Task<IResultModel<ApiImportPreviewDto>>> previewAction,
+        Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> importAction,
         Func<ApiDocumentDto, string> buildSuccessMessage)
     {
         if (IsImportDataBusy)
@@ -1216,31 +1282,100 @@ public partial class ProjectTabViewModel : ViewModelBase
             return;
         }
 
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _importCancellationTokenSource).Token;
         IsImportDataBusy = true;
         try
         {
-            var result = await importAction();
-            if (!result.IsSuccess || result.Data is null)
+            var previewResult = await previewAction(cancellationToken);
+            if (!previewResult.IsSuccess || previewResult.Data is null)
             {
-                var failureMessage = string.IsNullOrWhiteSpace(result.Message)
-                    ? "Swagger 导入失败，请检查文档格式后重试。"
-                    : result.Message;
+                var failureMessage = string.IsNullOrWhiteSpace(previewResult.Message)
+                    ? "Swagger 导入预检查失败，请检查文档格式后重试。"
+                    : previewResult.Message;
                 SetImportDataStatus(failureMessage, ImportStatusStates.Error);
                 StatusMessage = failureMessage;
                 return;
             }
 
-            await LoadImportedDocumentsAsync(manageBusyState: false);
-            var successMessage = buildSuccessMessage(result.Data);
-            SetImportDataStatus(successMessage, ImportStatusStates.Success);
-            IsProjectImportDialogOpen = false;
-            StatusMessage = successMessage;
+            if (previewResult.Data.ConflictCount > 0)
+            {
+                _pendingImportRequest = new PendingImportRequest(importAction, buildSuccessMessage);
+                PendingImportPreview = previewResult.Data;
+                IsImportOverwriteConfirmDialogOpen = true;
+                SetImportDataStatus(
+                    $"检测到 {previewResult.Data.ConflictCount} 个同路径接口，确认后将覆盖旧接口并保留未冲突接口。",
+                    ImportStatusStates.Info);
+                StatusMessage = "检测到同路径接口，等待确认是否覆盖。";
+                return;
+            }
+
+            await ExecuteImportAsync(importAction, buildSuccessMessage, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
         }
         finally
         {
             IsImportDataBusy = false;
             NotifyShellState();
         }
+    }
+
+    [RelayCommand]
+    private void CancelImportOverwriteConfirm()
+    {
+        ClearPendingImportConfirmation();
+        SetImportDataStatus("已取消本次覆盖导入。", ImportStatusStates.Info);
+        StatusMessage = "已取消本次覆盖导入。";
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private async Task ConfirmImportOverwriteAsync()
+    {
+        if (_pendingImportRequest is null || IsImportDataBusy)
+        {
+            return;
+        }
+
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _importCancellationTokenSource).Token;
+        IsImportDataBusy = true;
+        try
+        {
+            await ExecuteImportAsync(_pendingImportRequest.ImportAction, _pendingImportRequest.BuildSuccessMessage, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            IsImportDataBusy = false;
+            NotifyShellState();
+        }
+    }
+
+    private async Task ExecuteImportAsync(
+        Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> importAction,
+        Func<ApiDocumentDto, string> buildSuccessMessage,
+        CancellationToken cancellationToken)
+    {
+        var result = await importAction(cancellationToken);
+        if (!result.IsSuccess || result.Data is null)
+        {
+            var failureMessage = string.IsNullOrWhiteSpace(result.Message)
+                ? "Swagger 导入失败，请检查文档格式后重试。"
+                : result.Message;
+            SetImportDataStatus(failureMessage, ImportStatusStates.Error);
+            StatusMessage = failureMessage;
+            return;
+        }
+
+        await LoadImportedDocumentsAsync(manageBusyState: false);
+        var successMessage = buildSuccessMessage(result.Data);
+        ClearPendingImportConfirmation();
+        SetImportDataStatus(successMessage, ImportStatusStates.Success);
+        IsProjectImportDialogOpen = false;
+        StatusMessage = successMessage;
     }
 
     private async Task LoadImportedDocumentsAsync(bool manageBusyState = true)
@@ -1250,12 +1385,13 @@ public partial class ProjectTabViewModel : ViewModelBase
             IsImportDataBusy = true;
         }
 
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _importCancellationTokenSource).Token;
         try
         {
-            var documents = await _apiWorkspaceService.GetDocumentsAsync(ProjectId, CancellationToken.None);
+            var documents = await _apiWorkspaceService.GetDocumentsAsync(ProjectId, cancellationToken);
             var documentTasks = documents.Select(async document =>
             {
-                var endpoints = await _apiWorkspaceService.GetEndpointsAsync(document.Id, CancellationToken.None);
+                var endpoints = await _apiWorkspaceService.GetEndpointsAsync(document.Id, cancellationToken);
                 return (
                     Item: new ProjectImportedDocumentItemViewModel
                     {
@@ -1272,16 +1408,15 @@ public partial class ProjectTabViewModel : ViewModelBase
 
             var results = await Task.WhenAll(documentTasks);
             await SyncImportedInterfacesAsync(results.SelectMany(result => result.Endpoints).ToList());
-            ImportedApiDocuments.Clear();
-            foreach (var item in results.Select(result => result.Item))
-            {
-                ImportedApiDocuments.Add(item);
-            }
+            ImportedApiDocuments.ReplaceWith(results.Select(result => result.Item));
 
             if (!HasImportedApiDocuments && ImportDataStatusState == ImportStatusStates.Info)
             {
                 SetImportDataStatus("当前项目还没有导入 Swagger 数据，可先从文件或 URL 开始导入。", ImportStatusStates.Info);
             }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
         }
         finally
         {
@@ -1551,6 +1686,13 @@ public partial class ProjectTabViewModel : ViewModelBase
     {
         ImportDataStatusText = message;
         ImportDataStatusState = statusState;
+    }
+
+    private void ClearPendingImportConfirmation()
+    {
+        _pendingImportRequest = null;
+        PendingImportPreview = null;
+        IsImportOverwriteConfirmDialogOpen = false;
     }
 
     private static string ResolveImportSourceTypeText(string sourceType)
@@ -2017,6 +2159,14 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(PendingWorkspaceDeleteDescription));
     }
 
+    partial void OnPendingImportPreviewChanged(ApiImportPreviewDto? value)
+    {
+        OnPropertyChanged(nameof(HasPendingImportPreview));
+        OnPropertyChanged(nameof(PendingImportOverwriteTitle));
+        OnPropertyChanged(nameof(PendingImportOverwriteSummary));
+        OnPropertyChanged(nameof(PendingImportOverwriteDetailText));
+    }
+
     partial void OnActiveWorkspaceTabChanged(RequestWorkspaceTabViewModel? oldValue, RequestWorkspaceTabViewModel? newValue)
     {
         if (oldValue is not null)
@@ -2067,6 +2217,10 @@ public partial class ProjectTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsImportFileMode));
         OnPropertyChanged(nameof(IsImportUrlMode));
         OnPropertyChanged(nameof(ShowProjectImportDialogStatus));
+        OnPropertyChanged(nameof(HasPendingImportPreview));
+        OnPropertyChanged(nameof(PendingImportOverwriteTitle));
+        OnPropertyChanged(nameof(PendingImportOverwriteSummary));
+        OnPropertyChanged(nameof(PendingImportOverwriteDetailText));
         OnPropertyChanged(nameof(HasSelectedImportFile));
         OnPropertyChanged(nameof(SelectedImportFileName));
         OnPropertyChanged(nameof(SelectedImportFileSummary));
@@ -2119,5 +2273,20 @@ public partial class ProjectTabViewModel : ViewModelBase
         {
             SelectedWorkspaceNavigationItem = selectedItem;
         }
+    }
+
+    private sealed class PendingImportRequest
+    {
+        public PendingImportRequest(
+            Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> importAction,
+            Func<ApiDocumentDto, string> buildSuccessMessage)
+        {
+            ImportAction = importAction;
+            BuildSuccessMessage = buildSuccessMessage;
+        }
+
+        public Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> ImportAction { get; }
+
+        public Func<ApiDocumentDto, string> BuildSuccessMessage { get; }
     }
 }

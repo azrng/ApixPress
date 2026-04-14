@@ -425,7 +425,7 @@ public sealed class WorkspacePersistenceTests
     }
 
     [Fact]
-    public async Task ApiWorkspaceService_ShouldReplacePreviousImportedDocumentsWithinProject()
+    public async Task ApiWorkspaceService_ShouldKeepPreviousImportedDocumentsWhenPathsDoNotConflict()
     {
         using var factory = new TestSqliteConnectionFactory();
         await factory.InitializeAsync();
@@ -478,13 +478,109 @@ public sealed class WorkspacePersistenceTests
             Assert.True(secondResult.IsSuccess);
 
             var documents = await service.GetDocumentsAsync(project.Id, CancellationToken.None);
-            var document = Assert.Single(documents);
-            Assert.Equal("Second Import", document.Name);
+            Assert.Equal(2, documents.Count);
+            Assert.Contains(documents, item => item.Name == "First Import");
+            Assert.Contains(documents, item => item.Name == "Second Import");
 
-            var endpoints = await service.GetEndpointsAsync(document.Id, CancellationToken.None);
-            var endpoint = Assert.Single(endpoints);
-            Assert.Equal("POST", endpoint.Method);
-            Assert.Equal("/users", endpoint.Path);
+            var firstDocument = Assert.Single(documents, item => item.Name == "First Import");
+            var secondDocument = Assert.Single(documents, item => item.Name == "Second Import");
+
+            var firstEndpoints = await service.GetEndpointsAsync(firstDocument.Id, CancellationToken.None);
+            var firstEndpoint = Assert.Single(firstEndpoints);
+            Assert.Equal("GET", firstEndpoint.Method);
+            Assert.Equal("/health", firstEndpoint.Path);
+
+            var secondEndpoints = await service.GetEndpointsAsync(secondDocument.Id, CancellationToken.None);
+            var secondEndpoint = Assert.Single(secondEndpoints);
+            Assert.Equal("POST", secondEndpoint.Method);
+            Assert.Equal("/users", secondEndpoint.Path);
+        }
+        finally
+        {
+            if (File.Exists(firstFile))
+            {
+                File.Delete(firstFile);
+            }
+
+            if (File.Exists(secondFile))
+            {
+                File.Delete(secondFile);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ApiWorkspaceService_ShouldOverwriteOnlyConflictingImportedEndpoints()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var repository = new ApiDocumentRepository(factory);
+        var service = new ApiWorkspaceService(repository);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "冲突覆盖项目"
+        }, CancellationToken.None)).Data!;
+        var firstFile = Path.Combine(Path.GetTempPath(), $"swagger-first-conflict-{Guid.NewGuid():N}.json");
+        var secondFile = Path.Combine(Path.GetTempPath(), $"swagger-second-conflict-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            await File.WriteAllTextAsync(firstFile, """
+                                                  {
+                                                    "openapi": "3.0.1",
+                                                    "info": { "title": "First Import" },
+                                                    "paths": {
+                                                      "/orders": {
+                                                        "get": {
+                                                          "summary": "旧的订单查询"
+                                                        }
+                                                      },
+                                                      "/health": {
+                                                        "get": {
+                                                          "summary": "健康检查"
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                  """);
+            await File.WriteAllTextAsync(secondFile, """
+                                                   {
+                                                     "openapi": "3.0.1",
+                                                     "info": { "title": "Second Import" },
+                                                     "paths": {
+                                                       "/orders": {
+                                                         "get": {
+                                                           "summary": "新的订单查询"
+                                                         }
+                                                       }
+                                                     }
+                                                   }
+                                                   """);
+
+            var firstResult = await service.ImportFromFileAsync(project.Id, firstFile, CancellationToken.None);
+            var secondResult = await service.ImportFromFileAsync(project.Id, secondFile, CancellationToken.None);
+
+            Assert.True(firstResult.IsSuccess);
+            Assert.True(secondResult.IsSuccess);
+
+            var documents = await service.GetDocumentsAsync(project.Id, CancellationToken.None);
+            Assert.Equal(2, documents.Count);
+
+            var firstDocument = Assert.Single(documents, item => item.Name == "First Import");
+            var secondDocument = Assert.Single(documents, item => item.Name == "Second Import");
+
+            var firstEndpoints = await service.GetEndpointsAsync(firstDocument.Id, CancellationToken.None);
+            var remainingFirstEndpoint = Assert.Single(firstEndpoints);
+            Assert.Equal("/health", remainingFirstEndpoint.Path);
+
+            var secondEndpoints = await service.GetEndpointsAsync(secondDocument.Id, CancellationToken.None);
+            var importedEndpoint = Assert.Single(secondEndpoints);
+            Assert.Equal("/orders", importedEndpoint.Path);
+            Assert.Equal("GET", importedEndpoint.Method);
         }
         finally
         {

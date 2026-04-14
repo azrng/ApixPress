@@ -116,72 +116,9 @@ public sealed class ProjectWorkspaceRepository : IProjectWorkspaceRepository, IT
     public async Task DeleteAsync(string id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-
-        await connection.ExecuteAsync(new CommandDefinition(
-            """
-            delete from request_parameters
-            where endpoint_id in (
-                select ep.id
-                from api_endpoints ep
-                inner join api_documents ad on ad.id = ep.document_id
-                where ad.project_id = @Id
-            )
-            """,
-            new { Id = id },
-            transaction,
-            cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition(
-            """
-            delete from api_endpoints
-            where document_id in (
-                select id
-                from api_documents
-                where project_id = @Id
-            )
-            """,
-            new { Id = id },
-            transaction,
-            cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition(
-            "delete from api_documents where project_id = @Id",
-            new { Id = id },
-            transaction,
-            cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition(
-            """
-            delete from environment_variables
-            where environment_id in (
-                select id
-                from project_environments
-                where project_id = @Id
-            )
-            """,
-            new { Id = id },
-            transaction,
-            cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition(
-            "delete from project_environments where project_id = @Id",
-            new { Id = id },
-            transaction,
-            cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition(
-            "delete from request_history where project_id = @Id",
-            new { Id = id },
-            transaction,
-            cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition(
-            "delete from request_cases where project_id = @Id",
-            new { Id = id },
-            transaction,
-            cancellationToken: cancellationToken));
         await connection.ExecuteAsync(new CommandDefinition(
             "delete from projects where id = @Id",
             new { Id = id },
-            transaction,
             cancellationToken: cancellationToken));
-
-        transaction.Commit();
     }
 }

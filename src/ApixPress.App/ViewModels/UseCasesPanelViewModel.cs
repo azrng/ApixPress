@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -10,6 +11,7 @@ namespace ApixPress.App.ViewModels;
 public partial class UseCasesPanelViewModel : ViewModelBase
 {
     private readonly IRequestCaseService _requestCaseService;
+    private CancellationTokenSource? _loadCasesCancellationTokenSource;
     private string _currentProjectId = string.Empty;
 
     public event Action<RequestSnapshotDto>? CaseApplied;
@@ -49,16 +51,17 @@ public partial class UseCasesPanelViewModel : ViewModelBase
 
     public async Task LoadCasesAsync()
     {
-        RequestCases.Clear();
-        if (string.IsNullOrWhiteSpace(_currentProjectId))
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadCasesCancellationTokenSource).Token;
+        try
         {
-            return;
-        }
+            RequestCases.Clear();
+            if (string.IsNullOrWhiteSpace(_currentProjectId))
+            {
+                return;
+            }
 
-        var cases = await _requestCaseService.GetCasesAsync(_currentProjectId, CancellationToken.None);
-        foreach (var requestCase in cases)
-        {
-            RequestCases.Add(new RequestCaseItemViewModel
+            var cases = await _requestCaseService.GetCasesAsync(_currentProjectId, cancellationToken);
+            RequestCases.ReplaceWith(cases.Select(requestCase => new RequestCaseItemViewModel
             {
                 Id = requestCase.Id,
                 Name = requestCase.Name,
@@ -67,7 +70,10 @@ public partial class UseCasesPanelViewModel : ViewModelBase
                 Description = requestCase.Description,
                 UpdatedAt = requestCase.UpdatedAt.ToLocalTime(),
                 SourceCase = requestCase
-            });
+            }));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
         }
     }
 

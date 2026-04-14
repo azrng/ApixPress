@@ -40,6 +40,14 @@ public sealed class AppShellSettingsService : IAppShellSettingsService, ISinglet
             var settings = JsonSerializer.Deserialize<AppShellSettingsDto>(json) ?? new AppShellSettingsDto();
             return ResultModel<AppShellSettingsDto>.Success(settings);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return ResultModel<AppShellSettingsDto>.Failure("设置读取已取消。", "app_shell_settings_load_cancelled");
+        }
+        catch (JsonException exception)
+        {
+            return ResultModel<AppShellSettingsDto>.Failure($"设置文件格式无效：{exception.Message}", "app_shell_settings_invalid_json");
+        }
         catch (Exception exception)
         {
             return ResultModel<AppShellSettingsDto>.Failure($"设置读取失败：{exception.Message}", "app_shell_settings_load_failed");
@@ -62,6 +70,10 @@ public sealed class AppShellSettingsService : IAppShellSettingsService, ISinglet
             });
             await File.WriteAllTextAsync(_settingsFilePath, json, Encoding.UTF8, cancellationToken);
             return ResultModel<AppShellSettingsDto>.Success(settings);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return ResultModel<AppShellSettingsDto>.Failure("设置保存已取消。", "app_shell_settings_save_cancelled");
         }
         catch (Exception exception)
         {

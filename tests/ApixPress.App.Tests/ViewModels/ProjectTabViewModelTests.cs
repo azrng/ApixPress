@@ -65,7 +65,7 @@ public sealed class ProjectTabViewModelTests
     }
 
     [Fact]
-    public async Task ImportSwaggerUrlCommand_ShouldReplaceImportedDocumentHistory()
+    public async Task ImportSwaggerUrlCommand_ShouldAppendImportedDocumentWhenNoPathConflict()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
         var requestCaseService = new FakeRequestCaseService();
@@ -78,11 +78,39 @@ public sealed class ProjectTabViewModelTests
 
         await viewModel.ImportSwaggerUrlCommand.ExecuteAsync(null);
 
-        var imported = Assert.Single(viewModel.ImportedApiDocuments);
-        Assert.Equal("远程订单服务", imported.Name);
+        Assert.Equal("2", viewModel.ImportedApiDocumentCountText);
+        Assert.Equal(3, requestCaseService.Cases.Count(item => item.EntryType == "http-interface"));
+        Assert.Contains(requestCaseService.Cases, item => item.Name == "接口 1" && item.RequestSnapshot.Url == "/endpoint-1");
+        Assert.Contains(requestCaseService.Cases, item => item.Name == "查询订单列表" && item.RequestSnapshot.Url == "/orders");
+    }
+
+    [Fact]
+    public async Task ImportSwaggerUrlCommand_ShouldRequireConfirmationBeforeOverwritingConflictingEndpoints()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "旧文档", "FILE", @"C:\temp\legacy-swagger.json", "https://legacy.demo.local",
+        [
+            ("订单", "旧的查询订单列表", "GET", "/orders")
+        ]);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+        await viewModel.InitializeAsync();
+
+        viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
+        viewModel.ImportUrl = "https://demo.local/swagger.json";
+
+        await viewModel.ImportSwaggerUrlCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.IsImportOverwriteConfirmDialogOpen);
+        Assert.Contains("覆盖", viewModel.PendingImportOverwriteSummary);
+        Assert.Contains("GET /orders", viewModel.PendingImportOverwriteDetailText);
+
+        await viewModel.ConfirmImportOverwriteCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.IsImportOverwriteConfirmDialogOpen);
         Assert.Equal("1", viewModel.ImportedApiDocumentCountText);
-        Assert.Equal(2, requestCaseService.Cases.Count(item => item.EntryType == "http-interface"));
-        Assert.DoesNotContain(requestCaseService.Cases, item => item.Name == "接口 1" && item.RequestSnapshot.Url == "/endpoint-1");
+        Assert.Contains(requestCaseService.Cases, item => item.Name == "查询订单列表" && item.RequestSnapshot.Url == "/orders");
+        Assert.DoesNotContain(requestCaseService.Cases, item => item.Name == "旧的查询订单列表");
     }
 
     [Fact]
@@ -304,6 +332,18 @@ public sealed class ProjectTabViewModelTests
 
         public void SeedDocument(string projectId, string name, string sourceType, string sourceValue, string baseUrl, int endpointCount)
         {
+            SeedDocument(projectId, name, sourceType, sourceValue, baseUrl,
+                Enumerable.Range(1, endpointCount).Select(index => ("默认分组", $"接口 {index}", "GET", $"/endpoint-{index}")).ToArray());
+        }
+
+        public void SeedDocument(
+            string projectId,
+            string name,
+            string sourceType,
+            string sourceValue,
+            string baseUrl,
+            IReadOnlyList<(string GroupName, string Name, string Method, string Path)> endpoints)
+        {
             var document = new ApiDocumentDto
             {
                 Id = Guid.NewGuid().ToString("N"),
@@ -321,22 +361,16 @@ public sealed class ProjectTabViewModelTests
                 _documentsByProject[projectId] = documents;
             }
 
-            foreach (var existingDocument in documents.ToList())
-            {
-                _endpointsByDocument.Remove(existingDocument.Id);
-            }
-
-            documents.Clear();
             documents.Add(document);
-            _endpointsByDocument[document.Id] = Enumerable.Range(1, endpointCount)
-                .Select(index => new ApiEndpointDto
+            _endpointsByDocument[document.Id] = endpoints
+                .Select((endpoint, index) => new ApiEndpointDto
                 {
                     Id = $"{document.Id}-{index}",
                     DocumentId = document.Id,
-                    GroupName = "默认分组",
-                    Name = $"接口 {index}",
-                    Method = "GET",
-                    Path = $"/endpoint-{index}"
+                    GroupName = endpoint.GroupName,
+                    Name = endpoint.Name,
+                    Method = endpoint.Method,
+                    Path = endpoint.Path
                 })
                 .ToList();
         }
@@ -365,58 +399,60 @@ public sealed class ProjectTabViewModelTests
             return Task.FromResult(document);
         }
 
+        public Task<IResultModel<ApiImportPreviewDto>> PreviewImportFromUrlAsync(string projectId, string url, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<ApiImportPreviewDto>>(ResultModel<ApiImportPreviewDto>.Success(
+                BuildPreview(projectId, "URL", url,
+                [
+                    new ApiEndpointDto
+                    {
+                        GroupName = "订单",
+                        Name = "查询订单列表",
+                        Method = "GET",
+                        Path = "/orders"
+                    },
+                    new ApiEndpointDto
+                    {
+                        GroupName = "订单",
+                        Name = "创建订单",
+                        Method = "POST",
+                        Path = "/orders"
+                    }
+                ])));
+        }
+
+        public Task<IResultModel<ApiImportPreviewDto>> PreviewImportFromFileAsync(string projectId, string filePath, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<ApiImportPreviewDto>>(ResultModel<ApiImportPreviewDto>.Success(
+                BuildPreview(projectId, "FILE", filePath,
+                [
+                    new ApiEndpointDto
+                    {
+                        GroupName = "本地订单",
+                        Name = "本地下单",
+                        Method = "POST",
+                        Path = "/local-orders"
+                    }
+                ])));
+        }
+
         public Task<IResultModel<ApiDocumentDto>> ImportFromUrlAsync(string projectId, string url, CancellationToken cancellationToken)
         {
             LastImportedUrl = url;
-            var importedDocument = new ApiDocumentDto
-            {
-                Id = Guid.NewGuid().ToString("N"),
-                ProjectId = projectId,
-                Name = "远程订单服务",
-                SourceType = "URL",
-                SourceValue = url,
-                BaseUrl = "https://order.demo.local",
-                ImportedAt = DateTime.UtcNow
-            };
-
-            if (_documentsByProject.TryGetValue(projectId, out var existingDocuments))
-            {
-                foreach (var existingDocument in existingDocuments)
-                {
-                    _endpointsByDocument.Remove(existingDocument.Id);
-                }
-            }
-
-            _documentsByProject[projectId] = [importedDocument];
-            _endpointsByDocument[importedDocument.Id] =
+            var document = SaveImportedDocument(projectId, "远程订单服务", "URL", url, "https://order.demo.local",
             [
-                new ApiEndpointDto
-                {
-                    Id = $"{importedDocument.Id}-remote-1",
-                    DocumentId = importedDocument.Id,
-                    GroupName = "订单",
-                    Name = "查询订单列表",
-                    Method = "GET",
-                    Path = "/orders"
-                },
-                new ApiEndpointDto
-                {
-                    Id = $"{importedDocument.Id}-remote-2",
-                    DocumentId = importedDocument.Id,
-                    GroupName = "订单",
-                    Name = "创建订单",
-                    Method = "POST",
-                    Path = "/orders"
-                }
-            ];
-            var document = _documentsByProject[projectId][0];
+                ("订单", "查询订单列表", "GET", "/orders"),
+                ("订单", "创建订单", "POST", "/orders")
+            ]);
             return Task.FromResult<IResultModel<ApiDocumentDto>>(ResultModel<ApiDocumentDto>.Success(document));
         }
 
         public Task<IResultModel<ApiDocumentDto>> ImportFromFileAsync(string projectId, string filePath, CancellationToken cancellationToken)
         {
-            SeedDocument(projectId, "本地订单服务", "FILE", filePath, "https://order.demo.local", 1);
-            var document = _documentsByProject[projectId][0];
+            var document = SaveImportedDocument(projectId, "本地订单服务", "FILE", filePath, "https://order.demo.local",
+            [
+                ("本地订单", "本地下单", "POST", "/local-orders")
+            ]);
             return Task.FromResult<IResultModel<ApiDocumentDto>>(ResultModel<ApiDocumentDto>.Success(document));
         }
 
@@ -440,6 +476,114 @@ public sealed class ProjectTabViewModelTests
             }
 
             return Task.CompletedTask;
+        }
+
+        private ApiDocumentDto SaveImportedDocument(
+            string projectId,
+            string name,
+            string sourceType,
+            string sourceValue,
+            string baseUrl,
+            IReadOnlyList<(string GroupName, string Name, string Method, string Path)> endpoints)
+        {
+            if (!_documentsByProject.TryGetValue(projectId, out var documents))
+            {
+                documents = [];
+                _documentsByProject[projectId] = documents;
+            }
+
+            var incomingKeys = endpoints
+                .Select(endpoint => BuildImportedEndpointKey(endpoint.Method, endpoint.Path))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var document in documents.ToList())
+            {
+                if (!_endpointsByDocument.TryGetValue(document.Id, out var existingEndpoints))
+                {
+                    continue;
+                }
+
+                existingEndpoints.RemoveAll(endpoint => incomingKeys.Contains(BuildImportedEndpointKey(endpoint.Method, endpoint.Path)));
+                if (existingEndpoints.Count == 0)
+                {
+                    _endpointsByDocument.Remove(document.Id);
+                    documents.Remove(document);
+                }
+            }
+
+            var importedDocument = new ApiDocumentDto
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                ProjectId = projectId,
+                Name = name,
+                SourceType = sourceType,
+                SourceValue = sourceValue,
+                BaseUrl = baseUrl,
+                ImportedAt = DateTime.UtcNow
+            };
+
+            documents.Add(importedDocument);
+            _endpointsByDocument[importedDocument.Id] = endpoints.Select((endpoint, index) => new ApiEndpointDto
+            {
+                Id = $"{importedDocument.Id}-{index}",
+                DocumentId = importedDocument.Id,
+                GroupName = endpoint.GroupName,
+                Name = endpoint.Name,
+                Method = endpoint.Method,
+                Path = endpoint.Path
+            }).ToList();
+            return importedDocument;
+        }
+
+        private ApiImportPreviewDto BuildPreview(
+            string projectId,
+            string sourceType,
+            string sourceValue,
+            IReadOnlyList<ApiEndpointDto> endpoints)
+        {
+            var existingEndpoints = _documentsByProject.TryGetValue(projectId, out var documents)
+                ? documents.SelectMany(document =>
+                {
+                    var items = _endpointsByDocument.TryGetValue(document.Id, out var documentEndpoints)
+                        ? documentEndpoints
+                        : [];
+                    return items.Select(endpoint => new { Document = document, Endpoint = endpoint });
+                }).ToList()
+                : [];
+            var conflicts = endpoints
+                .Select(endpoint => new
+                {
+                    Endpoint = endpoint,
+                    Existing = existingEndpoints.FirstOrDefault(item =>
+                        string.Equals(item.Endpoint.Method, endpoint.Method, StringComparison.OrdinalIgnoreCase)
+                        && string.Equals(item.Endpoint.Path, endpoint.Path, StringComparison.OrdinalIgnoreCase))
+                })
+                .Where(item => item.Existing is not null)
+                .Select(item => new ApiImportConflictDto
+                {
+                    ExistingDocumentId = item.Existing!.Document.Id,
+                    ExistingDocumentName = item.Existing.Document.Name,
+                    ExistingEndpointId = item.Existing.Endpoint.Id,
+                    ExistingEndpointName = item.Existing.Endpoint.Name,
+                    ImportedEndpointName = item.Endpoint.Name,
+                    Method = item.Endpoint.Method,
+                    Path = item.Endpoint.Path
+                })
+                .ToList();
+            return new ApiImportPreviewDto
+            {
+                DocumentName = sourceType == "URL" ? "远程订单服务" : "本地订单服务",
+                SourceType = sourceType,
+                SourceValue = sourceValue,
+                TotalEndpointCount = endpoints.Count,
+                NewEndpointCount = endpoints.Count - conflicts.Count,
+                ConflictCount = conflicts.Count,
+                ConflictItems = conflicts
+            };
+        }
+
+        private static string BuildImportedEndpointKey(string method, string path)
+        {
+            return $"swagger-import:{method.ToUpperInvariant()} {path}";
         }
     }
 

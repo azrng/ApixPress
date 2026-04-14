@@ -1,16 +1,17 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
-using ApixPress.App.Helpers;
 
 namespace ApixPress.App.ViewModels;
 
 public partial class RequestHistoryPanelViewModel : ViewModelBase
 {
     private readonly IRequestHistoryService _requestHistoryService;
+    private CancellationTokenSource? _loadHistoryCancellationTokenSource;
     private string _currentProjectId = string.Empty;
 
     public ObservableCollection<RequestHistoryItemViewModel> HistoryItems { get; } = [];
@@ -36,31 +37,37 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
 
     public async Task LoadHistoryAsync()
     {
-        HistoryItems.Clear();
-        if (string.IsNullOrWhiteSpace(_currentProjectId))
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadHistoryCancellationTokenSource).Token;
+        try
         {
-            return;
-        }
-
-        var history = await _requestHistoryService.GetHistoryAsync(_currentProjectId, CancellationToken.None);
-        foreach (var item in history)
-        {
-            var snapshot = item.RequestSnapshot;
-            var response = item.ResponseSnapshot;
-
-            HistoryItems.Add(new RequestHistoryItemViewModel
+            HistoryItems.Clear();
+            if (string.IsNullOrWhiteSpace(_currentProjectId))
             {
-                Id = item.Id,
-                Method = snapshot.Method,
-                Url = snapshot.Url,
-                Timestamp = item.Timestamp,
-                HasResponse = response is not null,
-                StatusText = response?.StatusCode?.ToString() ?? "-",
-                DurationText = response?.DurationMs > 0 ? $"{response.DurationMs}ms" : "-",
-                SizeText = response?.SizeBytes > 0 ? UiFormatHelper.FormatBytes(response.SizeBytes) : "-",
-                RequestSnapshot = snapshot,
-                ResponseSnapshot = response
-            });
+                return;
+            }
+
+            var history = await _requestHistoryService.GetHistoryAsync(_currentProjectId, cancellationToken);
+            HistoryItems.ReplaceWith(history.Select(item =>
+            {
+                var snapshot = item.RequestSnapshot;
+                var response = item.ResponseSnapshot;
+                return new RequestHistoryItemViewModel
+                {
+                    Id = item.Id,
+                    Method = snapshot.Method,
+                    Url = snapshot.Url,
+                    Timestamp = item.Timestamp,
+                    HasResponse = response is not null,
+                    StatusText = response?.StatusCode?.ToString() ?? "-",
+                    DurationText = response?.DurationMs > 0 ? $"{response.DurationMs}ms" : "-",
+                    SizeText = response?.SizeBytes > 0 ? UiFormatHelper.FormatBytes(response.SizeBytes) : "-",
+                    RequestSnapshot = snapshot,
+                    ResponseSnapshot = response
+                };
+            }));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
         }
     }
 
