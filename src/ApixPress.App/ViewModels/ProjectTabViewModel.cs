@@ -2027,6 +2027,10 @@ public partial class ProjectTabViewModel : ViewModelBase
         if (newValue is not null)
         {
             newValue.IsActive = true;
+            SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
+            StatusMessage = newValue.IsLandingTab
+                ? "已切换到新建页。"
+                : $"已切换到标签：{newValue.HeaderText}";
         }
 
         if (newValue is null || !newValue.IsQuickRequestTab)

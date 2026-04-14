@@ -1242,32 +1242,28 @@
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
 
-  <Style Selector="Border.ProjectWorkspaceEditorTabs">
+  <Style Selector="TabStrip.ProjectWorkspaceEditorTabs">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0" />
   </Style>
 
-  <Style Selector="Border.ProjectWorkspaceInnerTabShell">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-  </Style>
-
-  <Style Selector="ToggleButton.ProjectWorkspaceInnerTabButton">
+  <Style Selector="TabStrip.ProjectWorkspaceEditorTabs TabStripItem">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="14,8" />
+    <Setter Property="Margin" Value="0,0,8,0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
   </Style>
 
-  <Style Selector="ToggleButton.ProjectWorkspaceInnerTabButton:pointerover">
+  <Style Selector="TabStrip.ProjectWorkspaceEditorTabs TabStripItem:pointerover">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
 
-  <Style Selector="ToggleButton.ProjectWorkspaceInnerTabButton:checked">
+  <Style Selector="TabStrip.ProjectWorkspaceEditorTabs TabStripItem:selected">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
