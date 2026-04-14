@@ -1395,17 +1395,17 @@
                                  Text="返回响应" />
                     </Grid>
 
-                    <Grid IsVisible="{Binding ResponseSection.ShowPlaceholder}">
-                      <StackPanel HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
+                    <Border Classes="HttpResponsePlaceholderHost"
+                            IsVisible="{Binding ResponseSection.ShowPlaceholder}">
+                      <StackPanel Classes="HttpResponsePlaceholderContent"
                                   Spacing="{StaticResource Space.2}">
                         <TextBlock Classes="HttpResponsePlaceholderIcon"
                                    FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    Text="&#xE7C3;" />
-                        <TextBlock Classes="SubtleText"
+                        <TextBlock Classes="SubtleText HttpResponsePlaceholderText"
                                    Text="点击“发送”按钮获取返回结果" />
                       </StackPanel>
-                    </Grid>
+                    </Border>
 
                     <Grid IsVisible="{Binding ResponseSection.HasResponse}"
                           RowDefinitions="Auto,*"
@@ -1489,17 +1489,17 @@
                                  Text="返回响应" />
                     </Grid>
 
-                    <Grid IsVisible="{Binding ResponseSection.ShowPlaceholder}">
-                      <StackPanel HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
+                    <Border Classes="HttpResponsePlaceholderHost"
+                            IsVisible="{Binding ResponseSection.ShowPlaceholder}">
+                      <StackPanel Classes="HttpResponsePlaceholderContent"
                                   Spacing="{StaticResource Space.2}">
                         <TextBlock Classes="HttpResponsePlaceholderIcon"
                                    FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                    Text="&#xE7C3;" />
-                        <TextBlock Classes="SubtleText"
+                        <TextBlock Classes="SubtleText HttpResponsePlaceholderText"
                                    Text="点击“发送”按钮获取返回结果" />
                       </StackPanel>
-                    </Grid>
+                    </Border>
 
                     <Grid IsVisible="{Binding ResponseSection.HasResponse}"
                           RowDefinitions="Auto,*"

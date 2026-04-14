@@ -1974,6 +1974,21 @@
     <Setter Property="HorizontalAlignment" Value="Center" />
   </Style>
 
+  <Style Selector="Border.HttpResponsePlaceholderHost">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="StackPanel.HttpResponsePlaceholderContent">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpResponsePlaceholderText">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextAlignment" Value="Center" />
+  </Style>
+
   <Style Selector="Border.EnvironmentSummaryPill">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
