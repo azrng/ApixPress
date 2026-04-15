@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Helpers;
@@ -41,13 +40,6 @@ public partial class ProjectTabViewModel : ViewModelBase
         public const string Info = "info";
         public const string Success = "success";
         public const string Error = "error";
-    }
-
-    private static class RequestEntryTypes
-    {
-        public const string QuickRequest = "quick-request";
-        public const string HttpInterface = "http-interface";
-        public const string HttpCase = "http-case";
     }
 
     private readonly IRequestCaseService _requestCaseService;
@@ -155,8 +147,8 @@ public partial class ProjectTabViewModel : ViewModelBase
     public bool HasEnvironmentContext => ActiveWorkspaceTab is not null && !ActiveWorkspaceTab.IsLandingTab;
     public bool HasSavedRequests => SavedRequests.Count > 0;
     public bool HasHistory => RequestHistory.Count > 0;
-    public bool HasQuickRequestEntries => SavedRequests.Any(item => string.Equals(item.SourceCase.EntryType, RequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase));
-    public bool HasInterfaceEntries => SavedRequests.Any(item => string.Equals(item.SourceCase.EntryType, RequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase));
+    public bool HasQuickRequestEntries => SavedRequests.Any(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase));
+    public bool HasInterfaceEntries => SavedRequests.Any(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase));
     public bool ShowInterfaceEntriesEmptyState => !HasInterfaceEntries;
     public bool ShowQuickRequestEntriesEmptyState => !HasQuickRequestEntries;
     public bool ShowSavedRequestsEmptyState => !HasQuickRequestEntries && !HasInterfaceEntries;
@@ -187,8 +179,8 @@ public partial class ProjectTabViewModel : ViewModelBase
     public bool ShowInterfaceManagementLanding => IsInterfaceManagementSection && (ActiveWorkspaceTab?.IsLandingTab ?? true);
     public bool ShowRequestEditorWorkspace => IsInterfaceManagementSection && IsRequestEditorOpen;
     public string SavedRequestCountText => SavedRequests.Count(item =>
-        string.Equals(item.SourceCase.EntryType, RequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(item.SourceCase.EntryType, RequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase)).ToString();
+        string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase)).ToString();
     public string HistoryCountText => RequestHistory.Count.ToString();
     public string EnvironmentCountText => EnvironmentPanel.Environments.Count.ToString();
     public string ImportedApiDocumentCountText => ImportedApiDocuments.Count.ToString();
@@ -343,7 +335,7 @@ public partial class ProjectTabViewModel : ViewModelBase
                 return string.Empty;
             }
 
-            var count = CollectDeletableSourceCases(PendingDeleteWorkspaceItem)
+            var count = ProjectWorkspaceTreeBuilder.CollectDeletableSourceCases(PendingDeleteWorkspaceItem)
                 .Select(item => item.Id)
                 .Where(item => !string.IsNullOrWhiteSpace(item))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -366,14 +358,14 @@ public partial class ProjectTabViewModel : ViewModelBase
     public string CurrentHttpDocumentBodyModeText => ConfigTab.HasBodyContent
         ? (ConfigTab.SelectedBodyModeOption?.DisplayName ?? ConfigTab.SelectedBodyMode)
         : "无";
-    public string CurrentHttpDocumentUrl => BuildHttpDocumentUrl();
+    public string CurrentHttpDocumentUrl => ProjectHttpDocumentFormatter.BuildUrl(RequestUrl, CurrentHttpInterfaceBaseUrl, ConfigTab.QueryParameters);
     public string CurrentHttpDocumentResponseSummary => ResponseSection.HasResponse
         ? CurrentResponseValidationResultText
         : "等待调试后生成响应示例";
     public string CurrentHttpDocumentBodyPreview => ResponseSection.HasResponse && !string.IsNullOrWhiteSpace(ResponseSection.BodyText)
         ? ResponseSection.BodyText
         : "{ }";
-    public string CurrentHttpDocumentCurlSnippet => BuildHttpDocumentCurlSnippet();
+    public string CurrentHttpDocumentCurlSnippet => ProjectHttpDocumentFormatter.BuildCurlSnippet(SelectedMethod, RequestUrl, CurrentHttpInterfaceBaseUrl, ConfigTab);
     public string CurrentResponseValidationResultText
     {
         get

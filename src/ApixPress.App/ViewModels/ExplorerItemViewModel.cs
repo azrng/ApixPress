@@ -37,18 +37,29 @@ public partial class ExplorerItemViewModel : ViewModelBase
     private bool isExpanded = true;
 
     public ObservableCollection<ExplorerItemViewModel> Children { get; } = [];
+
     public bool HasChildren => Children.Count > 0;
+
     public bool IsClickable => CanLoad || HasChildren;
+
     public bool CanDelete => SourceCase is not null || Children.Any(child => child.CanDelete);
+
     public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
+
     public bool ShowMethodBadge => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase);
+
     public bool ShowLeadingGlyph => !ShowMethodBadge && !IsHttpCaseNode;
+
     public bool IsHttpCaseNode => string.Equals(NodeType, "http-case", StringComparison.OrdinalIgnoreCase);
+
     public bool IsQuickRequestNode => string.Equals(NodeType, "quick-request", StringComparison.OrdinalIgnoreCase);
+
     public bool ShowTrailingDot => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase) && HasChildren;
+
     public string MethodBadgeText => SourceCase?.RequestSnapshot.Method?.ToUpperInvariant()
         ?? Endpoint?.Method?.ToUpperInvariant()
         ?? string.Empty;
+
     public string MethodBadgeClass => MethodBadgeText switch
     {
         "GET" => "Light Success",
@@ -58,6 +69,7 @@ public partial class ExplorerItemViewModel : ViewModelBase
         "PATCH" => "Light Secondary",
         _ => "Light Secondary"
     };
+
     public string NodeGlyph => NodeType switch
     {
         "module" => "\uE8B7",
@@ -70,92 +82,13 @@ public partial class ExplorerItemViewModel : ViewModelBase
     };
 
     public ICommand? DeleteCommand { get; init; }
+
     public RequestCaseDto? SourceCase { get; init; }
+
     public ApiEndpointDto? Endpoint { get; init; }
 
     partial void OnCanLoadChanged(bool value)
     {
         OnPropertyChanged(nameof(IsClickable));
     }
-
-    partial void OnIsExpandedChanged(bool value)
-    {
-        OnPropertyChanged(nameof(IsExpanded));
-    }
-}
-
-public partial class RequestParameterItemViewModel : ViewModelBase
-{
-    [ObservableProperty]
-    private string name = string.Empty;
-
-    [ObservableProperty]
-    private string value = string.Empty;
-
-    [ObservableProperty]
-    private string description = string.Empty;
-
-    [ObservableProperty]
-    private bool isRequired;
-
-    public RequestParameterKind ParameterType { get; init; }
-}
-
-public partial class RequestCaseItemViewModel : ViewModelBase
-{
-    [ObservableProperty]
-    private string id = string.Empty;
-
-    [ObservableProperty]
-    private string name = string.Empty;
-
-    [ObservableProperty]
-    private string groupName = string.Empty;
-
-    [ObservableProperty]
-    private string tagsText = string.Empty;
-
-    [ObservableProperty]
-    private string description = string.Empty;
-
-    [ObservableProperty]
-    private DateTime updatedAt;
-
-    public RequestCaseDto SourceCase { get; init; } = new();
-    public string UpdatedAtText => $"更新于 {UpdatedAt:MM-dd HH:mm}";
-
-    partial void OnUpdatedAtChanged(DateTime value)
-    {
-        OnPropertyChanged(nameof(UpdatedAtText));
-    }
-}
-
-public partial class EnvironmentVariableItemViewModel : ViewModelBase
-{
-    [ObservableProperty]
-    private string id = string.Empty;
-
-    [ObservableProperty]
-    private string environmentId = string.Empty;
-
-    [ObservableProperty]
-    private string environmentName = "Default";
-
-    [ObservableProperty]
-    private string key = string.Empty;
-
-    [ObservableProperty]
-    private string value = string.Empty;
-
-    [ObservableProperty]
-    private bool isEnabled = true;
-}
-
-public partial class BodyModeOptionViewModel : ViewModelBase
-{
-    [ObservableProperty]
-    private string mode = string.Empty;
-
-    [ObservableProperty]
-    private string displayName = string.Empty;
 }

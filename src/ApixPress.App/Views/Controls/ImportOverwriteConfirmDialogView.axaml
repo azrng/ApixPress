@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.ImportOverwriteConfirmDialogView"
+             x:DataType="vm:MainWindowViewModel"
+             mc:Ignorable="d">
+  <Border Classes="CreateProjectDialogBackdrop"
+          IsVisible="{Binding ShowProjectImportOverwriteConfirmDialog}">
+    <Grid HorizontalAlignment="Center"
+          VerticalAlignment="Center">
+      <Border Classes="QuickRequestSaveDialogCard">
+        <Grid RowDefinitions="Auto,Auto,Auto"
+              RowSpacing="{StaticResource Space.3}">
+          <StackPanel Spacing="2">
+            <TextBlock Classes="DialogTitle"
+                       Text="确认覆盖接口" />
+            <TextBlock Classes="CaptionText"
+                       Text="{Binding ActiveProjectTab.PendingImportOverwriteTitle, StringFormat='导入文档：{0}'}"
+                       IsVisible="{Binding ActiveProjectTab.HasPendingImportPreview}" />
+          </StackPanel>
+
+          <StackPanel Grid.Row="1"
+                      Spacing="{StaticResource Space.2}">
+            <Border Classes="CreateProjectFormShell">
+              <TextBlock Text="{Binding ActiveProjectTab.PendingImportOverwriteSummary}"
+                         TextWrapping="Wrap" />
+            </Border>
+            <Border Classes="CreateProjectFormShell">
+              <TextBlock Text="{Binding ActiveProjectTab.PendingImportOverwriteDetailText}"
+                         TextWrapping="Wrap" />
+            </Border>
+          </StackPanel>
+
+          <StackPanel Grid.Row="2"
+                      Orientation="Horizontal"
+                      HorizontalAlignment="Right"
+                      Spacing="{StaticResource Space.2}">
+            <Button Classes="DialogSecondaryButton"
+                    Content="取消"
+                    Command="{Binding ActiveProjectTab.CancelImportOverwriteConfirmCommand}" />
+            <Button Classes="DialogPrimaryButton"
+                    Content="确认覆盖"
+                    Command="{Binding ActiveProjectTab.ConfirmImportOverwriteCommand}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

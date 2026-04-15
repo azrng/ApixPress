@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.QuickRequestSaveDialogView"
+             x:DataType="vm:MainWindowViewModel"
+             mc:Ignorable="d">
+  <Border Classes="CreateProjectDialogBackdrop"
+          IsVisible="{Binding ShowQuickRequestSaveDialog}">
+    <Grid HorizontalAlignment="Center"
+          VerticalAlignment="Center">
+      <Border Classes="QuickRequestSaveDialogCard">
+        <Grid RowDefinitions="Auto,Auto,Auto"
+              RowSpacing="{StaticResource Space.3}">
+          <StackPanel Spacing="2">
+            <TextBlock Classes="DialogTitle"
+                       Text="保存快捷请求" />
+            <TextBlock Classes="CaptionText"
+                       Text="保存时再输入名称，已保存的快捷请求会继续保留在左侧目录中。" />
+          </StackPanel>
+
+          <Border Grid.Row="1"
+                  Classes="CreateProjectFormShell">
+            <u:Form LabelPosition="Top">
+              <TextBox Classes="SectionInput DialogInput"
+                       u:FormItem.Label="快捷请求名称"
+                       Watermark="请输入保存名称"
+                       Text="{Binding ActiveProjectTab.QuickRequestSaveName}" />
+              <TextBox Classes="SectionInput DialogInput"
+                       u:FormItem.Label="备注"
+                       AcceptsReturn="True"
+                       Height="96"
+                       TextWrapping="Wrap"
+                       Watermark="可选，补充请求用途说明"
+                       Text="{Binding ActiveProjectTab.QuickRequestSaveDescription}" />
+            </u:Form>
+          </Border>
+
+          <StackPanel Grid.Row="2"
+                      Orientation="Horizontal"
+                      HorizontalAlignment="Right"
+                      Spacing="{StaticResource Space.2}">
+            <Button Classes="DialogSecondaryButton"
+                    Content="取消"
+                    Command="{Binding ActiveProjectTab.CloseQuickRequestSaveDialogCommand}" />
+            <Button Classes="DialogPrimaryButton"
+                    Content="保存"
+                    Command="{Binding ActiveProjectTab.ConfirmQuickRequestSaveCommand}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

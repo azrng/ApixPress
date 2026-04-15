@@ -127,7 +127,7 @@ public partial class ProjectTabViewModel
         var result = await _requestCaseService.SaveAsync(new RequestCaseDto
         {
             ProjectId = ProjectId,
-            EntryType = RequestEntryTypes.QuickRequest,
+            EntryType = ProjectTabRequestEntryTypes.QuickRequest,
             Name = $"{snapshot.Method} {snapshot.Url}",
             GroupName = "快捷请求",
             Description = $"从 {item.Timestamp.ToLocalTime():yyyy-MM-dd HH:mm} 的历史记录创建",
@@ -169,10 +169,10 @@ public partial class ProjectTabViewModel
         {
             Id = workspaceTab.EditingCaseId,
             ProjectId = ProjectId,
-            EntryType = RequestEntryTypes.HttpCase,
+            EntryType = ProjectTabRequestEntryTypes.HttpCase,
             Name = BuildHttpCaseName(workspaceTab),
             GroupName = "用例",
-            FolderPath = NormalizeFolderPath(workspaceTab.InterfaceFolderPath),
+            FolderPath = ProjectWorkspaceTreeBuilder.NormalizeFolderPath(workspaceTab.InterfaceFolderPath),
             ParentId = interfaceId,
             Description = $"{workspaceTab.ResolveRequestName()} 的请求用例",
             RequestSnapshot = snapshot,
@@ -239,7 +239,7 @@ public partial class ProjectTabViewModel
         }
 
         var source = item.SourceCase;
-        var parentInterface = string.Equals(source.EntryType, RequestEntryTypes.HttpCase, StringComparison.OrdinalIgnoreCase)
+        var parentInterface = string.Equals(source.EntryType, ProjectTabRequestEntryTypes.HttpCase, StringComparison.OrdinalIgnoreCase)
             ? FindRequestById(source.ParentId)
             : null;
 
@@ -247,7 +247,7 @@ public partial class ProjectTabViewModel
         var targetTab = FindWorkspaceTabForSource(source) ?? ReuseActiveLandingOrCreateWorkspace();
         targetTab.ApplySavedRequest(source, parentInterface);
 
-        if (string.Equals(source.EntryType, RequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(source.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase))
         {
             targetTab.HttpCaseName = ResolveLatestCaseName(source.Id);
         }
@@ -255,8 +255,8 @@ public partial class ProjectTabViewModel
         ActivateWorkspaceTabCore(targetTab);
         StatusMessage = source.EntryType switch
         {
-            RequestEntryTypes.HttpInterface => $"已加载 HTTP 接口：{source.Name}",
-            RequestEntryTypes.HttpCase => $"已加载接口用例：{source.Name}",
+            ProjectTabRequestEntryTypes.HttpInterface => $"已加载 HTTP 接口：{source.Name}",
+            ProjectTabRequestEntryTypes.HttpCase => $"已加载接口用例：{source.Name}",
             _ => $"已加载快捷请求：{source.Name}"
         };
         NotifyShellState();
@@ -294,7 +294,7 @@ public partial class ProjectTabViewModel
             return;
         }
 
-        var targets = CollectDeletableSourceCases(item)
+        var targets = ProjectWorkspaceTreeBuilder.CollectDeletableSourceCases(item)
             .DistinctBy(source => source.Id, StringComparer.OrdinalIgnoreCase)
             .ToList();
         if (targets.Count == 0)
@@ -305,7 +305,7 @@ public partial class ProjectTabViewModel
         }
 
         var importedInterfaces = targets
-            .Where(source => string.Equals(source.EntryType, RequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase))
+            .Where(source => string.Equals(source.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase))
             .Where(IsImportedInterface)
             .ToList();
         if (importedInterfaces.Count > 0)
@@ -314,7 +314,7 @@ public partial class ProjectTabViewModel
         }
 
         foreach (var source in targets
-                     .OrderBy(source => ResolveDeletePriority(source.EntryType))
+                     .OrderBy(source => ProjectWorkspaceTreeBuilder.ResolveDeletePriority(source.EntryType))
                      .ThenBy(source => source.Name, StringComparer.OrdinalIgnoreCase))
         {
             await _requestCaseService.DeleteAsync(ProjectId, source.Id, CancellationToken.None);

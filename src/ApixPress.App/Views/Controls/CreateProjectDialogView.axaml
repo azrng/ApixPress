@@ -1,0 +1,54 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.CreateProjectDialogView"
+             x:DataType="vm:MainWindowViewModel"
+             mc:Ignorable="d">
+  <Border Classes="CreateProjectDialogBackdrop"
+          IsVisible="{Binding IsCreateProjectDialogOpen}">
+    <Grid HorizontalAlignment="Center"
+          VerticalAlignment="Center">
+      <Border Classes="CreateProjectDialogCard">
+        <Grid RowDefinitions="Auto,Auto,Auto"
+              RowSpacing="{StaticResource Space.3}">
+          <StackPanel Spacing="2">
+            <TextBlock Classes="DialogTitle"
+                       Text="新建项目" />
+            <TextBlock Classes="CaptionText"
+                       Text="只需要填写项目名称和备注信息。创建后会自动生成该项目的默认环境。" />
+          </StackPanel>
+          <Border Grid.Row="1"
+                  Classes="CreateProjectFormShell">
+            <u:Form LabelPosition="Top">
+              <TextBox Classes="SectionInput DialogInput"
+                       u:FormItem.Label="项目名称"
+                       Watermark="请输入项目名称"
+                       Text="{Binding ProjectPanel.DraftProjectName}" />
+              <TextBox Classes="SectionInput DialogInput"
+                       u:FormItem.Label="备注信息"
+                       AcceptsReturn="True"
+                       Height="112"
+                       TextWrapping="Wrap"
+                       Watermark="补充项目用途、团队或说明"
+                       Text="{Binding ProjectPanel.DraftProjectDescription}" />
+            </u:Form>
+          </Border>
+          <StackPanel Grid.Row="2"
+                      Orientation="Horizontal"
+                      HorizontalAlignment="Right"
+                      Spacing="{StaticResource Space.2}">
+            <Button Classes="DialogSecondaryButton"
+                    Content="取消"
+                    Command="{Binding CloseCreateProjectDialogCommand}" />
+            <Button Classes="DialogPrimaryButton"
+                    Content="创建项目"
+                    Command="{Binding ProjectPanel.CreateProjectCommand}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>
