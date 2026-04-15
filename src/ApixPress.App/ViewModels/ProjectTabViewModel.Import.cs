@@ -7,18 +7,6 @@ namespace ApixPress.App.ViewModels;
 
 public partial class ProjectTabViewModel
 {
-    private async Task LoadWorkspaceAsync(string? preferredEnvironmentId = null)
-    {
-        UseCasesPanel.SetProjectContext(ProjectId);
-        HistoryPanel.SetProjectContext(ProjectId);
-        await EnvironmentPanel.LoadProjectAsync(ProjectId, preferredEnvironmentId);
-        await ReloadSavedRequestsAsync();
-        await HistoryPanel.LoadHistoryAsync();
-        await LoadImportedDocumentsAsync(manageBusyState: false);
-        EnsureLandingWorkspaceTab();
-        NotifyShellState();
-    }
-
     private async Task ImportSwaggerAsync(
         Func<CancellationToken, Task<IResultModel<ApiImportPreviewDto>>> previewAction,
         Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> importAction,

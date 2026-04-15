@@ -104,47 +104,6 @@ public partial class ProjectTabViewModel
         OnPropertyChanged(nameof(InterfaceCatalogItems));
     }
 
-    private void CloseWorkspaceTabsForDeletedCases(IReadOnlyCollection<RequestCaseDto> deletedCases)
-    {
-        var deletedIds = deletedCases
-            .Select(item => item.Id)
-            .Where(item => !string.IsNullOrWhiteSpace(item))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (deletedIds.Count == 0)
-        {
-            return;
-        }
-
-        var tabsToClose = WorkspaceTabs
-            .Where(tab => deletedIds.Contains(tab.EditingQuickRequestId)
-                || deletedIds.Contains(tab.EditingInterfaceId)
-                || deletedIds.Contains(tab.EditingCaseId))
-            .ToList();
-        foreach (var tab in tabsToClose)
-        {
-            CloseWorkspaceTab(tab);
-        }
-    }
-
-    private ProjectEnvironmentDto BuildExecutionEnvironment()
-    {
-        var environment = EnvironmentPanel.GetSelectedEnvironmentDto();
-        if (environment is not null)
-        {
-            return environment;
-        }
-
-        return new ProjectEnvironmentDto
-        {
-            Id = string.Empty,
-            ProjectId = ProjectId,
-            Name = "未配置环境",
-            BaseUrl = string.Empty,
-            IsActive = false,
-            SortOrder = 0
-        };
-    }
-
     private void SetImportDataStatus(string message, string statusState)
     {
         ImportDataStatusText = message;
@@ -163,18 +122,6 @@ public partial class ProjectTabViewModel
         return string.Equals(sourceType, "URL", StringComparison.OrdinalIgnoreCase)
             ? "URL 导入"
             : "文件上传";
-    }
-
-    private void OpenQuickRequestSaveDialog(RequestWorkspaceTabViewModel workspaceTab)
-    {
-        var fallbackName = string.IsNullOrWhiteSpace(workspaceTab.ConfigTab.RequestName)
-            ? workspaceTab.ResolveRequestName()
-            : workspaceTab.ConfigTab.RequestName.Trim();
-        QuickRequestSaveName = fallbackName;
-        QuickRequestSaveDescription = workspaceTab.ConfigTab.RequestDescription;
-        IsQuickRequestSaveDialogOpen = true;
-        StatusMessage = "请输入快捷请求名称后再保存。";
-        NotifyShellState();
     }
 
     private RequestWorkspaceTabViewModel ReuseActiveLandingOrCreateWorkspace()
@@ -283,13 +230,6 @@ public partial class ProjectTabViewModel
             ?? "成功";
     }
 
-    private static string BuildHttpCaseName(RequestWorkspaceTabViewModel workspaceTab)
-    {
-        return string.IsNullOrWhiteSpace(workspaceTab.HttpCaseName)
-            ? "成功"
-            : workspaceTab.HttpCaseName.Trim();
-    }
-
     private static bool HasAbsoluteHttpUrl(string? value)
     {
         if (!Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri))
@@ -299,10 +239,5 @@ public partial class ProjectTabViewModel
 
         return string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
             || string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static bool IsImportedInterface(RequestCaseDto requestCase)
-    {
-        return requestCase.RequestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase);
     }
 }
