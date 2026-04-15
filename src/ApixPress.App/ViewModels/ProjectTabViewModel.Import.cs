@@ -167,4 +167,19 @@ public partial class ProjectTabViewModel
         await _requestCaseService.SyncImportedHttpInterfacesAsync(ProjectId, endpoints, CancellationToken.None);
         await ReloadSavedRequestsAsync();
     }
+
+    private sealed class PendingImportRequest
+    {
+        public PendingImportRequest(
+            Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> importAction,
+            Func<ApiDocumentDto, string> buildSuccessMessage)
+        {
+            ImportAction = importAction;
+            BuildSuccessMessage = buildSuccessMessage;
+        }
+
+        public Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> ImportAction { get; }
+
+        public Func<ApiDocumentDto, string> BuildSuccessMessage { get; }
+    }
 }
