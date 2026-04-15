@@ -18,16 +18,8 @@
             <DataTemplate x:DataType="vm:RequestWorkspaceTabViewModel">
               <Grid ColumnDefinitions="Auto,Auto"
                     ColumnSpacing="{StaticResource Space.1}">
-                <StackPanel Grid.Column="0"
-                            Orientation="Horizontal"
-                            Spacing="{StaticResource Space.2}">
-                  <Border Classes="ProjectWorkspaceInnerTabBadge"
-                          IsVisible="{Binding ShowMethodBadge}">
-                    <TextBlock Classes="CaptionText"
-                               Text="{Binding MethodBadgeText}" />
-                  </Border>
-                  <TextBlock Text="{Binding HeaderText}" />
-                </StackPanel>
+                <TextBlock Grid.Column="0"
+                           Text="{Binding HeaderText}" />
                 <Button Grid.Column="1"
                         Classes="ProjectWorkspaceInnerTabCloseButton"
                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActiveProjectTab.CloseWorkspaceTabCommand}"
