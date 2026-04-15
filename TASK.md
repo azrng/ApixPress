@@ -18,4 +18,4 @@
 | T007 | 修复工作区左侧导航偏移 | 调整项目工作区左侧导航栏布局，让导航项回到顶部并保持稳定对齐 | 阶段 1 | Codex | REVIEW | P1 | 2026-04-13 17:25 |
 | T008 | 工作区顶部标签栏切换为 TabStrip | 将项目工作区顶部自绘标签栏替换为 Avalonia TabStrip，保留关闭、新增与更多操作，并减少手写页签交互结构 | 阶段 1 | Codex | REVIEW | P1 | 2026-04-14 21:50 |
 | T009 | 返回响应空态改为居中展示 | 调整请求编辑区返回响应空态布局，让图标与提示文案在响应容器内居中显示 | 阶段 1 | Codex | REVIEW | P1 | 2026-04-14 22:21 |
-| T010 | 修复工作区高风险与中风险问题 | 修复 Swagger 导入覆盖提示、请求头丢失、窗口异步异常处理、取消令牌与持久化并发控制，并继续治理仓储/服务/大型 ViewModel / XAML 文件拆分与性能热点；本轮已将 `ProjectTabViewModel.State.cs` 拆为工作区状态、项目设置通知、Shell 状态三个 partial，并将 `MainWindowViewModel.Commands.cs` 继续按项目、环境、设置、工作区命令域拆分 | 阶段 3 | Codex | REVIEW | P0 | 2026-04-15 21:36 |
+| T010 | 修复工作区高风险与中风险问题 | 修复 Swagger 导入覆盖提示、请求头丢失、窗口异步异常处理、取消令牌与持久化并发控制，并继续治理仓储/服务/大型 ViewModel / XAML 文件拆分与性能热点；本轮继续拆分 `MainWindowViewModel` 的项目标签同步 / shell 状态广播职责，以及 `ProjectTabViewModel` 的编辑器状态职责 | 阶段 3 | Codex | REVIEW | P0 | 2026-04-15 21:49 |
