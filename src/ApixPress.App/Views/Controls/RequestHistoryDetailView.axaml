@@ -1,0 +1,96 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:iri="https://irihi.tech/shared"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.RequestHistoryDetailView"
+             x:DataType="vm:ProjectTabViewModel"
+             mc:Ignorable="d">
+  <Border Classes="PanelCard ProjectWorkspaceCanvas"
+          IsVisible="{Binding IsRequestHistorySection}">
+    <Grid RowDefinitions="Auto,*"
+          RowSpacing="{StaticResource Space.3}">
+      <Grid ColumnDefinitions="*,Auto"
+            ColumnSpacing="{StaticResource Space.2}">
+        <StackPanel Spacing="2">
+          <TextBlock Classes="SectionTitle"
+                     Text="请求历史详情" />
+          <TextBlock Classes="CaptionText"
+                     Text="从左侧选择历史记录后，可在这里查看响应并一键回到快捷请求。" />
+        </StackPanel>
+        <Button Grid.Column="1"
+                Classes="SecondaryButton"
+                Content="打开快捷请求"
+                Command="{Binding OpenQuickRequestWorkspaceCommand}" />
+      </Grid>
+
+      <Border Grid.Row="1"
+              Classes="PanelCard ResponsePanelCard">
+        <DockPanel>
+          <Grid DockPanel.Dock="Top"
+                ColumnDefinitions="*,Auto"
+                Margin="0,0,0,12">
+            <TextBlock Classes="SectionTitle"
+                       Text="最近一次载入的响应" />
+            <TextBlock Grid.Column="1"
+                       Classes="CaptionText"
+                       Text="{Binding CurrentEnvironmentLabel}"
+                       VerticalAlignment="Center" />
+          </Grid>
+
+          <StackPanel IsVisible="{Binding ResponseSection.ShowPlaceholder}"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      Spacing="{StaticResource Space.2}">
+            <TextBlock Classes="SubtleText"
+                       Text="选择左侧历史记录后，可在这里查看最近一次载入的响应内容。" />
+          </StackPanel>
+
+          <Grid IsVisible="{Binding ResponseSection.HasResponse}"
+                RowDefinitions="Auto,*"
+                RowSpacing="{StaticResource Space.2}">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,*"
+                  ColumnSpacing="{StaticResource Space.3}">
+              <u:Badge Grid.Column="0"
+                       Header="{Binding ResponseSection.StatusText}"
+                       iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
+              <TextBlock Grid.Column="1"
+                         Classes="CaptionText"
+                         Text="{Binding ResponseSection.DurationText}" />
+              <TextBlock Grid.Column="2"
+                         Classes="CaptionText"
+                         Text="{Binding ResponseSection.SizeText}" />
+            </Grid>
+
+            <TabControl Grid.Row="1"
+                        Classes="ResponseTabs"
+                        SelectedIndex="{Binding ResponseSection.SelectedResponseTab}">
+              <TabItem Header="Body">
+                <TextBox AcceptsReturn="True"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         IsReadOnly="True"
+                         TextWrapping="Wrap"
+                         VerticalContentAlignment="Top"
+                         Text="{Binding ResponseSection.BodyText}"
+                         FontFamily="{StaticResource Font.Monospace}" />
+              </TabItem>
+              <TabItem Header="Headers">
+                <TextBox AcceptsReturn="True"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         IsReadOnly="True"
+                         TextWrapping="Wrap"
+                         VerticalContentAlignment="Top"
+                         Text="{Binding ResponseSection.HeadersText}"
+                         FontFamily="{StaticResource Font.Monospace}" />
+              </TabItem>
+            </TabControl>
+          </Grid>
+        </DockPanel>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

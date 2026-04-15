@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:views="using:ApixPress.App.Views.Controls"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.WorkspaceLandingView"
+             x:DataType="vm:ProjectTabViewModel"
+             mc:Ignorable="d">
+  <Border Classes="PanelCard ProjectWorkspaceCanvas"
+          IsVisible="{Binding ShowInterfaceManagementLanding}">
+    <Grid RowDefinitions="Auto,*"
+          RowSpacing="{StaticResource Space.4}">
+      <views:ProjectWorkspaceToolbarView />
+
+      <Grid Grid.Row="1">
+        <StackPanel Classes="WorkspaceLandingCenterStage"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+          <StackPanel Classes="WorkspaceLandingChoicePanel"
+                      Orientation="Horizontal"
+                      HorizontalAlignment="Center">
+            <Button Classes="WorkspaceLandingChoiceButton"
+                    Command="{Binding OpenHttpInterfaceWorkspaceCommand}">
+              <Grid RowDefinitions="*,Auto">
+                <TextBlock Classes="WorkspaceLandingChoiceIcon"
+                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                           Text="&#xE8C8;" />
+                <TextBlock Grid.Row="1"
+                           Classes="WorkspaceLandingChoiceTitle"
+                           Text="新建 HTTP 接口" />
+              </Grid>
+            </Button>
+
+            <Button Classes="WorkspaceLandingChoiceButton"
+                    Command="{Binding OpenQuickRequestWorkspaceCommand}">
+              <Grid RowDefinitions="*,Auto">
+                <TextBlock Classes="WorkspaceLandingChoiceIcon WorkspaceLandingChoiceQuickIcon"
+                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                           Text="&#xE945;" />
+                <TextBlock Grid.Row="1"
+                           Classes="WorkspaceLandingChoiceTitle"
+                           Text="快捷请求" />
+              </Grid>
+            </Button>
+          </StackPanel>
+        </StackPanel>
+      </Grid>
+    </Grid>
+  </Border>
+</UserControl>

@@ -15,7 +15,6 @@ public partial class MainWindow : Window
     private readonly IWindowHostService _windowHostService;
     private bool _isCreateProjectDrawerOpen;
     private bool _isEnvironmentDrawerOpen;
-    private bool _isProjectDrawerOpen;
     private bool _isUseCasesDrawerOpen;
 
     public MainWindow()
@@ -70,30 +69,6 @@ public partial class MainWindow : Window
         _ = RunUiActionAsync(() => _viewModel.SaveCaseCommand.ExecuteAsync(null));
     }
 
-    private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
-    {
-        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
-        {
-            BeginMoveDrag(e);
-        }
-    }
-
-    private void OnMinimizeWindow(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        WindowState = WindowState.Minimized;
-    }
-
-    private void OnToggleMaximizeWindow(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
-        _viewModel.UpdateWindowState(WindowState);
-    }
-
-    private void OnCloseWindow(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        Close();
-    }
-
     private void OnOpenUseCasesDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
         if (_isUseCasesDrawerOpen)
@@ -124,47 +99,6 @@ public partial class MainWindow : Window
             finally
             {
                 _isUseCasesDrawerOpen = false;
-            }
-        });
-    }
-
-    private void OnOpenProjectDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        if (_isProjectDrawerOpen)
-        {
-            return;
-        }
-
-        var activeProjectId = _viewModel.ActiveProjectTab?.ProjectId;
-        if (!string.IsNullOrWhiteSpace(activeProjectId))
-        {
-            _viewModel.ProjectPanel.SelectedProject = _viewModel.ProjectPanel.Projects.FirstOrDefault(item =>
-                string.Equals(item.Id, activeProjectId, StringComparison.OrdinalIgnoreCase));
-        }
-
-        _ = RunUiActionAsync(async () =>
-        {
-            _isProjectDrawerOpen = true;
-            try
-            {
-                await Drawer.ShowModal(
-                    new ProjectDrawerView(),
-                    _viewModel,
-                    null,
-                    new DrawerOptions
-                    {
-                        Buttons = DialogButton.None,
-                        Title = "项目管理",
-                        Position = Ursa.Common.Position.Right,
-                        MinWidth = 920,
-                        MaxWidth = 1024,
-                        CanResize = true,
-                        TopLevelHashCode = GetHashCode()
-                    });
-            }
-            finally
-            {
-                _isProjectDrawerOpen = false;
             }
         });
     }

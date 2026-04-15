@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace ApixPress.App.Views.Controls;
 
-public partial class ProjectWorkspaceView : UserControl
+public partial class RequestEditorWorkspaceView : UserControl
 {
-    public ProjectWorkspaceView()
+    public RequestEditorWorkspaceView()
     {
         InitializeComponent();
     }

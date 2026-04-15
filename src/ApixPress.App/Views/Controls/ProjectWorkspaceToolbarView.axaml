@@ -1,0 +1,100 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.ProjectWorkspaceToolbarView"
+             x:DataType="vm:ProjectTabViewModel"
+             mc:Ignorable="d">
+  <Border Classes="ProjectWorkspaceTopActionBar">
+    <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto"
+          ColumnSpacing="{StaticResource Space.3}">
+      <ScrollViewer HorizontalScrollBarVisibility="Hidden"
+                    VerticalScrollBarVisibility="Disabled">
+        <TabStrip Classes="ProjectWorkspaceEditorTabs"
+                  ItemsSource="{Binding VisibleWorkspaceTabs}"
+                  SelectedItem="{Binding ActiveWorkspaceTab, Mode=TwoWay}">
+          <TabStrip.ItemTemplate>
+            <DataTemplate x:DataType="vm:RequestWorkspaceTabViewModel">
+              <Grid ColumnDefinitions="Auto,Auto"
+                    ColumnSpacing="{StaticResource Space.1}">
+                <StackPanel Grid.Column="0"
+                            Orientation="Horizontal"
+                            Spacing="{StaticResource Space.2}">
+                  <Border Classes="ProjectWorkspaceInnerTabBadge"
+                          IsVisible="{Binding ShowMethodBadge}">
+                    <TextBlock Classes="CaptionText"
+                               Text="{Binding MethodBadgeText}" />
+                  </Border>
+                  <TextBlock Text="{Binding HeaderText}" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Classes="ProjectWorkspaceInnerTabCloseButton"
+                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActiveProjectTab.CloseWorkspaceTabCommand}"
+                        CommandParameter="{Binding}"
+                        Content="×" />
+              </Grid>
+            </DataTemplate>
+          </TabStrip.ItemTemplate>
+        </TabStrip>
+      </ScrollViewer>
+
+      <Grid Grid.Column="1"
+            Width="72"
+            Height="28"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top">
+        <StackPanel Orientation="Horizontal"
+                    Spacing="{StaticResource Space.1}">
+          <Button Classes="ProjectWorkspaceInnerTabAddButton"
+                  Content="+"
+                  Command="{Binding CreateWorkspaceTabCommand}" />
+          <Button x:Name="WorkspaceTabMenuButton"
+                  Classes="ProjectWorkspaceInnerTabMoreButton"
+                  Content="..."
+                  Command="{Binding ToggleWorkspaceTabMenuCommand}" />
+        </StackPanel>
+
+        <Popup IsOpen="{Binding IsWorkspaceTabMenuOpen}"
+               PlacementTarget="{Binding #WorkspaceTabMenuButton}"
+               Placement="Bottom"
+               VerticalOffset="6">
+          <Border Classes="WorkspaceTabMenuCard">
+            <StackPanel Spacing="{StaticResource Space.1}">
+              <Button Classes="WorkspaceTabMenuItem"
+                      Content="关闭全部标签页"
+                      Command="{Binding CloseAllWorkspaceTabsCommand}" />
+              <Button Classes="WorkspaceTabMenuItem"
+                      Content="关闭当前标签页"
+                      Command="{Binding CloseCurrentWorkspaceFromMenuCommand}" />
+              <Button Classes="WorkspaceTabMenuItem"
+                      Content="关闭其它标签页"
+                      Command="{Binding CloseOtherWorkspaceTabsCommand}" />
+            </StackPanel>
+          </Border>
+        </Popup>
+      </Grid>
+
+      <ComboBox Grid.Column="3"
+                Width="164"
+                Classes="SectionInput ProjectWorkspaceToolbarComboBox"
+                ItemsSource="{Binding EnvironmentPanel.Environments}"
+                SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}">
+        <ComboBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
+            <TextBlock Text="{Binding CompactDisplayName}" />
+          </DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
+
+      <StackPanel Grid.Column="4"
+                  Orientation="Horizontal"
+                  Spacing="{StaticResource Space.2}">
+        <Button Classes="SecondaryButton ProjectWorkspaceToolbarIconButton"
+                FontFamily="Segoe UI Symbol, Segoe UI, Microsoft YaHei UI"
+                Content="☰"
+                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+      </StackPanel>
+    </Grid>
+  </Border>
+</UserControl>
