@@ -151,6 +151,32 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task LoadWorkspaceItem_ShouldKeepVisibleWorkspaceTabsStableWhenSwitchingHttpInterfaces()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 2);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        var visibleTabs = viewModel.VisibleWorkspaceTabs;
+        var firstInterfaceItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 1");
+        var secondInterfaceItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 2");
+        Assert.NotNull(firstInterfaceItem);
+        Assert.NotNull(secondInterfaceItem);
+
+        viewModel.LoadWorkspaceItem(firstInterfaceItem);
+        viewModel.LoadWorkspaceItem(secondInterfaceItem);
+
+        Assert.Same(visibleTabs, viewModel.VisibleWorkspaceTabs);
+        Assert.Equal(2, viewModel.VisibleWorkspaceTabs.Count);
+        Assert.Equal("接口 1", viewModel.VisibleWorkspaceTabs[0].HeaderText);
+        Assert.Equal("接口 2", viewModel.VisibleWorkspaceTabs[1].HeaderText);
+        Assert.Equal("接口 2", viewModel.ActiveWorkspaceTab?.HeaderText);
+    }
+
+    [Fact]
     public void OpenHttpInterfaceWorkspace_ShouldUseDefaultModuleFolder()
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());

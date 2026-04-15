@@ -15,8 +15,8 @@ public partial class ProjectTabViewModel
             }
         }
 
+        SyncVisibleWorkspaceTabs();
         OnPropertyChanged(nameof(WorkspaceTabs));
-        OnPropertyChanged(nameof(VisibleWorkspaceTabs));
         NotifyShellState();
     }
 
@@ -29,13 +29,20 @@ public partial class ProjectTabViewModel
 
         if (!ReferenceEquals(tab, ActiveWorkspaceTab))
         {
-            if (e.PropertyName == nameof(RequestWorkspaceTabViewModel.HeaderText))
+            if (e.PropertyName is nameof(RequestWorkspaceTabViewModel.EntryType)
+                or nameof(RequestWorkspaceTabViewModel.ShowInTabStrip))
             {
-                OnPropertyChanged(nameof(VisibleWorkspaceTabs));
-                NotifyShellState();
+                SyncVisibleWorkspaceTabs();
             }
 
+            NotifyShellState();
             return;
+        }
+
+        if (e.PropertyName is nameof(RequestWorkspaceTabViewModel.EntryType)
+            or nameof(RequestWorkspaceTabViewModel.ShowInTabStrip))
+        {
+            SyncVisibleWorkspaceTabs();
         }
 
         if (e.PropertyName is nameof(RequestWorkspaceTabViewModel.SelectedMethod)
@@ -46,7 +53,6 @@ public partial class ProjectTabViewModel
             or nameof(RequestWorkspaceTabViewModel.ShowInTabStrip)
             or nameof(RequestWorkspaceTabViewModel.HeaderText))
         {
-            OnPropertyChanged(nameof(VisibleWorkspaceTabs));
             NotifyWorkspaceEditorState();
         }
     }

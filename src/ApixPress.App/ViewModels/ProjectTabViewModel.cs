@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
+using ApixPress.App.Helpers;
 
 namespace ApixPress.App.ViewModels;
 
@@ -43,6 +44,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     private readonly IApiWorkspaceService _apiWorkspaceService;
     private readonly IFilePickerService _filePickerService;
     private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
+    private readonly ObservableCollection<RequestWorkspaceTabViewModel> _visibleWorkspaceTabs = [];
     private CancellationTokenSource? _importCancellationTokenSource;
     private CancellationTokenSource? _sendRequestCancellationTokenSource;
     private PendingImportRequest? _pendingImportRequest;
@@ -109,6 +111,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             ShowProjectSettingsCommand));
         SyncWorkspaceNavigationSelection();
 
+        VisibleWorkspaceTabs = new ReadOnlyObservableCollection<RequestWorkspaceTabViewModel>(_visibleWorkspaceTabs);
         EnsureLandingWorkspaceTab();
     }
 
@@ -123,9 +126,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     public ObservableCollection<ProjectWorkspaceNavItemViewModel> WorkspaceNavigationItems { get; } = [];
     public ObservableCollection<ProjectImportedDocumentItemViewModel> ImportedApiDocuments { get; } = [];
     public IReadOnlyList<ExplorerItemViewModel> InterfaceCatalogItems => InterfaceTreeItems.FirstOrDefault()?.Children ?? [];
-    public IReadOnlyList<RequestWorkspaceTabViewModel> VisibleWorkspaceTabs => WorkspaceTabs
-        .Where(item => !item.IsLandingTab || item.ShowInTabStrip)
-        .ToList();
+    public ReadOnlyObservableCollection<RequestWorkspaceTabViewModel> VisibleWorkspaceTabs { get; }
     public ObservableCollection<RequestCaseItemViewModel> SavedRequests => UseCasesPanel.RequestCases;
     public ObservableCollection<RequestHistoryItemViewModel> RequestHistory => HistoryPanel.HistoryItems;
 
@@ -245,4 +246,9 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private ApiImportPreviewDto? pendingImportPreview;
+
+    private void SyncVisibleWorkspaceTabs()
+    {
+        _visibleWorkspaceTabs.ReplaceWith(WorkspaceTabs.Where(item => !item.IsLandingTab || item.ShowInTabStrip));
+    }
 }
