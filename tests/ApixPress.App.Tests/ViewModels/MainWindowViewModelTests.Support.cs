@@ -1,3 +1,8 @@
+using FakeEnvironmentVariableService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeEnvironmentVariableService;
+using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeFilePickerService;
+using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
+using FakeRequestExecutionService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestExecutionService;
+using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
@@ -145,128 +150,6 @@ public sealed partial class MainWindowViewModelTests
         }
     }
 
-    private sealed class FakeEnvironmentVariableService : IEnvironmentVariableService
-    {
-        public Task<IReadOnlyList<ProjectEnvironmentDto>> GetEnvironmentsAsync(string projectId, CancellationToken cancellationToken)
-        {
-            IReadOnlyList<ProjectEnvironmentDto> environments =
-            [
-                new ProjectEnvironmentDto
-                {
-                    Id = "env-1",
-                    ProjectId = projectId,
-                    Name = "开发",
-                    BaseUrl = "https://api.demo.local",
-                    IsActive = true,
-                    SortOrder = 1
-                }
-            ];
-            return Task.FromResult(environments);
-        }
-
-        public Task<IResultModel<ProjectEnvironmentDto>> SaveEnvironmentAsync(ProjectEnvironmentDto environment, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IResultModel<ProjectEnvironmentDto>>(ResultModel<ProjectEnvironmentDto>.Success(environment));
-        }
-
-        public Task<IResultModel<ProjectEnvironmentDto>> SetActiveEnvironmentAsync(string projectId, string environmentId, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IResultModel<ProjectEnvironmentDto>>(ResultModel<ProjectEnvironmentDto>.Success(new ProjectEnvironmentDto
-            {
-                Id = environmentId,
-                ProjectId = projectId,
-                Name = "开发",
-                BaseUrl = "https://api.demo.local",
-                IsActive = true,
-                SortOrder = 1
-            }));
-        }
-
-        public Task<IResultModel<bool>> DeleteEnvironmentAsync(string projectId, string environmentId, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
-        }
-
-        public Task<IReadOnlyList<EnvironmentVariableDto>> GetVariablesAsync(string environmentId, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IReadOnlyList<EnvironmentVariableDto>>([]);
-        }
-
-        public Task<IResultModel<EnvironmentVariableDto>> SaveVariableAsync(EnvironmentVariableDto variable, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IResultModel<EnvironmentVariableDto>>(ResultModel<EnvironmentVariableDto>.Success(variable));
-        }
-
-        public Task<IResultModel<bool>> DeleteVariableAsync(string id, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
-        }
-
-        public Task<IReadOnlyDictionary<string, string>> GetActiveDictionaryAsync(string environmentId, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IReadOnlyDictionary<string, string>>(new Dictionary<string, string>());
-        }
-    }
-
-    private sealed class FakeRequestCaseService : IRequestCaseService
-    {
-        public Task<IReadOnlyList<RequestCaseDto>> GetCasesAsync(string projectId, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IReadOnlyList<RequestCaseDto>>([]);
-        }
-
-        public Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IResultModel<RequestCaseDto>>(ResultModel<RequestCaseDto>.Success(requestCase));
-        }
-
-        public Task SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task<IResultModel<RequestCaseDto>> DuplicateAsync(string projectId, string id, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IResultModel<RequestCaseDto>>(ResultModel<RequestCaseDto>.Failure("未实现"));
-        }
-
-        public Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
-        }
-    }
-
-    private sealed class FakeRequestExecutionService : IRequestExecutionService
-    {
-        public Task<IResultModel<ResponseSnapshotDto>> SendAsync(RequestSnapshotDto request, ProjectEnvironmentDto environment, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IResultModel<ResponseSnapshotDto>>(ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto()));
-        }
-    }
-
-    private sealed class FakeRequestHistoryService : IRequestHistoryService
-    {
-        public Task<IReadOnlyList<RequestHistoryItemDto>> GetHistoryAsync(string projectId, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IReadOnlyList<RequestHistoryItemDto>>([]);
-        }
-
-        public Task<IResultModel<RequestHistoryItemDto>> AddAsync(string projectId, RequestSnapshotDto request, ResponseSnapshotDto? response, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IResultModel<RequestHistoryItemDto>>(ResultModel<RequestHistoryItemDto>.Success(new RequestHistoryItemDto()));
-        }
-
-        public Task<IResultModel<bool>> ClearAsync(string projectId, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
-        }
-
-        public Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
-        {
-            return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
-        }
-    }
-
     private sealed class FakeApiWorkspaceService : IApiWorkspaceService
     {
         public Task<IReadOnlyList<ApiDocumentDto>> GetDocumentsAsync(string projectId, CancellationToken cancellationToken)
@@ -310,11 +193,4 @@ public sealed partial class MainWindowViewModelTests
         }
     }
 
-    private sealed class FakeFilePickerService : IFilePickerService
-    {
-        public Task<string?> PickSwaggerJsonFileAsync(CancellationToken cancellationToken)
-        {
-            return Task.FromResult<string?>(null);
-        }
-    }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels;
 using ApixPress.App.Services.Interfaces;
