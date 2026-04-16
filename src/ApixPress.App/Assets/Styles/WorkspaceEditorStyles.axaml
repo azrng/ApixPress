@@ -1,0 +1,463 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Style Selector="Button.ProjectWorkspaceToolbarButton">
+    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+  </Style>
+
+  <Style Selector="Border.HttpEditorModeBar">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="2" />
+  </Style>
+
+  <Style Selector="ToggleButton.HttpEditorModeButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="ToggleButton.HttpEditorModeButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="ToggleButton.HttpEditorModeButton:checked">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="TextBox.HttpInterfaceNameInput">
+    <Setter Property="MinHeight" Value="36" />
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+  </Style>
+
+  <Style Selector="Button.QuickRequestPrimaryButton">
+    <Setter Property="MinWidth" Value="86" />
+    <Setter Property="Padding" Value="12,10" />
+  </Style>
+
+  <Style Selector="Button.QuickRequestToolbarButton">
+    <Setter Property="MinWidth" Value="78" />
+    <Setter Property="Padding" Value="12,10" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="Border.QuickRequestConfigCard">
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="MaxHeight" Value="300" />
+  </Style>
+
+  <Style Selector="TabControl.QuickRequestInlineTabs TabItem">
+    <Setter Property="Padding" Value="10,12" />
+    <Setter Property="Margin" Value="0,0,12,0" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="TabControl.QuickRequestInlineTabs TabItem:selected">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderThickness" Value="0,0,0,2" />
+  </Style>
+
+  <Style Selector="Border.QuickRequestPlaceholderCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+    <Setter Property="Margin" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Button.ProjectLaunchButton">
+    <Setter Property="Width" Value="240" />
+    <Setter Property="Height" Value="220" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
+  </Style>
+
+  <Style Selector="Button.ProjectLaunchButton:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+
+  <Style Selector="Border.WorkspaceLandingHeroCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.6}" />
+  </Style>
+
+  <Style Selector="Border.WorkspaceLandingBadge">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+  </Style>
+
+  <Style Selector="Border.WorkspaceLandingPreviewCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Border.WorkspaceLandingMethodPill">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.WorkspaceLandingSwitchButton">
+    <Setter Property="Padding" Value="14,10" />
+  </Style>
+
+  <Style Selector="Border.WorkspaceLandingAsideCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+  </Style>
+
+  <Style Selector="StackPanel.WorkspaceLandingCenterStage">
+    <Setter Property="Spacing" Value="{StaticResource Space.6}" />
+    <Setter Property="MaxWidth" Value="520" />
+  </Style>
+
+  <Style Selector="StackPanel.WorkspaceLandingChoicePanel">
+    <Setter Property="Spacing" Value="{StaticResource Space.4}" />
+  </Style>
+
+  <Style Selector="Button.WorkspaceLandingChoiceButton">
+    <Setter Property="Width" Value="180" />
+    <Setter Property="Height" Value="188" />
+    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+  </Style>
+
+  <Style Selector="Button.WorkspaceLandingChoiceButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <Style Selector="TextBlock.WorkspaceLandingChoiceIcon">
+    <Setter Property="FontSize" Value="40" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,6,0,0" />
+  </Style>
+
+  <Style Selector="TextBlock.WorkspaceLandingChoiceQuickIcon">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Success.Text}" />
+  </Style>
+
+  <Style Selector="TextBlock.WorkspaceLandingChoiceTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Body}" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,0,0,4" />
+  </Style>
+
+  <Style Selector="Border.BaseUrlPrefixCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="MinHeight" Value="44" />
+  </Style>
+
+  <Style Selector="TreeView.WorkspaceTreeView">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="TreeView.ProjectSidebarTree">
+    <Setter Property="Margin" Value="0,2,0,0" />
+  </Style>
+
+  <Style Selector="TreeView.QuickRequestSidebarTree">
+    <Setter Property="Margin" Value="0" />
+  </Style>
+
+  <Style Selector="TreeView.WorkspaceTreeView TreeViewItem">
+    <Setter Property="Margin" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="IsExpanded" Value="{ReflectionBinding IsExpanded, Mode=TwoWay}" />
+  </Style>
+
+  <Style Selector="TreeView.ProjectSidebarTree TreeViewItem /template/ Panel#PART_ExpandCollapseChevronContainer">
+    <Setter Property="Width" Value="10" />
+    <Setter Property="Margin" Value="0,0,2,0" />
+  </Style>
+
+  <Style Selector="TreeView.ProjectSidebarTree TreeViewItem /template/ ContentPresenter#PART_Header">
+    <Setter Property="Margin" Value="0" />
+  </Style>
+
+  <Style Selector="Border.WorkspaceTreeNodeCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="10,8" />
+  </Style>
+
+  <Style Selector="Button.WorkspaceTreeNodeButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0,2" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="MinHeight" Value="24" />
+  </Style>
+
+  <Style Selector="Button.WorkspaceTreeNodeButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+  </Style>
+
+  <Style Selector="ItemsControl.ProjectSidebarInlineTree Button.WorkspaceTreeNodeButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="Padding" Value="8,6" />
+  </Style>
+
+  <Style Selector="ItemsControl.ProjectSidebarInlineTree Button.WorkspaceTreeNodeButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+  </Style>
+
+  <Style Selector="TreeView.ProjectSidebarTree Button.WorkspaceTreeNodeButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="Padding" Value="8,6" />
+  </Style>
+
+  <Style Selector="Button.QuickRequestTreeNodeButton">
+    <Setter Property="Padding" Value="6,4" />
+    <Setter Property="MinHeight" Value="22" />
+  </Style>
+
+  <Style Selector="StackPanel.QuickRequestTreeNodeContent">
+    <Setter Property="Spacing" Value="{StaticResource Space.1}" />
+  </Style>
+
+  <Style Selector="TreeView.ProjectSidebarTree Button.WorkspaceTreeNodeButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+  </Style>
+
+  <Style Selector="TextBlock.WorkspaceTreeNodeGlyph">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,0,1,0" />
+  </Style>
+
+  <Style Selector="TextBlock.WorkspaceTreeCaseGlyph">
+    <Setter Property="Foreground" Value="#8B6AE6" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+
+  <Style Selector="TextBlock.WorkspaceTreeSubtitleText">
+    <Setter Property="Margin" Value="24,0,0,0" />
+  </Style>
+
+  <Style Selector="DockPanel.QuickRequestBodyFieldPanel">
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
+
+  <Style Selector="DockPanel.QuickRequestBodyFieldPanel Border.ParameterHeader">
+    <Setter Property="Padding" Value="{StaticResource Pad.1}" />
+    <Setter Property="Margin" Value="0,0,0,6" />
+  </Style>
+
+  <Style Selector="DockPanel.QuickRequestBodyFieldPanel Border.ParameterRow">
+    <Setter Property="Padding" Value="{StaticResource Pad.1}" />
+    <Setter Property="Margin" Value="0,1" />
+  </Style>
+
+  <Style Selector="ScrollViewer.QuickRequestBodyFieldScroller">
+    <Setter Property="MaxHeight" Value="168" />
+    <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+  </Style>
+
+  <Style Selector="Button.QuickRequestBodyAddButton">
+    <Setter Property="Margin" Value="0,6,0,0" />
+  </Style>
+
+  <Style Selector="Border.WorkspaceTreeStatusDot">
+    <Setter Property="Width" Value="6" />
+    <Setter Property="Height" Value="6" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="4,0,0,0" />
+  </Style>
+
+  <Style Selector="Border.HttpRequestUrlShell">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="4" />
+  </Style>
+
+  <Style Selector="ComboBox.HttpMethodSelector">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="MinWidth" Value="72" />
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="ComboBox.HttpMethodSelector /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Margin" Value="0,0,14,0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="ComboBox.HttpMethodSelector /template/ PathIcon">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="Width" Value="11" />
+    <Setter Property="Height" Value="11" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpBaseUrlPrefixText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="MaxWidth" Value="280" />
+  </Style>
+
+  <Style Selector="Border.HttpBaseUrlPrefixCard">
+    <Setter Property="Margin" Value="2,0,0,0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="MinHeight" Value="34" />
+  </Style>
+
+  <Style Selector="TextBox.HttpRequestPathInput">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="4,6" />
+    <Setter Property="MinHeight" Value="34" />
+  </Style>
+
+  <Style Selector="Button.HttpSendButton">
+    <Setter Property="Background" Value="#8B6AE6" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="Padding" Value="16,8" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="MinWidth" Value="88" />
+  </Style>
+
+  <Style Selector="Button.HttpSaveButton">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="16,8" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="MinWidth" Value="78" />
+  </Style>
+
+  <Style Selector="TabControl.HttpRequestTabs">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="TabControl.HttpRequestTabs TabItem">
+    <Setter Property="Padding" Value="10,12" />
+    <Setter Property="Margin" Value="0,0,10,0" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="TabControl.HttpRequestTabs TabItem:selected">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderThickness" Value="0,0,0,2" />
+  </Style>
+
+  <Style Selector="Border.HttpRequestTableHeader">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="Padding" Value="0,0,0,8" />
+    <Setter Property="Margin" Value="0,4,0,4" />
+  </Style>
+
+  <Style Selector="Border.HttpRequestParameterRow">
+    <Setter Property="Padding" Value="4,6" />
+  </Style>
+
+  <Style Selector="TextBox.HttpTableInput">
+    <Setter Property="Padding" Value="6,4" />
+  </Style>
+
+  <Style Selector="Border.HttpRequestPlaceholderCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+    <Setter Property="Margin" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Border.HttpDesignMetaCard">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+  </Style>
+
+  <Style Selector="Border.HttpDesignSummaryCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="MinWidth" Value="220" />
+  </Style>
+
+  <Style Selector="TextBox.HttpDesignMultilineInput">
+    <Setter Property="MinHeight" Value="108" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseCard">
+    <Setter Property="MinHeight" Value="420" />
+  </Style>
+</Styles>

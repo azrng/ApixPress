@@ -1,0 +1,45 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.WorkspaceDeleteConfirmDialogView"
+             x:DataType="vm:MainWindowViewModel"
+             mc:Ignorable="d">
+  <Border Classes="CreateProjectDialogBackdrop"
+          IsVisible="{Binding ShowWorkspaceDeleteConfirmDialog}">
+    <Grid HorizontalAlignment="Center"
+          VerticalAlignment="Center">
+      <Border Classes="QuickRequestSaveDialogCard">
+        <Grid RowDefinitions="Auto,Auto,Auto"
+              RowSpacing="{StaticResource Space.3}">
+          <StackPanel Spacing="2">
+            <TextBlock Classes="DialogTitle"
+                       Text="确认删除" />
+            <TextBlock Classes="CaptionText"
+                       Text="{Binding ActiveProjectTab.PendingWorkspaceDeleteTitle, StringFormat='即将删除：{0}'}"
+                       IsVisible="{Binding ActiveProjectTab.HasPendingWorkspaceDeleteTarget}" />
+          </StackPanel>
+
+          <Border Grid.Row="1"
+                  Classes="CreateProjectFormShell">
+            <TextBlock Text="{Binding ActiveProjectTab.PendingWorkspaceDeleteDescription}"
+                       TextWrapping="Wrap" />
+          </Border>
+
+          <StackPanel Grid.Row="2"
+                      Orientation="Horizontal"
+                      HorizontalAlignment="Right"
+                      Spacing="{StaticResource Space.2}">
+            <Button Classes="DialogSecondaryButton"
+                    Content="取消"
+                    Command="{Binding ActiveProjectTab.CancelWorkspaceItemDeleteCommand}" />
+            <Button Classes="DialogPrimaryButton"
+                    Content="确认删除"
+                    Command="{Binding ActiveProjectTab.ConfirmWorkspaceItemDeleteCommand}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

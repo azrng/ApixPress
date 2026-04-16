@@ -1,0 +1,148 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:iri="https://irihi.tech/shared"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.MainWindowTitleBarView"
+             x:DataType="vm:MainWindowViewModel"
+             mc:Ignorable="d">    <Border Grid.Row="0"
+            Classes="TopBarCard AppTopBar"
+            PointerPressed="OnTitleBarPointerPressed">
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto"
+            ColumnSpacing="{StaticResource Space.3}">
+        <StackPanel Grid.Column="0"
+                    Orientation="Horizontal"
+                    Spacing="{StaticResource Space.3}"
+                    VerticalAlignment="Center">
+          <Border Width="42"
+                  Height="42"
+                  Classes="AppIconBadge">
+            <Path Width="20"
+                  Height="20"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  Fill="{DynamicResource Brush.Border.Focus}"
+                  Stretch="Uniform"
+                  Data="M6,4 L18,4 C19.1,4 20,4.9 20,6 L20,18 C20,19.1 19.1,20 18,20 L6,20 C4.9,20 4,19.1 4,18 L4,6 C4,4.9 4.9,4 6,4 Z M8,8 L16,8 L16,10 L8,10 Z M8,12 L13,12 L13,14 L8,14 Z M8,16 L15,16 L15,18 L8,18 Z" />
+          </Border>
+
+          <TextBlock Classes="PageTitle"
+                     VerticalAlignment="Center"
+                     Text="ApixPress" />
+        </StackPanel>
+
+        <Border Grid.Column="1"
+                Classes="TopTabStripShell">
+          <ScrollViewer HorizontalScrollBarVisibility="Hidden"
+                        VerticalScrollBarVisibility="Disabled">
+            <StackPanel Orientation="Horizontal"
+                        Spacing="{StaticResource Space.2}">
+              <ToggleButton Classes="WorkspaceTabButton HomeTabButton"
+                            Command="{Binding ActivateHomeTabCommand}"
+                            IsChecked="{Binding IsHomeTabActive, Mode=OneWay}">
+                <StackPanel Orientation="Horizontal"
+                            Spacing="{StaticResource Space.2}">
+                  <TextBlock Text="首页" />
+                  <Border Classes="WorkspaceTabBadge">
+                    <TextBlock Classes="CaptionText"
+                               Text="{Binding ProjectPanel.Projects.Count}" />
+                  </Border>
+                </StackPanel>
+              </ToggleButton>
+
+              <ItemsControl ItemsSource="{Binding ProjectTabs}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="{StaticResource Space.2}" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:ProjectTabViewModel">
+                    <Border Classes="WorkspaceTabItemShell">
+                      <Grid ColumnDefinitions="*,Auto"
+                            ColumnSpacing="{StaticResource Space.2}">
+                        <ToggleButton Grid.Column="0"
+                                      Classes="WorkspaceTabButton"
+                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActivateProjectTabCommand}"
+                                      CommandParameter="{Binding}"
+                                      IsChecked="{Binding IsActive, Mode=OneWay}">
+                          <StackPanel Orientation="Horizontal"
+                                      Spacing="{StaticResource Space.2}">
+                            <TextBlock Text="{Binding TabTitle}" />
+                            <u:Badge Header="默认"
+                                     IsVisible="{Binding Project.IsDefault}"
+                                     iri:ClassHelper.Classes="Light Primary" />
+                          </StackPanel>
+                        </ToggleButton>
+                        <Button Grid.Column="1"
+                                Classes="WorkspaceTabCloseButton"
+                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloseProjectTabCommand}"
+                                CommandParameter="{Binding}"
+                                Content="×" />
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </ScrollViewer>
+        </Border>
+
+        <StackPanel Grid.Column="3"
+                    Orientation="Horizontal"
+                    Spacing="{StaticResource Space.1}"
+                    VerticalAlignment="Center">
+          <Button Classes="ShellIconButton"
+                  Command="{Binding RefreshWorkspaceCommand}"
+                  ToolTip.Tip="刷新">
+            <Path Classes="ShellIconPath"
+                  Data="M12,5 A7,7 0 1 0 19,12 M19,5 L19,9 L15,9" />
+          </Button>
+          <Button Classes="ShellIconButton"
+                  Command="{Binding OpenSettingsDialogCommand}"
+                  ToolTip.Tip="设置">
+            <Path Classes="ShellIconPath"
+                  Data="M12,8.5 A3.5,3.5 0 1 0 12,15.5 A3.5,3.5 0 1 0 12,8.5 M12,3 L13.2,3.3 L13.8,5 L15.5,5.5 L17,4.7 L18.3,6 L17.5,7.5 L18,9.2 L19.7,9.8 L20,11 L18.3,12.2 L18,13.8 L19.5,15 L18.3,16.3 L16.8,15.5 L15.2,16 L14.5,17.7 L13.3,18 L12,16.7 L10.7,18 L9.5,17.7 L8.8,16 L7.2,15.5 L5.7,16.3 L4.5,15 L6,13.8 L5.7,12.2 L4,11 L4.3,9.8 L6,9.2 L6.5,7.5 L5.7,6 L7,4.7 L8.5,5.5 L10.2,5 L10.8,3.3 Z" />
+          </Button>
+          <Button Classes="ShellIconButton"
+                  Command="{Binding ToggleNotificationCenterCommand}"
+                  ToolTip.Tip="通知">
+            <Grid>
+              <Path Classes="ShellIconPath"
+                    Data="M12,4 C9.8,4 8,5.8 8,8 L8,10.7 C8,11.5 7.7,12.3 7.2,12.9 L6,14.3 L6,15 L18,15 L18,14.3 L16.8,12.9 C16.3,12.3 16,11.5 16,10.7 L16,8 C16,5.8 14.2,4 12,4 M10,17 A2,2 0 0 0 14,17" />
+              <Border Width="8"
+                      Height="8"
+                      Classes="NotificationDot"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Top"
+                      IsVisible="{Binding HasUnreadNotifications}" />
+            </Grid>
+          </Button>
+        </StackPanel>
+
+        <StackPanel Grid.Column="4"
+                    Orientation="Horizontal"
+                    Spacing="0"
+                    VerticalAlignment="Center">
+          <Button Classes="WindowControlButton"
+                  Click="OnMinimizeWindow">
+            <TextBlock Classes="WindowControlGlyph"
+                       Text="&#x2014;" />
+          </Button>
+          <Button Classes="WindowControlButton"
+                  Click="OnToggleMaximizeWindow">
+            <TextBlock Classes="WindowControlGlyph"
+                       Text="{Binding WindowMaximizeGlyph}" />
+          </Button>
+          <Button Classes="WindowControlButton WindowCloseButton"
+                  Click="OnCloseWindow">
+            <TextBlock Classes="WindowControlGlyph"
+                       Text="&#x00D7;" />
+          </Button>
+        </StackPanel>
+      </Grid>
+    </Border>
+</UserControl>

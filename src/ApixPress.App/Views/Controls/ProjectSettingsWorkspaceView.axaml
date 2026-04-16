@@ -1,0 +1,184 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.ProjectSettingsWorkspaceView"
+             x:DataType="vm:ProjectTabViewModel"
+             mc:Ignorable="d">
+  <Grid ColumnDefinitions="286,*"
+        ColumnSpacing="{StaticResource Space.3}"
+        Panel.ZIndex="1"
+        IsVisible="{Binding IsProjectSettingsSection}">
+    <Border Grid.Column="0"
+            Classes="PanelCard ProjectWorkspaceSidebarCard">
+      <Grid RowDefinitions="Auto,*"
+            RowSpacing="{StaticResource Space.3}">
+        <StackPanel Spacing="2">
+          <TextBlock Classes="SectionTitle"
+                     Text="项目设置" />
+          <TextBlock Classes="CaptionText"
+                     Text="在这里管理项目设置、环境和导入数据入口。" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Disabled">
+          <Border Classes="ProjectSettingsSidebarCard">
+            <StackPanel Spacing="{StaticResource Space.4}">
+              <StackPanel Spacing="{StaticResource Space.2}">
+                <TextBlock Classes="ProjectSettingsGroupTitle"
+                           Text="基本设置" />
+                <Button Classes="ProjectSettingsSidebarItemButton"
+                        Classes.ProjectSettingsSidebarItemSelected="{Binding IsProjectSettingsOverviewSelected}"
+                        Command="{Binding ShowProjectOverviewSettingsCommand}">
+                  <TextBlock Text="基本设置" />
+                </Button>
+              </StackPanel>
+
+              <StackPanel Spacing="{StaticResource Space.2}">
+                <TextBlock Classes="ProjectSettingsGroupTitle"
+                           Text="数据管理" />
+                <Button Classes="ProjectSettingsSidebarItemButton"
+                        Classes.ProjectSettingsSidebarItemSelected="{Binding IsProjectSettingsImportDataSelected}"
+                        Command="{Binding ShowProjectImportDataSettingsCommand}">
+                  <TextBlock Text="导入数据" />
+                </Button>
+              </StackPanel>
+
+              <Border Classes="ProjectSettingsSidebarMetaCard">
+                <StackPanel Spacing="{StaticResource Space.2}">
+                  <TextBlock Text="{Binding Project.DisplayName}"
+                             FontWeight="SemiBold" />
+                  <TextBlock Classes="CaptionText"
+                             Text="{Binding CurrentEnvironmentLabel, StringFormat='当前环境：{0}'}" />
+                  <TextBlock Classes="CaptionText"
+                             Text="{Binding ImportedApiDocumentCountText, StringFormat='已导入：{0} 份文档'}" />
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </Border>
+        </ScrollViewer>
+      </Grid>
+    </Border>
+
+    <Border Grid.Column="1"
+            Classes="PanelCard ProjectWorkspaceCanvas">
+      <Grid RowDefinitions="Auto,*"
+            RowSpacing="{StaticResource Space.4}">
+        <Grid>
+          <StackPanel Spacing="2">
+            <TextBlock Classes="SectionTitle"
+                       Text="{Binding CurrentProjectSettingsTitle}" />
+            <TextBlock Classes="CaptionText"
+                       Text="{Binding CurrentProjectSettingsSubtitle}"
+                       IsVisible="{Binding IsProjectSettingsImportDataSelected}" />
+          </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1">
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                        IsVisible="{Binding IsProjectSettingsOverviewSelected}">
+            <StackPanel Spacing="{StaticResource Space.4}">
+              <Border Classes="ProjectSettingsInfoCard">
+                <StackPanel Spacing="{StaticResource Space.3}">
+                  <StackPanel Spacing="2">
+                    <TextBlock Classes="SectionTitle"
+                               Text="基本信息" />
+                    <TextBlock Classes="CaptionText"
+                               Text="在这里维护当前项目名称、项目 ID 和项目简介。" />
+                  </StackPanel>
+
+                  <Border Classes="ProjectSettingsBasicCard">
+                    <StackPanel>
+                      <Border Classes="ProjectSettingsBasicRow">
+                        <Grid ColumnDefinitions="180,*,Auto"
+                              ColumnSpacing="{StaticResource Space.4}">
+                          <TextBlock Classes="ProjectSettingsRowLabel"
+                                     Text="项目名称" />
+                          <TextBlock Grid.Column="1"
+                                     Text="{Binding Project.Name}"
+                                     VerticalAlignment="Center" />
+                          <Button Grid.Column="2"
+                                  Classes="ProjectSettingsInlineActionButton"
+                                  Click="OnOpenProjectDrawer"
+                                  Content="编辑" />
+                        </Grid>
+                      </Border>
+
+                      <Border Classes="ProjectSettingsBasicRow">
+                        <Grid ColumnDefinitions="180,*"
+                              ColumnSpacing="{StaticResource Space.4}">
+                          <TextBlock Classes="ProjectSettingsRowLabel"
+                                     Text="项目 ID" />
+                          <TextBlock Grid.Column="1"
+                                     Text="{Binding ProjectId}"
+                                     VerticalAlignment="Center" />
+                        </Grid>
+                      </Border>
+
+                      <Border Classes="ProjectSettingsBasicRow ProjectSettingsBasicRowLast">
+                        <Grid ColumnDefinitions="180,*,Auto"
+                              ColumnSpacing="{StaticResource Space.4}">
+                          <TextBlock Classes="ProjectSettingsRowLabel"
+                                     Text="简介" />
+                          <TextBlock Grid.Column="1"
+                                     Text="{Binding ProjectSettingsDescription}"
+                                     TextWrapping="Wrap"
+                                     VerticalAlignment="Center" />
+                          <Button Grid.Column="2"
+                                  Classes="ProjectSettingsInlineActionButton"
+                                  Click="OnOpenProjectDrawer"
+                                  Content="编辑" />
+                        </Grid>
+                      </Border>
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                        IsVisible="{Binding IsProjectSettingsImportDataSelected}">
+            <StackPanel Spacing="{StaticResource Space.4}">
+              <Border Classes="ProjectSettingsInfoCard">
+                <StackPanel Spacing="{StaticResource Space.3}">
+                  <Border Classes="ProjectSettingsSectionDivider" />
+                  <StackPanel Spacing="2">
+                    <TextBlock Classes="SectionTitle"
+                               Text="导入 API 数据" />
+                    <TextBlock Classes="CaptionText"
+                               Text="请选择要导入的数据源格式" />
+                  </StackPanel>
+                  <Button Classes="ProjectImportCatalogButton"
+                          Command="{Binding OpenProjectImportDialogCommand}">
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="{StaticResource Space.3}">
+                      <Border Width="42"
+                              Height="42"
+                              Classes="ProjectImportFormatIcon">
+                        <TextBlock HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="{StaticResource Font.Size.BodyLarge}"
+                                   FontWeight="Bold"
+                                   Text="S" />
+                      </Border>
+                      <StackPanel Grid.Column="1"
+                                  Spacing="2"
+                                  VerticalAlignment="Center">
+                        <TextBlock Text="OpenAPI / Swagger"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="支持导入 OpenAPI 3.x 与 Swagger 2.0 的 JSON 或 YAML 文档" />
+                      </StackPanel>
+                    </Grid>
+                  </Button>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
+      </Grid>
+    </Border>
+  </Grid>
+</UserControl>

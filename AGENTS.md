@@ -14,6 +14,12 @@ dependencies: []
 - `infrastructure-AGENTS.md`：仓储、数据访问、依赖注入、配置、构建发布与交付验证
 - `doc-AGENTS.md`：设计文档、契约说明、设计系统、`doc/devlog/`
 - `CLAUDE.md` / `GEMINI.md`：入口提示文件，只提醒先读 `AGENTS.md`
+- `AGENTS.md`：只保留全局协作规范、阶段门控、任务机制、交付要求与子规则导航
+- `ui-AGENTS.md`：视图、布局、导航、样式、状态、界面测试
+- `application-AGENTS.md`：ViewModel、Service、业务编排、结果包装、应用层测试
+- `infrastructure-AGENTS.md`：仓储、数据访问、依赖注入、配置、构建发布与交付验证
+- `doc-AGENTS.md`：设计文档、契约说明、设计系统、`doc/devlog/`
+- `CLAUDE.md` / `GEMINI.md`：入口提示文件，只提醒先读 `AGENTS.md`
 - `design-system.yaml`：设计 token 与 UI 规范
 - `TASK.md`：唯一活动任务记录文件
 

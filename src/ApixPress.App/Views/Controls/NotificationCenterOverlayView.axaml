@@ -1,0 +1,65 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.NotificationCenterOverlayView"
+             x:DataType="vm:MainWindowViewModel"
+             mc:Ignorable="d">
+  <Border Classes="NotificationFlyoutCard"
+          IsVisible="{Binding IsNotificationCenterOpen}"
+          HorizontalAlignment="Right"
+          VerticalAlignment="Top"
+          Margin="0,16,160,0">
+    <Grid RowDefinitions="Auto,*,Auto"
+          RowSpacing="{StaticResource Space.3}">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Spacing="2">
+          <TextBlock Classes="SectionTitle"
+                     Text="通知中心" />
+          <TextBlock Classes="CaptionText"
+                     Text="近期更新和系统提醒都会显示在这里。" />
+        </StackPanel>
+        <Button Grid.Column="1"
+                Classes="DialogIconButton"
+                Command="{Binding MarkAllNotificationsReadCommand}"
+                Content="全部已读" />
+      </Grid>
+
+      <ItemsControl Grid.Row="1"
+                    ItemsSource="{Binding Notifications}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:NotificationItemViewModel">
+            <Border Classes="NotificationItemCard">
+              <Grid ColumnDefinitions="Auto,*"
+                    ColumnSpacing="{StaticResource Space.3}">
+                <Border Width="10"
+                        Height="10"
+                        Classes="NotificationItemDot"
+                        IsVisible="{Binding IsUnread}" />
+                <StackPanel Grid.Column="1"
+                            Spacing="4">
+                  <Grid ColumnDefinitions="*,Auto"
+                        ColumnSpacing="{StaticResource Space.2}">
+                    <TextBlock Text="{Binding Title}"
+                               FontWeight="SemiBold" />
+                    <TextBlock Grid.Column="1"
+                               Classes="CaptionText"
+                               Text="{Binding RelativeTimeText}" />
+                  </Grid>
+                  <TextBlock Classes="CaptionText"
+                             Text="{Binding Message}"
+                             TextWrapping="Wrap" />
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <TextBlock Grid.Row="2"
+                 Classes="CaptionText"
+                 Text="点击铃铛可再次收起此面板。" />
+    </Grid>
+  </Border>
+</UserControl>

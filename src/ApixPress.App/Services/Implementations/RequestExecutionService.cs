@@ -62,6 +62,8 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
                 };
             }
 
+            message.Content = BuildHttpContent(request, activeVariables);
+
             foreach (var header in request.Headers.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
             {
                 var value = ReplaceVariables(header.Value, activeVariables);
@@ -70,21 +72,6 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
                     message.Content ??= new StringContent(string.Empty);
                     message.Content.Headers.TryAddWithoutValidation(header.Name, value);
                 }
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.BodyContent) && request.BodyMode != BodyModes.None)
-            {
-                var bodyContent = ReplaceVariables(request.BodyContent, activeVariables);
-                message.Content = request.BodyMode switch
-                {
-                    BodyModes.RawJson => new StringContent(bodyContent, Encoding.UTF8, "application/json"),
-                    BodyModes.RawXml => new StringContent(bodyContent, Encoding.UTF8, "application/xml"),
-                    BodyModes.RawText => new StringContent(bodyContent, Encoding.UTF8, "text/plain"),
-                    BodyModes.FormUrlEncoded => new FormUrlEncodedContent(
-                        ParseKeyValuePairs(bodyContent)),
-                    BodyModes.FormData => BuildMultipartContent(bodyContent),
-                    _ => new StringContent(bodyContent, Encoding.UTF8, "text/plain")
-                };
             }
 
             var stopwatch = Stopwatch.StartNew();
@@ -111,10 +98,42 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
                 RequestSummary = $"{request.Method.ToUpperInvariant()} {finalUrl}"
             });
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return ResultModel<ResponseSnapshotDto>.Failure("请求已取消。", "request_cancelled");
+        }
+        catch (TaskCanceledException exception)
+        {
+            return ResultModel<ResponseSnapshotDto>.Failure($"请求超时：{exception.Message}", "request_timeout");
+        }
+        catch (HttpRequestException exception)
+        {
+            return ResultModel<ResponseSnapshotDto>.Failure($"请求发送失败：{exception.Message}", "request_http_failed");
+        }
         catch (Exception exception)
         {
             return ResultModel<ResponseSnapshotDto>.Failure($"请求发送失败：{exception.Message}", "request_send_failed");
         }
+    }
+
+    private static HttpContent? BuildHttpContent(RequestSnapshotDto request, IReadOnlyDictionary<string, string> activeVariables)
+    {
+        if (string.IsNullOrWhiteSpace(request.BodyContent) || request.BodyMode == BodyModes.None)
+        {
+            return null;
+        }
+
+        var bodyContent = ReplaceVariables(request.BodyContent, activeVariables);
+        return request.BodyMode switch
+        {
+            BodyModes.RawJson => new StringContent(bodyContent, Encoding.UTF8, "application/json"),
+            BodyModes.RawXml => new StringContent(bodyContent, Encoding.UTF8, "application/xml"),
+            BodyModes.RawText => new StringContent(bodyContent, Encoding.UTF8, "text/plain"),
+            BodyModes.FormUrlEncoded => new FormUrlEncodedContent(
+                ParseKeyValuePairs(bodyContent)),
+            BodyModes.FormData => BuildMultipartContent(bodyContent),
+            _ => new StringContent(bodyContent, Encoding.UTF8, "text/plain")
+        };
     }
 
     private static MultipartFormDataContent BuildMultipartContent(string encodedPairs)

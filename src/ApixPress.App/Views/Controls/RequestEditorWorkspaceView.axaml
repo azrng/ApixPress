@@ -1,0 +1,131 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:views="using:ApixPress.App.Views.Controls"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.RequestEditorWorkspaceView"
+             x:DataType="vm:ProjectTabViewModel"
+             mc:Ignorable="d">
+  <Grid IsVisible="{Binding ShowRequestEditorWorkspace}"
+        RowDefinitions="Auto,Auto,*"
+        RowSpacing="{StaticResource Space.3}">
+    <views:ProjectWorkspaceToolbarView />
+
+    <Grid Grid.Row="1"
+          RowDefinitions="Auto,Auto"
+          RowSpacing="{StaticResource Space.2}"
+          IsVisible="{Binding IsQuickRequestEditor}">
+      <TextBox Grid.Row="0"
+               Classes="SectionInput HttpInterfaceNameInput"
+               HorizontalAlignment="Stretch"
+               Watermark="未命名请求"
+               Text="{Binding CurrentQuickRequestName}" />
+
+      <Grid Grid.Row="1"
+            ColumnDefinitions="*,Auto,Auto"
+            ColumnSpacing="{StaticResource Space.2}">
+        <Border Grid.Column="0"
+                Classes="HttpRequestUrlShell">
+          <Grid ColumnDefinitions="88,Auto,*"
+                ColumnSpacing="{StaticResource Space.2}">
+            <ComboBox Grid.Column="0"
+                      Classes="HttpMethodSelector"
+                      ItemsSource="{Binding HttpMethods}"
+                      SelectedItem="{Binding SelectedMethod}" />
+            <Border Grid.Column="1"
+                    Classes="BaseUrlPrefixCard HttpBaseUrlPrefixCard">
+              <TextBlock Classes="HttpBaseUrlPrefixText"
+                         Text="{Binding CurrentEditorBaseUrlCaption}"
+                         VerticalAlignment="Center"
+                         TextTrimming="CharacterEllipsis" />
+            </Border>
+            <TextBox Grid.Column="2"
+                     Classes="HttpRequestPathInput"
+                     Watermark="{Binding CurrentEditorUrlWatermark}"
+                     Text="{Binding RequestUrl}" />
+          </Grid>
+        </Border>
+        <Button Grid.Column="1"
+                Classes="HttpSendButton"
+                Content="发送"
+                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendRequestCommand}" />
+        <Button Grid.Column="2"
+                Classes="HttpSaveButton"
+                Content="保存"
+                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveCaseCommand}" />
+      </Grid>
+    </Grid>
+
+    <Grid Grid.Row="1"
+          RowDefinitions="Auto,Auto"
+          RowSpacing="{StaticResource Space.2}"
+          IsVisible="{Binding IsHttpInterfaceEditor}">
+      <Grid ColumnDefinitions="Auto,*"
+            ColumnSpacing="{StaticResource Space.3}">
+        <Border Grid.Column="0"
+                Classes="HttpEditorModeBar">
+          <StackPanel Orientation="Horizontal"
+                      Spacing="{StaticResource Space.1}">
+            <ToggleButton Classes="HttpEditorModeButton"
+                          Command="{Binding ShowHttpDebugEditorModeCommand}"
+                          Content="调试"
+                          IsChecked="{Binding IsHttpDebugEditorMode, Mode=OneWay}" />
+            <ToggleButton Classes="HttpEditorModeButton"
+                          Command="{Binding ShowHttpDesignEditorModeCommand}"
+                          Content="设计"
+                          IsChecked="{Binding IsHttpDesignEditorMode, Mode=OneWay}" />
+            <ToggleButton Classes="HttpEditorModeButton"
+                          Command="{Binding ShowHttpDocumentPreviewModeCommand}"
+                          Content="文档预览"
+                          IsChecked="{Binding IsHttpDocumentPreviewMode, Mode=OneWay}" />
+          </StackPanel>
+        </Border>
+
+        <TextBox Grid.Column="1"
+                 Classes="SectionInput HttpInterfaceNameInput"
+                 HorizontalAlignment="Stretch"
+                 Watermark="未命名接口"
+                 Text="{Binding CurrentHttpInterfaceName}" />
+      </Grid>
+
+      <Grid Grid.Row="1"
+            ColumnDefinitions="*,Auto,Auto"
+            ColumnSpacing="{StaticResource Space.2}">
+        <Border Grid.Column="0"
+                Classes="HttpRequestUrlShell">
+          <Grid ColumnDefinitions="88,Auto,*"
+                ColumnSpacing="{StaticResource Space.2}">
+            <ComboBox Grid.Column="0"
+                      Classes="HttpMethodSelector"
+                      ItemsSource="{Binding HttpMethods}"
+                      SelectedItem="{Binding SelectedMethod}" />
+            <Border Grid.Column="1"
+                    Classes="BaseUrlPrefixCard HttpBaseUrlPrefixCard">
+              <TextBlock Classes="HttpBaseUrlPrefixText"
+                         Text="{Binding CurrentEditorBaseUrlCaption}"
+                         VerticalAlignment="Center"
+                         TextTrimming="CharacterEllipsis" />
+            </Border>
+            <TextBox Grid.Column="2"
+                     Classes="HttpRequestPathInput"
+                     Watermark="{Binding CurrentEditorUrlWatermark}"
+                     Text="{Binding RequestUrl}" />
+          </Grid>
+        </Border>
+        <Button Grid.Column="1"
+                Classes="HttpSendButton"
+                Content="发送"
+                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendRequestCommand}" />
+        <Button Grid.Column="2"
+                Classes="HttpSaveButton"
+                Content="保存"
+                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveCaseCommand}" />
+      </Grid>
+    </Grid>
+
+    <views:QuickRequestWorkbenchView Grid.Row="2" />
+    <views:HttpInterfaceWorkbenchView Grid.Row="2" />
+    <views:HttpDocumentWorkspaceView Grid.Row="2" />
+  </Grid>
+</UserControl>

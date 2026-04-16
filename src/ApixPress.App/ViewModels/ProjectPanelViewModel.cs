@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -10,6 +11,7 @@ namespace ApixPress.App.ViewModels;
 public partial class ProjectPanelViewModel : ViewModelBase
 {
     private readonly IProjectWorkspaceService _projectWorkspaceService;
+    private CancellationTokenSource? _loadProjectsCancellationTokenSource;
     private bool _isUpdatingSelection;
     private List<ProjectWorkspaceItemViewModel> _allProjects = [];
 
@@ -42,28 +44,30 @@ public partial class ProjectPanelViewModel : ViewModelBase
 
     public async Task LoadProjectsAsync(string? preferredProjectId = null, bool autoSelect = true)
     {
-        var projects = await _projectWorkspaceService.GetProjectsAsync(CancellationToken.None);
-        _allProjects = projects.Select(project => new ProjectWorkspaceItemViewModel
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadProjectsCancellationTokenSource).Token;
+        try
         {
-            Id = project.Id,
-            Name = project.Name,
-            Description = project.Description,
-            IsDefault = project.IsDefault
-        }).ToList();
+            var projects = await _projectWorkspaceService.GetProjectsAsync(cancellationToken);
+            _allProjects = projects.Select(project => new ProjectWorkspaceItemViewModel
+            {
+                Id = project.Id,
+                Name = project.Name,
+                Description = project.Description,
+                IsDefault = project.IsDefault
+            }).ToList();
 
-        Projects.Clear();
-        foreach (var item in _allProjects)
-        {
-            Projects.Add(item);
+            Projects.ReplaceWith(_allProjects);
+            RefreshFilteredProjects();
+
+            _isUpdatingSelection = true;
+            SelectedProject = autoSelect ? ResolveSelection(_allProjects, preferredProjectId) : null;
+            _isUpdatingSelection = false;
+            OnPropertyChanged(nameof(HasSelectedProject));
+            OnPropertyChanged(nameof(HasProjects));
         }
-
-        RefreshFilteredProjects();
-
-        _isUpdatingSelection = true;
-        SelectedProject = autoSelect ? ResolveSelection(_allProjects, preferredProjectId) : null;
-        _isUpdatingSelection = false;
-        OnPropertyChanged(nameof(HasSelectedProject));
-        OnPropertyChanged(nameof(HasProjects));
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
     }
 
     [RelayCommand(CanExecute = nameof(CanCreateProject))]
@@ -216,10 +220,6 @@ public partial class ProjectPanelViewModel : ViewModelBase
                     || item.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-        FilteredProjects.Clear();
-        foreach (var item in items)
-        {
-            FilteredProjects.Add(item);
-        }
+        FilteredProjects.ReplaceWith(items);
     }
 }

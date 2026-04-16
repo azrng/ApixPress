@@ -125,20 +125,9 @@ public sealed class ProjectEnvironmentRepository : IProjectEnvironmentRepository
     public async Task DeleteAsync(string id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-
-        await connection.ExecuteAsync(new CommandDefinition(
-            "delete from environment_variables where environment_id = @Id",
-            new { Id = id },
-            transaction,
-            cancellationToken: cancellationToken));
         await connection.ExecuteAsync(new CommandDefinition(
             "delete from project_environments where id = @Id",
             new { Id = id },
-            transaction,
             cancellationToken: cancellationToken));
-
-        transaction.Commit();
     }
 }

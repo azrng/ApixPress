@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:views="using:ApixPress.App.Views.Controls"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.ProjectWorkspaceView"
+             x:DataType="vm:MainWindowViewModel"
+             mc:Ignorable="d">
+  <Border IsVisible="{Binding HasActiveProjectTab}"
+          Background="Transparent">
+    <Grid DataContext="{Binding ActiveProjectTab}"
+          x:DataType="vm:ProjectTabViewModel"
+          Margin="{StaticResource Pad.5}"
+          RowDefinitions="*">
+      <Grid ColumnDefinitions="84,286,*"
+            ColumnSpacing="{StaticResource Space.3}">
+        <views:ProjectWorkspaceNavigationRailView Grid.Column="0" />
+
+        <Grid Grid.Column="1"
+              Grid.ColumnSpan="2"
+              ColumnDefinitions="0,286,*"
+              ColumnSpacing="{StaticResource Space.3}"
+              IsVisible="{Binding !IsProjectSettingsSection}">
+          <views:ProjectWorkspaceSidebarView Grid.Column="1" />
+          <views:WorkspaceLandingView Grid.Column="2" />
+          <views:RequestEditorWorkspaceView Grid.Column="2" />
+          <views:RequestHistoryDetailView Grid.Column="2" />
+        </Grid>
+
+        <views:ProjectSettingsWorkspaceView Grid.Column="1"
+                                            Grid.ColumnSpan="2" />
+      </Grid>
+    </Grid>
+  </Border>
+</UserControl>

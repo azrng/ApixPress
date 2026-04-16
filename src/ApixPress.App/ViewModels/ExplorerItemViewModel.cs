@@ -1,0 +1,94 @@
+using System.Collections.ObjectModel;
+using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using ApixPress.App.Models.DTOs;
+using ApixPress.App.ViewModels.Base;
+
+namespace ApixPress.App.ViewModels;
+
+public partial class ExplorerItemViewModel : ViewModelBase
+{
+    public ExplorerItemViewModel()
+    {
+        Children.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HasChildren));
+            OnPropertyChanged(nameof(IsClickable));
+            OnPropertyChanged(nameof(CanDelete));
+        };
+    }
+
+    [ObservableProperty]
+    private string title = string.Empty;
+
+    [ObservableProperty]
+    private string subtitle = string.Empty;
+
+    [ObservableProperty]
+    private bool isGroup;
+
+    [ObservableProperty]
+    private string nodeType = string.Empty;
+
+    [ObservableProperty]
+    private bool canLoad;
+
+    [ObservableProperty]
+    private bool isExpanded = true;
+
+    public ObservableCollection<ExplorerItemViewModel> Children { get; } = [];
+
+    public bool HasChildren => Children.Count > 0;
+
+    public bool IsClickable => CanLoad || HasChildren;
+
+    public bool CanDelete => SourceCase is not null || Children.Any(child => child.CanDelete);
+
+    public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
+
+    public bool ShowMethodBadge => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase);
+
+    public bool ShowLeadingGlyph => !ShowMethodBadge && !IsHttpCaseNode;
+
+    public bool IsHttpCaseNode => string.Equals(NodeType, "http-case", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsQuickRequestNode => string.Equals(NodeType, "quick-request", StringComparison.OrdinalIgnoreCase);
+
+    public bool ShowTrailingDot => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase) && HasChildren;
+
+    public string MethodBadgeText => SourceCase?.RequestSnapshot.Method?.ToUpperInvariant()
+        ?? Endpoint?.Method?.ToUpperInvariant()
+        ?? string.Empty;
+
+    public string MethodBadgeClass => MethodBadgeText switch
+    {
+        "GET" => "Light Success",
+        "POST" => "Light Primary",
+        "PUT" => "Light Warning",
+        "DELETE" => "Light Danger",
+        "PATCH" => "Light Secondary",
+        _ => "Light Secondary"
+    };
+
+    public string NodeGlyph => NodeType switch
+    {
+        "module" => "\uE8B7",
+        "interface-root" => "\uE71D",
+        "folder" => "\uE8B7",
+        "http-case" => "\uE7C3",
+        "quick-root" => "\uE945",
+        "quick-request" => "\uE8A5",
+        _ => "\uE8A5"
+    };
+
+    public ICommand? DeleteCommand { get; init; }
+
+    public RequestCaseDto? SourceCase { get; init; }
+
+    public ApiEndpointDto? Endpoint { get; init; }
+
+    partial void OnCanLoadChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsClickable));
+    }
+}

@@ -1,0 +1,8 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StyleInclude Source="/Assets/Styles/WorkspaceShellStyles.axaml" />
+  <StyleInclude Source="/Assets/Styles/WorkspaceNavigationStyles.axaml" />
+  <StyleInclude Source="/Assets/Styles/WorkspaceSidebarStyles.axaml" />
+  <StyleInclude Source="/Assets/Styles/WorkspaceEditorStyles.axaml" />
+  <StyleInclude Source="/Assets/Styles/WorkspaceDetailStyles.axaml" />
+</Styles>

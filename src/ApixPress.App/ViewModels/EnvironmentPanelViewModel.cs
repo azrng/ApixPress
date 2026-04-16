@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -10,6 +11,8 @@ namespace ApixPress.App.ViewModels;
 public partial class EnvironmentPanelViewModel : ViewModelBase
 {
     private readonly IEnvironmentVariableService _environmentVariableService;
+    private CancellationTokenSource? _loadProjectCancellationTokenSource;
+    private CancellationTokenSource? _activateEnvironmentCancellationTokenSource;
     private string _currentProjectId = string.Empty;
     private bool _isUpdatingSelection;
 
@@ -33,46 +36,50 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
 
     public async Task LoadProjectAsync(string projectId, string? preferredEnvironmentId = null)
     {
-        _currentProjectId = projectId;
-        EnvironmentVariables.Clear();
-        Environments.Clear();
-
-        if (string.IsNullOrWhiteSpace(projectId))
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadProjectCancellationTokenSource).Token;
+        try
         {
+            _currentProjectId = projectId;
+            EnvironmentVariables.Clear();
+            Environments.Clear();
+
+            if (string.IsNullOrWhiteSpace(projectId))
+            {
+                _isUpdatingSelection = true;
+                SelectedEnvironment = null;
+                _isUpdatingSelection = false;
+                NotifySelectionState();
+                return;
+            }
+
+            var environments = await _environmentVariableService.GetEnvironmentsAsync(projectId, cancellationToken);
+            var items = environments.Select(environment => new ProjectEnvironmentItemViewModel
+            {
+                Id = environment.Id,
+                ProjectId = environment.ProjectId,
+                Name = environment.Name,
+                BaseUrl = environment.BaseUrl,
+                IsActive = environment.IsActive,
+                SortOrder = environment.SortOrder
+            }).ToList();
+
+            Environments.ReplaceWith(items);
+
             _isUpdatingSelection = true;
-            SelectedEnvironment = null;
+            SelectedEnvironment = ResolveSelection(items, preferredEnvironmentId);
             _isUpdatingSelection = false;
+
+            if (SelectedEnvironment is not null)
+            {
+                await LoadVariablesAsync(SelectedEnvironment.Id, cancellationToken);
+                UpdateActiveFlags(SelectedEnvironment.Id);
+            }
+
             NotifySelectionState();
-            return;
         }
-
-        var environments = await _environmentVariableService.GetEnvironmentsAsync(projectId, CancellationToken.None);
-        var items = environments.Select(environment => new ProjectEnvironmentItemViewModel
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            Id = environment.Id,
-            ProjectId = environment.ProjectId,
-            Name = environment.Name,
-            BaseUrl = environment.BaseUrl,
-            IsActive = environment.IsActive,
-            SortOrder = environment.SortOrder
-        }).ToList();
-
-        foreach (var item in items)
-        {
-            Environments.Add(item);
         }
-
-        _isUpdatingSelection = true;
-        SelectedEnvironment = ResolveSelection(items, preferredEnvironmentId);
-        _isUpdatingSelection = false;
-
-        if (SelectedEnvironment is not null)
-        {
-            await LoadVariablesAsync(SelectedEnvironment.Id);
-            UpdateActiveFlags(SelectedEnvironment.Id);
-        }
-
-        NotifySelectionState();
     }
 
     public void ClearProjectContext()
@@ -224,22 +231,19 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
         EnvironmentVariables.Remove(item);
     }
 
-    private async Task LoadVariablesAsync(string environmentId)
+    private async Task LoadVariablesAsync(string environmentId, CancellationToken cancellationToken)
     {
         EnvironmentVariables.Clear();
-        var items = await _environmentVariableService.GetVariablesAsync(environmentId, CancellationToken.None);
-        foreach (var item in items)
+        var items = await _environmentVariableService.GetVariablesAsync(environmentId, cancellationToken);
+        EnvironmentVariables.ReplaceWith(items.Select(item => new EnvironmentVariableItemViewModel
         {
-            EnvironmentVariables.Add(new EnvironmentVariableItemViewModel
-            {
-                Id = item.Id,
-                EnvironmentId = item.EnvironmentId,
-                EnvironmentName = item.EnvironmentName,
-                Key = item.Key,
-                Value = item.Value,
-                IsEnabled = item.IsEnabled
-            });
-        }
+            Id = item.Id,
+            EnvironmentId = item.EnvironmentId,
+            EnvironmentName = item.EnvironmentName,
+            Key = item.Key,
+            Value = item.Value,
+            IsEnabled = item.IsEnabled
+        }));
     }
 
     private ProjectEnvironmentItemViewModel? ResolveSelection(IReadOnlyList<ProjectEnvironmentItemViewModel> items, string? preferredEnvironmentId)
@@ -302,25 +306,32 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
             return;
         }
 
-        _ = ActivateEnvironmentSelectionAsync(value);
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _activateEnvironmentCancellationTokenSource).Token;
+        _ = ActivateEnvironmentSelectionAsync(value, cancellationToken);
     }
 
-    private async Task ActivateEnvironmentSelectionAsync(ProjectEnvironmentItemViewModel? value)
+    private async Task ActivateEnvironmentSelectionAsync(ProjectEnvironmentItemViewModel? value, CancellationToken cancellationToken)
     {
-        EnvironmentVariables.Clear();
-        if (value is null || string.IsNullOrWhiteSpace(value.Id) || string.IsNullOrWhiteSpace(_currentProjectId))
+        try
         {
+            EnvironmentVariables.Clear();
+            if (value is null || string.IsNullOrWhiteSpace(value.Id) || string.IsNullOrWhiteSpace(_currentProjectId))
+            {
+                SelectedEnvironmentChanged?.Invoke(value);
+                return;
+            }
+
+            var result = await _environmentVariableService.SetActiveEnvironmentAsync(_currentProjectId, value.Id, cancellationToken);
+            if (result.IsSuccess)
+            {
+                UpdateActiveFlags(value.Id);
+            }
+
+            await LoadVariablesAsync(value.Id, cancellationToken);
             SelectedEnvironmentChanged?.Invoke(value);
-            return;
         }
-
-        var result = await _environmentVariableService.SetActiveEnvironmentAsync(_currentProjectId, value.Id, CancellationToken.None);
-        if (result.IsSuccess)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            UpdateActiveFlags(value.Id);
         }
-
-        await LoadVariablesAsync(value.Id);
-        SelectedEnvironmentChanged?.Invoke(value);
     }
 }

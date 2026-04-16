@@ -1,0 +1,146 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.HttpDocumentWorkspaceView"
+             x:DataType="vm:ProjectTabViewModel"
+             mc:Ignorable="d">
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                IsVisible="{Binding ShowHttpDocumentPreviewContent}">
+    <StackPanel Spacing="{StaticResource Space.4}">
+      <Border Classes="PanelCard HttpDocumentHeroCard">
+        <StackPanel Spacing="{StaticResource Space.3}">
+          <StackPanel Orientation="Horizontal"
+                      Spacing="{StaticResource Space.2}">
+            <Border Classes="HttpDocumentMethodBadge">
+              <TextBlock Text="{Binding SelectedMethod}" />
+            </Border>
+            <Border Classes="HttpDocumentStatusBadge">
+              <TextBlock Text="{Binding CurrentResponseValidationResultText}" />
+            </Border>
+          </StackPanel>
+
+          <StackPanel Spacing="4">
+            <TextBlock Classes="PageTitle"
+                       Text="{Binding CurrentHttpInterfaceDisplayName}" />
+            <TextBlock Classes="CaptionText"
+                       Text="{Binding ConfigTab.RequestDescription}"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+
+          <Border Classes="HttpDocumentUrlCard">
+            <StackPanel Spacing="4">
+              <TextBlock Classes="CaptionText"
+                         Text="请求地址" />
+              <TextBlock Text="{Binding CurrentHttpDocumentUrl}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Border>
+
+      <Grid ColumnDefinitions="1.3*,*"
+            ColumnSpacing="{StaticResource Space.3}">
+        <StackPanel Spacing="{StaticResource Space.3}">
+          <Border Classes="PanelCard HttpDocumentPreviewCard">
+            <StackPanel Spacing="{StaticResource Space.3}">
+              <TextBlock Classes="SectionTitle"
+                         Text="请求概览" />
+              <Grid ColumnDefinitions="Auto,*"
+                    ColumnSpacing="{StaticResource Space.3}"
+                    RowDefinitions="Auto,Auto,Auto,Auto"
+                    RowSpacing="{StaticResource Space.2}">
+                <TextBlock Grid.Row="0" Classes="CaptionText" Text="接口目录" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentInterfaceFolderPath}" />
+                <TextBlock Grid.Row="1" Classes="CaptionText" Text="BaseUrl" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentEditorBaseUrlCaption}" TextWrapping="Wrap" />
+                <TextBlock Grid.Row="2" Classes="CaptionText" Text="接口用例" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CurrentHttpCaseName}" />
+                <TextBlock Grid.Row="3" Classes="CaptionText" Text="Body 模式" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CurrentHttpDocumentBodyModeText}" />
+              </Grid>
+
+              <TextBlock Classes="CaptionText"
+                         IsVisible="{Binding ShowHttpDocumentRequestEmpty}"
+                         Text="当前还没有补充参数、Header 或请求体内容。" />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="PanelCard HttpDocumentPreviewCard"
+                  IsVisible="{Binding HasHttpDocumentParameters}">
+            <StackPanel Spacing="{StaticResource Space.3}">
+              <TextBlock Classes="SectionTitle"
+                         Text="Query 参数" />
+              <ItemsControl ItemsSource="{Binding ConfigTab.QueryParameters}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
+                    <Border Classes="HttpDocumentKeyValueRow">
+                      <Grid ColumnDefinitions="*,*"
+                            ColumnSpacing="{StaticResource Space.3}">
+                        <TextBlock Grid.Column="0" Text="{Binding Name}" />
+                        <TextBlock Grid.Column="1" Classes="CaptionText" Text="{Binding Value}" TextWrapping="Wrap" />
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="PanelCard HttpDocumentPreviewCard"
+                  IsVisible="{Binding HasHttpDocumentHeaders}">
+            <StackPanel Spacing="{StaticResource Space.3}">
+              <TextBlock Classes="SectionTitle"
+                         Text="Headers" />
+              <ItemsControl ItemsSource="{Binding ConfigTab.Headers}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
+                    <Border Classes="HttpDocumentKeyValueRow">
+                      <Grid ColumnDefinitions="*,*"
+                            ColumnSpacing="{StaticResource Space.3}">
+                        <TextBlock Grid.Column="0" Text="{Binding Name}" />
+                        <TextBlock Grid.Column="1" Classes="CaptionText" Text="{Binding Value}" TextWrapping="Wrap" />
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1"
+                    Spacing="{StaticResource Space.3}">
+          <Border Classes="PanelCard HttpDocumentPreviewCard">
+            <StackPanel Spacing="{StaticResource Space.3}">
+              <TextBlock Classes="SectionTitle"
+                         Text="响应示例" />
+              <TextBlock Classes="CaptionText"
+                         Text="{Binding CurrentHttpDocumentResponseSummary}" />
+              <TextBox Classes="HttpDocumentReadonlyCode"
+                       AcceptsReturn="True"
+                       IsReadOnly="True"
+                       Text="{Binding CurrentHttpDocumentBodyPreview}"
+                       TextWrapping="Wrap"
+                       VerticalContentAlignment="Top" />
+            </StackPanel>
+          </Border>
+
+          <Border Classes="PanelCard HttpDocumentPreviewCard">
+            <StackPanel Spacing="{StaticResource Space.3}">
+              <TextBlock Classes="SectionTitle"
+                         Text="请求示例" />
+              <TextBox Classes="HttpDocumentReadonlyCode"
+                       AcceptsReturn="True"
+                       IsReadOnly="True"
+                       Text="{Binding CurrentHttpDocumentCurlSnippet}"
+                       TextWrapping="Wrap"
+                       VerticalContentAlignment="Top" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

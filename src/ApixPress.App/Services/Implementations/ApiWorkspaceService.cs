@@ -25,7 +25,6 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         var documents = await _apiDocumentRepository.GetDocumentsAsync(projectId, cancellationToken);
         return documents
             .OrderByDescending(item => item.ImportedAt)
-            .Take(1)
             .Select(ToDocumentDto)
             .ToList();
     }
@@ -71,9 +70,36 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
             var json = await httpClient.GetStringAsync(targetUri, cancellationToken);
             return await ImportCoreAsync(projectId, "URL", url, json, cancellationToken);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return ResultModel<ApiDocumentDto>.Failure("已取消 URL 导入。", "swagger_import_cancelled");
+        }
         catch (Exception exception)
         {
             return ResultModel<ApiDocumentDto>.Failure($"URL 导入失败：{exception.Message}");
+        }
+    }
+
+    public async Task<IResultModel<ApiImportPreviewDto>> PreviewImportFromUrlAsync(string projectId, string url, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var targetUri))
+            {
+                return ResultModel<ApiImportPreviewDto>.Failure("请输入有效的 Swagger/OpenAPI 文档 URL。");
+            }
+
+            using var httpClient = new HttpClient();
+            var json = await httpClient.GetStringAsync(targetUri, cancellationToken);
+            return await PreviewImportCoreAsync(projectId, "URL", url, json, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return ResultModel<ApiImportPreviewDto>.Failure("已取消导入预检查。", "swagger_import_preview_cancelled");
+        }
+        catch (Exception exception)
+        {
+            return ResultModel<ApiImportPreviewDto>.Failure($"URL 导入预检查失败：{exception.Message}", "swagger_import_preview_failed");
         }
     }
 
@@ -95,9 +121,41 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
             var json = await File.ReadAllTextAsync(filePath, cancellationToken);
             return await ImportCoreAsync(projectId, "FILE", filePath, json, cancellationToken);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return ResultModel<ApiDocumentDto>.Failure("已取消本地文件导入。", "swagger_import_cancelled");
+        }
         catch (Exception exception)
         {
             return ResultModel<ApiDocumentDto>.Failure($"本地文件导入失败：{exception.Message}", "swagger_import_file_failed");
+        }
+    }
+
+    public async Task<IResultModel<ApiImportPreviewDto>> PreviewImportFromFileAsync(string projectId, string filePath, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (!File.Exists(filePath))
+            {
+                return ResultModel<ApiImportPreviewDto>.Failure("未找到指定的本地文件。", "swagger_file_not_found");
+            }
+
+            var fileInfo = new FileInfo(filePath);
+            if (fileInfo.Length > MaxSwaggerFileSizeBytes)
+            {
+                return ResultModel<ApiImportPreviewDto>.Failure("Swagger 文件超过 20MB 限制。", "swagger_file_too_large");
+            }
+
+            var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+            return await PreviewImportCoreAsync(projectId, "FILE", filePath, json, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return ResultModel<ApiImportPreviewDto>.Failure("已取消导入预检查。", "swagger_import_preview_cancelled");
+        }
+        catch (Exception exception)
+        {
+            return ResultModel<ApiImportPreviewDto>.Failure($"本地文件导入预检查失败：{exception.Message}", "swagger_import_preview_failed");
         }
     }
 
@@ -108,19 +166,14 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
             return;
         }
 
-        var endpointIds = new List<string>();
-        var documents = await _apiDocumentRepository.GetDocumentsAsync(projectId, cancellationToken);
-        foreach (var document in documents)
-        {
-            var endpoints = await _apiDocumentRepository.GetEndpointsByDocumentIdAsync(document.Id, cancellationToken);
-            foreach (var endpoint in endpoints)
-            {
-                if (requestCases.Any(requestCase => MatchesImportedInterface(endpoint, requestCase)))
-                {
-                    endpointIds.Add(endpoint.Id);
-                }
-            }
-        }
+        var requestCaseKeys = requestCases
+            .Select(BuildImportedEndpointKey)
+            .Where(key => !string.IsNullOrWhiteSpace(key))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var endpointIds = (await _apiDocumentRepository.GetEndpointsByProjectIdAsync(projectId, cancellationToken))
+            .Where(endpoint => requestCaseKeys.Contains(BuildImportedEndpointKey(endpoint.Method, endpoint.Path)))
+            .Select(endpoint => endpoint.Id)
+            .ToList();
 
         await _apiDocumentRepository.DeleteEndpointsByIdsAsync(endpointIds, cancellationToken);
     }
@@ -138,9 +191,40 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         {
             return ResultModel<ApiDocumentDto>.Failure(exception.Message, exception.ErrorCode);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return ResultModel<ApiDocumentDto>.Failure("导入已取消。", "swagger_import_cancelled");
+        }
         catch (Exception exception)
         {
             return ResultModel<ApiDocumentDto>.Failure($"导入失败：{exception.Message}", "swagger_import_failed");
+        }
+    }
+
+    private async Task<IResultModel<ApiImportPreviewDto>> PreviewImportCoreAsync(
+        string projectId,
+        string sourceType,
+        string sourceValue,
+        string json,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var graph = OpenApiJsonParser.Parse(json, sourceType, sourceValue);
+            var existingEndpoints = await _apiDocumentRepository.GetEndpointsByProjectIdAsync(projectId, cancellationToken);
+            return ResultModel<ApiImportPreviewDto>.Success(BuildImportPreview(graph, existingEndpoints));
+        }
+        catch (BaseException exception)
+        {
+            return ResultModel<ApiImportPreviewDto>.Failure(exception.Message, exception.ErrorCode);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return ResultModel<ApiImportPreviewDto>.Failure("导入预检查已取消。", "swagger_import_preview_cancelled");
+        }
+        catch (Exception exception)
+        {
+            return ResultModel<ApiImportPreviewDto>.Failure($"导入预检查失败：{exception.Message}", "swagger_import_preview_failed");
         }
     }
 
@@ -178,9 +262,70 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         };
     }
 
-    private static bool MatchesImportedInterface(ApiEndpointEntity endpoint, RequestCaseDto requestCase)
+    private static ApiImportPreviewDto BuildImportPreview(
+        ParsedDocumentGraph graph,
+        IReadOnlyList<ApiProjectEndpointEntity> existingEndpoints)
     {
-        var endpointKey = $"swagger-import:{endpoint.Method.ToUpperInvariant()} {endpoint.Path}";
+        var existingByKey = existingEndpoints
+            .GroupBy(endpoint => BuildImportedEndpointKey(endpoint.Method, endpoint.Path), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+        var distinctIncomingKeys = graph.Endpoints
+            .Select(endpoint => BuildImportedEndpointKey(endpoint.Method, endpoint.Path))
+            .Where(key => !string.IsNullOrWhiteSpace(key))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var conflicts = graph.Endpoints
+            .Select(endpoint => new
+            {
+                Endpoint = endpoint,
+                Key = BuildImportedEndpointKey(endpoint.Method, endpoint.Path)
+            })
+            .Where(item => existingByKey.TryGetValue(item.Key, out _))
+            .GroupBy(item => item.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(group =>
+            {
+                var endpoint = group.Last().Endpoint;
+                var existing = existingByKey[group.Key];
+                return new ApiImportConflictDto
+                {
+                    ExistingDocumentId = existing.DocumentId,
+                    ExistingDocumentName = existing.DocumentName,
+                    ExistingEndpointId = existing.Id,
+                    ExistingEndpointName = existing.Name,
+                    ImportedEndpointName = endpoint.Name,
+                    Method = endpoint.Method,
+                    Path = endpoint.Path
+                };
+            })
+            .OrderBy(item => item.Method, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(item => item.Path, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return new ApiImportPreviewDto
+        {
+            DocumentName = graph.Document.Name,
+            SourceType = graph.Document.SourceType,
+            SourceValue = graph.Document.SourceValue,
+            TotalEndpointCount = distinctIncomingKeys.Count,
+            ConflictCount = conflicts.Count,
+            NewEndpointCount = Math.Max(0, distinctIncomingKeys.Count - conflicts.Count),
+            ConflictItems = conflicts
+        };
+    }
+
+    private static string BuildImportedEndpointKey(RequestCaseDto requestCase)
+    {
+        return BuildImportedEndpointKey(requestCase.RequestSnapshot.Method, requestCase.RequestSnapshot.Url);
+    }
+
+    private static string BuildImportedEndpointKey(string method, string path)
+    {
+        return $"swagger-import:{method.ToUpperInvariant()} {path}";
+    }
+
+    private static bool MatchesImportedInterface(ApiProjectEndpointEntity endpoint, RequestCaseDto requestCase)
+    {
+        var endpointKey = BuildImportedEndpointKey(endpoint.Method, endpoint.Path);
         if (string.Equals(requestCase.RequestSnapshot.EndpointId, endpointKey, StringComparison.OrdinalIgnoreCase))
         {
             return true;
