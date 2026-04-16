@@ -167,15 +167,15 @@
                           <TextBlock Classes="SubtleText"
                                      Text="{Binding CurrentAppVersion, StringFormat='当前版本 {0}'}" />
                           <TextBlock Classes="CaptionText"
-                                     Text="{Binding LatestMockVersion, StringFormat='Mock 最新版本 {0}'}" />
+                                     Text="{Binding LatestAvailableVersion, StringFormat='最新版本 {0}'}" />
                           <StackPanel Orientation="Horizontal"
                                       Spacing="{StaticResource Space.2}">
                             <Button Classes="PrimaryButton"
-                                    Content="检查更新"
+                                    Content="{Binding CheckForUpdatesButtonText}"
                                     Command="{Binding CheckForUpdatesCommand}" />
                             <Border Classes="VersionTag">
                               <TextBlock Classes="CaptionText"
-                                         Text="Mock 通道" />
+                                         Text="{Binding UpdateChannelName}" />
                             </Border>
                           </StackPanel>
                         </StackPanel>

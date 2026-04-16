@@ -14,7 +14,8 @@ public sealed partial class MainWindowViewModelTests
 {
     private static MainWindowViewModel CreateViewModel(
         FakeProjectWorkspaceService? projectWorkspaceService = null,
-        FakeAppShellSettingsService? shellSettingsService = null)
+        FakeAppShellSettingsService? shellSettingsService = null,
+        FakeApplicationUpdateService? applicationUpdateService = null)
     {
         return new MainWindowViewModel(
             new FakeRequestExecutionService(),
@@ -23,6 +24,7 @@ public sealed partial class MainWindowViewModelTests
             new FakeEnvironmentVariableService(),
             projectWorkspaceService ?? new FakeProjectWorkspaceService(),
             shellSettingsService ?? new FakeAppShellSettingsService(),
+            applicationUpdateService ?? new FakeApplicationUpdateService(),
             new FakeApiWorkspaceService(),
             new FakeFilePickerService());
     }
@@ -190,6 +192,42 @@ public sealed partial class MainWindowViewModelTests
         public Task DeleteImportedHttpInterfacesAsync(string projectId, IReadOnlyList<RequestCaseDto> requestCases, CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeApplicationUpdateService : IApplicationUpdateService
+    {
+        public string ChannelName { get; set; } = "GitHub Releases";
+
+        public bool IsConfigured { get; set; } = true;
+
+        public AppUpdateCheckResultDto CheckResult { get; set; } = new()
+        {
+            CurrentVersion = "1.0.0.0",
+            LatestVersion = "1.0.0.0",
+            HasUpdate = false
+        };
+
+        public string StartMessage { get; set; } = string.Empty;
+
+        public bool StartSucceeded { get; set; } = true;
+
+        public int CheckCalls { get; private set; }
+
+        public int StartCalls { get; private set; }
+
+        public Task<IResultModel<AppUpdateCheckResultDto>> CheckForUpdatesAsync(string currentVersion, CancellationToken cancellationToken)
+        {
+            CheckCalls++;
+            return Task.FromResult<IResultModel<AppUpdateCheckResultDto>>(ResultModel<AppUpdateCheckResultDto>.Success(CheckResult));
+        }
+
+        public Task<IResultModel<bool>> StartUpdateAsync(string currentVersion, CancellationToken cancellationToken)
+        {
+            StartCalls++;
+            return Task.FromResult<IResultModel<bool>>(StartSucceeded
+                ? ResultModel<bool>.Success(true)
+                : ResultModel<bool>.Failure(StartMessage));
         }
     }
 

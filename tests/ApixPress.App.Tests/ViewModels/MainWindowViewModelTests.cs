@@ -1,3 +1,4 @@
+using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels;
 
 namespace ApixPress.App.Tests.ViewModels;
@@ -61,6 +62,53 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(project.Id, viewModel.ActiveProjectTab?.ProjectId);
         Assert.True(viewModel.IsWorkspaceMode);
         Assert.Equal("已打开项目：订单项目", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task CheckForUpdatesCommand_ShouldUpdateStatusWhenAlreadyLatest()
+    {
+        var updateService = new FakeApplicationUpdateService
+        {
+            CheckResult = new AppUpdateCheckResultDto
+            {
+                CurrentVersion = "1.0.0.0",
+                LatestVersion = "1.0.0.0",
+                HasUpdate = false
+            }
+        };
+        var viewModel = CreateViewModel(applicationUpdateService: updateService);
+        await viewModel.InitializeAsync();
+
+        await viewModel.CheckForUpdatesCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, updateService.CheckCalls);
+        Assert.Equal(0, updateService.StartCalls);
+        Assert.Equal("1.0.0.0", viewModel.LatestAvailableVersion);
+        Assert.Equal("当前已是最新版本 1.0.0.0。", viewModel.AboutUpdateStatus);
+        Assert.Equal(viewModel.AboutUpdateStatus, viewModel.StatusMessage);
+        Assert.NotEqual("尚未检查", viewModel.LastUpdateCheckText);
+    }
+
+    [Fact]
+    public async Task CheckForUpdatesCommand_ShouldStartUpdaterWhenNewVersionDetected()
+    {
+        var updateService = new FakeApplicationUpdateService
+        {
+            CheckResult = new AppUpdateCheckResultDto
+            {
+                CurrentVersion = "1.0.0.0",
+                LatestVersion = "1.1.0.0",
+                HasUpdate = true
+            }
+        };
+        var viewModel = CreateViewModel(applicationUpdateService: updateService);
+        await viewModel.InitializeAsync();
+
+        await viewModel.CheckForUpdatesCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, updateService.CheckCalls);
+        Assert.Equal(1, updateService.StartCalls);
+        Assert.Equal("1.1.0.0", viewModel.LatestAvailableVersion);
     }
 
     [Fact]

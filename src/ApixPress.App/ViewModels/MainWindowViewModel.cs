@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -14,6 +15,7 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     private readonly IAppShellSettingsService _appShellSettingsService;
+    private readonly IApplicationUpdateService _applicationUpdateService;
     private readonly IEnvironmentVariableService _environmentVariableService;
     private readonly IRequestCaseService _requestCaseService;
     private readonly IRequestExecutionService _requestExecutionService;
@@ -37,6 +39,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IEnvironmentVariableService environmentVariableService,
         IProjectWorkspaceService projectWorkspaceService,
         IAppShellSettingsService appShellSettingsService,
+        IApplicationUpdateService applicationUpdateService,
         IApiWorkspaceService apiWorkspaceService,
         IFilePickerService filePickerService)
     {
@@ -45,6 +48,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _requestHistoryService = requestHistoryService;
         _environmentVariableService = environmentVariableService;
         _appShellSettingsService = appShellSettingsService;
+        _applicationUpdateService = applicationUpdateService;
         _apiWorkspaceService = apiWorkspaceService;
         _filePickerService = filePickerService;
 
@@ -57,10 +61,11 @@ public partial class MainWindowViewModel : ViewModelBase
         ProjectPanel = new ProjectPanelViewModel(projectWorkspaceService);
         Notifications = CreateNotifications();
 
-        var version = typeof(MainWindowViewModel).Assembly.GetName().Version;
-        CurrentAppVersion = version is null
-            ? "1.0.0"
-            : $"{version.Major}.{Math.Max(version.Minor, 0)}.{Math.Max(version.Build, 0)}";
+        CurrentAppVersion = ResolveCurrentAppVersion();
+        UpdateChannelName = _applicationUpdateService.ChannelName;
+        AboutUpdateStatus = _applicationUpdateService.IsConfigured
+            ? $"当前通过 {UpdateChannelName} 检查更新。"
+            : "尚未配置更新源，请先补充 appsettings.json 中的 Update 节点。";
 
         ProjectTabs.CollectionChanged += OnProjectTabsCollectionChanged;
         ProjectPanel.ProjectCreated += OnProjectCreated;
@@ -108,9 +113,10 @@ public partial class MainWindowViewModel : ViewModelBase
         : "当前还没有项目，请先创建一个项目。";
     public string CurrentAppVersion { get; }
     public string CurrentSettingsTitle => ShowAboutSettingsSection ? "关于" : "通用";
-    public string LatestMockVersion { get; } = "1.1.0";
+    public string UpdateChannelName { get; }
     public string RuntimeStackText { get; } = ".NET 10 / Avalonia 11 / Ursa";
     public string WindowMaximizeGlyph => IsWindowMaximized ? "\u2750" : "\u25A1";
+    public string CheckForUpdatesButtonText => IsCheckingForUpdates ? "检查中..." : "检查更新";
 
     [ObservableProperty]
     private ProjectTabViewModel? activeProjectTab;
@@ -161,8 +167,44 @@ public partial class MainWindowViewModel : ViewModelBase
     private string generalSettingsSaveStatus = "设置会自动保存到本地工作目录。";
 
     [ObservableProperty]
+    private bool isCheckingForUpdates;
+
+    [ObservableProperty]
     private string aboutUpdateStatus = "尚未检查更新。";
 
     [ObservableProperty]
     private string lastUpdateCheckText = "尚未检查";
+
+    [ObservableProperty]
+    private string latestAvailableVersion = "尚未检查";
+
+    partial void OnIsCheckingForUpdatesChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CheckForUpdatesButtonText));
+    }
+
+    private static string ResolveCurrentAppVersion()
+    {
+        var assembly = typeof(MainWindowViewModel).Assembly;
+        var informationalVersion = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+
+        if (!string.IsNullOrWhiteSpace(informationalVersion))
+        {
+            var metadataSeparatorIndex = informationalVersion.IndexOf('+');
+            if (metadataSeparatorIndex >= 0)
+            {
+                informationalVersion = informationalVersion[..metadataSeparatorIndex];
+            }
+
+            informationalVersion = informationalVersion.Trim();
+            if (!string.IsNullOrWhiteSpace(informationalVersion))
+            {
+                return informationalVersion;
+            }
+        }
+
+        return assembly.GetName().Version?.ToString() ?? "1.0.0.0";
+    }
 }

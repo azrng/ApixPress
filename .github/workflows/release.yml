@@ -1,0 +1,186 @@
+name: release-win-x64
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+env:
+  VERSION_FILE: VERSION
+  APP_PROJECT_PATH: src/ApixPress.App/Apifox.App.csproj
+  UPDATER_PROJECT_PATH: src/ApixPress.Updater/ApixPress.Updater.csproj
+  APP_PUBLISH_DIR: publish/win-x64/app
+  UPDATER_PUBLISH_DIR: publish/win-x64/updater
+  RELEASE_DIR: publish/win-x64/release
+  PACKAGE_NAME: ApixPress-win-x64-portable.zip
+  MANIFEST_NAME: versions.json
+
+jobs:
+  publish-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Resolve release metadata
+        id: release_meta
+        shell: pwsh
+        run: |
+          $versionFilePath = Join-Path "${{ github.workspace }}" "${{ env.VERSION_FILE }}"
+          if (-not (Test-Path -LiteralPath $versionFilePath)) {
+            throw "版本文件不存在：$versionFilePath"
+          }
+
+          $version = (Get-Content -LiteralPath $versionFilePath -Raw -Encoding UTF8).Trim()
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            throw "版本文件内容为空：$versionFilePath"
+          }
+
+          $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+          $shortSha = "${{ github.sha }}".Substring(0, 7)
+          $tag = "v$version-build-$timestamp-$shortSha"
+          $releaseName = "ApixPress $version ($timestamp)"
+          $packagePath = Join-Path "${{ github.workspace }}" "${{ env.PACKAGE_NAME }}"
+          $manifestPath = Join-Path "${{ github.workspace }}" "${{ env.MANIFEST_NAME }}"
+          $packageUrl = "https://github.com/${{ github.repository }}/releases/latest/download/${{ env.PACKAGE_NAME }}"
+          $manifestUrl = "https://github.com/${{ github.repository }}/releases/latest/download/${{ env.MANIFEST_NAME }}"
+          $packetName = [System.IO.Path]::GetFileNameWithoutExtension("${{ env.PACKAGE_NAME }}")
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag_name=$tag" >> $env:GITHUB_OUTPUT
+          "release_name=$releaseName" >> $env:GITHUB_OUTPUT
+          "package_path=$packagePath" >> $env:GITHUB_OUTPUT
+          "manifest_path=$manifestPath" >> $env:GITHUB_OUTPUT
+          "package_url=$packageUrl" >> $env:GITHUB_OUTPUT
+          "manifest_url=$manifestUrl" >> $env:GITHUB_OUTPUT
+          "packet_name=$packetName" >> $env:GITHUB_OUTPUT
+
+      - name: Restore
+        run: dotnet restore ${{ env.APP_PROJECT_PATH }}
+
+      - name: Publish main app
+        shell: pwsh
+        run: |
+          $version = "${{ steps.release_meta.outputs.version }}"
+          $shortSha = "${{ github.sha }}".Substring(0, 7)
+          $informationalVersion = "$version+$shortSha"
+
+          if (Test-Path "${{ env.APP_PUBLISH_DIR }}") {
+            Remove-Item "${{ env.APP_PUBLISH_DIR }}" -Recurse -Force
+          }
+
+          dotnet publish "${{ env.APP_PROJECT_PATH }}" `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -o "${{ env.APP_PUBLISH_DIR }}" `
+            -p:PublishAot=false `
+            -p:PublishTrimmed=false `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            -p:InformationalVersion=$informationalVersion `
+            -p:Version=$version
+
+      - name: Publish updater
+        shell: pwsh
+        run: |
+          $version = "${{ steps.release_meta.outputs.version }}"
+          $shortSha = "${{ github.sha }}".Substring(0, 7)
+          $informationalVersion = "$version+$shortSha"
+
+          if (Test-Path "${{ env.UPDATER_PUBLISH_DIR }}") {
+            Remove-Item "${{ env.UPDATER_PUBLISH_DIR }}" -Recurse -Force
+          }
+
+          dotnet publish "${{ env.UPDATER_PROJECT_PATH }}" `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -o "${{ env.UPDATER_PUBLISH_DIR }}" `
+            -p:PublishAot=false `
+            -p:PublishTrimmed=false `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            -p:InformationalVersion=$informationalVersion `
+            -p:Version=$version
+
+      - name: Build update package and manifest
+        shell: pwsh
+        run: |
+          $releaseDir = "${{ env.RELEASE_DIR }}"
+          $packagePath = "${{ steps.release_meta.outputs.package_path }}"
+          $manifestPath = "${{ steps.release_meta.outputs.manifest_path }}"
+          $packetName = "${{ steps.release_meta.outputs.packet_name }}"
+
+          if (Test-Path $releaseDir) {
+            Remove-Item $releaseDir -Recurse -Force
+          }
+
+          New-Item -ItemType Directory -Path $releaseDir | Out-Null
+          Copy-Item "${{ env.APP_PUBLISH_DIR }}\\*" $releaseDir -Recurse -Force
+          Copy-Item "${{ env.UPDATER_PUBLISH_DIR }}\\*" $releaseDir -Recurse -Force
+
+          $symbolFiles = Get-ChildItem -Path $releaseDir -Filter *.pdb -File -Recurse
+          foreach ($symbolFile in $symbolFiles) {
+            Remove-Item -LiteralPath $symbolFile.FullName -Force
+          }
+
+          if (Test-Path $packagePath) {
+            Remove-Item $packagePath -Force
+          }
+
+          Compress-Archive -Path "$releaseDir\\*" -DestinationPath $packagePath -Force
+
+          $hash = (Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash.ToLowerInvariant()
+          $manifest = @(
+            [ordered]@{
+              PacketName = $packetName
+              Hash = $hash
+              Version = "${{ steps.release_meta.outputs.version }}"
+              Url = "${{ steps.release_meta.outputs.package_url }}"
+              PubTime = (Get-Date).ToUniversalTime().ToString("o")
+            }
+          ) | ConvertTo-Json -Depth 5
+
+          Set-Content -LiteralPath $manifestPath -Value $manifest -Encoding UTF8
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ApixPress-win-x64-release
+          path: |
+            ${{ steps.release_meta.outputs.package_path }}
+            ${{ steps.release_meta.outputs.manifest_path }}
+          retention-days: 30
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.release_meta.outputs.tag_name }}
+          name: ${{ steps.release_meta.outputs.release_name }}
+          target_commitish: ${{ github.sha }}
+          files: |
+            ${{ steps.release_meta.outputs.package_path }}
+            ${{ steps.release_meta.outputs.manifest_path }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
