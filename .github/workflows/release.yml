@@ -158,7 +158,7 @@ jobs:
               Url = "${{ steps.release_meta.outputs.package_url }}"
               PubTime = (Get-Date).ToUniversalTime().ToString("o")
             }
-          ) | ConvertTo-Json -Depth 5
+          ) | ConvertTo-Json -Depth 5 -AsArray
 
           Set-Content -LiteralPath $manifestPath -Value $manifest -Encoding UTF8
 

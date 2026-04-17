@@ -147,27 +147,14 @@
                 <Grid IsVisible="{Binding ShowAboutSettingsSection}">
                   <StackPanel Spacing="{StaticResource Space.4}">
                     <Border Classes="AboutHeroCard">
-                      <Grid ColumnDefinitions="Auto,*"
+                      <Grid ColumnDefinitions="*,260"
                             ColumnSpacing="{StaticResource Space.4}">
-                        <Border Width="88"
-                                Height="88"
-                                Classes="AboutIconBadge">
-                          <Path Width="42"
-                                Height="42"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Fill="{DynamicResource Brush.Text.Inverse}"
-                                Data="M12,2 C17.5,2 22,6.5 22,12 C22,17.5 17.5,22 12,22 C6.5,22 2,17.5 2,12 C2,6.5 6.5,2 12,2 Z M7,8 L17,8 L17,10 L7,10 Z M7,12 L14,12 L14,14 L7,14 Z" />
-                        </Border>
-                        <StackPanel Grid.Column="1"
-                                    Spacing="{StaticResource Space.2}"
+                        <StackPanel Spacing="{StaticResource Space.2}"
                                     VerticalAlignment="Center">
                           <TextBlock Classes="HeroTitle"
                                      Text="{Binding AppDisplayName}" />
-                          <TextBlock Classes="SubtleText"
-                                     Text="{Binding CurrentAppVersion, StringFormat='当前版本 {0}'}" />
                           <TextBlock Classes="CaptionText"
-                                     Text="{Binding LatestAvailableVersion, StringFormat='最新版本 {0}'}" />
+                                     Text="轻量 API 协作与调试工作台" />
                           <StackPanel Orientation="Horizontal"
                                       Spacing="{StaticResource Space.2}">
                             <Button Classes="PrimaryButton"
@@ -179,6 +166,35 @@
                             </Border>
                           </StackPanel>
                         </StackPanel>
+                        <Border Grid.Column="1"
+                                Classes="AboutVersionPanel">
+                          <Grid RowDefinitions="Auto,Auto,Auto"
+                                RowSpacing="{StaticResource Space.3}">
+                            <Grid ColumnDefinitions="*,Auto">
+                              <TextBlock Classes="AboutMetaLabel"
+                                         Text="当前版本" />
+                              <TextBlock Grid.Column="1"
+                                         Classes="AboutMetaValue"
+                                         Text="{Binding CurrentAppVersion}" />
+                            </Grid>
+                            <Grid Grid.Row="1"
+                                  ColumnDefinitions="*,Auto">
+                              <TextBlock Classes="AboutMetaLabel"
+                                         Text="最新版本" />
+                              <TextBlock Grid.Column="1"
+                                         Classes="AboutMetaValue"
+                                         Text="{Binding LatestAvailableVersion}" />
+                            </Grid>
+                            <Grid Grid.Row="2"
+                                  ColumnDefinitions="*,Auto">
+                              <TextBlock Classes="AboutMetaLabel"
+                                         Text="更新渠道" />
+                              <TextBlock Grid.Column="1"
+                                         Classes="AboutMetaValue"
+                                         Text="{Binding UpdateChannelName}" />
+                            </Grid>
+                          </Grid>
+                        </Border>
                       </Grid>
                     </Border>
                     <Border Classes="SettingsPageSection">

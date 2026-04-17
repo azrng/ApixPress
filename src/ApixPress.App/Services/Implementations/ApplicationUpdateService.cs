@@ -50,7 +50,7 @@ public sealed class ApplicationUpdateService : IApplicationUpdateService, ISingl
         }
 
         var normalizedCurrentVersion = NormalizeVersion(currentVersion);
-        if (!Version.TryParse(normalizedCurrentVersion, out var parsedCurrentVersion))
+        if (!TryParseComparableVersion(normalizedCurrentVersion, out var parsedCurrentVersion))
         {
             return ResultModel<AppUpdateCheckResultDto>.Failure($"当前版本号无效：{currentVersion}", "app_update_invalid_current_version");
         }
@@ -58,9 +58,7 @@ public sealed class ApplicationUpdateService : IApplicationUpdateService, ISingl
         try
         {
             await using var manifestStream = await _httpClient.GetStreamAsync(_versionManifestUrl, cancellationToken);
-            var manifest = await JsonSerializer.DeserializeAsync<List<AppUpdateManifestItemDto>>(
-                manifestStream,
-                cancellationToken: cancellationToken);
+            var manifest = await ReadManifestAsync(manifestStream, cancellationToken);
 
             if (manifest is null || manifest.Count == 0)
             {
@@ -68,9 +66,9 @@ public sealed class ApplicationUpdateService : IApplicationUpdateService, ISingl
             }
 
             var latestRelease = manifest
-                .Where(item => Version.TryParse(NormalizeVersion(item.Version), out _))
+                .Where(item => TryParseComparableVersion(item.Version, out _))
                 .OrderByDescending(item => item.PubTime)
-                .ThenByDescending(item => ParseVersion(item.Version))
+                .ThenByDescending(item => ParseComparableVersion(item.Version))
                 .FirstOrDefault();
 
             if (latestRelease is null)
@@ -78,11 +76,12 @@ public sealed class ApplicationUpdateService : IApplicationUpdateService, ISingl
                 return ResultModel<AppUpdateCheckResultDto>.Failure("更新清单中未找到有效版本。", "app_update_invalid_manifest");
             }
 
-            var latestVersion = ParseVersion(latestRelease.Version);
+            var latestVersion = ParseComparableVersion(latestRelease.Version);
+            var latestDisplayVersion = NormalizeVersion(latestRelease.Version);
             return ResultModel<AppUpdateCheckResultDto>.Success(new AppUpdateCheckResultDto
             {
                 CurrentVersion = normalizedCurrentVersion,
-                LatestVersion = latestVersion.ToString(),
+                LatestVersion = latestDisplayVersion,
                 HasUpdate = parsedCurrentVersion < latestVersion,
                 PublishedAt = latestRelease.PubTime,
                 DownloadUrl = latestRelease.Url
@@ -173,10 +172,41 @@ public sealed class ApplicationUpdateService : IApplicationUpdateService, ISingl
         return normalized.Trim();
     }
 
-    private static Version ParseVersion(string version)
+    private static Version ParseComparableVersion(string version)
     {
-        return Version.TryParse(NormalizeVersion(version), out var parsedVersion)
+        return TryParseComparableVersion(version, out var parsedVersion)
             ? parsedVersion
-            : new Version(0, 0);
+            : new Version(0, 0, 0, 0);
+    }
+
+    private static bool TryParseComparableVersion(string version, out Version parsedVersion)
+    {
+        if (!Version.TryParse(NormalizeVersion(version), out var rawVersion))
+        {
+            parsedVersion = new Version(0, 0, 0, 0);
+            return false;
+        }
+
+        parsedVersion = new Version(
+            rawVersion.Major,
+            rawVersion.Minor,
+            rawVersion.Build < 0 ? 0 : rawVersion.Build,
+            rawVersion.Revision < 0 ? 0 : rawVersion.Revision);
+        return true;
+    }
+
+    private static async Task<List<AppUpdateManifestItemDto>?> ReadManifestAsync(
+        Stream manifestStream,
+        CancellationToken cancellationToken)
+    {
+        using var document = await JsonDocument.ParseAsync(manifestStream, cancellationToken: cancellationToken);
+        return document.RootElement.ValueKind switch
+        {
+            JsonValueKind.Array => document.RootElement.Deserialize<List<AppUpdateManifestItemDto>>(),
+            JsonValueKind.Object => document.RootElement.Deserialize<AppUpdateManifestItemDto>() is { } item
+                ? [item]
+                : null,
+            _ => null
+        };
     }
 }

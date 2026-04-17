@@ -35,6 +35,55 @@ public sealed class ApplicationUpdateServiceTests
     }
 
     [Fact]
+    public async Task CheckForUpdatesAsync_ShouldReadSingleObjectManifest()
+    {
+        var configuration = CreateConfiguration();
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler("""
+            {
+              "PacketName": "ApixPress-win-x64-portable",
+              "Hash": "abc123",
+              "Version": "1.1.0.0",
+              "Url": "https://github.com/azrng/ApixPress/releases/latest/download/ApixPress-win-x64-portable.zip",
+              "PubTime": "2026-04-17T10:39:19Z"
+            }
+            """));
+        var service = new ApplicationUpdateService(configuration, httpClient);
+
+        var result = await service.CheckForUpdatesAsync("1.0.0.0", CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Data);
+        Assert.True(result.Data!.HasUpdate);
+        Assert.Equal("1.1.0.0", result.Data.LatestVersion);
+    }
+
+    [Fact]
+    public async Task CheckForUpdatesAsync_ShouldTreatMissingVersionComponentsAsEqual()
+    {
+        var configuration = CreateConfiguration();
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler("""
+            [
+              {
+                "PacketName": "ApixPress-win-x64-portable",
+                "Hash": "abc123",
+                "Version": "1.0.0",
+                "Url": "https://github.com/azrng/ApixPress/releases/latest/download/ApixPress-win-x64-portable.zip",
+                "PubTime": "2026-04-17T10:39:19Z"
+              }
+            ]
+            """));
+        var service = new ApplicationUpdateService(configuration, httpClient);
+
+        var result = await service.CheckForUpdatesAsync("1.0", CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Data);
+        Assert.False(result.Data!.HasUpdate);
+        Assert.Equal("1.0", result.Data.CurrentVersion);
+        Assert.Equal("1.0.0", result.Data.LatestVersion);
+    }
+
+    [Fact]
     public async Task StartUpdateAsync_ShouldFailWhenUpdaterExecutableMissing()
     {
         var configuration = new ConfigurationBuilder()
