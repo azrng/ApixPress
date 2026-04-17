@@ -41,6 +41,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
 
     public bool HasSelectedProject => SelectedProject is not null;
     public bool HasProjects => FilteredProjects.Count > 0;
+    public bool HasAnyProjects => Projects.Count > 0;
 
     public async Task LoadProjectsAsync(string? preferredProjectId = null, bool autoSelect = true)
     {
@@ -64,6 +65,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
             _isUpdatingSelection = false;
             OnPropertyChanged(nameof(HasSelectedProject));
             OnPropertyChanged(nameof(HasProjects));
+            OnPropertyChanged(nameof(HasAnyProjects));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -208,6 +210,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
     {
         RefreshFilteredProjects();
         OnPropertyChanged(nameof(HasProjects));
+        OnPropertyChanged(nameof(HasAnyProjects));
     }
 
     private void RefreshFilteredProjects()

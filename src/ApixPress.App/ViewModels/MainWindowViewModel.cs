@@ -94,7 +94,8 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool HasProjectTabs => ProjectTabs.Count > 0;
     public bool IsProjectBrowserMode => IsHomeTabActive;
     public bool IsWorkspaceMode => HasActiveProjectTab;
-    public bool ShowProjectListEmptyState => IsHomeTabActive && !ProjectPanel.HasProjects;
+    public bool ShowProjectListEmptyState => IsHomeTabActive && !ProjectPanel.HasAnyProjects;
+    public bool ShowProjectSearchEmptyState => IsHomeTabActive && ProjectPanel.HasAnyProjects && !ProjectPanel.HasProjects;
     public bool HasEnvironmentContext => ActiveProjectTab?.HasEnvironmentContext ?? false;
     public bool ShowQuickRequestSaveDialog => ActiveProjectTab?.IsQuickRequestSaveDialogOpen ?? false;
     public bool ShowProjectImportDialog => ActiveProjectTab?.IsProjectImportDialogOpen ?? false;

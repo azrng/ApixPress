@@ -1,11 +1,12 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:u="https://irihi.tech/ursa">  <Style Selector="Border.ProjectGridHost">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="{StaticResource Pad.5}" />
+    <Setter Property="BoxShadow" Value="0 12 30 0 #0F172A0A" />
   </Style>
 
   <Style Selector="TextBlock.ProjectCardTitle">
@@ -13,20 +14,40 @@
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
+  <Style Selector="TextBlock.ProjectCardCaption">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
   <Style Selector="TextBlock.ProjectCardSummary">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.Body}" />
-    <Setter Property="MaxHeight" Value="72" />
+    <Setter Property="MaxHeight" Value="80" />
+  </Style>
+
+  <Style Selector="Border.ProjectCardSummaryPanel">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Border.ProjectCardContextPanel">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
 
   <Style Selector="Border.ProjectMetaPill">
     <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="8,4" />
   </Style>
 
   <Style Selector="Border.ProjectMetaPillMuted">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
   </Style>
@@ -39,8 +60,8 @@
 
   <Style Selector="Border.ProjectEntryBadge">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="10,8" />
   </Style>
 
   <Style Selector="TextBlock.ProjectEntryBadgeText">
@@ -54,6 +75,119 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Button.HomeSidebarProjectButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="Border.HomeSidebarProjectCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Button.HomeSidebarProjectButton:pointerover Border.HomeSidebarProjectCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <Style Selector="Border.HomeSidebarProjectAvatar">
+    <Setter Property="Width" Value="42" />
+    <Setter Property="Height" Value="42" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+  </Style>
+
+  <Style Selector="TextBlock.HomeSidebarProjectAvatarText">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <Style Selector="TextBlock.HomeSidebarProjectTitle">
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="TextBlock.HomeSidebarProjectSummary">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="Border.HomeSidebarProjectBadge">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+  </Style>
+
+  <Style Selector="Button.HomeProjectTileButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Margin" Value="0,0,18,18" />
+  </Style>
+
+  <Style Selector="Border.HomeProjectTileCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+    <Setter Property="MinHeight" Value="206" />
+  </Style>
+
+  <Style Selector="Button.HomeProjectTileButton:pointerover Border.HomeProjectTileCard">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BoxShadow" Value="0 12 28 0 #4C84F014" />
+  </Style>
+
+  <Style Selector="Border.HomeProjectTileIcon">
+    <Setter Property="Width" Value="42" />
+    <Setter Property="Height" Value="42" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+  </Style>
+
+  <Style Selector="TextBlock.HomeProjectTileTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="TextBlock.HomeProjectTileSummary">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="Border.HomeProjectTileDefaultBadge">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Warning.Background}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+  </Style>
+
+  <Style Selector="Border.HomeProjectTileTag">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="8,4" />
+  </Style>
+
+  <Style Selector="Border.HomeProjectTileTagMuted">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+  </Style>
+
+  <Style Selector="Border.HomeProjectTileEntry">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="8,6" />
   </Style>
 
   <Style Selector="Border.SideRail">

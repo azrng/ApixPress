@@ -432,7 +432,7 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0" />
-    <Setter Property="Margin" Value="0,0,16,16" />
+    <Setter Property="Margin" Value="0,0,18,18" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="VerticalAlignment" Value="Stretch" />
   </Style>
@@ -443,8 +443,8 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="{StaticResource Pad.5}" />
-    <Setter Property="MinHeight" Value="224" />
-    <Setter Property="BoxShadow" Value="0 12 32 0 #0F172A0D" />
+    <Setter Property="MinHeight" Value="286" />
+    <Setter Property="BoxShadow" Value="0 14 30 0 #0F172A0D" />
   </Style>
 
   <Style Selector="Border.ProjectCardGlow">
@@ -458,7 +458,7 @@
 
   <Style Selector="Button.ProjectCardButton:pointerover Border.ProjectCard">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BoxShadow" Value="0 18 36 0 #4C84F022" />
   </Style>
 

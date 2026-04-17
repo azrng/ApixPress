@@ -8,160 +8,200 @@
              x:Class="ApixPress.App.Views.Controls.MainWindowHomeView"
              x:DataType="vm:MainWindowViewModel"
              mc:Ignorable="d">
-      <ScrollViewer IsVisible="{Binding IsHomeTabActive}">
-        <Grid Margin="{StaticResource Pad.6}"
-              RowDefinitions="Auto,*"
-              RowSpacing="{StaticResource Space.5}">
-          <Border Classes="HomeHeroCard">
-            <Grid RowDefinitions="Auto,Auto">
-              <Grid ColumnDefinitions="*,Auto"
-                    ColumnSpacing="{StaticResource Space.5}">
-                <StackPanel Spacing="{StaticResource Space.2}">
-                  <TextBlock Classes="HeroTitle"
-                             Text="项目首页" />
-                  <TextBlock Classes="SubtleText"
-                             Text="默认打开这里查看全部项目。点击任意项目后，会在顶部以新标签页打开对应的快捷请求工作区。" />
-                </StackPanel>
-                <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
-                            Spacing="{StaticResource Space.3}"
-                            VerticalAlignment="Center">
-                  <Border Classes="DashboardStatCard">
-                    <StackPanel Spacing="4">
-                      <TextBlock Classes="CaptionText"
-                                 Text="项目总数" />
-                      <TextBlock Classes="SectionTitle"
-                                 Text="{Binding ProjectPanel.Projects.Count}" />
-                    </StackPanel>
-                  </Border>
-                  <Border Classes="DashboardStatCard">
-                    <StackPanel Spacing="4">
-                      <TextBlock Classes="CaptionText"
-                                 Text="当前模式" />
-                      <TextBlock Classes="SectionTitle"
-                                 Text="多项目 Tab" />
-                    </StackPanel>
-                  </Border>
-                </StackPanel>
-              </Grid>
-
-              <Border Grid.Row="1"
-                      Classes="HomeOverviewToolbarSection">
-                <Grid ColumnDefinitions="*,Auto"
-                      ColumnSpacing="{StaticResource Space.4}">
-                  <TextBlock Classes="SectionTitle"
-                             VerticalAlignment="Center"
-                             Text="项目列表" />
-                  <Grid Grid.Column="1"
-                        ColumnDefinitions="280,Auto"
-                        ColumnSpacing="{StaticResource Space.2}">
-                    <TextBox Grid.Column="0"
-                             Classes="ToolbarSearchBox"
-                             Watermark="搜索项目名称或备注"
-                             Text="{Binding ProjectPanel.SearchText}" />
-                    <Button Grid.Column="1"
-                            Classes="PrimaryButton"
-                            Content="新建项目"
-                            Command="{Binding OpenCreateProjectDialogCommand}" />
-                  </Grid>
-                </Grid>
-              </Border>
-            </Grid>
-          </Border>
-
-          <Border Grid.Row="1"
-                  Classes="EmptyStateCard"
-                  IsVisible="{Binding ShowProjectListEmptyState}">
-            <StackPanel Spacing="{StaticResource Space.3}"
-                        HorizontalAlignment="Center">
-              <TextBlock Classes="SectionTitle"
-                         Text="还没有项目" />
-              <TextBlock Classes="CaptionText"
-                         Text="点击右上角“新建项目”，填写项目名称和备注后即可开始。" />
-              <Button Classes="PrimaryButton"
-                      HorizontalAlignment="Center"
-                      Content="新建项目"
-                      Command="{Binding OpenCreateProjectDialogCommand}" />
+  <ScrollViewer IsVisible="{Binding IsHomeTabActive}"
+                HorizontalScrollBarVisibility="Disabled">
+    <Grid Margin="{StaticResource Pad.4}"
+          RowDefinitions="Auto,Auto,*"
+          RowSpacing="{StaticResource Space.4}">
+        <Border Classes="HomeContentHeaderCard">
+          <Grid ColumnDefinitions="*,Auto"
+                ColumnSpacing="{StaticResource Space.4}">
+            <StackPanel Spacing="{StaticResource Space.2}">
+              <StackPanel Orientation="Horizontal"
+                          Spacing="{StaticResource Space.2}">
+                <TextBlock Classes="PageTitle"
+                           Text="项目首页" />
+                <Border Classes="HomeContentOwnerBadge">
+                  <TextBlock Classes="CaptionText"
+                             Text="本地工作区" />
+                </Border>
+              </StackPanel>
+              <TextBlock Classes="SubtleText"
+                         Text="参考 Apifox 的项目列表工作台风格：首页保持轻量，重点放在筛选、进入和浏览项目卡片。"
+                         TextWrapping="Wrap" />
+              <StackPanel Orientation="Horizontal"
+                          Spacing="{StaticResource Space.5}">
+                <TextBlock Classes="HomeContentTabText HomeContentTabTextActive"
+                           Text="项目列表" />
+                <TextBlock Classes="HomeContentTabText"
+                           Text="快速打开" />
+                <TextBlock Classes="HomeContentTabText"
+                           Text="本地空间" />
+              </StackPanel>
             </StackPanel>
-          </Border>
 
-          <Border Grid.Row="1"
-                  Classes="ProjectGridHost"
-                  IsVisible="{Binding ProjectPanel.HasProjects}">
-            <ItemsControl ItemsSource="{Binding ProjectPanel.FilteredProjects}">
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        Spacing="{StaticResource Space.2}"
+                        VerticalAlignment="Top">
+              <Border Classes="HomeTopMetricPill">
+                <StackPanel Spacing="2">
+                  <TextBlock Classes="CaptionText"
+                             Text="项目总数" />
+                  <TextBlock Classes="SectionTitle"
+                             Text="{Binding ProjectPanel.Projects.Count}" />
+                </StackPanel>
+              </Border>
+              <Border Classes="HomeTopMetricPill">
+                <StackPanel Spacing="2">
+                  <TextBlock Classes="CaptionText"
+                             Text="当前可见" />
+                  <TextBlock Classes="SectionTitle"
+                             Text="{Binding ProjectPanel.FilteredProjects.Count}" />
+                </StackPanel>
+              </Border>
+              <Border Classes="HomeTopMetricPill">
+                <StackPanel Spacing="2">
+                  <TextBlock Classes="CaptionText"
+                             Text="已打开标签" />
+                  <TextBlock Classes="SectionTitle"
+                             Text="{Binding ProjectTabs.Count}" />
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                Classes="HomeContentToolbarCard">
+          <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                ColumnSpacing="{StaticResource Space.3}">
+            <Border Classes="HomeToolbarChip">
+              <TextBlock Classes="CaptionText"
+                         Text="项目列表" />
+            </Border>
+            <TextBlock Grid.Column="1"
+                       Classes="CaptionText"
+                       VerticalAlignment="Center"
+                       Text="搜索项目名称或备注，点击卡片后在顶部以新标签页进入工作区。" />
+            <TextBox Grid.Column="2"
+                     Width="240"
+                     Classes="ToolbarSearchBox"
+                     Watermark="搜索"
+                     Text="{Binding ProjectPanel.SearchText}" />
+            <Button Grid.Column="3"
+                    Classes="PrimaryButton HomeCreateProjectButton"
+                    Content="+ 新建项目"
+                    Command="{Binding OpenCreateProjectDialogCommand}" />
+          </Grid>
+        </Border>
+
+        <Border Grid.Row="2"
+                Classes="HomeContentBodyCard">
+          <Grid>
+            <Border Classes="HomeBodyEmptyCard"
+                    IsVisible="{Binding ShowProjectListEmptyState}">
+              <StackPanel Spacing="{StaticResource Space.3}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center">
+                <Border Classes="HomeBodyEmptyBadge">
+                  <TextBlock Classes="CaptionText"
+                             Text="项目列表" />
+                </Border>
+                <TextBlock Classes="PageTitle"
+                           Text="还没有项目" />
+                <TextBlock Classes="CaptionText"
+                           Text="从这里创建第一个项目后，就可以像图里的工作台一样直接筛选、浏览并打开项目。"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           MaxWidth="420" />
+                <Button Classes="PrimaryButton HomeCreateProjectButton"
+                        Content="新建项目"
+                        Command="{Binding OpenCreateProjectDialogCommand}" />
+              </StackPanel>
+            </Border>
+
+            <Border Classes="HomeBodyEmptyCard"
+                    IsVisible="{Binding ShowProjectSearchEmptyState}">
+              <StackPanel Spacing="{StaticResource Space.3}"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center">
+                <Border Classes="HomeBodyEmptyBadge">
+                  <TextBlock Classes="CaptionText"
+                             Text="搜索结果" />
+                </Border>
+                <TextBlock Classes="PageTitle"
+                           Text="没有找到匹配项目" />
+                <TextBlock Classes="CaptionText"
+                           Text="可以换一个关键词继续搜索，或者直接新建一个项目。"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           MaxWidth="360" />
+                <Button Classes="SecondaryButton HomeSidebarCreateButton"
+                        Content="新建项目"
+                        Command="{Binding OpenCreateProjectDialogCommand}" />
+              </StackPanel>
+            </Border>
+
+            <ItemsControl ItemsSource="{Binding ProjectPanel.FilteredProjects}"
+                          IsVisible="{Binding ProjectPanel.HasProjects}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                   <WrapPanel Orientation="Horizontal"
-                             ItemWidth="332"
-                             ItemHeight="264" />
+                             ItemWidth="356" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:ProjectWorkspaceItemViewModel">
-                  <Button Classes="ProjectCardButton"
-                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenProjectWorkspaceCommand}"
-                          CommandParameter="{Binding}">
-                    <Border Classes="ProjectCard">
-                      <Grid RowDefinitions="Auto,Auto,*,Auto"
-                            RowSpacing="{StaticResource Space.4}">
-                        <Border Classes="ProjectCardGlow" />
+                <Button Classes="HomeProjectTileButton"
+                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenProjectWorkspaceCommand}"
+                        CommandParameter="{Binding}">
+                  <Border Classes="HomeProjectTileCard">
+                      <Grid RowDefinitions="Auto,*,Auto"
+                            RowSpacing="{StaticResource Space.3}">
                         <Grid ColumnDefinitions="Auto,*,Auto"
                               ColumnSpacing="{StaticResource Space.3}">
-                          <Border Width="56"
-                                  Height="56"
-                                  Classes="ProjectCardIcon">
+                          <Border Classes="HomeProjectTileIcon">
                             <TextBlock Classes="ProjectAvatarText"
                                        Text="{Binding AvatarText}" />
                           </Border>
                           <StackPanel Grid.Column="1"
-                                      Spacing="3"
+                                      Spacing="4"
                                       VerticalAlignment="Center">
-                            <TextBlock Classes="ProjectCardTitle"
-                                       Text="{Binding Name}" />
+                            <TextBlock Classes="HomeProjectTileTitle"
+                                       Text="{Binding Name}"
+                                       TextTrimming="CharacterEllipsis" />
                             <TextBlock Classes="CaptionText"
-                                       Text="点击后在顶部打开独立工作标签" />
+                                       Text="点击后在顶部打开独立工作标签"
+                                       TextWrapping="Wrap" />
                           </StackPanel>
-                          <u:Badge Grid.Column="2"
-                                   Header="默认"
-                                   IsVisible="{Binding IsDefault}"
-                                   iri:ClassHelper.Classes="Light Primary" />
+                          <Border Grid.Column="2"
+                                  Classes="HomeProjectTileDefaultBadge"
+                                  IsVisible="{Binding IsDefault}">
+                            <TextBlock Classes="CaptionText"
+                                       Text="默认" />
+                          </Border>
                         </Grid>
-                        <StackPanel Grid.Row="1"
-                                    Orientation="Horizontal"
-                                    Spacing="{StaticResource Space.2}">
-                          <Border Classes="ProjectMetaPill">
-                            <TextBlock Classes="CaptionText"
-                                       Text="{Binding CategoryText}" />
-                          </Border>
-                          <Border Classes="ProjectMetaPill ProjectMetaPillMuted">
-                            <TextBlock Classes="CaptionText"
-                                       Text="快捷请求" />
-                          </Border>
-                          <Border Classes="ProjectMetaPill ProjectMetaPillMuted">
-                            <TextBlock Classes="CaptionText"
-                                       Text="环境隔离" />
-                          </Border>
-                        </StackPanel>
-                        <TextBlock Grid.Row="2"
-                                   Classes="ProjectCardSummary"
+
+                        <TextBlock Grid.Row="1"
+                                   Classes="HomeProjectTileSummary"
                                    Text="{Binding SummaryText}"
-                                   TextWrapping="Wrap" />
-                        <Grid Grid.Row="3"
+                                   TextWrapping="Wrap"
+                                   MaxLines="2" />
+
+                        <Grid Grid.Row="2"
                               ColumnDefinitions="*,Auto"
                               ColumnSpacing="{StaticResource Space.3}">
-                          <StackPanel Spacing="2">
-                            <TextBlock Classes="ProjectEntryHint"
-                                       Text="打开后保留首页，不会替换当前列表。" />
-                            <TextBlock Classes="CaptionText"
-                                       Text="{Binding DisplayName}" />
-                          </StackPanel>
+                          <TextBlock Classes="CaptionText"
+                                     VerticalAlignment="Center"
+                                     Text="{Binding DisplayName}" />
                           <Border Grid.Column="1"
-                                  Classes="ProjectEntryBadge">
+                                  Classes="HomeProjectTileEntry">
                             <StackPanel Orientation="Horizontal"
                                         Spacing="6">
-                              <TextBlock Classes="ProjectEntryBadgeText"
-                                         Text="打开标签页" />
-                              <TextBlock Classes="ProjectEntryBadgeText"
+                              <TextBlock Classes="CaptionText"
+                                         Text="打开项目" />
+                              <TextBlock Classes="CaptionText"
                                          Text="→" />
                             </StackPanel>
                           </Border>
@@ -172,7 +212,9 @@
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
-          </Border>
-        </Grid>
-      </ScrollViewer>
+          </Grid>
+        </Border>
+      
+    </Grid>
+  </ScrollViewer>
 </UserControl>

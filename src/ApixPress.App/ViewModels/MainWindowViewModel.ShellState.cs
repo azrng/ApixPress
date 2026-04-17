@@ -43,6 +43,7 @@ public partial class MainWindowViewModel
     {
         if (e.PropertyName is nameof(ProjectPanelViewModel.SelectedProject)
             or nameof(ProjectPanelViewModel.HasProjects)
+            or nameof(ProjectPanelViewModel.HasAnyProjects)
             or nameof(ProjectPanelViewModel.SearchText)
             or nameof(ProjectPanelViewModel.HasSelectedProject))
         {
@@ -66,6 +67,7 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(IsProjectBrowserMode));
         OnPropertyChanged(nameof(IsWorkspaceMode));
         OnPropertyChanged(nameof(ShowProjectListEmptyState));
+        OnPropertyChanged(nameof(ShowProjectSearchEmptyState));
         OnPropertyChanged(nameof(HasEnvironmentContext));
         OnPropertyChanged(nameof(ShowQuickRequestSaveDialog));
         OnPropertyChanged(nameof(ShowProjectImportDialog));
