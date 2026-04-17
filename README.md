@@ -136,3 +136,17 @@ API 协作平台需求文档
 4. 数据存储
 
   • 本地存储方案：sqlite + 本地备份
+
+三、开发与发布说明
+
+1. 桌面端主程序 `Apifox.App` 与更新器 `ApixPress.Updater` 默认按 `win-x64` 自包含单文件模式发布。
+
+2. 主程序默认配置与数据库初始化脚本已内嵌到程序集：
+
+  • 内嵌默认配置：`appsettings.json`
+
+  • 内嵌迁移脚本：`Data/Migrations/001_Initial.sql`
+
+3. 若发布目录旁额外提供 `appsettings.json`，程序会优先使用内嵌默认配置，再叠加外部文件覆盖，便于按环境调整更新源或本地路径。
+
+4. GitHub Actions 发布工作流位于 `.github/workflows/release.yml`，当前会分别发布主程序与更新器，并将两者合并到同一发布包中。

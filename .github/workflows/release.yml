@@ -90,6 +90,7 @@ jobs:
             -r win-x64 `
             --self-contained true `
             -o "${{ env.APP_PUBLISH_DIR }}" `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:PublishAot=false `
             -p:PublishTrimmed=false `
             -p:DebugType=None `
@@ -113,6 +114,7 @@ jobs:
             -r win-x64 `
             --self-contained true `
             -o "${{ env.UPDATER_PUBLISH_DIR }}" `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:PublishAot=false `
             -p:PublishTrimmed=false `
             -p:DebugType=None `

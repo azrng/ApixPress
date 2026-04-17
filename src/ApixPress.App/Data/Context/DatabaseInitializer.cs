@@ -2,6 +2,7 @@ using Dapper;
 using ApixPress.App.Helpers;
 using Azrng.Core.DependencyInjection;
 using System.Data;
+using System.Reflection;
 
 namespace ApixPress.App.Data.Context;
 
@@ -17,12 +18,9 @@ public sealed class DatabaseInitializer : ISingletonDependency
     public void Initialize()
     {
         var migrationPath = WorkspacePaths.ResolveFromBaseDirectory(Path.Combine("Data", "Migrations", "001_Initial.sql"));
-        if (!File.Exists(migrationPath))
-        {
-            throw new FileNotFoundException("未找到数据库初始化脚本。", migrationPath);
-        }
-
-        var sql = File.ReadAllText(migrationPath);
+        var sql = File.Exists(migrationPath)
+            ? File.ReadAllText(migrationPath)
+            : EmbeddedResourceReader.ReadRequiredText(Assembly.GetExecutingAssembly(), "Data.Migrations.001_Initial.sql");
 
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();

@@ -1,5 +1,6 @@
 using System.Reflection;
 using ApixPress.App.Data.Context;
+using ApixPress.App.Helpers;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
 using Azrng.Core.Json;
@@ -12,9 +13,11 @@ public static class ServiceBootstrapper
 {
     public static IServiceProvider Build()
     {
+        var assembly = Assembly.GetExecutingAssembly();
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonStream(EmbeddedResourceReader.OpenRequiredStream(assembly, "appsettings.json"))
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
             .Build();
 
         var services = new ServiceCollection();
