@@ -211,14 +211,15 @@
 
     <Border Grid.Row="2"
             Classes="PanelCard HttpResponseCard">
-      <DockPanel>
-        <Grid DockPanel.Dock="Top"
-              Margin="0,0,0,12">
+      <Grid RowDefinitions="Auto,*"
+            RowSpacing="{StaticResource Space.3}">
+        <Grid Grid.Row="0">
           <TextBlock Classes="SectionTitle"
                      Text="返回响应" />
         </Grid>
 
-        <Border Classes="HttpResponsePlaceholderHost"
+        <Border Grid.Row="1"
+                Classes="HttpResponsePlaceholderHost"
                 IsVisible="{Binding ResponseSection.ShowPlaceholder}">
           <StackPanel Classes="HttpResponsePlaceholderContent"
                       Spacing="{StaticResource Space.2}">
@@ -230,7 +231,8 @@
           </StackPanel>
         </Border>
 
-        <Grid IsVisible="{Binding ResponseSection.HasResponse}"
+        <Grid Grid.Row="1"
+              IsVisible="{Binding ResponseSection.HasResponse}"
               RowDefinitions="Auto,*"
               RowSpacing="{StaticResource Space.2}">
           <Grid ColumnDefinitions="Auto,Auto,Auto,*"
@@ -267,7 +269,7 @@
             </TabItem>
           </TabControl>
         </Grid>
-      </DockPanel>
+      </Grid>
     </Border>
   </Grid>
 </UserControl>

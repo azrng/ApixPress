@@ -46,6 +46,17 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
 
+    public string DisplayTitle => !string.IsNullOrWhiteSpace(Title)
+        ? Title
+        : NodeType switch
+        {
+            "http-interface" => "未命名接口",
+            "http-case" => "未命名用例",
+            "folder" => "未命名目录",
+            "quick-request" => "未命名请求",
+            _ => "未命名项"
+        };
+
     public bool ShowMethodBadge => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase);
 
     public bool ShowLeadingGlyph => !ShowMethodBadge && !IsHttpCaseNode;
@@ -90,5 +101,21 @@ public partial class ExplorerItemViewModel : ViewModelBase
     partial void OnCanLoadChanged(bool value)
     {
         OnPropertyChanged(nameof(IsClickable));
+    }
+
+    partial void OnTitleChanged(string value)
+    {
+        OnPropertyChanged(nameof(DisplayTitle));
+    }
+
+    partial void OnNodeTypeChanged(string value)
+    {
+        OnPropertyChanged(nameof(ShowMethodBadge));
+        OnPropertyChanged(nameof(ShowLeadingGlyph));
+        OnPropertyChanged(nameof(IsHttpCaseNode));
+        OnPropertyChanged(nameof(IsQuickRequestNode));
+        OnPropertyChanged(nameof(ShowTrailingDot));
+        OnPropertyChanged(nameof(NodeGlyph));
+        OnPropertyChanged(nameof(DisplayTitle));
     }
 }

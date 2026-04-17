@@ -289,10 +289,47 @@
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
+  <Style Selector="Border.EnvironmentDetailHeroCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+
+  <Style Selector="Border.EnvironmentDetailHeroIcon">
+    <Setter Property="Width" Value="44" />
+    <Setter Property="Height" Value="44" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+  </Style>
+
+  <Style Selector="Border.EnvironmentDetailHeroIcon TextBlock">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Link}" />
+  </Style>
+
+  <Style Selector="TextBox.EnvironmentHeroNameInput">
+    <Setter Property="MinWidth" Value="260" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
   <Style Selector="Border.EnvironmentListItem">
-    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="MinHeight" Value="64" />
+  </Style>
+
+  <Style Selector="TextBlock.EnvironmentListItemTitle">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="TextBlock.EnvironmentListItemSubtitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 
   <Style Selector="Border.EnvironmentVariableHeader">
@@ -314,7 +351,55 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
   </Style>
 
+  <Style Selector="ListBox.EnvironmentListBox ListBoxItem:pointerover Border.EnvironmentListItem">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+  </Style>
+
+  <Style Selector="ListBox.EnvironmentListBox ListBoxItem:selected">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
   <Style Selector="ListBox.EnvironmentListBox ListBoxItem:selected Border.EnvironmentListItem">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="ListBox.EnvironmentListBox ListBoxItem:selected TextBlock.EnvironmentListItemTitle">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="ListBox.EnvironmentListBox ListBoxItem:selected TextBlock.EnvironmentListItemSubtitle">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="Border.EnvironmentSectionHeader">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Border.EnvironmentSectionRow">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="TextBlock.EnvironmentTableHeaderText">
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="TextBlock.EnvironmentTableCellLabel">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBox.EnvironmentTableInput">
+    <Setter Property="MinHeight" Value="36" />
   </Style>
 </Styles>

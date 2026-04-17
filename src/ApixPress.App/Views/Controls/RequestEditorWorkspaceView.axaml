@@ -27,8 +27,8 @@
             ColumnSpacing="{StaticResource Space.2}">
         <Border Grid.Column="0"
                 Classes="HttpRequestUrlShell">
-          <Grid ColumnDefinitions="88,Auto,*"
-                ColumnSpacing="{StaticResource Space.2}">
+          <Grid ColumnDefinitions="Auto,Auto,*"
+                ColumnSpacing="{StaticResource Space.1}">
             <ComboBox Grid.Column="0"
                       Classes="HttpMethodSelector"
                       ItemsSource="{Binding HttpMethods}"
@@ -94,8 +94,8 @@
             ColumnSpacing="{StaticResource Space.2}">
         <Border Grid.Column="0"
                 Classes="HttpRequestUrlShell">
-          <Grid ColumnDefinitions="88,Auto,*"
-                ColumnSpacing="{StaticResource Space.2}">
+          <Grid ColumnDefinitions="Auto,Auto,*"
+                ColumnSpacing="{StaticResource Space.1}">
             <ComboBox Grid.Column="0"
                       Classes="HttpMethodSelector"
                       ItemsSource="{Binding HttpMethods}"

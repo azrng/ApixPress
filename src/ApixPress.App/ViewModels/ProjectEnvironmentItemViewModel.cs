@@ -25,6 +25,7 @@ public partial class ProjectEnvironmentItemViewModel : ViewModelBase
 
     public string DisplayName => IsActive ? $"{Name}（当前）" : Name;
     public string CompactDisplayName => Name;
+    public string DisplayBaseUrl => string.IsNullOrWhiteSpace(BaseUrl) ? "未配置前置 URL" : BaseUrl;
 
     partial void OnNameChanged(string value)
     {
@@ -36,5 +37,10 @@ public partial class ProjectEnvironmentItemViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(DisplayName));
         OnPropertyChanged(nameof(CompactDisplayName));
+    }
+
+    partial void OnBaseUrlChanged(string value)
+    {
+        OnPropertyChanged(nameof(DisplayBaseUrl));
     }
 }

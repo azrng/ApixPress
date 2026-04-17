@@ -234,12 +234,12 @@
   <Style Selector="Button.WorkspaceTreeNodeButton">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Padding" Value="0,2" />
+    <Setter Property="Padding" Value="0,1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-    <Setter Property="MinHeight" Value="24" />
+    <Setter Property="MinHeight" Value="22" />
   </Style>
 
   <Style Selector="Button.WorkspaceTreeNodeButton:pointerover">
@@ -251,7 +251,8 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
-    <Setter Property="Padding" Value="8,6" />
+    <Setter Property="Padding" Value="6,3" />
+    <Setter Property="MinHeight" Value="20" />
   </Style>
 
   <Style Selector="ItemsControl.ProjectSidebarInlineTree Button.WorkspaceTreeNodeButton:pointerover">
@@ -342,15 +343,15 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="Padding" Value="6,4" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
-    <Setter Property="MinWidth" Value="72" />
+    <Setter Property="MinWidth" Value="60" />
     <Setter Property="MinHeight" Value="32" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
   <Style Selector="ComboBox.HttpMethodSelector /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Margin" Value="0,0,14,0" />
+    <Setter Property="Margin" Value="0,0,10,0" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
@@ -368,9 +369,9 @@
   </Style>
 
   <Style Selector="Border.HttpBaseUrlPrefixCard">
-    <Setter Property="Margin" Value="2,0,0,0" />
+    <Setter Property="Margin" Value="0" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="Padding" Value="8,6" />
     <Setter Property="MinHeight" Value="34" />
   </Style>
 

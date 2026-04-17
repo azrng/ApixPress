@@ -29,7 +29,7 @@
 
   <Style Selector="StackPanel.ProjectSidebarModuleChildren">
     <Setter Property="Spacing" Value="{StaticResource Space.2}" />
-    <Setter Property="Margin" Value="12,6,0,0" />
+    <Setter Property="Margin" Value="10,4,0,0" />
   </Style>
 
   <Style Selector="StackPanel.ProjectSidebarNestedSection">
@@ -113,8 +113,8 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="12,6,0,0" />
-    <Setter Property="Margin" Value="12,2,0,0" />
+    <Setter Property="Padding" Value="10,2,0,0" />
+    <Setter Property="Margin" Value="10,0,0,0" />
   </Style>
 
   <Style Selector="Border.QuickRequestCatalogBody">
@@ -151,11 +151,11 @@
   </Style>
 
   <Style Selector="ItemsControl.ProjectSidebarInlineTree">
-    <Setter Property="Margin" Value="0,4,0,0" />
+    <Setter Property="Margin" Value="0" />
   </Style>
 
   <Style Selector="ItemsControl.ProjectSidebarInlineTreeChildren">
-    <Setter Property="Margin" Value="18,0,0,0" />
+    <Setter Property="Margin" Value="16,0,0,0" />
   </Style>
 
   <Style Selector="ToggleButton.ProjectSidebarTreeExpanderToggle TextBlock.ProjectSidebarCatalogChevron">
@@ -230,6 +230,12 @@
     <Setter Property="Padding" Value="4,4,4,10" />
   </Style>
 
+  <Style Selector="Border.ProjectWorkspaceTabViewport">
+    <Setter Property="ClipToBounds" Value="True" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="MinWidth" Value="0" />
+  </Style>
+
   <Style Selector="Border.ProjectWorkspaceMetaCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
@@ -242,6 +248,7 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
   </Style>
 
   <Style Selector="TabStrip.ProjectWorkspaceEditorTabs TabStripItem">
@@ -345,7 +352,8 @@
   <Style Selector="ComboBox.ProjectWorkspaceToolbarComboBox">
     <Setter Property="MinWidth" Value="156" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="MinHeight" Value="36" />
+    <Setter Property="Height" Value="36" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
 
   <Style Selector="Button.ProjectWorkspaceToolbarIconButton">
@@ -355,6 +363,7 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
     <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
 
   <Style Selector="ComboBox.ProjectSidebarEnvCombo">

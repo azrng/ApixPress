@@ -48,13 +48,14 @@ public sealed class EnvironmentVariableService : IEnvironmentVariableService, IT
             ? null
             : await _projectEnvironmentRepository.GetByIdAsync(environment.Id, cancellationToken);
         var currentEnvironments = await _projectEnvironmentRepository.GetByProjectAsync(environment.ProjectId, cancellationToken);
+        var normalizedBaseUrl = NormalizeBaseUrl(environment.BaseUrl);
 
         var entity = new ProjectEnvironmentEntity
         {
             Id = string.IsNullOrWhiteSpace(environment.Id) ? Guid.NewGuid().ToString("N") : environment.Id,
             ProjectId = environment.ProjectId,
             Name = environment.Name,
-            BaseUrl = environment.BaseUrl,
+            BaseUrl = normalizedBaseUrl,
             IsActive = environment.IsActive || currentEnvironments.Count == 0 || existing?.IsActive == true,
             SortOrder = existing?.SortOrder ?? environment.SortOrder,
             CreatedAt = existing?.CreatedAt ?? DateTime.UtcNow,
@@ -184,6 +185,14 @@ public sealed class EnvironmentVariableService : IEnvironmentVariableService, IT
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt
         };
+    }
+
+    private static string NormalizeBaseUrl(string? baseUrl)
+    {
+        var normalized = (baseUrl ?? string.Empty).Trim();
+        return string.IsNullOrWhiteSpace(normalized)
+            ? string.Empty
+            : normalized.TrimEnd('/');
     }
 
     private static EnvironmentVariableDto ToVariableDto(EnvironmentVariableEntity entity)

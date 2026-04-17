@@ -46,6 +46,27 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_ShouldExposeFallbackDisplayTitleForUnnamedInterface()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local",
+        [
+            ("默认分组", string.Empty, "GET", "/unnamed-endpoint")
+        ]);
+
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        var folderItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (1)");
+        var unnamedInterface = Assert.Single(folderItem!.Children);
+
+        Assert.Equal(string.Empty, unnamedInterface.Title);
+        Assert.Equal("未命名接口", unnamedInterface.DisplayTitle);
+    }
+
+    [Fact]
     public async Task ImportSwaggerUrlCommand_ShouldRefreshImportedDocumentList()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();

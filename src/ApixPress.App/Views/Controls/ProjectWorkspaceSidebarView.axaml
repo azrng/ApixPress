@@ -63,7 +63,7 @@
                          IsVisible="{Binding ShowMethodBadge}"
                          iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
                 <TextBlock Grid.Column="2"
-                           Text="{Binding Title}"
+                           Text="{Binding DisplayTitle}"
                            VerticalAlignment="Center"
                            TextWrapping="Wrap" />
                 <Border Grid.Column="3"
@@ -292,7 +292,7 @@
                                          IsVisible="{Binding ShowMethodBadge}"
                                          iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
                                 <TextBlock Grid.Column="2"
-                                           Text="{Binding Title}"
+                                           Text="{Binding DisplayTitle}"
                                            VerticalAlignment="Center"
                                            TextWrapping="Wrap" />
                                 <Border Grid.Column="3"

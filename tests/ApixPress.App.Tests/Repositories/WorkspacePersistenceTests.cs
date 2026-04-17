@@ -361,4 +361,38 @@ public sealed partial class WorkspacePersistenceTests
         Assert.False(active.ContainsKey("token"));
     }
 
+    [Fact]
+    public async Task EnvironmentVariableService_ShouldTrimTrailingSlashWhenSavingBaseUrl()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var environmentService = new EnvironmentVariableService(new EnvironmentVariableRepository(factory), environmentRepository);
+
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "BaseUrl 规整测试"
+        }, CancellationToken.None)).Data!;
+
+        var environment = Assert.Single(await environmentService.GetEnvironmentsAsync(project.Id, CancellationToken.None));
+
+        var saved = (await environmentService.SaveEnvironmentAsync(new ProjectEnvironmentDto
+        {
+            Id = environment.Id,
+            ProjectId = project.Id,
+            Name = environment.Name,
+            BaseUrl = " http://localhost:5172/ ",
+            IsActive = true,
+            SortOrder = environment.SortOrder
+        }, CancellationToken.None)).Data!;
+
+        Assert.Equal("http://localhost:5172", saved.BaseUrl);
+
+        var reloaded = Assert.Single(await environmentService.GetEnvironmentsAsync(project.Id, CancellationToken.None));
+        Assert.Equal("http://localhost:5172", reloaded.BaseUrl);
+    }
+
 }
