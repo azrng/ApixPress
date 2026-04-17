@@ -3,6 +3,7 @@ using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels.Base;
 using Azrng.Core.Results;
+using System.Text.Json;
 
 namespace ApixPress.App.ViewModels;
 
@@ -81,7 +82,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
         StatusText = r.StatusCode is { } code ? $"HTTP {code}" : "请求完成";
         DurationText = $"{r.DurationMs} ms";
         SizeText = UiFormatHelper.FormatBytes(r.SizeBytes);
-        BodyText = r.Content;
+        BodyText = FormatResponseBody(r);
         HeadersText = string.Join(Environment.NewLine, r.Headers.Select(h => $"{h.Name}: {h.Value}"));
     }
 
@@ -99,5 +100,41 @@ public partial class ResponseSectionViewModel : ViewModelBase
     partial void OnStatusTextChanged(string value)
     {
         OnPropertyChanged(nameof(StatusBadgeClass));
+    }
+
+    private static string FormatResponseBody(ResponseSnapshotDto response)
+    {
+        if (string.IsNullOrWhiteSpace(response.Content) || !IsJsonResponse(response.Headers))
+        {
+            return response.Content;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(response.Content);
+            return JsonSerializer.Serialize(document.RootElement, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+        }
+        catch (JsonException)
+        {
+            return response.Content;
+        }
+    }
+
+    private static bool IsJsonResponse(IEnumerable<ResponseHeaderDto> headers)
+    {
+        var contentType = headers.FirstOrDefault(header =>
+            string.Equals(header.Name, "Content-Type", StringComparison.OrdinalIgnoreCase))?.Value;
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            return false;
+        }
+
+        var mediaType = contentType.Split(';', 2, StringSplitOptions.TrimEntries)[0];
+        return mediaType.Equals("application/json", StringComparison.OrdinalIgnoreCase)
+               || mediaType.Equals("text/json", StringComparison.OrdinalIgnoreCase)
+               || mediaType.EndsWith("+json", StringComparison.OrdinalIgnoreCase);
     }
 }
