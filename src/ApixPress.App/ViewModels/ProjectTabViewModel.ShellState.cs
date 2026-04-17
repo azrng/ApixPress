@@ -27,6 +27,7 @@ public partial class ProjectTabViewModel
         OnPropertyChanged(nameof(ShowProjectSettingsImportDataSection));
         OnPropertyChanged(nameof(IsImportFileMode));
         OnPropertyChanged(nameof(IsImportUrlMode));
+        OnPropertyChanged(nameof(CanEditImportData));
         OnPropertyChanged(nameof(ShowProjectImportDialogStatus));
         OnPropertyChanged(nameof(HasPendingImportPreview));
         OnPropertyChanged(nameof(PendingImportOverwriteTitle));

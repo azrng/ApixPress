@@ -351,4 +351,51 @@ public sealed partial class WorkspacePersistenceTests
 
         Assert.Equal("http://localhost:5000", document.BaseUrl);
     }
+
+    [Fact]
+    public async Task ApiWorkspaceService_ShouldReusePreviewedUrlPayloadForImport()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var repository = new ApiDocumentRepository(factory);
+        var downloadCount = 0;
+        var service = new ApiWorkspaceService(
+            repository,
+            (_, _) =>
+            {
+                downloadCount++;
+                return Task.FromResult("""
+                                       {
+                                         "openapi": "3.0.1",
+                                         "info": { "title": "Remote Import Demo" },
+                                         "paths": {
+                                           "/orders": {
+                                             "get": {
+                                               "summary": "查询订单"
+                                             }
+                                           }
+                                         }
+                                       }
+                                       """);
+            });
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "URL 导入复用项目"
+        }, CancellationToken.None)).Data!;
+        const string url = "http://demo.local/swagger/v1/swagger.json";
+
+        var previewResult = await service.PreviewImportFromUrlAsync(project.Id, url, CancellationToken.None);
+        var importResult = await service.ImportFromUrlAsync(project.Id, url, CancellationToken.None);
+
+        Assert.True(previewResult.IsSuccess);
+        Assert.True(importResult.IsSuccess);
+        Assert.Equal(1, downloadCount);
+
+        var document = Assert.Single(await service.GetDocumentsAsync(project.Id, CancellationToken.None));
+        Assert.Equal("Remote Import Demo", document.Name);
+    }
 }

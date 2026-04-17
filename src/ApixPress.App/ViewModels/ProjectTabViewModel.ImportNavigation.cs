@@ -75,7 +75,9 @@ public partial class ProjectTabViewModel
         await ImportSwaggerAsync(
             cancellationToken => _apiWorkspaceService.PreviewImportFromFileAsync(ProjectId, SelectedImportFilePath.Trim(), cancellationToken),
             cancellationToken => _apiWorkspaceService.ImportFromFileAsync(ProjectId, SelectedImportFilePath.Trim(), cancellationToken),
-            document => $"Swagger 文件导入成功：{document.Name}");
+            document => $"Swagger 文件导入成功：{document.Name}",
+            "正在校验本地 Swagger 文件...",
+            "正在导入本地 Swagger 文件...");
     }
 
     [RelayCommand]
@@ -93,7 +95,9 @@ public partial class ProjectTabViewModel
         await ImportSwaggerAsync(
             cancellationToken => _apiWorkspaceService.PreviewImportFromUrlAsync(ProjectId, importTargetUrl, cancellationToken),
             cancellationToken => _apiWorkspaceService.ImportFromUrlAsync(ProjectId, importTargetUrl, cancellationToken),
-            document => $"Swagger URL 导入成功：{document.Name}");
+            document => $"Swagger URL 导入成功：{document.Name}",
+            "正在获取并校验 Swagger URL...",
+            "正在导入 Swagger URL...");
     }
 
     [RelayCommand]

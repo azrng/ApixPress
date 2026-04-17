@@ -10,6 +10,7 @@ public partial class ProjectTabViewModel
     public bool ShowProjectSettingsImportDataSection => IsProjectSettingsSection && IsProjectSettingsImportDataSelected;
     public bool IsImportFileMode => SelectedImportDataMode == ImportDataModes.File;
     public bool IsImportUrlMode => SelectedImportDataMode == ImportDataModes.Url;
+    public bool CanEditImportData => !IsImportDataBusy;
     public bool ShowProjectImportDialogStatus => ShowImportStatusInfo || ShowImportStatusSuccess || ShowImportStatusError;
     public bool HasSelectedImportFile => !string.IsNullOrWhiteSpace(SelectedImportFilePath);
     public string SelectedImportFileName => HasSelectedImportFile ? Path.GetFileName(SelectedImportFilePath) : "尚未选择 Swagger 文件";

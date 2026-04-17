@@ -66,6 +66,32 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task ImportSwaggerUrlCommand_ShouldShowBusyOverlayStateWhileLoading()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService
+        {
+            UrlPreviewGate = new TaskCompletionSource<bool>()
+        };
+        var viewModel = CreateViewModel(apiWorkspaceService);
+        await viewModel.InitializeAsync();
+
+        viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
+        viewModel.ImportUrl = "https://demo.local/swagger.json";
+
+        var importTask = viewModel.ImportSwaggerUrlCommand.ExecuteAsync(null);
+
+        Assert.True(SpinWait.SpinUntil(() => viewModel.IsImportDataBusy, TimeSpan.FromSeconds(1)));
+        Assert.False(viewModel.CanEditImportData);
+        Assert.Equal("正在获取并校验 Swagger URL...", viewModel.ImportDataBusyText);
+
+        apiWorkspaceService.UrlPreviewGate.SetResult(true);
+        await importTask;
+
+        Assert.False(viewModel.IsImportDataBusy);
+        Assert.True(viewModel.CanEditImportData);
+    }
+
+    [Fact]
     public async Task ImportSwaggerUrlCommand_ShouldAppendImportedDocumentWhenNoPathConflict()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();

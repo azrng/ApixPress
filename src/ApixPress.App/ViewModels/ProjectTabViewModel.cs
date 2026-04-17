@@ -197,6 +197,9 @@ public partial class ProjectTabViewModel : ViewModelBase
     private bool isImportDataBusy;
 
     [ObservableProperty]
+    private string importDataBusyText = "正在处理 Swagger 导入...";
+
+    [ObservableProperty]
     private string importDataStatusText = "请选择 Swagger/OpenAPI JSON 文件，或输入可访问的文档 URL。";
 
     [ObservableProperty]

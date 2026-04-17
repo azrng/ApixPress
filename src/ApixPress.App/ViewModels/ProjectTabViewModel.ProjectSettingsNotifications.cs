@@ -42,6 +42,12 @@ public partial class ProjectTabViewModel
         OnPropertyChanged(nameof(IsImportUrlMode));
     }
 
+    partial void OnIsImportDataBusyChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanEditImportData));
+        OnPropertyChanged(nameof(ShowImportedApiDocumentsEmptyState));
+    }
+
     partial void OnSelectedImportFilePathChanged(string value)
     {
         OnPropertyChanged(nameof(HasSelectedImportFile));

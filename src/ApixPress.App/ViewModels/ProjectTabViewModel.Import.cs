@@ -10,7 +10,9 @@ public partial class ProjectTabViewModel
     private async Task ImportSwaggerAsync(
         Func<CancellationToken, Task<IResultModel<ApiImportPreviewDto>>> previewAction,
         Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> importAction,
-        Func<ApiDocumentDto, string> buildSuccessMessage)
+        Func<ApiDocumentDto, string> buildSuccessMessage,
+        string previewBusyText,
+        string importBusyText)
     {
         if (IsImportDataBusy)
         {
@@ -18,6 +20,7 @@ public partial class ProjectTabViewModel
         }
 
         var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _importCancellationTokenSource).Token;
+        ImportDataBusyText = previewBusyText;
         IsImportDataBusy = true;
         try
         {
@@ -34,7 +37,7 @@ public partial class ProjectTabViewModel
 
             if (previewResult.Data.ConflictCount > 0)
             {
-                _pendingImportRequest = new PendingImportRequest(importAction, buildSuccessMessage);
+                _pendingImportRequest = new PendingImportRequest(importAction, buildSuccessMessage, importBusyText);
                 PendingImportPreview = previewResult.Data;
                 IsImportOverwriteConfirmDialogOpen = true;
                 SetImportDataStatus(
@@ -44,7 +47,7 @@ public partial class ProjectTabViewModel
                 return;
             }
 
-            await ExecuteImportAsync(importAction, buildSuccessMessage, cancellationToken);
+            await ExecuteImportAsync(importAction, buildSuccessMessage, importBusyText, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -74,10 +77,15 @@ public partial class ProjectTabViewModel
         }
 
         var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _importCancellationTokenSource).Token;
+        ImportDataBusyText = _pendingImportRequest.ImportBusyText;
         IsImportDataBusy = true;
         try
         {
-            await ExecuteImportAsync(_pendingImportRequest.ImportAction, _pendingImportRequest.BuildSuccessMessage, cancellationToken);
+            await ExecuteImportAsync(
+                _pendingImportRequest.ImportAction,
+                _pendingImportRequest.BuildSuccessMessage,
+                _pendingImportRequest.ImportBusyText,
+                cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -92,8 +100,10 @@ public partial class ProjectTabViewModel
     private async Task ExecuteImportAsync(
         Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> importAction,
         Func<ApiDocumentDto, string> buildSuccessMessage,
+        string importBusyText,
         CancellationToken cancellationToken)
     {
+        ImportDataBusyText = importBusyText;
         var result = await importAction(cancellationToken);
         if (!result.IsSuccess || result.Data is null)
         {
@@ -105,6 +115,7 @@ public partial class ProjectTabViewModel
             return;
         }
 
+        ImportDataBusyText = "正在刷新导入结果...";
         await LoadImportedDocumentsAsync(manageBusyState: false);
         var successMessage = buildSuccessMessage(result.Data);
         ClearPendingImportConfirmation();
@@ -172,14 +183,18 @@ public partial class ProjectTabViewModel
     {
         public PendingImportRequest(
             Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> importAction,
-            Func<ApiDocumentDto, string> buildSuccessMessage)
+            Func<ApiDocumentDto, string> buildSuccessMessage,
+            string importBusyText)
         {
             ImportAction = importAction;
             BuildSuccessMessage = buildSuccessMessage;
+            ImportBusyText = importBusyText;
         }
 
         public Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> ImportAction { get; }
 
         public Func<ApiDocumentDto, string> BuildSuccessMessage { get; }
+
+        public string ImportBusyText { get; }
     }
 }

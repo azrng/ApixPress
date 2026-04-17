@@ -12,12 +12,28 @@ namespace ApixPress.App.Services.Implementations;
 public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDependency
 {
     private const long MaxSwaggerFileSizeBytes = 20 * 1024 * 1024;
+    private static readonly TimeSpan UrlImportCacheLifetime = TimeSpan.FromMinutes(10);
 
     private readonly IApiDocumentRepository _apiDocumentRepository;
+    private readonly Func<Uri, CancellationToken, Task<string>> _downloadOpenApiDocumentAsync;
+    private readonly Dictionary<string, CachedUrlImportPayload> _cachedUrlImports = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Lock _urlImportCacheLock = new();
 
     public ApiWorkspaceService(IApiDocumentRepository apiDocumentRepository)
+        : this(apiDocumentRepository, static async (targetUri, cancellationToken) =>
+        {
+            using var httpClient = new HttpClient();
+            return await httpClient.GetStringAsync(targetUri, cancellationToken);
+        })
+    {
+    }
+
+    public ApiWorkspaceService(
+        IApiDocumentRepository apiDocumentRepository,
+        Func<Uri, CancellationToken, Task<string>> downloadOpenApiDocumentAsync)
     {
         _apiDocumentRepository = apiDocumentRepository;
+        _downloadOpenApiDocumentAsync = downloadOpenApiDocumentAsync;
     }
 
     public async Task<IReadOnlyList<ApiDocumentDto>> GetDocumentsAsync(string projectId, CancellationToken cancellationToken)
@@ -66,8 +82,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
                 return ResultModel<ApiDocumentDto>.Failure("请输入有效的 Swagger/OpenAPI 文档 URL。");
             }
 
-            using var httpClient = new HttpClient();
-            var json = await httpClient.GetStringAsync(targetUri, cancellationToken);
+            var json = await GetCachedOrDownloadUrlDocumentAsync(projectId, url, targetUri, cancellationToken);
             return await ImportCoreAsync(projectId, "URL", url, json, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -77,6 +92,10 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         catch (Exception exception)
         {
             return ResultModel<ApiDocumentDto>.Failure($"URL 导入失败：{exception.Message}");
+        }
+        finally
+        {
+            ClearCachedUrlDocument(projectId, url);
         }
     }
 
@@ -89,9 +108,14 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
                 return ResultModel<ApiImportPreviewDto>.Failure("请输入有效的 Swagger/OpenAPI 文档 URL。");
             }
 
-            using var httpClient = new HttpClient();
-            var json = await httpClient.GetStringAsync(targetUri, cancellationToken);
-            return await PreviewImportCoreAsync(projectId, "URL", url, json, cancellationToken);
+            var json = await DownloadAndCacheUrlDocumentAsync(projectId, url, targetUri, cancellationToken);
+            var previewResult = await PreviewImportCoreAsync(projectId, "URL", url, json, cancellationToken);
+            if (!previewResult.IsSuccess)
+            {
+                ClearCachedUrlDocument(projectId, url);
+            }
+
+            return previewResult;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -334,4 +358,75 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         return string.Equals(requestCase.RequestSnapshot.Method, endpoint.Method, StringComparison.OrdinalIgnoreCase)
             && string.Equals(requestCase.RequestSnapshot.Url, endpoint.Path, StringComparison.OrdinalIgnoreCase);
     }
+
+    private async Task<string> DownloadAndCacheUrlDocumentAsync(
+        string projectId,
+        string url,
+        Uri targetUri,
+        CancellationToken cancellationToken)
+    {
+        var json = await _downloadOpenApiDocumentAsync(targetUri, cancellationToken);
+        CacheUrlDocument(projectId, url, json);
+        return json;
+    }
+
+    private async Task<string> GetCachedOrDownloadUrlDocumentAsync(
+        string projectId,
+        string url,
+        Uri targetUri,
+        CancellationToken cancellationToken)
+    {
+        if (TryGetCachedUrlDocument(projectId, url, out var cachedJson))
+        {
+            return cachedJson;
+        }
+
+        return await DownloadAndCacheUrlDocumentAsync(projectId, url, targetUri, cancellationToken);
+    }
+
+    private bool TryGetCachedUrlDocument(string projectId, string url, out string json)
+    {
+        lock (_urlImportCacheLock)
+        {
+            var cacheKey = BuildCachedUrlImportKey(projectId, url);
+            if (!_cachedUrlImports.TryGetValue(cacheKey, out var payload))
+            {
+                json = string.Empty;
+                return false;
+            }
+
+            if (DateTime.UtcNow - payload.CachedAt > UrlImportCacheLifetime)
+            {
+                _cachedUrlImports.Remove(cacheKey);
+                json = string.Empty;
+                return false;
+            }
+
+            json = payload.Json;
+            return true;
+        }
+    }
+
+    private void CacheUrlDocument(string projectId, string url, string json)
+    {
+        lock (_urlImportCacheLock)
+        {
+            _cachedUrlImports[BuildCachedUrlImportKey(projectId, url)] = new CachedUrlImportPayload(json, DateTime.UtcNow);
+        }
+    }
+
+    private void ClearCachedUrlDocument(string projectId, string url)
+    {
+        lock (_urlImportCacheLock)
+        {
+            _cachedUrlImports.Remove(BuildCachedUrlImportKey(projectId, url));
+        }
+    }
+
+    private static string BuildCachedUrlImportKey(string projectId, string url)
+    {
+        return $"{projectId}::{url.Trim()}";
+    }
+
+    private sealed record CachedUrlImportPayload(string Json, DateTime CachedAt);
 }

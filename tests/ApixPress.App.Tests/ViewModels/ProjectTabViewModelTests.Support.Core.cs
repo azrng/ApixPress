@@ -67,6 +67,8 @@ public sealed partial class ProjectTabViewModelTests
         private readonly Dictionary<string, List<ApiEndpointDto>> _endpointsByDocument = new(StringComparer.OrdinalIgnoreCase);
 
         public string LastImportedUrl { get; private set; } = string.Empty;
+        public TaskCompletionSource<bool>? UrlPreviewGate { get; set; }
+        public TaskCompletionSource<bool>? UrlImportGate { get; set; }
 
         public void SeedDocument(string projectId, string name, string sourceType, string sourceValue, string baseUrl, int endpointCount)
         {
@@ -137,9 +139,14 @@ public sealed partial class ProjectTabViewModelTests
             return Task.FromResult(document);
         }
 
-        public Task<IResultModel<ApiImportPreviewDto>> PreviewImportFromUrlAsync(string projectId, string url, CancellationToken cancellationToken)
+        public async Task<IResultModel<ApiImportPreviewDto>> PreviewImportFromUrlAsync(string projectId, string url, CancellationToken cancellationToken)
         {
-            return Task.FromResult<IResultModel<ApiImportPreviewDto>>(ResultModel<ApiImportPreviewDto>.Success(
+            if (UrlPreviewGate is not null)
+            {
+                await UrlPreviewGate.Task.WaitAsync(cancellationToken);
+            }
+
+            return ResultModel<ApiImportPreviewDto>.Success(
                 BuildPreview(projectId, "URL", url,
                 [
                     new ApiEndpointDto
@@ -156,7 +163,7 @@ public sealed partial class ProjectTabViewModelTests
                         Method = "POST",
                         Path = "/orders"
                     }
-                ])));
+                ]));
         }
 
         public Task<IResultModel<ApiImportPreviewDto>> PreviewImportFromFileAsync(string projectId, string filePath, CancellationToken cancellationToken)
@@ -174,15 +181,20 @@ public sealed partial class ProjectTabViewModelTests
                 ])));
         }
 
-        public Task<IResultModel<ApiDocumentDto>> ImportFromUrlAsync(string projectId, string url, CancellationToken cancellationToken)
+        public async Task<IResultModel<ApiDocumentDto>> ImportFromUrlAsync(string projectId, string url, CancellationToken cancellationToken)
         {
+            if (UrlImportGate is not null)
+            {
+                await UrlImportGate.Task.WaitAsync(cancellationToken);
+            }
+
             LastImportedUrl = url;
             var document = SaveImportedDocument(projectId, "远程订单服务", "URL", url, "https://order.demo.local",
             [
                 ("订单", "查询订单列表", "GET", "/orders"),
                 ("订单", "创建订单", "POST", "/orders")
             ]);
-            return Task.FromResult<IResultModel<ApiDocumentDto>>(ResultModel<ApiDocumentDto>.Success(document));
+            return ResultModel<ApiDocumentDto>.Success(document);
         }
 
         public Task<IResultModel<ApiDocumentDto>> ImportFromFileAsync(string projectId, string filePath, CancellationToken cancellationToken)
