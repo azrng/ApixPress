@@ -26,14 +26,14 @@
               <TextBox Classes="SectionInput DialogInput"
                        u:FormItem.Label="项目名称"
                        Watermark="请输入项目名称"
-                       Text="{Binding ProjectPanel.DraftProjectName}" />
+                       Text="{Binding ProjectPanel.Creation.DraftProjectName}" />
               <TextBox Classes="SectionInput DialogInput"
                        u:FormItem.Label="备注信息"
                        AcceptsReturn="True"
                        Height="112"
                        TextWrapping="Wrap"
                        Watermark="补充项目用途、团队或说明"
-                       Text="{Binding ProjectPanel.DraftProjectDescription}" />
+                       Text="{Binding ProjectPanel.Creation.DraftProjectDescription}" />
             </u:Form>
           </Border>
           <StackPanel Grid.Row="2"
@@ -45,7 +45,7 @@
                     Command="{Binding CloseCreateProjectDialogCommand}" />
             <Button Classes="DialogPrimaryButton"
                     Content="创建项目"
-                    Command="{Binding ProjectPanel.CreateProjectCommand}" />
+                    Command="{Binding ProjectPanel.Creation.CreateProjectCommand}" />
           </StackPanel>
         </Grid>
       </Border>

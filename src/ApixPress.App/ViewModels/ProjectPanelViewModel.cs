@@ -21,20 +21,15 @@ public partial class ProjectPanelViewModel : ViewModelBase
     public ProjectPanelViewModel(IProjectWorkspaceService projectWorkspaceService)
     {
         _projectWorkspaceService = projectWorkspaceService;
+        Creation = new ProjectCreationViewModel(BuildNextProjectName, CreateProjectAsync);
     }
 
     public ObservableCollection<ProjectWorkspaceItemViewModel> Projects { get; } = [];
     public ObservableCollection<ProjectWorkspaceItemViewModel> FilteredProjects { get; } = [];
+    public ProjectCreationViewModel Creation { get; }
 
     [ObservableProperty]
     private ProjectWorkspaceItemViewModel? selectedProject;
-
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(CreateProjectCommand))]
-    private string draftProjectName = string.Empty;
-
-    [ObservableProperty]
-    private string draftProjectDescription = string.Empty;
 
     [ObservableProperty]
     private string searchText = string.Empty;
@@ -72,40 +67,32 @@ public partial class ProjectPanelViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanCreateProject))]
-    private async Task CreateProjectAsync()
+    private async Task<bool> CreateProjectAsync(string projectName, string projectDescription)
     {
-        var projectName = DraftProjectName.Trim();
-        if (string.IsNullOrWhiteSpace(projectName))
-        {
-            return;
-        }
-
         var result = await _projectWorkspaceService.SaveAsync(new ProjectWorkspaceDto
         {
             Name = projectName,
-            Description = DraftProjectDescription.Trim(),
+            Description = projectDescription,
             IsDefault = Projects.Count == 0
         }, CancellationToken.None);
 
-        if (result.IsSuccess && result.Data is not null)
+        if (!result.IsSuccess || result.Data is null)
         {
-            DraftProjectName = string.Empty;
-            DraftProjectDescription = string.Empty;
-            await LoadProjectsAsync(result.Data.Id);
-            ProjectCreated?.Invoke();
+            return false;
         }
-    }
 
-    private bool CanCreateProject()
-    {
-        return !string.IsNullOrWhiteSpace(DraftProjectName);
-    }
-
-    [RelayCommand]
-    private void UseProjectTemplate()
-    {
-        DraftProjectName = BuildNextProjectName();
+        var created = CreateProjectItem(result.Data);
+        _allProjects.Add(created);
+        Projects.Add(created);
+        RefreshFilteredProjects();
+        _isUpdatingSelection = true;
+        SelectedProject = created;
+        _isUpdatingSelection = false;
+        OnPropertyChanged(nameof(HasSelectedProject));
+        OnPropertyChanged(nameof(HasProjects));
+        OnPropertyChanged(nameof(HasAnyProjects));
+        ProjectCreated?.Invoke();
+        return true;
     }
 
     [RelayCommand]
@@ -126,7 +113,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
 
         if (result.IsSuccess && result.Data is not null)
         {
-            await LoadProjectsAsync(result.Data.Id);
+            ApplySavedProject(result.Data);
         }
     }
 
@@ -139,7 +126,22 @@ public partial class ProjectPanelViewModel : ViewModelBase
         }
 
         await _projectWorkspaceService.DeleteAsync(SelectedProject.Id, CancellationToken.None);
-        await LoadProjectsAsync(autoSelect: false);
+        var deletedProjectId = SelectedProject.Id;
+        var deletedItem = SelectedProject;
+        _allProjects.RemoveAll(item => string.Equals(item.Id, deletedProjectId, StringComparison.OrdinalIgnoreCase));
+        if (deletedItem is not null)
+        {
+            Projects.Remove(deletedItem);
+            FilteredProjects.Remove(deletedItem);
+        }
+
+        _isUpdatingSelection = true;
+        SelectedProject = null;
+        _isUpdatingSelection = false;
+        RefreshFilteredProjects();
+        OnPropertyChanged(nameof(HasSelectedProject));
+        OnPropertyChanged(nameof(HasProjects));
+        OnPropertyChanged(nameof(HasAnyProjects));
     }
 
     [RelayCommand]
@@ -153,7 +155,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
         var result = await _projectWorkspaceService.SetDefaultAsync(SelectedProject.Id, CancellationToken.None);
         if (result.IsSuccess && result.Data is not null)
         {
-            await LoadProjectsAsync(result.Data.Id);
+            ApplySavedProject(result.Data);
         }
     }
 
@@ -186,7 +188,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
         while (true)
         {
             var name = $"新项目 {index}";
-            if (!Projects.Any(item => string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase)))
+            if (!_allProjects.Any(item => string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase)))
             {
                 return name;
             }
@@ -224,5 +226,58 @@ public partial class ProjectPanelViewModel : ViewModelBase
                 .ToList();
 
         FilteredProjects.ReplaceWith(items);
+    }
+
+    private void ApplySavedProject(ProjectWorkspaceDto project)
+    {
+        foreach (var item in _allProjects)
+        {
+            item.IsDefault = string.Equals(item.Id, project.Id, StringComparison.OrdinalIgnoreCase)
+                ? project.IsDefault
+                : item.IsDefault && !project.IsDefault
+                    ? false
+                    : item.IsDefault;
+        }
+
+        var existing = _allProjects.FirstOrDefault(item => string.Equals(item.Id, project.Id, StringComparison.OrdinalIgnoreCase));
+        if (existing is null)
+        {
+            existing = CreateProjectItem(project);
+            _allProjects.Add(existing);
+            Projects.Add(existing);
+        }
+        else
+        {
+            existing.Name = project.Name;
+            existing.Description = project.Description;
+            existing.IsDefault = project.IsDefault;
+        }
+
+        if (project.IsDefault)
+        {
+            foreach (var item in _allProjects.Where(item => !string.Equals(item.Id, project.Id, StringComparison.OrdinalIgnoreCase)))
+            {
+                item.IsDefault = false;
+            }
+        }
+
+        RefreshFilteredProjects();
+        _isUpdatingSelection = true;
+        SelectedProject = existing;
+        _isUpdatingSelection = false;
+        OnPropertyChanged(nameof(HasSelectedProject));
+        OnPropertyChanged(nameof(HasProjects));
+        OnPropertyChanged(nameof(HasAnyProjects));
+    }
+
+    private static ProjectWorkspaceItemViewModel CreateProjectItem(ProjectWorkspaceDto project)
+    {
+        return new ProjectWorkspaceItemViewModel
+        {
+            Id = project.Id,
+            Name = project.Name,
+            Description = project.Description,
+            IsDefault = project.IsDefault
+        };
     }
 }

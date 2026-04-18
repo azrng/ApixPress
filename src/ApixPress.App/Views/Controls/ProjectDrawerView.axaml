@@ -23,7 +23,7 @@
                      Text="先输入项目名称，再创建项目。创建后会自动生成一个默认环境。" />
           <TextBox Classes="SectionInput"
                    Watermark="请输入项目名称"
-                   Text="{Binding ProjectPanel.DraftProjectName}" />
+                   Text="{Binding ProjectPanel.Creation.DraftProjectName}" />
         </StackPanel>
         <StackPanel Grid.Column="1"
                     Spacing="{StaticResource Space.2}">
@@ -36,17 +36,17 @@
                    Height="88"
                    TextWrapping="Wrap"
                    Watermark="例如：支付域联调、会员系统 OpenAPI、测试导出项目"
-                   Text="{Binding ProjectPanel.DraftProjectDescription}" />
+                   Text="{Binding ProjectPanel.Creation.DraftProjectDescription}" />
         </StackPanel>
         <StackPanel Grid.Column="2"
                     VerticalAlignment="Bottom"
                     Spacing="{StaticResource Space.2}">
           <Button Classes="SecondaryButton"
                   Content="自动命名"
-                  Command="{Binding ProjectPanel.UseProjectTemplateCommand}" />
+                  Command="{Binding ProjectPanel.Creation.UseProjectTemplateCommand}" />
           <Button Classes="PrimaryButton"
                   Content="创建项目"
-                  Command="{Binding ProjectPanel.CreateProjectCommand}" />
+                  Command="{Binding ProjectPanel.Creation.CreateProjectCommand}" />
         </StackPanel>
       </Grid>
     </Border>
