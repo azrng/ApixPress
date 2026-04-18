@@ -42,8 +42,8 @@ public partial class ProjectTabViewModel
             }
 
             return PendingImportPreview.NewEndpointCount > 0
-                ? $"本次将新增 {PendingImportPreview.NewEndpointCount} 个接口，并覆盖 {PendingImportPreview.ConflictCount} 个同路径接口。"
-                : $"本次导入将覆盖当前项目中 {PendingImportPreview.ConflictCount} 个同路径接口。";
+                ? $"本次将新增 {PendingImportPreview.NewEndpointCount} 个接口，并更新 {PendingImportPreview.ConflictCount} 个同路径接口，已保存用例会保留。"
+                : $"本次导入将更新当前项目中 {PendingImportPreview.ConflictCount} 个同路径接口，已保存用例会保留。";
         }
     }
 
@@ -56,13 +56,18 @@ public partial class ProjectTabViewModel
                 return string.Empty;
             }
 
-            var lines = PendingImportPreview.ConflictItems
+            var displayedConflicts = PendingImportPreview.ConflictItems
                 .Take(5)
                 .Select(item => $"{item.Method} {item.Path} 现有：{item.ExistingDocumentName} / {item.ExistingEndpointName} -> 导入：{item.ImportedEndpointName}")
                 .ToList();
-            if (PendingImportPreview.ConflictItems.Count > lines.Count)
+            var lines = new List<string>
             {
-                lines.Add($"另有 {PendingImportPreview.ConflictItems.Count - lines.Count} 个重复接口未展开。");
+                "同路径接口会更新为最新定义，当前已保存的用例不会因本次导入被自动删除。"
+            };
+            lines.AddRange(displayedConflicts);
+            if (PendingImportPreview.ConflictItems.Count > displayedConflicts.Count)
+            {
+                lines.Add($"另有 {PendingImportPreview.ConflictItems.Count - displayedConflicts.Count} 个重复接口未展开。");
             }
 
             return string.Join(Environment.NewLine, lines);

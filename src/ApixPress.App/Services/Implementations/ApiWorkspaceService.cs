@@ -6,13 +6,18 @@ using ApixPress.App.Models.Entities;
 using ApixPress.App.Repositories.Interfaces;
 using ApixPress.App.Services.Interfaces;
 using Azrng.Core.Results;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text;
 
 namespace ApixPress.App.Services.Implementations;
 
 public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDependency
 {
     private const long MaxSwaggerFileSizeBytes = 20 * 1024 * 1024;
+    private static readonly TimeSpan SwaggerUrlDownloadTimeout = TimeSpan.FromSeconds(20);
     private static readonly TimeSpan UrlImportCacheLifetime = TimeSpan.FromMinutes(10);
+    private static readonly HttpClient SharedHttpClient = CreateSwaggerImportHttpClient();
 
     private readonly IApiDocumentRepository _apiDocumentRepository;
     private readonly Func<Uri, CancellationToken, Task<string>> _downloadOpenApiDocumentAsync;
@@ -20,11 +25,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     private readonly Lock _urlImportCacheLock = new();
 
     public ApiWorkspaceService(IApiDocumentRepository apiDocumentRepository)
-        : this(apiDocumentRepository, static async (targetUri, cancellationToken) =>
-        {
-            using var httpClient = new HttpClient();
-            return await httpClient.GetStringAsync(targetUri, cancellationToken);
-        })
+        : this(apiDocumentRepository, DownloadOpenApiDocumentAsync)
     {
     }
 
@@ -89,6 +90,14 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         {
             return ResultModel<ApiDocumentDto>.Failure("已取消 URL 导入。", "swagger_import_cancelled");
         }
+        catch (OperationCanceledException)
+        {
+            return ResultModel<ApiDocumentDto>.Failure("获取 Swagger URL 超时，请稍后重试，或先下载为本地文件再导入。", "swagger_import_timeout");
+        }
+        catch (HttpRequestException exception)
+        {
+            return ResultModel<ApiDocumentDto>.Failure(BuildUrlImportHttpFailureMessage("URL 导入失败", exception), "swagger_import_http_failed");
+        }
         catch (Exception exception)
         {
             return ResultModel<ApiDocumentDto>.Failure($"URL 导入失败：{exception.Message}");
@@ -120,6 +129,14 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             return ResultModel<ApiImportPreviewDto>.Failure("已取消导入预检查。", "swagger_import_preview_cancelled");
+        }
+        catch (OperationCanceledException)
+        {
+            return ResultModel<ApiImportPreviewDto>.Failure("获取 Swagger URL 超时，请稍后重试，或先下载为本地文件再导入。", "swagger_import_timeout");
+        }
+        catch (HttpRequestException exception)
+        {
+            return ResultModel<ApiImportPreviewDto>.Failure(BuildUrlImportHttpFailureMessage("URL 导入预检查失败", exception), "swagger_import_http_failed");
         }
         catch (Exception exception)
         {
@@ -426,6 +443,67 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     private static string BuildCachedUrlImportKey(string projectId, string url)
     {
         return $"{projectId}::{url.Trim()}";
+    }
+
+    private static async Task<string> DownloadOpenApiDocumentAsync(Uri targetUri, CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, targetUri);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/yaml"));
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/yaml"));
+
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(SwaggerUrlDownloadTimeout);
+
+        using var response = await SharedHttpClient.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            timeoutCts.Token);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new HttpRequestException(
+                $"远程服务返回 {(int)response.StatusCode} {response.ReasonPhrase}".Trim(),
+                null,
+                response.StatusCode);
+        }
+
+        if (response.Content.Headers.ContentLength is > MaxSwaggerFileSizeBytes)
+        {
+            throw new InvalidOperationException("Swagger 文档超过 20MB 限制。");
+        }
+
+        var document = await response.Content.ReadAsStringAsync(timeoutCts.Token);
+        if (Encoding.UTF8.GetByteCount(document) > MaxSwaggerFileSizeBytes)
+        {
+            throw new InvalidOperationException("Swagger 文档超过 20MB 限制。");
+        }
+
+        return document;
+    }
+
+    private static HttpClient CreateSwaggerImportHttpClient()
+    {
+        var httpClient = new HttpClient(new SocketsHttpHandler
+        {
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli
+        })
+        {
+            Timeout = Timeout.InfiniteTimeSpan
+        };
+
+        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("ApixPress/1.0");
+        return httpClient;
+    }
+
+    private static string BuildUrlImportHttpFailureMessage(string prefix, HttpRequestException exception)
+    {
+        if (exception.StatusCode is HttpStatusCode statusCode)
+        {
+            return $"{prefix}：远程服务返回 {(int)statusCode} {statusCode}。";
+        }
+
+        return $"{prefix}：{exception.Message}";
     }
 
     private sealed record CachedUrlImportPayload(string Json, DateTime CachedAt);

@@ -6,12 +6,14 @@ using ApixPress.App.Services.Interfaces;
 using Azrng.Core;
 using Azrng.Core.DependencyInjection;
 using Azrng.Core.Results;
+using Microsoft.Data.Sqlite;
 
 namespace ApixPress.App.Services.Implementations;
 
 public sealed class RequestCaseService : IRequestCaseService, ITransientDependency
 {
     private const string ImportedEndpointKeyPrefix = "swagger-import:";
+    private const string PreservedInterfaceParentIdPrefix = "preserved-interface:";
 
     private readonly IRequestCaseRepository _requestCaseRepository;
     private readonly IJsonSerializer _serializer;
@@ -51,8 +53,19 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             entity.UpdatedAt = DateTime.UtcNow;
         }
 
-        await _requestCaseRepository.UpsertAsync(entity, cancellationToken);
-        return ResultModel<RequestCaseDto>.Success(ToDto(entity));
+        try
+        {
+            await _requestCaseRepository.UpsertAsync(entity, cancellationToken);
+            return ResultModel<RequestCaseDto>.Success(ToDto(entity));
+        }
+        catch (SqliteException exception) when (exception.SqliteErrorCode == 19)
+        {
+            return ResultModel<RequestCaseDto>.Failure("保存失败：当前目录下已存在同名接口或用例，请调整名称后重试。", "request_case_unique_conflict");
+        }
+        catch (Exception exception)
+        {
+            return ResultModel<RequestCaseDto>.Failure($"保存失败：{exception.Message}", "request_case_save_failed");
+        }
     }
 
     public async Task SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
@@ -75,6 +88,9 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             .Where(item => string.Equals(item.EntryType, "http-case", StringComparison.OrdinalIgnoreCase))
             .Where(item => importedInterfaceIds.Contains(item.ParentId))
             .ToList();
+        var importedCasesByInterfaceId = importedCases
+            .GroupBy(item => item.ParentId, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.OrdinalIgnoreCase);
         var normalizedEndpoints = endpoints
             .GroupBy(BuildImportedEndpointKey, StringComparer.OrdinalIgnoreCase)
             .Select(group => group.Last())
@@ -83,13 +99,14 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             .Select(BuildImportedEndpointKey)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var removedCase in importedCases.Where(item => !targetKeys.Contains(BuildImportedEndpointKey(item.ParentId, importedInterfaces))).ToList())
-        {
-            await DeleteAsync(projectId, removedCase.Id, cancellationToken);
-        }
-
         foreach (var removedInterface in importedInterfaces.Values.Where(item => !targetKeys.Contains(item.RequestSnapshot.EndpointId)).ToList())
         {
+            if (importedCasesByInterfaceId.ContainsKey(removedInterface.Id))
+            {
+                await PreserveImportedInterfaceAsync(removedInterface, cancellationToken);
+                continue;
+            }
+
             await DeleteAsync(projectId, removedInterface.Id, cancellationToken);
         }
 
@@ -99,7 +116,7 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             importedInterfaces.TryGetValue(endpointKey, out var existingInterface);
 
             var snapshot = BuildImportedSnapshot(endpoint, endpointKey);
-            await SaveAsync(new RequestCaseDto
+            var saveResult = await SaveAsync(new RequestCaseDto
             {
                 Id = existingInterface?.Id ?? string.Empty,
                 ProjectId = projectId,
@@ -107,10 +124,18 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
                 Name = endpoint.Name,
                 GroupName = "接口",
                 FolderPath = NormalizeFolderPath(endpoint.GroupName),
+                ParentId = endpointKey,
                 Description = endpoint.Description,
                 RequestSnapshot = snapshot,
                 UpdatedAt = DateTime.UtcNow
             }, cancellationToken);
+
+            if (!saveResult.IsSuccess)
+            {
+                throw new InvalidOperationException(string.IsNullOrWhiteSpace(saveResult.Message)
+                    ? "导入接口同步失败。"
+                    : saveResult.Message);
+            }
         }
     }
 
@@ -164,6 +189,72 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
     {
         var requestCase = importedInterfaces.Values.FirstOrDefault(item => string.Equals(item.Id, interfaceId, StringComparison.OrdinalIgnoreCase));
         return requestCase?.RequestSnapshot.EndpointId ?? string.Empty;
+    }
+
+    private async Task PreserveImportedInterfaceAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
+    {
+        var saveResult = await SaveAsync(new RequestCaseDto
+        {
+            Id = requestCase.Id,
+            ProjectId = requestCase.ProjectId,
+            EntryType = requestCase.EntryType,
+            Name = requestCase.Name,
+            GroupName = requestCase.GroupName,
+            FolderPath = requestCase.FolderPath,
+            ParentId = BuildPreservedInterfaceParentId(requestCase.Id),
+            Tags = requestCase.Tags.ToList(),
+            Description = requestCase.Description,
+            RequestSnapshot = BuildDetachedSnapshot(requestCase.RequestSnapshot),
+            UpdatedAt = DateTime.UtcNow
+        }, cancellationToken);
+
+        if (!saveResult.IsSuccess)
+        {
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(saveResult.Message)
+                ? "保留已保存用例关联的接口失败。"
+                : saveResult.Message);
+        }
+    }
+
+    private static string BuildPreservedInterfaceParentId(string requestCaseId)
+    {
+        return $"{PreservedInterfaceParentIdPrefix}{requestCaseId}";
+    }
+
+    private static RequestSnapshotDto BuildDetachedSnapshot(RequestSnapshotDto snapshot)
+    {
+        return new RequestSnapshotDto
+        {
+            EndpointId = string.Empty,
+            Name = snapshot.Name,
+            Method = snapshot.Method,
+            Url = snapshot.Url,
+            Description = snapshot.Description,
+            BodyMode = snapshot.BodyMode,
+            BodyContent = snapshot.BodyContent,
+            IgnoreSslErrors = snapshot.IgnoreSslErrors,
+            QueryParameters = snapshot.QueryParameters
+                .Select(item => new RequestKeyValueDto
+                {
+                    Name = item.Name,
+                    Value = item.Value
+                })
+                .ToList(),
+            PathParameters = snapshot.PathParameters
+                .Select(item => new RequestKeyValueDto
+                {
+                    Name = item.Name,
+                    Value = item.Value
+                })
+                .ToList(),
+            Headers = snapshot.Headers
+                .Select(item => new RequestKeyValueDto
+                {
+                    Name = item.Name,
+                    Value = item.Value
+                })
+                .ToList()
+        };
     }
 
     private static RequestSnapshotDto BuildImportedSnapshot(ApiEndpointDto endpoint, string endpointKey)

@@ -41,9 +41,9 @@ public partial class ProjectTabViewModel
                 PendingImportPreview = previewResult.Data;
                 IsImportOverwriteConfirmDialogOpen = true;
                 SetImportDataStatus(
-                    $"检测到 {previewResult.Data.ConflictCount} 个同路径接口，确认后将覆盖旧接口并保留未冲突接口。",
+                    $"检测到 {previewResult.Data.ConflictCount} 个同路径接口，确认后将更新接口定义，已保存用例会保留。",
                     ImportStatusStates.Info);
-                StatusMessage = "检测到同路径接口，等待确认是否覆盖。";
+                StatusMessage = "检测到同路径接口，等待确认是否更新接口定义。";
                 return;
             }
 
@@ -51,6 +51,10 @@ public partial class ProjectTabViewModel
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+        }
+        catch (Exception exception)
+        {
+            HandleUnexpectedImportFailure(exception, "Swagger 导入失败，应用已阻止异常继续扩散。");
         }
         finally
         {
@@ -89,6 +93,10 @@ public partial class ProjectTabViewModel
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+        }
+        catch (Exception exception)
+        {
+            HandleUnexpectedImportFailure(exception, "Swagger 导入失败，应用已阻止异常继续扩散。");
         }
         finally
         {
@@ -164,6 +172,10 @@ public partial class ProjectTabViewModel
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
         }
+        catch (Exception exception)
+        {
+            HandleUnexpectedImportFailure(exception, "导入结果已写入，但刷新接口列表时发生错误。");
+        }
         finally
         {
             if (manageBusyState)
@@ -177,6 +189,18 @@ public partial class ProjectTabViewModel
     {
         await _requestCaseService.SyncImportedHttpInterfacesAsync(ProjectId, endpoints, CancellationToken.None);
         await ReloadSavedRequestsAsync();
+    }
+
+    private void HandleUnexpectedImportFailure(Exception exception, string fallbackMessage)
+    {
+        ClearPendingImportConfirmation();
+
+        var failureMessage = string.IsNullOrWhiteSpace(exception.Message)
+            ? fallbackMessage
+            : $"{fallbackMessage} {exception.Message}";
+
+        SetImportDataStatus(failureMessage, ImportStatusStates.Error);
+        StatusMessage = failureMessage;
     }
 
     private sealed class PendingImportRequest
