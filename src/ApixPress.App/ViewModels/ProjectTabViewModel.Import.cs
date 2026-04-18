@@ -28,7 +28,7 @@ public partial class ProjectTabViewModel
             if (!previewResult.IsSuccess || previewResult.Data is null)
             {
                 var failureMessage = string.IsNullOrWhiteSpace(previewResult.Message)
-                    ? "Swagger 导入预检查失败，请检查文档格式后重试。"
+                    ? ImportTexts.PreviewFailureFallback
                     : previewResult.Message;
                 SetImportDataStatus(failureMessage, ImportStatusStates.Error);
                 StatusMessage = failureMessage;
@@ -41,9 +41,9 @@ public partial class ProjectTabViewModel
                 PendingImportPreview = previewResult.Data;
                 IsImportOverwriteConfirmDialogOpen = true;
                 SetImportDataStatus(
-                    $"检测到 {previewResult.Data.ConflictCount} 个同路径接口，确认后将更新接口定义，已保存用例会保留。",
+                    ImportTexts.FormatOverwriteDetectedStatus(previewResult.Data.ConflictCount),
                     ImportStatusStates.Info);
-                StatusMessage = "检测到同路径接口，等待确认是否更新接口定义。";
+                StatusMessage = ImportTexts.OverwritePendingShellStatus;
                 return;
             }
 
@@ -54,7 +54,7 @@ public partial class ProjectTabViewModel
         }
         catch (Exception exception)
         {
-            HandleUnexpectedImportFailure(exception, "Swagger 导入失败，应用已阻止异常继续扩散。");
+            HandleUnexpectedImportFailure(exception, ImportTexts.UnexpectedFailureFallback);
         }
         finally
         {
@@ -67,8 +67,8 @@ public partial class ProjectTabViewModel
     private void CancelImportOverwriteConfirm()
     {
         ClearPendingImportConfirmation();
-        SetImportDataStatus("已取消本次覆盖导入。", ImportStatusStates.Info);
-        StatusMessage = "已取消本次覆盖导入。";
+        SetImportDataStatus(ImportTexts.OverwriteCancelled, ImportStatusStates.Info);
+        StatusMessage = ImportTexts.OverwriteCancelled;
         NotifyShellState();
     }
 
@@ -96,7 +96,7 @@ public partial class ProjectTabViewModel
         }
         catch (Exception exception)
         {
-            HandleUnexpectedImportFailure(exception, "Swagger 导入失败，应用已阻止异常继续扩散。");
+            HandleUnexpectedImportFailure(exception, ImportTexts.UnexpectedFailureFallback);
         }
         finally
         {
@@ -116,14 +116,14 @@ public partial class ProjectTabViewModel
         if (!result.IsSuccess || result.Data is null)
         {
             var failureMessage = string.IsNullOrWhiteSpace(result.Message)
-                ? "Swagger 导入失败，请检查文档格式后重试。"
+                ? ImportTexts.ImportFailureFallback
                 : result.Message;
             SetImportDataStatus(failureMessage, ImportStatusStates.Error);
             StatusMessage = failureMessage;
             return;
         }
 
-        ImportDataBusyText = "正在刷新导入结果...";
+        ImportDataBusyText = ImportTexts.BusyRefreshResult;
         await LoadImportedDocumentsAsync(manageBusyState: false);
         var successMessage = buildSuccessMessage(result.Data);
         ClearPendingImportConfirmation();
@@ -142,31 +142,33 @@ public partial class ProjectTabViewModel
         var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _importCancellationTokenSource).Token;
         try
         {
-            var documents = await _apiWorkspaceService.GetDocumentsAsync(ProjectId, cancellationToken);
-            var documentTasks = documents.Select(async document =>
-            {
-                var endpoints = await _apiWorkspaceService.GetEndpointsAsync(document.Id, cancellationToken);
-                return (
-                    Item: new ProjectImportedDocumentItemViewModel
-                    {
-                        Id = document.Id,
-                        Name = document.Name,
-                        SourceTypeText = ResolveImportSourceTypeText(document.SourceType),
-                        SourceValueText = string.IsNullOrWhiteSpace(document.SourceValue) ? "-" : document.SourceValue,
-                        BaseUrlText = string.IsNullOrWhiteSpace(document.BaseUrl) ? "未解析出 BaseUrl" : document.BaseUrl,
-                        ImportedAtText = document.ImportedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
-                        EndpointCount = endpoints.Count
-                    },
-                    Endpoints: endpoints);
-            });
+            var documentsTask = _apiWorkspaceService.GetDocumentsAsync(ProjectId, cancellationToken);
+            var endpointsTask = _apiWorkspaceService.GetProjectEndpointsAsync(ProjectId, cancellationToken);
+            await Task.WhenAll(documentsTask, endpointsTask);
 
-            var results = await Task.WhenAll(documentTasks);
-            await SyncImportedInterfacesAsync(results.SelectMany(result => result.Endpoints).ToList());
-            ImportedApiDocuments.ReplaceWith(results.Select(result => result.Item));
+            var documents = await documentsTask;
+            var endpoints = await endpointsTask;
+            var endpointCountByDocumentId = endpoints
+                .GroupBy(item => item.DocumentId, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
+
+            await SyncImportedInterfacesAsync(endpoints);
+            ImportedApiDocuments.ReplaceWith(documents.Select(document => new ProjectImportedDocumentItemViewModel
+            {
+                Id = document.Id,
+                Name = document.Name,
+                SourceTypeText = ResolveImportSourceTypeText(document.SourceType),
+                SourceValueText = string.IsNullOrWhiteSpace(document.SourceValue) ? "-" : document.SourceValue,
+                BaseUrlText = string.IsNullOrWhiteSpace(document.BaseUrl) ? ImportTexts.BaseUrlFallback : document.BaseUrl,
+                ImportedAtText = document.ImportedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"),
+                EndpointCount = endpointCountByDocumentId.TryGetValue(document.Id, out var endpointCount)
+                    ? endpointCount
+                    : 0
+            }));
 
             if (!HasImportedApiDocuments && ImportDataStatusState == ImportStatusStates.Info)
             {
-                SetImportDataStatus("当前项目还没有导入 Swagger 数据，可先从文件或 URL 开始导入。", ImportStatusStates.Info);
+                SetImportDataStatus(ImportTexts.EmptyStateStatus, ImportStatusStates.Info);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -174,7 +176,7 @@ public partial class ProjectTabViewModel
         }
         catch (Exception exception)
         {
-            HandleUnexpectedImportFailure(exception, "导入结果已写入，但刷新接口列表时发生错误。");
+            HandleUnexpectedImportFailure(exception, ImportTexts.RefreshAfterImportFailure);
         }
         finally
         {

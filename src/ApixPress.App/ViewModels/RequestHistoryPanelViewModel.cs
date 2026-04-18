@@ -47,27 +47,26 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
             }
 
             var history = await _requestHistoryService.GetHistoryAsync(_currentProjectId, cancellationToken);
-            HistoryItems.ReplaceWith(history.Select(item =>
-            {
-                var snapshot = item.RequestSnapshot;
-                var response = item.ResponseSnapshot;
-                return new RequestHistoryItemViewModel
-                {
-                    Id = item.Id,
-                    Method = snapshot.Method,
-                    Url = snapshot.Url,
-                    Timestamp = item.Timestamp,
-                    HasResponse = response is not null,
-                    StatusText = response?.StatusCode?.ToString() ?? "-",
-                    DurationText = response?.DurationMs > 0 ? $"{response.DurationMs}ms" : "-",
-                    SizeText = response?.SizeBytes > 0 ? UiFormatHelper.FormatBytes(response.SizeBytes) : "-",
-                    RequestSnapshot = snapshot,
-                    ResponseSnapshot = response
-                };
-            }));
+            HistoryItems.ReplaceWith(history.Select(CreateHistoryItem));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+        }
+    }
+
+    public void PrependHistoryItem(RequestHistoryItemDto item)
+    {
+        var viewModel = CreateHistoryItem(item);
+        var existing = HistoryItems.FirstOrDefault(historyItem => string.Equals(historyItem.Id, item.Id, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            HistoryItems.Remove(existing);
+        }
+
+        HistoryItems.Insert(0, viewModel);
+        while (HistoryItems.Count > 50)
+        {
+            HistoryItems.RemoveAt(HistoryItems.Count - 1);
         }
     }
 
@@ -80,11 +79,30 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         }
 
         await _requestHistoryService.ClearAsync(_currentProjectId, CancellationToken.None);
-        await LoadHistoryAsync();
+        HistoryItems.Clear();
     }
 
     partial void OnSearchTextChanged(string value)
     {
         // Trigger re-filter if needed
+    }
+
+    private static RequestHistoryItemViewModel CreateHistoryItem(RequestHistoryItemDto item)
+    {
+        var snapshot = item.RequestSnapshot;
+        var response = item.ResponseSnapshot;
+        return new RequestHistoryItemViewModel
+        {
+            Id = item.Id,
+            Method = snapshot.Method,
+            Url = snapshot.Url,
+            Timestamp = item.Timestamp,
+            HasResponse = response is not null,
+            StatusText = response?.StatusCode?.ToString() ?? "-",
+            DurationText = response?.DurationMs > 0 ? $"{response.DurationMs}ms" : "-",
+            SizeText = response?.SizeBytes > 0 ? UiFormatHelper.FormatBytes(response.SizeBytes) : "-",
+            RequestSnapshot = snapshot,
+            ResponseSnapshot = response
+        };
     }
 }

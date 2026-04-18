@@ -7,6 +7,7 @@ public partial class ProjectTabViewModel
         OnPropertyChanged(nameof(TabTitle));
         OnPropertyChanged(nameof(ProjectSummary));
         OnPropertyChanged(nameof(CurrentEnvironmentLabel));
+        OnPropertyChanged(nameof(CurrentEnvironmentSummaryText));
         OnPropertyChanged(nameof(CurrentBaseUrlText));
         OnPropertyChanged(nameof(HasEnvironmentContext));
         OnPropertyChanged(nameof(HasSavedRequests));
@@ -39,6 +40,7 @@ public partial class ProjectTabViewModel
         OnPropertyChanged(nameof(HasImportedApiDocuments));
         OnPropertyChanged(nameof(ShowImportedApiDocumentsEmptyState));
         OnPropertyChanged(nameof(ImportedApiDocumentCountText));
+        OnPropertyChanged(nameof(ImportedApiDocumentSummaryText));
         OnPropertyChanged(nameof(CurrentProjectSettingsTitle));
         OnPropertyChanged(nameof(CurrentProjectSettingsSubtitle));
         OnPropertyChanged(nameof(ShowImportStatusInfo));

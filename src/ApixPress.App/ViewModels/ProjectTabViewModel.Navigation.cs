@@ -67,8 +67,8 @@ public partial class ProjectTabViewModel
         IsProjectImportDialogOpen = false;
         ClearPendingImportConfirmation();
         StatusMessage = ShowProjectSettingsImportDataSection
-            ? "这里可以导入 Swagger 文档。"
-            : "这里可以查看当前项目的基本设置。";
+            ? ProjectSettingsTexts.ImportDescription
+            : ProjectSettingsTexts.OverviewDescription;
         NotifyShellState();
     }
 
@@ -79,7 +79,7 @@ public partial class ProjectTabViewModel
         SelectedProjectSettingsSection = ProjectSettingsSections.Overview;
         IsProjectImportDialogOpen = false;
         ClearPendingImportConfirmation();
-        StatusMessage = "这里可以查看项目名称、项目 ID 和简介。";
+        StatusMessage = ProjectSettingsTexts.OverviewDescription;
         NotifyShellState();
     }
 
@@ -90,7 +90,7 @@ public partial class ProjectTabViewModel
         SelectedProjectSettingsSection = ProjectSettingsSections.ImportData;
         IsProjectImportDialogOpen = false;
         ClearPendingImportConfirmation();
-        StatusMessage = "这里可以导入 Swagger 文档。";
+        StatusMessage = ProjectSettingsTexts.ImportDescription;
         NotifyShellState();
     }
 }

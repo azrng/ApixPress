@@ -31,12 +31,14 @@ public partial class ProjectTabViewModel
             await _apiWorkspaceService.DeleteImportedHttpInterfacesAsync(ProjectId, importedInterfaces, CancellationToken.None);
         }
 
-        foreach (var source in targets
-                     .OrderBy(source => ProjectWorkspaceTreeBuilder.ResolveDeletePriority(source.EntryType))
-                     .ThenBy(source => source.Name, StringComparer.OrdinalIgnoreCase))
-        {
-            await _requestCaseService.DeleteAsync(ProjectId, source.Id, CancellationToken.None);
-        }
+        await _requestCaseService.DeleteRangeAsync(
+            ProjectId,
+            targets
+                .OrderBy(source => ProjectWorkspaceTreeBuilder.ResolveDeletePriority(source.EntryType))
+                .ThenBy(source => source.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(source => source.Id)
+                .ToList(),
+            CancellationToken.None);
 
         CloseWorkspaceTabsForDeletedCases(targets);
         if (importedInterfaces.Count > 0)
@@ -45,7 +47,7 @@ public partial class ProjectTabViewModel
         }
         else
         {
-            await ReloadSavedRequestsAsync();
+            RunWithWorkspaceNavigationRebuildSuppressed(() => UseCasesPanel.RemoveCases(targets.Select(item => item.Id)));
         }
 
         StatusMessage = targets.Count == 1

@@ -16,9 +16,9 @@
             RowSpacing="{StaticResource Space.3}">
         <StackPanel Spacing="2">
           <TextBlock Classes="SectionTitle"
-                     Text="项目设置" />
+                     Text="{Binding ProjectSettingsSidebarTitle}" />
           <TextBlock Classes="CaptionText"
-                     Text="在这里管理项目设置、环境和导入数据入口。" />
+                     Text="{Binding ProjectSettingsSidebarDescription}" />
         </StackPanel>
 
         <ScrollViewer Grid.Row="1"
@@ -27,21 +27,21 @@
             <StackPanel Spacing="{StaticResource Space.4}">
               <StackPanel Spacing="{StaticResource Space.2}">
                 <TextBlock Classes="ProjectSettingsGroupTitle"
-                           Text="基本设置" />
+                           Text="{Binding ProjectSettingsOverviewGroupTitle}" />
                 <Button Classes="ProjectSettingsSidebarItemButton"
                         Classes.ProjectSettingsSidebarItemSelected="{Binding IsProjectSettingsOverviewSelected}"
                         Command="{Binding ShowProjectOverviewSettingsCommand}">
-                  <TextBlock Text="基本设置" />
+                  <TextBlock Text="{Binding ProjectSettingsOverviewGroupTitle}" />
                 </Button>
               </StackPanel>
 
               <StackPanel Spacing="{StaticResource Space.2}">
                 <TextBlock Classes="ProjectSettingsGroupTitle"
-                           Text="数据管理" />
+                           Text="{Binding ProjectSettingsImportGroupTitle}" />
                 <Button Classes="ProjectSettingsSidebarItemButton"
                         Classes.ProjectSettingsSidebarItemSelected="{Binding IsProjectSettingsImportDataSelected}"
                         Command="{Binding ShowProjectImportDataSettingsCommand}">
-                  <TextBlock Text="导入数据" />
+                  <TextBlock Text="{Binding ProjectSettingsImportDataTitle}" />
                 </Button>
               </StackPanel>
 
@@ -50,9 +50,9 @@
                   <TextBlock Text="{Binding Project.DisplayName}"
                              FontWeight="SemiBold" />
                   <TextBlock Classes="CaptionText"
-                             Text="{Binding CurrentEnvironmentLabel, StringFormat='当前环境：{0}'}" />
+                             Text="{Binding CurrentEnvironmentSummaryText}" />
                   <TextBlock Classes="CaptionText"
-                             Text="{Binding ImportedApiDocumentCountText, StringFormat='已导入：{0} 份文档'}" />
+                             Text="{Binding ImportedApiDocumentSummaryText}" />
                 </StackPanel>
               </Border>
             </StackPanel>
@@ -83,9 +83,9 @@
                 <StackPanel Spacing="{StaticResource Space.3}">
                   <StackPanel Spacing="2">
                     <TextBlock Classes="SectionTitle"
-                               Text="基本信息" />
+                               Text="{Binding ProjectSettingsOverviewCardTitle}" />
                     <TextBlock Classes="CaptionText"
-                               Text="在这里维护当前项目名称、项目 ID 和项目简介。" />
+                               Text="{Binding ProjectSettingsOverviewCardDescription}" />
                   </StackPanel>
 
                   <Border Classes="ProjectSettingsBasicCard">
@@ -146,9 +146,9 @@
                   <Border Classes="ProjectSettingsSectionDivider" />
                   <StackPanel Spacing="2">
                     <TextBlock Classes="SectionTitle"
-                               Text="导入 API 数据" />
+                               Text="{Binding ProjectSettingsImportCardTitle}" />
                     <TextBlock Classes="CaptionText"
-                               Text="请选择要导入的数据源格式" />
+                               Text="{Binding ProjectSettingsImportCardDescription}" />
                   </StackPanel>
                   <Button Classes="ProjectImportCatalogButton"
                           Command="{Binding OpenProjectImportDialogCommand}">
@@ -166,10 +166,10 @@
                       <StackPanel Grid.Column="1"
                                   Spacing="2"
                                   VerticalAlignment="Center">
-                        <TextBlock Text="OpenAPI / Swagger"
+                        <TextBlock Text="{Binding ProjectSettingsImportFormatName}"
                                    FontWeight="SemiBold" />
                         <TextBlock Classes="CaptionText"
-                                   Text="支持导入 OpenAPI 3.x 与 Swagger 2.0 的 JSON 或 YAML 文档" />
+                                   Text="{Binding ProjectSettingsImportFormatDescription}" />
                       </StackPanel>
                     </Grid>
                   </Button>

@@ -15,8 +15,11 @@ public partial class ExplorerItemViewModel : ViewModelBase
             OnPropertyChanged(nameof(HasChildren));
             OnPropertyChanged(nameof(IsClickable));
             OnPropertyChanged(nameof(CanDelete));
+            OnPropertyChanged(nameof(ShowTrailingDot));
         };
     }
+
+    public string NodeKey { get; set; } = string.Empty;
 
     [ObservableProperty]
     private string title = string.Empty;
@@ -92,11 +95,28 @@ public partial class ExplorerItemViewModel : ViewModelBase
         _ => "\uE8A5"
     };
 
-    public ICommand? DeleteCommand { get; init; }
+    public ICommand? DeleteCommand { get; set; }
 
-    public RequestCaseDto? SourceCase { get; init; }
+    public RequestCaseDto? SourceCase { get; set; }
 
-    public ApiEndpointDto? Endpoint { get; init; }
+    public ApiEndpointDto? Endpoint { get; set; }
+
+    public void SyncFrom(ExplorerItemViewModel source)
+    {
+        NodeKey = source.NodeKey;
+        Title = source.Title;
+        Subtitle = source.Subtitle;
+        IsGroup = source.IsGroup;
+        NodeType = source.NodeType;
+        CanLoad = source.CanLoad;
+        DeleteCommand = source.DeleteCommand;
+        SourceCase = source.SourceCase;
+        Endpoint = source.Endpoint;
+
+        OnPropertyChanged(nameof(CanDelete));
+        OnPropertyChanged(nameof(MethodBadgeText));
+        OnPropertyChanged(nameof(MethodBadgeClass));
+    }
 
     partial void OnCanLoadChanged(bool value)
     {

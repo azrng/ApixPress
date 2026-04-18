@@ -12,7 +12,7 @@ public partial class ProjectTabViewModel
         SelectedImportDataMode = ImportDataModes.File;
         ClearPendingImportConfirmation();
         IsProjectImportDialogOpen = true;
-        StatusMessage = "请选择 OpenAPI / Swagger 导入方式。";
+        StatusMessage = ImportTexts.OpenDialogStatus;
         NotifyShellState();
     }
 
@@ -21,7 +21,7 @@ public partial class ProjectTabViewModel
     {
         IsProjectImportDialogOpen = false;
         ClearPendingImportConfirmation();
-        StatusMessage = "已返回导入数据页面。";
+        StatusMessage = ImportTexts.CloseDialogStatus;
         NotifyShellState();
     }
 
@@ -50,14 +50,15 @@ public partial class ProjectTabViewModel
         var filePath = await _filePickerService.PickSwaggerJsonFileAsync(CancellationToken.None);
         if (string.IsNullOrWhiteSpace(filePath))
         {
-            SetImportDataStatus("未选择文件，当前保持原有导入配置。", ImportStatusStates.Info);
+            SetImportDataStatus(ImportTexts.PickFileCancelledStatus, ImportStatusStates.Info);
             NotifyShellState();
             return;
         }
 
         SelectedImportFilePath = filePath;
-        SetImportDataStatus($"已选择 Swagger 文件：{Path.GetFileName(filePath)}", ImportStatusStates.Info);
-        StatusMessage = $"已选择 Swagger 文件：{Path.GetFileName(filePath)}";
+        var selectedFileStatus = ImportTexts.FormatSelectedFileStatus(Path.GetFileName(filePath));
+        SetImportDataStatus(selectedFileStatus, ImportStatusStates.Info);
+        StatusMessage = selectedFileStatus;
         NotifyShellState();
     }
 
@@ -66,8 +67,8 @@ public partial class ProjectTabViewModel
     {
         if (!HasSelectedImportFile)
         {
-            SetImportDataStatus("请先选择要导入的 Swagger/OpenAPI JSON 文件。", ImportStatusStates.Error);
-            StatusMessage = "请先选择要导入的 Swagger 文件。";
+            SetImportDataStatus(ImportTexts.MissingFileStatus, ImportStatusStates.Error);
+            StatusMessage = ImportTexts.MissingFileShellStatus;
             NotifyShellState();
             return;
         }
@@ -75,9 +76,9 @@ public partial class ProjectTabViewModel
         await ImportSwaggerAsync(
             cancellationToken => _apiWorkspaceService.PreviewImportFromFileAsync(ProjectId, SelectedImportFilePath.Trim(), cancellationToken),
             cancellationToken => _apiWorkspaceService.ImportFromFileAsync(ProjectId, SelectedImportFilePath.Trim(), cancellationToken),
-            document => $"Swagger 文件导入成功：{document.Name}",
-            "正在校验本地 Swagger 文件...",
-            "正在导入本地 Swagger 文件...");
+            document => ImportTexts.FormatFileImportSuccess(document.Name),
+            ImportTexts.PreviewLocalBusyText,
+            ImportTexts.ImportLocalBusyText);
     }
 
     [RelayCommand]
@@ -86,8 +87,8 @@ public partial class ProjectTabViewModel
         var importTargetUrl = ImportUrl.Trim();
         if (string.IsNullOrWhiteSpace(importTargetUrl))
         {
-            SetImportDataStatus("请输入 Swagger/OpenAPI 文档 URL。", ImportStatusStates.Error);
-            StatusMessage = "请输入 Swagger 文档 URL。";
+            SetImportDataStatus(ImportTexts.MissingUrlStatus, ImportStatusStates.Error);
+            StatusMessage = ImportTexts.MissingUrlShellStatus;
             NotifyShellState();
             return;
         }
@@ -95,9 +96,9 @@ public partial class ProjectTabViewModel
         await ImportSwaggerAsync(
             cancellationToken => _apiWorkspaceService.PreviewImportFromUrlAsync(ProjectId, importTargetUrl, cancellationToken),
             cancellationToken => _apiWorkspaceService.ImportFromUrlAsync(ProjectId, importTargetUrl, cancellationToken),
-            document => $"Swagger URL 导入成功：{document.Name}",
-            "正在获取并校验 Swagger URL...",
-            "正在导入 Swagger URL...");
+            document => ImportTexts.FormatUrlImportSuccess(document.Name),
+            ImportTexts.PreviewUrlBusyText,
+            ImportTexts.ImportUrlBusyText);
     }
 
     [RelayCommand]
@@ -105,8 +106,8 @@ public partial class ProjectTabViewModel
     {
         await LoadImportedDocumentsAsync();
         StatusMessage = HasImportedApiDocuments
-            ? $"已刷新已导入数据，共 {ImportedApiDocuments.Count} 份文档。"
-            : "已刷新导入数据，当前项目还没有 Swagger 文档。";
+            ? ImportTexts.FormatRefreshImportedDocumentsSuccess(ImportedApiDocuments.Count)
+            : ImportTexts.EmptyRefreshStatus;
         NotifyShellState();
     }
 }

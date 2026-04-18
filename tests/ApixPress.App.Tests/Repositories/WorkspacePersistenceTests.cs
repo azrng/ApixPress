@@ -395,4 +395,51 @@ public sealed partial class WorkspacePersistenceTests
         Assert.Equal("http://localhost:5172", reloaded.BaseUrl);
     }
 
+    [Fact]
+    public async Task EnvironmentVariableService_ShouldBatchSaveVariablesForEnvironment()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var environmentService = new EnvironmentVariableService(new EnvironmentVariableRepository(factory), environmentRepository);
+
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "批量环境变量测试"
+        }, CancellationToken.None)).Data!;
+
+        var environment = Assert.Single(await environmentService.GetEnvironmentsAsync(project.Id, CancellationToken.None));
+        var saveResult = await environmentService.SaveVariablesAsync(
+            environment,
+            [
+                new EnvironmentVariableDto
+                {
+                    EnvironmentId = environment.Id,
+                    Key = "tenantId",
+                    Value = "demo",
+                    IsEnabled = true
+                },
+                new EnvironmentVariableDto
+                {
+                    EnvironmentId = environment.Id,
+                    Key = "region",
+                    Value = "cn",
+                    IsEnabled = true
+                }
+            ],
+            CancellationToken.None);
+
+        Assert.True(saveResult.IsSuccess);
+        Assert.NotNull(saveResult.Data);
+        Assert.Equal(2, saveResult.Data!.Count);
+
+        var reloaded = await environmentService.GetVariablesAsync(environment.Id, CancellationToken.None);
+        Assert.Equal(2, reloaded.Count);
+        Assert.Contains(reloaded, item => item.Key == "tenantId" && item.Value == "demo");
+        Assert.Contains(reloaded, item => item.Key == "region" && item.Value == "cn");
+    }
+
 }

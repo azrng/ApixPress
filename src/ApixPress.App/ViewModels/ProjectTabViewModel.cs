@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Models.DTOs;
@@ -49,6 +50,9 @@ public partial class ProjectTabViewModel : ViewModelBase
     private CancellationTokenSource? _sendRequestCancellationTokenSource;
     private PendingImportRequest? _pendingImportRequest;
     private bool _initialized;
+    private int _workspaceNavigationRebuildSuspendCount;
+    private bool _interfaceNavigationRebuildPending;
+    private bool _quickRequestNavigationRebuildPending;
 
     public event Action<ProjectTabViewModel>? ShellStateChanged;
 
@@ -85,11 +89,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         Project.PropertyChanged += (_, _) => NotifyShellState();
         EnvironmentPanel.SelectedEnvironmentChanged += OnSelectedEnvironmentChanged;
         EnvironmentPanel.Environments.CollectionChanged += (_, _) => NotifyShellState();
-        UseCasesPanel.RequestCases.CollectionChanged += (_, _) =>
-        {
-            RebuildWorkspaceNavigation();
-            NotifyShellState();
-        };
+        UseCasesPanel.RequestCases.CollectionChanged += OnSavedRequestsCollectionChanged;
         HistoryPanel.HistoryItems.CollectionChanged += (_, _) => NotifyShellState();
         WorkspaceTabs.CollectionChanged += OnWorkspaceTabsCollectionChanged;
         ImportedApiDocuments.CollectionChanged += (_, _) => NotifyShellState();
@@ -197,10 +197,10 @@ public partial class ProjectTabViewModel : ViewModelBase
     private bool isImportDataBusy;
 
     [ObservableProperty]
-    private string importDataBusyText = "正在处理 Swagger 导入...";
+    private string importDataBusyText = ImportTexts.BusyProcessing;
 
     [ObservableProperty]
-    private string importDataStatusText = "请选择 Swagger/OpenAPI JSON 文件，或输入可访问的文档 URL。";
+    private string importDataStatusText = ImportTexts.DefaultStatus;
 
     [ObservableProperty]
     private string importDataStatusState = ImportStatusStates.Info;
@@ -253,5 +253,12 @@ public partial class ProjectTabViewModel : ViewModelBase
     private void SyncVisibleWorkspaceTabs()
     {
         _visibleWorkspaceTabs.ReplaceWith(WorkspaceTabs.Where(item => !item.IsLandingTab || item.ShowInTabStrip));
+    }
+
+    private void OnSavedRequestsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        var (rebuildInterfaceNavigation, rebuildQuickRequestNavigation) = ResolveWorkspaceNavigationRebuildScope(e);
+        RequestWorkspaceNavigationRebuild(rebuildInterfaceNavigation, rebuildQuickRequestNavigation);
+        NotifyShellState();
     }
 }

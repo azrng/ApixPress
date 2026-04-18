@@ -164,6 +164,11 @@ public sealed partial class MainWindowViewModelTests
             return Task.FromResult<IReadOnlyList<ApiEndpointDto>>([]);
         }
 
+        public Task<IReadOnlyList<ApiEndpointDto>> GetProjectEndpointsAsync(string projectId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<ApiEndpointDto>>([]);
+        }
+
         public Task<ApiDocumentDto?> GetDocumentAsync(string projectId, string documentId, CancellationToken cancellationToken)
         {
             return Task.FromResult<ApiDocumentDto?>(null);

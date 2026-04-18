@@ -48,7 +48,10 @@ public partial class ProjectTabViewModel
 
         if (result.IsSuccess)
         {
-            await ReloadSavedRequestsAsync();
+            if (result.Data is not null)
+            {
+                RunWithWorkspaceNavigationRebuildSuppressed(() => UseCasesPanel.UpsertCaseItem(result.Data));
+            }
             StatusMessage = "已从历史记录生成快捷请求。";
         }
         else
@@ -94,7 +97,7 @@ public partial class ProjectTabViewModel
         {
             workspaceTab.EditingCaseId = result.Data.Id;
             workspaceTab.SourceEndpointId = result.Data.RequestSnapshot.EndpointId;
-            await ReloadSavedRequestsAsync();
+            RunWithWorkspaceNavigationRebuildSuppressed(() => UseCasesPanel.UpsertCaseItem(result.Data));
             StatusMessage = "HTTP 接口用例已保存。";
         }
         else

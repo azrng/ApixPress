@@ -55,6 +55,11 @@ public sealed class DatabaseInitializer : ISingletonDependency
         connection.Execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_projects_default ON projects(is_default) WHERE is_default = 1;");
         connection.Execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_project_environments_project_name ON project_environments(project_id, name);");
         connection.Execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_project_environments_project_active ON project_environments(project_id, is_active) WHERE is_active = 1;");
+        connection.Execute("CREATE INDEX IF NOT EXISTS ix_api_documents_project_imported_at ON api_documents(project_id, imported_at DESC);");
+        connection.Execute("CREATE INDEX IF NOT EXISTS ix_api_endpoints_document_id ON api_endpoints(document_id);");
+        connection.Execute("CREATE INDEX IF NOT EXISTS ix_api_endpoints_method_path ON api_endpoints(method, path);");
+        connection.Execute("CREATE INDEX IF NOT EXISTS ix_request_parameters_endpoint_id ON request_parameters(endpoint_id);");
+        connection.Execute("CREATE INDEX IF NOT EXISTS ix_request_cases_project_parent_id ON request_cases(project_id, parent_id);");
 
         connection.Execute("update request_cases set entry_type = 'quick-request' where ifnull(entry_type, '') = ''");
         connection.Execute("update request_cases set folder_path = '' where folder_path is null");

@@ -17,6 +17,11 @@ public interface IEnvironmentVariableService
 
     Task<IResultModel<EnvironmentVariableDto>> SaveVariableAsync(EnvironmentVariableDto variable, CancellationToken cancellationToken);
 
+    Task<IResultModel<IReadOnlyList<EnvironmentVariableDto>>> SaveVariablesAsync(
+        ProjectEnvironmentDto environment,
+        IReadOnlyList<EnvironmentVariableDto> variables,
+        CancellationToken cancellationToken);
+
     Task<IResultModel<bool>> DeleteVariableAsync(string id, CancellationToken cancellationToken);
 
     Task<IReadOnlyDictionary<string, string>> GetActiveDictionaryAsync(string environmentId, CancellationToken cancellationToken);

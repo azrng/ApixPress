@@ -16,25 +16,38 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
 {
     private const long MaxSwaggerFileSizeBytes = 20 * 1024 * 1024;
     private static readonly TimeSpan SwaggerUrlDownloadTimeout = TimeSpan.FromSeconds(20);
-    private static readonly TimeSpan UrlImportCacheLifetime = TimeSpan.FromMinutes(10);
+    private static readonly TimeSpan PreparedImportCacheLifetime = TimeSpan.FromMinutes(10);
     private static readonly HttpClient SharedHttpClient = CreateSwaggerImportHttpClient();
 
     private readonly IApiDocumentRepository _apiDocumentRepository;
     private readonly Func<Uri, CancellationToken, Task<string>> _downloadOpenApiDocumentAsync;
-    private readonly Dictionary<string, CachedUrlImportPayload> _cachedUrlImports = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Lock _urlImportCacheLock = new();
+    private readonly Func<string, CancellationToken, Task<string>> _readOpenApiFileAsync;
+    private readonly Func<string, string, string, ParsedDocumentGraph> _parseOpenApiDocument;
+    private readonly Dictionary<string, PreparedImportPayload> _preparedImports = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Lock _preparedImportCacheLock = new();
 
     public ApiWorkspaceService(IApiDocumentRepository apiDocumentRepository)
-        : this(apiDocumentRepository, DownloadOpenApiDocumentAsync)
+        : this(apiDocumentRepository, DownloadOpenApiDocumentAsync, ReadOpenApiFileAsync, OpenApiJsonParser.Parse)
     {
     }
 
     public ApiWorkspaceService(
         IApiDocumentRepository apiDocumentRepository,
         Func<Uri, CancellationToken, Task<string>> downloadOpenApiDocumentAsync)
+        : this(apiDocumentRepository, downloadOpenApiDocumentAsync, ReadOpenApiFileAsync, OpenApiJsonParser.Parse)
+    {
+    }
+
+    public ApiWorkspaceService(
+        IApiDocumentRepository apiDocumentRepository,
+        Func<Uri, CancellationToken, Task<string>> downloadOpenApiDocumentAsync,
+        Func<string, CancellationToken, Task<string>> readOpenApiFileAsync,
+        Func<string, string, string, ParsedDocumentGraph> parseOpenApiDocument)
     {
         _apiDocumentRepository = apiDocumentRepository;
         _downloadOpenApiDocumentAsync = downloadOpenApiDocumentAsync;
+        _readOpenApiFileAsync = readOpenApiFileAsync;
+        _parseOpenApiDocument = parseOpenApiDocument;
     }
 
     public async Task<IReadOnlyList<ApiDocumentDto>> GetDocumentsAsync(string projectId, CancellationToken cancellationToken)
@@ -50,22 +63,14 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     {
         var endpoints = await _apiDocumentRepository.GetEndpointsByDocumentIdAsync(documentId, cancellationToken);
         var parameters = await _apiDocumentRepository.GetParametersByEndpointIdsAsync(endpoints.Select(item => item.Id), cancellationToken);
-        var parameterLookup = parameters.GroupBy(item => item.EndpointId).ToDictionary(group => group.Key, group => group.ToList());
+        return MapEndpoints(endpoints, parameters);
+    }
 
-        return endpoints.Select(endpoint => new ApiEndpointDto
-        {
-            Id = endpoint.Id,
-            DocumentId = endpoint.DocumentId,
-            GroupName = endpoint.GroupName,
-            Name = endpoint.Name,
-            Method = endpoint.Method,
-            Path = endpoint.Path,
-            Description = endpoint.Description,
-            RequestBodyTemplate = endpoint.RequestBodyTemplate,
-            Parameters = parameterLookup.TryGetValue(endpoint.Id, out var endpointParameters)
-                ? endpointParameters.Select(ToParameterDto).ToList()
-                : []
-        }).ToList();
+    public async Task<IReadOnlyList<ApiEndpointDto>> GetProjectEndpointsAsync(string projectId, CancellationToken cancellationToken)
+    {
+        var endpoints = await _apiDocumentRepository.GetEndpointDetailsByProjectIdAsync(projectId, cancellationToken);
+        var parameters = await _apiDocumentRepository.GetParametersByEndpointIdsAsync(endpoints.Select(item => item.Id), cancellationToken);
+        return MapEndpoints(endpoints, parameters);
     }
 
     public async Task<ApiDocumentDto?> GetDocumentAsync(string projectId, string documentId, CancellationToken cancellationToken)
@@ -83,7 +88,12 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
                 return ResultModel<ApiDocumentDto>.Failure("请输入有效的 Swagger/OpenAPI 文档 URL。");
             }
 
-            var json = await GetCachedOrDownloadUrlDocumentAsync(projectId, url, targetUri, cancellationToken);
+            if (TryTakePreparedImport(projectId, "URL", url, out var preparedImport))
+            {
+                return await ImportPreparedGraphAsync(projectId, preparedImport.Graph, cancellationToken);
+            }
+
+            var json = await _downloadOpenApiDocumentAsync(targetUri, cancellationToken);
             return await ImportCoreAsync(projectId, "URL", url, json, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -104,7 +114,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         }
         finally
         {
-            ClearCachedUrlDocument(projectId, url);
+            ClearPreparedImport(projectId, "URL", url);
         }
     }
 
@@ -117,11 +127,16 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
                 return ResultModel<ApiImportPreviewDto>.Failure("请输入有效的 Swagger/OpenAPI 文档 URL。");
             }
 
-            var json = await DownloadAndCacheUrlDocumentAsync(projectId, url, targetUri, cancellationToken);
+            if (TryGetPreparedImport(projectId, "URL", url, out var preparedImport))
+            {
+                return ResultModel<ApiImportPreviewDto>.Success(preparedImport.Preview);
+            }
+
+            var json = await _downloadOpenApiDocumentAsync(targetUri, cancellationToken);
             var previewResult = await PreviewImportCoreAsync(projectId, "URL", url, json, cancellationToken);
             if (!previewResult.IsSuccess)
             {
-                ClearCachedUrlDocument(projectId, url);
+                ClearPreparedImport(projectId, "URL", url);
             }
 
             return previewResult;
@@ -159,7 +174,12 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
                 return ResultModel<ApiDocumentDto>.Failure("Swagger 文件超过 20MB 限制。", "swagger_file_too_large");
             }
 
-            var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+            if (TryTakePreparedImport(projectId, "FILE", filePath, out var preparedImport))
+            {
+                return await ImportPreparedGraphAsync(projectId, preparedImport.Graph, cancellationToken);
+            }
+
+            var json = await _readOpenApiFileAsync(filePath, cancellationToken);
             return await ImportCoreAsync(projectId, "FILE", filePath, json, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -169,6 +189,10 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         catch (Exception exception)
         {
             return ResultModel<ApiDocumentDto>.Failure($"本地文件导入失败：{exception.Message}", "swagger_import_file_failed");
+        }
+        finally
+        {
+            ClearPreparedImport(projectId, "FILE", filePath);
         }
     }
 
@@ -187,7 +211,12 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
                 return ResultModel<ApiImportPreviewDto>.Failure("Swagger 文件超过 20MB 限制。", "swagger_file_too_large");
             }
 
-            var json = await File.ReadAllTextAsync(filePath, cancellationToken);
+            if (TryGetPreparedImport(projectId, "FILE", filePath, out var preparedImport))
+            {
+                return ResultModel<ApiImportPreviewDto>.Success(preparedImport.Preview);
+            }
+
+            var json = await _readOpenApiFileAsync(filePath, cancellationToken);
             return await PreviewImportCoreAsync(projectId, "FILE", filePath, json, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -223,10 +252,8 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     {
         try
         {
-            var graph = OpenApiJsonParser.Parse(json, sourceType, sourceValue);
-            graph.Document.ProjectId = projectId;
-            await _apiDocumentRepository.SaveDocumentGraphAsync(graph.Document, graph.Endpoints, graph.Parameters, cancellationToken);
-            return ResultModel<ApiDocumentDto>.Success(ToDocumentDto(graph.Document));
+            var graph = _parseOpenApiDocument(json, sourceType, sourceValue);
+            return await ImportPreparedGraphAsync(projectId, graph, cancellationToken);
         }
         catch (BaseException exception)
         {
@@ -251,9 +278,11 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     {
         try
         {
-            var graph = OpenApiJsonParser.Parse(json, sourceType, sourceValue);
+            var graph = _parseOpenApiDocument(json, sourceType, sourceValue);
             var existingEndpoints = await _apiDocumentRepository.GetEndpointsByProjectIdAsync(projectId, cancellationToken);
-            return ResultModel<ApiImportPreviewDto>.Success(BuildImportPreview(graph, existingEndpoints));
+            var preview = BuildImportPreview(graph, existingEndpoints);
+            CachePreparedImport(projectId, sourceType, sourceValue, graph, preview);
+            return ResultModel<ApiImportPreviewDto>.Success(preview);
         }
         catch (BaseException exception)
         {
@@ -267,6 +296,16 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         {
             return ResultModel<ApiImportPreviewDto>.Failure($"导入预检查失败：{exception.Message}", "swagger_import_preview_failed");
         }
+    }
+
+    private async Task<IResultModel<ApiDocumentDto>> ImportPreparedGraphAsync(
+        string projectId,
+        ParsedDocumentGraph graph,
+        CancellationToken cancellationToken)
+    {
+        graph.Document.ProjectId = projectId;
+        await _apiDocumentRepository.SaveDocumentGraphAsync(graph.Document, graph.Endpoints, graph.Parameters, cancellationToken);
+        return ResultModel<ApiDocumentDto>.Success(ToDocumentDto(graph.Document));
     }
 
     private static ApiDocumentDto ToDocumentDto(ApiDocumentEntity entity)
@@ -301,6 +340,30 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
             Description = entity.Description,
             Required = entity.Required
         };
+    }
+
+    private static IReadOnlyList<ApiEndpointDto> MapEndpoints(
+        IReadOnlyList<ApiEndpointEntity> endpoints,
+        IReadOnlyList<RequestParameterEntity> parameters)
+    {
+        var parameterLookup = parameters
+            .GroupBy(item => item.EndpointId, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.Select(ToParameterDto).ToList(), StringComparer.OrdinalIgnoreCase);
+
+        return endpoints.Select(endpoint => new ApiEndpointDto
+        {
+            Id = endpoint.Id,
+            DocumentId = endpoint.DocumentId,
+            GroupName = endpoint.GroupName,
+            Name = endpoint.Name,
+            Method = endpoint.Method,
+            Path = endpoint.Path,
+            Description = endpoint.Description,
+            RequestBodyTemplate = endpoint.RequestBodyTemplate,
+            Parameters = parameterLookup.TryGetValue(endpoint.Id, out var endpointParameters)
+                ? endpointParameters
+                : []
+        }).ToList();
     }
 
     private static ApiImportPreviewDto BuildImportPreview(
@@ -376,73 +439,79 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
             && string.Equals(requestCase.RequestSnapshot.Url, endpoint.Path, StringComparison.OrdinalIgnoreCase);
     }
 
-    private async Task<string> DownloadAndCacheUrlDocumentAsync(
-        string projectId,
-        string url,
-        Uri targetUri,
-        CancellationToken cancellationToken)
+    private bool TryGetPreparedImport(string projectId, string sourceType, string sourceValue, out PreparedImportPayload payload)
     {
-        var json = await _downloadOpenApiDocumentAsync(targetUri, cancellationToken);
-        CacheUrlDocument(projectId, url, json);
-        return json;
-    }
-
-    private async Task<string> GetCachedOrDownloadUrlDocumentAsync(
-        string projectId,
-        string url,
-        Uri targetUri,
-        CancellationToken cancellationToken)
-    {
-        if (TryGetCachedUrlDocument(projectId, url, out var cachedJson))
+        lock (_preparedImportCacheLock)
         {
-            return cachedJson;
-        }
-
-        return await DownloadAndCacheUrlDocumentAsync(projectId, url, targetUri, cancellationToken);
-    }
-
-    private bool TryGetCachedUrlDocument(string projectId, string url, out string json)
-    {
-        lock (_urlImportCacheLock)
-        {
-            var cacheKey = BuildCachedUrlImportKey(projectId, url);
-            if (!_cachedUrlImports.TryGetValue(cacheKey, out var payload))
+            var cacheKey = BuildPreparedImportKey(projectId, sourceType, sourceValue);
+            if (!_preparedImports.TryGetValue(cacheKey, out payload!))
             {
-                json = string.Empty;
                 return false;
             }
 
-            if (DateTime.UtcNow - payload.CachedAt > UrlImportCacheLifetime)
+            if (DateTime.UtcNow - payload.CachedAt > PreparedImportCacheLifetime)
             {
-                _cachedUrlImports.Remove(cacheKey);
-                json = string.Empty;
+                _preparedImports.Remove(cacheKey);
+                payload = null!;
                 return false;
             }
 
-            json = payload.Json;
             return true;
         }
     }
 
-    private void CacheUrlDocument(string projectId, string url, string json)
+    private bool TryTakePreparedImport(string projectId, string sourceType, string sourceValue, out PreparedImportPayload payload)
     {
-        lock (_urlImportCacheLock)
+        lock (_preparedImportCacheLock)
         {
-            _cachedUrlImports[BuildCachedUrlImportKey(projectId, url)] = new CachedUrlImportPayload(json, DateTime.UtcNow);
+            var cacheKey = BuildPreparedImportKey(projectId, sourceType, sourceValue);
+            if (!_preparedImports.TryGetValue(cacheKey, out payload!))
+            {
+                return false;
+            }
+
+            if (DateTime.UtcNow - payload.CachedAt > PreparedImportCacheLifetime)
+            {
+                _preparedImports.Remove(cacheKey);
+                payload = null!;
+                return false;
+            }
+
+            _preparedImports.Remove(cacheKey);
+            return true;
         }
     }
 
-    private void ClearCachedUrlDocument(string projectId, string url)
+    private void CachePreparedImport(
+        string projectId,
+        string sourceType,
+        string sourceValue,
+        ParsedDocumentGraph graph,
+        ApiImportPreviewDto preview)
     {
-        lock (_urlImportCacheLock)
+        lock (_preparedImportCacheLock)
         {
-            _cachedUrlImports.Remove(BuildCachedUrlImportKey(projectId, url));
+            _preparedImports[BuildPreparedImportKey(projectId, sourceType, sourceValue)] =
+                new PreparedImportPayload(graph, preview, DateTime.UtcNow);
         }
     }
 
-    private static string BuildCachedUrlImportKey(string projectId, string url)
+    private void ClearPreparedImport(string projectId, string sourceType, string sourceValue)
     {
-        return $"{projectId}::{url.Trim()}";
+        lock (_preparedImportCacheLock)
+        {
+            _preparedImports.Remove(BuildPreparedImportKey(projectId, sourceType, sourceValue));
+        }
+    }
+
+    private static string BuildPreparedImportKey(string projectId, string sourceType, string sourceValue)
+    {
+        return $"{projectId}::{sourceType.Trim().ToUpperInvariant()}::{sourceValue.Trim()}";
+    }
+
+    private static Task<string> ReadOpenApiFileAsync(string filePath, CancellationToken cancellationToken)
+    {
+        return File.ReadAllTextAsync(filePath, cancellationToken);
     }
 
     private static async Task<string> DownloadOpenApiDocumentAsync(Uri targetUri, CancellationToken cancellationToken)
@@ -506,5 +575,5 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         return $"{prefix}：{exception.Message}";
     }
 
-    private sealed record CachedUrlImportPayload(string Json, DateTime CachedAt);
+    private sealed record PreparedImportPayload(ParsedDocumentGraph Graph, ApiImportPreviewDto Preview, DateTime CachedAt);
 }

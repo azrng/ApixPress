@@ -144,18 +144,62 @@ public sealed class EnvironmentVariableService : IEnvironmentVariableService, IT
             return ResultModel<EnvironmentVariableDto>.Failure("未找到变量所属环境。", "environment_not_found");
         }
 
-        var entity = new EnvironmentVariableEntity
-        {
-            Id = string.IsNullOrWhiteSpace(variable.Id) ? Guid.NewGuid().ToString("N") : variable.Id,
-            EnvironmentId = variable.EnvironmentId,
-            EnvironmentName = environment.Name,
-            Key = variable.Key,
-            Value = variable.Value,
-            IsEnabled = variable.IsEnabled
-        };
+        var entity = BuildVariableEntity(variable, environment.Name);
 
         await _environmentVariableRepository.UpsertAsync(entity, cancellationToken);
         return ResultModel<EnvironmentVariableDto>.Success(ToVariableDto(entity));
+    }
+
+    public async Task<IResultModel<IReadOnlyList<EnvironmentVariableDto>>> SaveVariablesAsync(
+        ProjectEnvironmentDto environment,
+        IReadOnlyList<EnvironmentVariableDto> variables,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(environment.Id))
+        {
+            return ResultModel<IReadOnlyList<EnvironmentVariableDto>>.Failure("请先选择环境后再保存变量。", "environment_variable_environment_required");
+        }
+
+        var environmentEntity = await _projectEnvironmentRepository.GetByIdAsync(environment.Id, cancellationToken);
+        if (environmentEntity is null)
+        {
+            return ResultModel<IReadOnlyList<EnvironmentVariableDto>>.Failure("未找到变量所属环境。", "environment_not_found");
+        }
+
+        var normalizedVariables = new List<EnvironmentVariableEntity>(variables.Count);
+        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var variable in variables)
+        {
+            if (string.IsNullOrWhiteSpace(variable.Key))
+            {
+                return ResultModel<IReadOnlyList<EnvironmentVariableDto>>.Failure("环境变量键不能为空。", "environment_key_required");
+            }
+
+            if (string.Equals(variable.Key, "baseUrl", StringComparison.OrdinalIgnoreCase))
+            {
+                return ResultModel<IReadOnlyList<EnvironmentVariableDto>>.Failure("BaseUrl 已作为环境独立字段维护，请不要重复保存为变量。", "environment_key_baseurl_reserved");
+            }
+
+            if (!keys.Add(variable.Key))
+            {
+                return ResultModel<IReadOnlyList<EnvironmentVariableDto>>.Failure("同一环境下环境变量键不能重复。", "environment_key_duplicated");
+            }
+
+            normalizedVariables.Add(BuildVariableEntity(
+                new EnvironmentVariableDto
+                {
+                    Id = variable.Id,
+                    EnvironmentId = environmentEntity.Id,
+                    EnvironmentName = environmentEntity.Name,
+                    Key = variable.Key,
+                    Value = variable.Value,
+                    IsEnabled = variable.IsEnabled
+                },
+                environmentEntity.Name));
+        }
+
+        await _environmentVariableRepository.UpsertRangeAsync(normalizedVariables, cancellationToken);
+        return ResultModel<IReadOnlyList<EnvironmentVariableDto>>.Success(normalizedVariables.Select(ToVariableDto).ToList());
     }
 
     public async Task<IResultModel<bool>> DeleteVariableAsync(string id, CancellationToken cancellationToken)
@@ -166,10 +210,7 @@ public sealed class EnvironmentVariableService : IEnvironmentVariableService, IT
 
     public async Task<IReadOnlyDictionary<string, string>> GetActiveDictionaryAsync(string environmentId, CancellationToken cancellationToken)
     {
-        var variables = await GetVariablesAsync(environmentId, cancellationToken);
-        return variables.Where(item => item.IsEnabled)
-            .GroupBy(item => item.Key)
-            .ToDictionary(group => group.Key, group => group.Last().Value, StringComparer.OrdinalIgnoreCase);
+        return await _environmentVariableRepository.GetEnabledDictionaryAsync(environmentId, cancellationToken);
     }
 
     private static ProjectEnvironmentDto ToEnvironmentDto(ProjectEnvironmentEntity entity)
@@ -205,6 +246,19 @@ public sealed class EnvironmentVariableService : IEnvironmentVariableService, IT
             Key = entity.Key,
             Value = entity.Value,
             IsEnabled = entity.IsEnabled
+        };
+    }
+
+    private static EnvironmentVariableEntity BuildVariableEntity(EnvironmentVariableDto variable, string environmentName)
+    {
+        return new EnvironmentVariableEntity
+        {
+            Id = string.IsNullOrWhiteSpace(variable.Id) ? Guid.NewGuid().ToString("N") : variable.Id,
+            EnvironmentId = variable.EnvironmentId,
+            EnvironmentName = environmentName,
+            Key = variable.Key,
+            Value = variable.Value,
+            IsEnabled = variable.IsEnabled
         };
     }
 }

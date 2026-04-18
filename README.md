@@ -139,7 +139,7 @@ API 协作平台需求文档
 
 三、开发与发布说明
 
-1. 桌面端主程序 `Apifox.App` 与更新器 `ApixPress.Updater` 默认按 `win-x64` 自包含单文件模式发布。
+1. 桌面端主程序 `ApixPress` 与更新器 `ApixPress.Updater` 默认按 `win-x64` 自包含单文件模式发布。
 
 2. 主程序默认配置与数据库初始化脚本已内嵌到程序集：
 

@@ -17,7 +17,7 @@
                 IsEnabled="{Binding ActiveProjectTab.CanEditImportData}">
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock Classes="DialogTitle"
-                         Text="导入数据" />
+                         Text="{Binding ActiveProjectTab.ImportDialogTitle}" />
               <Button Grid.Column="1"
                       Classes="DialogIconButton"
                       Content="×"
@@ -41,8 +41,8 @@
                             Spacing="2"
                             VerticalAlignment="Center">
                   <TextBlock Classes="CaptionText"
-                             Text="数据源格式" />
-                  <TextBlock Text="OpenAPI/Swagger"
+                             Text="{Binding ActiveProjectTab.ImportDialogFormatLabel}" />
+                  <TextBlock Text="{Binding ActiveProjectTab.ImportDialogFormatName}"
                              FontSize="{StaticResource Font.Size.BodyLarge}"
                              FontWeight="SemiBold" />
                 </StackPanel>
@@ -51,7 +51,7 @@
 
             <Border Grid.Row="2"
                     Classes="ProjectImportDialogNoticeCard">
-              <TextBlock Text="支持导入 OpenAPI 3.0、3.1 或 Swagger 2.0 数据格式的 JSON 或 YAML 文件。"
+              <TextBlock Text="{Binding ActiveProjectTab.ImportDialogNoticeText}"
                          TextWrapping="Wrap"
                          TextAlignment="Center" />
             </Border>
@@ -64,13 +64,13 @@
                                 Classes="ProjectImportModeTab"
                                 Command="{Binding ActiveProjectTab.ShowImportFileModeCommand}"
                                 IsChecked="{Binding ActiveProjectTab.IsImportFileMode, Mode=OneWay}">
-                    <TextBlock Text="上传文件" />
+                    <TextBlock Text="{Binding ActiveProjectTab.ImportFileModeTitle}" />
                   </ToggleButton>
                   <ToggleButton Grid.Column="1"
                                 Classes="ProjectImportModeTab"
                                 Command="{Binding ActiveProjectTab.ShowImportUrlModeCommand}"
                                 IsChecked="{Binding ActiveProjectTab.IsImportUrlMode, Mode=OneWay}">
-                    <TextBlock Text="URL 导入" />
+                    <TextBlock Text="{Binding ActiveProjectTab.ImportUrlModeTitle}" />
                   </ToggleButton>
                 </Grid>
               </Border>
@@ -111,10 +111,10 @@
                               HorizontalAlignment="Center"
                               Spacing="{StaticResource Space.2}">
                     <Button Classes="DialogSecondaryButton"
-                            Content="选择文件"
+                            Content="{Binding ActiveProjectTab.ImportPickFileButtonText}"
                             Command="{Binding ActiveProjectTab.PickSwaggerImportFileCommand}" />
                     <Button Classes="DialogPrimaryButton"
-                            Content="开始导入"
+                            Content="{Binding ActiveProjectTab.ImportStartButtonText}"
                             Command="{Binding ActiveProjectTab.ImportSwaggerFileCommand}" />
                   </StackPanel>
                 </StackPanel>
@@ -124,17 +124,17 @@
                       IsVisible="{Binding ActiveProjectTab.IsImportUrlMode}">
                 <StackPanel Spacing="{StaticResource Space.3}">
                   <TextBlock Classes="SectionTitle"
-                             Text="URL 导入" />
+                             Text="{Binding ActiveProjectTab.ImportUrlModeTitle}" />
                   <TextBlock Classes="CaptionText"
-                             Text="输入可直接访问的 OpenAPI / Swagger 文档地址。" />
+                             Text="{Binding ActiveProjectTab.ImportUrlDescription}" />
                   <TextBox Classes="SectionInput DialogInput"
-                           Watermark="https://example.com/swagger/v1/swagger.json"
+                           Watermark="{Binding ActiveProjectTab.ImportUrlWatermark}"
                            Text="{Binding ActiveProjectTab.ImportUrl}" />
                   <StackPanel Orientation="Horizontal"
                               HorizontalAlignment="Right"
                               Spacing="{StaticResource Space.2}">
                     <Button Classes="DialogPrimaryButton"
-                            Content="导入 URL"
+                            Content="{Binding ActiveProjectTab.ImportUrlButtonText}"
                             Command="{Binding ActiveProjectTab.ImportSwaggerUrlCommand}" />
                   </StackPanel>
                 </StackPanel>
@@ -155,7 +155,7 @@
                 <ProgressBar Classes="ProjectImportBusyProgress"
                              IsIndeterminate="True" />
                 <TextBlock Classes="CaptionText"
-                           Text="导入期间会暂时锁定当前对话框，完成后会自动展示结果。"
+                           Text="{Binding ActiveProjectTab.ImportBusyOverlayDescription}"
                            TextWrapping="Wrap"
                            TextAlignment="Center" />
               </StackPanel>

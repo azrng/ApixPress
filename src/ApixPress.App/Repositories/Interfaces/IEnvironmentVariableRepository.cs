@@ -8,5 +8,9 @@ public interface IEnvironmentVariableRepository
 
     Task UpsertAsync(EnvironmentVariableEntity entity, CancellationToken cancellationToken);
 
+    Task UpsertRangeAsync(IReadOnlyList<EnvironmentVariableEntity> entities, CancellationToken cancellationToken);
+
+    Task<IReadOnlyDictionary<string, string>> GetEnabledDictionaryAsync(string environmentId, CancellationToken cancellationToken);
+
     Task DeleteAsync(string id, CancellationToken cancellationToken);
 }

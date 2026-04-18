@@ -108,6 +108,30 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
         return items.ToList();
     }
 
+    public async Task<IReadOnlyList<ApiEndpointEntity>> GetEndpointDetailsByProjectIdAsync(string projectId, CancellationToken cancellationToken)
+    {
+        const string sql = """
+                           select
+                               ep.id Id,
+                               ep.document_id DocumentId,
+                               ep.group_name GroupName,
+                               ep.name Name,
+                               ep.method Method,
+                               ep.path Path,
+                               ep.description Description,
+                               ep.request_body_template RequestBodyTemplate
+                           from api_endpoints ep
+                           inner join api_documents ad on ad.id = ep.document_id
+                           where ad.project_id = @ProjectId
+                           order by ad.imported_at desc, ep.group_name, ep.method, ep.path
+                           """;
+
+        using var connection = _connectionFactory.CreateConnection();
+        var items = await connection.QueryAsync<ApiEndpointEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken));
+        return items.ToList();
+    }
+
     public async Task<IReadOnlyList<RequestParameterEntity>> GetParametersByEndpointIdsAsync(IEnumerable<string> endpointIds, CancellationToken cancellationToken)
     {
         var ids = endpointIds.ToArray();

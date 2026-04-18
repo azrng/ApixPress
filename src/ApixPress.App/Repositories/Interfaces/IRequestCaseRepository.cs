@@ -10,5 +10,9 @@ public interface IRequestCaseRepository
 
     Task UpsertAsync(RequestCaseEntity entity, CancellationToken cancellationToken);
 
+    Task UpsertRangeAsync(IReadOnlyList<RequestCaseEntity> entities, CancellationToken cancellationToken);
+
     Task DeleteAsync(string projectId, string id, CancellationToken cancellationToken);
+
+    Task DeleteRangeAsync(string projectId, IEnumerable<string> ids, CancellationToken cancellationToken);
 }

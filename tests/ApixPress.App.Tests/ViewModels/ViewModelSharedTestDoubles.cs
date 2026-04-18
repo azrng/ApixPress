@@ -59,6 +59,15 @@ public static class ViewModelSharedTestDoubles
             return Task.FromResult<IResultModel<EnvironmentVariableDto>>(ResultModel<EnvironmentVariableDto>.Success(variable));
         }
 
+        public Task<IResultModel<IReadOnlyList<EnvironmentVariableDto>>> SaveVariablesAsync(
+            ProjectEnvironmentDto environment,
+            IReadOnlyList<EnvironmentVariableDto> variables,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<IReadOnlyList<EnvironmentVariableDto>>>(
+                ResultModel<IReadOnlyList<EnvironmentVariableDto>>.Success(variables));
+        }
+
         public Task<IResultModel<bool>> DeleteVariableAsync(string id, CancellationToken cancellationToken)
         {
             return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
@@ -75,9 +84,11 @@ public static class ViewModelSharedTestDoubles
         private const string ImportedEndpointKeyPrefix = "swagger-import:";
 
         public List<RequestCaseDto> Cases { get; } = [];
+        public int GetCasesCallCount { get; private set; }
 
         public Task<IReadOnlyList<RequestCaseDto>> GetCasesAsync(string projectId, CancellationToken cancellationToken)
         {
+            GetCasesCallCount++;
             return Task.FromResult<IReadOnlyList<RequestCaseDto>>(Cases
                 .Where(item => string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase))
                 .OrderBy(item => item.EntryType, StringComparer.OrdinalIgnoreCase)
@@ -192,6 +203,15 @@ public static class ViewModelSharedTestDoubles
             Cases.RemoveAll(item => string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase));
             return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
+        }
+
+        public Task DeleteRangeAsync(string projectId, IReadOnlyList<string> ids, CancellationToken cancellationToken)
+        {
+            var targetIds = ids.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            Cases.RemoveAll(item =>
+                string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase)
+                && targetIds.Contains(item.Id));
+            return Task.CompletedTask;
         }
 
         private static string BuildImportedEndpointKey(ApiEndpointDto endpoint)

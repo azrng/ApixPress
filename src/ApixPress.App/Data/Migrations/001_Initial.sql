@@ -45,6 +45,9 @@ CREATE TABLE IF NOT EXISTS api_documents (
     FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
 );
 
+CREATE INDEX IF NOT EXISTS ix_api_documents_project_imported_at
+ON api_documents(project_id, imported_at DESC);
+
 CREATE TABLE IF NOT EXISTS api_endpoints (
     id TEXT PRIMARY KEY,
     document_id TEXT NOT NULL,
@@ -57,6 +60,12 @@ CREATE TABLE IF NOT EXISTS api_endpoints (
     FOREIGN KEY(document_id) REFERENCES api_documents(id) ON DELETE CASCADE
 );
 
+CREATE INDEX IF NOT EXISTS ix_api_endpoints_document_id
+ON api_endpoints(document_id);
+
+CREATE INDEX IF NOT EXISTS ix_api_endpoints_method_path
+ON api_endpoints(method, path);
+
 CREATE TABLE IF NOT EXISTS request_parameters (
     id TEXT PRIMARY KEY,
     endpoint_id TEXT NOT NULL,
@@ -67,6 +76,9 @@ CREATE TABLE IF NOT EXISTS request_parameters (
     required INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY(endpoint_id) REFERENCES api_endpoints(id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS ix_request_parameters_endpoint_id
+ON request_parameters(endpoint_id);
 
 CREATE TABLE IF NOT EXISTS request_cases (
     id TEXT PRIMARY KEY,
@@ -88,6 +100,9 @@ DROP INDEX IF EXISTS ux_request_cases_project_group_name;
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_request_cases_project_entry_scope_name
 ON request_cases(project_id, entry_type, group_name, folder_path, parent_id, name);
+
+CREATE INDEX IF NOT EXISTS ix_request_cases_project_parent_id
+ON request_cases(project_id, parent_id);
 
 CREATE TABLE IF NOT EXISTS environment_variables (
     id TEXT PRIMARY KEY,

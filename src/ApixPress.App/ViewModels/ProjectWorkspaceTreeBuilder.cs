@@ -9,6 +9,13 @@ public static class ProjectWorkspaceTreeBuilder
         IEnumerable<RequestCaseItemViewModel> savedRequests,
         ICommand deleteCommand)
     {
+        return (BuildInterfaceRoot(savedRequests, deleteCommand), BuildQuickRequests(savedRequests, deleteCommand));
+    }
+
+    public static ExplorerItemViewModel BuildInterfaceRoot(
+        IEnumerable<RequestCaseItemViewModel> savedRequests,
+        ICommand deleteCommand)
+    {
         var requestItems = savedRequests.ToList();
         var httpInterfaces = requestItems
             .Where(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase))
@@ -19,15 +26,11 @@ public static class ProjectWorkspaceTreeBuilder
             .Where(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpCase, StringComparison.OrdinalIgnoreCase))
             .GroupBy(item => item.SourceCase.ParentId)
             .ToDictionary(group => group.Key, group => group.OrderByDescending(item => item.UpdatedAt).ToList(), StringComparer.OrdinalIgnoreCase);
-        var quickRequests = requestItems
-            .Where(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(item => item.UpdatedAt)
-            .Select(item => BuildQuickRequestNode(item, deleteCommand))
-            .ToList();
         var folderCounts = BuildFolderDescendantCounts(httpInterfaces.Select(item => item.SourceCase.FolderPath));
 
         var interfaceRoot = new ExplorerItemViewModel
         {
+            NodeKey = "interface-root",
             Title = "接口",
             Subtitle = string.Empty,
             IsGroup = true,
@@ -51,6 +54,7 @@ public static class ProjectWorkspaceTreeBuilder
                     {
                         folderNode = new ExplorerItemViewModel
                         {
+                            NodeKey = $"folder:{currentPath}",
                             Title = BuildFolderTitle(segment, currentPath, folderCounts),
                             Subtitle = string.Empty,
                             IsGroup = true,
@@ -67,6 +71,7 @@ public static class ProjectWorkspaceTreeBuilder
 
             var interfaceNode = new ExplorerItemViewModel
             {
+                NodeKey = $"http-interface:{item.SourceCase.Id}",
                 Title = BuildInterfaceTitle(item.Name, httpCases.TryGetValue(item.SourceCase.Id, out var interfaceCases) ? interfaceCases.Count : 0),
                 Subtitle = string.Empty,
                 NodeType = ProjectTabRequestEntryTypes.HttpInterface,
@@ -82,6 +87,7 @@ public static class ProjectWorkspaceTreeBuilder
                 {
                     interfaceNode.Children.Add(new ExplorerItemViewModel
                     {
+                        NodeKey = $"http-case:{caseItem.SourceCase.Id}",
                         Title = caseItem.Name,
                         Subtitle = string.Empty,
                         NodeType = ProjectTabRequestEntryTypes.HttpCase,
@@ -93,7 +99,18 @@ public static class ProjectWorkspaceTreeBuilder
             }
         }
 
-        return (interfaceRoot, quickRequests);
+        return interfaceRoot;
+    }
+
+    public static List<ExplorerItemViewModel> BuildQuickRequests(
+        IEnumerable<RequestCaseItemViewModel> savedRequests,
+        ICommand deleteCommand)
+    {
+        return savedRequests
+            .Where(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(item => item.UpdatedAt)
+            .Select(item => BuildQuickRequestNode(item, deleteCommand))
+            .ToList();
     }
 
     public static IEnumerable<RequestCaseDto> CollectDeletableSourceCases(ExplorerItemViewModel item)
@@ -139,6 +156,7 @@ public static class ProjectWorkspaceTreeBuilder
     {
         return new ExplorerItemViewModel
         {
+            NodeKey = $"quick-request:{item.SourceCase.Id}",
             Title = item.Name,
             Subtitle = string.Empty,
             NodeType = ProjectTabRequestEntryTypes.QuickRequest,

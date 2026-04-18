@@ -61,16 +61,7 @@ public partial class UseCasesPanelViewModel : ViewModelBase
             }
 
             var cases = await _requestCaseService.GetCasesAsync(_currentProjectId, cancellationToken);
-            RequestCases.ReplaceWith(cases.Select(requestCase => new RequestCaseItemViewModel
-            {
-                Id = requestCase.Id,
-                Name = requestCase.Name,
-                GroupName = requestCase.GroupName,
-                TagsText = string.Join(", ", requestCase.Tags),
-                Description = requestCase.Description,
-                UpdatedAt = requestCase.UpdatedAt.ToLocalTime(),
-                SourceCase = requestCase
-            }));
+            RequestCases.ReplaceWith(cases.Select(CreateRequestCaseItem));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -109,8 +100,10 @@ public partial class UseCasesPanelViewModel : ViewModelBase
 
         var dto = BuildCaseDto(SelectedRequestCase?.Id ?? string.Empty, snapshot.Name, snapshot);
         var result = await _requestCaseService.SaveAsync(dto, CancellationToken.None);
-        if (result.IsSuccess)
-            await LoadCasesAsync();
+        if (result.IsSuccess && result.Data is not null)
+        {
+            UpsertCaseItem(result.Data);
+        }
     }
 
     [RelayCommand]
@@ -131,8 +124,10 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         if (SelectedRequestCase is null) return;
         if (string.IsNullOrWhiteSpace(_currentProjectId)) return;
         var result = await _requestCaseService.DuplicateAsync(_currentProjectId, SelectedRequestCase.Id, CancellationToken.None);
-        if (result.IsSuccess)
-            await LoadCasesAsync();
+        if (result.IsSuccess && result.Data is not null)
+        {
+            UpsertCaseItem(result.Data);
+        }
     }
 
     [RelayCommand]
@@ -142,8 +137,8 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(_currentProjectId)) return;
 
         await _requestCaseService.DeleteAsync(_currentProjectId, SelectedRequestCase.Id, CancellationToken.None);
+        RemoveCases([SelectedRequestCase.Id]);
         SelectedRequestCase = null;
-        await LoadCasesAsync();
     }
 
     private void ReplaceCaseTags(IEnumerable<string> tags)
@@ -153,5 +148,73 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         {
             CaseTags.Add(tag);
         }
+    }
+
+    public void UpsertCaseItem(RequestCaseDto requestCase)
+    {
+        var existing = RequestCases.FirstOrDefault(item => string.Equals(item.Id, requestCase.Id, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            RequestCases.Remove(existing);
+        }
+
+        var nextItem = CreateRequestCaseItem(requestCase);
+        var insertIndex = 0;
+        while (insertIndex < RequestCases.Count && CompareRequestCaseItems(RequestCases[insertIndex], nextItem) <= 0)
+        {
+            insertIndex++;
+        }
+
+        RequestCases.Insert(insertIndex, nextItem);
+    }
+
+    public void RemoveCases(IEnumerable<string> ids)
+    {
+        var targetIds = ids
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (targetIds.Count == 0)
+        {
+            return;
+        }
+
+        for (var index = RequestCases.Count - 1; index >= 0; index--)
+        {
+            if (targetIds.Contains(RequestCases[index].Id))
+            {
+                RequestCases.RemoveAt(index);
+            }
+        }
+    }
+
+    private static RequestCaseItemViewModel CreateRequestCaseItem(RequestCaseDto requestCase)
+    {
+        return new RequestCaseItemViewModel
+        {
+            Id = requestCase.Id,
+            Name = requestCase.Name,
+            GroupName = requestCase.GroupName,
+            TagsText = string.Join(", ", requestCase.Tags),
+            Description = requestCase.Description,
+            UpdatedAt = requestCase.UpdatedAt.ToLocalTime(),
+            SourceCase = requestCase
+        };
+    }
+
+    private static int CompareRequestCaseItems(RequestCaseItemViewModel left, RequestCaseItemViewModel right)
+    {
+        var entryTypeCompare = StringComparer.OrdinalIgnoreCase.Compare(left.SourceCase.EntryType, right.SourceCase.EntryType);
+        if (entryTypeCompare != 0)
+        {
+            return entryTypeCompare;
+        }
+
+        var folderCompare = StringComparer.OrdinalIgnoreCase.Compare(left.SourceCase.FolderPath, right.SourceCase.FolderPath);
+        if (folderCompare != 0)
+        {
+            return folderCompare;
+        }
+
+        return StringComparer.OrdinalIgnoreCase.Compare(left.SourceCase.Name, right.SourceCase.Name);
     }
 }

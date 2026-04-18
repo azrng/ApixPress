@@ -11,6 +11,9 @@ namespace ApixPress.App.Services.Implementations;
 public sealed class AppShellSettingsService : IAppShellSettingsService, ISingletonDependency
 {
     private readonly string _settingsFilePath;
+    private readonly Lock _cacheLock = new();
+    private AppShellSettingsDto? _cachedSettings;
+    private bool _hasLoaded;
 
     public AppShellSettingsService()
         : this(WorkspacePaths.ResolveFromBaseDirectory(Path.Combine("Data", "app-shell-settings.json")))
@@ -26,19 +29,32 @@ public sealed class AppShellSettingsService : IAppShellSettingsService, ISinglet
     {
         try
         {
+            lock (_cacheLock)
+            {
+                if (_hasLoaded && _cachedSettings is not null)
+                {
+                    return ResultModel<AppShellSettingsDto>.Success(CloneSettings(_cachedSettings));
+                }
+            }
+
             if (!File.Exists(_settingsFilePath))
             {
-                return ResultModel<AppShellSettingsDto>.Success(new AppShellSettingsDto());
+                var emptySettings = new AppShellSettingsDto();
+                CacheSettings(emptySettings);
+                return ResultModel<AppShellSettingsDto>.Success(CloneSettings(emptySettings));
             }
 
             var json = await File.ReadAllTextAsync(_settingsFilePath, Encoding.UTF8, cancellationToken);
             if (string.IsNullOrWhiteSpace(json))
             {
-                return ResultModel<AppShellSettingsDto>.Success(new AppShellSettingsDto());
+                var emptySettings = new AppShellSettingsDto();
+                CacheSettings(emptySettings);
+                return ResultModel<AppShellSettingsDto>.Success(CloneSettings(emptySettings));
             }
 
             var settings = JsonSerializer.Deserialize<AppShellSettingsDto>(json) ?? new AppShellSettingsDto();
-            return ResultModel<AppShellSettingsDto>.Success(settings);
+            CacheSettings(settings);
+            return ResultModel<AppShellSettingsDto>.Success(CloneSettings(settings));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -69,7 +85,8 @@ public sealed class AppShellSettingsService : IAppShellSettingsService, ISinglet
                 WriteIndented = true
             });
             await File.WriteAllTextAsync(_settingsFilePath, json, Encoding.UTF8, cancellationToken);
-            return ResultModel<AppShellSettingsDto>.Success(settings);
+            CacheSettings(settings);
+            return ResultModel<AppShellSettingsDto>.Success(CloneSettings(settings));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -79,5 +96,27 @@ public sealed class AppShellSettingsService : IAppShellSettingsService, ISinglet
         {
             return ResultModel<AppShellSettingsDto>.Failure($"设置保存失败：{exception.Message}", "app_shell_settings_save_failed");
         }
+    }
+
+    private void CacheSettings(AppShellSettingsDto settings)
+    {
+        lock (_cacheLock)
+        {
+            _cachedSettings = CloneSettings(settings);
+            _hasLoaded = true;
+        }
+    }
+
+    private static AppShellSettingsDto CloneSettings(AppShellSettingsDto settings)
+    {
+        return new AppShellSettingsDto
+        {
+            RequestTimeoutMilliseconds = settings.RequestTimeoutMilliseconds,
+            ValidateSslCertificate = settings.ValidateSslCertificate,
+            AutoFollowRedirects = settings.AutoFollowRedirects,
+            SendNoCacheHeader = settings.SendNoCacheHeader,
+            EnableVerboseLogging = settings.EnableVerboseLogging,
+            EnableUpdateReminder = settings.EnableUpdateReminder
+        };
     }
 }

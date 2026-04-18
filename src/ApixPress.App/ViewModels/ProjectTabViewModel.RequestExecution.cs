@@ -41,8 +41,11 @@ public partial class ProjectTabViewModel
 
             if (result.IsSuccess || result.Data is not null)
             {
-                await _requestHistoryService.AddAsync(ProjectId, snapshot, result.Data, cancellationToken);
-                await HistoryPanel.LoadHistoryAsync();
+                var historyResult = await _requestHistoryService.AddAsync(ProjectId, snapshot, result.Data, cancellationToken);
+                if (historyResult.IsSuccess && historyResult.Data is not null)
+                {
+                    HistoryPanel.PrependHistoryItem(historyResult.Data);
+                }
             }
 
             StatusMessage = result.IsSuccess

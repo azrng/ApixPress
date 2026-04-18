@@ -1,5 +1,6 @@
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Models.Entities;
+using ApixPress.App.Helpers;
 using ApixPress.App.Repositories.Implementations;
 using ApixPress.App.Services.Implementations;
 
@@ -60,6 +61,72 @@ public sealed partial class WorkspacePersistenceTests
             var endpoint = Assert.Single(endpoints);
             Assert.Equal("GET", endpoint.Method);
             Assert.Equal("/health", endpoint.Path);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ApiWorkspaceService_ShouldLoadProjectEndpointsWithParametersInSinglePass()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var repository = new ApiDocumentRepository(factory);
+        var service = new ApiWorkspaceService(repository);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "项目级导入接口查询"
+        }, CancellationToken.None)).Data!;
+        var tempFile = Path.Combine(Path.GetTempPath(), $"swagger-project-endpoints-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, """
+                                                 {
+                                                   "openapi": "3.0.1",
+                                                   "info": { "title": "Project Endpoint Demo" },
+                                                   "paths": {
+                                                     "/orders/{id}": {
+                                                       "get": {
+                                                         "summary": "查询订单",
+                                                         "parameters": [
+                                                           {
+                                                             "name": "id",
+                                                             "in": "path",
+                                                             "required": true,
+                                                             "schema": { "type": "string" }
+                                                           },
+                                                           {
+                                                             "name": "traceId",
+                                                             "in": "header",
+                                                             "schema": { "default": "demo-trace" }
+                                                           }
+                                                         ]
+                                                       }
+                                                     }
+                                                   }
+                                                 }
+                                                 """);
+
+            var importResult = await service.ImportFromFileAsync(project.Id, tempFile, CancellationToken.None);
+
+            Assert.True(importResult.IsSuccess);
+
+            var endpoints = await service.GetProjectEndpointsAsync(project.Id, CancellationToken.None);
+            var endpoint = Assert.Single(endpoints);
+            Assert.Equal("/orders/{id}", endpoint.Path);
+            Assert.Equal(2, endpoint.Parameters.Count);
+            Assert.Contains(endpoint.Parameters, item => item.ParameterType == RequestParameterKind.Path && item.Name == "id");
+            Assert.Contains(endpoint.Parameters, item => item.ParameterType == RequestParameterKind.Header && item.Name == "traceId");
         }
         finally
         {
@@ -363,6 +430,7 @@ public sealed partial class WorkspacePersistenceTests
         var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
         var repository = new ApiDocumentRepository(factory);
         var downloadCount = 0;
+        var parseCount = 0;
         var service = new ApiWorkspaceService(
             repository,
             (_, _) =>
@@ -378,9 +446,15 @@ public sealed partial class WorkspacePersistenceTests
                                                "summary": "查询订单"
                                              }
                                            }
-                                         }
+                                           }
                                        }
                                        """);
+            },
+            (filePath, cancellationToken) => File.ReadAllTextAsync(filePath, cancellationToken),
+            (json, sourceType, sourceValue) =>
+            {
+                parseCount++;
+                return OpenApiJsonParser.Parse(json, sourceType, sourceValue);
             });
         var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
         {
@@ -394,8 +468,76 @@ public sealed partial class WorkspacePersistenceTests
         Assert.True(previewResult.IsSuccess);
         Assert.True(importResult.IsSuccess);
         Assert.Equal(1, downloadCount);
+        Assert.Equal(1, parseCount);
 
         var document = Assert.Single(await service.GetDocumentsAsync(project.Id, CancellationToken.None));
         Assert.Equal("Remote Import Demo", document.Name);
+    }
+
+    [Fact]
+    public async Task ApiWorkspaceService_ShouldReusePreviewedFilePreparationForImport()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var repository = new ApiDocumentRepository(factory);
+        var fileReadCount = 0;
+        var parseCount = 0;
+        var service = new ApiWorkspaceService(
+            repository,
+            (_, _) => throw new InvalidOperationException("当前测试不应触发 URL 下载。"),
+            async (filePath, cancellationToken) =>
+            {
+                fileReadCount++;
+                return await File.ReadAllTextAsync(filePath, cancellationToken);
+            },
+            (json, sourceType, sourceValue) =>
+            {
+                parseCount++;
+                return OpenApiJsonParser.Parse(json, sourceType, sourceValue);
+            });
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "文件导入复用项目"
+        }, CancellationToken.None)).Data!;
+        var tempFile = Path.Combine(Path.GetTempPath(), $"swagger-preview-import-{Guid.NewGuid():N}.json");
+
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, """
+                                                 {
+                                                   "openapi": "3.0.1",
+                                                   "info": { "title": "File Import Demo" },
+                                                   "paths": {
+                                                     "/orders": {
+                                                       "get": {
+                                                         "summary": "查询订单"
+                                                       }
+                                                     }
+                                                   }
+                                                 }
+                                                 """);
+
+            var previewResult = await service.PreviewImportFromFileAsync(project.Id, tempFile, CancellationToken.None);
+            var importResult = await service.ImportFromFileAsync(project.Id, tempFile, CancellationToken.None);
+
+            Assert.True(previewResult.IsSuccess);
+            Assert.True(importResult.IsSuccess);
+            Assert.Equal(1, fileReadCount);
+            Assert.Equal(1, parseCount);
+
+            var document = Assert.Single(await service.GetDocumentsAsync(project.Id, CancellationToken.None));
+            Assert.Equal("File Import Demo", document.Name);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
     }
 }

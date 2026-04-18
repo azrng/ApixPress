@@ -8,11 +8,14 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Collections.Concurrent;
 
 namespace ApixPress.App.Services.Implementations;
 
 public sealed partial class RequestExecutionService : IRequestExecutionService, ITransientDependency
 {
+    private static readonly ConcurrentDictionary<RequestClientOptions, HttpClient> SharedHttpClients = new();
+
     private readonly IAppShellSettingsService _appShellSettingsService;
     private readonly IEnvironmentVariableService _environmentVariableService;
     private readonly IJsonSerializer _serializer;
@@ -47,7 +50,7 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
 
             var finalUrl = BuildUrl(request, resolvedBaseUrl, activeVariables);
             var ignoreSslErrors = request.IgnoreSslErrors || !shellSettings.ValidateSslCertificate;
-            using var httpClient = CreateHttpClient(
+            var httpClient = GetOrCreateHttpClient(
                 ignoreSslErrors,
                 shellSettings.AutoFollowRedirects,
                 shellSettings.RequestTimeoutMilliseconds);
@@ -229,26 +232,32 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         return result;
     }
 
-    private static HttpClient CreateHttpClient(bool ignoreSslErrors, bool allowAutoRedirect, int timeoutMilliseconds)
+    private static HttpClient GetOrCreateHttpClient(bool ignoreSslErrors, bool allowAutoRedirect, int timeoutMilliseconds)
     {
-        var handler = new HttpClientHandler
+        var options = new RequestClientOptions(ignoreSslErrors, allowAutoRedirect, timeoutMilliseconds);
+        return SharedHttpClients.GetOrAdd(options, static key =>
         {
-            AllowAutoRedirect = allowAutoRedirect
-        };
-        if (ignoreSslErrors)
-        {
-            handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
-        }
+            var handler = new HttpClientHandler
+            {
+                AllowAutoRedirect = key.AllowAutoRedirect
+            };
+            if (key.IgnoreSslErrors)
+            {
+                handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
+            }
 
-        var client = new HttpClient(handler, disposeHandler: true);
-        client.Timeout = timeoutMilliseconds <= 0
-            ? Timeout.InfiniteTimeSpan
-            : TimeSpan.FromMilliseconds(timeoutMilliseconds);
-        return client;
+            var client = new HttpClient(handler, disposeHandler: true);
+            client.Timeout = key.TimeoutMilliseconds <= 0
+                ? Timeout.InfiniteTimeSpan
+                : TimeSpan.FromMilliseconds(key.TimeoutMilliseconds);
+            return client;
+        });
     }
 
 
 
     [GeneratedRegex("\\{\\{\\s*([\\w.-]+)\\s*\\}\\}")]
     private static partial Regex VariableRegex();
+
+    private readonly record struct RequestClientOptions(bool IgnoreSslErrors, bool AllowAutoRedirect, int TimeoutMilliseconds);
 }

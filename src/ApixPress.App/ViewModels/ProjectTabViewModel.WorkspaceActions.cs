@@ -18,9 +18,9 @@ public partial class ProjectTabViewModel
         UseCasesPanel.SetProjectContext(ProjectId);
         HistoryPanel.SetProjectContext(ProjectId);
         await EnvironmentPanel.LoadProjectAsync(ProjectId, preferredEnvironmentId);
-        await ReloadSavedRequestsAsync();
-        await HistoryPanel.LoadHistoryAsync();
-        await LoadImportedDocumentsAsync(manageBusyState: false);
+        var loadHistoryTask = HistoryPanel.LoadHistoryAsync();
+        var loadImportedDocumentsTask = LoadImportedDocumentsAsync(manageBusyState: false);
+        await Task.WhenAll(loadHistoryTask, loadImportedDocumentsTask);
         EnsureLandingWorkspaceTab();
         NotifyShellState();
     }

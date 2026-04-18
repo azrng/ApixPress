@@ -75,11 +75,12 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             return;
         }
 
-        var existingCases = await GetCasesAsync(projectId, cancellationToken);
+        var existingCases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
         var importedInterfaces = existingCases
             .Where(item => string.Equals(item.EntryType, "http-interface", StringComparison.OrdinalIgnoreCase))
-            .Where(IsImportedInterface)
-            .ToDictionary(item => item.RequestSnapshot.EndpointId, StringComparer.OrdinalIgnoreCase);
+            .Select(item => new ImportedInterfaceRecord(item, DeserializeRequestSnapshot(item.RequestSnapshotJson)))
+            .Where(item => IsImportedInterface(item.Snapshot))
+            .ToDictionary(item => item.Snapshot.EndpointId, StringComparer.OrdinalIgnoreCase);
         var importedInterfaceIds = importedInterfaces.Values
             .Select(item => item.Id)
             .Where(item => !string.IsNullOrWhiteSpace(item))
@@ -98,44 +99,43 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         var targetKeys = normalizedEndpoints
             .Select(BuildImportedEndpointKey)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var deletedInterfaceIds = new List<string>();
+        var entitiesToUpsert = new List<RequestCaseEntity>();
 
-        foreach (var removedInterface in importedInterfaces.Values.Where(item => !targetKeys.Contains(item.RequestSnapshot.EndpointId)).ToList())
+        foreach (var removedInterface in importedInterfaces.Values.Where(item => !targetKeys.Contains(item.Snapshot.EndpointId)))
         {
             if (importedCasesByInterfaceId.ContainsKey(removedInterface.Id))
             {
-                await PreserveImportedInterfaceAsync(removedInterface, cancellationToken);
+                entitiesToUpsert.Add(BuildPreservedImportedInterfaceEntity(removedInterface));
                 continue;
             }
 
-            await DeleteAsync(projectId, removedInterface.Id, cancellationToken);
+            deletedInterfaceIds.Add(removedInterface.Id);
         }
 
-        foreach (var endpoint in normalizedEndpoints)
+        try
         {
-            var endpointKey = BuildImportedEndpointKey(endpoint);
-            importedInterfaces.TryGetValue(endpointKey, out var existingInterface);
-
-            var snapshot = BuildImportedSnapshot(endpoint, endpointKey);
-            var saveResult = await SaveAsync(new RequestCaseDto
+            if (deletedInterfaceIds.Count > 0)
             {
-                Id = existingInterface?.Id ?? string.Empty,
-                ProjectId = projectId,
-                EntryType = "http-interface",
-                Name = endpoint.Name,
-                GroupName = "接口",
-                FolderPath = NormalizeFolderPath(endpoint.GroupName),
-                ParentId = endpointKey,
-                Description = endpoint.Description,
-                RequestSnapshot = snapshot,
-                UpdatedAt = DateTime.UtcNow
-            }, cancellationToken);
-
-            if (!saveResult.IsSuccess)
-            {
-                throw new InvalidOperationException(string.IsNullOrWhiteSpace(saveResult.Message)
-                    ? "导入接口同步失败。"
-                    : saveResult.Message);
+                await _requestCaseRepository.DeleteRangeAsync(projectId, deletedInterfaceIds, cancellationToken);
             }
+
+            foreach (var endpoint in normalizedEndpoints)
+            {
+                var endpointKey = BuildImportedEndpointKey(endpoint);
+                importedInterfaces.TryGetValue(endpointKey, out var existingInterface);
+
+                entitiesToUpsert.Add(BuildImportedInterfaceEntity(projectId, endpoint, endpointKey, existingInterface?.Id));
+            }
+
+            if (entitiesToUpsert.Count > 0)
+            {
+                await _requestCaseRepository.UpsertRangeAsync(entitiesToUpsert, cancellationToken);
+            }
+        }
+        catch (SqliteException exception) when (exception.SqliteErrorCode == 19)
+        {
+            throw new InvalidOperationException("导入接口同步失败：当前目录下已存在同名接口或用例，请调整名称后重试。", exception);
         }
     }
 
@@ -173,9 +173,14 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         return ResultModel<bool>.Success(true);
     }
 
-    private static bool IsImportedInterface(RequestCaseDto requestCase)
+    public async Task DeleteRangeAsync(string projectId, IReadOnlyList<string> ids, CancellationToken cancellationToken)
     {
-        return requestCase.RequestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase);
+        await _requestCaseRepository.DeleteRangeAsync(projectId, ids, cancellationToken);
+    }
+
+    private static bool IsImportedInterface(RequestSnapshotDto requestSnapshot)
+    {
+        return requestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string BuildImportedEndpointKey(ApiEndpointDto endpoint)
@@ -185,15 +190,9 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         return $"{ImportedEndpointKeyPrefix}{method} {path}";
     }
 
-    private static string BuildImportedEndpointKey(string interfaceId, IReadOnlyDictionary<string, RequestCaseDto> importedInterfaces)
+    private RequestCaseEntity BuildPreservedImportedInterfaceEntity(ImportedInterfaceRecord requestCase)
     {
-        var requestCase = importedInterfaces.Values.FirstOrDefault(item => string.Equals(item.Id, interfaceId, StringComparison.OrdinalIgnoreCase));
-        return requestCase?.RequestSnapshot.EndpointId ?? string.Empty;
-    }
-
-    private async Task PreserveImportedInterfaceAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
-    {
-        var saveResult = await SaveAsync(new RequestCaseDto
+        return new RequestCaseEntity
         {
             Id = requestCase.Id,
             ProjectId = requestCase.ProjectId,
@@ -202,18 +201,11 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             GroupName = requestCase.GroupName,
             FolderPath = requestCase.FolderPath,
             ParentId = BuildPreservedInterfaceParentId(requestCase.Id),
-            Tags = requestCase.Tags.ToList(),
+            TagsJson = requestCase.TagsJson,
             Description = requestCase.Description,
-            RequestSnapshot = BuildDetachedSnapshot(requestCase.RequestSnapshot),
+            RequestSnapshotJson = _serializer.ToJson(BuildDetachedSnapshot(requestCase.Snapshot)),
             UpdatedAt = DateTime.UtcNow
-        }, cancellationToken);
-
-        if (!saveResult.IsSuccess)
-        {
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(saveResult.Message)
-                ? "保留已保存用例关联的接口失败。"
-                : saveResult.Message);
-        }
+        };
     }
 
     private static string BuildPreservedInterfaceParentId(string requestCaseId)
@@ -283,6 +275,24 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         };
     }
 
+    private RequestCaseEntity BuildImportedInterfaceEntity(string projectId, ApiEndpointDto endpoint, string endpointKey, string? id)
+    {
+        return new RequestCaseEntity
+        {
+            Id = string.IsNullOrWhiteSpace(id) ? Guid.NewGuid().ToString("N") : id,
+            ProjectId = projectId,
+            EntryType = "http-interface",
+            Name = endpoint.Name,
+            GroupName = "接口",
+            FolderPath = NormalizeFolderPath(endpoint.GroupName),
+            ParentId = endpointKey,
+            TagsJson = "[]",
+            Description = endpoint.Description,
+            RequestSnapshotJson = _serializer.ToJson(BuildImportedSnapshot(endpoint, endpointKey)),
+            UpdatedAt = DateTime.UtcNow
+        };
+    }
+
     private static string NormalizeFolderPath(string folderPath)
     {
         if (string.IsNullOrWhiteSpace(folderPath))
@@ -338,5 +348,39 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             RequestSnapshotJson = _serializer.ToJson(dto.RequestSnapshot),
             UpdatedAt = dto.UpdatedAt
         };
+    }
+
+    private RequestSnapshotDto DeserializeRequestSnapshot(string requestSnapshotJson)
+    {
+        return _serializer.ToObject<RequestSnapshotDto>(requestSnapshotJson) ?? new RequestSnapshotDto();
+    }
+
+    private sealed class ImportedInterfaceRecord
+    {
+        public ImportedInterfaceRecord(RequestCaseEntity entity, RequestSnapshotDto snapshot)
+        {
+            Entity = entity;
+            Snapshot = snapshot;
+        }
+
+        public RequestCaseEntity Entity { get; }
+
+        public RequestSnapshotDto Snapshot { get; }
+
+        public string Id => Entity.Id;
+
+        public string ProjectId => Entity.ProjectId;
+
+        public string EntryType => Entity.EntryType;
+
+        public string Name => Entity.Name;
+
+        public string GroupName => Entity.GroupName;
+
+        public string FolderPath => Entity.FolderPath;
+
+        public string TagsJson => Entity.TagsJson;
+
+        public string Description => Entity.Description;
     }
 }

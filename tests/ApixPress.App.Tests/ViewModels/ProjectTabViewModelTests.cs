@@ -46,6 +46,20 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task InitializeAsync_ShouldLoadSavedRequestsOnlyOnceWhenRefreshingImportedDocuments()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 2);
+
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        Assert.Equal(1, requestCaseService.GetCasesCallCount);
+    }
+
+    [Fact]
     public async Task InitializeAsync_ShouldExposeFallbackDisplayTitleForUnnamedInterface()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
@@ -150,7 +164,7 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.ImportSwaggerUrlCommand.ExecuteAsync(null);
 
         Assert.True(viewModel.IsImportOverwriteConfirmDialogOpen);
-        Assert.Contains("覆盖", viewModel.PendingImportOverwriteSummary);
+        Assert.Contains("更新", viewModel.PendingImportOverwriteSummary);
         Assert.Contains("GET /orders", viewModel.PendingImportOverwriteDetailText);
 
         await viewModel.ConfirmImportOverwriteCommand.ExecuteAsync(null);
@@ -221,6 +235,60 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Equal("接口 1", viewModel.VisibleWorkspaceTabs[0].HeaderText);
         Assert.Equal("接口 2", viewModel.VisibleWorkspaceTabs[1].HeaderText);
         Assert.Equal("接口 2", viewModel.ActiveWorkspaceTab?.HeaderText);
+    }
+
+    [Fact]
+    public async Task ConfirmQuickRequestSaveAsync_ShouldKeepExistingInterfaceTreeNodesStable()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 1);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        var originalFolder = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (1)");
+        Assert.NotNull(originalFolder);
+
+        viewModel.OpenQuickRequestWorkspaceCommand.Execute(null);
+        Assert.NotNull(viewModel.ActiveWorkspaceTab);
+        viewModel.ActiveWorkspaceTab!.RequestUrl = "https://demo.local/ping";
+        viewModel.ActiveWorkspaceTab.ConfigTab.RequestName = "健康检查";
+
+        await viewModel.SaveCurrentEditorAsync();
+        await viewModel.ConfirmQuickRequestSaveCommand.ExecuteAsync(null);
+
+        var currentFolder = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (1)");
+        Assert.Same(originalFolder, currentFolder);
+        Assert.Single(viewModel.QuickRequestTreeItems);
+        Assert.Equal("健康检查", viewModel.QuickRequestTreeItems[0].Title);
+    }
+
+    [Fact]
+    public async Task SaveCurrentEditorAsync_ShouldKeepExistingInterfaceTreeNodesStable()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 1);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        var originalFolder = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (1)");
+        var originalInterface = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 1");
+        Assert.NotNull(originalFolder);
+        Assert.NotNull(originalInterface);
+
+        viewModel.LoadWorkspaceItem(originalInterface);
+        viewModel.CurrentHttpInterfaceName = "接口 1 已编辑";
+
+        await viewModel.SaveCurrentEditorAsync();
+
+        var currentFolder = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (1)");
+        var currentInterface = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 1 已编辑");
+        Assert.Same(originalFolder, currentFolder);
+        Assert.Same(originalInterface, currentInterface);
+        Assert.Equal("接口 1 已编辑", currentInterface!.Title);
     }
 
     [Fact]

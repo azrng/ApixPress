@@ -13,10 +13,10 @@ public partial class ProjectTabViewModel
     public bool CanEditImportData => !IsImportDataBusy;
     public bool ShowProjectImportDialogStatus => ShowImportStatusInfo || ShowImportStatusSuccess || ShowImportStatusError;
     public bool HasSelectedImportFile => !string.IsNullOrWhiteSpace(SelectedImportFilePath);
-    public string SelectedImportFileName => HasSelectedImportFile ? Path.GetFileName(SelectedImportFilePath) : "尚未选择 Swagger 文件";
+    public string SelectedImportFileName => HasSelectedImportFile ? Path.GetFileName(SelectedImportFilePath) : ImportTexts.UnselectedFileName;
     public string SelectedImportFileSummary => HasSelectedImportFile
         ? SelectedImportFilePath
-        : "请选择本地 Swagger/OpenAPI JSON 文件后再执行导入。";
+        : ImportTexts.UnselectedFileSummary;
     public bool HasImportedApiDocuments => ImportedApiDocuments.Count > 0;
     public bool ShowImportedApiDocumentsEmptyState => !IsImportDataBusy && !HasImportedApiDocuments;
     public bool ShowImportStatusInfo => ImportDataStatusState == ImportStatusStates.Info;
@@ -24,11 +24,11 @@ public partial class ProjectTabViewModel
     public bool ShowImportStatusError => ImportDataStatusState == ImportStatusStates.Error;
     public string ImportedApiDocumentCountText => ImportedApiDocuments.Count.ToString();
     public string ProjectSettingsDescription => string.IsNullOrWhiteSpace(Project.Description)
-        ? "当前项目还没有补充备注，可在这里继续维护环境与工作区说明。"
+        ? ProjectSettingsTexts.EmptyDescription
         : Project.Description;
-    public string CurrentProjectSettingsTitle => IsProjectSettingsImportDataSelected ? "导入数据" : "基本设置";
+    public string CurrentProjectSettingsTitle => IsProjectSettingsImportDataSelected ? ProjectSettingsTexts.ImportDataTitle : ProjectSettingsTexts.OverviewTitle;
     public string CurrentProjectSettingsSubtitle => IsProjectSettingsImportDataSelected
-        ? "支持 Swagger 文件上传和 URL 导入，导入结果会持久化保存到当前项目。"
+        ? ProjectSettingsTexts.ImportSubtitle
         : string.Empty;
     public bool HasPendingImportPreview => PendingImportPreview is not null;
     public string PendingImportOverwriteTitle => PendingImportPreview?.DocumentName ?? string.Empty;
@@ -41,9 +41,9 @@ public partial class ProjectTabViewModel
                 return string.Empty;
             }
 
-            return PendingImportPreview.NewEndpointCount > 0
-                ? $"本次将新增 {PendingImportPreview.NewEndpointCount} 个接口，并更新 {PendingImportPreview.ConflictCount} 个同路径接口，已保存用例会保留。"
-                : $"本次导入将更新当前项目中 {PendingImportPreview.ConflictCount} 个同路径接口，已保存用例会保留。";
+            return ImportTexts.FormatPendingOverwriteSummary(
+                PendingImportPreview.NewEndpointCount,
+                PendingImportPreview.ConflictCount);
         }
     }
 
@@ -62,12 +62,12 @@ public partial class ProjectTabViewModel
                 .ToList();
             var lines = new List<string>
             {
-                "同路径接口会更新为最新定义，当前已保存的用例不会因本次导入被自动删除。"
+                ImportTexts.OverwriteDetailPrefix
             };
             lines.AddRange(displayedConflicts);
             if (PendingImportPreview.ConflictItems.Count > displayedConflicts.Count)
             {
-                lines.Add($"另有 {PendingImportPreview.ConflictItems.Count - displayedConflicts.Count} 个重复接口未展开。");
+                lines.Add(ImportTexts.FormatAdditionalConflictItems(PendingImportPreview.ConflictItems.Count - displayedConflicts.Count));
             }
 
             return string.Join(Environment.NewLine, lines);

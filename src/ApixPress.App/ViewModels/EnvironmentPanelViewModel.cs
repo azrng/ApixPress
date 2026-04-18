@@ -53,15 +53,7 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
             }
 
             var environments = await _environmentVariableService.GetEnvironmentsAsync(projectId, cancellationToken);
-            var items = environments.Select(environment => new ProjectEnvironmentItemViewModel
-            {
-                Id = environment.Id,
-                ProjectId = environment.ProjectId,
-                Name = environment.Name,
-                BaseUrl = environment.BaseUrl,
-                IsActive = environment.IsActive,
-                SortOrder = environment.SortOrder
-            }).ToList();
+            var items = environments.Select(CreateEnvironmentItem).ToList();
 
             Environments.ReplaceWith(items);
 
@@ -130,7 +122,14 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
 
         if (result.IsSuccess && result.Data is not null)
         {
-            await LoadProjectAsync(_currentProjectId, result.Data.Id);
+            var createdItem = CreateEnvironmentItem(result.Data);
+            Environments.Add(createdItem);
+            UpdateActiveFlags(createdItem.Id);
+            _isUpdatingSelection = true;
+            SelectedEnvironment = createdItem;
+            _isUpdatingSelection = false;
+            EnvironmentVariables.Clear();
+            NotifySelectionState();
         }
     }
 
@@ -157,9 +156,9 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
             return;
         }
 
-        foreach (var item in EnvironmentVariables)
-        {
-            var result = await _environmentVariableService.SaveVariableAsync(new EnvironmentVariableDto
+        var variablesResult = await _environmentVariableService.SaveVariablesAsync(
+            saveResult.Data,
+            EnvironmentVariables.Select(item => new EnvironmentVariableDto
             {
                 Id = item.Id,
                 EnvironmentId = saveResult.Data.Id,
@@ -167,17 +166,15 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
                 Key = item.Key,
                 Value = item.Value,
                 IsEnabled = item.IsEnabled
-            }, CancellationToken.None);
-
-            if (result.IsSuccess && result.Data is not null)
-            {
-                item.Id = result.Data.Id;
-                item.EnvironmentId = result.Data.EnvironmentId;
-                item.EnvironmentName = result.Data.EnvironmentName;
-            }
+            }).ToList(),
+            CancellationToken.None);
+        if (!variablesResult.IsSuccess || variablesResult.Data is null)
+        {
+            return;
         }
 
-        await LoadProjectAsync(_currentProjectId, saveResult.Data.Id);
+        ApplySavedEnvironment(saveResult.Data);
+        ApplySavedVariables(variablesResult.Data);
     }
 
     [RelayCommand]
@@ -193,7 +190,24 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
         if (result.IsSuccess)
         {
             var nextSelection = Environments.FirstOrDefault(item => !string.Equals(item.Id, deletedEnvironmentId, StringComparison.OrdinalIgnoreCase));
-            await LoadProjectAsync(_currentProjectId, nextSelection?.Id);
+            var deletedItem = SelectedEnvironment;
+            if (deletedItem is not null)
+            {
+                Environments.Remove(deletedItem);
+            }
+
+            _isUpdatingSelection = true;
+            SelectedEnvironment = nextSelection;
+            _isUpdatingSelection = false;
+            EnvironmentVariables.Clear();
+
+            if (nextSelection is not null)
+            {
+                UpdateActiveFlags(nextSelection.Id);
+                await LoadVariablesAsync(nextSelection.Id, CancellationToken.None);
+            }
+
+            NotifySelectionState();
         }
     }
 
@@ -235,15 +249,7 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     {
         EnvironmentVariables.Clear();
         var items = await _environmentVariableService.GetVariablesAsync(environmentId, cancellationToken);
-        EnvironmentVariables.ReplaceWith(items.Select(item => new EnvironmentVariableItemViewModel
-        {
-            Id = item.Id,
-            EnvironmentId = item.EnvironmentId,
-            EnvironmentName = item.EnvironmentName,
-            Key = item.Key,
-            Value = item.Value,
-            IsEnabled = item.IsEnabled
-        }));
+        EnvironmentVariables.ReplaceWith(items.Select(CreateVariableItem));
     }
 
     private ProjectEnvironmentItemViewModel? ResolveSelection(IReadOnlyList<ProjectEnvironmentItemViewModel> items, string? preferredEnvironmentId)
@@ -296,6 +302,60 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(HasSelectedEnvironment));
         OnPropertyChanged(nameof(ActiveEnvironmentName));
+    }
+
+    private void ApplySavedEnvironment(ProjectEnvironmentDto environment)
+    {
+        var existing = Environments.FirstOrDefault(item => string.Equals(item.Id, environment.Id, StringComparison.OrdinalIgnoreCase));
+        if (existing is null)
+        {
+            existing = CreateEnvironmentItem(environment);
+            Environments.Add(existing);
+        }
+        else
+        {
+            existing.Name = environment.Name;
+            existing.BaseUrl = environment.BaseUrl;
+            existing.ProjectId = environment.ProjectId;
+            existing.SortOrder = environment.SortOrder;
+        }
+
+        UpdateActiveFlags(environment.Id);
+        _isUpdatingSelection = true;
+        SelectedEnvironment = existing;
+        _isUpdatingSelection = false;
+        NotifySelectionState();
+    }
+
+    private void ApplySavedVariables(IReadOnlyList<EnvironmentVariableDto> variables)
+    {
+        EnvironmentVariables.ReplaceWith(variables.Select(CreateVariableItem));
+    }
+
+    private static ProjectEnvironmentItemViewModel CreateEnvironmentItem(ProjectEnvironmentDto environment)
+    {
+        return new ProjectEnvironmentItemViewModel
+        {
+            Id = environment.Id,
+            ProjectId = environment.ProjectId,
+            Name = environment.Name,
+            BaseUrl = environment.BaseUrl,
+            IsActive = environment.IsActive,
+            SortOrder = environment.SortOrder
+        };
+    }
+
+    private static EnvironmentVariableItemViewModel CreateVariableItem(EnvironmentVariableDto item)
+    {
+        return new EnvironmentVariableItemViewModel
+        {
+            Id = item.Id,
+            EnvironmentId = item.EnvironmentId,
+            EnvironmentName = item.EnvironmentName,
+            Key = item.Key,
+            Value = item.Value,
+            IsEnabled = item.IsEnabled
+        };
     }
 
     partial void OnSelectedEnvironmentChanged(ProjectEnvironmentItemViewModel? value)

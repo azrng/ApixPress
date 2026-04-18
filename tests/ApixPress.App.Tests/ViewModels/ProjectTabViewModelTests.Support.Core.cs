@@ -131,6 +131,14 @@ public sealed partial class ProjectTabViewModelTests
             return Task.FromResult(endpoints);
         }
 
+        public Task<IReadOnlyList<ApiEndpointDto>> GetProjectEndpointsAsync(string projectId, CancellationToken cancellationToken)
+        {
+            IReadOnlyList<ApiEndpointDto> endpoints = _documentsByProject.TryGetValue(projectId, out var documents)
+                ? documents.SelectMany(document => _endpointsByDocument.TryGetValue(document.Id, out var items) ? items : []).ToList()
+                : [];
+            return Task.FromResult(endpoints);
+        }
+
         public Task<ApiDocumentDto?> GetDocumentAsync(string projectId, string documentId, CancellationToken cancellationToken)
         {
             var document = _documentsByProject.TryGetValue(projectId, out var items)

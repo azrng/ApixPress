@@ -14,4 +14,6 @@ public interface IRequestCaseService
     Task<IResultModel<RequestCaseDto>> DuplicateAsync(string projectId, string id, CancellationToken cancellationToken);
 
     Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken);
+
+    Task DeleteRangeAsync(string projectId, IReadOnlyList<string> ids, CancellationToken cancellationToken);
 }
