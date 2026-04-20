@@ -74,6 +74,7 @@
 | T037 | 收口项目页展示摘要职责 | 将 `ProjectTabViewModel` 中仅用于界面绑定的展示摘要与项目设置文案抽成独立子 ViewModel，继续减少父类 partial 与只读代理属性 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 21:58 |
 | T038 | 收口项目页生命周期编排职责 | 将 `ProjectTabViewModel` 中初始化、刷新、历史载入、环境保存与 workspace 联动状态编排抽成独立协调对象，继续收紧父类组合根 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 22:08 |
 | T039 | 收口项目页构造组装职责 | 将 `ProjectTabViewModel` 构造函数中的子 ViewModel 创建与事件接线抽成独立组装对象，继续压缩组合根复杂度 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 22:15 |
+| T040 | 收口项目页宿主上下文职责 | 将 `ProjectTabComposition` 与生命周期协调对象之间的回调参数收成显式宿主上下文对象，降低组装期闭包耦合 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 22:23 |
 --- 
 
 ## 归档索引

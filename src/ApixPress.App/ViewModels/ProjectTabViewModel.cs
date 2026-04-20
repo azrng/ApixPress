@@ -32,6 +32,17 @@ public partial class ProjectTabViewModel : ViewModelBase
 
         _fallbackWorkspaceTab = new RequestWorkspaceTabViewModel();
         _fallbackWorkspaceTab.ConfigureAsLanding();
+        var hostContext = new ProjectTabHostContext
+        {
+            GetActiveWorkspaceTab = () => ActiveWorkspaceTab,
+            SetStatusMessage = message => StatusMessage = message,
+            NotifyShellState = NotifyShellState,
+            NotifyWorkspaceEditorState = NotifyWorkspaceEditorState,
+            NotifyWorkspaceBindingsChanged = NotifyWorkspaceBindingsChanged,
+            NotifyActiveWorkspaceTabChanged = () => OnPropertyChanged(nameof(ActiveWorkspaceTab)),
+            NotifyWorkspaceTabMenuChanged = () => OnPropertyChanged(nameof(IsWorkspaceTabMenuOpen)),
+            SetBusyState = value => IsBusy = value
+        };
         var composition = ProjectTabComposition.Create(
             Project,
             _fallbackWorkspaceTab,
@@ -41,14 +52,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             environmentVariableService,
             apiWorkspaceService,
             filePickerService,
-            () => ActiveWorkspaceTab,
-            message => StatusMessage = message,
-            NotifyShellState,
-            NotifyWorkspaceEditorState,
-            NotifyWorkspaceBindingsChanged,
-            () => OnPropertyChanged(nameof(ActiveWorkspaceTab)),
-            () => OnPropertyChanged(nameof(IsWorkspaceTabMenuOpen)),
-            value => IsBusy = value);
+            hostContext);
         EnvironmentPanel = composition.EnvironmentPanel;
         UseCasesPanel = composition.UseCasesPanel;
         HistoryPanel = composition.HistoryPanel;

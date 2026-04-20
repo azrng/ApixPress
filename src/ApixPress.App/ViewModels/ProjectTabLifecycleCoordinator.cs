@@ -15,12 +15,7 @@ internal sealed class ProjectTabLifecycleCoordinator
     private readonly ProjectQuickRequestSaveViewModel _quickRequestSave;
     private readonly ProjectWorkspaceShellViewModel _shell;
     private readonly ProjectRequestEditorViewModel _editor;
-    private readonly Func<RequestWorkspaceTabViewModel?> _getActiveWorkspaceTab;
-    private readonly Action<string> _setStatusMessage;
-    private readonly Action _notifyShellState;
-    private readonly Action _notifyWorkspaceBindingsChanged;
-    private readonly Action _notifyActiveWorkspaceTabChanged;
-    private readonly Action _notifyWorkspaceTabMenuChanged;
+    private readonly ProjectTabHostContext _hostContext;
     private bool _initialized;
 
     public ProjectTabLifecycleCoordinator(
@@ -34,12 +29,7 @@ internal sealed class ProjectTabLifecycleCoordinator
         ProjectQuickRequestSaveViewModel quickRequestSave,
         ProjectWorkspaceShellViewModel shell,
         ProjectRequestEditorViewModel editor,
-        Func<RequestWorkspaceTabViewModel?> getActiveWorkspaceTab,
-        Action<string> setStatusMessage,
-        Action notifyShellState,
-        Action notifyWorkspaceBindingsChanged,
-        Action notifyActiveWorkspaceTabChanged,
-        Action notifyWorkspaceTabMenuChanged)
+        ProjectTabHostContext hostContext)
     {
         _projectId = projectId;
         _getProjectName = getProjectName;
@@ -51,12 +41,7 @@ internal sealed class ProjectTabLifecycleCoordinator
         _quickRequestSave = quickRequestSave;
         _shell = shell;
         _editor = editor;
-        _getActiveWorkspaceTab = getActiveWorkspaceTab;
-        _setStatusMessage = setStatusMessage;
-        _notifyShellState = notifyShellState;
-        _notifyWorkspaceBindingsChanged = notifyWorkspaceBindingsChanged;
-        _notifyActiveWorkspaceTabChanged = notifyActiveWorkspaceTabChanged;
-        _notifyWorkspaceTabMenuChanged = notifyWorkspaceTabMenuChanged;
+        _hostContext = hostContext;
     }
 
     public async Task InitializeAsync()
@@ -73,22 +58,22 @@ internal sealed class ProjectTabLifecycleCoordinator
     public async Task RefreshAsync()
     {
         await LoadWorkspaceAsync(_environmentPanel.SelectedEnvironment?.Id);
-        _setStatusMessage($"项目 {_getProjectName()} 已刷新。");
-        _notifyShellState();
+        _hostContext.SetStatusMessage($"项目 {_getProjectName()} 已刷新。");
+        _hostContext.NotifyShellState();
     }
 
     public async Task SaveCurrentEnvironmentAsync(string currentEnvironmentLabel)
     {
         if (!_environmentPanel.HasSelectedEnvironment)
         {
-            _setStatusMessage("请先选择环境后再保存。");
-            _notifyShellState();
+            _hostContext.SetStatusMessage("请先选择环境后再保存。");
+            _hostContext.NotifyShellState();
             return;
         }
 
         await _environmentPanel.SaveEnvironmentCommand.ExecuteAsync(null);
-        _setStatusMessage($"环境 {currentEnvironmentLabel} 已保存。");
-        _notifyShellState();
+        _hostContext.SetStatusMessage($"环境 {currentEnvironmentLabel} 已保存。");
+        _hostContext.NotifyShellState();
     }
 
     public void LoadHistoryRequest(RequestHistoryItemViewModel? item)
@@ -98,8 +83,8 @@ internal sealed class ProjectTabLifecycleCoordinator
             return;
         }
 
-        var targetTab = _getActiveWorkspaceTab()?.IsLandingTab == true
-            ? _getActiveWorkspaceTab()
+        var targetTab = _hostContext.GetActiveWorkspaceTab()?.IsLandingTab == true
+            ? _hostContext.GetActiveWorkspaceTab()
             : _workspace.FindFirstQuickRequestTab() ?? _workspace.CreateWorkspaceTab(activate: false);
 
         targetTab ??= _workspace.CreateWorkspaceTab(activate: false);
@@ -112,13 +97,13 @@ internal sealed class ProjectTabLifecycleCoordinator
 
         _workspace.ActivateWorkspaceTab(targetTab);
         _shell.SelectRequestHistorySection();
-        _setStatusMessage($"已加载历史请求：{item.Method} {item.Url}");
-        _notifyShellState();
+        _hostContext.SetStatusMessage($"已加载历史请求：{item.Method} {item.Url}");
+        _hostContext.NotifyShellState();
     }
 
     public void OnSelectedEnvironmentChanged(ProjectEnvironmentItemViewModel? environment)
     {
-        _setStatusMessage(environment is null
+        _hostContext.SetStatusMessage(environment is null
             ? "当前项目尚未配置环境。"
             : $"当前环境已切换为：{environment.Name}");
         NotifyWorkspaceEditorState();
@@ -136,12 +121,12 @@ internal sealed class ProjectTabLifecycleCoordinator
     {
         if (e.PropertyName == nameof(ProjectWorkspaceTabsViewModel.ActiveWorkspaceTab))
         {
-            _notifyActiveWorkspaceTabChanged();
+            _hostContext.NotifyActiveWorkspaceTabChanged();
             _shell.NotifyWorkspaceStateChanged();
         }
         else if (e.PropertyName == nameof(ProjectWorkspaceTabsViewModel.IsWorkspaceTabMenuOpen))
         {
-            _notifyWorkspaceTabMenuChanged();
+            _hostContext.NotifyWorkspaceTabMenuChanged();
         }
     }
 
@@ -154,13 +139,13 @@ internal sealed class ProjectTabLifecycleCoordinator
         var loadImportedDocumentsTask = _import.LoadImportedDocumentsAsync(manageBusyState: false);
         await Task.WhenAll(loadHistoryTask, loadImportedDocumentsTask);
         _workspace.EnsureLandingWorkspaceTab();
-        _notifyShellState();
+        _hostContext.NotifyShellState();
     }
 
     private void NotifyWorkspaceEditorState()
     {
-        _notifyWorkspaceBindingsChanged();
+        _hostContext.NotifyWorkspaceBindingsChanged();
         _editor.NotifyStateChanged();
-        _notifyShellState();
+        _hostContext.NotifyShellState();
     }
 }

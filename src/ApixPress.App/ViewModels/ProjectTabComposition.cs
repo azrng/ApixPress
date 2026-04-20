@@ -8,8 +8,7 @@ namespace ApixPress.App.ViewModels;
 internal sealed class ProjectTabComposition
 {
     private readonly ProjectWorkspaceItemViewModel _project;
-    private readonly Action _notifyShellState;
-    private readonly Action _notifyWorkspaceEditorState;
+    private readonly ProjectTabHostContext _hostContext;
 
     private ProjectTabComposition(
         ProjectWorkspaceItemViewModel project,
@@ -26,8 +25,7 @@ internal sealed class ProjectTabComposition
         ProjectQuickRequestSaveViewModel quickRequestSave,
         ProjectTabSummaryViewModel summary,
         ProjectTabLifecycleCoordinator lifecycle,
-        Action notifyShellState,
-        Action notifyWorkspaceEditorState)
+        ProjectTabHostContext hostContext)
     {
         _project = project;
         EnvironmentPanel = environmentPanel;
@@ -43,8 +41,7 @@ internal sealed class ProjectTabComposition
         QuickRequestSave = quickRequestSave;
         Summary = summary;
         Lifecycle = lifecycle;
-        _notifyShellState = notifyShellState;
-        _notifyWorkspaceEditorState = notifyWorkspaceEditorState;
+        _hostContext = hostContext;
     }
 
     public EnvironmentPanelViewModel EnvironmentPanel { get; }
@@ -70,14 +67,7 @@ internal sealed class ProjectTabComposition
         IEnvironmentVariableService environmentVariableService,
         IApiWorkspaceService apiWorkspaceService,
         IFilePickerService filePickerService,
-        Func<RequestWorkspaceTabViewModel?> getActiveWorkspaceTab,
-        Action<string> setStatusMessage,
-        Action notifyShellState,
-        Action notifyWorkspaceEditorState,
-        Action notifyWorkspaceBindingsChanged,
-        Action notifyActiveWorkspaceTabChanged,
-        Action notifyWorkspaceTabMenuChanged,
-        Action<bool> setBusyState)
+        ProjectTabHostContext hostContext)
     {
         var environmentPanel = new EnvironmentPanelViewModel(environmentVariableService);
         var useCasesPanel = new UseCasesPanelViewModel(requestCaseService);
@@ -90,15 +80,15 @@ internal sealed class ProjectTabComposition
 
         var workspace = new ProjectWorkspaceTabsViewModel(
             () => shellViewModel?.SelectInterfaceManagementSection(),
-            setStatusMessage);
+            hostContext.SetStatusMessage);
         var shell = shellViewModel = new ProjectWorkspaceShellViewModel(
             workspace.EnsureLandingWorkspaceTab,
-            getActiveWorkspaceTab,
+            hostContext.GetActiveWorkspaceTab,
             () => historyPanel.HistoryItems.Count > 0,
-            setStatusMessage,
-            notifyShellState);
+            hostContext.SetStatusMessage,
+            hostContext.NotifyShellState);
         var editor = new ProjectRequestEditorViewModel(
-            getActiveWorkspaceTab,
+            hostContext.GetActiveWorkspaceTab,
             () => fallbackWorkspaceTab,
             () => environmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty);
         var settings = new ProjectSettingsShellViewModel(
@@ -106,8 +96,8 @@ internal sealed class ProjectTabComposition
             () => importViewModel?.DismissDialog(),
             () => shellViewModel?.IsProjectSettingsSection ?? false,
             () => project.Description,
-            setStatusMessage,
-            notifyShellState);
+            hostContext.SetStatusMessage,
+            hostContext.NotifyShellState);
         var catalog = new ProjectWorkspaceCatalogViewModel(
             project.Id,
             requestCaseService,
@@ -115,15 +105,15 @@ internal sealed class ProjectTabComposition
             useCasesPanel,
             workspace,
             () => shellViewModel?.SelectInterfaceManagementSection(),
-            setStatusMessage,
-            notifyShellState,
+            hostContext.SetStatusMessage,
+            hostContext.NotifyShellState,
             () => importViewModel?.LoadImportedDocumentsAsync(manageBusyState: false) ?? Task.CompletedTask);
         var import = importViewModel = new ProjectImportViewModel(
             project.Id,
             apiWorkspaceService,
             filePickerService,
             catalog.SyncImportedInterfacesAsync,
-            setStatusMessage);
+            hostContext.SetStatusMessage);
         var workflow = workflowViewModel = new ProjectRequestWorkflowViewModel(
             project.Id,
             requestExecutionService,
@@ -133,24 +123,24 @@ internal sealed class ProjectTabComposition
             historyPanel,
             environmentPanel,
             catalog,
-            getActiveWorkspaceTab,
+            hostContext.GetActiveWorkspaceTab,
             workspaceTab => quickRequestSaveViewModel?.OpenDialogFor(workspaceTab),
             () => shellViewModel?.SelectInterfaceManagementSection(),
-            setStatusMessage,
-            setBusyState,
-            notifyShellState);
+            hostContext.SetStatusMessage,
+            hostContext.SetBusyState,
+            hostContext.NotifyShellState);
         var quickRequestSave = quickRequestSaveViewModel = new ProjectQuickRequestSaveViewModel(
-            getActiveWorkspaceTab,
+            hostContext.GetActiveWorkspaceTab,
             (workspaceTab, requestNameOverride) => workflowViewModel?.SaveQuickRequestAsync(workspaceTab, requestNameOverride) ?? Task.FromResult(false),
             message =>
             {
-                setStatusMessage(message);
-                notifyShellState();
+                hostContext.SetStatusMessage(message);
+                hostContext.NotifyShellState();
             });
         var summary = new ProjectTabSummaryViewModel(
             () => project,
             () => environmentPanel.SelectedEnvironment,
-            getActiveWorkspaceTab,
+            hostContext.GetActiveWorkspaceTab,
             () => useCasesPanel.RequestCases,
             () => historyPanel.HistoryItems,
             () => environmentPanel.Environments.Count,
@@ -166,12 +156,7 @@ internal sealed class ProjectTabComposition
             quickRequestSave,
             shell,
             editor,
-            getActiveWorkspaceTab,
-            setStatusMessage,
-            notifyShellState,
-            notifyWorkspaceBindingsChanged,
-            notifyActiveWorkspaceTabChanged,
-            notifyWorkspaceTabMenuChanged);
+            hostContext);
 
         return new ProjectTabComposition(
             project,
@@ -188,8 +173,7 @@ internal sealed class ProjectTabComposition
             quickRequestSave,
             summary,
             lifecycle,
-            notifyShellState,
-            notifyWorkspaceEditorState);
+            hostContext);
     }
 
     public void Attach()
@@ -199,8 +183,8 @@ internal sealed class ProjectTabComposition
         EnvironmentPanel.Environments.CollectionChanged += OnCollectionChanged;
         HistoryPanel.HistoryItems.CollectionChanged += OnCollectionChanged;
         Workspace.PropertyChanged += Lifecycle.OnWorkspacePropertyChanged;
-        Workspace.StateChanged += _notifyShellState;
-        Workspace.EditorStateChanged += _notifyWorkspaceEditorState;
+        Workspace.StateChanged += _hostContext.NotifyShellState;
+        Workspace.EditorStateChanged += _hostContext.NotifyWorkspaceEditorState;
         Workspace.ActiveWorkspaceTabChanged += Lifecycle.OnWorkspaceActiveWorkspaceTabChanged;
         Editor.PropertyChanged += OnChildPropertyChanged;
         Shell.PropertyChanged += OnShellPropertyChanged;
@@ -214,17 +198,17 @@ internal sealed class ProjectTabComposition
     private void OnProjectPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         Settings.NotifyProjectChanged();
-        _notifyShellState();
+        _hostContext.NotifyShellState();
     }
 
     private void OnCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
-        _notifyShellState();
+        _hostContext.NotifyShellState();
     }
 
     private void OnChildPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        _notifyShellState();
+        _hostContext.NotifyShellState();
     }
 
     private void OnShellPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -235,6 +219,6 @@ internal sealed class ProjectTabComposition
             Settings.NotifyWorkspaceSectionChanged();
         }
 
-        _notifyShellState();
+        _hostContext.NotifyShellState();
     }
 }
