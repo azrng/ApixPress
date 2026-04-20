@@ -64,6 +64,7 @@
 | T028 | 收口项目面板创建状态职责 | 将 `ProjectPanelViewModel` 中的新建项目草稿与命令抽为独立子 ViewModel，降低面板类职责密度，并补齐对应回归验证 | 阶段 2 | Codex | DONE | P1 | 2026-04-19 00:07 |
 | T029 | 收口项目工作区导入职责 | 将 `ProjectTabViewModel` 中的 Swagger 导入状态、命令与确认流程抽成独立子 ViewModel，降低 partial 数量与父类职责密度，并补齐回归验证 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 20:21 |
 | T030 | 收口快捷请求保存弹窗职责 | 将 `ProjectTabViewModel` 中的快捷请求保存弹窗状态、草稿字段与确认命令抽成独立子 ViewModel，继续降低父类 partial 密度，并补齐回归验证 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 20:35 |
+| T031 | 收口工作标签生命周期职责 | 将 `ProjectTabViewModel` 中的工作标签集合、激活、关闭、landing 与菜单状态抽成独立子 ViewModel，减少多组 workspace partial 对父类的长期堆叠 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 20:47 |
 --- 
 
 ## 归档索引

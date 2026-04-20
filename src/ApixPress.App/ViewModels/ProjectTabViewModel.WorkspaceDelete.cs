@@ -40,7 +40,7 @@ public partial class ProjectTabViewModel
                 .ToList(),
             CancellationToken.None);
 
-        CloseWorkspaceTabsForDeletedCases(targets);
+        Workspace.CloseTabsForDeletedCases(targets);
         if (importedInterfaces.Count > 0)
         {
             await Import.LoadImportedDocumentsAsync(manageBusyState: false);
@@ -93,28 +93,6 @@ public partial class ProjectTabViewModel
         PendingDeleteWorkspaceItem = null;
         IsWorkspaceDeleteConfirmDialogOpen = false;
         await DeleteWorkspaceItemAsync(item);
-    }
-
-    private void CloseWorkspaceTabsForDeletedCases(IReadOnlyCollection<RequestCaseDto> deletedCases)
-    {
-        var deletedIds = deletedCases
-            .Select(item => item.Id)
-            .Where(item => !string.IsNullOrWhiteSpace(item))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (deletedIds.Count == 0)
-        {
-            return;
-        }
-
-        var tabsToClose = WorkspaceTabs
-            .Where(tab => deletedIds.Contains(tab.EditingQuickRequestId)
-                || deletedIds.Contains(tab.EditingInterfaceId)
-                || deletedIds.Contains(tab.EditingCaseId))
-            .ToList();
-        foreach (var tab in tabsToClose)
-        {
-            CloseWorkspaceTab(tab);
-        }
     }
 
     private static bool IsImportedInterface(RequestCaseDto requestCase)

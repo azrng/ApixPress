@@ -21,7 +21,7 @@
                       Orientation="Horizontal"
                       HorizontalAlignment="Center">
             <Button Classes="WorkspaceLandingChoiceButton"
-                    Command="{Binding OpenHttpInterfaceWorkspaceCommand}">
+                    Command="{Binding Workspace.OpenHttpInterfaceWorkspaceCommand}">
               <Grid RowDefinitions="*,Auto">
                 <TextBlock Classes="WorkspaceLandingChoiceIcon"
                            FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
@@ -33,7 +33,7 @@
             </Button>
 
             <Button Classes="WorkspaceLandingChoiceButton"
-                    Command="{Binding OpenQuickRequestWorkspaceCommand}">
+                    Command="{Binding Workspace.OpenQuickRequestWorkspaceCommand}">
               <Grid RowDefinitions="*,Auto">
                 <TextBlock Classes="WorkspaceLandingChoiceIcon WorkspaceLandingChoiceQuickIcon"
                            FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"

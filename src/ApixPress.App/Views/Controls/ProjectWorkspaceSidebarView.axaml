@@ -108,7 +108,7 @@
                    Watermark="搜索" />
           <Button Grid.Column="1"
                   Classes="ProjectSidebarAddButton"
-                  Command="{Binding OpenHttpInterfaceWorkspaceCommand}">
+                  Command="{Binding Workspace.OpenHttpInterfaceWorkspaceCommand}">
             <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                        Text="&#xE710;" />
           </Button>
@@ -309,7 +309,7 @@
                     </TreeView>
                     <Button Classes="ProjectSidebarGhostButton ProjectSidebarBottomCreateButton QuickRequestBottomCreateButton"
                             Content="+ 新建"
-                            Command="{Binding OpenQuickRequestWorkspaceCommand}" />
+                            Command="{Binding Workspace.OpenQuickRequestWorkspaceCommand}" />
                   </StackPanel>
                 </Border>
               </StackPanel>

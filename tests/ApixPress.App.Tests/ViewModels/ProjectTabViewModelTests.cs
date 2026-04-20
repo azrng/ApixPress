@@ -250,7 +250,7 @@ public sealed partial class ProjectTabViewModelTests
         var originalFolder = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (1)");
         Assert.NotNull(originalFolder);
 
-        viewModel.OpenQuickRequestWorkspaceCommand.Execute(null);
+        viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
         Assert.NotNull(viewModel.ActiveWorkspaceTab);
         viewModel.ActiveWorkspaceTab!.RequestUrl = "https://demo.local/ping";
         viewModel.ActiveWorkspaceTab.ConfigTab.RequestName = "健康检查";
@@ -296,7 +296,7 @@ public sealed partial class ProjectTabViewModelTests
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
 
-        viewModel.OpenHttpInterfaceWorkspaceCommand.Execute(null);
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
 
         Assert.Equal("默认模块", viewModel.CurrentInterfaceFolderPath);
     }

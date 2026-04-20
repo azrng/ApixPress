@@ -44,7 +44,7 @@ public partial class ProjectTabViewModel
     private void ShowInterfaceManagement()
     {
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-        EnsureLandingWorkspaceTab();
+        Workspace.EnsureLandingWorkspaceTab();
         StatusMessage = ActiveWorkspaceTab?.IsLandingTab == true
             ? "接口管理已就绪，可在中间新建 HTTP 接口或快捷请求。"
             : "接口管理已打开。";

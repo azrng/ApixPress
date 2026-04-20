@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
@@ -31,7 +32,6 @@ public partial class ProjectTabViewModel : ViewModelBase
     private readonly IRequestHistoryService _requestHistoryService;
     private readonly IApiWorkspaceService _apiWorkspaceService;
     private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
-    private readonly ObservableCollection<RequestWorkspaceTabViewModel> _visibleWorkspaceTabs = [];
     private CancellationTokenSource? _sendRequestCancellationTokenSource;
     private bool _initialized;
     private int _workspaceNavigationRebuildSuspendCount;
@@ -68,6 +68,9 @@ public partial class ProjectTabViewModel : ViewModelBase
         EnvironmentPanel = new EnvironmentPanelViewModel(environmentVariableService);
         UseCasesPanel = new UseCasesPanelViewModel(requestCaseService);
         HistoryPanel = new RequestHistoryPanelViewModel(requestHistoryService);
+        Workspace = new ProjectWorkspaceTabsViewModel(
+            () => SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement,
+            message => StatusMessage = message);
         Import = new ProjectImportViewModel(
             Project.Id,
             apiWorkspaceService,
@@ -88,7 +91,10 @@ public partial class ProjectTabViewModel : ViewModelBase
         EnvironmentPanel.Environments.CollectionChanged += (_, _) => NotifyShellState();
         UseCasesPanel.RequestCases.CollectionChanged += OnSavedRequestsCollectionChanged;
         HistoryPanel.HistoryItems.CollectionChanged += (_, _) => NotifyShellState();
-        WorkspaceTabs.CollectionChanged += OnWorkspaceTabsCollectionChanged;
+        Workspace.PropertyChanged += OnWorkspacePropertyChanged;
+        Workspace.StateChanged += NotifyShellState;
+        Workspace.EditorStateChanged += NotifyWorkspaceEditorState;
+        Workspace.ActiveWorkspaceTabChanged += OnWorkspaceActiveWorkspaceTabChanged;
         Import.PropertyChanged += (_, _) => NotifyShellState();
         QuickRequestSave.PropertyChanged += (_, _) => NotifyShellState();
 
@@ -109,25 +115,36 @@ public partial class ProjectTabViewModel : ViewModelBase
             ShowProjectSettingsCommand));
         SyncWorkspaceNavigationSelection();
 
-        VisibleWorkspaceTabs = new ReadOnlyObservableCollection<RequestWorkspaceTabViewModel>(_visibleWorkspaceTabs);
-        EnsureLandingWorkspaceTab();
+        Workspace.EnsureLandingWorkspaceTab();
     }
 
     public ProjectWorkspaceItemViewModel Project { get; }
     public EnvironmentPanelViewModel EnvironmentPanel { get; }
     public UseCasesPanelViewModel UseCasesPanel { get; }
     public RequestHistoryPanelViewModel HistoryPanel { get; }
+    public ProjectWorkspaceTabsViewModel Workspace { get; }
     public ProjectImportViewModel Import { get; }
     public ProjectQuickRequestSaveViewModel QuickRequestSave { get; }
 
-    public ObservableCollection<RequestWorkspaceTabViewModel> WorkspaceTabs { get; } = [];
+    public ObservableCollection<RequestWorkspaceTabViewModel> WorkspaceTabs => Workspace.WorkspaceTabs;
     public ObservableCollection<ExplorerItemViewModel> InterfaceTreeItems { get; } = [];
     public ObservableCollection<ExplorerItemViewModel> QuickRequestTreeItems { get; } = [];
     public ObservableCollection<ProjectWorkspaceNavItemViewModel> WorkspaceNavigationItems { get; } = [];
     public IReadOnlyList<ExplorerItemViewModel> InterfaceCatalogItems => InterfaceTreeItems.FirstOrDefault()?.Children ?? [];
-    public ReadOnlyObservableCollection<RequestWorkspaceTabViewModel> VisibleWorkspaceTabs { get; }
+    public ReadOnlyObservableCollection<RequestWorkspaceTabViewModel> VisibleWorkspaceTabs => Workspace.VisibleWorkspaceTabs;
     public ObservableCollection<RequestCaseItemViewModel> SavedRequests => UseCasesPanel.RequestCases;
     public ObservableCollection<RequestHistoryItemViewModel> RequestHistory => HistoryPanel.HistoryItems;
+    public RequestWorkspaceTabViewModel? ActiveWorkspaceTab
+    {
+        get => Workspace.ActiveWorkspaceTab;
+        set => Workspace.ActiveWorkspaceTab = value;
+    }
+
+    public bool IsWorkspaceTabMenuOpen
+    {
+        get => Workspace.IsWorkspaceTabMenuOpen;
+        set => Workspace.IsWorkspaceTabMenuOpen = value;
+    }
 
     public RequestConfigTabViewModel ConfigTab => ActiveWorkspaceTab?.ConfigTab ?? _fallbackWorkspaceTab.ConfigTab;
     public ResponseSectionViewModel ResponseSection => ActiveWorkspaceTab?.ResponseSection ?? _fallbackWorkspaceTab.ResponseSection;
@@ -196,29 +213,30 @@ public partial class ProjectTabViewModel : ViewModelBase
     private bool isQuickRequestCatalogExpanded = true;
 
     [ObservableProperty]
-    private RequestWorkspaceTabViewModel? activeWorkspaceTab;
-
-    [ObservableProperty]
     private bool isWorkspaceDeleteConfirmDialogOpen;
 
     [ObservableProperty]
     private bool responseValidationEnabled = true;
 
     [ObservableProperty]
-    private bool isWorkspaceTabMenuOpen;
-
-    [ObservableProperty]
     private ExplorerItemViewModel? pendingDeleteWorkspaceItem;
-
-    private void SyncVisibleWorkspaceTabs()
-    {
-        _visibleWorkspaceTabs.ReplaceWith(WorkspaceTabs.Where(item => !item.IsLandingTab || item.ShowInTabStrip));
-    }
 
     private void OnSavedRequestsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         var (rebuildInterfaceNavigation, rebuildQuickRequestNavigation) = ResolveWorkspaceNavigationRebuildScope(e);
         RequestWorkspaceNavigationRebuild(rebuildInterfaceNavigation, rebuildQuickRequestNavigation);
         NotifyShellState();
+    }
+
+    private void OnWorkspacePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ProjectWorkspaceTabsViewModel.ActiveWorkspaceTab))
+        {
+            OnPropertyChanged(nameof(ActiveWorkspaceTab));
+        }
+        else if (e.PropertyName == nameof(ProjectWorkspaceTabsViewModel.IsWorkspaceTabMenuOpen))
+        {
+            OnPropertyChanged(nameof(IsWorkspaceTabMenuOpen));
+        }
     }
 }

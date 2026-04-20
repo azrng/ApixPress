@@ -18,7 +18,7 @@ public partial class ProjectTabViewModel
             : null;
 
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-        var targetTab = FindWorkspaceTabForSource(source) ?? ReuseActiveLandingOrCreateWorkspace();
+        var targetTab = Workspace.FindWorkspaceTabForSource(source) ?? Workspace.ReuseActiveLandingOrCreateWorkspace();
         targetTab.ApplySavedRequest(source, parentInterface);
 
         if (string.Equals(source.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase))
@@ -26,7 +26,7 @@ public partial class ProjectTabViewModel
             targetTab.HttpCaseName = ResolveLatestCaseName(source.Id);
         }
 
-        ActivateWorkspaceTabCore(targetTab);
+        Workspace.ActivateWorkspaceTab(targetTab);
         StatusMessage = source.EntryType switch
         {
             ProjectTabRequestEntryTypes.HttpInterface => $"已加载 HTTP 接口：{source.Name}",
@@ -45,9 +45,9 @@ public partial class ProjectTabViewModel
 
         var targetTab = ActiveWorkspaceTab?.IsLandingTab == true
             ? ActiveWorkspaceTab
-            : FindFirstQuickRequestTab() ?? CreateWorkspaceTab(activate: false);
+            : Workspace.FindFirstQuickRequestTab() ?? Workspace.CreateWorkspaceTab(activate: false);
 
-        targetTab ??= CreateWorkspaceTab(activate: false);
+        targetTab ??= Workspace.CreateWorkspaceTab(activate: false);
         targetTab.ConfigureAsQuickRequest();
         targetTab.ApplySnapshot(item.RequestSnapshot);
         if (item.ResponseSnapshot is not null)
@@ -55,7 +55,7 @@ public partial class ProjectTabViewModel
             targetTab.ResponseSection.ApplyResult(ResultModel<ResponseSnapshotDto>.Success(item.ResponseSnapshot), item.RequestSnapshot);
         }
 
-        ActivateWorkspaceTabCore(targetTab);
+        Workspace.ActivateWorkspaceTab(targetTab);
         SelectedWorkspaceSection = WorkspaceSections.RequestHistory;
         StatusMessage = $"已加载历史请求：{item.Method} {item.Url}";
         NotifyShellState();

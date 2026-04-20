@@ -23,7 +23,7 @@
         <Button Grid.Column="1"
                 Classes="SecondaryButton"
                 Content="打开快捷请求"
-                Command="{Binding OpenQuickRequestWorkspaceCommand}" />
+                Command="{Binding Workspace.OpenQuickRequestWorkspaceCommand}" />
       </Grid>
 
       <Border Grid.Row="1"
