@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
@@ -33,128 +32,37 @@ public partial class ProjectTabViewModel : ViewModelBase
 
         _fallbackWorkspaceTab = new RequestWorkspaceTabViewModel();
         _fallbackWorkspaceTab.ConfigureAsLanding();
-
-        EnvironmentPanel = new EnvironmentPanelViewModel(environmentVariableService);
-        UseCasesPanel = new UseCasesPanelViewModel(requestCaseService);
-        HistoryPanel = new RequestHistoryPanelViewModel(requestHistoryService);
-        ProjectImportViewModel? importViewModel = null;
-        ProjectQuickRequestSaveViewModel? quickRequestSaveViewModel = null;
-        ProjectRequestWorkflowViewModel? workflowViewModel = null;
-        ProjectWorkspaceShellViewModel? shellViewModel = null;
-        Workspace = new ProjectWorkspaceTabsViewModel(
-            () => shellViewModel?.SelectInterfaceManagementSection(),
-            message => StatusMessage = message);
-        Shell = shellViewModel = new ProjectWorkspaceShellViewModel(
-            Workspace.EnsureLandingWorkspaceTab,
-            () => ActiveWorkspaceTab,
-            () => HistoryPanel.HistoryItems.Count > 0,
-            message => StatusMessage = message,
-            NotifyShellState);
-        Editor = new ProjectRequestEditorViewModel(
-            () => ActiveWorkspaceTab,
-            () => _fallbackWorkspaceTab,
-            () => EnvironmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty);
-        Settings = new ProjectSettingsShellViewModel(
-            () => shellViewModel?.ShowProjectSettingsSection(),
-            () => importViewModel?.DismissDialog(),
-            () => shellViewModel?.IsProjectSettingsSection ?? false,
-            () => Project.Description,
-            message => StatusMessage = message,
-            NotifyShellState);
-        Catalog = new ProjectWorkspaceCatalogViewModel(
-            Project.Id,
-            requestCaseService,
-            apiWorkspaceService,
-            UseCasesPanel,
-            Workspace,
-            () => shellViewModel?.SelectInterfaceManagementSection(),
-            message => StatusMessage = message,
-            NotifyShellState,
-            () => importViewModel?.LoadImportedDocumentsAsync(manageBusyState: false) ?? Task.CompletedTask);
-        Import = importViewModel = new ProjectImportViewModel(
-            Project.Id,
-            apiWorkspaceService,
-            filePickerService,
-            Catalog.SyncImportedInterfacesAsync,
-            message => StatusMessage = message);
-        Workflow = workflowViewModel = new ProjectRequestWorkflowViewModel(
-            Project.Id,
+        var composition = ProjectTabComposition.Create(
+            Project,
+            _fallbackWorkspaceTab,
             requestExecutionService,
             requestCaseService,
             requestHistoryService,
-            Workspace,
-            HistoryPanel,
-            EnvironmentPanel,
-            Catalog,
-            () => ActiveWorkspaceTab,
-            workspaceTab => quickRequestSaveViewModel?.OpenDialogFor(workspaceTab),
-            () => shellViewModel?.SelectInterfaceManagementSection(),
-            message => StatusMessage = message,
-            value => IsBusy = value,
-            NotifyShellState);
-        QuickRequestSave = quickRequestSaveViewModel = new ProjectQuickRequestSaveViewModel(
-            () => ActiveWorkspaceTab,
-            (workspaceTab, requestNameOverride) => workflowViewModel?.SaveQuickRequestAsync(workspaceTab, requestNameOverride) ?? Task.FromResult(false),
-            message =>
-            {
-                StatusMessage = message;
-                NotifyShellState();
-            });
-        Summary = new ProjectTabSummaryViewModel(
-            () => Project,
-            () => EnvironmentPanel.SelectedEnvironment,
-            () => ActiveWorkspaceTab,
-            () => SavedRequests,
-            () => RequestHistory,
-            () => EnvironmentPanel.Environments.Count,
-            () => Import.ImportedApiDocuments.Count);
-        _lifecycle = new ProjectTabLifecycleCoordinator(
-            Project.Id,
-            () => Project.Name,
-            UseCasesPanel,
-            EnvironmentPanel,
-            HistoryPanel,
-            Import,
-            Workspace,
-            QuickRequestSave,
-            Shell,
-            Editor,
+            environmentVariableService,
+            apiWorkspaceService,
+            filePickerService,
             () => ActiveWorkspaceTab,
             message => StatusMessage = message,
             NotifyShellState,
+            NotifyWorkspaceEditorState,
             NotifyWorkspaceBindingsChanged,
             () => OnPropertyChanged(nameof(ActiveWorkspaceTab)),
-            () => OnPropertyChanged(nameof(IsWorkspaceTabMenuOpen)));
-
-        Project.PropertyChanged += (_, _) =>
-        {
-            Settings.NotifyProjectChanged();
-            NotifyShellState();
-        };
-        EnvironmentPanel.SelectedEnvironmentChanged += _lifecycle.OnSelectedEnvironmentChanged;
-        EnvironmentPanel.Environments.CollectionChanged += (_, _) => NotifyShellState();
-        HistoryPanel.HistoryItems.CollectionChanged += (_, _) => NotifyShellState();
-        Workspace.PropertyChanged += _lifecycle.OnWorkspacePropertyChanged;
-        Workspace.StateChanged += NotifyShellState;
-        Workspace.EditorStateChanged += NotifyWorkspaceEditorState;
-        Workspace.ActiveWorkspaceTabChanged += _lifecycle.OnWorkspaceActiveWorkspaceTabChanged;
-        Editor.PropertyChanged += (_, _) => NotifyShellState();
-        Shell.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName is nameof(ProjectWorkspaceShellViewModel.SelectedSection)
-                or nameof(ProjectWorkspaceShellViewModel.IsProjectSettingsSection))
-            {
-                Settings.NotifyWorkspaceSectionChanged();
-            }
-
-            NotifyShellState();
-        };
-        Settings.PropertyChanged += (_, _) => NotifyShellState();
-        Import.PropertyChanged += (_, _) => NotifyShellState();
-        QuickRequestSave.PropertyChanged += (_, _) => NotifyShellState();
-        Shell.AddProjectSettingsNavigation(Settings.OpenWorkspaceCommand);
-
-        Workspace.EnsureLandingWorkspaceTab();
+            () => OnPropertyChanged(nameof(IsWorkspaceTabMenuOpen)),
+            value => IsBusy = value);
+        EnvironmentPanel = composition.EnvironmentPanel;
+        UseCasesPanel = composition.UseCasesPanel;
+        HistoryPanel = composition.HistoryPanel;
+        Workspace = composition.Workspace;
+        Shell = composition.Shell;
+        Editor = composition.Editor;
+        Settings = composition.Settings;
+        Catalog = composition.Catalog;
+        Import = composition.Import;
+        Workflow = composition.Workflow;
+        QuickRequestSave = composition.QuickRequestSave;
+        Summary = composition.Summary;
+        _lifecycle = composition.Lifecycle;
+        composition.Attach();
     }
 
     public ProjectWorkspaceItemViewModel Project { get; }

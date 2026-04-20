@@ -73,6 +73,7 @@
 | T036 | 收口工作区壳层职责 | 将 `ProjectTabViewModel` 中 workspace section、导航 rail 与 landing/editor/history 显隐状态抽成独立子 ViewModel，继续减少 partial 堆叠并补齐回归验证 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 21:45 |
 | T037 | 收口项目页展示摘要职责 | 将 `ProjectTabViewModel` 中仅用于界面绑定的展示摘要与项目设置文案抽成独立子 ViewModel，继续减少父类 partial 与只读代理属性 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 21:58 |
 | T038 | 收口项目页生命周期编排职责 | 将 `ProjectTabViewModel` 中初始化、刷新、历史载入、环境保存与 workspace 联动状态编排抽成独立协调对象，继续收紧父类组合根 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 22:08 |
+| T039 | 收口项目页构造组装职责 | 将 `ProjectTabViewModel` 构造函数中的子 ViewModel 创建与事件接线抽成独立组装对象，继续压缩组合根复杂度 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 22:15 |
 --- 
 
 ## 归档索引
