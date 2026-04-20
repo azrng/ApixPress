@@ -14,34 +14,13 @@ public partial class ProjectTabViewModel
         OnPropertyChanged(nameof(VisibleWorkspaceTabs));
         OnPropertyChanged(nameof(HasHistory));
         OnPropertyChanged(nameof(ShowHistoryEmptyState));
-        OnPropertyChanged(nameof(IsInterfaceManagementSection));
-        OnPropertyChanged(nameof(IsRequestHistorySection));
-        OnPropertyChanged(nameof(IsProjectSettingsSection));
         OnPropertyChanged(nameof(ImportedApiDocumentSummaryText));
         OnPropertyChanged(nameof(IsQuickRequestEditor));
         OnPropertyChanged(nameof(IsHttpInterfaceEditor));
         OnPropertyChanged(nameof(IsRequestEditorOpen));
-        OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
-        OnPropertyChanged(nameof(ShowRequestEditorWorkspace));
         OnPropertyChanged(nameof(SavedRequestCountText));
         OnPropertyChanged(nameof(HistoryCountText));
         OnPropertyChanged(nameof(EnvironmentCountText));
         ShellStateChanged?.Invoke(this);
-    }
-
-    private void SyncWorkspaceNavigationSelection()
-    {
-        var selectedItem = WorkspaceNavigationItems.FirstOrDefault(item =>
-            string.Equals(item.SectionKey, SelectedWorkspaceSection, StringComparison.OrdinalIgnoreCase));
-
-        foreach (var navigationItem in WorkspaceNavigationItems)
-        {
-            navigationItem.IsSelected = ReferenceEquals(navigationItem, selectedItem);
-        }
-
-        if (!ReferenceEquals(SelectedWorkspaceNavigationItem, selectedItem))
-        {
-            SelectedWorkspaceNavigationItem = selectedItem;
-        }
     }
 }

@@ -12,8 +12,8 @@
       <StackPanel Orientation="Vertical"
                   Spacing="{StaticResource Space.2}">
         <Button Classes="ProjectWorkspaceNavButton"
-                Classes.ProjectWorkspaceNavButtonSelected="{Binding IsInterfaceManagementSection}"
-                Command="{Binding ShowInterfaceManagementCommand}">
+                Classes.ProjectWorkspaceNavButtonSelected="{Binding Shell.IsInterfaceManagementSection}"
+                Command="{Binding Shell.ShowInterfaceManagementCommand}">
           <StackPanel HorizontalAlignment="Center"
                       Spacing="6">
             <Border Classes="ProjectWorkspaceNavIcon">
@@ -31,8 +31,8 @@
         </Button>
 
         <Button Classes="ProjectWorkspaceNavButton"
-                Classes.ProjectWorkspaceNavButtonSelected="{Binding IsRequestHistorySection}"
-                Command="{Binding ShowRequestHistoryCommand}">
+                Classes.ProjectWorkspaceNavButtonSelected="{Binding Shell.IsRequestHistorySection}"
+                Command="{Binding Shell.ShowRequestHistoryCommand}">
           <StackPanel HorizontalAlignment="Center"
                       Spacing="6">
             <Border Classes="ProjectWorkspaceNavIcon">
@@ -50,7 +50,7 @@
         </Button>
 
         <Button Classes="ProjectWorkspaceNavButton"
-                Classes.ProjectWorkspaceNavButtonSelected="{Binding IsProjectSettingsSection}"
+                Classes.ProjectWorkspaceNavButtonSelected="{Binding Shell.IsProjectSettingsSection}"
                 Command="{Binding Settings.OpenWorkspaceCommand}">
           <StackPanel HorizontalAlignment="Center"
                       Spacing="6">

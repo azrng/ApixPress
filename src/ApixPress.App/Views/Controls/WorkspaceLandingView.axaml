@@ -8,7 +8,7 @@
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
   <Border Classes="PanelCard ProjectWorkspaceCanvas"
-          IsVisible="{Binding ShowInterfaceManagementLanding}">
+          IsVisible="{Binding Shell.ShowInterfaceManagementLanding}">
     <Grid RowDefinitions="Auto,*"
           RowSpacing="{StaticResource Space.4}">
       <views:ProjectWorkspaceToolbarView />

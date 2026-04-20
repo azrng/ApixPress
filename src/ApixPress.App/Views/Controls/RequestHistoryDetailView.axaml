@@ -9,7 +9,7 @@
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
   <Border Classes="PanelCard ProjectWorkspaceCanvas"
-          IsVisible="{Binding IsRequestHistorySection}">
+          IsVisible="{Binding Shell.IsRequestHistorySection}">
     <Grid RowDefinitions="Auto,*"
           RowSpacing="{StaticResource Space.3}">
       <Grid ColumnDefinitions="*,Auto"

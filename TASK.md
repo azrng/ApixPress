@@ -70,6 +70,7 @@
 | T033 | 收口工作区目录与删除确认职责 | 将 `ProjectTabViewModel` 中侧边目录树、删除确认弹窗、已保存请求树同步与载入/删除逻辑抽成独立子 ViewModel，继续减少 workspace 相关 partial 堆叠 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 21:15 |
 | T034 | 收口项目设置壳层职责 | 将 `ProjectTabViewModel` 中项目设置二级导航、标题派生与 section 切换命令抽成独立子 ViewModel，删除 `ProjectSettingsState` / `ProjectSettingsNotifications` partial | 阶段 2 | Codex | DONE | P1 | 2026-04-20 21:24 |
 | T035 | 收口请求发送与保存编排职责 | 将 `ProjectTabViewModel` 中发送请求、保存当前编辑器、从历史转存与保存 HTTP 用例等流程抽成独立工作流 ViewModel，删除对应 request/save partial | 阶段 2 | Codex | DONE | P1 | 2026-04-20 21:34 |
+| T036 | 收口工作区壳层职责 | 将 `ProjectTabViewModel` 中 workspace section、导航 rail 与 landing/editor/history 显隐状态抽成独立子 ViewModel，继续减少 partial 堆叠并补齐回归验证 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 21:45 |
 --- 
 
 ## 归档索引

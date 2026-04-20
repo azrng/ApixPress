@@ -372,21 +372,21 @@ public sealed partial class ProjectTabViewModelTests
         viewModel.Settings.OpenWorkspaceCommand.Execute(null);
         viewModel.Settings.ShowOverviewCommand.Execute(null);
 
-        Assert.True(viewModel.IsProjectSettingsSection);
+        Assert.True(viewModel.Shell.IsProjectSettingsSection);
         Assert.True(viewModel.Settings.IsOverviewSelected);
         Assert.False(viewModel.Settings.IsImportDataSelected);
         Assert.Equal("基本设置", viewModel.Settings.CurrentTitle);
 
         viewModel.Settings.ShowImportDataCommand.Execute(null);
 
-        Assert.True(viewModel.IsProjectSettingsSection);
+        Assert.True(viewModel.Shell.IsProjectSettingsSection);
         Assert.False(viewModel.Settings.IsOverviewSelected);
         Assert.True(viewModel.Settings.IsImportDataSelected);
         Assert.Equal("导入数据", viewModel.Settings.CurrentTitle);
 
         viewModel.Settings.OpenWorkspaceCommand.Execute(null);
 
-        Assert.True(viewModel.IsProjectSettingsSection);
+        Assert.True(viewModel.Shell.IsProjectSettingsSection);
         Assert.True(viewModel.Settings.IsOverviewSelected);
         Assert.False(viewModel.Settings.IsImportDataSelected);
         Assert.Equal("基本设置", viewModel.Settings.CurrentTitle);
@@ -396,24 +396,24 @@ public sealed partial class ProjectTabViewModelTests
     public void SelectingWorkspaceNavigationItem_ShouldSwitchWorkspaceSection()
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
-        var projectSettingsItem = Assert.Single(viewModel.WorkspaceNavigationItems, item => item.SectionKey == "project-settings");
+        var projectSettingsItem = Assert.Single(viewModel.Shell.NavigationItems, item => item.SectionKey == "project-settings");
 
-        viewModel.SelectedWorkspaceNavigationItem = projectSettingsItem;
+        viewModel.Shell.SelectedNavigationItem = projectSettingsItem;
 
-        Assert.True(viewModel.IsProjectSettingsSection);
-        Assert.Equal(projectSettingsItem, viewModel.SelectedWorkspaceNavigationItem);
+        Assert.True(viewModel.Shell.IsProjectSettingsSection);
+        Assert.Equal(projectSettingsItem, viewModel.Shell.SelectedNavigationItem);
     }
 
     [Fact]
     public void ExecutingProjectSettingsNavCommand_ShouldSwitchWorkspaceSection()
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
-        var projectSettingsItem = Assert.Single(viewModel.WorkspaceNavigationItems, item => item.SectionKey == "project-settings");
+        var projectSettingsItem = Assert.Single(viewModel.Shell.NavigationItems, item => item.SectionKey == "project-settings");
 
         projectSettingsItem.Command.Execute(null);
 
-        Assert.True(viewModel.IsProjectSettingsSection);
-        Assert.Equal(projectSettingsItem, viewModel.SelectedWorkspaceNavigationItem);
+        Assert.True(viewModel.Shell.IsProjectSettingsSection);
+        Assert.Equal(projectSettingsItem, viewModel.Shell.SelectedNavigationItem);
         Assert.True(projectSettingsItem.IsSelected);
     }
 }

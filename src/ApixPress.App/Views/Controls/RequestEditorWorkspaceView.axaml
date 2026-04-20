@@ -7,7 +7,7 @@
              x:Class="ApixPress.App.Views.Controls.RequestEditorWorkspaceView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <Grid IsVisible="{Binding ShowRequestEditorWorkspace}"
+  <Grid IsVisible="{Binding Shell.ShowRequestEditorWorkspace}"
         RowDefinitions="Auto,Auto,*"
         RowSpacing="{StaticResource Space.3}">
     <views:ProjectWorkspaceToolbarView />

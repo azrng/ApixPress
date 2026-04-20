@@ -10,13 +10,6 @@ namespace ApixPress.App.ViewModels;
 
 public partial class ProjectTabViewModel : ViewModelBase
 {
-    private static class WorkspaceSections
-    {
-        public const string InterfaceManagement = "interface-management";
-        public const string RequestHistory = "request-history";
-        public const string ProjectSettings = "project-settings";
-    }
-
     private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
     private bool _initialized;
 
@@ -48,17 +41,24 @@ public partial class ProjectTabViewModel : ViewModelBase
         ProjectImportViewModel? importViewModel = null;
         ProjectQuickRequestSaveViewModel? quickRequestSaveViewModel = null;
         ProjectRequestWorkflowViewModel? workflowViewModel = null;
+        ProjectWorkspaceShellViewModel? shellViewModel = null;
         Workspace = new ProjectWorkspaceTabsViewModel(
-            () => SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement,
+            () => shellViewModel?.SelectInterfaceManagementSection(),
             message => StatusMessage = message);
+        Shell = shellViewModel = new ProjectWorkspaceShellViewModel(
+            Workspace.EnsureLandingWorkspaceTab,
+            () => ActiveWorkspaceTab,
+            () => HasHistory,
+            message => StatusMessage = message,
+            NotifyShellState);
         Editor = new ProjectRequestEditorViewModel(
             () => ActiveWorkspaceTab,
             () => _fallbackWorkspaceTab,
             () => EnvironmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty);
         Settings = new ProjectSettingsShellViewModel(
-            () => SelectedWorkspaceSection = WorkspaceSections.ProjectSettings,
+            () => shellViewModel?.ShowProjectSettingsSection(),
             () => importViewModel?.DismissDialog(),
-            () => IsProjectSettingsSection,
+            () => shellViewModel?.IsProjectSettingsSection ?? false,
             () => Project.Description,
             message => StatusMessage = message,
             NotifyShellState);
@@ -68,7 +68,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             apiWorkspaceService,
             UseCasesPanel,
             Workspace,
-            () => SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement,
+            () => shellViewModel?.SelectInterfaceManagementSection(),
             message => StatusMessage = message,
             NotifyShellState,
             () => importViewModel?.LoadImportedDocumentsAsync(manageBusyState: false) ?? Task.CompletedTask);
@@ -89,7 +89,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             Catalog,
             () => ActiveWorkspaceTab,
             workspaceTab => quickRequestSaveViewModel?.OpenDialogFor(workspaceTab),
-            () => SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement,
+            () => shellViewModel?.SelectInterfaceManagementSection(),
             message => StatusMessage = message,
             value => IsBusy = value,
             NotifyShellState);
@@ -115,26 +115,20 @@ public partial class ProjectTabViewModel : ViewModelBase
         Workspace.EditorStateChanged += NotifyWorkspaceEditorState;
         Workspace.ActiveWorkspaceTabChanged += OnWorkspaceActiveWorkspaceTabChanged;
         Editor.PropertyChanged += (_, _) => NotifyShellState();
+        Shell.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(ProjectWorkspaceShellViewModel.SelectedSection)
+                or nameof(ProjectWorkspaceShellViewModel.IsProjectSettingsSection))
+            {
+                Settings.NotifyWorkspaceSectionChanged();
+            }
+
+            NotifyShellState();
+        };
         Settings.PropertyChanged += (_, _) => NotifyShellState();
         Import.PropertyChanged += (_, _) => NotifyShellState();
         QuickRequestSave.PropertyChanged += (_, _) => NotifyShellState();
-
-        WorkspaceNavigationItems.Add(new ProjectWorkspaceNavItemViewModel(
-            WorkspaceSections.InterfaceManagement,
-            "接口管理",
-            "M4,5 L20,5 L20,7 L4,7 Z M4,10 L20,10 L20,12 L4,12 Z M4,15 L20,15 L20,17 L4,17 Z",
-            ShowInterfaceManagementCommand));
-        WorkspaceNavigationItems.Add(new ProjectWorkspaceNavItemViewModel(
-            WorkspaceSections.RequestHistory,
-            "请求历史",
-            "M12,4 A8,8 0 1 0 20,12 A8,8 0 1 0 12,4 M12,7 L12,12 L15.5,14",
-            ShowRequestHistoryCommand));
-        WorkspaceNavigationItems.Add(new ProjectWorkspaceNavItemViewModel(
-            WorkspaceSections.ProjectSettings,
-            "项目设置",
-            "M12,8.5 A3.5,3.5 0 1 0 12,15.5 A3.5,3.5 0 1 0 12,8.5 M12,3 L13.2,3.3 L13.8,5 L15.5,5.5 L17,4.7 L18.3,6 L17.5,7.5 L18,9.2 L19.7,9.8 L20,11 L18.3,12.2 L18,13.8 L19.5,15 L18.3,16.3 L16.8,15.5 L15.2,16 L14.5,17.7 L13.3,18 L12,16.7 L10.7,18 L9.5,17.7 L8.8,16 L7.2,15.5 L5.7,16.3 L4.5,15 L6,13.8 L5.7,12.2 L4,11 L4.3,9.8 L6,9.2 L6.5,7.5 L5.7,6 L7,4.7 L8.5,5.5 L10.2,5 L10.8,3.3 Z",
-            Settings.OpenWorkspaceCommand));
-        SyncWorkspaceNavigationSelection();
+        Shell.AddProjectSettingsNavigation(Settings.OpenWorkspaceCommand);
 
         Workspace.EnsureLandingWorkspaceTab();
     }
@@ -144,6 +138,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     public UseCasesPanelViewModel UseCasesPanel { get; }
     public RequestHistoryPanelViewModel HistoryPanel { get; }
     public ProjectWorkspaceTabsViewModel Workspace { get; }
+    public ProjectWorkspaceShellViewModel Shell { get; }
     public ProjectRequestEditorViewModel Editor { get; }
     public ProjectSettingsShellViewModel Settings { get; }
     public ProjectWorkspaceCatalogViewModel Catalog { get; }
@@ -152,7 +147,6 @@ public partial class ProjectTabViewModel : ViewModelBase
     public ProjectQuickRequestSaveViewModel QuickRequestSave { get; }
 
     public ObservableCollection<RequestWorkspaceTabViewModel> WorkspaceTabs => Workspace.WorkspaceTabs;
-    public ObservableCollection<ProjectWorkspaceNavItemViewModel> WorkspaceNavigationItems { get; } = [];
     public ReadOnlyObservableCollection<RequestWorkspaceTabViewModel> VisibleWorkspaceTabs => Workspace.VisibleWorkspaceTabs;
     public ObservableCollection<RequestCaseItemViewModel> SavedRequests => UseCasesPanel.RequestCases;
     public ObservableCollection<RequestHistoryItemViewModel> RequestHistory => HistoryPanel.HistoryItems;
@@ -182,14 +176,9 @@ public partial class ProjectTabViewModel : ViewModelBase
     public bool HasSavedRequests => SavedRequests.Count > 0;
     public bool HasHistory => RequestHistory.Count > 0;
     public bool ShowHistoryEmptyState => !HasHistory;
-    public bool IsInterfaceManagementSection => SelectedWorkspaceSection == WorkspaceSections.InterfaceManagement;
-    public bool IsRequestHistorySection => SelectedWorkspaceSection == WorkspaceSections.RequestHistory;
-    public bool IsProjectSettingsSection => SelectedWorkspaceSection == WorkspaceSections.ProjectSettings;
     public bool IsQuickRequestEditor => ActiveWorkspaceTab?.IsQuickRequestTab ?? false;
     public bool IsHttpInterfaceEditor => ActiveWorkspaceTab?.IsHttpInterfaceTab ?? false;
     public bool IsRequestEditorOpen => ActiveWorkspaceTab is not null && !ActiveWorkspaceTab.IsLandingTab;
-    public bool ShowInterfaceManagementLanding => IsInterfaceManagementSection && (ActiveWorkspaceTab?.IsLandingTab ?? true);
-    public bool ShowRequestEditorWorkspace => IsInterfaceManagementSection && IsRequestEditorOpen;
     public string SavedRequestCountText => SavedRequests.Count(item =>
         string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase)
         || string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase)).ToString();
@@ -203,12 +192,6 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private string statusMessage = "项目工作区已就绪。";
-
-    [ObservableProperty]
-    private string selectedWorkspaceSection = WorkspaceSections.InterfaceManagement;
-
-    [ObservableProperty]
-    private ProjectWorkspaceNavItemViewModel? selectedWorkspaceNavigationItem;
 
     [ObservableProperty]
     private bool responseValidationEnabled = true;
@@ -233,7 +216,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         }
 
         Workspace.ActivateWorkspaceTab(targetTab);
-        SelectedWorkspaceSection = WorkspaceSections.RequestHistory;
+        Shell.SelectRequestHistorySection();
         StatusMessage = $"已加载历史请求：{item.Method} {item.Url}";
         NotifyShellState();
     }
@@ -243,6 +226,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         if (e.PropertyName == nameof(ProjectWorkspaceTabsViewModel.ActiveWorkspaceTab))
         {
             OnPropertyChanged(nameof(ActiveWorkspaceTab));
+            Shell.NotifyWorkspaceStateChanged();
         }
         else if (e.PropertyName == nameof(ProjectWorkspaceTabsViewModel.IsWorkspaceTabMenuOpen))
         {

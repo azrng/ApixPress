@@ -90,7 +90,7 @@
 
   <Border Classes="PanelCard ProjectWorkspaceSidebarCard">
     <Grid>
-      <Grid IsVisible="{Binding IsInterfaceManagementSection}"
+      <Grid IsVisible="{Binding Shell.IsInterfaceManagementSection}"
             RowDefinitions="Auto,Auto,*"
             RowSpacing="{StaticResource Space.3}">
         <Grid ColumnDefinitions="*">
@@ -318,7 +318,7 @@
         </ScrollViewer>
       </Grid>
 
-      <Grid IsVisible="{Binding IsRequestHistorySection}"
+      <Grid IsVisible="{Binding Shell.IsRequestHistorySection}"
             RowDefinitions="Auto,*"
             RowSpacing="{StaticResource Space.3}">
         <Grid ColumnDefinitions="*,Auto"

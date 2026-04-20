@@ -21,7 +21,7 @@
               Grid.ColumnSpan="2"
               ColumnDefinitions="0,286,*"
               ColumnSpacing="{StaticResource Space.3}"
-              IsVisible="{Binding !IsProjectSettingsSection}">
+              IsVisible="{Binding !Shell.IsProjectSettingsSection}">
           <views:ProjectWorkspaceSidebarView Grid.Column="1" />
           <views:WorkspaceLandingView Grid.Column="2" />
           <views:RequestEditorWorkspaceView Grid.Column="2" />
