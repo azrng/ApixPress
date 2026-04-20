@@ -14,7 +14,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        await ActiveProjectTab.SendQuickRequestAsync();
+        await ActiveProjectTab.Workflow.SendRequestAsync();
         StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }
@@ -28,7 +28,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        await ActiveProjectTab.SaveCurrentEditorAsync();
+        await ActiveProjectTab.Workflow.SaveCurrentEditorAsync();
         StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }
@@ -92,7 +92,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        await ActiveProjectTab.SaveHistoryAsQuickRequestAsync(item);
+        await ActiveProjectTab.Workflow.SaveHistoryAsQuickRequestAsync(item);
         StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }

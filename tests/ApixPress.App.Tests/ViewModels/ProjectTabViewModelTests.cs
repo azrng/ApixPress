@@ -191,7 +191,7 @@ public sealed partial class ProjectTabViewModelTests
         viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
         viewModel.Editor.CurrentHttpInterfaceName = "接口 1 已编辑";
 
-        await viewModel.SaveCurrentEditorAsync();
+        await viewModel.Workflow.SaveCurrentEditorAsync();
 
         var savedInterface = Assert.Single(requestCaseService.Cases, item => item.EntryType == "http-interface");
         Assert.Equal("接口 1 已编辑", savedInterface.Name);
@@ -255,7 +255,7 @@ public sealed partial class ProjectTabViewModelTests
         viewModel.ActiveWorkspaceTab!.RequestUrl = "https://demo.local/ping";
         viewModel.ActiveWorkspaceTab.ConfigTab.RequestName = "健康检查";
 
-        await viewModel.SaveCurrentEditorAsync();
+        await viewModel.Workflow.SaveCurrentEditorAsync();
         await viewModel.QuickRequestSave.ConfirmSaveCommand.ExecuteAsync(null);
 
         var currentFolder = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "默认分组 (1)");
@@ -282,7 +282,7 @@ public sealed partial class ProjectTabViewModelTests
         viewModel.Catalog.LoadWorkspaceItem(originalInterface);
         viewModel.Editor.CurrentHttpInterfaceName = "接口 1 已编辑";
 
-        await viewModel.SaveCurrentEditorAsync();
+        await viewModel.Workflow.SaveCurrentEditorAsync();
 
         var currentFolder = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "默认分组 (1)");
         var currentInterface = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1 已编辑");

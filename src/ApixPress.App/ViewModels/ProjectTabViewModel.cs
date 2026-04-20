@@ -5,7 +5,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
-using Azrng.Core.Results;
 
 namespace ApixPress.App.ViewModels;
 
@@ -18,11 +17,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         public const string ProjectSettings = "project-settings";
     }
 
-    private readonly IRequestCaseService _requestCaseService;
-    private readonly IRequestExecutionService _requestExecutionService;
-    private readonly IRequestHistoryService _requestHistoryService;
     private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
-    private CancellationTokenSource? _sendRequestCancellationTokenSource;
     private bool _initialized;
 
     public event Action<ProjectTabViewModel>? ShellStateChanged;
@@ -44,10 +39,6 @@ public partial class ProjectTabViewModel : ViewModelBase
             IsDefault = project.IsDefault
         };
 
-        _requestExecutionService = requestExecutionService;
-        _requestCaseService = requestCaseService;
-        _requestHistoryService = requestHistoryService;
-
         _fallbackWorkspaceTab = new RequestWorkspaceTabViewModel();
         _fallbackWorkspaceTab.ConfigureAsLanding();
 
@@ -55,6 +46,8 @@ public partial class ProjectTabViewModel : ViewModelBase
         UseCasesPanel = new UseCasesPanelViewModel(requestCaseService);
         HistoryPanel = new RequestHistoryPanelViewModel(requestHistoryService);
         ProjectImportViewModel? importViewModel = null;
+        ProjectQuickRequestSaveViewModel? quickRequestSaveViewModel = null;
+        ProjectRequestWorkflowViewModel? workflowViewModel = null;
         Workspace = new ProjectWorkspaceTabsViewModel(
             () => SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement,
             message => StatusMessage = message);
@@ -85,9 +78,24 @@ public partial class ProjectTabViewModel : ViewModelBase
             filePickerService,
             Catalog.SyncImportedInterfacesAsync,
             message => StatusMessage = message);
-        QuickRequestSave = new ProjectQuickRequestSaveViewModel(
+        Workflow = workflowViewModel = new ProjectRequestWorkflowViewModel(
+            Project.Id,
+            requestExecutionService,
+            requestCaseService,
+            requestHistoryService,
+            Workspace,
+            HistoryPanel,
+            EnvironmentPanel,
+            Catalog,
             () => ActiveWorkspaceTab,
-            SaveQuickRequestAsync,
+            workspaceTab => quickRequestSaveViewModel?.OpenDialogFor(workspaceTab),
+            () => SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement,
+            message => StatusMessage = message,
+            value => IsBusy = value,
+            NotifyShellState);
+        QuickRequestSave = quickRequestSaveViewModel = new ProjectQuickRequestSaveViewModel(
+            () => ActiveWorkspaceTab,
+            (workspaceTab, requestNameOverride) => workflowViewModel?.SaveQuickRequestAsync(workspaceTab, requestNameOverride) ?? Task.FromResult(false),
             message =>
             {
                 StatusMessage = message;
@@ -139,6 +147,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     public ProjectRequestEditorViewModel Editor { get; }
     public ProjectSettingsShellViewModel Settings { get; }
     public ProjectWorkspaceCatalogViewModel Catalog { get; }
+    public ProjectRequestWorkflowViewModel Workflow { get; }
     public ProjectImportViewModel Import { get; }
     public ProjectQuickRequestSaveViewModel QuickRequestSave { get; }
 
@@ -220,7 +229,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         targetTab.ApplySnapshot(item.RequestSnapshot);
         if (item.ResponseSnapshot is not null)
         {
-            targetTab.ResponseSection.ApplyResult(ResultModel<ResponseSnapshotDto>.Success(item.ResponseSnapshot), item.RequestSnapshot);
+            targetTab.ResponseSection.ApplyResult(Azrng.Core.Results.ResultModel<ResponseSnapshotDto>.Success(item.ResponseSnapshot), item.RequestSnapshot);
         }
 
         Workspace.ActivateWorkspaceTab(targetTab);
