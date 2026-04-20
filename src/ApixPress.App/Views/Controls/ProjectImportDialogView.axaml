@@ -11,17 +11,17 @@
     <Grid HorizontalAlignment="Center"
           VerticalAlignment="Center">
       <Border Classes="ProjectImportDialogCard">
-        <Grid>
-          <Grid RowDefinitions="Auto,Auto,Auto,*"
-                RowSpacing="{StaticResource Space.3}"
-                IsEnabled="{Binding ActiveProjectTab.CanEditImportData}">
+          <Grid>
+            <Grid RowDefinitions="Auto,Auto,Auto,*"
+                  RowSpacing="{StaticResource Space.3}"
+                IsEnabled="{Binding ActiveProjectTab.Import.CanEditImportData}">
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock Classes="DialogTitle"
-                         Text="{Binding ActiveProjectTab.ImportDialogTitle}" />
+                         Text="{Binding ActiveProjectTab.Import.DialogTitle}" />
               <Button Grid.Column="1"
                       Classes="DialogIconButton"
                       Content="×"
-                      Command="{Binding ActiveProjectTab.CloseProjectImportDialogCommand}" />
+                      Command="{Binding ActiveProjectTab.Import.CloseDialogCommand}" />
             </Grid>
 
             <Border Grid.Row="1"
@@ -41,8 +41,8 @@
                             Spacing="2"
                             VerticalAlignment="Center">
                   <TextBlock Classes="CaptionText"
-                             Text="{Binding ActiveProjectTab.ImportDialogFormatLabel}" />
-                  <TextBlock Text="{Binding ActiveProjectTab.ImportDialogFormatName}"
+                             Text="{Binding ActiveProjectTab.Import.DialogFormatLabel}" />
+                  <TextBlock Text="{Binding ActiveProjectTab.Import.DialogFormatName}"
                              FontSize="{StaticResource Font.Size.BodyLarge}"
                              FontWeight="SemiBold" />
                 </StackPanel>
@@ -51,7 +51,7 @@
 
             <Border Grid.Row="2"
                     Classes="ProjectImportDialogNoticeCard">
-              <TextBlock Text="{Binding ActiveProjectTab.ImportDialogNoticeText}"
+              <TextBlock Text="{Binding ActiveProjectTab.Import.DialogNoticeText}"
                          TextWrapping="Wrap"
                          TextAlignment="Center" />
             </Border>
@@ -62,37 +62,37 @@
                 <Grid ColumnDefinitions="*,*">
                   <ToggleButton Grid.Column="0"
                                 Classes="ProjectImportModeTab"
-                                Command="{Binding ActiveProjectTab.ShowImportFileModeCommand}"
-                                IsChecked="{Binding ActiveProjectTab.IsImportFileMode, Mode=OneWay}">
-                    <TextBlock Text="{Binding ActiveProjectTab.ImportFileModeTitle}" />
+                                Command="{Binding ActiveProjectTab.Import.ShowImportFileModeCommand}"
+                                IsChecked="{Binding ActiveProjectTab.Import.IsImportFileMode, Mode=OneWay}">
+                    <TextBlock Text="{Binding ActiveProjectTab.Import.FileModeTitle}" />
                   </ToggleButton>
                   <ToggleButton Grid.Column="1"
                                 Classes="ProjectImportModeTab"
-                                Command="{Binding ActiveProjectTab.ShowImportUrlModeCommand}"
-                                IsChecked="{Binding ActiveProjectTab.IsImportUrlMode, Mode=OneWay}">
-                    <TextBlock Text="{Binding ActiveProjectTab.ImportUrlModeTitle}" />
+                                Command="{Binding ActiveProjectTab.Import.ShowImportUrlModeCommand}"
+                                IsChecked="{Binding ActiveProjectTab.Import.IsImportUrlMode, Mode=OneWay}">
+                    <TextBlock Text="{Binding ActiveProjectTab.Import.UrlModeTitle}" />
                   </ToggleButton>
                 </Grid>
               </Border>
 
               <Border Classes="StatusInfo"
-                      IsVisible="{Binding ActiveProjectTab.ShowImportStatusInfo}">
-                <TextBlock Text="{Binding ActiveProjectTab.ImportDataStatusText}"
+                      IsVisible="{Binding ActiveProjectTab.Import.ShowImportStatusInfo}">
+                <TextBlock Text="{Binding ActiveProjectTab.Import.ImportDataStatusText}"
                            TextWrapping="Wrap" />
               </Border>
               <Border Classes="StatusSuccess"
-                      IsVisible="{Binding ActiveProjectTab.ShowImportStatusSuccess}">
-                <TextBlock Text="{Binding ActiveProjectTab.ImportDataStatusText}"
+                      IsVisible="{Binding ActiveProjectTab.Import.ShowImportStatusSuccess}">
+                <TextBlock Text="{Binding ActiveProjectTab.Import.ImportDataStatusText}"
                            TextWrapping="Wrap" />
               </Border>
               <Border Classes="StatusError"
-                      IsVisible="{Binding ActiveProjectTab.ShowImportStatusError}">
-                <TextBlock Text="{Binding ActiveProjectTab.ImportDataStatusText}"
+                      IsVisible="{Binding ActiveProjectTab.Import.ShowImportStatusError}">
+                <TextBlock Text="{Binding ActiveProjectTab.Import.ImportDataStatusText}"
                            TextWrapping="Wrap" />
               </Border>
 
               <Border Classes="ProjectImportDropZoneCard"
-                      IsVisible="{Binding ActiveProjectTab.IsImportFileMode}">
+                      IsVisible="{Binding ActiveProjectTab.Import.IsImportFileMode}">
                 <StackPanel Spacing="{StaticResource Space.3}"
                             VerticalAlignment="Center"
                             HorizontalAlignment="Center">
@@ -100,42 +100,42 @@
                              FontSize="28"
                              HorizontalAlignment="Center"
                              Text="&#xE898;" />
-                  <TextBlock Text="{Binding ActiveProjectTab.SelectedImportFileName}"
+                  <TextBlock Text="{Binding ActiveProjectTab.Import.SelectedImportFileName}"
                              FontWeight="SemiBold"
                              TextAlignment="Center" />
                   <TextBlock Classes="CaptionText"
-                             Text="{Binding ActiveProjectTab.SelectedImportFileSummary}"
+                             Text="{Binding ActiveProjectTab.Import.SelectedImportFileSummary}"
                              TextWrapping="Wrap"
                              TextAlignment="Center" />
                   <StackPanel Orientation="Horizontal"
                               HorizontalAlignment="Center"
                               Spacing="{StaticResource Space.2}">
                     <Button Classes="DialogSecondaryButton"
-                            Content="{Binding ActiveProjectTab.ImportPickFileButtonText}"
-                            Command="{Binding ActiveProjectTab.PickSwaggerImportFileCommand}" />
+                            Content="{Binding ActiveProjectTab.Import.PickFileButtonText}"
+                            Command="{Binding ActiveProjectTab.Import.PickSwaggerImportFileCommand}" />
                     <Button Classes="DialogPrimaryButton"
-                            Content="{Binding ActiveProjectTab.ImportStartButtonText}"
-                            Command="{Binding ActiveProjectTab.ImportSwaggerFileCommand}" />
+                            Content="{Binding ActiveProjectTab.Import.StartImportButtonText}"
+                            Command="{Binding ActiveProjectTab.Import.ImportSwaggerFileCommand}" />
                   </StackPanel>
                 </StackPanel>
               </Border>
 
               <Border Classes="ProjectImportUrlCard"
-                      IsVisible="{Binding ActiveProjectTab.IsImportUrlMode}">
+                      IsVisible="{Binding ActiveProjectTab.Import.IsImportUrlMode}">
                 <StackPanel Spacing="{StaticResource Space.3}">
                   <TextBlock Classes="SectionTitle"
-                             Text="{Binding ActiveProjectTab.ImportUrlModeTitle}" />
+                             Text="{Binding ActiveProjectTab.Import.UrlModeTitle}" />
                   <TextBlock Classes="CaptionText"
-                             Text="{Binding ActiveProjectTab.ImportUrlDescription}" />
+                             Text="{Binding ActiveProjectTab.Import.UrlDescription}" />
                   <TextBox Classes="SectionInput DialogInput"
-                           Watermark="{Binding ActiveProjectTab.ImportUrlWatermark}"
-                           Text="{Binding ActiveProjectTab.ImportUrl}" />
+                           Watermark="{Binding ActiveProjectTab.Import.UrlWatermark}"
+                           Text="{Binding ActiveProjectTab.Import.ImportUrl}" />
                   <StackPanel Orientation="Horizontal"
                               HorizontalAlignment="Right"
                               Spacing="{StaticResource Space.2}">
                     <Button Classes="DialogPrimaryButton"
-                            Content="{Binding ActiveProjectTab.ImportUrlButtonText}"
-                            Command="{Binding ActiveProjectTab.ImportSwaggerUrlCommand}" />
+                            Content="{Binding ActiveProjectTab.Import.ImportUrlButtonText}"
+                            Command="{Binding ActiveProjectTab.Import.ImportSwaggerUrlCommand}" />
                   </StackPanel>
                 </StackPanel>
               </Border>
@@ -143,19 +143,19 @@
           </Grid>
 
           <Border Classes="ProjectImportBusyOverlay"
-                  IsVisible="{Binding ActiveProjectTab.IsImportDataBusy}">
+                  IsVisible="{Binding ActiveProjectTab.Import.IsImportDataBusy}">
             <Border Classes="ProjectImportBusyCard"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
               <StackPanel Spacing="{StaticResource Space.3}">
-                <TextBlock Text="{Binding ActiveProjectTab.ImportDataBusyText}"
+                <TextBlock Text="{Binding ActiveProjectTab.Import.ImportDataBusyText}"
                            FontSize="{StaticResource Font.Size.BodyLarge}"
                            FontWeight="SemiBold"
                            TextAlignment="Center" />
                 <ProgressBar Classes="ProjectImportBusyProgress"
                              IsIndeterminate="True" />
                 <TextBlock Classes="CaptionText"
-                           Text="{Binding ActiveProjectTab.ImportBusyOverlayDescription}"
+                           Text="{Binding ActiveProjectTab.Import.BusyOverlayDescription}"
                            TextWrapping="Wrap"
                            TextAlignment="Center" />
               </StackPanel>

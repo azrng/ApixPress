@@ -64,8 +64,7 @@ public partial class ProjectTabViewModel
     {
         SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
         SelectedProjectSettingsSection = ProjectSettingsSections.Overview;
-        IsProjectImportDialogOpen = false;
-        ClearPendingImportConfirmation();
+        Import.DismissDialog();
         StatusMessage = ShowProjectSettingsImportDataSection
             ? ProjectSettingsTexts.ImportDescription
             : ProjectSettingsTexts.OverviewDescription;
@@ -77,8 +76,7 @@ public partial class ProjectTabViewModel
     {
         SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
         SelectedProjectSettingsSection = ProjectSettingsSections.Overview;
-        IsProjectImportDialogOpen = false;
-        ClearPendingImportConfirmation();
+        Import.DismissDialog();
         StatusMessage = ProjectSettingsTexts.OverviewDescription;
         NotifyShellState();
     }
@@ -88,8 +86,7 @@ public partial class ProjectTabViewModel
     {
         SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
         SelectedProjectSettingsSection = ProjectSettingsSections.ImportData;
-        IsProjectImportDialogOpen = false;
-        ClearPendingImportConfirmation();
+        Import.DismissDialog();
         StatusMessage = ProjectSettingsTexts.ImportDescription;
         NotifyShellState();
     }

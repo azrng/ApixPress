@@ -17,18 +17,18 @@
             <TextBlock Classes="DialogTitle"
                        Text="确认更新接口" />
             <TextBlock Classes="CaptionText"
-                       Text="{Binding ActiveProjectTab.PendingImportOverwriteTitle, StringFormat='导入文档：{0}'}"
-                       IsVisible="{Binding ActiveProjectTab.HasPendingImportPreview}" />
+                       Text="{Binding ActiveProjectTab.Import.PendingImportOverwriteTitle, StringFormat='导入文档：{0}'}"
+                       IsVisible="{Binding ActiveProjectTab.Import.HasPendingImportPreview}" />
           </StackPanel>
 
           <StackPanel Grid.Row="1"
                       Spacing="{StaticResource Space.2}">
             <Border Classes="CreateProjectFormShell">
-              <TextBlock Text="{Binding ActiveProjectTab.PendingImportOverwriteSummary}"
+              <TextBlock Text="{Binding ActiveProjectTab.Import.PendingImportOverwriteSummary}"
                          TextWrapping="Wrap" />
             </Border>
             <Border Classes="CreateProjectFormShell">
-              <TextBlock Text="{Binding ActiveProjectTab.PendingImportOverwriteDetailText}"
+              <TextBlock Text="{Binding ActiveProjectTab.Import.PendingImportOverwriteDetailText}"
                          TextWrapping="Wrap" />
             </Border>
           </StackPanel>
@@ -39,10 +39,10 @@
                       Spacing="{StaticResource Space.2}">
             <Button Classes="DialogSecondaryButton"
                     Content="取消"
-                    Command="{Binding ActiveProjectTab.CancelImportOverwriteConfirmCommand}" />
+                    Command="{Binding ActiveProjectTab.Import.CancelImportOverwriteConfirmCommand}" />
             <Button Classes="DialogPrimaryButton"
                     Content="确认更新"
-                    Command="{Binding ActiveProjectTab.ConfirmImportOverwriteCommand}" />
+                    Command="{Binding ActiveProjectTab.Import.ConfirmImportOverwriteCommand}" />
           </StackPanel>
         </Grid>
       </Border>

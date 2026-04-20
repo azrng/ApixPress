@@ -43,7 +43,7 @@ public partial class ProjectTabViewModel
         CloseWorkspaceTabsForDeletedCases(targets);
         if (importedInterfaces.Count > 0)
         {
-            await LoadImportedDocumentsAsync(manageBusyState: false);
+            await Import.LoadImportedDocumentsAsync(manageBusyState: false);
         }
         else
         {

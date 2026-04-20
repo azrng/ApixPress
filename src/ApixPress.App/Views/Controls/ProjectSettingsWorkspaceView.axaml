@@ -151,7 +151,7 @@
                                Text="{Binding ProjectSettingsImportCardDescription}" />
                   </StackPanel>
                   <Button Classes="ProjectImportCatalogButton"
-                          Command="{Binding OpenProjectImportDialogCommand}">
+                          Command="{Binding Import.OpenDialogCommand}">
                     <Grid ColumnDefinitions="Auto,*"
                           ColumnSpacing="{StaticResource Space.3}">
                       <Border Width="42"

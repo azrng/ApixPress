@@ -93,6 +93,12 @@ public partial class ProjectTabViewModel
         await RunWithWorkspaceNavigationRebuildSuppressedAsync(() => UseCasesPanel.LoadCasesAsync());
     }
 
+    private async Task SyncImportedInterfacesAsync(IReadOnlyList<ApiEndpointDto> endpoints)
+    {
+        await _requestCaseService.SyncImportedHttpInterfacesAsync(ProjectId, endpoints, CancellationToken.None);
+        await ReloadSavedRequestsAsync();
+    }
+
     private void RebuildInterfaceNavigation()
     {
         SynchronizeExplorerItems(
@@ -266,26 +272,6 @@ public partial class ProjectTabViewModel
         }
 
         return -1;
-    }
-
-    private void SetImportDataStatus(string message, string statusState)
-    {
-        ImportDataStatusText = message;
-        ImportDataStatusState = statusState;
-    }
-
-    private void ClearPendingImportConfirmation()
-    {
-        _pendingImportRequest = null;
-        PendingImportPreview = null;
-        IsImportOverwriteConfirmDialogOpen = false;
-    }
-
-    private static string ResolveImportSourceTypeText(string sourceType)
-    {
-        return string.Equals(sourceType, "URL", StringComparison.OrdinalIgnoreCase)
-            ? ImportTexts.SourceTypeUrl
-            : ImportTexts.SourceTypeFile;
     }
 
     private RequestWorkspaceTabViewModel ReuseActiveLandingOrCreateWorkspace()

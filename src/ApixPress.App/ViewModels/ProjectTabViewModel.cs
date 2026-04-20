@@ -26,29 +26,13 @@ public partial class ProjectTabViewModel : ViewModelBase
         public const string ImportData = "import-data";
     }
 
-    private static class ImportDataModes
-    {
-        public const string File = "file";
-        public const string Url = "url";
-    }
-
-    private static class ImportStatusStates
-    {
-        public const string Info = "info";
-        public const string Success = "success";
-        public const string Error = "error";
-    }
-
     private readonly IRequestCaseService _requestCaseService;
     private readonly IRequestExecutionService _requestExecutionService;
     private readonly IRequestHistoryService _requestHistoryService;
     private readonly IApiWorkspaceService _apiWorkspaceService;
-    private readonly IFilePickerService _filePickerService;
     private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
     private readonly ObservableCollection<RequestWorkspaceTabViewModel> _visibleWorkspaceTabs = [];
-    private CancellationTokenSource? _importCancellationTokenSource;
     private CancellationTokenSource? _sendRequestCancellationTokenSource;
-    private PendingImportRequest? _pendingImportRequest;
     private bool _initialized;
     private int _workspaceNavigationRebuildSuspendCount;
     private bool _interfaceNavigationRebuildPending;
@@ -77,7 +61,6 @@ public partial class ProjectTabViewModel : ViewModelBase
         _requestCaseService = requestCaseService;
         _requestHistoryService = requestHistoryService;
         _apiWorkspaceService = apiWorkspaceService;
-        _filePickerService = filePickerService;
 
         _fallbackWorkspaceTab = new RequestWorkspaceTabViewModel();
         _fallbackWorkspaceTab.ConfigureAsLanding();
@@ -85,6 +68,12 @@ public partial class ProjectTabViewModel : ViewModelBase
         EnvironmentPanel = new EnvironmentPanelViewModel(environmentVariableService);
         UseCasesPanel = new UseCasesPanelViewModel(requestCaseService);
         HistoryPanel = new RequestHistoryPanelViewModel(requestHistoryService);
+        Import = new ProjectImportViewModel(
+            Project.Id,
+            apiWorkspaceService,
+            filePickerService,
+            SyncImportedInterfacesAsync,
+            message => StatusMessage = message);
 
         Project.PropertyChanged += (_, _) => NotifyShellState();
         EnvironmentPanel.SelectedEnvironmentChanged += OnSelectedEnvironmentChanged;
@@ -92,7 +81,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         UseCasesPanel.RequestCases.CollectionChanged += OnSavedRequestsCollectionChanged;
         HistoryPanel.HistoryItems.CollectionChanged += (_, _) => NotifyShellState();
         WorkspaceTabs.CollectionChanged += OnWorkspaceTabsCollectionChanged;
-        ImportedApiDocuments.CollectionChanged += (_, _) => NotifyShellState();
+        Import.PropertyChanged += (_, _) => NotifyShellState();
 
         WorkspaceNavigationItems.Add(new ProjectWorkspaceNavItemViewModel(
             WorkspaceSections.InterfaceManagement,
@@ -119,12 +108,12 @@ public partial class ProjectTabViewModel : ViewModelBase
     public EnvironmentPanelViewModel EnvironmentPanel { get; }
     public UseCasesPanelViewModel UseCasesPanel { get; }
     public RequestHistoryPanelViewModel HistoryPanel { get; }
+    public ProjectImportViewModel Import { get; }
 
     public ObservableCollection<RequestWorkspaceTabViewModel> WorkspaceTabs { get; } = [];
     public ObservableCollection<ExplorerItemViewModel> InterfaceTreeItems { get; } = [];
     public ObservableCollection<ExplorerItemViewModel> QuickRequestTreeItems { get; } = [];
     public ObservableCollection<ProjectWorkspaceNavItemViewModel> WorkspaceNavigationItems { get; } = [];
-    public ObservableCollection<ProjectImportedDocumentItemViewModel> ImportedApiDocuments { get; } = [];
     public IReadOnlyList<ExplorerItemViewModel> InterfaceCatalogItems => InterfaceTreeItems.FirstOrDefault()?.Children ?? [];
     public ReadOnlyObservableCollection<RequestWorkspaceTabViewModel> VisibleWorkspaceTabs { get; }
     public ObservableCollection<RequestCaseItemViewModel> SavedRequests => UseCasesPanel.RequestCases;
@@ -185,27 +174,6 @@ public partial class ProjectTabViewModel : ViewModelBase
     private string selectedProjectSettingsSection = ProjectSettingsSections.Overview;
 
     [ObservableProperty]
-    private string selectedImportDataMode = ImportDataModes.File;
-
-    [ObservableProperty]
-    private string selectedImportFilePath = string.Empty;
-
-    [ObservableProperty]
-    private string importUrl = string.Empty;
-
-    [ObservableProperty]
-    private bool isImportDataBusy;
-
-    [ObservableProperty]
-    private string importDataBusyText = ImportTexts.BusyProcessing;
-
-    [ObservableProperty]
-    private string importDataStatusText = ImportTexts.DefaultStatus;
-
-    [ObservableProperty]
-    private string importDataStatusState = ImportStatusStates.Info;
-
-    [ObservableProperty]
     private bool isInterfaceCatalogExpanded = true;
 
     [ObservableProperty]
@@ -224,13 +192,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     private bool isQuickRequestSaveDialogOpen;
 
     [ObservableProperty]
-    private bool isProjectImportDialogOpen;
-
-    [ObservableProperty]
     private bool isWorkspaceDeleteConfirmDialogOpen;
-
-    [ObservableProperty]
-    private bool isImportOverwriteConfirmDialogOpen;
 
     [ObservableProperty]
     private string quickRequestSaveName = string.Empty;
@@ -246,9 +208,6 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private ExplorerItemViewModel? pendingDeleteWorkspaceItem;
-
-    [ObservableProperty]
-    private ApiImportPreviewDto? pendingImportPreview;
 
     private void SyncVisibleWorkspaceTabs()
     {

@@ -19,11 +19,11 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.InitializeAsync();
 
-        var imported = Assert.Single(viewModel.ImportedApiDocuments);
+        var imported = Assert.Single(viewModel.Import.ImportedApiDocuments);
         Assert.Equal("支付服务", imported.Name);
         Assert.Equal("3", imported.EndpointCountText);
-        Assert.True(viewModel.HasImportedApiDocuments);
-        Assert.Equal("1", viewModel.ImportedApiDocumentCountText);
+        Assert.True(viewModel.Import.HasImportedApiDocuments);
+        Assert.Equal("1", viewModel.Import.ImportedApiDocumentCountText);
     }
 
     [Fact]
@@ -88,15 +88,15 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.InitializeAsync();
 
         viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
-        viewModel.ImportUrl = "https://demo.local/swagger.json";
+        viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
 
-        await viewModel.ImportSwaggerUrlCommand.ExecuteAsync(null);
+        await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
 
-        var imported = Assert.Single(viewModel.ImportedApiDocuments);
+        var imported = Assert.Single(viewModel.Import.ImportedApiDocuments);
         Assert.Equal("Swagger URL 导入成功：远程订单服务", viewModel.StatusMessage);
         Assert.Equal("远程订单服务", imported.Name);
         Assert.Equal("URL 导入", imported.SourceTypeText);
-        Assert.True(viewModel.ShowImportStatusSuccess);
+        Assert.True(viewModel.Import.ShowImportStatusSuccess);
         Assert.Equal("https://demo.local/swagger.json", apiWorkspaceService.LastImportedUrl);
     }
 
@@ -111,19 +111,19 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.InitializeAsync();
 
         viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
-        viewModel.ImportUrl = "https://demo.local/swagger.json";
+        viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
 
-        var importTask = viewModel.ImportSwaggerUrlCommand.ExecuteAsync(null);
+        var importTask = viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
 
-        Assert.True(SpinWait.SpinUntil(() => viewModel.IsImportDataBusy, TimeSpan.FromSeconds(1)));
-        Assert.False(viewModel.CanEditImportData);
-        Assert.Equal("正在获取并校验 Swagger URL...", viewModel.ImportDataBusyText);
+        Assert.True(SpinWait.SpinUntil(() => viewModel.Import.IsImportDataBusy, TimeSpan.FromSeconds(1)));
+        Assert.False(viewModel.Import.CanEditImportData);
+        Assert.Equal("正在获取并校验 Swagger URL...", viewModel.Import.ImportDataBusyText);
 
         apiWorkspaceService.UrlPreviewGate.SetResult(true);
         await importTask;
 
-        Assert.False(viewModel.IsImportDataBusy);
-        Assert.True(viewModel.CanEditImportData);
+        Assert.False(viewModel.Import.IsImportDataBusy);
+        Assert.True(viewModel.Import.CanEditImportData);
     }
 
     [Fact]
@@ -136,11 +136,11 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.InitializeAsync();
 
         viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
-        viewModel.ImportUrl = "https://demo.local/swagger.json";
+        viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
 
-        await viewModel.ImportSwaggerUrlCommand.ExecuteAsync(null);
+        await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
 
-        Assert.Equal("2", viewModel.ImportedApiDocumentCountText);
+        Assert.Equal("2", viewModel.Import.ImportedApiDocumentCountText);
         Assert.Equal(3, requestCaseService.Cases.Count(item => item.EntryType == "http-interface"));
         Assert.Contains(requestCaseService.Cases, item => item.Name == "接口 1" && item.RequestSnapshot.Url == "/endpoint-1");
         Assert.Contains(requestCaseService.Cases, item => item.Name == "查询订单列表" && item.RequestSnapshot.Url == "/orders");
@@ -159,18 +159,18 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.InitializeAsync();
 
         viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
-        viewModel.ImportUrl = "https://demo.local/swagger.json";
+        viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
 
-        await viewModel.ImportSwaggerUrlCommand.ExecuteAsync(null);
+        await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
 
-        Assert.True(viewModel.IsImportOverwriteConfirmDialogOpen);
-        Assert.Contains("更新", viewModel.PendingImportOverwriteSummary);
-        Assert.Contains("GET /orders", viewModel.PendingImportOverwriteDetailText);
+        Assert.True(viewModel.Import.IsOverwriteConfirmDialogOpen);
+        Assert.Contains("更新", viewModel.Import.PendingImportOverwriteSummary);
+        Assert.Contains("GET /orders", viewModel.Import.PendingImportOverwriteDetailText);
 
-        await viewModel.ConfirmImportOverwriteCommand.ExecuteAsync(null);
+        await viewModel.Import.ConfirmImportOverwriteCommand.ExecuteAsync(null);
 
-        Assert.False(viewModel.IsImportOverwriteConfirmDialogOpen);
-        Assert.Equal("1", viewModel.ImportedApiDocumentCountText);
+        Assert.False(viewModel.Import.IsOverwriteConfirmDialogOpen);
+        Assert.Equal("1", viewModel.Import.ImportedApiDocumentCountText);
         Assert.Contains(requestCaseService.Cases, item => item.Name == "查询订单列表" && item.RequestSnapshot.Url == "/orders");
         Assert.DoesNotContain(requestCaseService.Cases, item => item.Name == "旧的查询订单列表");
     }
@@ -318,7 +318,7 @@ public sealed partial class ProjectTabViewModelTests
 
         Assert.Empty(viewModel.InterfaceCatalogItems);
         Assert.Empty(requestCaseService.Cases);
-        var remainingDocument = Assert.Single(viewModel.ImportedApiDocuments);
+        var remainingDocument = Assert.Single(viewModel.Import.ImportedApiDocuments);
         Assert.Equal("0", remainingDocument.EndpointCountText);
     }
 

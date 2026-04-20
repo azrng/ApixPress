@@ -1,5 +1,3 @@
-using ApixPress.App.Models.DTOs;
-
 namespace ApixPress.App.ViewModels;
 
 public partial class ProjectTabViewModel
@@ -36,45 +34,10 @@ public partial class ProjectTabViewModel
         SelectedWorkspaceSection = value.SectionKey;
     }
 
-    partial void OnSelectedImportDataModeChanged(string value)
-    {
-        OnPropertyChanged(nameof(IsImportFileMode));
-        OnPropertyChanged(nameof(IsImportUrlMode));
-    }
-
-    partial void OnIsImportDataBusyChanged(bool value)
-    {
-        OnPropertyChanged(nameof(CanEditImportData));
-        OnPropertyChanged(nameof(ShowImportedApiDocumentsEmptyState));
-    }
-
-    partial void OnSelectedImportFilePathChanged(string value)
-    {
-        OnPropertyChanged(nameof(HasSelectedImportFile));
-        OnPropertyChanged(nameof(SelectedImportFileName));
-        OnPropertyChanged(nameof(SelectedImportFileSummary));
-    }
-
-    partial void OnImportDataStatusStateChanged(string value)
-    {
-        OnPropertyChanged(nameof(ShowImportStatusInfo));
-        OnPropertyChanged(nameof(ShowImportStatusSuccess));
-        OnPropertyChanged(nameof(ShowImportStatusError));
-        OnPropertyChanged(nameof(ShowProjectImportDialogStatus));
-    }
-
     partial void OnPendingDeleteWorkspaceItemChanged(ExplorerItemViewModel? value)
     {
         OnPropertyChanged(nameof(HasPendingWorkspaceDeleteTarget));
         OnPropertyChanged(nameof(PendingWorkspaceDeleteTitle));
         OnPropertyChanged(nameof(PendingWorkspaceDeleteDescription));
-    }
-
-    partial void OnPendingImportPreviewChanged(ApiImportPreviewDto? value)
-    {
-        OnPropertyChanged(nameof(HasPendingImportPreview));
-        OnPropertyChanged(nameof(PendingImportOverwriteTitle));
-        OnPropertyChanged(nameof(PendingImportOverwriteSummary));
-        OnPropertyChanged(nameof(PendingImportOverwriteDetailText));
     }
 }
