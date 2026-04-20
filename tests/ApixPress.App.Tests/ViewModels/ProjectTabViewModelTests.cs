@@ -256,7 +256,7 @@ public sealed partial class ProjectTabViewModelTests
         viewModel.ActiveWorkspaceTab.ConfigTab.RequestName = "健康检查";
 
         await viewModel.SaveCurrentEditorAsync();
-        await viewModel.ConfirmQuickRequestSaveCommand.ExecuteAsync(null);
+        await viewModel.QuickRequestSave.ConfirmSaveCommand.ExecuteAsync(null);
 
         var currentFolder = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (1)");
         Assert.Same(originalFolder, currentFolder);

@@ -6,13 +6,13 @@ namespace ApixPress.App.ViewModels;
 
 public partial class ProjectTabViewModel
 {
-    private async Task SaveQuickRequestAsync(RequestWorkspaceTabViewModel workspaceTab, string? requestNameOverride = null)
+    private async Task<bool> SaveQuickRequestAsync(RequestWorkspaceTabViewModel workspaceTab, string? requestNameOverride = null)
     {
         if (!HasAbsoluteHttpUrl(workspaceTab.RequestUrl))
         {
             StatusMessage = "快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。";
             NotifyShellState();
-            return;
+            return false;
         }
 
         var requestName = string.IsNullOrWhiteSpace(requestNameOverride)
@@ -43,6 +43,7 @@ public partial class ProjectTabViewModel
         }
 
         NotifyShellState();
+        return result.IsSuccess && result.Data is not null;
     }
 
     private async Task SaveHttpInterfaceAsync(RequestWorkspaceTabViewModel workspaceTab)

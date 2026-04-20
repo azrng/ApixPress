@@ -74,6 +74,14 @@ public partial class ProjectTabViewModel : ViewModelBase
             filePickerService,
             SyncImportedInterfacesAsync,
             message => StatusMessage = message);
+        QuickRequestSave = new ProjectQuickRequestSaveViewModel(
+            () => ActiveWorkspaceTab,
+            SaveQuickRequestAsync,
+            message =>
+            {
+                StatusMessage = message;
+                NotifyShellState();
+            });
 
         Project.PropertyChanged += (_, _) => NotifyShellState();
         EnvironmentPanel.SelectedEnvironmentChanged += OnSelectedEnvironmentChanged;
@@ -82,6 +90,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         HistoryPanel.HistoryItems.CollectionChanged += (_, _) => NotifyShellState();
         WorkspaceTabs.CollectionChanged += OnWorkspaceTabsCollectionChanged;
         Import.PropertyChanged += (_, _) => NotifyShellState();
+        QuickRequestSave.PropertyChanged += (_, _) => NotifyShellState();
 
         WorkspaceNavigationItems.Add(new ProjectWorkspaceNavItemViewModel(
             WorkspaceSections.InterfaceManagement,
@@ -109,6 +118,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     public UseCasesPanelViewModel UseCasesPanel { get; }
     public RequestHistoryPanelViewModel HistoryPanel { get; }
     public ProjectImportViewModel Import { get; }
+    public ProjectQuickRequestSaveViewModel QuickRequestSave { get; }
 
     public ObservableCollection<RequestWorkspaceTabViewModel> WorkspaceTabs { get; } = [];
     public ObservableCollection<ExplorerItemViewModel> InterfaceTreeItems { get; } = [];
@@ -189,16 +199,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     private RequestWorkspaceTabViewModel? activeWorkspaceTab;
 
     [ObservableProperty]
-    private bool isQuickRequestSaveDialogOpen;
-
-    [ObservableProperty]
     private bool isWorkspaceDeleteConfirmDialogOpen;
-
-    [ObservableProperty]
-    private string quickRequestSaveName = string.Empty;
-
-    [ObservableProperty]
-    private string quickRequestSaveDescription = string.Empty;
 
     [ObservableProperty]
     private bool responseValidationEnabled = true;

@@ -100,7 +100,7 @@ public partial class ProjectTabViewModel
 
         if (newValue is null || !newValue.IsQuickRequestTab)
         {
-            IsQuickRequestSaveDialogOpen = false;
+            QuickRequestSave.Dismiss();
         }
 
         NotifyWorkspaceEditorState();

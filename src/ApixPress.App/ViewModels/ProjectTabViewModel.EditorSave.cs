@@ -29,7 +29,8 @@ public partial class ProjectTabViewModel
             return;
         }
 
-        OpenQuickRequestSaveDialog(workspaceTab);
+        QuickRequestSave.OpenDialogFor(workspaceTab);
+        NotifyShellState();
     }
 
     public async Task SaveHistoryAsQuickRequestAsync(RequestHistoryItemViewModel item)
@@ -105,55 +106,6 @@ public partial class ProjectTabViewModel
             StatusMessage = result.Message;
         }
 
-        NotifyShellState();
-    }
-
-    [RelayCommand]
-    private void CloseQuickRequestSaveDialog()
-    {
-        IsQuickRequestSaveDialogOpen = false;
-        StatusMessage = "已取消保存快捷请求。";
-        NotifyShellState();
-    }
-
-    [RelayCommand]
-    private async Task ConfirmQuickRequestSaveAsync()
-    {
-        var workspaceTab = ActiveWorkspaceTab;
-        if (workspaceTab is null || !workspaceTab.IsQuickRequestTab)
-        {
-            IsQuickRequestSaveDialogOpen = false;
-            NotifyShellState();
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(QuickRequestSaveName))
-        {
-            StatusMessage = "请输入快捷请求名称。";
-            NotifyShellState();
-            return;
-        }
-
-        workspaceTab.ConfigTab.RequestName = QuickRequestSaveName.Trim();
-        workspaceTab.ConfigTab.RequestDescription = QuickRequestSaveDescription.Trim();
-        await SaveQuickRequestAsync(workspaceTab, workspaceTab.ConfigTab.RequestName);
-        if (!string.IsNullOrWhiteSpace(workspaceTab.EditingQuickRequestId))
-        {
-            IsQuickRequestSaveDialogOpen = false;
-        }
-
-        NotifyShellState();
-    }
-
-    private void OpenQuickRequestSaveDialog(RequestWorkspaceTabViewModel workspaceTab)
-    {
-        var fallbackName = string.IsNullOrWhiteSpace(workspaceTab.ConfigTab.RequestName)
-            ? workspaceTab.ResolveRequestName()
-            : workspaceTab.ConfigTab.RequestName.Trim();
-        QuickRequestSaveName = fallbackName;
-        QuickRequestSaveDescription = workspaceTab.ConfigTab.RequestDescription;
-        IsQuickRequestSaveDialogOpen = true;
-        StatusMessage = "请输入快捷请求名称后再保存。";
         NotifyShellState();
     }
 

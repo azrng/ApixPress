@@ -27,14 +27,14 @@
               <TextBox Classes="SectionInput DialogInput"
                        u:FormItem.Label="快捷请求名称"
                        Watermark="请输入保存名称"
-                       Text="{Binding ActiveProjectTab.QuickRequestSaveName}" />
+                       Text="{Binding ActiveProjectTab.QuickRequestSave.DraftName}" />
               <TextBox Classes="SectionInput DialogInput"
                        u:FormItem.Label="备注"
                        AcceptsReturn="True"
                        Height="96"
                        TextWrapping="Wrap"
                        Watermark="可选，补充请求用途说明"
-                       Text="{Binding ActiveProjectTab.QuickRequestSaveDescription}" />
+                       Text="{Binding ActiveProjectTab.QuickRequestSave.DraftDescription}" />
             </u:Form>
           </Border>
 
@@ -44,10 +44,10 @@
                       Spacing="{StaticResource Space.2}">
             <Button Classes="DialogSecondaryButton"
                     Content="取消"
-                    Command="{Binding ActiveProjectTab.CloseQuickRequestSaveDialogCommand}" />
+                    Command="{Binding ActiveProjectTab.QuickRequestSave.CloseDialogCommand}" />
             <Button Classes="DialogPrimaryButton"
                     Content="保存"
-                    Command="{Binding ActiveProjectTab.ConfirmQuickRequestSaveCommand}" />
+                    Command="{Binding ActiveProjectTab.QuickRequestSave.ConfirmSaveCommand}" />
           </StackPanel>
         </Grid>
       </Border>
