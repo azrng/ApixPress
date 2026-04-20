@@ -37,7 +37,7 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.InitializeAsync();
 
-        var titles = FlattenExplorerTitles(viewModel.InterfaceCatalogItems).ToList();
+        var titles = FlattenExplorerTitles(viewModel.Catalog.InterfaceCatalogItems).ToList();
 
         Assert.Contains("默认分组 (2)", titles);
         Assert.Contains("接口 1", titles);
@@ -73,7 +73,7 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.InitializeAsync();
 
-        var folderItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (1)");
+        var folderItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "默认分组 (1)");
         var unnamedInterface = Assert.Single(folderItem!.Children);
 
         Assert.Equal(string.Empty, unnamedInterface.Title);
@@ -185,10 +185,10 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.InitializeAsync();
 
-        var interfaceItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 1");
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
         Assert.NotNull(interfaceItem);
 
-        viewModel.LoadWorkspaceItem(interfaceItem);
+        viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
         viewModel.Editor.CurrentHttpInterfaceName = "接口 1 已编辑";
 
         await viewModel.SaveCurrentEditorAsync();
@@ -222,13 +222,13 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.InitializeAsync();
 
         var visibleTabs = viewModel.VisibleWorkspaceTabs;
-        var firstInterfaceItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 1");
-        var secondInterfaceItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 2");
+        var firstInterfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
+        var secondInterfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 2");
         Assert.NotNull(firstInterfaceItem);
         Assert.NotNull(secondInterfaceItem);
 
-        viewModel.LoadWorkspaceItem(firstInterfaceItem);
-        viewModel.LoadWorkspaceItem(secondInterfaceItem);
+        viewModel.Catalog.LoadWorkspaceItem(firstInterfaceItem);
+        viewModel.Catalog.LoadWorkspaceItem(secondInterfaceItem);
 
         Assert.Same(visibleTabs, viewModel.VisibleWorkspaceTabs);
         Assert.Equal(2, viewModel.VisibleWorkspaceTabs.Count);
@@ -247,7 +247,7 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.InitializeAsync();
 
-        var originalFolder = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (1)");
+        var originalFolder = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "默认分组 (1)");
         Assert.NotNull(originalFolder);
 
         viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
@@ -258,10 +258,10 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.SaveCurrentEditorAsync();
         await viewModel.QuickRequestSave.ConfirmSaveCommand.ExecuteAsync(null);
 
-        var currentFolder = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (1)");
+        var currentFolder = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "默认分组 (1)");
         Assert.Same(originalFolder, currentFolder);
-        Assert.Single(viewModel.QuickRequestTreeItems);
-        Assert.Equal("健康检查", viewModel.QuickRequestTreeItems[0].Title);
+        Assert.Single(viewModel.Catalog.QuickRequestTreeItems);
+        Assert.Equal("健康检查", viewModel.Catalog.QuickRequestTreeItems[0].Title);
     }
 
     [Fact]
@@ -274,18 +274,18 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.InitializeAsync();
 
-        var originalFolder = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (1)");
-        var originalInterface = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 1");
+        var originalFolder = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "默认分组 (1)");
+        var originalInterface = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
         Assert.NotNull(originalFolder);
         Assert.NotNull(originalInterface);
 
-        viewModel.LoadWorkspaceItem(originalInterface);
+        viewModel.Catalog.LoadWorkspaceItem(originalInterface);
         viewModel.Editor.CurrentHttpInterfaceName = "接口 1 已编辑";
 
         await viewModel.SaveCurrentEditorAsync();
 
-        var currentFolder = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (1)");
-        var currentInterface = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 1 已编辑");
+        var currentFolder = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "默认分组 (1)");
+        var currentInterface = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1 已编辑");
         Assert.Same(originalFolder, currentFolder);
         Assert.Same(originalInterface, currentInterface);
         Assert.Equal("接口 1 已编辑", currentInterface!.Title);
@@ -311,12 +311,12 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.InitializeAsync();
 
-        var folderItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "默认分组 (2)");
+        var folderItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "默认分组 (2)");
         Assert.NotNull(folderItem);
 
-        await viewModel.DeleteWorkspaceItemAsync(folderItem);
+        await viewModel.Catalog.DeleteWorkspaceItemAsync(folderItem);
 
-        Assert.Empty(viewModel.InterfaceCatalogItems);
+        Assert.Empty(viewModel.Catalog.InterfaceCatalogItems);
         Assert.Empty(requestCaseService.Cases);
         var remainingDocument = Assert.Single(viewModel.Import.ImportedApiDocuments);
         Assert.Equal("0", remainingDocument.EndpointCountText);
@@ -332,14 +332,14 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.InitializeAsync();
 
-        var interfaceItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 1");
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
         Assert.NotNull(interfaceItem);
 
-        viewModel.RequestDeleteWorkspaceTreeItemCommand.Execute(interfaceItem);
+        viewModel.Catalog.RequestDeleteWorkspaceTreeItemCommand.Execute(interfaceItem);
 
-        Assert.True(viewModel.IsWorkspaceDeleteConfirmDialogOpen);
-        Assert.Equal("接口 1", viewModel.PendingWorkspaceDeleteTitle);
-        Assert.Contains("删除后无法恢复", viewModel.PendingWorkspaceDeleteDescription);
+        Assert.True(viewModel.Catalog.IsDeleteConfirmDialogOpen);
+        Assert.Equal("接口 1", viewModel.Catalog.PendingDeleteTitle);
+        Assert.Contains("删除后无法恢复", viewModel.Catalog.PendingDeleteDescription);
     }
 
     [Fact]
@@ -352,15 +352,15 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.InitializeAsync();
 
-        var interfaceItem = FindExplorerItemByTitle(viewModel.InterfaceCatalogItems, "接口 1");
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
         Assert.NotNull(interfaceItem);
 
-        viewModel.RequestDeleteWorkspaceTreeItemCommand.Execute(interfaceItem);
-        await viewModel.ConfirmWorkspaceItemDeleteCommand.ExecuteAsync(null);
+        viewModel.Catalog.RequestDeleteWorkspaceTreeItemCommand.Execute(interfaceItem);
+        await viewModel.Catalog.ConfirmDeleteCommand.ExecuteAsync(null);
 
-        Assert.False(viewModel.IsWorkspaceDeleteConfirmDialogOpen);
-        Assert.Null(viewModel.PendingDeleteWorkspaceItem);
-        Assert.Empty(viewModel.InterfaceCatalogItems);
+        Assert.False(viewModel.Catalog.IsDeleteConfirmDialogOpen);
+        Assert.Null(viewModel.Catalog.PendingDeleteWorkspaceItem);
+        Assert.Empty(viewModel.Catalog.InterfaceCatalogItems);
         Assert.Empty(requestCaseService.Cases);
     }
 

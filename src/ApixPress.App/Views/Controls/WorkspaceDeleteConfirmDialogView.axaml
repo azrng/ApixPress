@@ -17,13 +17,13 @@
             <TextBlock Classes="DialogTitle"
                        Text="确认删除" />
             <TextBlock Classes="CaptionText"
-                       Text="{Binding ActiveProjectTab.PendingWorkspaceDeleteTitle, StringFormat='即将删除：{0}'}"
-                       IsVisible="{Binding ActiveProjectTab.HasPendingWorkspaceDeleteTarget}" />
+                       Text="{Binding ActiveProjectTab.Catalog.PendingDeleteTitle, StringFormat='即将删除：{0}'}"
+                       IsVisible="{Binding ActiveProjectTab.Catalog.HasPendingDeleteTarget}" />
           </StackPanel>
 
           <Border Grid.Row="1"
                   Classes="CreateProjectFormShell">
-            <TextBlock Text="{Binding ActiveProjectTab.PendingWorkspaceDeleteDescription}"
+            <TextBlock Text="{Binding ActiveProjectTab.Catalog.PendingDeleteDescription}"
                        TextWrapping="Wrap" />
           </Border>
 
@@ -33,10 +33,10 @@
                       Spacing="{StaticResource Space.2}">
             <Button Classes="DialogSecondaryButton"
                     Content="取消"
-                    Command="{Binding ActiveProjectTab.CancelWorkspaceItemDeleteCommand}" />
+                    Command="{Binding ActiveProjectTab.Catalog.CancelDeleteCommand}" />
             <Button Classes="DialogPrimaryButton"
                     Content="确认删除"
-                    Command="{Binding ActiveProjectTab.ConfirmWorkspaceItemDeleteCommand}" />
+                    Command="{Binding ActiveProjectTab.Catalog.ConfirmDeleteCommand}" />
           </StackPanel>
         </Grid>
       </Border>

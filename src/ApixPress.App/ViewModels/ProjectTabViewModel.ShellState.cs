@@ -12,12 +12,7 @@ public partial class ProjectTabViewModel
         OnPropertyChanged(nameof(HasEnvironmentContext));
         OnPropertyChanged(nameof(HasSavedRequests));
         OnPropertyChanged(nameof(VisibleWorkspaceTabs));
-        OnPropertyChanged(nameof(HasQuickRequestEntries));
-        OnPropertyChanged(nameof(HasInterfaceEntries));
-        OnPropertyChanged(nameof(ShowInterfaceEntriesEmptyState));
-        OnPropertyChanged(nameof(ShowQuickRequestEntriesEmptyState));
         OnPropertyChanged(nameof(HasHistory));
-        OnPropertyChanged(nameof(ShowSavedRequestsEmptyState));
         OnPropertyChanged(nameof(ShowHistoryEmptyState));
         OnPropertyChanged(nameof(IsInterfaceManagementSection));
         OnPropertyChanged(nameof(IsRequestHistorySection));
@@ -38,11 +33,6 @@ public partial class ProjectTabViewModel
         OnPropertyChanged(nameof(HistoryCountText));
         OnPropertyChanged(nameof(EnvironmentCountText));
         OnPropertyChanged(nameof(ProjectSettingsDescription));
-        OnPropertyChanged(nameof(InterfaceSectionHint));
-        OnPropertyChanged(nameof(QuickRequestSectionHint));
-        OnPropertyChanged(nameof(HasPendingWorkspaceDeleteTarget));
-        OnPropertyChanged(nameof(PendingWorkspaceDeleteTitle));
-        OnPropertyChanged(nameof(PendingWorkspaceDeleteDescription));
         ShellStateChanged?.Invoke(this);
     }
 

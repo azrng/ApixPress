@@ -67,6 +67,7 @@
 | T030 | 收口快捷请求保存弹窗职责 | 将 `ProjectTabViewModel` 中的快捷请求保存弹窗状态、草稿字段与确认命令抽成独立子 ViewModel，继续降低父类 partial 密度，并补齐回归验证 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 20:35 |
 | T031 | 收口工作标签生命周期职责 | 将 `ProjectTabViewModel` 中的工作标签集合、激活、关闭、landing 与菜单状态抽成独立子 ViewModel，减少多组 workspace partial 对父类的长期堆叠 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 20:47 |
 | T032 | 收口请求编辑器 facade 职责 | 将 `ProjectTabViewModel` 中请求编辑器状态、文档预览计算属性与编辑模式命令抽成独立子 ViewModel，删除 `EditorState` partial 并减少父类代理属性 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 21:01 |
+| T033 | 收口工作区目录与删除确认职责 | 将 `ProjectTabViewModel` 中侧边目录树、删除确认弹窗、已保存请求树同步与载入/删除逻辑抽成独立子 ViewModel，继续减少 workspace 相关 partial 堆叠 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 21:15 |
 --- 
 
 ## 归档索引

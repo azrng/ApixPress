@@ -136,7 +136,7 @@
                 <StackPanel Classes="ProjectSidebarModuleChildren">
                   <ToggleButton x:Name="InterfaceCatalogToggle"
                                 Classes="ProjectSidebarCatalogToggleButton ProjectSidebarCatalogActiveButton ProjectSidebarCatalogFlatButton"
-                                IsChecked="{Binding IsInterfaceCatalogExpanded, Mode=TwoWay}">
+                                IsChecked="{Binding Catalog.IsInterfaceCatalogExpanded, Mode=TwoWay}">
                     <Grid ColumnDefinitions="Auto,Auto,*,Auto"
                           ColumnSpacing="{StaticResource Space.2}">
                       <TextBlock Grid.Column="0"
@@ -160,13 +160,13 @@
                   </ToggleButton>
 
                   <Border Classes="ProjectSidebarCatalogBody"
-                          IsVisible="{Binding IsInterfaceCatalogExpanded}">
+                          IsVisible="{Binding Catalog.IsInterfaceCatalogExpanded}">
                     <StackPanel Classes="ProjectSidebarCatalogContent">
                       <TextBlock Classes="CaptionText ProjectSidebarEmptyHint"
                                  Text="当前还没有保存的 HTTP 接口"
-                                 IsVisible="{Binding ShowInterfaceEntriesEmptyState}" />
+                                 IsVisible="{Binding Catalog.ShowInterfaceEntriesEmptyState}" />
                       <ItemsControl Classes="ProjectSidebarInlineTree"
-                                    ItemsSource="{Binding InterfaceCatalogItems}">
+                                    ItemsSource="{Binding Catalog.InterfaceCatalogItems}">
                         <ItemsControl.ItemTemplate>
                           <StaticResource ResourceKey="ProjectSidebarExplorerItemTemplate" />
                         </ItemsControl.ItemTemplate>
@@ -176,7 +176,7 @@
 
                   <ToggleButton x:Name="DataModelCatalogToggle"
                                 Classes="ProjectSidebarCatalogToggleButton"
-                                IsChecked="{Binding IsDataModelCatalogExpanded, Mode=TwoWay}">
+                                IsChecked="{Binding Catalog.IsDataModelCatalogExpanded, Mode=TwoWay}">
                     <Grid ColumnDefinitions="Auto,*,Auto"
                           ColumnSpacing="{StaticResource Space.2}">
                       <TextBlock Grid.Column="0"
@@ -201,7 +201,7 @@
 
                   <ToggleButton x:Name="ComponentCatalogToggle"
                                 Classes="ProjectSidebarCatalogToggleButton"
-                                IsChecked="{Binding IsComponentLibraryCatalogExpanded, Mode=TwoWay}">
+                                IsChecked="{Binding Catalog.IsComponentLibraryCatalogExpanded, Mode=TwoWay}">
                     <Grid ColumnDefinitions="Auto,*,Auto"
                           ColumnSpacing="{StaticResource Space.2}">
                       <TextBlock Grid.Column="0"
@@ -231,7 +231,7 @@
               <StackPanel Classes="ProjectSidebarTopLevelSection">
                 <ToggleButton x:Name="QuickRequestCatalogToggle"
                               Classes="ProjectSidebarCatalogToggleButton ProjectSidebarCatalogFlatButton"
-                              IsChecked="{Binding IsQuickRequestCatalogExpanded, Mode=TwoWay}">
+                              IsChecked="{Binding Catalog.IsQuickRequestCatalogExpanded, Mode=TwoWay}">
                   <Grid ColumnDefinitions="Auto,Auto,*,Auto"
                         ColumnSpacing="{StaticResource Space.2}">
                     <TextBlock Grid.Column="0"
@@ -254,10 +254,10 @@
                   </Grid>
                 </ToggleButton>
                 <Border Classes="ProjectSidebarCatalogBody QuickRequestCatalogBody"
-                        IsVisible="{Binding IsQuickRequestCatalogExpanded}">
+                        IsVisible="{Binding Catalog.IsQuickRequestCatalogExpanded}">
                   <StackPanel Classes="ProjectSidebarCatalogContent QuickRequestCatalogContent">
                     <TreeView Classes="WorkspaceTreeView ProjectSidebarTree QuickRequestSidebarTree"
-                              ItemsSource="{Binding QuickRequestTreeItems}">
+                              ItemsSource="{Binding Catalog.QuickRequestTreeItems}">
                       <TreeView.ItemTemplate>
                         <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
                                           ItemsSource="{Binding Children}">

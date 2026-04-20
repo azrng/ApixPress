@@ -33,11 +33,4 @@ public partial class ProjectTabViewModel
 
         SelectedWorkspaceSection = value.SectionKey;
     }
-
-    partial void OnPendingDeleteWorkspaceItemChanged(ExplorerItemViewModel? value)
-    {
-        OnPropertyChanged(nameof(HasPendingWorkspaceDeleteTarget));
-        OnPropertyChanged(nameof(PendingWorkspaceDeleteTitle));
-        OnPropertyChanged(nameof(PendingWorkspaceDeleteDescription));
-    }
 }

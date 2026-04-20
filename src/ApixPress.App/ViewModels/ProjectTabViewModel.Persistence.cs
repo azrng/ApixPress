@@ -1,6 +1,4 @@
-using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
-using System.Collections.Specialized;
 
 namespace ApixPress.App.ViewModels;
 
@@ -34,7 +32,7 @@ public partial class ProjectTabViewModel
         if (result.IsSuccess && result.Data is not null)
         {
             workspaceTab.EditingQuickRequestId = result.Data.Id;
-            RunWithWorkspaceNavigationRebuildSuppressed(() => UseCasesPanel.UpsertCaseItem(result.Data));
+            Catalog.UpsertCaseItem(result.Data);
             StatusMessage = "快捷请求已保存到左侧目录。";
         }
         else
@@ -83,214 +81,10 @@ public partial class ProjectTabViewModel
         workspaceTab.SourceEndpointId = result.Data.RequestSnapshot.EndpointId;
         if (reloadAfterSave)
         {
-            RunWithWorkspaceNavigationRebuildSuppressed(() => UseCasesPanel.UpsertCaseItem(result.Data));
+            Catalog.UpsertCaseItem(result.Data);
         }
 
         return result.Data.Id;
-    }
-
-    private async Task ReloadSavedRequestsAsync()
-    {
-        await RunWithWorkspaceNavigationRebuildSuppressedAsync(() => UseCasesPanel.LoadCasesAsync());
-    }
-
-    private async Task SyncImportedInterfacesAsync(IReadOnlyList<ApiEndpointDto> endpoints)
-    {
-        await _requestCaseService.SyncImportedHttpInterfacesAsync(ProjectId, endpoints, CancellationToken.None);
-        await ReloadSavedRequestsAsync();
-    }
-
-    private void RebuildInterfaceNavigation()
-    {
-        SynchronizeExplorerItems(
-            InterfaceTreeItems,
-            [ProjectWorkspaceTreeBuilder.BuildInterfaceRoot(SavedRequests, RequestDeleteWorkspaceTreeItemCommand)]);
-        OnPropertyChanged(nameof(InterfaceCatalogItems));
-    }
-
-    private void RebuildQuickRequestNavigation()
-    {
-        SynchronizeExplorerItems(
-            QuickRequestTreeItems,
-            ProjectWorkspaceTreeBuilder.BuildQuickRequests(SavedRequests, RequestDeleteWorkspaceTreeItemCommand));
-    }
-
-    private void RebuildWorkspaceNavigation()
-    {
-        RebuildInterfaceNavigation();
-        RebuildQuickRequestNavigation();
-    }
-
-    private void RequestWorkspaceNavigationRebuild(bool rebuildInterfaceNavigation = true, bool rebuildQuickRequestNavigation = true)
-    {
-        if (!rebuildInterfaceNavigation && !rebuildQuickRequestNavigation)
-        {
-            return;
-        }
-
-        if (_workspaceNavigationRebuildSuspendCount > 0)
-        {
-            _interfaceNavigationRebuildPending |= rebuildInterfaceNavigation;
-            _quickRequestNavigationRebuildPending |= rebuildQuickRequestNavigation;
-            return;
-        }
-
-        if (rebuildInterfaceNavigation)
-        {
-            RebuildInterfaceNavigation();
-        }
-
-        if (rebuildQuickRequestNavigation)
-        {
-            RebuildQuickRequestNavigation();
-        }
-    }
-
-    private void RunWithWorkspaceNavigationRebuildSuppressed(Action action)
-    {
-        _workspaceNavigationRebuildSuspendCount++;
-        try
-        {
-            action();
-        }
-        finally
-        {
-            _workspaceNavigationRebuildSuspendCount--;
-            FlushWorkspaceNavigationRebuild();
-        }
-    }
-
-    private async Task RunWithWorkspaceNavigationRebuildSuppressedAsync(Func<Task> action)
-    {
-        _workspaceNavigationRebuildSuspendCount++;
-        try
-        {
-            await action();
-        }
-        finally
-        {
-            _workspaceNavigationRebuildSuspendCount--;
-            FlushWorkspaceNavigationRebuild();
-        }
-    }
-
-    private void FlushWorkspaceNavigationRebuild()
-    {
-        if (_workspaceNavigationRebuildSuspendCount > 0)
-        {
-            return;
-        }
-
-        var rebuildInterfaceNavigation = _interfaceNavigationRebuildPending;
-        var rebuildQuickRequestNavigation = _quickRequestNavigationRebuildPending;
-        _interfaceNavigationRebuildPending = false;
-        _quickRequestNavigationRebuildPending = false;
-        RequestWorkspaceNavigationRebuild(rebuildInterfaceNavigation, rebuildQuickRequestNavigation);
-    }
-
-    private static (bool RebuildInterfaceNavigation, bool RebuildQuickRequestNavigation) ResolveWorkspaceNavigationRebuildScope(NotifyCollectionChangedEventArgs e)
-    {
-        if (e.Action is NotifyCollectionChangedAction.Reset or NotifyCollectionChangedAction.Move or NotifyCollectionChangedAction.Replace)
-        {
-            return (true, true);
-        }
-
-        var changedItems = EnumerateChangedRequestCases(e).ToList();
-        if (changedItems.Count == 0)
-        {
-            return (true, true);
-        }
-
-        var rebuildQuickRequestNavigation = changedItems.Any(IsQuickRequestCaseItem);
-        var rebuildInterfaceNavigation = changedItems.Any(item => !IsQuickRequestCaseItem(item));
-        return (rebuildInterfaceNavigation, rebuildQuickRequestNavigation);
-    }
-
-    private static IEnumerable<RequestCaseItemViewModel> EnumerateChangedRequestCases(NotifyCollectionChangedEventArgs e)
-    {
-        if (e.OldItems is not null)
-        {
-            foreach (var item in e.OldItems.OfType<RequestCaseItemViewModel>())
-            {
-                yield return item;
-            }
-        }
-
-        if (e.NewItems is not null)
-        {
-            foreach (var item in e.NewItems.OfType<RequestCaseItemViewModel>())
-            {
-                yield return item;
-            }
-        }
-    }
-
-    private static bool IsQuickRequestCaseItem(RequestCaseItemViewModel item)
-    {
-        return string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static void SynchronizeExplorerItems(
-        System.Collections.ObjectModel.ObservableCollection<ExplorerItemViewModel> target,
-        IReadOnlyList<ExplorerItemViewModel> desiredItems)
-    {
-        for (var index = 0; index < desiredItems.Count; index++)
-        {
-            var desiredItem = desiredItems[index];
-            var currentIndex = FindExplorerItemIndex(target, desiredItem.NodeKey);
-            if (currentIndex >= 0)
-            {
-                var existingItem = target[currentIndex];
-                existingItem.SyncFrom(desiredItem);
-                SynchronizeExplorerItems(existingItem.Children, desiredItem.Children);
-                if (currentIndex != index)
-                {
-                    target.Move(currentIndex, index);
-                }
-
-                continue;
-            }
-
-            target.Insert(index, desiredItem);
-        }
-
-        while (target.Count > desiredItems.Count)
-        {
-            target.RemoveAt(target.Count - 1);
-        }
-    }
-
-    private static int FindExplorerItemIndex(
-        System.Collections.ObjectModel.ObservableCollection<ExplorerItemViewModel> items,
-        string nodeKey)
-    {
-        for (var index = 0; index < items.Count; index++)
-        {
-            if (string.Equals(items[index].NodeKey, nodeKey, StringComparison.OrdinalIgnoreCase))
-            {
-                return index;
-            }
-        }
-
-        return -1;
-    }
-
-    private RequestCaseDto? FindRequestById(string id)
-    {
-        return SavedRequests
-            .Select(item => item.SourceCase)
-            .FirstOrDefault(item => string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private string ResolveLatestCaseName(string interfaceId)
-    {
-        return SavedRequests
-            .Where(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpCase, StringComparison.OrdinalIgnoreCase))
-            .Where(item => string.Equals(item.SourceCase.ParentId, interfaceId, StringComparison.OrdinalIgnoreCase))
-            .OrderByDescending(item => item.UpdatedAt)
-            .Select(item => item.Name)
-            .FirstOrDefault()
-            ?? "成功";
     }
 
     private static bool HasAbsoluteHttpUrl(string? value)

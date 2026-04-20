@@ -51,7 +51,7 @@ public partial class ProjectTabViewModel
         {
             if (result.Data is not null)
             {
-                RunWithWorkspaceNavigationRebuildSuppressed(() => UseCasesPanel.UpsertCaseItem(result.Data));
+                Catalog.UpsertCaseItem(result.Data);
             }
             StatusMessage = "已从历史记录生成快捷请求。";
         }
@@ -98,7 +98,7 @@ public partial class ProjectTabViewModel
         {
             workspaceTab.EditingCaseId = result.Data.Id;
             workspaceTab.SourceEndpointId = result.Data.RequestSnapshot.EndpointId;
-            RunWithWorkspaceNavigationRebuildSuppressed(() => UseCasesPanel.UpsertCaseItem(result.Data));
+            Catalog.UpsertCaseItem(result.Data);
             StatusMessage = "HTTP 接口用例已保存。";
         }
         else

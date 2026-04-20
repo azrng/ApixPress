@@ -53,7 +53,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        ActiveProjectTab.LoadWorkspaceItem(item);
+        ActiveProjectTab.Catalog.LoadWorkspaceItem(item);
         StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }
@@ -66,7 +66,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        await ActiveProjectTab.DeleteWorkspaceItemAsync(item);
+        await ActiveProjectTab.Catalog.DeleteWorkspaceItemAsync(item);
         StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }

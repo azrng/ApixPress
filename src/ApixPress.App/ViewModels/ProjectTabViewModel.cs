@@ -1,19 +1,16 @@
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Linq;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
-using ApixPress.App.Helpers;
+using Azrng.Core.Results;
 
 namespace ApixPress.App.ViewModels;
 
 public partial class ProjectTabViewModel : ViewModelBase
 {
-    private const string ImportedEndpointKeyPrefix = "swagger-import:";
-
     private static class WorkspaceSections
     {
         public const string InterfaceManagement = "interface-management";
@@ -30,13 +27,9 @@ public partial class ProjectTabViewModel : ViewModelBase
     private readonly IRequestCaseService _requestCaseService;
     private readonly IRequestExecutionService _requestExecutionService;
     private readonly IRequestHistoryService _requestHistoryService;
-    private readonly IApiWorkspaceService _apiWorkspaceService;
     private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
     private CancellationTokenSource? _sendRequestCancellationTokenSource;
     private bool _initialized;
-    private int _workspaceNavigationRebuildSuspendCount;
-    private bool _interfaceNavigationRebuildPending;
-    private bool _quickRequestNavigationRebuildPending;
 
     public event Action<ProjectTabViewModel>? ShellStateChanged;
 
@@ -60,7 +53,6 @@ public partial class ProjectTabViewModel : ViewModelBase
         _requestExecutionService = requestExecutionService;
         _requestCaseService = requestCaseService;
         _requestHistoryService = requestHistoryService;
-        _apiWorkspaceService = apiWorkspaceService;
 
         _fallbackWorkspaceTab = new RequestWorkspaceTabViewModel();
         _fallbackWorkspaceTab.ConfigureAsLanding();
@@ -68,6 +60,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         EnvironmentPanel = new EnvironmentPanelViewModel(environmentVariableService);
         UseCasesPanel = new UseCasesPanelViewModel(requestCaseService);
         HistoryPanel = new RequestHistoryPanelViewModel(requestHistoryService);
+        ProjectImportViewModel? importViewModel = null;
         Workspace = new ProjectWorkspaceTabsViewModel(
             () => SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement,
             message => StatusMessage = message);
@@ -75,11 +68,21 @@ public partial class ProjectTabViewModel : ViewModelBase
             () => ActiveWorkspaceTab,
             () => _fallbackWorkspaceTab,
             () => EnvironmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty);
-        Import = new ProjectImportViewModel(
+        Catalog = new ProjectWorkspaceCatalogViewModel(
+            Project.Id,
+            requestCaseService,
+            apiWorkspaceService,
+            UseCasesPanel,
+            Workspace,
+            () => SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement,
+            message => StatusMessage = message,
+            NotifyShellState,
+            () => importViewModel?.LoadImportedDocumentsAsync(manageBusyState: false) ?? Task.CompletedTask);
+        Import = importViewModel = new ProjectImportViewModel(
             Project.Id,
             apiWorkspaceService,
             filePickerService,
-            SyncImportedInterfacesAsync,
+            Catalog.SyncImportedInterfacesAsync,
             message => StatusMessage = message);
         QuickRequestSave = new ProjectQuickRequestSaveViewModel(
             () => ActiveWorkspaceTab,
@@ -93,7 +96,6 @@ public partial class ProjectTabViewModel : ViewModelBase
         Project.PropertyChanged += (_, _) => NotifyShellState();
         EnvironmentPanel.SelectedEnvironmentChanged += OnSelectedEnvironmentChanged;
         EnvironmentPanel.Environments.CollectionChanged += (_, _) => NotifyShellState();
-        UseCasesPanel.RequestCases.CollectionChanged += OnSavedRequestsCollectionChanged;
         HistoryPanel.HistoryItems.CollectionChanged += (_, _) => NotifyShellState();
         Workspace.PropertyChanged += OnWorkspacePropertyChanged;
         Workspace.StateChanged += NotifyShellState;
@@ -129,14 +131,12 @@ public partial class ProjectTabViewModel : ViewModelBase
     public RequestHistoryPanelViewModel HistoryPanel { get; }
     public ProjectWorkspaceTabsViewModel Workspace { get; }
     public ProjectRequestEditorViewModel Editor { get; }
+    public ProjectWorkspaceCatalogViewModel Catalog { get; }
     public ProjectImportViewModel Import { get; }
     public ProjectQuickRequestSaveViewModel QuickRequestSave { get; }
 
     public ObservableCollection<RequestWorkspaceTabViewModel> WorkspaceTabs => Workspace.WorkspaceTabs;
-    public ObservableCollection<ExplorerItemViewModel> InterfaceTreeItems { get; } = [];
-    public ObservableCollection<ExplorerItemViewModel> QuickRequestTreeItems { get; } = [];
     public ObservableCollection<ProjectWorkspaceNavItemViewModel> WorkspaceNavigationItems { get; } = [];
-    public IReadOnlyList<ExplorerItemViewModel> InterfaceCatalogItems => InterfaceTreeItems.FirstOrDefault()?.Children ?? [];
     public ReadOnlyObservableCollection<RequestWorkspaceTabViewModel> VisibleWorkspaceTabs => Workspace.VisibleWorkspaceTabs;
     public ObservableCollection<RequestCaseItemViewModel> SavedRequests => UseCasesPanel.RequestCases;
     public ObservableCollection<RequestHistoryItemViewModel> RequestHistory => HistoryPanel.HistoryItems;
@@ -165,11 +165,6 @@ public partial class ProjectTabViewModel : ViewModelBase
     public bool HasEnvironmentContext => ActiveWorkspaceTab is not null && !ActiveWorkspaceTab.IsLandingTab;
     public bool HasSavedRequests => SavedRequests.Count > 0;
     public bool HasHistory => RequestHistory.Count > 0;
-    public bool HasQuickRequestEntries => SavedRequests.Any(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase));
-    public bool HasInterfaceEntries => SavedRequests.Any(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase));
-    public bool ShowInterfaceEntriesEmptyState => !HasInterfaceEntries;
-    public bool ShowQuickRequestEntriesEmptyState => !HasQuickRequestEntries;
-    public bool ShowSavedRequestsEmptyState => !HasQuickRequestEntries && !HasInterfaceEntries;
     public bool ShowHistoryEmptyState => !HasHistory;
     public bool IsInterfaceManagementSection => SelectedWorkspaceSection == WorkspaceSections.InterfaceManagement;
     public bool IsRequestHistorySection => SelectedWorkspaceSection == WorkspaceSections.RequestHistory;
@@ -184,8 +179,6 @@ public partial class ProjectTabViewModel : ViewModelBase
         || string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase)).ToString();
     public string HistoryCountText => RequestHistory.Count.ToString();
     public string EnvironmentCountText => EnvironmentPanel.Environments.Count.ToString();
-    public string InterfaceSectionHint => HasInterfaceEntries ? "默认模块 / 接口" : "默认模块下还没有保存的 HTTP 接口";
-    public string QuickRequestSectionHint => HasQuickRequestEntries ? "保存到左侧快捷请求目录" : "左侧快捷请求目录还是空的";
     [ObservableProperty]
     private bool isActive;
 
@@ -205,30 +198,30 @@ public partial class ProjectTabViewModel : ViewModelBase
     private string selectedProjectSettingsSection = ProjectSettingsSections.Overview;
 
     [ObservableProperty]
-    private bool isInterfaceCatalogExpanded = true;
-
-    [ObservableProperty]
-    private bool isDataModelCatalogExpanded;
-
-    [ObservableProperty]
-    private bool isComponentLibraryCatalogExpanded;
-
-    [ObservableProperty]
-    private bool isQuickRequestCatalogExpanded = true;
-
-    [ObservableProperty]
-    private bool isWorkspaceDeleteConfirmDialogOpen;
-
-    [ObservableProperty]
     private bool responseValidationEnabled = true;
 
-    [ObservableProperty]
-    private ExplorerItemViewModel? pendingDeleteWorkspaceItem;
-
-    private void OnSavedRequestsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    public void LoadHistoryRequest(RequestHistoryItemViewModel? item)
     {
-        var (rebuildInterfaceNavigation, rebuildQuickRequestNavigation) = ResolveWorkspaceNavigationRebuildScope(e);
-        RequestWorkspaceNavigationRebuild(rebuildInterfaceNavigation, rebuildQuickRequestNavigation);
+        if (item is null)
+        {
+            return;
+        }
+
+        var targetTab = ActiveWorkspaceTab?.IsLandingTab == true
+            ? ActiveWorkspaceTab
+            : Workspace.FindFirstQuickRequestTab() ?? Workspace.CreateWorkspaceTab(activate: false);
+
+        targetTab ??= Workspace.CreateWorkspaceTab(activate: false);
+        targetTab.ConfigureAsQuickRequest();
+        targetTab.ApplySnapshot(item.RequestSnapshot);
+        if (item.ResponseSnapshot is not null)
+        {
+            targetTab.ResponseSection.ApplyResult(ResultModel<ResponseSnapshotDto>.Success(item.ResponseSnapshot), item.RequestSnapshot);
+        }
+
+        Workspace.ActivateWorkspaceTab(targetTab);
+        SelectedWorkspaceSection = WorkspaceSections.RequestHistory;
+        StatusMessage = $"已加载历史请求：{item.Method} {item.Url}";
         NotifyShellState();
     }
 

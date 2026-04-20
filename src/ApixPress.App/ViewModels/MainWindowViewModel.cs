@@ -100,7 +100,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool ShowQuickRequestSaveDialog => ActiveProjectTab?.QuickRequestSave.IsDialogOpen ?? false;
     public bool ShowProjectImportDialog => ActiveProjectTab?.Import.IsDialogOpen ?? false;
     public bool ShowProjectImportOverwriteConfirmDialog => ActiveProjectTab?.Import.IsOverwriteConfirmDialogOpen ?? false;
-    public bool ShowWorkspaceDeleteConfirmDialog => ActiveProjectTab?.IsWorkspaceDeleteConfirmDialogOpen ?? false;
+    public bool ShowWorkspaceDeleteConfirmDialog => ActiveProjectTab?.Catalog.IsDeleteConfirmDialogOpen ?? false;
     public bool ShowGeneralSettingsSection => CurrentSettingsSection == SettingsSections.General;
     public bool ShowAboutSettingsSection => CurrentSettingsSection == SettingsSections.About;
     public bool HasUnreadNotifications => Notifications.Any(item => item.IsUnread);
