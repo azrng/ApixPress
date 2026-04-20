@@ -22,36 +22,4 @@ public partial class ProjectTabViewModel
         StatusMessage = HasHistory ? "这里展示当前项目的请求历史。" : "当前项目还没有请求历史。";
         NotifyShellState();
     }
-
-    [RelayCommand]
-    private void ShowProjectSettings()
-    {
-        SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
-        SelectedProjectSettingsSection = ProjectSettingsSections.Overview;
-        Import.DismissDialog();
-        StatusMessage = ShowProjectSettingsImportDataSection
-            ? ProjectSettingsTexts.ImportDescription
-            : ProjectSettingsTexts.OverviewDescription;
-        NotifyShellState();
-    }
-
-    [RelayCommand]
-    private void ShowProjectOverviewSettings()
-    {
-        SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
-        SelectedProjectSettingsSection = ProjectSettingsSections.Overview;
-        Import.DismissDialog();
-        StatusMessage = ProjectSettingsTexts.OverviewDescription;
-        NotifyShellState();
-    }
-
-    [RelayCommand]
-    private void ShowProjectImportDataSettings()
-    {
-        SelectedWorkspaceSection = WorkspaceSections.ProjectSettings;
-        SelectedProjectSettingsSection = ProjectSettingsSections.ImportData;
-        Import.DismissDialog();
-        StatusMessage = ProjectSettingsTexts.ImportDescription;
-        NotifyShellState();
-    }
 }

@@ -12,4 +12,25 @@ public partial class ProjectTabViewModel
             : $"当前环境已切换为：{environment.Name}";
         NotifyWorkspaceEditorState();
     }
+
+    partial void OnSelectedWorkspaceSectionChanged(string value)
+    {
+        SyncWorkspaceNavigationSelection();
+        Settings.NotifyWorkspaceSectionChanged();
+        OnPropertyChanged(nameof(IsInterfaceManagementSection));
+        OnPropertyChanged(nameof(IsRequestHistorySection));
+        OnPropertyChanged(nameof(IsProjectSettingsSection));
+        OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
+        OnPropertyChanged(nameof(ShowRequestEditorWorkspace));
+    }
+
+    partial void OnSelectedWorkspaceNavigationItemChanged(ProjectWorkspaceNavItemViewModel? value)
+    {
+        if (value is null || string.Equals(SelectedWorkspaceSection, value.SectionKey, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        SelectedWorkspaceSection = value.SectionKey;
+    }
 }

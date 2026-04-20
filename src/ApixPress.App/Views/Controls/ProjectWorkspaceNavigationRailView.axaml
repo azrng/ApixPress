@@ -51,7 +51,7 @@
 
         <Button Classes="ProjectWorkspaceNavButton"
                 Classes.ProjectWorkspaceNavButtonSelected="{Binding IsProjectSettingsSection}"
-                Command="{Binding ShowProjectSettingsCommand}">
+                Command="{Binding Settings.OpenWorkspaceCommand}">
           <StackPanel HorizontalAlignment="Center"
                       Spacing="6">
             <Border Classes="ProjectWorkspaceNavIcon">

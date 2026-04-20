@@ -18,12 +18,6 @@ public partial class ProjectTabViewModel : ViewModelBase
         public const string ProjectSettings = "project-settings";
     }
 
-    private static class ProjectSettingsSections
-    {
-        public const string Overview = "overview";
-        public const string ImportData = "import-data";
-    }
-
     private readonly IRequestCaseService _requestCaseService;
     private readonly IRequestExecutionService _requestExecutionService;
     private readonly IRequestHistoryService _requestHistoryService;
@@ -68,6 +62,13 @@ public partial class ProjectTabViewModel : ViewModelBase
             () => ActiveWorkspaceTab,
             () => _fallbackWorkspaceTab,
             () => EnvironmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty);
+        Settings = new ProjectSettingsShellViewModel(
+            () => SelectedWorkspaceSection = WorkspaceSections.ProjectSettings,
+            () => importViewModel?.DismissDialog(),
+            () => IsProjectSettingsSection,
+            () => Project.Description,
+            message => StatusMessage = message,
+            NotifyShellState);
         Catalog = new ProjectWorkspaceCatalogViewModel(
             Project.Id,
             requestCaseService,
@@ -93,7 +94,11 @@ public partial class ProjectTabViewModel : ViewModelBase
                 NotifyShellState();
             });
 
-        Project.PropertyChanged += (_, _) => NotifyShellState();
+        Project.PropertyChanged += (_, _) =>
+        {
+            Settings.NotifyProjectChanged();
+            NotifyShellState();
+        };
         EnvironmentPanel.SelectedEnvironmentChanged += OnSelectedEnvironmentChanged;
         EnvironmentPanel.Environments.CollectionChanged += (_, _) => NotifyShellState();
         HistoryPanel.HistoryItems.CollectionChanged += (_, _) => NotifyShellState();
@@ -102,6 +107,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         Workspace.EditorStateChanged += NotifyWorkspaceEditorState;
         Workspace.ActiveWorkspaceTabChanged += OnWorkspaceActiveWorkspaceTabChanged;
         Editor.PropertyChanged += (_, _) => NotifyShellState();
+        Settings.PropertyChanged += (_, _) => NotifyShellState();
         Import.PropertyChanged += (_, _) => NotifyShellState();
         QuickRequestSave.PropertyChanged += (_, _) => NotifyShellState();
 
@@ -119,7 +125,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             WorkspaceSections.ProjectSettings,
             "项目设置",
             "M12,8.5 A3.5,3.5 0 1 0 12,15.5 A3.5,3.5 0 1 0 12,8.5 M12,3 L13.2,3.3 L13.8,5 L15.5,5.5 L17,4.7 L18.3,6 L17.5,7.5 L18,9.2 L19.7,9.8 L20,11 L18.3,12.2 L18,13.8 L19.5,15 L18.3,16.3 L16.8,15.5 L15.2,16 L14.5,17.7 L13.3,18 L12,16.7 L10.7,18 L9.5,17.7 L8.8,16 L7.2,15.5 L5.7,16.3 L4.5,15 L6,13.8 L5.7,12.2 L4,11 L4.3,9.8 L6,9.2 L6.5,7.5 L5.7,6 L7,4.7 L8.5,5.5 L10.2,5 L10.8,3.3 Z",
-            ShowProjectSettingsCommand));
+            Settings.OpenWorkspaceCommand));
         SyncWorkspaceNavigationSelection();
 
         Workspace.EnsureLandingWorkspaceTab();
@@ -131,6 +137,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     public RequestHistoryPanelViewModel HistoryPanel { get; }
     public ProjectWorkspaceTabsViewModel Workspace { get; }
     public ProjectRequestEditorViewModel Editor { get; }
+    public ProjectSettingsShellViewModel Settings { get; }
     public ProjectWorkspaceCatalogViewModel Catalog { get; }
     public ProjectImportViewModel Import { get; }
     public ProjectQuickRequestSaveViewModel QuickRequestSave { get; }
@@ -193,9 +200,6 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private ProjectWorkspaceNavItemViewModel? selectedWorkspaceNavigationItem;
-
-    [ObservableProperty]
-    private string selectedProjectSettingsSection = ProjectSettingsSections.Overview;
 
     [ObservableProperty]
     private bool responseValidationEnabled = true;

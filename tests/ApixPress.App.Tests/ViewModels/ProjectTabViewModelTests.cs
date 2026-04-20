@@ -87,7 +87,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService);
         await viewModel.InitializeAsync();
 
-        viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
+        viewModel.Settings.ShowImportDataCommand.Execute(null);
         viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
 
         await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
@@ -110,7 +110,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService);
         await viewModel.InitializeAsync();
 
-        viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
+        viewModel.Settings.ShowImportDataCommand.Execute(null);
         viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
 
         var importTask = viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
@@ -135,7 +135,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
         await viewModel.InitializeAsync();
 
-        viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
+        viewModel.Settings.ShowImportDataCommand.Execute(null);
         viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
 
         await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
@@ -158,7 +158,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
         await viewModel.InitializeAsync();
 
-        viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
+        viewModel.Settings.ShowImportDataCommand.Execute(null);
         viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
 
         await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
@@ -369,27 +369,27 @@ public sealed partial class ProjectTabViewModelTests
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
 
-        viewModel.ShowProjectSettingsCommand.Execute(null);
-        viewModel.ShowProjectOverviewSettingsCommand.Execute(null);
+        viewModel.Settings.OpenWorkspaceCommand.Execute(null);
+        viewModel.Settings.ShowOverviewCommand.Execute(null);
 
         Assert.True(viewModel.IsProjectSettingsSection);
-        Assert.True(viewModel.IsProjectSettingsOverviewSelected);
-        Assert.False(viewModel.IsProjectSettingsImportDataSelected);
-        Assert.Equal("基本设置", viewModel.CurrentProjectSettingsTitle);
+        Assert.True(viewModel.Settings.IsOverviewSelected);
+        Assert.False(viewModel.Settings.IsImportDataSelected);
+        Assert.Equal("基本设置", viewModel.Settings.CurrentTitle);
 
-        viewModel.ShowProjectImportDataSettingsCommand.Execute(null);
-
-        Assert.True(viewModel.IsProjectSettingsSection);
-        Assert.False(viewModel.IsProjectSettingsOverviewSelected);
-        Assert.True(viewModel.IsProjectSettingsImportDataSelected);
-        Assert.Equal("导入数据", viewModel.CurrentProjectSettingsTitle);
-
-        viewModel.ShowProjectSettingsCommand.Execute(null);
+        viewModel.Settings.ShowImportDataCommand.Execute(null);
 
         Assert.True(viewModel.IsProjectSettingsSection);
-        Assert.True(viewModel.IsProjectSettingsOverviewSelected);
-        Assert.False(viewModel.IsProjectSettingsImportDataSelected);
-        Assert.Equal("基本设置", viewModel.CurrentProjectSettingsTitle);
+        Assert.False(viewModel.Settings.IsOverviewSelected);
+        Assert.True(viewModel.Settings.IsImportDataSelected);
+        Assert.Equal("导入数据", viewModel.Settings.CurrentTitle);
+
+        viewModel.Settings.OpenWorkspaceCommand.Execute(null);
+
+        Assert.True(viewModel.IsProjectSettingsSection);
+        Assert.True(viewModel.Settings.IsOverviewSelected);
+        Assert.False(viewModel.Settings.IsImportDataSelected);
+        Assert.Equal("基本设置", viewModel.Settings.CurrentTitle);
     }
 
     [Fact]

@@ -17,13 +17,7 @@ public partial class ProjectTabViewModel
         OnPropertyChanged(nameof(IsInterfaceManagementSection));
         OnPropertyChanged(nameof(IsRequestHistorySection));
         OnPropertyChanged(nameof(IsProjectSettingsSection));
-        OnPropertyChanged(nameof(IsProjectSettingsOverviewSelected));
-        OnPropertyChanged(nameof(IsProjectSettingsImportDataSelected));
-        OnPropertyChanged(nameof(ShowProjectSettingsOverviewSection));
-        OnPropertyChanged(nameof(ShowProjectSettingsImportDataSection));
         OnPropertyChanged(nameof(ImportedApiDocumentSummaryText));
-        OnPropertyChanged(nameof(CurrentProjectSettingsTitle));
-        OnPropertyChanged(nameof(CurrentProjectSettingsSubtitle));
         OnPropertyChanged(nameof(IsQuickRequestEditor));
         OnPropertyChanged(nameof(IsHttpInterfaceEditor));
         OnPropertyChanged(nameof(IsRequestEditorOpen));
@@ -32,7 +26,6 @@ public partial class ProjectTabViewModel
         OnPropertyChanged(nameof(SavedRequestCountText));
         OnPropertyChanged(nameof(HistoryCountText));
         OnPropertyChanged(nameof(EnvironmentCountText));
-        OnPropertyChanged(nameof(ProjectSettingsDescription));
         ShellStateChanged?.Invoke(this);
     }
 

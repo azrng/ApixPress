@@ -29,8 +29,8 @@
                 <TextBlock Classes="ProjectSettingsGroupTitle"
                            Text="{Binding ProjectSettingsOverviewGroupTitle}" />
                 <Button Classes="ProjectSettingsSidebarItemButton"
-                        Classes.ProjectSettingsSidebarItemSelected="{Binding IsProjectSettingsOverviewSelected}"
-                        Command="{Binding ShowProjectOverviewSettingsCommand}">
+                        Classes.ProjectSettingsSidebarItemSelected="{Binding Settings.IsOverviewSelected}"
+                        Command="{Binding Settings.ShowOverviewCommand}">
                   <TextBlock Text="{Binding ProjectSettingsOverviewGroupTitle}" />
                 </Button>
               </StackPanel>
@@ -39,8 +39,8 @@
                 <TextBlock Classes="ProjectSettingsGroupTitle"
                            Text="{Binding ProjectSettingsImportGroupTitle}" />
                 <Button Classes="ProjectSettingsSidebarItemButton"
-                        Classes.ProjectSettingsSidebarItemSelected="{Binding IsProjectSettingsImportDataSelected}"
-                        Command="{Binding ShowProjectImportDataSettingsCommand}">
+                        Classes.ProjectSettingsSidebarItemSelected="{Binding Settings.IsImportDataSelected}"
+                        Command="{Binding Settings.ShowImportDataCommand}">
                   <TextBlock Text="{Binding ProjectSettingsImportDataTitle}" />
                 </Button>
               </StackPanel>
@@ -68,16 +68,16 @@
         <Grid>
           <StackPanel Spacing="2">
             <TextBlock Classes="SectionTitle"
-                       Text="{Binding CurrentProjectSettingsTitle}" />
+                       Text="{Binding Settings.CurrentTitle}" />
             <TextBlock Classes="CaptionText"
-                       Text="{Binding CurrentProjectSettingsSubtitle}"
-                       IsVisible="{Binding IsProjectSettingsImportDataSelected}" />
+                       Text="{Binding Settings.CurrentSubtitle}"
+                       IsVisible="{Binding Settings.IsImportDataSelected}" />
           </StackPanel>
         </Grid>
 
         <Grid Grid.Row="1">
           <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                        IsVisible="{Binding IsProjectSettingsOverviewSelected}">
+                        IsVisible="{Binding Settings.IsOverviewSelected}">
             <StackPanel Spacing="{StaticResource Space.4}">
               <Border Classes="ProjectSettingsInfoCard">
                 <StackPanel Spacing="{StaticResource Space.3}">
@@ -122,7 +122,7 @@
                           <TextBlock Classes="ProjectSettingsRowLabel"
                                      Text="简介" />
                           <TextBlock Grid.Column="1"
-                                     Text="{Binding ProjectSettingsDescription}"
+                                     Text="{Binding Settings.ProjectDescription}"
                                      TextWrapping="Wrap"
                                      VerticalAlignment="Center" />
                           <Button Grid.Column="2"
@@ -139,7 +139,7 @@
           </ScrollViewer>
 
           <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                        IsVisible="{Binding IsProjectSettingsImportDataSelected}">
+                        IsVisible="{Binding Settings.IsImportDataSelected}">
             <StackPanel Spacing="{StaticResource Space.4}">
               <Border Classes="ProjectSettingsInfoCard">
                 <StackPanel Spacing="{StaticResource Space.3}">
