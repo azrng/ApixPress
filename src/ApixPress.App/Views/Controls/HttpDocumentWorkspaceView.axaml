@@ -7,23 +7,23 @@
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
   <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                IsVisible="{Binding ShowHttpDocumentPreviewContent}">
+                IsVisible="{Binding Editor.ShowHttpDocumentPreviewContent}">
     <StackPanel Spacing="{StaticResource Space.4}">
       <Border Classes="PanelCard HttpDocumentHeroCard">
         <StackPanel Spacing="{StaticResource Space.3}">
           <StackPanel Orientation="Horizontal"
                       Spacing="{StaticResource Space.2}">
             <Border Classes="HttpDocumentMethodBadge">
-              <TextBlock Text="{Binding SelectedMethod}" />
+              <TextBlock Text="{Binding Editor.SelectedMethod}" />
             </Border>
             <Border Classes="HttpDocumentStatusBadge">
-              <TextBlock Text="{Binding CurrentResponseValidationResultText}" />
+              <TextBlock Text="{Binding Editor.CurrentResponseValidationResultText}" />
             </Border>
           </StackPanel>
 
           <StackPanel Spacing="4">
             <TextBlock Classes="PageTitle"
-                       Text="{Binding CurrentHttpInterfaceDisplayName}" />
+                       Text="{Binding Editor.CurrentHttpInterfaceDisplayName}" />
             <TextBlock Classes="CaptionText"
                        Text="{Binding ConfigTab.RequestDescription}"
                        TextWrapping="Wrap" />
@@ -33,7 +33,7 @@
             <StackPanel Spacing="4">
               <TextBlock Classes="CaptionText"
                          Text="请求地址" />
-              <TextBlock Text="{Binding CurrentHttpDocumentUrl}"
+              <TextBlock Text="{Binding Editor.CurrentHttpDocumentUrl}"
                          TextWrapping="Wrap" />
             </StackPanel>
           </Border>
@@ -52,23 +52,23 @@
                     RowDefinitions="Auto,Auto,Auto,Auto"
                     RowSpacing="{StaticResource Space.2}">
                 <TextBlock Grid.Row="0" Classes="CaptionText" Text="接口目录" />
-                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentInterfaceFolderPath}" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Editor.CurrentInterfaceFolderPath}" />
                 <TextBlock Grid.Row="1" Classes="CaptionText" Text="BaseUrl" />
-                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentEditorBaseUrlCaption}" TextWrapping="Wrap" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Editor.CurrentEditorBaseUrlCaption}" TextWrapping="Wrap" />
                 <TextBlock Grid.Row="2" Classes="CaptionText" Text="接口用例" />
-                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding CurrentHttpCaseName}" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Editor.CurrentHttpCaseName}" />
                 <TextBlock Grid.Row="3" Classes="CaptionText" Text="Body 模式" />
-                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding CurrentHttpDocumentBodyModeText}" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Editor.CurrentHttpDocumentBodyModeText}" />
               </Grid>
 
               <TextBlock Classes="CaptionText"
-                         IsVisible="{Binding ShowHttpDocumentRequestEmpty}"
+                         IsVisible="{Binding Editor.ShowHttpDocumentRequestEmpty}"
                          Text="当前还没有补充参数、Header 或请求体内容。" />
             </StackPanel>
           </Border>
 
           <Border Classes="PanelCard HttpDocumentPreviewCard"
-                  IsVisible="{Binding HasHttpDocumentParameters}">
+                  IsVisible="{Binding Editor.HasHttpDocumentParameters}">
             <StackPanel Spacing="{StaticResource Space.3}">
               <TextBlock Classes="SectionTitle"
                          Text="Query 参数" />
@@ -89,7 +89,7 @@
           </Border>
 
           <Border Classes="PanelCard HttpDocumentPreviewCard"
-                  IsVisible="{Binding HasHttpDocumentHeaders}">
+                  IsVisible="{Binding Editor.HasHttpDocumentHeaders}">
             <StackPanel Spacing="{StaticResource Space.3}">
               <TextBlock Classes="SectionTitle"
                          Text="Headers" />
@@ -117,11 +117,11 @@
               <TextBlock Classes="SectionTitle"
                          Text="响应示例" />
               <TextBlock Classes="CaptionText"
-                         Text="{Binding CurrentHttpDocumentResponseSummary}" />
+                         Text="{Binding Editor.CurrentHttpDocumentResponseSummary}" />
               <TextBox Classes="HttpDocumentReadonlyCode"
                        AcceptsReturn="True"
                        IsReadOnly="True"
-                       Text="{Binding CurrentHttpDocumentBodyPreview}"
+                       Text="{Binding Editor.CurrentHttpDocumentBodyPreview}"
                        TextWrapping="Wrap"
                        VerticalContentAlignment="Top" />
             </StackPanel>
@@ -134,7 +134,7 @@
               <TextBox Classes="HttpDocumentReadonlyCode"
                        AcceptsReturn="True"
                        IsReadOnly="True"
-                       Text="{Binding CurrentHttpDocumentCurlSnippet}"
+                       Text="{Binding Editor.CurrentHttpDocumentCurlSnippet}"
                        TextWrapping="Wrap"
                        VerticalContentAlignment="Top" />
             </StackPanel>

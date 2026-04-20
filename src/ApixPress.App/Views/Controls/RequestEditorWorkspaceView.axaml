@@ -15,12 +15,12 @@
     <Grid Grid.Row="1"
           RowDefinitions="Auto,Auto"
           RowSpacing="{StaticResource Space.2}"
-          IsVisible="{Binding IsQuickRequestEditor}">
+          IsVisible="{Binding Editor.IsQuickRequestEditor}">
       <TextBox Grid.Row="0"
                Classes="SectionInput HttpInterfaceNameInput"
                HorizontalAlignment="Stretch"
                Watermark="未命名请求"
-               Text="{Binding CurrentQuickRequestName}" />
+               Text="{Binding Editor.CurrentQuickRequestName}" />
 
       <Grid Grid.Row="1"
             ColumnDefinitions="*,Auto,Auto"
@@ -31,19 +31,19 @@
                 ColumnSpacing="{StaticResource Space.1}">
             <ComboBox Grid.Column="0"
                       Classes="HttpMethodSelector"
-                      ItemsSource="{Binding HttpMethods}"
-                      SelectedItem="{Binding SelectedMethod}" />
+                      ItemsSource="{Binding Editor.HttpMethods}"
+                      SelectedItem="{Binding Editor.SelectedMethod}" />
             <Border Grid.Column="1"
                     Classes="BaseUrlPrefixCard HttpBaseUrlPrefixCard">
               <TextBlock Classes="HttpBaseUrlPrefixText"
-                         Text="{Binding CurrentEditorBaseUrlCaption}"
+                         Text="{Binding Editor.CurrentEditorBaseUrlCaption}"
                          VerticalAlignment="Center"
                          TextTrimming="CharacterEllipsis" />
             </Border>
             <TextBox Grid.Column="2"
                      Classes="HttpRequestPathInput"
-                     Watermark="{Binding CurrentEditorUrlWatermark}"
-                     Text="{Binding RequestUrl}" />
+                     Watermark="{Binding Editor.CurrentEditorUrlWatermark}"
+                     Text="{Binding Editor.RequestUrl}" />
           </Grid>
         </Border>
         <Button Grid.Column="1"
@@ -60,7 +60,7 @@
     <Grid Grid.Row="1"
           RowDefinitions="Auto,Auto"
           RowSpacing="{StaticResource Space.2}"
-          IsVisible="{Binding IsHttpInterfaceEditor}">
+          IsVisible="{Binding Editor.IsHttpInterfaceEditor}">
       <Grid ColumnDefinitions="Auto,*"
             ColumnSpacing="{StaticResource Space.3}">
         <Border Grid.Column="0"
@@ -68,17 +68,17 @@
           <StackPanel Orientation="Horizontal"
                       Spacing="{StaticResource Space.1}">
             <ToggleButton Classes="HttpEditorModeButton"
-                          Command="{Binding ShowHttpDebugEditorModeCommand}"
+                          Command="{Binding Editor.ShowHttpDebugEditorModeCommand}"
                           Content="调试"
-                          IsChecked="{Binding IsHttpDebugEditorMode, Mode=OneWay}" />
+                          IsChecked="{Binding Editor.IsHttpDebugEditorMode, Mode=OneWay}" />
             <ToggleButton Classes="HttpEditorModeButton"
-                          Command="{Binding ShowHttpDesignEditorModeCommand}"
+                          Command="{Binding Editor.ShowHttpDesignEditorModeCommand}"
                           Content="设计"
-                          IsChecked="{Binding IsHttpDesignEditorMode, Mode=OneWay}" />
+                          IsChecked="{Binding Editor.IsHttpDesignEditorMode, Mode=OneWay}" />
             <ToggleButton Classes="HttpEditorModeButton"
-                          Command="{Binding ShowHttpDocumentPreviewModeCommand}"
+                          Command="{Binding Editor.ShowHttpDocumentPreviewModeCommand}"
                           Content="文档预览"
-                          IsChecked="{Binding IsHttpDocumentPreviewMode, Mode=OneWay}" />
+                          IsChecked="{Binding Editor.IsHttpDocumentPreviewMode, Mode=OneWay}" />
           </StackPanel>
         </Border>
 
@@ -86,7 +86,7 @@
                  Classes="SectionInput HttpInterfaceNameInput"
                  HorizontalAlignment="Stretch"
                  Watermark="未命名接口"
-                 Text="{Binding CurrentHttpInterfaceName}" />
+                 Text="{Binding Editor.CurrentHttpInterfaceName}" />
       </Grid>
 
       <Grid Grid.Row="1"
@@ -98,19 +98,19 @@
                 ColumnSpacing="{StaticResource Space.1}">
             <ComboBox Grid.Column="0"
                       Classes="HttpMethodSelector"
-                      ItemsSource="{Binding HttpMethods}"
-                      SelectedItem="{Binding SelectedMethod}" />
+                      ItemsSource="{Binding Editor.HttpMethods}"
+                      SelectedItem="{Binding Editor.SelectedMethod}" />
             <Border Grid.Column="1"
                     Classes="BaseUrlPrefixCard HttpBaseUrlPrefixCard">
               <TextBlock Classes="HttpBaseUrlPrefixText"
-                         Text="{Binding CurrentEditorBaseUrlCaption}"
+                         Text="{Binding Editor.CurrentEditorBaseUrlCaption}"
                          VerticalAlignment="Center"
                          TextTrimming="CharacterEllipsis" />
             </Border>
             <TextBox Grid.Column="2"
                      Classes="HttpRequestPathInput"
-                     Watermark="{Binding CurrentEditorUrlWatermark}"
-                     Text="{Binding RequestUrl}" />
+                     Watermark="{Binding Editor.CurrentEditorUrlWatermark}"
+                     Text="{Binding Editor.RequestUrl}" />
           </Grid>
         </Border>
         <Button Grid.Column="1"

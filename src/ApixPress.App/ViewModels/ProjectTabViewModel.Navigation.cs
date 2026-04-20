@@ -5,42 +5,6 @@ namespace ApixPress.App.ViewModels;
 public partial class ProjectTabViewModel
 {
     [RelayCommand]
-    private void ShowHttpDebugEditorMode()
-    {
-        if (ActiveWorkspaceTab is null || !ActiveWorkspaceTab.IsHttpInterfaceTab)
-        {
-            return;
-        }
-
-        ActiveWorkspaceTab.HttpEditorViewIndex = 0;
-        NotifyWorkspaceEditorState();
-    }
-
-    [RelayCommand]
-    private void ShowHttpDesignEditorMode()
-    {
-        if (ActiveWorkspaceTab is null || !ActiveWorkspaceTab.IsHttpInterfaceTab)
-        {
-            return;
-        }
-
-        ActiveWorkspaceTab.HttpEditorViewIndex = 1;
-        NotifyWorkspaceEditorState();
-    }
-
-    [RelayCommand]
-    private void ShowHttpDocumentPreviewMode()
-    {
-        if (ActiveWorkspaceTab is null || !ActiveWorkspaceTab.IsHttpInterfaceTab)
-        {
-            return;
-        }
-
-        ActiveWorkspaceTab.HttpEditorViewIndex = 2;
-        NotifyWorkspaceEditorState();
-    }
-
-    [RelayCommand]
     private void ShowInterfaceManagement()
     {
         SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement;

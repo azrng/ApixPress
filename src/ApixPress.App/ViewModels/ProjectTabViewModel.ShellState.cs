@@ -40,16 +40,6 @@ public partial class ProjectTabViewModel
         OnPropertyChanged(nameof(ProjectSettingsDescription));
         OnPropertyChanged(nameof(InterfaceSectionHint));
         OnPropertyChanged(nameof(QuickRequestSectionHint));
-        OnPropertyChanged(nameof(CurrentEditorTitle));
-        OnPropertyChanged(nameof(CurrentEditorDescription));
-        OnPropertyChanged(nameof(CurrentEditorPrimaryActionText));
-        OnPropertyChanged(nameof(CurrentEditorUrlWatermark));
-        OnPropertyChanged(nameof(ShowEditorBaseUrlPrefix));
-        OnPropertyChanged(nameof(CurrentEditorBaseUrlPrefix));
-        OnPropertyChanged(nameof(CurrentHttpInterfaceBaseUrl));
-        OnPropertyChanged(nameof(ShowSaveHttpCaseAction));
-        OnPropertyChanged(nameof(CurrentEditorBaseUrlCaption));
-        OnPropertyChanged(nameof(CurrentResponseValidationResultText));
         OnPropertyChanged(nameof(HasPendingWorkspaceDeleteTarget));
         OnPropertyChanged(nameof(PendingWorkspaceDeleteTitle));
         OnPropertyChanged(nameof(PendingWorkspaceDeleteDescription));

@@ -71,6 +71,10 @@ public partial class ProjectTabViewModel : ViewModelBase
         Workspace = new ProjectWorkspaceTabsViewModel(
             () => SelectedWorkspaceSection = WorkspaceSections.InterfaceManagement,
             message => StatusMessage = message);
+        Editor = new ProjectRequestEditorViewModel(
+            () => ActiveWorkspaceTab,
+            () => _fallbackWorkspaceTab,
+            () => EnvironmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty);
         Import = new ProjectImportViewModel(
             Project.Id,
             apiWorkspaceService,
@@ -95,6 +99,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         Workspace.StateChanged += NotifyShellState;
         Workspace.EditorStateChanged += NotifyWorkspaceEditorState;
         Workspace.ActiveWorkspaceTabChanged += OnWorkspaceActiveWorkspaceTabChanged;
+        Editor.PropertyChanged += (_, _) => NotifyShellState();
         Import.PropertyChanged += (_, _) => NotifyShellState();
         QuickRequestSave.PropertyChanged += (_, _) => NotifyShellState();
 
@@ -123,6 +128,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     public UseCasesPanelViewModel UseCasesPanel { get; }
     public RequestHistoryPanelViewModel HistoryPanel { get; }
     public ProjectWorkspaceTabsViewModel Workspace { get; }
+    public ProjectRequestEditorViewModel Editor { get; }
     public ProjectImportViewModel Import { get; }
     public ProjectQuickRequestSaveViewModel QuickRequestSave { get; }
 
@@ -180,8 +186,6 @@ public partial class ProjectTabViewModel : ViewModelBase
     public string EnvironmentCountText => EnvironmentPanel.Environments.Count.ToString();
     public string InterfaceSectionHint => HasInterfaceEntries ? "默认模块 / 接口" : "默认模块下还没有保存的 HTTP 接口";
     public string QuickRequestSectionHint => HasQuickRequestEntries ? "保存到左侧快捷请求目录" : "左侧快捷请求目录还是空的";
-    public IReadOnlyList<string> HttpMethods { get; } = ["GET", "POST", "PUT", "DELETE", "PATCH"];
-
     [ObservableProperty]
     private bool isActive;
 

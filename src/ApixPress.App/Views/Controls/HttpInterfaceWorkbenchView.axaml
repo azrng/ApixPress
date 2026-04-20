@@ -10,10 +10,10 @@
              mc:Ignorable="d">
   <Grid RowDefinitions="Auto,2*,3*"
         RowSpacing="{StaticResource Space.3}"
-        IsVisible="{Binding ShowHttpWorkbenchContent}">
+        IsVisible="{Binding Editor.ShowHttpWorkbenchContent}">
     <Border Grid.Row="0"
             Classes="PanelCard HttpDesignMetaCard"
-            IsVisible="{Binding IsHttpDesignEditorMode}">
+            IsVisible="{Binding Editor.IsHttpDesignEditorMode}">
       <StackPanel Spacing="{StaticResource Space.3}">
         <StackPanel Spacing="2">
           <TextBlock Classes="SectionTitle"

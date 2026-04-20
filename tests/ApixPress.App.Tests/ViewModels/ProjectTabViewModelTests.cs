@@ -189,7 +189,7 @@ public sealed partial class ProjectTabViewModelTests
         Assert.NotNull(interfaceItem);
 
         viewModel.LoadWorkspaceItem(interfaceItem);
-        viewModel.CurrentHttpInterfaceName = "接口 1 已编辑";
+        viewModel.Editor.CurrentHttpInterfaceName = "接口 1 已编辑";
 
         await viewModel.SaveCurrentEditorAsync();
 
@@ -280,7 +280,7 @@ public sealed partial class ProjectTabViewModelTests
         Assert.NotNull(originalInterface);
 
         viewModel.LoadWorkspaceItem(originalInterface);
-        viewModel.CurrentHttpInterfaceName = "接口 1 已编辑";
+        viewModel.Editor.CurrentHttpInterfaceName = "接口 1 已编辑";
 
         await viewModel.SaveCurrentEditorAsync();
 
@@ -298,7 +298,7 @@ public sealed partial class ProjectTabViewModelTests
 
         viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
 
-        Assert.Equal("默认模块", viewModel.CurrentInterfaceFolderPath);
+        Assert.Equal("默认模块", viewModel.Editor.CurrentInterfaceFolderPath);
     }
 
     [Fact]

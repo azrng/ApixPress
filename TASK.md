@@ -19,7 +19,8 @@
 
 ## 当前处理中
 
-> 当前无 `TODO`、`DOING`、`BLOCKED` 任务。
+| 任务 ID | 任务名称 | 任务目标 | 当前阶段 | 负责人 AI | 任务状态 | 优先级 | 最近更新时间 |
+| ------- | -------- | -------- | -------- | --------- | -------- | ------ | ------------ |
 
 ---
 
@@ -65,6 +66,7 @@
 | T029 | 收口项目工作区导入职责 | 将 `ProjectTabViewModel` 中的 Swagger 导入状态、命令与确认流程抽成独立子 ViewModel，降低 partial 数量与父类职责密度，并补齐回归验证 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 20:21 |
 | T030 | 收口快捷请求保存弹窗职责 | 将 `ProjectTabViewModel` 中的快捷请求保存弹窗状态、草稿字段与确认命令抽成独立子 ViewModel，继续降低父类 partial 密度，并补齐回归验证 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 20:35 |
 | T031 | 收口工作标签生命周期职责 | 将 `ProjectTabViewModel` 中的工作标签集合、激活、关闭、landing 与菜单状态抽成独立子 ViewModel，减少多组 workspace partial 对父类的长期堆叠 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 20:47 |
+| T032 | 收口请求编辑器 facade 职责 | 将 `ProjectTabViewModel` 中请求编辑器状态、文档预览计算属性与编辑模式命令抽成独立子 ViewModel，删除 `EditorState` partial 并减少父类代理属性 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 21:01 |
 --- 
 
 ## 归档索引
