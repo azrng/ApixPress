@@ -15,24 +15,15 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
         public const string ProjectSettings = "project-settings";
     }
 
-    private readonly Action _ensureLandingWorkspaceTab;
-    private readonly Func<RequestWorkspaceTabViewModel?> _getActiveWorkspaceTab;
-    private readonly Func<bool> _hasHistory;
-    private readonly Action<string> _setStatusMessage;
-    private readonly Action _notifyShellState;
+    private readonly ProjectTabWorkspaceContext _workspaceContext;
+    private readonly ProjectTabHostContext _hostContext;
 
-    public ProjectWorkspaceShellViewModel(
-        Action ensureLandingWorkspaceTab,
-        Func<RequestWorkspaceTabViewModel?> getActiveWorkspaceTab,
-        Func<bool> hasHistory,
-        Action<string> setStatusMessage,
-        Action notifyShellState)
+    internal ProjectWorkspaceShellViewModel(
+        ProjectTabWorkspaceContext workspaceContext,
+        ProjectTabHostContext hostContext)
     {
-        _ensureLandingWorkspaceTab = ensureLandingWorkspaceTab;
-        _getActiveWorkspaceTab = getActiveWorkspaceTab;
-        _hasHistory = hasHistory;
-        _setStatusMessage = setStatusMessage;
-        _notifyShellState = notifyShellState;
+        _workspaceContext = workspaceContext;
+        _hostContext = hostContext;
 
         NavigationItems.Add(new ProjectWorkspaceNavItemViewModel(
             Sections.InterfaceManagement,
@@ -50,8 +41,8 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
     public bool IsInterfaceManagementSection => SelectedSection == Sections.InterfaceManagement;
     public bool IsRequestHistorySection => SelectedSection == Sections.RequestHistory;
     public bool IsProjectSettingsSection => SelectedSection == Sections.ProjectSettings;
-    public bool ShowInterfaceManagementLanding => IsInterfaceManagementSection && (_getActiveWorkspaceTab()?.IsLandingTab ?? true);
-    public bool ShowRequestEditorWorkspace => IsInterfaceManagementSection && _getActiveWorkspaceTab() is { IsLandingTab: false };
+    public bool ShowInterfaceManagementLanding => IsInterfaceManagementSection && (_workspaceContext.GetActiveWorkspaceTab()?.IsLandingTab ?? true);
+    public bool ShowRequestEditorWorkspace => IsInterfaceManagementSection && _workspaceContext.GetActiveWorkspaceTab() is { IsLandingTab: false };
 
     [ObservableProperty]
     private string selectedSection = Sections.InterfaceManagement;
@@ -94,20 +85,20 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
     private void ShowInterfaceManagement()
     {
         SelectInterfaceManagementSection();
-        _ensureLandingWorkspaceTab();
-        _setStatusMessage(_getActiveWorkspaceTab()?.IsLandingTab == true
+        _workspaceContext.EnsureLandingWorkspaceTab();
+        _hostContext.SetStatusMessage(_workspaceContext.GetActiveWorkspaceTab()?.IsLandingTab == true
             ? "接口管理已就绪，可在中间新建 HTTP 接口或快捷请求。"
             : "接口管理已打开。");
         NotifyWorkspaceStateChanged();
-        _notifyShellState();
+        _hostContext.NotifyShellState();
     }
 
     [RelayCommand]
     private void ShowRequestHistory()
     {
         SelectRequestHistorySection();
-        _setStatusMessage(_hasHistory() ? "这里展示当前项目的请求历史。" : "当前项目还没有请求历史。");
-        _notifyShellState();
+        _hostContext.SetStatusMessage(_workspaceContext.HasHistory() ? "这里展示当前项目的请求历史。" : "当前项目还没有请求历史。");
+        _hostContext.NotifyShellState();
     }
 
     partial void OnSelectedSectionChanged(string value)

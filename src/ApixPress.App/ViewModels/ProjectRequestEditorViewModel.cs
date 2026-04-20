@@ -5,18 +5,11 @@ namespace ApixPress.App.ViewModels;
 
 public partial class ProjectRequestEditorViewModel : ViewModelBase
 {
-    private readonly Func<RequestWorkspaceTabViewModel?> _getActiveWorkspaceTab;
-    private readonly Func<RequestWorkspaceTabViewModel> _getFallbackWorkspaceTab;
-    private readonly Func<string> _getCurrentBaseUrl;
+    private readonly ProjectTabWorkspaceContext _workspaceContext;
 
-    public ProjectRequestEditorViewModel(
-        Func<RequestWorkspaceTabViewModel?> getActiveWorkspaceTab,
-        Func<RequestWorkspaceTabViewModel> getFallbackWorkspaceTab,
-        Func<string> getCurrentBaseUrl)
+    internal ProjectRequestEditorViewModel(ProjectTabWorkspaceContext workspaceContext)
     {
-        _getActiveWorkspaceTab = getActiveWorkspaceTab;
-        _getFallbackWorkspaceTab = getFallbackWorkspaceTab;
-        _getCurrentBaseUrl = getCurrentBaseUrl;
+        _workspaceContext = workspaceContext;
     }
 
     public RequestConfigTabViewModel ConfigTab => ResolveWorkspaceTabOrFallback().ConfigTab;
@@ -28,7 +21,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     public string CurrentEditorDescription => ActiveWorkspaceTab?.EditorDescription ?? "从下方卡片中选择要创建的工作内容。";
     public string CurrentEditorPrimaryActionText => ActiveWorkspaceTab?.PrimaryActionText ?? "保存";
     public string CurrentEditorUrlWatermark => ActiveWorkspaceTab?.UrlWatermark ?? "输入请求地址";
-    public string CurrentHttpInterfaceBaseUrl => IsHttpInterfaceEditor ? _getCurrentBaseUrl() : string.Empty;
+    public string CurrentHttpInterfaceBaseUrl => IsHttpInterfaceEditor ? _workspaceContext.GetCurrentBaseUrl() : string.Empty;
     public string CurrentHttpInterfaceName
     {
         get => ResolveEditorRequestName("未命名接口", workspace => workspace.IsHttpInterfaceTab);
@@ -54,7 +47,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     public bool ShowHttpDocumentPreviewContent => IsHttpInterfaceEditor && IsHttpDocumentPreviewMode;
     public bool ShowSaveHttpCaseAction => IsHttpInterfaceEditor;
     public string CurrentEditorBaseUrlCaption => IsHttpInterfaceEditor
-        ? (string.IsNullOrWhiteSpace(_getCurrentBaseUrl()) ? "当前环境未配置 BaseUrl" : _getCurrentBaseUrl())
+        ? (string.IsNullOrWhiteSpace(_workspaceContext.GetCurrentBaseUrl()) ? "当前环境未配置 BaseUrl" : _workspaceContext.GetCurrentBaseUrl())
         : IsQuickRequestEditor
             ? "完整地址"
             : string.Empty;
@@ -230,11 +223,11 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentHttpCaseName));
     }
 
-    private RequestWorkspaceTabViewModel? ActiveWorkspaceTab => _getActiveWorkspaceTab();
+    private RequestWorkspaceTabViewModel? ActiveWorkspaceTab => _workspaceContext.GetActiveWorkspaceTab();
 
     private RequestWorkspaceTabViewModel ResolveWorkspaceTabOrFallback()
     {
-        return ActiveWorkspaceTab ?? _getFallbackWorkspaceTab();
+        return ActiveWorkspaceTab ?? _workspaceContext.GetFallbackWorkspaceTab();
     }
 
     private string ResolveEditorRequestName(string fallbackName, Func<RequestWorkspaceTabViewModel, bool> matchEditorType)

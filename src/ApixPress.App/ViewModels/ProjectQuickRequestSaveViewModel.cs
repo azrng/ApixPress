@@ -6,18 +6,18 @@ namespace ApixPress.App.ViewModels;
 
 public partial class ProjectQuickRequestSaveViewModel : ViewModelBase
 {
-    private readonly Func<RequestWorkspaceTabViewModel?> _getActiveWorkspaceTab;
+    private readonly ProjectTabWorkspaceContext _workspaceContext;
     private readonly Func<RequestWorkspaceTabViewModel, string?, Task<bool>> _saveQuickRequestAsync;
-    private readonly Action<string> _setStatusMessage;
+    private readonly ProjectTabHostContext _hostContext;
 
-    public ProjectQuickRequestSaveViewModel(
-        Func<RequestWorkspaceTabViewModel?> getActiveWorkspaceTab,
+    internal ProjectQuickRequestSaveViewModel(
+        ProjectTabWorkspaceContext workspaceContext,
         Func<RequestWorkspaceTabViewModel, string?, Task<bool>> saveQuickRequestAsync,
-        Action<string> setStatusMessage)
+        ProjectTabHostContext hostContext)
     {
-        _getActiveWorkspaceTab = getActiveWorkspaceTab;
+        _workspaceContext = workspaceContext;
         _saveQuickRequestAsync = saveQuickRequestAsync;
-        _setStatusMessage = setStatusMessage;
+        _hostContext = hostContext;
     }
 
     [ObservableProperty]
@@ -37,7 +37,7 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase
         DraftName = fallbackName;
         DraftDescription = workspaceTab.ConfigTab.RequestDescription;
         IsDialogOpen = true;
-        _setStatusMessage("请输入快捷请求名称后再保存。");
+        _hostContext.SetStatusMessage("请输入快捷请求名称后再保存。");
     }
 
     public void Dismiss()
@@ -49,13 +49,13 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase
     private void CloseDialog()
     {
         Dismiss();
-        _setStatusMessage("已取消保存快捷请求。");
+        _hostContext.SetStatusMessage("已取消保存快捷请求。");
     }
 
     [RelayCommand]
     private async Task ConfirmSaveAsync()
     {
-        var workspaceTab = _getActiveWorkspaceTab();
+        var workspaceTab = _workspaceContext.GetActiveWorkspaceTab();
         if (workspaceTab is null || !workspaceTab.IsQuickRequestTab)
         {
             Dismiss();
@@ -64,7 +64,7 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase
 
         if (string.IsNullOrWhiteSpace(DraftName))
         {
-            _setStatusMessage("请输入快捷请求名称。");
+            _hostContext.SetStatusMessage("请输入快捷请求名称。");
             return;
         }
 

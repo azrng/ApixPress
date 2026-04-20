@@ -79,18 +79,27 @@ internal sealed class ProjectTabComposition
         ProjectWorkspaceShellViewModel? shellViewModel = null;
 
         var workspace = new ProjectWorkspaceTabsViewModel(
-            () => shellViewModel?.SelectInterfaceManagementSection(),
+            () =>
+            {
+                shellViewModel?.SelectInterfaceManagementSection();
+            },
             hostContext.SetStatusMessage);
+        var workspaceContext = new ProjectTabWorkspaceContext
+        {
+            GetActiveWorkspaceTab = hostContext.GetActiveWorkspaceTab,
+            GetFallbackWorkspaceTab = () => fallbackWorkspaceTab,
+            GetCurrentBaseUrl = () => environmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty,
+            EnsureLandingWorkspaceTab = workspace.EnsureLandingWorkspaceTab,
+            SelectInterfaceManagementSection = () =>
+            {
+                shellViewModel?.SelectInterfaceManagementSection();
+            },
+            HasHistory = () => historyPanel.HistoryItems.Count > 0
+        };
         var shell = shellViewModel = new ProjectWorkspaceShellViewModel(
-            workspace.EnsureLandingWorkspaceTab,
-            hostContext.GetActiveWorkspaceTab,
-            () => historyPanel.HistoryItems.Count > 0,
-            hostContext.SetStatusMessage,
-            hostContext.NotifyShellState);
-        var editor = new ProjectRequestEditorViewModel(
-            hostContext.GetActiveWorkspaceTab,
-            () => fallbackWorkspaceTab,
-            () => environmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty);
+            workspaceContext,
+            hostContext);
+        var editor = new ProjectRequestEditorViewModel(workspaceContext);
         var settings = new ProjectSettingsShellViewModel(
             () => shellViewModel?.ShowProjectSettingsSection(),
             () => importViewModel?.DismissDialog(),
@@ -123,20 +132,16 @@ internal sealed class ProjectTabComposition
             historyPanel,
             environmentPanel,
             catalog,
-            hostContext.GetActiveWorkspaceTab,
-            workspaceTab => quickRequestSaveViewModel?.OpenDialogFor(workspaceTab),
-            () => shellViewModel?.SelectInterfaceManagementSection(),
-            hostContext.SetStatusMessage,
-            hostContext.SetBusyState,
-            hostContext.NotifyShellState);
-        var quickRequestSave = quickRequestSaveViewModel = new ProjectQuickRequestSaveViewModel(
-            hostContext.GetActiveWorkspaceTab,
-            (workspaceTab, requestNameOverride) => workflowViewModel?.SaveQuickRequestAsync(workspaceTab, requestNameOverride) ?? Task.FromResult(false),
-            message =>
+            workspaceContext,
+            workspaceTab =>
             {
-                hostContext.SetStatusMessage(message);
-                hostContext.NotifyShellState();
-            });
+                quickRequestSaveViewModel?.OpenDialogFor(workspaceTab);
+            },
+            hostContext);
+        var quickRequestSave = quickRequestSaveViewModel = new ProjectQuickRequestSaveViewModel(
+            workspaceContext,
+            (workspaceTab, requestNameOverride) => workflowViewModel?.SaveQuickRequestAsync(workspaceTab, requestNameOverride) ?? Task.FromResult(false),
+            hostContext);
         var summary = new ProjectTabSummaryViewModel(
             () => project,
             () => environmentPanel.SelectedEnvironment,
