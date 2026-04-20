@@ -110,20 +110,3 @@ internal static class ImportTexts
         return $"另有 {remainingCount} 个重复接口未展开。";
     }
 }
-
-public partial class ProjectTabViewModel
-{
-    public string ProjectSettingsSidebarTitle => ProjectSettingsTexts.SidebarTitle;
-    public string ProjectSettingsSidebarDescription => ProjectSettingsTexts.SidebarDescription;
-    public string ProjectSettingsOverviewGroupTitle => ProjectSettingsTexts.OverviewGroupTitle;
-    public string ProjectSettingsImportGroupTitle => ProjectSettingsTexts.ImportGroupTitle;
-    public string ProjectSettingsImportDataTitle => ProjectSettingsTexts.ImportDataTitle;
-    public string CurrentEnvironmentSummaryText => ProjectSettingsTexts.FormatCurrentEnvironmentSummary(CurrentEnvironmentLabel);
-    public string ImportedApiDocumentSummaryText => ProjectSettingsTexts.FormatImportedApiDocumentSummary(Import.ImportedApiDocuments.Count);
-    public string ProjectSettingsOverviewCardTitle => ProjectSettingsTexts.OverviewCardTitle;
-    public string ProjectSettingsOverviewCardDescription => ProjectSettingsTexts.OverviewCardDescription;
-    public string ProjectSettingsImportCardTitle => ProjectSettingsTexts.ImportCardTitle;
-    public string ProjectSettingsImportCardDescription => ProjectSettingsTexts.ImportCardDescription;
-    public string ProjectSettingsImportFormatName => ProjectSettingsTexts.ImportFormatName;
-    public string ProjectSettingsImportFormatDescription => ProjectSettingsTexts.ImportFormatDescription;
-}

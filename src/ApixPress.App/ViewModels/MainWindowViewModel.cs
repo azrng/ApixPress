@@ -96,7 +96,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool IsWorkspaceMode => HasActiveProjectTab;
     public bool ShowProjectListEmptyState => IsHomeTabActive && !ProjectPanel.HasAnyProjects;
     public bool ShowProjectSearchEmptyState => IsHomeTabActive && ProjectPanel.HasAnyProjects && !ProjectPanel.HasProjects;
-    public bool HasEnvironmentContext => ActiveProjectTab?.HasEnvironmentContext ?? false;
+    public bool HasEnvironmentContext => ActiveProjectTab?.Summary.HasEnvironmentContext ?? false;
     public bool ShowQuickRequestSaveDialog => ActiveProjectTab?.QuickRequestSave.IsDialogOpen ?? false;
     public bool ShowProjectImportDialog => ActiveProjectTab?.Import.IsDialogOpen ?? false;
     public bool ShowProjectImportOverwriteConfirmDialog => ActiveProjectTab?.Import.IsOverwriteConfirmDialogOpen ?? false;
@@ -107,8 +107,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public string AppDisplayName { get; } = "ApixPress";
     public string CurrentProjectName => ActiveProjectTab?.Project.Name ?? "项目列表";
-    public string CurrentProjectSummary => ActiveProjectTab?.ProjectSummary ?? "在首页选择项目后，会以新的标签页打开快捷请求工作区。";
-    public string CurrentEnvironmentLabel => ActiveProjectTab?.CurrentEnvironmentLabel ?? "未选择环境";
+    public string CurrentProjectSummary => ActiveProjectTab?.Summary.ProjectSummary ?? "在首页选择项目后，会以新的标签页打开快捷请求工作区。";
+    public string CurrentEnvironmentLabel => ActiveProjectTab?.Summary.CurrentEnvironmentLabel ?? "未选择环境";
     public string BrowserStatusText => ProjectPanel.HasProjects
         ? "选择一个项目会在顶部新开标签页，并保留首页列表。"
         : "当前还没有项目，请先创建一个项目。";

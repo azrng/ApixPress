@@ -36,7 +36,7 @@
                        Text="最近一次载入的响应" />
             <TextBlock Grid.Column="1"
                        Classes="CaptionText"
-                       Text="{Binding CurrentEnvironmentLabel}"
+                       Text="{Binding Summary.CurrentEnvironmentLabel}"
                        VerticalAlignment="Center" />
           </Grid>
 

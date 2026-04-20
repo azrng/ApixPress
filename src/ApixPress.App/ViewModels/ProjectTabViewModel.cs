@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Models.DTOs;
@@ -48,7 +47,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         Shell = shellViewModel = new ProjectWorkspaceShellViewModel(
             Workspace.EnsureLandingWorkspaceTab,
             () => ActiveWorkspaceTab,
-            () => HasHistory,
+            () => HistoryPanel.HistoryItems.Count > 0,
             message => StatusMessage = message,
             NotifyShellState);
         Editor = new ProjectRequestEditorViewModel(
@@ -101,6 +100,14 @@ public partial class ProjectTabViewModel : ViewModelBase
                 StatusMessage = message;
                 NotifyShellState();
             });
+        Summary = new ProjectTabSummaryViewModel(
+            () => Project,
+            () => EnvironmentPanel.SelectedEnvironment,
+            () => ActiveWorkspaceTab,
+            () => SavedRequests,
+            () => RequestHistory,
+            () => EnvironmentPanel.Environments.Count,
+            () => Import.ImportedApiDocuments.Count);
 
         Project.PropertyChanged += (_, _) =>
         {
@@ -145,6 +152,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     public ProjectRequestWorkflowViewModel Workflow { get; }
     public ProjectImportViewModel Import { get; }
     public ProjectQuickRequestSaveViewModel QuickRequestSave { get; }
+    public ProjectTabSummaryViewModel Summary { get; }
 
     public ObservableCollection<RequestWorkspaceTabViewModel> WorkspaceTabs => Workspace.WorkspaceTabs;
     public ReadOnlyObservableCollection<RequestWorkspaceTabViewModel> VisibleWorkspaceTabs => Workspace.VisibleWorkspaceTabs;
@@ -166,24 +174,6 @@ public partial class ProjectTabViewModel : ViewModelBase
     public ResponseSectionViewModel ResponseSection => ActiveWorkspaceTab?.ResponseSection ?? _fallbackWorkspaceTab.ResponseSection;
 
     public string ProjectId => Project.Id;
-    public string TabTitle => Project.Name;
-    public string ProjectSummary => string.IsNullOrWhiteSpace(Project.Description) ? "暂无项目备注" : Project.Description;
-    public string CurrentEnvironmentLabel => EnvironmentPanel.SelectedEnvironment?.Name ?? "未选择环境";
-    public string CurrentBaseUrlText => string.IsNullOrWhiteSpace(EnvironmentPanel.SelectedEnvironment?.BaseUrl)
-        ? "当前环境暂未配置 BaseUrl"
-        : EnvironmentPanel.SelectedEnvironment.BaseUrl;
-    public bool HasEnvironmentContext => ActiveWorkspaceTab is not null && !ActiveWorkspaceTab.IsLandingTab;
-    public bool HasSavedRequests => SavedRequests.Count > 0;
-    public bool HasHistory => RequestHistory.Count > 0;
-    public bool ShowHistoryEmptyState => !HasHistory;
-    public bool IsQuickRequestEditor => ActiveWorkspaceTab?.IsQuickRequestTab ?? false;
-    public bool IsHttpInterfaceEditor => ActiveWorkspaceTab?.IsHttpInterfaceTab ?? false;
-    public bool IsRequestEditorOpen => ActiveWorkspaceTab is not null && !ActiveWorkspaceTab.IsLandingTab;
-    public string SavedRequestCountText => SavedRequests.Count(item =>
-        string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase)).ToString();
-    public string HistoryCountText => RequestHistory.Count.ToString();
-    public string EnvironmentCountText => EnvironmentPanel.Environments.Count.ToString();
     [ObservableProperty]
     private bool isActive;
 
@@ -232,5 +222,12 @@ public partial class ProjectTabViewModel : ViewModelBase
         {
             OnPropertyChanged(nameof(IsWorkspaceTabMenuOpen));
         }
+    }
+
+    private void NotifyShellState()
+    {
+        Summary.NotifyStateChanged();
+        OnPropertyChanged(nameof(VisibleWorkspaceTabs));
+        ShellStateChanged?.Invoke(this);
     }
 }

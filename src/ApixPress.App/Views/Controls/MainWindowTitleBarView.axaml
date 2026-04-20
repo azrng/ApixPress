@@ -71,7 +71,7 @@
                                       IsChecked="{Binding IsActive, Mode=OneWay}">
                           <StackPanel Orientation="Horizontal"
                                       Spacing="{StaticResource Space.2}">
-                            <TextBlock Text="{Binding TabTitle}" />
+                            <TextBlock Text="{Binding Summary.TabTitle}" />
                             <u:Badge Header="默认"
                                      IsVisible="{Binding Project.IsDefault}"
                                      iri:ClassHelper.Classes="Light Primary" />

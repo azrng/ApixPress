@@ -342,9 +342,9 @@
           <StackPanel Spacing="{StaticResource Space.2}">
             <TextBlock Classes="CaptionText"
                        Text="还没有发送记录"
-                       IsVisible="{Binding ShowHistoryEmptyState}" />
+                       IsVisible="{Binding Summary.ShowHistoryEmptyState}" />
             <ItemsControl ItemsSource="{Binding RequestHistory}"
-                          IsVisible="{Binding HasHistory}">
+                          IsVisible="{Binding Summary.HasHistory}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:RequestHistoryItemViewModel">
                   <Border Classes="SidebarListCard">

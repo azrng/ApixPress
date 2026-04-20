@@ -42,7 +42,7 @@ public partial class ProjectTabViewModel
         }
 
         await EnvironmentPanel.SaveEnvironmentCommand.ExecuteAsync(null);
-        StatusMessage = $"环境 {CurrentEnvironmentLabel} 已保存。";
+        StatusMessage = $"环境 {Summary.CurrentEnvironmentLabel} 已保存。";
         NotifyShellState();
     }
 }
