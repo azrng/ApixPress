@@ -10,7 +10,7 @@ namespace ApixPress.App.ViewModels;
 public partial class ProjectTabViewModel : ViewModelBase
 {
     private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
-    private bool _initialized;
+    private readonly ProjectTabLifecycleCoordinator _lifecycle;
 
     public event Action<ProjectTabViewModel>? ShellStateChanged;
 
@@ -108,19 +108,36 @@ public partial class ProjectTabViewModel : ViewModelBase
             () => RequestHistory,
             () => EnvironmentPanel.Environments.Count,
             () => Import.ImportedApiDocuments.Count);
+        _lifecycle = new ProjectTabLifecycleCoordinator(
+            Project.Id,
+            () => Project.Name,
+            UseCasesPanel,
+            EnvironmentPanel,
+            HistoryPanel,
+            Import,
+            Workspace,
+            QuickRequestSave,
+            Shell,
+            Editor,
+            () => ActiveWorkspaceTab,
+            message => StatusMessage = message,
+            NotifyShellState,
+            NotifyWorkspaceBindingsChanged,
+            () => OnPropertyChanged(nameof(ActiveWorkspaceTab)),
+            () => OnPropertyChanged(nameof(IsWorkspaceTabMenuOpen)));
 
         Project.PropertyChanged += (_, _) =>
         {
             Settings.NotifyProjectChanged();
             NotifyShellState();
         };
-        EnvironmentPanel.SelectedEnvironmentChanged += OnSelectedEnvironmentChanged;
+        EnvironmentPanel.SelectedEnvironmentChanged += _lifecycle.OnSelectedEnvironmentChanged;
         EnvironmentPanel.Environments.CollectionChanged += (_, _) => NotifyShellState();
         HistoryPanel.HistoryItems.CollectionChanged += (_, _) => NotifyShellState();
-        Workspace.PropertyChanged += OnWorkspacePropertyChanged;
+        Workspace.PropertyChanged += _lifecycle.OnWorkspacePropertyChanged;
         Workspace.StateChanged += NotifyShellState;
         Workspace.EditorStateChanged += NotifyWorkspaceEditorState;
-        Workspace.ActiveWorkspaceTabChanged += OnWorkspaceActiveWorkspaceTabChanged;
+        Workspace.ActiveWorkspaceTabChanged += _lifecycle.OnWorkspaceActiveWorkspaceTabChanged;
         Editor.PropertyChanged += (_, _) => NotifyShellState();
         Shell.PropertyChanged += (_, e) =>
         {
@@ -186,42 +203,24 @@ public partial class ProjectTabViewModel : ViewModelBase
     [ObservableProperty]
     private bool responseValidationEnabled = true;
 
-    public void LoadHistoryRequest(RequestHistoryItemViewModel? item)
+    public Task InitializeAsync()
     {
-        if (item is null)
-        {
-            return;
-        }
-
-        var targetTab = ActiveWorkspaceTab?.IsLandingTab == true
-            ? ActiveWorkspaceTab
-            : Workspace.FindFirstQuickRequestTab() ?? Workspace.CreateWorkspaceTab(activate: false);
-
-        targetTab ??= Workspace.CreateWorkspaceTab(activate: false);
-        targetTab.ConfigureAsQuickRequest();
-        targetTab.ApplySnapshot(item.RequestSnapshot);
-        if (item.ResponseSnapshot is not null)
-        {
-            targetTab.ResponseSection.ApplyResult(Azrng.Core.Results.ResultModel<ResponseSnapshotDto>.Success(item.ResponseSnapshot), item.RequestSnapshot);
-        }
-
-        Workspace.ActivateWorkspaceTab(targetTab);
-        Shell.SelectRequestHistorySection();
-        StatusMessage = $"已加载历史请求：{item.Method} {item.Url}";
-        NotifyShellState();
+        return _lifecycle.InitializeAsync();
     }
 
-    private void OnWorkspacePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    public Task RefreshAsync()
     {
-        if (e.PropertyName == nameof(ProjectWorkspaceTabsViewModel.ActiveWorkspaceTab))
-        {
-            OnPropertyChanged(nameof(ActiveWorkspaceTab));
-            Shell.NotifyWorkspaceStateChanged();
-        }
-        else if (e.PropertyName == nameof(ProjectWorkspaceTabsViewModel.IsWorkspaceTabMenuOpen))
-        {
-            OnPropertyChanged(nameof(IsWorkspaceTabMenuOpen));
-        }
+        return _lifecycle.RefreshAsync();
+    }
+
+    public Task SaveCurrentEnvironmentAsync()
+    {
+        return _lifecycle.SaveCurrentEnvironmentAsync(Summary.CurrentEnvironmentLabel);
+    }
+
+    public void LoadHistoryRequest(RequestHistoryItemViewModel? item)
+    {
+        _lifecycle.LoadHistoryRequest(item);
     }
 
     private void NotifyShellState()
@@ -229,5 +228,18 @@ public partial class ProjectTabViewModel : ViewModelBase
         Summary.NotifyStateChanged();
         OnPropertyChanged(nameof(VisibleWorkspaceTabs));
         ShellStateChanged?.Invoke(this);
+    }
+
+    private void NotifyWorkspaceBindingsChanged()
+    {
+        OnPropertyChanged(nameof(ConfigTab));
+        OnPropertyChanged(nameof(ResponseSection));
+    }
+
+    private void NotifyWorkspaceEditorState()
+    {
+        NotifyWorkspaceBindingsChanged();
+        Editor.NotifyStateChanged();
+        NotifyShellState();
     }
 }
