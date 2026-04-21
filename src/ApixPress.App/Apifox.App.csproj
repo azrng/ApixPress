@@ -62,4 +62,18 @@
                              Condition="'%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'libSkiaSharp.pdb'" />
     </ItemGroup>
   </Target>
+
+  <Target Name="CreateLegacyExecutableAlias"
+          AfterTargets="Publish"
+          Condition="'$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' == 'win-x64'">
+    <PropertyGroup>
+      <PrimaryExecutablePath>$(PublishDir)ApixPress.exe</PrimaryExecutablePath>
+      <LegacyExecutablePath>$(PublishDir)Apifox.App.exe</LegacyExecutablePath>
+    </PropertyGroup>
+
+    <Copy SourceFiles="$(PrimaryExecutablePath)"
+          DestinationFiles="$(LegacyExecutablePath)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(PrimaryExecutablePath)')" />
+  </Target>
 </Project>
