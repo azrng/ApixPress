@@ -76,6 +76,7 @@
 | T039 | 收口项目页构造组装职责 | 将 `ProjectTabViewModel` 构造函数中的子 ViewModel 创建与事件接线抽成独立组装对象，继续压缩组合根复杂度 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 22:15 |
 | T040 | 收口项目页宿主上下文职责 | 将 `ProjectTabComposition` 与生命周期协调对象之间的回调参数收成显式宿主上下文对象，降低组装期闭包耦合 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 22:23 |
 | T041 | 收口项目页工作区上下文职责 | 将 Editor、Shell、Workflow、QuickRequestSave 共享的工作区回调参数收成显式上下文对象，继续减少子 ViewModel 构造中的匿名回调 | 阶段 2 | Codex | DONE | P1 | 2026-04-20 22:21 |
+| T042 | 版本号改为按日期自动生成 | 将项目与发布版本改为构建时自动生成 `yyyy.M.d` 格式，替代手工维护 `VERSION` 文件 | 阶段 3 | Codex | DONE | P0 | 2026-04-21 13:50:22 |
 --- 
 
 ## 归档索引

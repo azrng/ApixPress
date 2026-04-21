@@ -84,6 +84,32 @@ public sealed class ApplicationUpdateServiceTests
     }
 
     [Fact]
+    public async Task CheckForUpdatesAsync_ShouldSupportDateBasedVersionFormat()
+    {
+        var configuration = CreateConfiguration();
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler("""
+            [
+              {
+                "PacketName": "ApixPress-win-x64-portable",
+                "Hash": "abc123",
+                "Version": "2026.4.21",
+                "Url": "https://github.com/azrng/ApixPress/releases/latest/download/ApixPress-win-x64-portable.zip",
+                "PubTime": "2026-04-21T03:00:00Z"
+              }
+            ]
+            """));
+        var service = new ApplicationUpdateService(configuration, httpClient);
+
+        var result = await service.CheckForUpdatesAsync("2026.4.20", CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Data);
+        Assert.True(result.Data!.HasUpdate);
+        Assert.Equal("2026.4.20", result.Data.CurrentVersion);
+        Assert.Equal("2026.4.21", result.Data.LatestVersion);
+    }
+
+    [Fact]
     public async Task StartUpdateAsync_ShouldFailWhenUpdaterExecutableMissing()
     {
         var configuration = new ConfigurationBuilder()

@@ -14,7 +14,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  VERSION_FILE: VERSION
   APP_PROJECT_PATH: src/ApixPress.App/Apifox.App.csproj
   UPDATER_PROJECT_PATH: src/ApixPress.Updater/ApixPress.Updater.csproj
   APP_PUBLISH_DIR: publish/win-x64/app
@@ -42,16 +41,7 @@ jobs:
         id: release_meta
         shell: pwsh
         run: |
-          $versionFilePath = Join-Path "${{ github.workspace }}" "${{ env.VERSION_FILE }}"
-          if (-not (Test-Path -LiteralPath $versionFilePath)) {
-            throw "版本文件不存在：$versionFilePath"
-          }
-
-          $version = (Get-Content -LiteralPath $versionFilePath -Raw -Encoding UTF8).Trim()
-          if ([string]::IsNullOrWhiteSpace($version)) {
-            throw "版本文件内容为空：$versionFilePath"
-          }
-
+          $version = Get-Date -Format "yyyy.M.d"
           $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
           $shortSha = "${{ github.sha }}".Substring(0, 7)
           $tag = "v$version-build-$timestamp-$shortSha"
@@ -78,8 +68,7 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ steps.release_meta.outputs.version }}"
-          $shortSha = "${{ github.sha }}".Substring(0, 7)
-          $informationalVersion = "$version+$shortSha"
+          $informationalVersion = $version
 
           if (Test-Path "${{ env.APP_PUBLISH_DIR }}") {
             Remove-Item "${{ env.APP_PUBLISH_DIR }}" -Recurse -Force
@@ -90,6 +79,7 @@ jobs:
             -r win-x64 `
             --self-contained true `
             -o "${{ env.APP_PUBLISH_DIR }}" `
+            -p:ApixPressVersionDate=$version `
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:PublishAot=false `
             -p:PublishTrimmed=false `
@@ -102,8 +92,7 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ steps.release_meta.outputs.version }}"
-          $shortSha = "${{ github.sha }}".Substring(0, 7)
-          $informationalVersion = "$version+$shortSha"
+          $informationalVersion = $version
 
           if (Test-Path "${{ env.UPDATER_PUBLISH_DIR }}") {
             Remove-Item "${{ env.UPDATER_PUBLISH_DIR }}" -Recurse -Force
@@ -114,6 +103,7 @@ jobs:
             -r win-x64 `
             --self-contained true `
             -o "${{ env.UPDATER_PUBLISH_DIR }}" `
+            -p:ApixPressVersionDate=$version `
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:PublishAot=false `
             -p:PublishTrimmed=false `

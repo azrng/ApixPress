@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <ApixPressVersionDate Condition="'$(ApixPressVersionDate)' == ''">$([System.DateTime]::Now.ToString('yyyy.M.d'))</ApixPressVersionDate>
+    <ApixPressAssemblyVersion Condition="'$(ApixPressAssemblyVersion)' == ''">$(ApixPressVersionDate).0</ApixPressAssemblyVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <Version Condition="'$(Version)' == ''">$(ApixPressVersionDate)</Version>
+    <InformationalVersion Condition="'$(InformationalVersion)' == ''">$(ApixPressVersionDate)</InformationalVersion>
+    <AssemblyVersion Condition="'$(AssemblyVersion)' == ''">$(ApixPressAssemblyVersion)</AssemblyVersion>
+    <FileVersion Condition="'$(FileVersion)' == ''">$(ApixPressAssemblyVersion)</FileVersion>
+  </PropertyGroup>
+</Project>
