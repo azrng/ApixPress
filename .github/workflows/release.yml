@@ -14,6 +14,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  VERSION_FILE: VERSION
   APP_PROJECT_PATH: src/ApixPress.App/Apifox.App.csproj
   UPDATER_PROJECT_PATH: src/ApixPress.Updater/ApixPress.Updater.csproj
   APP_PUBLISH_DIR: publish/win-x64/app
@@ -41,7 +42,19 @@ jobs:
         id: release_meta
         shell: pwsh
         run: |
-          $version = Get-Date -Format "yyyy.M.d"
+          $versionFilePath = Join-Path "${{ github.workspace }}" "${{ env.VERSION_FILE }}"
+          $legacyVersion = ""
+          if (Test-Path -LiteralPath $versionFilePath) {
+            $legacyVersion = (Get-Content -LiteralPath $versionFilePath -Raw -Encoding UTF8).Trim()
+          }
+
+          if ($legacyVersion -match '^\d+\.\d+\.\d+(?:\.\d+)?$') {
+            $version = $legacyVersion
+          }
+          else {
+            $version = Get-Date -Format "yyyy.M.d"
+          }
+
           $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
           $shortSha = "${{ github.sha }}".Substring(0, 7)
           $tag = "v$version-build-$timestamp-$shortSha"

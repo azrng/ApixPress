@@ -1,10 +1,17 @@
 <Project>
   <PropertyGroup>
-    <ApixPressVersionDate Condition="'$(ApixPressVersionDate)' == ''">$([System.DateTime]::Now.ToString('yyyy.M.d'))</ApixPressVersionDate>
-    <ApixPressAssemblyVersion Condition="'$(ApixPressAssemblyVersion)' == ''">$(ApixPressVersionDate).0</ApixPressAssemblyVersion>
+    <ApixPressVersionFile Condition="'$(ApixPressVersionFile)' == ''">$(MSBuildThisFileDirectory)VERSION</ApixPressVersionFile>
+    <ApixPressLegacyVersion Condition="'$(ApixPressLegacyVersion)' == '' and Exists('$(ApixPressVersionFile)')">$([System.String]::Copy($([System.IO.File]::ReadAllText('$(ApixPressVersionFile)'))).Trim())</ApixPressLegacyVersion>
+    <ApixPressLegacyVersionIsExplicit Condition="'$(ApixPressLegacyVersion)' != ''">$([System.Text.RegularExpressions.Regex]::IsMatch('$(ApixPressLegacyVersion)', '^\d+\.\d+\.\d+(?:\.\d+)?$'))</ApixPressLegacyVersionIsExplicit>
+    <ApixPressResolvedVersion Condition="'$(ApixPressResolvedVersion)' == '' and '$(ApixPressVersionDate)' != ''">$(ApixPressVersionDate)</ApixPressResolvedVersion>
+    <ApixPressResolvedVersion Condition="'$(ApixPressResolvedVersion)' == '' and '$(ApixPressLegacyVersionIsExplicit)' == 'True'">$(ApixPressLegacyVersion)</ApixPressResolvedVersion>
+    <ApixPressResolvedVersion Condition="'$(ApixPressResolvedVersion)' == ''">$([System.DateTime]::Now.ToString('yyyy.M.d'))</ApixPressResolvedVersion>
+    <ApixPressResolvedVersionHasRevision Condition="'$(ApixPressResolvedVersion)' != ''">$([System.Text.RegularExpressions.Regex]::IsMatch('$(ApixPressResolvedVersion)', '^\d+\.\d+\.\d+\.\d+$'))</ApixPressResolvedVersionHasRevision>
+    <ApixPressAssemblyVersion Condition="'$(ApixPressAssemblyVersion)' == '' and '$(ApixPressResolvedVersionHasRevision)' == 'True'">$(ApixPressResolvedVersion)</ApixPressAssemblyVersion>
+    <ApixPressAssemblyVersion Condition="'$(ApixPressAssemblyVersion)' == ''">$(ApixPressResolvedVersion).0</ApixPressAssemblyVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-    <Version Condition="'$(Version)' == ''">$(ApixPressVersionDate)</Version>
-    <InformationalVersion Condition="'$(InformationalVersion)' == ''">$(ApixPressVersionDate)</InformationalVersion>
+    <Version Condition="'$(Version)' == ''">$(ApixPressResolvedVersion)</Version>
+    <InformationalVersion Condition="'$(InformationalVersion)' == ''">$(ApixPressResolvedVersion)</InformationalVersion>
     <AssemblyVersion Condition="'$(AssemblyVersion)' == ''">$(ApixPressAssemblyVersion)</AssemblyVersion>
     <FileVersion Condition="'$(FileVersion)' == ''">$(ApixPressAssemblyVersion)</FileVersion>
   </PropertyGroup>
