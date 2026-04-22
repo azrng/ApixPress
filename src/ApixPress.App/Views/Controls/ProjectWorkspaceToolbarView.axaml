@@ -21,18 +21,21 @@
                       SelectedItem="{Binding Workspace.ActiveWorkspaceTab, Mode=TwoWay}">
               <TabStrip.ItemTemplate>
                 <DataTemplate x:DataType="vm:RequestWorkspaceTabViewModel">
-                  <Grid ColumnDefinitions="Auto,Auto"
-                        ColumnSpacing="{StaticResource Space.1}">
-                    <TextBlock Grid.Column="0"
-                               MaxWidth="180"
-                               Text="{Binding HeaderText}"
-                               TextTrimming="CharacterEllipsis" />
-                    <Button Grid.Column="1"
-                            Classes="ProjectWorkspaceInnerTabCloseButton"
-                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActiveProjectTab.Workspace.CloseWorkspaceTabCommand}"
-                            CommandParameter="{Binding}"
-                            Content="×" />
-                  </Grid>
+                  <Border Classes="ProjectWorkspaceInnerTabCapsule">
+                    <Grid ColumnDefinitions="Auto,Auto"
+                          ColumnSpacing="{StaticResource Space.1}">
+                      <TextBlock Grid.Column="0"
+                                 MaxWidth="180"
+                                 VerticalAlignment="Center"
+                                 Text="{Binding HeaderText}"
+                                 TextTrimming="CharacterEllipsis" />
+                      <Button Grid.Column="1"
+                              Classes="ProjectWorkspaceInnerTabCloseButton"
+                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActiveProjectTab.Workspace.CloseWorkspaceTabCommand}"
+                              CommandParameter="{Binding}"
+                              Content="×" />
+                    </Grid>
+                  </Border>
                 </DataTemplate>
               </TabStrip.ItemTemplate>
             </TabStrip>
@@ -41,9 +44,9 @@
 
         <Grid Grid.Column="1"
               Width="72"
-              Height="28"
+              Height="26"
               HorizontalAlignment="Left"
-              VerticalAlignment="Top">
+              VerticalAlignment="Center">
           <StackPanel Orientation="Horizontal"
                       Spacing="{StaticResource Space.1}">
             <Button Classes="ProjectWorkspaceInnerTabAddButton"
