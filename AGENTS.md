@@ -1,7 +1,7 @@
 ---
 rule_id: agents-root
-version: 1.0.0
-last_updated: 2026-04-16
+version: 1.0.1
+last_updated: 2026-04-22
 dependencies: []
 ---
 
@@ -116,6 +116,7 @@ dependencies: []
 - 输出保持简洁，但分析、实现、验证要完整
 - 已确认无变更风险的文件无需重复阅读；出现上下文缺口时必须补读
 - 对同一项目会写入相同 `obj/bin` 中间目录的命令（如 `dotnet build`、`dotnet test`、`dotnet publish`）禁止并行执行，避免中间文件竞争导致伪失败
+- 禁止使用并行工具包装同一仓库内的 `dotnet restore`、`dotnet build`、`dotnet test`、`dotnet publish`；这类命令默认按串行执行
 - 删除文件、删除目录、批量重构、数据破坏性变更、环境清理等高风险操作，必须先获得明确确认
 
 ---

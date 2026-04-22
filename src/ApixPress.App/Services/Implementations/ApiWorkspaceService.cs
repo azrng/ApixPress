@@ -7,34 +7,28 @@ using ApixPress.App.Repositories.Interfaces;
 using ApixPress.App.Services.Interfaces;
 using Azrng.Core.Results;
 using System.Net;
-using System.Net.Http.Headers;
-using System.Text;
 
 namespace ApixPress.App.Services.Implementations;
 
 public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDependency
 {
-    private const long MaxSwaggerFileSizeBytes = 20 * 1024 * 1024;
-    private static readonly TimeSpan SwaggerUrlDownloadTimeout = TimeSpan.FromSeconds(20);
-    private static readonly TimeSpan PreparedImportCacheLifetime = TimeSpan.FromMinutes(10);
-    private static readonly HttpClient SharedHttpClient = CreateSwaggerImportHttpClient();
-
     private readonly IApiDocumentRepository _apiDocumentRepository;
-    private readonly Func<Uri, CancellationToken, Task<string>> _downloadOpenApiDocumentAsync;
-    private readonly Func<string, CancellationToken, Task<string>> _readOpenApiFileAsync;
     private readonly Func<string, string, string, ParsedDocumentGraph> _parseOpenApiDocument;
-    private readonly Dictionary<string, PreparedImportPayload> _preparedImports = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Lock _preparedImportCacheLock = new();
+    private readonly OpenApiImportSourceReader _sourceReader;
+    private readonly OpenApiPreparedImportCache _preparedImportCache;
 
     public ApiWorkspaceService(IApiDocumentRepository apiDocumentRepository)
-        : this(apiDocumentRepository, DownloadOpenApiDocumentAsync, ReadOpenApiFileAsync, OpenApiJsonParser.Parse)
+        : this(apiDocumentRepository, new OpenApiImportSourceReader(), OpenApiJsonParser.Parse)
     {
     }
 
     public ApiWorkspaceService(
         IApiDocumentRepository apiDocumentRepository,
         Func<Uri, CancellationToken, Task<string>> downloadOpenApiDocumentAsync)
-        : this(apiDocumentRepository, downloadOpenApiDocumentAsync, ReadOpenApiFileAsync, OpenApiJsonParser.Parse)
+        : this(
+            apiDocumentRepository,
+            new OpenApiImportSourceReader(downloadOpenApiDocumentAsync, File.ReadAllTextAsync),
+            OpenApiJsonParser.Parse)
     {
     }
 
@@ -43,11 +37,22 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         Func<Uri, CancellationToken, Task<string>> downloadOpenApiDocumentAsync,
         Func<string, CancellationToken, Task<string>> readOpenApiFileAsync,
         Func<string, string, string, ParsedDocumentGraph> parseOpenApiDocument)
+        : this(
+            apiDocumentRepository,
+            new OpenApiImportSourceReader(downloadOpenApiDocumentAsync, readOpenApiFileAsync),
+            parseOpenApiDocument)
+    {
+    }
+
+    private ApiWorkspaceService(
+        IApiDocumentRepository apiDocumentRepository,
+        OpenApiImportSourceReader sourceReader,
+        Func<string, string, string, ParsedDocumentGraph> parseOpenApiDocument)
     {
         _apiDocumentRepository = apiDocumentRepository;
-        _downloadOpenApiDocumentAsync = downloadOpenApiDocumentAsync;
-        _readOpenApiFileAsync = readOpenApiFileAsync;
+        _sourceReader = sourceReader;
         _parseOpenApiDocument = parseOpenApiDocument;
+        _preparedImportCache = new OpenApiPreparedImportCache();
     }
 
     public async Task<IReadOnlyList<ApiDocumentDto>> GetDocumentsAsync(string projectId, CancellationToken cancellationToken)
@@ -88,12 +93,12 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
                 return ResultModel<ApiDocumentDto>.Failure("请输入有效的 Swagger/OpenAPI 文档 URL。");
             }
 
-            if (TryTakePreparedImport(projectId, "URL", url, out var preparedImport))
+            if (_preparedImportCache.TryTake(projectId, "URL", url, out var preparedGraph, out _))
             {
-                return await ImportPreparedGraphAsync(projectId, preparedImport.Graph, cancellationToken);
+                return await ImportPreparedGraphAsync(projectId, preparedGraph, cancellationToken);
             }
 
-            var json = await _downloadOpenApiDocumentAsync(targetUri, cancellationToken);
+            var json = await _sourceReader.ReadFromUrlAsync(targetUri, cancellationToken);
             return await ImportCoreAsync(projectId, "URL", url, json, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -114,7 +119,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         }
         finally
         {
-            ClearPreparedImport(projectId, "URL", url);
+            _preparedImportCache.Clear(projectId, "URL", url);
         }
     }
 
@@ -127,16 +132,16 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
                 return ResultModel<ApiImportPreviewDto>.Failure("请输入有效的 Swagger/OpenAPI 文档 URL。");
             }
 
-            if (TryGetPreparedImport(projectId, "URL", url, out var preparedImport))
+            if (_preparedImportCache.TryGet(projectId, "URL", url, out _, out var preparedPreview))
             {
-                return ResultModel<ApiImportPreviewDto>.Success(preparedImport.Preview);
+                return ResultModel<ApiImportPreviewDto>.Success(preparedPreview);
             }
 
-            var json = await _downloadOpenApiDocumentAsync(targetUri, cancellationToken);
+            var json = await _sourceReader.ReadFromUrlAsync(targetUri, cancellationToken);
             var previewResult = await PreviewImportCoreAsync(projectId, "URL", url, json, cancellationToken);
             if (!previewResult.IsSuccess)
             {
-                ClearPreparedImport(projectId, "URL", url);
+                _preparedImportCache.Clear(projectId, "URL", url);
             }
 
             return previewResult;
@@ -163,28 +168,21 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     {
         try
         {
-            if (!File.Exists(filePath))
+            if (_preparedImportCache.TryTake(projectId, "FILE", filePath, out var preparedGraph, out _))
             {
-                return ResultModel<ApiDocumentDto>.Failure("未找到指定的本地文件。", "swagger_file_not_found");
+                return await ImportPreparedGraphAsync(projectId, preparedGraph, cancellationToken);
             }
 
-            var fileInfo = new FileInfo(filePath);
-            if (fileInfo.Length > MaxSwaggerFileSizeBytes)
-            {
-                return ResultModel<ApiDocumentDto>.Failure("Swagger 文件超过 20MB 限制。", "swagger_file_too_large");
-            }
-
-            if (TryTakePreparedImport(projectId, "FILE", filePath, out var preparedImport))
-            {
-                return await ImportPreparedGraphAsync(projectId, preparedImport.Graph, cancellationToken);
-            }
-
-            var json = await _readOpenApiFileAsync(filePath, cancellationToken);
+            var json = await _sourceReader.ReadFromFileAsync(filePath, cancellationToken);
             return await ImportCoreAsync(projectId, "FILE", filePath, json, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             return ResultModel<ApiDocumentDto>.Failure("已取消本地文件导入。", "swagger_import_cancelled");
+        }
+        catch (OpenApiImportSourceException exception)
+        {
+            return ResultModel<ApiDocumentDto>.Failure(exception.Message, exception.ErrorCode);
         }
         catch (Exception exception)
         {
@@ -192,7 +190,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         }
         finally
         {
-            ClearPreparedImport(projectId, "FILE", filePath);
+            _preparedImportCache.Clear(projectId, "FILE", filePath);
         }
     }
 
@@ -200,28 +198,21 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     {
         try
         {
-            if (!File.Exists(filePath))
+            if (_preparedImportCache.TryGet(projectId, "FILE", filePath, out _, out var preparedPreview))
             {
-                return ResultModel<ApiImportPreviewDto>.Failure("未找到指定的本地文件。", "swagger_file_not_found");
+                return ResultModel<ApiImportPreviewDto>.Success(preparedPreview);
             }
 
-            var fileInfo = new FileInfo(filePath);
-            if (fileInfo.Length > MaxSwaggerFileSizeBytes)
-            {
-                return ResultModel<ApiImportPreviewDto>.Failure("Swagger 文件超过 20MB 限制。", "swagger_file_too_large");
-            }
-
-            if (TryGetPreparedImport(projectId, "FILE", filePath, out var preparedImport))
-            {
-                return ResultModel<ApiImportPreviewDto>.Success(preparedImport.Preview);
-            }
-
-            var json = await _readOpenApiFileAsync(filePath, cancellationToken);
+            var json = await _sourceReader.ReadFromFileAsync(filePath, cancellationToken);
             return await PreviewImportCoreAsync(projectId, "FILE", filePath, json, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             return ResultModel<ApiImportPreviewDto>.Failure("已取消导入预检查。", "swagger_import_preview_cancelled");
+        }
+        catch (OpenApiImportSourceException exception)
+        {
+            return ResultModel<ApiImportPreviewDto>.Failure(exception.Message, exception.ErrorCode);
         }
         catch (Exception exception)
         {
@@ -237,11 +228,11 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         }
 
         var requestCaseKeys = requestCases
-            .Select(BuildImportedEndpointKey)
+            .Select(OpenApiImportPreviewBuilder.BuildImportedEndpointKey)
             .Where(key => !string.IsNullOrWhiteSpace(key))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var endpointIds = (await _apiDocumentRepository.GetEndpointsByProjectIdAsync(projectId, cancellationToken))
-            .Where(endpoint => requestCaseKeys.Contains(BuildImportedEndpointKey(endpoint.Method, endpoint.Path)))
+            .Where(endpoint => requestCaseKeys.Contains(OpenApiImportPreviewBuilder.BuildImportedEndpointKey(endpoint.Method, endpoint.Path)))
             .Select(endpoint => endpoint.Id)
             .ToList();
 
@@ -280,8 +271,8 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         {
             var graph = _parseOpenApiDocument(json, sourceType, sourceValue);
             var existingEndpoints = await _apiDocumentRepository.GetEndpointsByProjectIdAsync(projectId, cancellationToken);
-            var preview = BuildImportPreview(graph, existingEndpoints);
-            CachePreparedImport(projectId, sourceType, sourceValue, graph, preview);
+            var preview = OpenApiImportPreviewBuilder.Build(graph, existingEndpoints);
+            _preparedImportCache.Cache(projectId, sourceType, sourceValue, graph, preview);
             return ResultModel<ApiImportPreviewDto>.Success(preview);
         }
         catch (BaseException exception)
@@ -366,205 +357,6 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         }).ToList();
     }
 
-    private static ApiImportPreviewDto BuildImportPreview(
-        ParsedDocumentGraph graph,
-        IReadOnlyList<ApiProjectEndpointEntity> existingEndpoints)
-    {
-        var existingByKey = existingEndpoints
-            .GroupBy(endpoint => BuildImportedEndpointKey(endpoint.Method, endpoint.Path), StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
-        var distinctIncomingKeys = graph.Endpoints
-            .Select(endpoint => BuildImportedEndpointKey(endpoint.Method, endpoint.Path))
-            .Where(key => !string.IsNullOrWhiteSpace(key))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-        var conflicts = graph.Endpoints
-            .Select(endpoint => new
-            {
-                Endpoint = endpoint,
-                Key = BuildImportedEndpointKey(endpoint.Method, endpoint.Path)
-            })
-            .Where(item => existingByKey.TryGetValue(item.Key, out _))
-            .GroupBy(item => item.Key, StringComparer.OrdinalIgnoreCase)
-            .Select(group =>
-            {
-                var endpoint = group.Last().Endpoint;
-                var existing = existingByKey[group.Key];
-                return new ApiImportConflictDto
-                {
-                    ExistingDocumentId = existing.DocumentId,
-                    ExistingDocumentName = existing.DocumentName,
-                    ExistingEndpointId = existing.Id,
-                    ExistingEndpointName = existing.Name,
-                    ImportedEndpointName = endpoint.Name,
-                    Method = endpoint.Method,
-                    Path = endpoint.Path
-                };
-            })
-            .OrderBy(item => item.Method, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(item => item.Path, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        return new ApiImportPreviewDto
-        {
-            DocumentName = graph.Document.Name,
-            SourceType = graph.Document.SourceType,
-            SourceValue = graph.Document.SourceValue,
-            TotalEndpointCount = distinctIncomingKeys.Count,
-            ConflictCount = conflicts.Count,
-            NewEndpointCount = Math.Max(0, distinctIncomingKeys.Count - conflicts.Count),
-            ConflictItems = conflicts
-        };
-    }
-
-    private static string BuildImportedEndpointKey(RequestCaseDto requestCase)
-    {
-        return BuildImportedEndpointKey(requestCase.RequestSnapshot.Method, requestCase.RequestSnapshot.Url);
-    }
-
-    private static string BuildImportedEndpointKey(string method, string path)
-    {
-        return $"swagger-import:{method.ToUpperInvariant()} {path}";
-    }
-
-    private static bool MatchesImportedInterface(ApiProjectEndpointEntity endpoint, RequestCaseDto requestCase)
-    {
-        var endpointKey = BuildImportedEndpointKey(endpoint.Method, endpoint.Path);
-        if (string.Equals(requestCase.RequestSnapshot.EndpointId, endpointKey, StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        return string.Equals(requestCase.RequestSnapshot.Method, endpoint.Method, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(requestCase.RequestSnapshot.Url, endpoint.Path, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private bool TryGetPreparedImport(string projectId, string sourceType, string sourceValue, out PreparedImportPayload payload)
-    {
-        lock (_preparedImportCacheLock)
-        {
-            var cacheKey = BuildPreparedImportKey(projectId, sourceType, sourceValue);
-            if (!_preparedImports.TryGetValue(cacheKey, out payload!))
-            {
-                return false;
-            }
-
-            if (DateTime.UtcNow - payload.CachedAt > PreparedImportCacheLifetime)
-            {
-                _preparedImports.Remove(cacheKey);
-                payload = null!;
-                return false;
-            }
-
-            return true;
-        }
-    }
-
-    private bool TryTakePreparedImport(string projectId, string sourceType, string sourceValue, out PreparedImportPayload payload)
-    {
-        lock (_preparedImportCacheLock)
-        {
-            var cacheKey = BuildPreparedImportKey(projectId, sourceType, sourceValue);
-            if (!_preparedImports.TryGetValue(cacheKey, out payload!))
-            {
-                return false;
-            }
-
-            if (DateTime.UtcNow - payload.CachedAt > PreparedImportCacheLifetime)
-            {
-                _preparedImports.Remove(cacheKey);
-                payload = null!;
-                return false;
-            }
-
-            _preparedImports.Remove(cacheKey);
-            return true;
-        }
-    }
-
-    private void CachePreparedImport(
-        string projectId,
-        string sourceType,
-        string sourceValue,
-        ParsedDocumentGraph graph,
-        ApiImportPreviewDto preview)
-    {
-        lock (_preparedImportCacheLock)
-        {
-            _preparedImports[BuildPreparedImportKey(projectId, sourceType, sourceValue)] =
-                new PreparedImportPayload(graph, preview, DateTime.UtcNow);
-        }
-    }
-
-    private void ClearPreparedImport(string projectId, string sourceType, string sourceValue)
-    {
-        lock (_preparedImportCacheLock)
-        {
-            _preparedImports.Remove(BuildPreparedImportKey(projectId, sourceType, sourceValue));
-        }
-    }
-
-    private static string BuildPreparedImportKey(string projectId, string sourceType, string sourceValue)
-    {
-        return $"{projectId}::{sourceType.Trim().ToUpperInvariant()}::{sourceValue.Trim()}";
-    }
-
-    private static Task<string> ReadOpenApiFileAsync(string filePath, CancellationToken cancellationToken)
-    {
-        return File.ReadAllTextAsync(filePath, cancellationToken);
-    }
-
-    private static async Task<string> DownloadOpenApiDocumentAsync(Uri targetUri, CancellationToken cancellationToken)
-    {
-        using var request = new HttpRequestMessage(HttpMethod.Get, targetUri);
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/yaml"));
-        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/yaml"));
-
-        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeoutCts.CancelAfter(SwaggerUrlDownloadTimeout);
-
-        using var response = await SharedHttpClient.SendAsync(
-            request,
-            HttpCompletionOption.ResponseHeadersRead,
-            timeoutCts.Token);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new HttpRequestException(
-                $"远程服务返回 {(int)response.StatusCode} {response.ReasonPhrase}".Trim(),
-                null,
-                response.StatusCode);
-        }
-
-        if (response.Content.Headers.ContentLength is > MaxSwaggerFileSizeBytes)
-        {
-            throw new InvalidOperationException("Swagger 文档超过 20MB 限制。");
-        }
-
-        var document = await response.Content.ReadAsStringAsync(timeoutCts.Token);
-        if (Encoding.UTF8.GetByteCount(document) > MaxSwaggerFileSizeBytes)
-        {
-            throw new InvalidOperationException("Swagger 文档超过 20MB 限制。");
-        }
-
-        return document;
-    }
-
-    private static HttpClient CreateSwaggerImportHttpClient()
-    {
-        var httpClient = new HttpClient(new SocketsHttpHandler
-        {
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli
-        })
-        {
-            Timeout = Timeout.InfiniteTimeSpan
-        };
-
-        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("ApixPress/1.0");
-        return httpClient;
-    }
-
     private static string BuildUrlImportHttpFailureMessage(string prefix, HttpRequestException exception)
     {
         if (exception.StatusCode is HttpStatusCode statusCode)
@@ -574,6 +366,4 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
 
         return $"{prefix}：{exception.Message}";
     }
-
-    private sealed record PreparedImportPayload(ParsedDocumentGraph Graph, ApiImportPreviewDto Preview, DateTime CachedAt);
 }
