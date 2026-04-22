@@ -70,8 +70,8 @@ public partial class MainWindowViewModel
         }
 
         var wasActive = ReferenceEquals(tab, ActiveProjectTab);
-        tab.ShellStateChanged -= OnProjectTabShellStateChanged;
         ProjectTabs.Remove(tab);
+        ReleaseProjectTab(tab);
 
         if (!wasActive)
         {

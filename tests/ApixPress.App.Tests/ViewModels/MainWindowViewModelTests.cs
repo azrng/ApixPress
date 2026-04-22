@@ -134,6 +134,56 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task RefreshWorkspaceCommand_ShouldDisposeRemovedProjectTab()
+    {
+        var projectService = new FakeProjectWorkspaceService();
+        projectService.SeedProjects(
+        [
+            new("project-1", "订单项目", "订单接口", true)
+        ]);
+        var viewModel = CreateViewModel(projectService);
+        await viewModel.InitializeAsync();
+        var project = viewModel.ProjectPanel.Projects.Single();
+
+        await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(project);
+        var removedTab = Assert.Single(viewModel.ProjectTabs);
+
+        projectService.RemoveProject(project.Id);
+        await viewModel.RefreshWorkspaceCommand.ExecuteAsync(null);
+
+        Assert.Empty(removedTab.WorkspaceTabs);
+        Assert.Null(removedTab.ActiveWorkspaceTab);
+    }
+
+    [Fact]
+    public async Task CloseProjectTabCommand_ShouldDisposeClosedTabAndKeepRemainingTabActive()
+    {
+        var projectService = new FakeProjectWorkspaceService();
+        projectService.SeedProjects(
+        [
+            new("project-1", "订单项目", "订单接口", true),
+            new("project-2", "用户项目", "用户接口", false)
+        ]);
+        var viewModel = CreateViewModel(projectService);
+        await viewModel.InitializeAsync();
+        var firstProject = viewModel.ProjectPanel.Projects[0];
+        var secondProject = viewModel.ProjectPanel.Projects[1];
+
+        await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(firstProject);
+        var firstTab = Assert.Single(viewModel.ProjectTabs);
+
+        await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(secondProject);
+        var secondTab = Assert.Single(viewModel.ProjectTabs, tab => tab.ProjectId == secondProject.Id);
+
+        viewModel.CloseProjectTabCommand.Execute(secondTab);
+
+        Assert.Single(viewModel.ProjectTabs);
+        Assert.Same(firstTab, viewModel.ActiveProjectTab);
+        Assert.Empty(secondTab.WorkspaceTabs);
+        Assert.Null(secondTab.ActiveWorkspaceTab);
+    }
+
+    [Fact]
     public void ToggleNotificationCenterCommand_ShouldMarkNotificationsAsRead()
     {
         var viewModel = CreateViewModel();

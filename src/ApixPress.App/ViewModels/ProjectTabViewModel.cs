@@ -6,10 +6,12 @@ using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class ProjectTabViewModel : ViewModelBase
+public partial class ProjectTabViewModel : ViewModelBase, IDisposable
 {
     private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
+    private readonly ProjectTabComposition _composition;
     private readonly ProjectTabLifecycleCoordinator _lifecycle;
+    private bool _isDisposed;
 
     public event Action<ProjectTabViewModel>? ShellStateChanged;
 
@@ -43,7 +45,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             NotifyWorkspaceTabMenuChanged = () => OnPropertyChanged(nameof(IsWorkspaceTabMenuOpen)),
             SetBusyState = value => IsBusy = value
         };
-        var composition = ProjectTabComposition.Create(
+        _composition = ProjectTabComposition.Create(
             Project,
             _fallbackWorkspaceTab,
             requestExecutionService,
@@ -53,20 +55,20 @@ public partial class ProjectTabViewModel : ViewModelBase
             apiWorkspaceService,
             filePickerService,
             hostContext);
-        EnvironmentPanel = composition.EnvironmentPanel;
-        UseCasesPanel = composition.UseCasesPanel;
-        HistoryPanel = composition.HistoryPanel;
-        Workspace = composition.Workspace;
-        Shell = composition.Shell;
-        Editor = composition.Editor;
-        Settings = composition.Settings;
-        Catalog = composition.Catalog;
-        Import = composition.Import;
-        Workflow = composition.Workflow;
-        QuickRequestSave = composition.QuickRequestSave;
-        Summary = composition.Summary;
-        _lifecycle = composition.Lifecycle;
-        composition.Attach();
+        EnvironmentPanel = _composition.EnvironmentPanel;
+        UseCasesPanel = _composition.UseCasesPanel;
+        HistoryPanel = _composition.HistoryPanel;
+        Workspace = _composition.Workspace;
+        Shell = _composition.Shell;
+        Editor = _composition.Editor;
+        Settings = _composition.Settings;
+        Catalog = _composition.Catalog;
+        Import = _composition.Import;
+        Workflow = _composition.Workflow;
+        QuickRequestSave = _composition.QuickRequestSave;
+        Summary = _composition.Summary;
+        _lifecycle = _composition.Lifecycle;
+        _composition.Attach();
     }
 
     public ProjectWorkspaceItemViewModel Project { get; }
@@ -135,8 +137,25 @@ public partial class ProjectTabViewModel : ViewModelBase
         _lifecycle.LoadHistoryRequest(item);
     }
 
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        _composition.Dispose();
+        ShellStateChanged = null;
+    }
+
     private void NotifyShellState()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         Summary.NotifyStateChanged();
         OnPropertyChanged(nameof(VisibleWorkspaceTabs));
         ShellStateChanged?.Invoke(this);
@@ -144,12 +163,22 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     private void NotifyWorkspaceBindingsChanged()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         OnPropertyChanged(nameof(ConfigTab));
         OnPropertyChanged(nameof(ResponseSection));
     }
 
     private void NotifyWorkspaceEditorState()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         NotifyWorkspaceBindingsChanged();
         Editor.NotifyStateChanged();
         NotifyShellState();

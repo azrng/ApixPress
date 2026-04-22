@@ -416,4 +416,36 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Equal(projectSettingsItem, viewModel.Shell.SelectedNavigationItem);
         Assert.True(projectSettingsItem.IsSelected);
     }
+
+    [Fact]
+    public void Dispose_ShouldStopProjectChangeFromRaisingShellState()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+        var shellStateChangedCount = 0;
+        viewModel.ShellStateChanged += _ => shellStateChangedCount++;
+
+        viewModel.Project.Name = "测试项目 V2";
+        Assert.True(shellStateChangedCount > 0);
+        var countBeforeDispose = shellStateChangedCount;
+
+        viewModel.Dispose();
+        viewModel.Project.Name = "测试项目 V3";
+
+        Assert.Equal(countBeforeDispose, shellStateChangedCount);
+        Assert.Empty(viewModel.WorkspaceTabs);
+        Assert.Null(viewModel.ActiveWorkspaceTab);
+    }
+
+    [Fact]
+    public void Dispose_ShouldBeIdempotent()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        viewModel.Dispose();
+        var exception = Record.Exception(viewModel.Dispose);
+
+        Assert.Null(exception);
+        Assert.Empty(viewModel.WorkspaceTabs);
+        Assert.Null(viewModel.ActiveWorkspaceTab);
+    }
 }

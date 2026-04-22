@@ -5,10 +5,12 @@ using ApixPress.App.Services.Interfaces;
 
 namespace ApixPress.App.ViewModels;
 
-internal sealed class ProjectTabComposition
+internal sealed class ProjectTabComposition : IDisposable
 {
     private readonly ProjectWorkspaceItemViewModel _project;
     private readonly ProjectTabHostContext _hostContext;
+    private bool _isAttached;
+    private bool _isDisposed;
 
     private ProjectTabComposition(
         ProjectWorkspaceItemViewModel project,
@@ -183,6 +185,12 @@ internal sealed class ProjectTabComposition
 
     public void Attach()
     {
+        ObjectDisposedException.ThrowIf(_isDisposed, this);
+        if (_isAttached)
+        {
+            return;
+        }
+
         _project.PropertyChanged += OnProjectPropertyChanged;
         EnvironmentPanel.SelectedEnvironmentChanged += Lifecycle.OnSelectedEnvironmentChanged;
         EnvironmentPanel.Environments.CollectionChanged += OnCollectionChanged;
@@ -198,6 +206,42 @@ internal sealed class ProjectTabComposition
         QuickRequestSave.PropertyChanged += OnChildPropertyChanged;
         Shell.AddProjectSettingsNavigation(Settings.OpenWorkspaceCommand);
         Workspace.EnsureLandingWorkspaceTab();
+        _isAttached = true;
+    }
+
+    public void Detach()
+    {
+        if (!_isAttached)
+        {
+            return;
+        }
+
+        _project.PropertyChanged -= OnProjectPropertyChanged;
+        EnvironmentPanel.SelectedEnvironmentChanged -= Lifecycle.OnSelectedEnvironmentChanged;
+        EnvironmentPanel.Environments.CollectionChanged -= OnCollectionChanged;
+        HistoryPanel.HistoryItems.CollectionChanged -= OnCollectionChanged;
+        Workspace.PropertyChanged -= Lifecycle.OnWorkspacePropertyChanged;
+        Workspace.StateChanged -= _hostContext.NotifyShellState;
+        Workspace.EditorStateChanged -= _hostContext.NotifyWorkspaceEditorState;
+        Workspace.ActiveWorkspaceTabChanged -= Lifecycle.OnWorkspaceActiveWorkspaceTabChanged;
+        Editor.PropertyChanged -= OnChildPropertyChanged;
+        Shell.PropertyChanged -= OnShellPropertyChanged;
+        Settings.PropertyChanged -= OnChildPropertyChanged;
+        Import.PropertyChanged -= OnChildPropertyChanged;
+        QuickRequestSave.PropertyChanged -= OnChildPropertyChanged;
+        _isAttached = false;
+    }
+
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        Detach();
+        Workspace.Dispose();
+        _isDisposed = true;
     }
 
     private void OnProjectPropertyChanged(object? sender, PropertyChangedEventArgs e)

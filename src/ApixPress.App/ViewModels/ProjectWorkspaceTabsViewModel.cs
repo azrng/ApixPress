@@ -10,11 +10,12 @@ using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
+public partial class ProjectWorkspaceTabsViewModel : ViewModelBase, IDisposable
 {
     private readonly Action _selectInterfaceManagementSection;
     private readonly Action<string> _setStatusMessage;
     private readonly ObservableCollection<RequestWorkspaceTabViewModel> _visibleWorkspaceTabs = [];
+    private bool _isDisposed;
 
     public ProjectWorkspaceTabsViewModel(
         Action selectInterfaceManagementSection,
@@ -100,6 +101,26 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
     public void ActivateWorkspaceTab(RequestWorkspaceTabViewModel tab)
     {
         ActiveWorkspaceTab = tab;
+    }
+
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        WorkspaceTabs.CollectionChanged -= OnWorkspaceTabsCollectionChanged;
+
+        foreach (var tab in WorkspaceTabs.ToList())
+        {
+            DetachWorkspaceTab(tab);
+        }
+
+        WorkspaceTabs.Clear();
+        _visibleWorkspaceTabs.Clear();
+        ActiveWorkspaceTab = null;
     }
 
     public void CloseTabsForDeletedCases(IReadOnlyCollection<RequestCaseDto> deletedCases)

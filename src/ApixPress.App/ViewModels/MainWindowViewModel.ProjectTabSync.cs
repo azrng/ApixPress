@@ -18,6 +18,12 @@ public partial class MainWindowViewModel
         return tab;
     }
 
+    private void ReleaseProjectTab(ProjectTabViewModel tab)
+    {
+        tab.ShellStateChanged -= OnProjectTabShellStateChanged;
+        tab.Dispose();
+    }
+
     private void ActivateProjectTabCore(ProjectTabViewModel tab)
     {
         ActiveProjectTab = tab;
@@ -46,8 +52,8 @@ public partial class MainWindowViewModel
 
         foreach (var tab in removedTabs)
         {
-            tab.ShellStateChanged -= OnProjectTabShellStateChanged;
             ProjectTabs.Remove(tab);
+            ReleaseProjectTab(tab);
         }
 
         if (ActiveProjectTab is not null && !ProjectTabs.Contains(ActiveProjectTab))
