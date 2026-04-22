@@ -2,15 +2,15 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
+using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
-internal sealed class ProjectTabComposition : IDisposable
+internal sealed class ProjectTabComposition : DisposableObject
 {
     private readonly ProjectWorkspaceItemViewModel _project;
     private readonly ProjectTabHostContext _hostContext;
     private bool _isAttached;
-    private bool _isDisposed;
 
     private ProjectTabComposition(
         ProjectWorkspaceItemViewModel project,
@@ -185,7 +185,7 @@ internal sealed class ProjectTabComposition : IDisposable
 
     public void Attach()
     {
-        ObjectDisposedException.ThrowIf(_isDisposed, this);
+        ThrowIfDisposed();
         if (_isAttached)
         {
             return;
@@ -232,13 +232,8 @@ internal sealed class ProjectTabComposition : IDisposable
         _isAttached = false;
     }
 
-    public void Dispose()
+    protected override void DisposeManaged()
     {
-        if (_isDisposed)
-        {
-            return;
-        }
-
         Detach();
         Catalog.Dispose();
         Import.Dispose();
@@ -247,7 +242,6 @@ internal sealed class ProjectTabComposition : IDisposable
         UseCasesPanel.Dispose();
         HistoryPanel.Dispose();
         Workspace.Dispose();
-        _isDisposed = true;
     }
 
     private void OnProjectPropertyChanged(object? sender, PropertyChangedEventArgs e)
