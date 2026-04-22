@@ -8,6 +8,77 @@ namespace ApixPress.App.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
+    private sealed class ConstructionResult
+    {
+        public required RequestConfigTabViewModel FallbackConfigTab { get; init; }
+        public required ResponseSectionViewModel FallbackResponseSection { get; init; }
+        public required EnvironmentPanelViewModel FallbackEnvironmentPanel { get; init; }
+        public required UseCasesPanelViewModel FallbackUseCasesPanel { get; init; }
+        public required RequestHistoryPanelViewModel FallbackHistoryPanel { get; init; }
+        public required ProjectPanelViewModel ProjectPanel { get; init; }
+        public required ObservableCollection<NotificationItemViewModel> Notifications { get; init; }
+        public required MainWindowSettingsViewModel SettingsCenter { get; init; }
+    }
+
+    private sealed class Builder
+    {
+        private readonly IEnvironmentVariableService _environmentVariableService;
+        private readonly IRequestCaseService _requestCaseService;
+        private readonly IRequestHistoryService _requestHistoryService;
+        private readonly IProjectWorkspaceService _projectWorkspaceService;
+        private readonly IAppShellSettingsService _appShellSettingsService;
+        private readonly IApplicationUpdateService _applicationUpdateService;
+        private readonly IWindowHostService _windowHostService;
+        private readonly string _currentAppVersion;
+        private readonly Action<string> _setStatusMessage;
+        private readonly Action _notifyShellState;
+
+        public Builder(
+            IEnvironmentVariableService environmentVariableService,
+            IRequestCaseService requestCaseService,
+            IRequestHistoryService requestHistoryService,
+            IProjectWorkspaceService projectWorkspaceService,
+            IAppShellSettingsService appShellSettingsService,
+            IApplicationUpdateService applicationUpdateService,
+            IWindowHostService windowHostService,
+            string currentAppVersion,
+            Action<string> setStatusMessage,
+            Action notifyShellState)
+        {
+            _environmentVariableService = environmentVariableService;
+            _requestCaseService = requestCaseService;
+            _requestHistoryService = requestHistoryService;
+            _projectWorkspaceService = projectWorkspaceService;
+            _appShellSettingsService = appShellSettingsService;
+            _applicationUpdateService = applicationUpdateService;
+            _windowHostService = windowHostService;
+            _currentAppVersion = currentAppVersion;
+            _setStatusMessage = setStatusMessage;
+            _notifyShellState = notifyShellState;
+        }
+
+        public ConstructionResult Build()
+        {
+            return new ConstructionResult
+            {
+                FallbackConfigTab = new RequestConfigTabViewModel(null),
+                FallbackResponseSection = new ResponseSectionViewModel(),
+                FallbackEnvironmentPanel = new EnvironmentPanelViewModel(_environmentVariableService),
+                FallbackUseCasesPanel = new UseCasesPanelViewModel(_requestCaseService),
+                FallbackHistoryPanel = new RequestHistoryPanelViewModel(_requestHistoryService),
+                ProjectPanel = new ProjectPanelViewModel(_projectWorkspaceService),
+                Notifications = CreateNotifications(),
+                SettingsCenter = new MainWindowSettingsViewModel(
+                    _appShellSettingsService,
+                    _applicationUpdateService,
+                    _windowHostService,
+                    _currentAppVersion,
+                    _setStatusMessage,
+                    _notifyShellState)
+            };
+        }
+    }
+
     private readonly IEnvironmentVariableService _environmentVariableService;
     private readonly IRequestCaseService _requestCaseService;
     private readonly IRequestExecutionService _requestExecutionService;
@@ -40,32 +111,30 @@ public partial class MainWindowViewModel : ViewModelBase
         _apiWorkspaceService = apiWorkspaceService;
         _filePickerService = filePickerService;
 
-        _fallbackConfigTab = new RequestConfigTabViewModel(null);
-        _fallbackResponseSection = new ResponseSectionViewModel();
-        _fallbackEnvironmentPanel = new EnvironmentPanelViewModel(environmentVariableService);
-        _fallbackUseCasesPanel = new UseCasesPanelViewModel(requestCaseService);
-        _fallbackHistoryPanel = new RequestHistoryPanelViewModel(requestHistoryService);
-
-        ProjectPanel = new ProjectPanelViewModel(projectWorkspaceService);
-        Notifications = CreateNotifications();
-
-        SettingsCenter = new MainWindowSettingsViewModel(
+        var construction = new Builder(
+            environmentVariableService,
+            requestCaseService,
+            requestHistoryService,
+            projectWorkspaceService,
             appShellSettingsService,
             applicationUpdateService,
             windowHostService,
             ResolveCurrentAppVersion(),
             message => StatusMessage = message,
-            NotifyShellState);
+            NotifyShellState)
+            .Build();
 
-        ProjectTabs.CollectionChanged += OnProjectTabsCollectionChanged;
-        ProjectPanel.ProjectCreated += OnProjectCreated;
-        ProjectPanel.PropertyChanged += OnProjectPanelPropertyChanged;
-        ProjectPanel.Projects.CollectionChanged += OnProjectsCollectionChanged;
+        _fallbackConfigTab = construction.FallbackConfigTab;
+        _fallbackResponseSection = construction.FallbackResponseSection;
+        _fallbackEnvironmentPanel = construction.FallbackEnvironmentPanel;
+        _fallbackUseCasesPanel = construction.FallbackUseCasesPanel;
+        _fallbackHistoryPanel = construction.FallbackHistoryPanel;
 
-        foreach (var item in Notifications)
-        {
-            item.PropertyChanged += OnNotificationPropertyChanged;
-        }
+        ProjectPanel = construction.ProjectPanel;
+        Notifications = construction.Notifications;
+        SettingsCenter = construction.SettingsCenter;
+
+        AttachShellEventHandlers();
     }
 
     public ProjectPanelViewModel ProjectPanel { get; }
@@ -130,15 +199,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     protected override void DisposeManaged()
     {
-        ProjectTabs.CollectionChanged -= OnProjectTabsCollectionChanged;
-        ProjectPanel.ProjectCreated -= OnProjectCreated;
-        ProjectPanel.PropertyChanged -= OnProjectPanelPropertyChanged;
-        ProjectPanel.Projects.CollectionChanged -= OnProjectsCollectionChanged;
-
-        foreach (var item in Notifications)
-        {
-            item.PropertyChanged -= OnNotificationPropertyChanged;
-        }
+        DetachShellEventHandlers();
 
         foreach (var tab in ProjectTabs.ToList())
         {
@@ -152,6 +213,32 @@ public partial class MainWindowViewModel : ViewModelBase
         _fallbackEnvironmentPanel.Dispose();
         _fallbackUseCasesPanel.Dispose();
         _fallbackHistoryPanel.Dispose();
+    }
+
+    private void AttachShellEventHandlers()
+    {
+        ProjectTabs.CollectionChanged += OnProjectTabsCollectionChanged;
+        ProjectPanel.ProjectCreated += OnProjectCreated;
+        ProjectPanel.PropertyChanged += OnProjectPanelPropertyChanged;
+        ProjectPanel.Projects.CollectionChanged += OnProjectsCollectionChanged;
+
+        foreach (var item in Notifications)
+        {
+            item.PropertyChanged += OnNotificationPropertyChanged;
+        }
+    }
+
+    private void DetachShellEventHandlers()
+    {
+        ProjectTabs.CollectionChanged -= OnProjectTabsCollectionChanged;
+        ProjectPanel.ProjectCreated -= OnProjectCreated;
+        ProjectPanel.PropertyChanged -= OnProjectPanelPropertyChanged;
+        ProjectPanel.Projects.CollectionChanged -= OnProjectsCollectionChanged;
+
+        foreach (var item in Notifications)
+        {
+            item.PropertyChanged -= OnNotificationPropertyChanged;
+        }
     }
 
     private static string ResolveCurrentAppVersion()
