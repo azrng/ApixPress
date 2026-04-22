@@ -61,7 +61,8 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:ProjectTabViewModel">
-                    <Border Classes="WorkspaceTabItemShell">
+                    <Border Classes="WorkspaceTabItemShell WorkspaceTabCapsule"
+                            Tag="{Binding IsActive}">
                       <Grid ColumnDefinitions="*,Auto"
                             ColumnSpacing="{StaticResource Space.2}">
                         <ToggleButton Grid.Column="0"

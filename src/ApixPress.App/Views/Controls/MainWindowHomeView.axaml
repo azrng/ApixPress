@@ -148,7 +148,8 @@
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                   <WrapPanel Orientation="Horizontal"
-                             ItemWidth="356" />
+                             ItemWidth="334"
+                             ItemHeight="214" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
@@ -166,14 +167,16 @@
                                        Text="{Binding AvatarText}" />
                           </Border>
                           <StackPanel Grid.Column="1"
+                                      Classes="HomeProjectTileHeaderText"
                                       Spacing="4"
                                       VerticalAlignment="Center">
                             <TextBlock Classes="HomeProjectTileTitle"
                                        Text="{Binding Name}"
                                        TextTrimming="CharacterEllipsis" />
-                            <TextBlock Classes="CaptionText"
+                            <TextBlock Classes="CaptionText HomeProjectTileHint"
                                        Text="点击后在顶部打开独立工作标签"
-                                       TextWrapping="Wrap" />
+                                       TextWrapping="Wrap"
+                                       MaxLines="2" />
                           </StackPanel>
                           <Border Grid.Column="2"
                                   Classes="HomeProjectTileDefaultBadge"
