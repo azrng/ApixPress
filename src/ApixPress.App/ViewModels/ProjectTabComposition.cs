@@ -8,6 +8,234 @@ namespace ApixPress.App.ViewModels;
 
 internal sealed class ProjectTabComposition : DisposableObject
 {
+    private sealed class Builder
+    {
+        private readonly ProjectWorkspaceItemViewModel _project;
+        private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
+        private readonly IRequestExecutionService _requestExecutionService;
+        private readonly IRequestCaseService _requestCaseService;
+        private readonly IRequestHistoryService _requestHistoryService;
+        private readonly IEnvironmentVariableService _environmentVariableService;
+        private readonly IApiWorkspaceService _apiWorkspaceService;
+        private readonly IFilePickerService _filePickerService;
+        private readonly ProjectTabHostContext _hostContext;
+
+        private ProjectImportViewModel? _importViewModel;
+        private ProjectQuickRequestSaveViewModel? _quickRequestSaveViewModel;
+        private ProjectRequestWorkflowViewModel? _workflowViewModel;
+        private ProjectWorkspaceShellViewModel? _shellViewModel;
+
+        public Builder(
+            ProjectWorkspaceItemViewModel project,
+            RequestWorkspaceTabViewModel fallbackWorkspaceTab,
+            IRequestExecutionService requestExecutionService,
+            IRequestCaseService requestCaseService,
+            IRequestHistoryService requestHistoryService,
+            IEnvironmentVariableService environmentVariableService,
+            IApiWorkspaceService apiWorkspaceService,
+            IFilePickerService filePickerService,
+            ProjectTabHostContext hostContext)
+        {
+            _project = project;
+            _fallbackWorkspaceTab = fallbackWorkspaceTab;
+            _requestExecutionService = requestExecutionService;
+            _requestCaseService = requestCaseService;
+            _requestHistoryService = requestHistoryService;
+            _environmentVariableService = environmentVariableService;
+            _apiWorkspaceService = apiWorkspaceService;
+            _filePickerService = filePickerService;
+            _hostContext = hostContext;
+        }
+
+        public ProjectTabComposition Build()
+        {
+            var environmentPanel = new EnvironmentPanelViewModel(_environmentVariableService);
+            var useCasesPanel = new UseCasesPanelViewModel(_requestCaseService);
+            var historyPanel = new RequestHistoryPanelViewModel(_requestHistoryService);
+            var workspace = CreateWorkspace();
+            var workspaceContext = CreateWorkspaceContext(workspace, environmentPanel, historyPanel);
+            var shell = CreateShell(workspaceContext);
+            var editor = new ProjectRequestEditorViewModel(workspaceContext);
+            var settings = CreateSettings();
+            var catalog = CreateCatalog(useCasesPanel, workspace);
+            var import = CreateImport(catalog);
+            var workflow = CreateWorkflow(workspace, historyPanel, environmentPanel, catalog, workspaceContext);
+            var quickRequestSave = CreateQuickRequestSave(workspaceContext);
+            var summary = CreateSummary(environmentPanel, useCasesPanel, historyPanel, import);
+            var lifecycle = CreateLifecycle(useCasesPanel, environmentPanel, historyPanel, import, workspace, quickRequestSave, shell, editor);
+
+            return new ProjectTabComposition(
+                _project,
+                environmentPanel,
+                useCasesPanel,
+                historyPanel,
+                workspace,
+                shell,
+                editor,
+                settings,
+                catalog,
+                import,
+                workflow,
+                quickRequestSave,
+                summary,
+                lifecycle,
+                _hostContext);
+        }
+
+        private ProjectWorkspaceTabsViewModel CreateWorkspace()
+        {
+            return new ProjectWorkspaceTabsViewModel(
+                () =>
+                {
+                    _shellViewModel?.SelectInterfaceManagementSection();
+                },
+                _hostContext.SetStatusMessage);
+        }
+
+        private ProjectTabWorkspaceContext CreateWorkspaceContext(
+            ProjectWorkspaceTabsViewModel workspace,
+            EnvironmentPanelViewModel environmentPanel,
+            RequestHistoryPanelViewModel historyPanel)
+        {
+            return new ProjectTabWorkspaceContext
+            {
+                GetActiveWorkspaceTab = _hostContext.GetActiveWorkspaceTab,
+                GetFallbackWorkspaceTab = () => _fallbackWorkspaceTab,
+                GetCurrentBaseUrl = () => environmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty,
+                EnsureLandingWorkspaceTab = workspace.EnsureLandingWorkspaceTab,
+                SelectInterfaceManagementSection = () =>
+                {
+                    _shellViewModel?.SelectInterfaceManagementSection();
+                },
+                HasHistory = () => historyPanel.HistoryItems.Count > 0
+            };
+        }
+
+        private ProjectWorkspaceShellViewModel CreateShell(ProjectTabWorkspaceContext workspaceContext)
+        {
+            var shell = new ProjectWorkspaceShellViewModel(
+                workspaceContext,
+                _hostContext);
+            _shellViewModel = shell;
+            return shell;
+        }
+
+        private ProjectSettingsShellViewModel CreateSettings()
+        {
+            return new ProjectSettingsShellViewModel(
+                () => _shellViewModel?.ShowProjectSettingsSection(),
+                () => _importViewModel?.DismissDialog(),
+                () => _shellViewModel?.IsProjectSettingsSection ?? false,
+                () => _project.Description,
+                _hostContext.SetStatusMessage,
+                _hostContext.NotifyShellState);
+        }
+
+        private ProjectWorkspaceCatalogViewModel CreateCatalog(
+            UseCasesPanelViewModel useCasesPanel,
+            ProjectWorkspaceTabsViewModel workspace)
+        {
+            return new ProjectWorkspaceCatalogViewModel(
+                _project.Id,
+                _requestCaseService,
+                _apiWorkspaceService,
+                useCasesPanel,
+                workspace,
+                () => _shellViewModel?.SelectInterfaceManagementSection(),
+                _hostContext.SetStatusMessage,
+                _hostContext.NotifyShellState,
+                () => _importViewModel?.LoadImportedDocumentsAsync(manageBusyState: false) ?? Task.CompletedTask);
+        }
+
+        private ProjectImportViewModel CreateImport(ProjectWorkspaceCatalogViewModel catalog)
+        {
+            var import = new ProjectImportViewModel(
+                _project.Id,
+                _apiWorkspaceService,
+                _filePickerService,
+                catalog.SyncImportedInterfacesAsync,
+                _hostContext.SetStatusMessage);
+            _importViewModel = import;
+            return import;
+        }
+
+        private ProjectRequestWorkflowViewModel CreateWorkflow(
+            ProjectWorkspaceTabsViewModel workspace,
+            RequestHistoryPanelViewModel historyPanel,
+            EnvironmentPanelViewModel environmentPanel,
+            ProjectWorkspaceCatalogViewModel catalog,
+            ProjectTabWorkspaceContext workspaceContext)
+        {
+            var workflow = new ProjectRequestWorkflowViewModel(
+                _project.Id,
+                _requestExecutionService,
+                _requestCaseService,
+                _requestHistoryService,
+                workspace,
+                historyPanel,
+                environmentPanel,
+                catalog,
+                workspaceContext,
+                workspaceTab =>
+                {
+                    _quickRequestSaveViewModel?.OpenDialogFor(workspaceTab);
+                },
+                _hostContext);
+            _workflowViewModel = workflow;
+            return workflow;
+        }
+
+        private ProjectQuickRequestSaveViewModel CreateQuickRequestSave(ProjectTabWorkspaceContext workspaceContext)
+        {
+            var quickRequestSave = new ProjectQuickRequestSaveViewModel(
+                workspaceContext,
+                (workspaceTab, requestNameOverride) => _workflowViewModel?.SaveQuickRequestAsync(workspaceTab, requestNameOverride) ?? Task.FromResult(false),
+                _hostContext);
+            _quickRequestSaveViewModel = quickRequestSave;
+            return quickRequestSave;
+        }
+
+        private ProjectTabSummaryViewModel CreateSummary(
+            EnvironmentPanelViewModel environmentPanel,
+            UseCasesPanelViewModel useCasesPanel,
+            RequestHistoryPanelViewModel historyPanel,
+            ProjectImportViewModel import)
+        {
+            return new ProjectTabSummaryViewModel(
+                () => _project,
+                () => environmentPanel.SelectedEnvironment,
+                _hostContext.GetActiveWorkspaceTab,
+                () => useCasesPanel.RequestCases,
+                () => historyPanel.HistoryItems,
+                () => environmentPanel.Environments.Count,
+                () => import.ImportedApiDocuments.Count);
+        }
+
+        private ProjectTabLifecycleCoordinator CreateLifecycle(
+            UseCasesPanelViewModel useCasesPanel,
+            EnvironmentPanelViewModel environmentPanel,
+            RequestHistoryPanelViewModel historyPanel,
+            ProjectImportViewModel import,
+            ProjectWorkspaceTabsViewModel workspace,
+            ProjectQuickRequestSaveViewModel quickRequestSave,
+            ProjectWorkspaceShellViewModel shell,
+            ProjectRequestEditorViewModel editor)
+        {
+            return new ProjectTabLifecycleCoordinator(
+                _project.Id,
+                () => _project.Name,
+                useCasesPanel,
+                environmentPanel,
+                historyPanel,
+                import,
+                workspace,
+                quickRequestSave,
+                shell,
+                editor,
+                _hostContext);
+        }
+    }
+
     private readonly ProjectWorkspaceItemViewModel _project;
     private readonly ProjectTabHostContext _hostContext;
     private bool _isAttached;
@@ -71,116 +299,17 @@ internal sealed class ProjectTabComposition : DisposableObject
         IFilePickerService filePickerService,
         ProjectTabHostContext hostContext)
     {
-        var environmentPanel = new EnvironmentPanelViewModel(environmentVariableService);
-        var useCasesPanel = new UseCasesPanelViewModel(requestCaseService);
-        var historyPanel = new RequestHistoryPanelViewModel(requestHistoryService);
-
-        ProjectImportViewModel? importViewModel = null;
-        ProjectQuickRequestSaveViewModel? quickRequestSaveViewModel = null;
-        ProjectRequestWorkflowViewModel? workflowViewModel = null;
-        ProjectWorkspaceShellViewModel? shellViewModel = null;
-
-        var workspace = new ProjectWorkspaceTabsViewModel(
-            () =>
-            {
-                shellViewModel?.SelectInterfaceManagementSection();
-            },
-            hostContext.SetStatusMessage);
-        var workspaceContext = new ProjectTabWorkspaceContext
-        {
-            GetActiveWorkspaceTab = hostContext.GetActiveWorkspaceTab,
-            GetFallbackWorkspaceTab = () => fallbackWorkspaceTab,
-            GetCurrentBaseUrl = () => environmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty,
-            EnsureLandingWorkspaceTab = workspace.EnsureLandingWorkspaceTab,
-            SelectInterfaceManagementSection = () =>
-            {
-                shellViewModel?.SelectInterfaceManagementSection();
-            },
-            HasHistory = () => historyPanel.HistoryItems.Count > 0
-        };
-        var shell = shellViewModel = new ProjectWorkspaceShellViewModel(
-            workspaceContext,
-            hostContext);
-        var editor = new ProjectRequestEditorViewModel(workspaceContext);
-        var settings = new ProjectSettingsShellViewModel(
-            () => shellViewModel?.ShowProjectSettingsSection(),
-            () => importViewModel?.DismissDialog(),
-            () => shellViewModel?.IsProjectSettingsSection ?? false,
-            () => project.Description,
-            hostContext.SetStatusMessage,
-            hostContext.NotifyShellState);
-        var catalog = new ProjectWorkspaceCatalogViewModel(
-            project.Id,
-            requestCaseService,
-            apiWorkspaceService,
-            useCasesPanel,
-            workspace,
-            () => shellViewModel?.SelectInterfaceManagementSection(),
-            hostContext.SetStatusMessage,
-            hostContext.NotifyShellState,
-            () => importViewModel?.LoadImportedDocumentsAsync(manageBusyState: false) ?? Task.CompletedTask);
-        var import = importViewModel = new ProjectImportViewModel(
-            project.Id,
-            apiWorkspaceService,
-            filePickerService,
-            catalog.SyncImportedInterfacesAsync,
-            hostContext.SetStatusMessage);
-        var workflow = workflowViewModel = new ProjectRequestWorkflowViewModel(
-            project.Id,
+        return new Builder(
+            project,
+            fallbackWorkspaceTab,
             requestExecutionService,
             requestCaseService,
             requestHistoryService,
-            workspace,
-            historyPanel,
-            environmentPanel,
-            catalog,
-            workspaceContext,
-            workspaceTab =>
-            {
-                quickRequestSaveViewModel?.OpenDialogFor(workspaceTab);
-            },
-            hostContext);
-        var quickRequestSave = quickRequestSaveViewModel = new ProjectQuickRequestSaveViewModel(
-            workspaceContext,
-            (workspaceTab, requestNameOverride) => workflowViewModel?.SaveQuickRequestAsync(workspaceTab, requestNameOverride) ?? Task.FromResult(false),
-            hostContext);
-        var summary = new ProjectTabSummaryViewModel(
-            () => project,
-            () => environmentPanel.SelectedEnvironment,
-            hostContext.GetActiveWorkspaceTab,
-            () => useCasesPanel.RequestCases,
-            () => historyPanel.HistoryItems,
-            () => environmentPanel.Environments.Count,
-            () => import.ImportedApiDocuments.Count);
-        var lifecycle = new ProjectTabLifecycleCoordinator(
-            project.Id,
-            () => project.Name,
-            useCasesPanel,
-            environmentPanel,
-            historyPanel,
-            import,
-            workspace,
-            quickRequestSave,
-            shell,
-            editor,
-            hostContext);
-
-        return new ProjectTabComposition(
-            project,
-            environmentPanel,
-            useCasesPanel,
-            historyPanel,
-            workspace,
-            shell,
-            editor,
-            settings,
-            catalog,
-            import,
-            workflow,
-            quickRequestSave,
-            summary,
-            lifecycle,
-            hostContext);
+            environmentVariableService,
+            apiWorkspaceService,
+            filePickerService,
+            hostContext)
+            .Build();
     }
 
     public void Attach()
