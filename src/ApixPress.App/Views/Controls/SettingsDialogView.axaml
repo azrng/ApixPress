@@ -7,7 +7,7 @@
              x:DataType="vm:MainWindowViewModel"
              mc:Ignorable="d">
   <Border Classes="SettingsDialogBackdrop"
-          IsVisible="{Binding IsSettingsDialogOpen}">
+          IsVisible="{Binding ShellPanels.IsSettingsDialogOpen}">
     <Grid HorizontalAlignment="Center"
           VerticalAlignment="Center">
       <Border Classes="SettingsDialogCard">
@@ -20,13 +20,13 @@
                <TextBlock Classes="CaptionText"
                           Text="先保留通用和关于两个分组。" />
                <ToggleButton Classes="SettingsNavButton"
-                             Command="{Binding SettingsCenter.ShowGeneralSettingsCommand}"
-                             IsChecked="{Binding SettingsCenter.ShowGeneralSettingsSection, Mode=OneWay}">
+                             Command="{Binding ShellPanels.SettingsCenter.ShowGeneralSettingsCommand}"
+                             IsChecked="{Binding ShellPanels.SettingsCenter.ShowGeneralSettingsSection, Mode=OneWay}">
                  <TextBlock Text="通用" />
                </ToggleButton>
                <ToggleButton Classes="SettingsNavButton"
-                             Command="{Binding SettingsCenter.ShowAboutSettingsCommand}"
-                             IsChecked="{Binding SettingsCenter.ShowAboutSettingsSection, Mode=OneWay}">
+                             Command="{Binding ShellPanels.SettingsCenter.ShowAboutSettingsCommand}"
+                             IsChecked="{Binding ShellPanels.SettingsCenter.ShowAboutSettingsSection, Mode=OneWay}">
                  <TextBlock Text="关于" />
                </ToggleButton>
              </StackPanel>
@@ -39,20 +39,20 @@
             <Grid ColumnDefinitions="*,Auto">
               <StackPanel Spacing="2">
                 <TextBlock Classes="PageTitle"
-                           Text="{Binding SettingsCenter.CurrentSettingsTitle}" />
+                           Text="{Binding ShellPanels.SettingsCenter.CurrentSettingsTitle}" />
                 <TextBlock Classes="CaptionText"
                            Text="设置会自动保存到本地工作目录，并在后续请求中生效。" />
               </StackPanel>
               <Button Grid.Column="1"
                       Classes="DialogIconButton"
-                      Command="{Binding CloseSettingsDialogCommand}"
+                      Command="{Binding ShellPanels.CloseSettingsDialogCommand}"
                       Content="×" />
             </Grid>
 
             <ScrollViewer Grid.Row="1">
               <StackPanel>
                 <Grid RowDefinitions="Auto,Auto"
-                      IsVisible="{Binding SettingsCenter.ShowGeneralSettingsSection}"
+                      IsVisible="{Binding ShellPanels.SettingsCenter.ShowGeneralSettingsSection}"
                       RowSpacing="{StaticResource Space.4}">
                   <Border Classes="SettingsPageSection">
                     <Grid ColumnDefinitions="*,Auto"
@@ -68,7 +68,7 @@
                                      Minimum="0"
                                      Maximum="120000"
                                      Increment="1000"
-                                     Value="{Binding SettingsCenter.RequestTimeoutMilliseconds}" />
+                                     Value="{Binding ShellPanels.SettingsCenter.RequestTimeoutMilliseconds}" />
                     </Grid>
                   </Border>
 
@@ -84,7 +84,7 @@
                                      Text="关闭后会忽略证书校验，适合本地或自签名环境调试。" />
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
-                                      IsChecked="{Binding SettingsCenter.ValidateSslCertificate}" />
+                                      IsChecked="{Binding ShellPanels.SettingsCenter.ValidateSslCertificate}" />
                       </Grid>
                     </Border>
                     <Border Classes="SettingsPageSection">
@@ -97,7 +97,7 @@
                                      Text="开启后，请求会自动处理 3xx 跳转响应。" />
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
-                                      IsChecked="{Binding SettingsCenter.AutoFollowRedirects}" />
+                                      IsChecked="{Binding ShellPanels.SettingsCenter.AutoFollowRedirects}" />
                       </Grid>
                     </Border>
                     <Border Classes="SettingsPageSection">
@@ -110,7 +110,7 @@
                                      Text="开启后会自动补充 no-cache / no-store 请求头。" />
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
-                                      IsChecked="{Binding SettingsCenter.SendNoCacheHeader}" />
+                                      IsChecked="{Binding ShellPanels.SettingsCenter.SendNoCacheHeader}" />
                       </Grid>
                     </Border>
                     <Border Classes="SettingsPageSection">
@@ -123,7 +123,7 @@
                                      Text="当前先保存为本地偏好项，后续会继续扩展到更完整的调试输出。" />
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
-                                      IsChecked="{Binding SettingsCenter.EnableVerboseLogging}" />
+                                      IsChecked="{Binding ShellPanels.SettingsCenter.EnableVerboseLogging}" />
                       </Grid>
                     </Border>
                     <Border Classes="SettingsPageSection">
@@ -136,15 +136,15 @@
                                      Text="控制是否在设置中心展示 mock 更新提示。" />
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1"
-                                      IsChecked="{Binding SettingsCenter.EnableUpdateReminder}" />
+                                      IsChecked="{Binding ShellPanels.SettingsCenter.EnableUpdateReminder}" />
                       </Grid>
                     </Border>
                     <TextBlock Classes="CaptionText"
-                               Text="{Binding SettingsCenter.GeneralSettingsSaveStatus}" />
+                               Text="{Binding ShellPanels.SettingsCenter.GeneralSettingsSaveStatus}" />
                   </StackPanel>
                 </Grid>
 
-                <Grid IsVisible="{Binding SettingsCenter.ShowAboutSettingsSection}">
+                <Grid IsVisible="{Binding ShellPanels.SettingsCenter.ShowAboutSettingsSection}">
                   <StackPanel Spacing="{StaticResource Space.4}">
                     <Border Classes="AboutHeroCard">
                       <Grid ColumnDefinitions="*,260"
@@ -158,11 +158,11 @@
                           <StackPanel Orientation="Horizontal"
                                       Spacing="{StaticResource Space.2}">
                             <Button Classes="PrimaryButton"
-                                    Content="{Binding SettingsCenter.CheckForUpdatesButtonText}"
-                                    Command="{Binding SettingsCenter.CheckForUpdatesCommand}" />
+                                    Content="{Binding ShellPanels.SettingsCenter.CheckForUpdatesButtonText}"
+                                    Command="{Binding ShellPanels.SettingsCenter.CheckForUpdatesCommand}" />
                             <Border Classes="VersionTag">
                               <TextBlock Classes="CaptionText"
-                                         Text="{Binding SettingsCenter.UpdateChannelName}" />
+                                         Text="{Binding ShellPanels.SettingsCenter.UpdateChannelName}" />
                             </Border>
                           </StackPanel>
                         </StackPanel>
@@ -175,7 +175,7 @@
                                          Text="当前版本" />
                               <TextBlock Grid.Column="1"
                                          Classes="AboutMetaValue"
-                                         Text="{Binding SettingsCenter.CurrentAppVersion}" />
+                                         Text="{Binding ShellPanels.SettingsCenter.CurrentAppVersion}" />
                             </Grid>
                             <Grid Grid.Row="1"
                                   ColumnDefinitions="*,Auto">
@@ -183,7 +183,7 @@
                                          Text="最新版本" />
                               <TextBlock Grid.Column="1"
                                          Classes="AboutMetaValue"
-                                         Text="{Binding SettingsCenter.LatestAvailableVersion}" />
+                                         Text="{Binding ShellPanels.SettingsCenter.LatestAvailableVersion}" />
                             </Grid>
                             <Grid Grid.Row="2"
                                   ColumnDefinitions="*,Auto">
@@ -191,7 +191,7 @@
                                          Text="更新渠道" />
                               <TextBlock Grid.Column="1"
                                          Classes="AboutMetaValue"
-                                         Text="{Binding SettingsCenter.UpdateChannelName}" />
+                                         Text="{Binding ShellPanels.SettingsCenter.UpdateChannelName}" />
                             </Grid>
                           </Grid>
                         </Border>
@@ -202,9 +202,9 @@
                         <TextBlock Classes="SettingsGroupTitle"
                                    Text="更新状态" />
                         <TextBlock Classes="CaptionText"
-                                   Text="{Binding SettingsCenter.AboutUpdateStatus}" />
+                                   Text="{Binding ShellPanels.SettingsCenter.AboutUpdateStatus}" />
                         <TextBlock Classes="CaptionText"
-                                   Text="{Binding SettingsCenter.LastUpdateCheckText, StringFormat='最近检查：{0}'}" />
+                                   Text="{Binding ShellPanels.SettingsCenter.LastUpdateCheckText, StringFormat='最近检查：{0}'}" />
                       </StackPanel>
                     </Border>
                     <Border Classes="SettingsPageSection">
@@ -214,7 +214,7 @@
                         <TextBlock Classes="CaptionText"
                                    Text="{Binding AppDisplayName, StringFormat='软件名称：{0}'}" />
                         <TextBlock Classes="CaptionText"
-                                   Text="{Binding SettingsCenter.CurrentAppVersion, StringFormat='版本号：{0}'}" />
+                                   Text="{Binding ShellPanels.SettingsCenter.CurrentAppVersion, StringFormat='版本号：{0}'}" />
                         <TextBlock Classes="CaptionText"
                                    Text="{Binding RuntimeStackText, StringFormat='技术栈：{0}'}" />
                         <TextBlock Classes="CaptionText"

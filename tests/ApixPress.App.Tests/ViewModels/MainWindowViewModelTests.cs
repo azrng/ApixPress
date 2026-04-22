@@ -188,15 +188,31 @@ public sealed partial class MainWindowViewModelTests
     {
         var viewModel = CreateViewModel();
 
-        Assert.True(viewModel.HasUnreadNotifications);
+        Assert.True(viewModel.ShellPanels.HasUnreadNotifications);
 
-        viewModel.ToggleNotificationCenterCommand.Execute(null);
+        viewModel.ShellPanels.ToggleNotificationCenterCommand.Execute(null);
 
-        Assert.True(viewModel.IsNotificationCenterOpen);
-        Assert.False(viewModel.IsSettingsDialogOpen);
-        Assert.False(viewModel.HasUnreadNotifications);
-        Assert.All(viewModel.Notifications, item => Assert.False(item.IsUnread));
+        Assert.True(viewModel.ShellPanels.IsNotificationCenterOpen);
+        Assert.False(viewModel.ShellPanels.IsSettingsDialogOpen);
+        Assert.False(viewModel.ShellPanels.HasUnreadNotifications);
+        Assert.All(viewModel.ShellPanels.Notifications, item => Assert.False(item.IsUnread));
         Assert.Equal("这里展示近期动态和提醒。", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public void OpenSettingsDialogCommand_ShouldCloseNotificationCenterAndResetToGeneralSection()
+    {
+        var viewModel = CreateViewModel();
+        viewModel.SettingsCenter.ShowAboutSettingsCommand.Execute(null);
+        viewModel.ShellPanels.ToggleNotificationCenterCommand.Execute(null);
+
+        viewModel.ShellPanels.OpenSettingsDialogCommand.Execute(null);
+
+        Assert.True(viewModel.ShellPanels.IsSettingsDialogOpen);
+        Assert.False(viewModel.ShellPanels.IsNotificationCenterOpen);
+        Assert.True(viewModel.SettingsCenter.ShowGeneralSettingsSection);
+        Assert.False(viewModel.SettingsCenter.ShowAboutSettingsSection);
+        Assert.Equal("可在这里调整通用设置和查看版本信息。", viewModel.StatusMessage);
     }
 
     [Fact]

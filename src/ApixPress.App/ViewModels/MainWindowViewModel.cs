@@ -16,8 +16,7 @@ public partial class MainWindowViewModel : ViewModelBase
         public required UseCasesPanelViewModel FallbackUseCasesPanel { get; init; }
         public required RequestHistoryPanelViewModel FallbackHistoryPanel { get; init; }
         public required ProjectPanelViewModel ProjectPanel { get; init; }
-        public required ObservableCollection<NotificationItemViewModel> Notifications { get; init; }
-        public required MainWindowSettingsViewModel SettingsCenter { get; init; }
+        public required MainWindowShellPanelsViewModel ShellPanels { get; init; }
     }
 
     private sealed class Builder
@@ -32,6 +31,7 @@ public partial class MainWindowViewModel : ViewModelBase
         private readonly string _currentAppVersion;
         private readonly Action<string> _setStatusMessage;
         private readonly Action _notifyShellState;
+        private readonly Func<string> _getDefaultStatusMessage;
 
         public Builder(
             IEnvironmentVariableService environmentVariableService,
@@ -43,7 +43,8 @@ public partial class MainWindowViewModel : ViewModelBase
             IWindowHostService windowHostService,
             string currentAppVersion,
             Action<string> setStatusMessage,
-            Action notifyShellState)
+            Action notifyShellState,
+            Func<string> getDefaultStatusMessage)
         {
             _environmentVariableService = environmentVariableService;
             _requestCaseService = requestCaseService;
@@ -55,6 +56,7 @@ public partial class MainWindowViewModel : ViewModelBase
             _currentAppVersion = currentAppVersion;
             _setStatusMessage = setStatusMessage;
             _notifyShellState = notifyShellState;
+            _getDefaultStatusMessage = getDefaultStatusMessage;
         }
 
         public ConstructionResult Build()
@@ -67,14 +69,17 @@ public partial class MainWindowViewModel : ViewModelBase
                 FallbackUseCasesPanel = new UseCasesPanelViewModel(_requestCaseService),
                 FallbackHistoryPanel = new RequestHistoryPanelViewModel(_requestHistoryService),
                 ProjectPanel = new ProjectPanelViewModel(_projectWorkspaceService),
-                Notifications = CreateNotifications(),
-                SettingsCenter = new MainWindowSettingsViewModel(
-                    _appShellSettingsService,
-                    _applicationUpdateService,
-                    _windowHostService,
-                    _currentAppVersion,
+                ShellPanels = new MainWindowShellPanelsViewModel(
+                    new MainWindowSettingsViewModel(
+                        _appShellSettingsService,
+                        _applicationUpdateService,
+                        _windowHostService,
+                        _currentAppVersion,
+                        _setStatusMessage,
+                        _notifyShellState),
+                    CreateNotifications(),
                     _setStatusMessage,
-                    _notifyShellState)
+                    _getDefaultStatusMessage)
             };
         }
     }
@@ -121,7 +126,8 @@ public partial class MainWindowViewModel : ViewModelBase
             windowHostService,
             ResolveCurrentAppVersion(),
             message => StatusMessage = message,
-            NotifyShellState)
+            NotifyShellState,
+            () => ActiveProjectTab?.StatusMessage ?? BrowserStatusText)
             .Build();
 
         _fallbackConfigTab = construction.FallbackConfigTab;
@@ -131,16 +137,15 @@ public partial class MainWindowViewModel : ViewModelBase
         _fallbackHistoryPanel = construction.FallbackHistoryPanel;
 
         ProjectPanel = construction.ProjectPanel;
-        Notifications = construction.Notifications;
-        SettingsCenter = construction.SettingsCenter;
+        ShellPanels = construction.ShellPanels;
 
         AttachShellEventHandlers();
     }
 
     public ProjectPanelViewModel ProjectPanel { get; }
     public ObservableCollection<ProjectTabViewModel> ProjectTabs { get; } = [];
-    public ObservableCollection<NotificationItemViewModel> Notifications { get; }
-    public MainWindowSettingsViewModel SettingsCenter { get; }
+    public MainWindowShellPanelsViewModel ShellPanels { get; }
+    public MainWindowSettingsViewModel SettingsCenter => ShellPanels.SettingsCenter;
 
     public RequestConfigTabViewModel ConfigTab => ActiveProjectTab?.ConfigTab ?? _fallbackConfigTab;
     public ResponseSectionViewModel ResponseSection => ActiveProjectTab?.ResponseSection ?? _fallbackResponseSection;
@@ -161,7 +166,6 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool ShowProjectImportDialog => ActiveProjectTab?.Import.IsDialogOpen ?? false;
     public bool ShowProjectImportOverwriteConfirmDialog => ActiveProjectTab?.Import.IsOverwriteConfirmDialogOpen ?? false;
     public bool ShowWorkspaceDeleteConfirmDialog => ActiveProjectTab?.Catalog.IsDeleteConfirmDialogOpen ?? false;
-    public bool HasUnreadNotifications => Notifications.Any(item => item.IsUnread);
 
     public string AppDisplayName { get; } = "ApixPress";
     public string CurrentProjectName => ActiveProjectTab?.Project.Name ?? "项目列表";
@@ -189,12 +193,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool isEnvironmentManagerOpen;
 
     [ObservableProperty]
-    private bool isSettingsDialogOpen;
-
-    [ObservableProperty]
-    private bool isNotificationCenterOpen;
-
-    [ObservableProperty]
     private bool isWindowMaximized;
 
     protected override void DisposeManaged()
@@ -209,7 +207,7 @@ public partial class MainWindowViewModel : ViewModelBase
         ProjectTabs.Clear();
         ActiveProjectTab = null;
         ProjectPanel.Dispose();
-        SettingsCenter.Dispose();
+        ShellPanels.Dispose();
         _fallbackEnvironmentPanel.Dispose();
         _fallbackUseCasesPanel.Dispose();
         _fallbackHistoryPanel.Dispose();
@@ -221,11 +219,6 @@ public partial class MainWindowViewModel : ViewModelBase
         ProjectPanel.ProjectCreated += OnProjectCreated;
         ProjectPanel.PropertyChanged += OnProjectPanelPropertyChanged;
         ProjectPanel.Projects.CollectionChanged += OnProjectsCollectionChanged;
-
-        foreach (var item in Notifications)
-        {
-            item.PropertyChanged += OnNotificationPropertyChanged;
-        }
     }
 
     private void DetachShellEventHandlers()
@@ -234,11 +227,6 @@ public partial class MainWindowViewModel : ViewModelBase
         ProjectPanel.ProjectCreated -= OnProjectCreated;
         ProjectPanel.PropertyChanged -= OnProjectPanelPropertyChanged;
         ProjectPanel.Projects.CollectionChanged -= OnProjectsCollectionChanged;
-
-        foreach (var item in Notifications)
-        {
-            item.PropertyChanged -= OnNotificationPropertyChanged;
-        }
     }
 
     private static string ResolveCurrentAppVersion()

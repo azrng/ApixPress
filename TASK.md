@@ -90,6 +90,7 @@
 | T053 | 统一组合对象释放基类 | 为非 ViewModel 的组合对象补齐统一 `Dispose` 模板，先从 `ProjectTabComposition` 收口，避免组合根继续手写释放幂等与已释放守卫 | 阶段 2 | Codex | DONE | P1 | 2026-04-22 14:18:00 |
 | T054 | 收口项目页组合根组装方法 | 将 `ProjectTabComposition.Create()` 的大体量组装逻辑改为显式 builder 编排，降低组合根持续膨胀风险并保持现有行为不变 | 阶段 2 | Codex | DONE | P1 | 2026-04-22 14:52:00 |
 | T055 | 收口主窗口构造组装职责 | 将 `MainWindowViewModel` 构造函数中的 fallback 创建、设置中心装配和事件订阅初始化拆成显式 builder + 接线步骤，降低主窗口壳层构造复杂度 | 阶段 2 | Codex | DONE | P1 | 2026-04-22 15:18:00 |
+| T056 | 收口主窗口通知与设置壳层职责 | 将 `MainWindowViewModel` 中的通知中心开关、通知集合订阅与设置弹窗显隐协调抽成独立子 ViewModel，减少主窗口壳层状态堆叠并补齐回归验证 | 阶段 2 | Codex | DONE | P1 | 2026-04-22 17:59:37 |
 --- 
 
 ## 归档索引

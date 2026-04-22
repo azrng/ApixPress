@@ -7,7 +7,7 @@
              x:DataType="vm:MainWindowViewModel"
              mc:Ignorable="d">
   <Border Classes="NotificationFlyoutCard"
-          IsVisible="{Binding IsNotificationCenterOpen}"
+          IsVisible="{Binding ShellPanels.IsNotificationCenterOpen}"
           HorizontalAlignment="Right"
           VerticalAlignment="Top"
           Margin="0,16,160,0">
@@ -22,12 +22,12 @@
         </StackPanel>
         <Button Grid.Column="1"
                 Classes="DialogIconButton"
-                Command="{Binding MarkAllNotificationsReadCommand}"
+                Command="{Binding ShellPanels.MarkAllNotificationsReadCommand}"
                 Content="全部已读" />
       </Grid>
 
       <ItemsControl Grid.Row="1"
-                    ItemsSource="{Binding Notifications}">
+                    ItemsSource="{Binding ShellPanels.Notifications}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:NotificationItemViewModel">
             <Border Classes="NotificationItemCard">

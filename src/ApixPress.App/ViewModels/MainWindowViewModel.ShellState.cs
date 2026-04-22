@@ -71,19 +71,6 @@ public partial class MainWindowViewModel
         }
     }
 
-    private void OnNotificationPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (IsDisposed)
-        {
-            return;
-        }
-
-        if (e.PropertyName == nameof(NotificationItemViewModel.IsUnread))
-        {
-            NotifyShellState();
-        }
-    }
-
     private void NotifyShellState()
     {
         if (IsDisposed)
@@ -103,7 +90,6 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(ShowProjectImportDialog));
         OnPropertyChanged(nameof(ShowProjectImportOverwriteConfirmDialog));
         OnPropertyChanged(nameof(ShowWorkspaceDeleteConfirmDialog));
-        OnPropertyChanged(nameof(HasUnreadNotifications));
         OnPropertyChanged(nameof(CurrentProjectName));
         OnPropertyChanged(nameof(CurrentProjectSummary));
         OnPropertyChanged(nameof(CurrentEnvironmentLabel));

@@ -102,13 +102,13 @@
                   Data="M12,5 A7,7 0 1 0 19,12 M19,5 L19,9 L15,9" />
           </Button>
           <Button Classes="ShellIconButton"
-                  Command="{Binding OpenSettingsDialogCommand}"
+                  Command="{Binding ShellPanels.OpenSettingsDialogCommand}"
                   ToolTip.Tip="设置">
             <Path Classes="ShellIconPath"
                   Data="M12,8.5 A3.5,3.5 0 1 0 12,15.5 A3.5,3.5 0 1 0 12,8.5 M12,3 L13.2,3.3 L13.8,5 L15.5,5.5 L17,4.7 L18.3,6 L17.5,7.5 L18,9.2 L19.7,9.8 L20,11 L18.3,12.2 L18,13.8 L19.5,15 L18.3,16.3 L16.8,15.5 L15.2,16 L14.5,17.7 L13.3,18 L12,16.7 L10.7,18 L9.5,17.7 L8.8,16 L7.2,15.5 L5.7,16.3 L4.5,15 L6,13.8 L5.7,12.2 L4,11 L4.3,9.8 L6,9.2 L6.5,7.5 L5.7,6 L7,4.7 L8.5,5.5 L10.2,5 L10.8,3.3 Z" />
           </Button>
           <Button Classes="ShellIconButton"
-                  Command="{Binding ToggleNotificationCenterCommand}"
+                  Command="{Binding ShellPanels.ToggleNotificationCenterCommand}"
                   ToolTip.Tip="通知">
             <Grid>
               <Path Classes="ShellIconPath"
@@ -118,7 +118,7 @@
                       Classes="NotificationDot"
                       HorizontalAlignment="Right"
                       VerticalAlignment="Top"
-                      IsVisible="{Binding HasUnreadNotifications}" />
+                      IsVisible="{Binding ShellPanels.HasUnreadNotifications}" />
             </Grid>
           </Button>
         </StackPanel>

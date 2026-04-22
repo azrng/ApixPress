@@ -7,47 +7,24 @@ public partial class MainWindowViewModel
     [RelayCommand]
     private void OpenSettingsDialog()
     {
-        SettingsCenter.SelectGeneralSection();
-        IsSettingsDialogOpen = true;
-        IsNotificationCenterOpen = false;
-        StatusMessage = "可在这里调整通用设置和查看版本信息。";
-        NotifyShellState();
+        ShellPanels.OpenSettingsDialogCommand.Execute(null);
     }
 
     [RelayCommand]
     private void CloseSettingsDialog()
     {
-        IsSettingsDialogOpen = false;
-        StatusMessage = ActiveProjectTab?.StatusMessage ?? BrowserStatusText;
-        NotifyShellState();
+        ShellPanels.CloseSettingsDialogCommand.Execute(null);
     }
 
     [RelayCommand]
     private void ToggleNotificationCenter()
     {
-        IsNotificationCenterOpen = !IsNotificationCenterOpen;
-        if (IsNotificationCenterOpen)
-        {
-            IsSettingsDialogOpen = false;
-            MarkAllNotificationsRead();
-            StatusMessage = "这里展示近期动态和提醒。";
-        }
-        else
-        {
-            StatusMessage = ActiveProjectTab?.StatusMessage ?? BrowserStatusText;
-        }
-
-        NotifyShellState();
+        ShellPanels.ToggleNotificationCenterCommand.Execute(null);
     }
 
     [RelayCommand]
     private void MarkAllNotificationsRead()
     {
-        foreach (var item in Notifications)
-        {
-            item.IsUnread = false;
-        }
-
-        NotifyShellState();
+        ShellPanels.MarkAllNotificationsReadCommand.Execute(null);
     }
 }
