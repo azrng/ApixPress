@@ -13,7 +13,7 @@ public partial class MainWindowViewModel
 
         _initialized = true;
         IsBusy = true;
-        await LoadShellSettingsAsync();
+        await SettingsCenter.InitializeAsync();
         await ProjectPanel.LoadProjectsAsync(autoSelect: false);
         StatusMessage = BrowserStatusText;
         IsBusy = false;

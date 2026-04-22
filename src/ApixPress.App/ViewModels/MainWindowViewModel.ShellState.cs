@@ -73,14 +73,11 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(ShowProjectImportDialog));
         OnPropertyChanged(nameof(ShowProjectImportOverwriteConfirmDialog));
         OnPropertyChanged(nameof(ShowWorkspaceDeleteConfirmDialog));
-        OnPropertyChanged(nameof(ShowGeneralSettingsSection));
-        OnPropertyChanged(nameof(ShowAboutSettingsSection));
         OnPropertyChanged(nameof(HasUnreadNotifications));
         OnPropertyChanged(nameof(CurrentProjectName));
         OnPropertyChanged(nameof(CurrentProjectSummary));
         OnPropertyChanged(nameof(CurrentEnvironmentLabel));
         OnPropertyChanged(nameof(BrowserStatusText));
-        OnPropertyChanged(nameof(CurrentSettingsTitle));
         OnPropertyChanged(nameof(WindowMaximizeGlyph));
     }
 

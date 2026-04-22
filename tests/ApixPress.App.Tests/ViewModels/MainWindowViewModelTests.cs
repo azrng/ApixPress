@@ -31,12 +31,12 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.InitializeAsync();
 
         Assert.Equal(2, viewModel.ProjectPanel.Projects.Count);
-        Assert.Equal(45000, viewModel.RequestTimeoutMilliseconds);
-        Assert.False(viewModel.ValidateSslCertificate);
-        Assert.False(viewModel.AutoFollowRedirects);
-        Assert.True(viewModel.SendNoCacheHeader);
-        Assert.True(viewModel.EnableVerboseLogging);
-        Assert.False(viewModel.EnableUpdateReminder);
+        Assert.Equal(45000, viewModel.SettingsCenter.RequestTimeoutMilliseconds);
+        Assert.False(viewModel.SettingsCenter.ValidateSslCertificate);
+        Assert.False(viewModel.SettingsCenter.AutoFollowRedirects);
+        Assert.True(viewModel.SettingsCenter.SendNoCacheHeader);
+        Assert.True(viewModel.SettingsCenter.EnableVerboseLogging);
+        Assert.False(viewModel.SettingsCenter.EnableUpdateReminder);
         Assert.Equal(viewModel.BrowserStatusText, viewModel.StatusMessage);
         Assert.True(viewModel.IsHomeTabActive);
         Assert.False(viewModel.ShowProjectListEmptyState);
@@ -79,14 +79,14 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(applicationUpdateService: updateService);
         await viewModel.InitializeAsync();
 
-        await viewModel.CheckForUpdatesCommand.ExecuteAsync(null);
+        await viewModel.SettingsCenter.CheckForUpdatesCommand.ExecuteAsync(null);
 
         Assert.Equal(1, updateService.CheckCalls);
         Assert.Equal(0, updateService.StartCalls);
-        Assert.Equal("1.0.0.0", viewModel.LatestAvailableVersion);
-        Assert.Equal("当前已是最新版本 1.0.0.0。", viewModel.AboutUpdateStatus);
-        Assert.Equal(viewModel.AboutUpdateStatus, viewModel.StatusMessage);
-        Assert.NotEqual("尚未检查", viewModel.LastUpdateCheckText);
+        Assert.Equal("1.0.0.0", viewModel.SettingsCenter.LatestAvailableVersion);
+        Assert.Equal("当前已是最新版本 1.0.0.0。", viewModel.SettingsCenter.AboutUpdateStatus);
+        Assert.Equal(viewModel.SettingsCenter.AboutUpdateStatus, viewModel.StatusMessage);
+        Assert.NotEqual("尚未检查", viewModel.SettingsCenter.LastUpdateCheckText);
     }
 
     [Fact]
@@ -104,11 +104,11 @@ public sealed partial class MainWindowViewModelTests
         var viewModel = CreateViewModel(applicationUpdateService: updateService);
         await viewModel.InitializeAsync();
 
-        await viewModel.CheckForUpdatesCommand.ExecuteAsync(null);
+        await viewModel.SettingsCenter.CheckForUpdatesCommand.ExecuteAsync(null);
 
         Assert.Equal(1, updateService.CheckCalls);
         Assert.Equal(1, updateService.StartCalls);
-        Assert.Equal("1.1.0.0", viewModel.LatestAvailableVersion);
+        Assert.Equal("1.1.0.0", viewModel.SettingsCenter.LatestAvailableVersion);
     }
 
     [Fact]
