@@ -352,3 +352,6 @@ docs/
 .dotnet-cli
 .dotnet
 NUL
+
+# 本地工具生成的 NuGet 配置目录
+src/ApixPress.App/.appdata/
