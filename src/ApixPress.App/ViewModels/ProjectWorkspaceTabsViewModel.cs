@@ -413,5 +413,6 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         tab.ConfigTab.QueryParameters.CollectionChanged -= OnWorkspaceConfigCollectionChanged;
         tab.ConfigTab.Headers.CollectionChanged -= OnWorkspaceConfigCollectionChanged;
         tab.ConfigTab.FormFields.CollectionChanged -= OnWorkspaceConfigCollectionChanged;
+        tab.Dispose();
     }
 }

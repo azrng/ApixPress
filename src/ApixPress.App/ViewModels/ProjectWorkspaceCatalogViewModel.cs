@@ -105,6 +105,10 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     protected override void DisposeManaged()
     {
         _useCasesPanel.RequestCases.CollectionChanged -= OnSavedRequestsCollectionChanged;
+        DisposeExplorerItems(InterfaceTreeItems);
+        DisposeExplorerItems(QuickRequestTreeItems);
+        InterfaceTreeItems.Clear();
+        QuickRequestTreeItems.Clear();
     }
 
     public void LoadWorkspaceItem(ExplorerItemViewModel? item)
@@ -425,7 +429,17 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 
         while (target.Count > desiredItems.Count)
         {
+            var removedItem = target[^1];
             target.RemoveAt(target.Count - 1);
+            removedItem.Dispose();
+        }
+    }
+
+    private static void DisposeExplorerItems(IEnumerable<ExplorerItemViewModel> items)
+    {
+        foreach (var item in items)
+        {
+            item.Dispose();
         }
     }
 

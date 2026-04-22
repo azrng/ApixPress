@@ -10,13 +10,7 @@ public partial class ExplorerItemViewModel : ViewModelBase
 {
     public ExplorerItemViewModel()
     {
-        Children.CollectionChanged += (_, _) =>
-        {
-            OnPropertyChanged(nameof(HasChildren));
-            OnPropertyChanged(nameof(IsClickable));
-            OnPropertyChanged(nameof(CanDelete));
-            OnPropertyChanged(nameof(ShowTrailingDot));
-        };
+        Children.CollectionChanged += OnChildrenCollectionChanged;
     }
 
     public string NodeKey { get; set; } = string.Empty;
@@ -101,6 +95,16 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public ApiEndpointDto? Endpoint { get; set; }
 
+    protected override void DisposeManaged()
+    {
+        Children.CollectionChanged -= OnChildrenCollectionChanged;
+
+        foreach (var child in Children.ToList())
+        {
+            child.Dispose();
+        }
+    }
+
     public void SyncFrom(ExplorerItemViewModel source)
     {
         NodeKey = source.NodeKey;
@@ -116,6 +120,19 @@ public partial class ExplorerItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanDelete));
         OnPropertyChanged(nameof(MethodBadgeText));
         OnPropertyChanged(nameof(MethodBadgeClass));
+    }
+
+    private void OnChildrenCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        OnPropertyChanged(nameof(HasChildren));
+        OnPropertyChanged(nameof(IsClickable));
+        OnPropertyChanged(nameof(CanDelete));
+        OnPropertyChanged(nameof(ShowTrailingDot));
     }
 
     partial void OnCanLoadChanged(bool value)

@@ -139,6 +139,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     protected override void DisposeManaged()
     {
         _composition.Dispose();
+        _fallbackWorkspaceTab.Dispose();
         ShellStateChanged = null;
     }
 

@@ -230,8 +230,18 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         return ResolveGeneratedRequestName();
     }
 
+    protected override void DisposeManaged()
+    {
+        ConfigTab.PropertyChanged -= OnConfigTabPropertyChanged;
+    }
+
     private void OnConfigTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (IsDisposed)
+        {
+            return;
+        }
+
         if (e.PropertyName is nameof(RequestConfigTabViewModel.RequestName)
             or nameof(RequestConfigTabViewModel.RequestDescription))
         {
