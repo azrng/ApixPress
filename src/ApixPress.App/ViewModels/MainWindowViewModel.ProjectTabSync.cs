@@ -26,12 +26,22 @@ public partial class MainWindowViewModel
 
     private void ActivateProjectTabCore(ProjectTabViewModel tab)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         ActiveProjectTab = tab;
         IsEnvironmentManagerOpen = false;
     }
 
     private void OnProjectsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         SyncProjectTabsWithProjectList();
     }
 
@@ -78,6 +88,11 @@ public partial class MainWindowViewModel
 
     private void OnProjectTabsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         OnPropertyChanged(nameof(HasProjectTabs));
         NotifyShellState();
     }

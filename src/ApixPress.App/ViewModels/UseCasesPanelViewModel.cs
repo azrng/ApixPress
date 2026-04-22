@@ -8,11 +8,12 @@ using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class UseCasesPanelViewModel : ViewModelBase
+public partial class UseCasesPanelViewModel : ViewModelBase, IDisposable
 {
     private readonly IRequestCaseService _requestCaseService;
     private CancellationTokenSource? _loadCasesCancellationTokenSource;
     private string _currentProjectId = string.Empty;
+    private bool _isDisposed;
 
     public event Action<RequestSnapshotDto>? CaseApplied;
 
@@ -37,6 +38,18 @@ public partial class UseCasesPanelViewModel : ViewModelBase
 
     public ObservableCollection<string> CaseTags { get; } = [];
 
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadCasesCancellationTokenSource);
+        CaseApplied = null;
+    }
+
     public void SetProjectContext(string projectId)
     {
         _currentProjectId = projectId;
@@ -51,6 +64,11 @@ public partial class UseCasesPanelViewModel : ViewModelBase
 
     public async Task LoadCasesAsync()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadCasesCancellationTokenSource).Token;
         try
         {

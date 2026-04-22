@@ -7,6 +7,11 @@ public partial class MainWindowViewModel
 {
     partial void OnActiveProjectTabChanged(ProjectTabViewModel? oldValue, ProjectTabViewModel? newValue)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         if (oldValue is not null)
         {
             oldValue.IsActive = false;
@@ -23,6 +28,11 @@ public partial class MainWindowViewModel
 
     private void OnProjectCreated()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         IsCreateProjectDialogOpen = false;
         StatusMessage = "项目已创建，可在首页卡片中继续打开为新标签页。";
         NotifyShellState();
@@ -30,6 +40,11 @@ public partial class MainWindowViewModel
 
     private void OnProjectTabShellStateChanged(ProjectTabViewModel tab)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         if (ReferenceEquals(tab, ActiveProjectTab) && !string.IsNullOrWhiteSpace(tab.StatusMessage))
         {
             StatusMessage = tab.StatusMessage;
@@ -41,6 +56,11 @@ public partial class MainWindowViewModel
 
     private void OnProjectPanelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         if (e.PropertyName is nameof(ProjectPanelViewModel.SelectedProject)
             or nameof(ProjectPanelViewModel.HasProjects)
             or nameof(ProjectPanelViewModel.HasAnyProjects)
@@ -53,6 +73,11 @@ public partial class MainWindowViewModel
 
     private void OnNotificationPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         if (e.PropertyName == nameof(NotificationItemViewModel.IsUnread))
         {
             NotifyShellState();
@@ -61,6 +86,11 @@ public partial class MainWindowViewModel
 
     private void NotifyShellState()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         OnPropertyChanged(nameof(IsHomeTabActive));
         OnPropertyChanged(nameof(HasActiveProjectTab));
         OnPropertyChanged(nameof(HasProjectTabs));

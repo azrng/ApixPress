@@ -240,6 +240,12 @@ internal sealed class ProjectTabComposition : IDisposable
         }
 
         Detach();
+        Catalog.Dispose();
+        Import.Dispose();
+        Workflow.Dispose();
+        EnvironmentPanel.Dispose();
+        UseCasesPanel.Dispose();
+        HistoryPanel.Dispose();
         Workspace.Dispose();
         _isDisposed = true;
     }

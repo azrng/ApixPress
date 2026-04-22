@@ -4,6 +4,11 @@ public partial class MainWindowViewModel
 {
     private void NotifyActiveProjectTabBindings()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         OnPropertyChanged(nameof(ConfigTab));
         OnPropertyChanged(nameof(ResponseSection));
         OnPropertyChanged(nameof(EnvironmentPanel));

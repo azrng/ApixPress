@@ -6,7 +6,7 @@ using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class MainWindowViewModel : ViewModelBase
+public partial class MainWindowViewModel : ViewModelBase, IDisposable
 {
     private readonly IEnvironmentVariableService _environmentVariableService;
     private readonly IRequestCaseService _requestCaseService;
@@ -20,6 +20,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly UseCasesPanelViewModel _fallbackUseCasesPanel;
     private readonly RequestHistoryPanelViewModel _fallbackHistoryPanel;
     private bool _initialized;
+    private bool _isDisposed;
 
     public MainWindowViewModel(
         IRequestExecutionService requestExecutionService,
@@ -127,6 +128,38 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool isWindowMaximized;
+
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        ProjectTabs.CollectionChanged -= OnProjectTabsCollectionChanged;
+        ProjectPanel.ProjectCreated -= OnProjectCreated;
+        ProjectPanel.PropertyChanged -= OnProjectPanelPropertyChanged;
+        ProjectPanel.Projects.CollectionChanged -= OnProjectsCollectionChanged;
+
+        foreach (var item in Notifications)
+        {
+            item.PropertyChanged -= OnNotificationPropertyChanged;
+        }
+
+        foreach (var tab in ProjectTabs.ToList())
+        {
+            ReleaseProjectTab(tab);
+        }
+
+        ProjectTabs.Clear();
+        ActiveProjectTab = null;
+        ProjectPanel.Dispose();
+        SettingsCenter.Dispose();
+        _fallbackEnvironmentPanel.Dispose();
+        _fallbackUseCasesPanel.Dispose();
+        _fallbackHistoryPanel.Dispose();
+    }
 
     private static string ResolveCurrentAppVersion()
     {

@@ -52,10 +52,16 @@ public partial class MainWindow : Window
 
     private void OnClosed(object? sender, System.EventArgs e)
     {
+        Opened -= OnOpened;
+        Closed -= OnClosed;
+        KeyDown -= OnWindowKeyDown;
+
         if (ReferenceEquals(_windowHostService.MainWindow, this))
         {
             _windowHostService.MainWindow = null;
         }
+
+        _viewModel.Dispose();
     }
 
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)

@@ -8,11 +8,12 @@ using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class RequestHistoryPanelViewModel : ViewModelBase
+public partial class RequestHistoryPanelViewModel : ViewModelBase, IDisposable
 {
     private readonly IRequestHistoryService _requestHistoryService;
     private CancellationTokenSource? _loadHistoryCancellationTokenSource;
     private string _currentProjectId = string.Empty;
+    private bool _isDisposed;
 
     public ObservableCollection<RequestHistoryItemViewModel> HistoryItems { get; } = [];
 
@@ -22,6 +23,17 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     public RequestHistoryPanelViewModel(IRequestHistoryService requestHistoryService)
     {
         _requestHistoryService = requestHistoryService;
+    }
+
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadHistoryCancellationTokenSource);
     }
 
     public void SetProjectContext(string projectId)
@@ -37,6 +49,11 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
 
     public async Task LoadHistoryAsync()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadHistoryCancellationTokenSource).Token;
         try
         {

@@ -198,4 +198,45 @@ public sealed partial class MainWindowViewModelTests
         Assert.All(viewModel.Notifications, item => Assert.False(item.IsUnread));
         Assert.Equal("这里展示近期动态和提醒。", viewModel.StatusMessage);
     }
+
+    [Fact]
+    public async Task Dispose_ShouldReleaseProjectTabs()
+    {
+        var projectService = new FakeProjectWorkspaceService();
+        projectService.SeedProjects(
+        [
+            new("project-1", "订单项目", "订单接口", true),
+            new("project-2", "用户项目", "用户接口", false)
+        ]);
+        var viewModel = CreateViewModel(projectService);
+        await viewModel.InitializeAsync();
+
+        await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(viewModel.ProjectPanel.Projects[0]);
+        await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(viewModel.ProjectPanel.Projects[1]);
+
+        var tabs = viewModel.ProjectTabs.ToList();
+
+        viewModel.Dispose();
+
+        Assert.Empty(viewModel.ProjectTabs);
+        Assert.Null(viewModel.ActiveProjectTab);
+        Assert.All(tabs, tab =>
+        {
+            Assert.Empty(tab.WorkspaceTabs);
+            Assert.Null(tab.ActiveWorkspaceTab);
+        });
+    }
+
+    [Fact]
+    public void Dispose_ShouldBeIdempotent()
+    {
+        var viewModel = CreateViewModel();
+
+        viewModel.Dispose();
+        var exception = Record.Exception(viewModel.Dispose);
+
+        Assert.Null(exception);
+        Assert.Empty(viewModel.ProjectTabs);
+        Assert.Null(viewModel.ActiveProjectTab);
+    }
 }

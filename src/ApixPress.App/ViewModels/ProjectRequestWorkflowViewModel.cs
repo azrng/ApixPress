@@ -6,7 +6,7 @@ using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class ProjectRequestWorkflowViewModel : ViewModelBase
+public partial class ProjectRequestWorkflowViewModel : ViewModelBase, IDisposable
 {
     private readonly string _projectId;
     private readonly IRequestExecutionService _requestExecutionService;
@@ -20,6 +20,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
     private readonly Action<RequestWorkspaceTabViewModel> _openQuickRequestSaveDialog;
     private readonly ProjectTabHostContext _hostContext;
     private CancellationTokenSource? _sendRequestCancellationTokenSource;
+    private bool _isDisposed;
 
     internal ProjectRequestWorkflowViewModel(
         string projectId,
@@ -47,8 +48,24 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         _hostContext = hostContext;
     }
 
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        CancellationTokenSourceHelper.CancelAndDispose(ref _sendRequestCancellationTokenSource);
+    }
+
     public async Task SendRequestAsync()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         _workspaceContext.SelectInterfaceManagementSection();
         var workspaceTab = _workspaceContext.GetActiveWorkspaceTab();
         if (workspaceTab is null || workspaceTab.IsLandingTab)
@@ -107,6 +124,11 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
 
     public async Task SaveCurrentEditorAsync()
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         _workspaceContext.SelectInterfaceManagementSection();
         var workspaceTab = _workspaceContext.GetActiveWorkspaceTab();
         if (workspaceTab is null || workspaceTab.IsLandingTab)

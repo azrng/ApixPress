@@ -8,11 +8,12 @@ using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class ProjectPanelViewModel : ViewModelBase
+public partial class ProjectPanelViewModel : ViewModelBase, IDisposable
 {
     private readonly IProjectWorkspaceService _projectWorkspaceService;
     private CancellationTokenSource? _loadProjectsCancellationTokenSource;
     private bool _isUpdatingSelection;
+    private bool _isDisposed;
     private List<ProjectWorkspaceItemViewModel> _allProjects = [];
 
     public event Action<ProjectWorkspaceItemViewModel?>? SelectedProjectChanged;
@@ -38,8 +39,26 @@ public partial class ProjectPanelViewModel : ViewModelBase
     public bool HasProjects => FilteredProjects.Count > 0;
     public bool HasAnyProjects => Projects.Count > 0;
 
+    public void Dispose()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        _isDisposed = true;
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadProjectsCancellationTokenSource);
+        SelectedProjectChanged = null;
+        ProjectCreated = null;
+    }
+
     public async Task LoadProjectsAsync(string? preferredProjectId = null, bool autoSelect = true)
     {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadProjectsCancellationTokenSource).Token;
         try
         {
