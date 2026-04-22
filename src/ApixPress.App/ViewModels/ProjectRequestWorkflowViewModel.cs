@@ -229,11 +229,13 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         }
 
         _workspaceContext.SelectInterfaceManagementSection();
-        var interfaceId = await EnsureHttpInterfaceSavedAsync(workspaceTab, reloadAfterSave: false);
-        if (string.IsNullOrWhiteSpace(interfaceId))
+        var savedInterface = await EnsureHttpInterfaceSavedAsync(workspaceTab, reloadAfterSave: false);
+        if (savedInterface is null)
         {
             return;
         }
+
+        _catalog.UpsertCaseItem(savedInterface);
 
         var snapshot = workspaceTab.BuildSnapshot();
         var result = await _requestCaseService.SaveAsync(new RequestCaseDto
@@ -244,7 +246,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             Name = BuildHttpCaseName(workspaceTab),
             GroupName = "用例",
             FolderPath = ProjectWorkspaceTreeBuilder.NormalizeFolderPath(workspaceTab.InterfaceFolderPath),
-            ParentId = interfaceId,
+            ParentId = savedInterface.Id,
             Description = $"{workspaceTab.ResolveRequestName()} 的请求用例",
             RequestSnapshot = snapshot,
             UpdatedAt = DateTime.UtcNow
@@ -286,15 +288,15 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
 
     private async Task SaveHttpInterfaceAsync(RequestWorkspaceTabViewModel workspaceTab)
     {
-        var interfaceId = await EnsureHttpInterfaceSavedAsync(workspaceTab, reloadAfterSave: true);
-        if (!string.IsNullOrWhiteSpace(interfaceId))
+        var savedInterface = await EnsureHttpInterfaceSavedAsync(workspaceTab, reloadAfterSave: true);
+        if (savedInterface is not null)
         {
             _hostContext.SetStatusMessage("HTTP 接口已保存到默认模块。");
             _hostContext.NotifyShellState();
         }
     }
 
-    private async Task<string?> EnsureHttpInterfaceSavedAsync(RequestWorkspaceTabViewModel workspaceTab, bool reloadAfterSave)
+    private async Task<RequestCaseDto?> EnsureHttpInterfaceSavedAsync(RequestWorkspaceTabViewModel workspaceTab, bool reloadAfterSave)
     {
         var snapshot = workspaceTab.BuildSnapshot();
         var result = await _requestCaseService.SaveAsync(new RequestCaseDto
@@ -324,7 +326,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             _catalog.UpsertCaseItem(result.Data);
         }
 
-        return result.Data.Id;
+        return result.Data;
     }
 
     private static string BuildHttpCaseName(RequestWorkspaceTabViewModel workspaceTab)

@@ -79,24 +79,13 @@
               <StackPanel Spacing="{StaticResource Space.4}"
                           IsVisible="{Binding EnvironmentPanel.HasSelectedEnvironment}">
                 <Border Classes="EnvironmentDetailCard EnvironmentDetailHeroCard">
-                  <Grid ColumnDefinitions="Auto,*"
-                        ColumnSpacing="{StaticResource Space.4}">
-                    <Border Classes="EnvironmentDetailHeroIcon">
-                      <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                 FontSize="18"
-                                 Text="&#xEC1A;" />
-                    </Border>
-                    <StackPanel Grid.Column="1"
-                                Spacing="{StaticResource Space.2}">
-                      <TextBlock Classes="CaptionText"
-                                 Text="环境名称" />
-                      <TextBox Classes="SectionInput EnvironmentHeroNameInput"
-                               Watermark="例如 开发 / 测试 / 生产"
-                               Text="{Binding EnvironmentPanel.SelectedEnvironment.Name}" />
-                      <TextBlock Classes="CaptionText"
-                                 Text="当前环境会影响项目请求的前置 URL 与变量替换规则。" />
-                    </StackPanel>
-                  </Grid>
+                  <StackPanel Spacing="{StaticResource Space.2}">
+                    <TextBlock Classes="CaptionText"
+                               Text="环境名称" />
+                    <TextBox Classes="SectionInput EnvironmentHeroNameInput"
+                             Watermark="例如 开发 / 测试 / 生产"
+                             Text="{Binding EnvironmentPanel.SelectedEnvironment.Name}" />
+                  </StackPanel>
                 </Border>
 
                 <Border Classes="EnvironmentDetailCard">

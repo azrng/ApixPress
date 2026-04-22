@@ -63,6 +63,33 @@ public sealed class ResponseSectionViewModelTests
     }
 
     [Fact]
+    public void ApplyResult_ShouldKeepChineseCharacters_WhenJsonResponseContainsUnicodeEscapes()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 400,
+                DurationMs = 2,
+                SizeBytes = 92,
+                Content = "{\"isSuccess\":false,\"message\":\"\\u53c2\\u6570\\u683c\\u5f0f\\u4e0d\\u5bf9\"}",
+                Headers =
+                [
+                    new ResponseHeaderDto
+                    {
+                        Name = "Content-Type",
+                        Value = "application/json; charset=utf-8"
+                    }
+                ]
+            }),
+            new RequestSnapshotDto());
+
+        Assert.Contains("\"message\": \"参数格式不对\"", viewModel.BodyText);
+        Assert.DoesNotContain("\\u53c2", viewModel.BodyText);
+    }
+
+    [Fact]
     public void ApplyResult_ShouldKeepOriginalBody_WhenJsonResponseBodyIsInvalid()
     {
         var viewModel = new ResponseSectionViewModel();

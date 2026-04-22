@@ -3,12 +3,19 @@ using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels.Base;
 using Azrng.Core.Results;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace ApixPress.App.ViewModels;
 
 public partial class ResponseSectionViewModel : ViewModelBase
 {
+    private static readonly JsonSerializerOptions PrettyJsonOptions = new()
+    {
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
     [ObservableProperty]
     private bool hasResponse;
 
@@ -112,10 +119,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
         try
         {
             using var document = JsonDocument.Parse(response.Content);
-            return JsonSerializer.Serialize(document.RootElement, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
+            return JsonSerializer.Serialize(document.RootElement, PrettyJsonOptions);
         }
         catch (JsonException)
         {

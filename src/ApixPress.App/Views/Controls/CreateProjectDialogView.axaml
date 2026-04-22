@@ -2,7 +2,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.CreateProjectDialogView"
              x:DataType="vm:MainWindowViewModel"
@@ -10,43 +9,100 @@
   <Border Classes="CreateProjectDialogBackdrop"
           IsVisible="{Binding IsCreateProjectDialogOpen}">
     <Grid HorizontalAlignment="Center"
-          VerticalAlignment="Center">
+          VerticalAlignment="Center"
+          Margin="{StaticResource Pad.6}">
       <Border Classes="CreateProjectDialogCard">
         <Grid RowDefinitions="Auto,Auto,Auto"
-              RowSpacing="{StaticResource Space.3}">
-          <StackPanel Spacing="2">
-            <TextBlock Classes="DialogTitle"
-                       Text="新建项目" />
-            <TextBlock Classes="CaptionText"
-                       Text="只需要填写项目名称和备注信息。创建后会自动生成该项目的默认环境。" />
-          </StackPanel>
-          <Border Grid.Row="1"
-                  Classes="CreateProjectFormShell">
-            <u:Form LabelPosition="Top">
-              <TextBox Classes="SectionInput DialogInput"
-                       u:FormItem.Label="项目名称"
-                       Watermark="请输入项目名称"
-                       Text="{Binding ProjectPanel.Creation.DraftProjectName}" />
-              <TextBox Classes="SectionInput DialogInput"
-                       u:FormItem.Label="备注信息"
-                       AcceptsReturn="True"
-                       Height="112"
-                       TextWrapping="Wrap"
-                       Watermark="补充项目用途、团队或说明"
-                       Text="{Binding ProjectPanel.Creation.DraftProjectDescription}" />
-            </u:Form>
+              RowSpacing="{StaticResource Space.5}">
+          <Border Classes="CreateProjectDialogHeader">
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="{StaticResource Space.4}">
+              <StackPanel Spacing="{StaticResource Space.2}">
+                <Border HorizontalAlignment="Left"
+                        Classes="CreateProjectDialogEyebrow">
+                  <TextBlock Classes="CreateProjectDialogEyebrowText"
+                             Text="快速创建" />
+                </Border>
+                <StackPanel Spacing="{StaticResource Space.1}">
+                  <TextBlock Classes="DialogTitle"
+                             Text="新建项目" />
+                  <TextBlock Classes="CreateProjectDialogSubtitle"
+                             Text="只需要填写项目名称和备注信息。创建后会自动生成该项目的默认环境。"
+                             TextWrapping="Wrap" />
+                </StackPanel>
+              </StackPanel>
+
+              <Border Grid.Column="1"
+                      Classes="CreateProjectDialogAccentCard">
+                <Path Width="22"
+                      Height="22"
+                      Stretch="Uniform"
+                      Fill="{DynamicResource Brush.Border.Focus}"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      Data="M5,4 L19,4 L19,20 L5,20 Z M8,8 L16,8 L16,10 L8,10 Z M8,12 L16,12 L16,14 L8,14 Z" />
+              </Border>
+            </Grid>
           </Border>
-          <StackPanel Grid.Row="2"
-                      Orientation="Horizontal"
-                      HorizontalAlignment="Right"
-                      Spacing="{StaticResource Space.2}">
-            <Button Classes="DialogSecondaryButton"
-                    Content="取消"
-                    Command="{Binding CloseCreateProjectDialogCommand}" />
-            <Button Classes="DialogPrimaryButton"
-                    Content="创建项目"
-                    Command="{Binding ProjectPanel.Creation.CreateProjectCommand}" />
-          </StackPanel>
+
+          <Border Grid.Row="1"
+                  Classes="CreateProjectDialogFormCard">
+            <StackPanel Spacing="{StaticResource Space.4}">
+              <StackPanel Spacing="{StaticResource Space.2}">
+                <TextBlock Classes="CreateProjectDialogFieldLabel"
+                           Text="项目名称" />
+                <TextBlock Classes="CreateProjectDialogFieldHint"
+                           Text="建议使用系统名、服务名或团队名，方便后续在首页和工作区快速识别。"
+                           TextWrapping="Wrap" />
+                <TextBox Classes="SectionInput DialogInput"
+                         Watermark="请输入项目名称"
+                         Text="{Binding ProjectPanel.Creation.DraftProjectName}" />
+              </StackPanel>
+
+              <Border Classes="CreateProjectDialogDivider" />
+
+              <StackPanel Spacing="{StaticResource Space.2}">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="{StaticResource Space.2}">
+                  <TextBlock Classes="CreateProjectDialogFieldLabel"
+                             Text="备注信息" />
+                  <Border Grid.Column="1"
+                          Classes="CreateProjectDialogOptionalTag">
+                    <TextBlock Classes="CreateProjectDialogOptionalTagText"
+                               Text="可选" />
+                  </Border>
+                </Grid>
+                <TextBlock Classes="CreateProjectDialogFieldHint"
+                           Text="补充项目用途、协作背景或使用说明，后续切换项目时会更容易区分。"
+                           TextWrapping="Wrap" />
+                <TextBox Classes="SectionInput DialogInput"
+                         AcceptsReturn="True"
+                         Height="120"
+                         TextWrapping="Wrap"
+                         Watermark="补充项目用途、团队或说明"
+                         Text="{Binding ProjectPanel.Creation.DraftProjectDescription}" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <Border Grid.Row="2"
+                  Classes="CreateProjectDialogFooter">
+            <Grid ColumnDefinitions="*,Auto,Auto"
+                  ColumnSpacing="{StaticResource Space.2}">
+              <TextBlock Classes="CreateProjectDialogFooterHint"
+                         Text="创建完成后仍可在项目设置中继续补充说明和环境信息。"
+                         TextWrapping="Wrap"
+                         VerticalAlignment="Center" />
+              <Button Grid.Column="1"
+                      Classes="DialogSecondaryButton"
+                      Content="取消"
+                      Command="{Binding CloseCreateProjectDialogCommand}" />
+              <Button Grid.Column="2"
+                      Classes="DialogPrimaryButton"
+                      Content="创建项目"
+                      Command="{Binding ProjectPanel.Creation.CreateProjectCommand}" />
+            </Grid>
+          </Border>
         </Grid>
       </Border>
     </Grid>

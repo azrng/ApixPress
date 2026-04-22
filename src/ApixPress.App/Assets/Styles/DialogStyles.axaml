@@ -291,25 +291,12 @@
 
   <Style Selector="Border.EnvironmentDetailHeroCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-  </Style>
-
-  <Style Selector="Border.EnvironmentDetailHeroIcon">
-    <Setter Property="Width" Value="44" />
-    <Setter Property="Height" Value="44" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="HorizontalAlignment" Value="Center" />
-    <Setter Property="VerticalAlignment" Value="Top" />
-  </Style>
-
-  <Style Selector="Border.EnvironmentDetailHeroIcon TextBlock">
-    <Setter Property="HorizontalAlignment" Value="Center" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Link}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
 
   <Style Selector="TextBox.EnvironmentHeroNameInput">
     <Setter Property="MinWidth" Value="260" />
+    <Setter Property="MinHeight" Value="38" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>

@@ -10,34 +10,53 @@
                 IsVisible="{Binding Editor.ShowHttpDocumentPreviewContent}">
     <StackPanel Spacing="{StaticResource Space.4}">
       <Border Classes="PanelCard HttpDocumentHeroCard">
-        <StackPanel Spacing="{StaticResource Space.3}">
-          <StackPanel Orientation="Horizontal"
-                      Spacing="{StaticResource Space.2}">
-            <Border Classes="HttpDocumentMethodBadge">
-              <TextBlock Text="{Binding Editor.SelectedMethod}" />
-            </Border>
-            <Border Classes="HttpDocumentStatusBadge">
-              <TextBlock Text="{Binding Editor.CurrentResponseValidationResultText}" />
-            </Border>
-          </StackPanel>
+        <Grid ColumnDefinitions="*,Auto"
+              ColumnSpacing="{StaticResource Space.4}">
+          <StackPanel Grid.Column="0"
+                      Spacing="{StaticResource Space.3}">
+            <StackPanel Orientation="Horizontal"
+                        Spacing="{StaticResource Space.2}">
+              <Border Classes="HttpDocumentMethodBadge">
+                <TextBlock Text="{Binding Editor.SelectedMethod}" />
+              </Border>
+              <Border Classes="HttpDocumentStatusBadge">
+                <TextBlock Text="{Binding Editor.CurrentResponseValidationResultText}" />
+              </Border>
+            </StackPanel>
 
-          <StackPanel Spacing="4">
-            <TextBlock Classes="PageTitle"
-                       Text="{Binding Editor.CurrentHttpInterfaceDisplayName}" />
-            <TextBlock Classes="CaptionText"
-                       Text="{Binding ConfigTab.RequestDescription}"
-                       TextWrapping="Wrap" />
-          </StackPanel>
-
-          <Border Classes="HttpDocumentUrlCard">
             <StackPanel Spacing="4">
+              <TextBlock Classes="PageTitle"
+                         Text="{Binding Editor.CurrentHttpInterfaceDisplayName}" />
               <TextBlock Classes="CaptionText"
-                         Text="请求地址" />
-              <TextBlock Text="{Binding Editor.CurrentHttpDocumentUrl}"
+                         Text="{Binding ConfigTab.RequestDescription}"
                          TextWrapping="Wrap" />
             </StackPanel>
+
+            <Border Classes="HttpDocumentUrlCard">
+              <StackPanel Spacing="4">
+                <TextBlock Classes="CaptionText"
+                           Text="请求地址" />
+                <TextBlock Text="{Binding Editor.CurrentHttpDocumentUrl}"
+                           TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <Border Grid.Column="1"
+                  Classes="HttpDocumentCaseActionCard"
+                  IsVisible="{Binding Editor.ShowSaveHttpCaseAction}">
+            <StackPanel Spacing="{StaticResource Space.2}">
+              <TextBlock Classes="CaptionText"
+                         Text="测试用例" />
+              <TextBox Classes="SectionInput HttpInterfaceNameInput HttpCaseNameInput"
+                       Watermark="用例名称"
+                       Text="{Binding Editor.CurrentHttpCaseName}" />
+              <Button Classes="HttpSaveButton"
+                      Content="保存测试用例"
+                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveHttpCaseCommand}" />
+            </StackPanel>
           </Border>
-        </StackPanel>
+        </Grid>
       </Border>
 
       <Grid ColumnDefinitions="1.3*,*"

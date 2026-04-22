@@ -90,7 +90,7 @@
       </Grid>
 
       <Grid Grid.Row="1"
-            ColumnDefinitions="*,Auto,Auto"
+            ColumnDefinitions="*,Auto,Auto,Auto,Auto"
             ColumnSpacing="{StaticResource Space.2}">
         <Border Grid.Column="0"
                 Classes="HttpRequestUrlShell">
@@ -113,11 +113,22 @@
                      Text="{Binding Editor.RequestUrl}" />
           </Grid>
         </Border>
-        <Button Grid.Column="1"
+        <TextBox Grid.Column="1"
+                 Classes="SectionInput HttpInterfaceNameInput HttpCaseNameInput"
+                 HorizontalAlignment="Stretch"
+                 Watermark="用例名称"
+                 Text="{Binding Editor.CurrentHttpCaseName}"
+                 IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
+        <Button Grid.Column="2"
                 Classes="HttpSendButton"
                 Content="发送"
                 Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SendRequestCommand}" />
-        <Button Grid.Column="2"
+        <Button Grid.Column="3"
+                Classes="HttpSaveButton"
+                Content="保存测试用例"
+                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveHttpCaseCommand}"
+                IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
+        <Button Grid.Column="4"
                 Classes="HttpSaveButton"
                 Content="保存"
                 Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveCaseCommand}" />

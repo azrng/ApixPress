@@ -34,6 +34,20 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
+    private async Task SaveHttpCaseAsync()
+    {
+        if (ActiveProjectTab is null)
+        {
+            StatusMessage = "请先打开一个项目标签页。";
+            return;
+        }
+
+        await ActiveProjectTab.Workflow.SaveHttpCaseAsync();
+        StatusMessage = ActiveProjectTab.StatusMessage;
+        NotifyShellState();
+    }
+
+    [RelayCommand]
     private void LoadSavedRequest(ExplorerItemViewModel? item)
     {
         if (item is null)

@@ -26,6 +26,16 @@
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
 
+  <Style Selector="Border.HttpDocumentCaseActionCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="MinWidth" Value="220" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+  </Style>
+
   <Style Selector="Border.HttpDocumentPreviewCard">
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>

@@ -39,6 +39,10 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
   </Style>
 
+  <Style Selector="TextBox.HttpCaseNameInput">
+    <Setter Property="MinWidth" Value="152" />
+  </Style>
+
   <Style Selector="Button.QuickRequestPrimaryButton">
     <Setter Property="MinWidth" Value="86" />
     <Setter Property="Padding" Value="12,10" />

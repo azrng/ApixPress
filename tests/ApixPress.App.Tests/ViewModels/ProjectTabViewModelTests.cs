@@ -238,6 +238,31 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task LoadWorkspaceItem_ShouldShowRequestEditorWorkspaceWhenReusingLandingTab()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 1);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        Assert.True(viewModel.Shell.ShowInterfaceManagementLanding);
+        Assert.False(viewModel.Shell.ShowRequestEditorWorkspace);
+
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
+        Assert.NotNull(interfaceItem);
+
+        viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+
+        Assert.NotNull(viewModel.ActiveWorkspaceTab);
+        Assert.False(viewModel.ActiveWorkspaceTab!.IsLandingTab);
+        Assert.True(viewModel.Shell.ShowRequestEditorWorkspace);
+        Assert.False(viewModel.Shell.ShowInterfaceManagementLanding);
+        Assert.Equal("接口 1", viewModel.Editor.CurrentHttpInterfaceDisplayName);
+    }
+
+    [Fact]
     public async Task ConfirmQuickRequestSaveAsync_ShouldKeepExistingInterfaceTreeNodesStable()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
@@ -289,6 +314,40 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Same(originalFolder, currentFolder);
         Assert.Same(originalInterface, currentInterface);
         Assert.Equal("接口 1 已编辑", currentInterface!.Title);
+    }
+
+    [Fact]
+    public async Task SaveHttpCaseAsync_ShouldCreateCaseUnderInterfaceNode()
+    {
+        var requestCaseService = new FakeRequestCaseService();
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
+        viewModel.Editor.CurrentHttpInterfaceName = "创建订单";
+        viewModel.Editor.SelectedMethod = "POST";
+        viewModel.Editor.RequestUrl = "/orders";
+        viewModel.Editor.CurrentInterfaceFolderPath = "订单";
+        viewModel.Editor.CurrentHttpCaseName = "成功响应";
+
+        await viewModel.Workflow.SaveHttpCaseAsync();
+
+        var savedInterface = Assert.Single(requestCaseService.Cases, item => item.EntryType == ProjectTabRequestEntryTypes.HttpInterface);
+        var savedCase = Assert.Single(requestCaseService.Cases, item => item.EntryType == ProjectTabRequestEntryTypes.HttpCase);
+
+        Assert.Equal(savedInterface.Id, savedCase.ParentId);
+        Assert.Equal("订单", savedCase.FolderPath);
+
+        var folderItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "订单 (1)");
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "创建订单 (1)");
+        var caseItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "成功响应");
+
+        Assert.NotNull(folderItem);
+        Assert.NotNull(interfaceItem);
+        Assert.NotNull(caseItem);
+        Assert.Single(interfaceItem!.Children);
+        Assert.Same(caseItem, interfaceItem.Children[0]);
     }
 
     [Fact]
