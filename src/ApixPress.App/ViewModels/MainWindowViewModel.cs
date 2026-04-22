@@ -22,6 +22,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IRequestHistoryService _requestHistoryService;
     private readonly IApiWorkspaceService _apiWorkspaceService;
     private readonly IFilePickerService _filePickerService;
+    private readonly IWindowHostService _windowHostService;
     private readonly RequestConfigTabViewModel _fallbackConfigTab;
     private readonly ResponseSectionViewModel _fallbackResponseSection;
     private readonly EnvironmentPanelViewModel _fallbackEnvironmentPanel;
@@ -41,7 +42,8 @@ public partial class MainWindowViewModel : ViewModelBase
         IAppShellSettingsService appShellSettingsService,
         IApplicationUpdateService applicationUpdateService,
         IApiWorkspaceService apiWorkspaceService,
-        IFilePickerService filePickerService)
+        IFilePickerService filePickerService,
+        IWindowHostService windowHostService)
     {
         _requestExecutionService = requestExecutionService;
         _requestCaseService = requestCaseService;
@@ -51,6 +53,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _applicationUpdateService = applicationUpdateService;
         _apiWorkspaceService = apiWorkspaceService;
         _filePickerService = filePickerService;
+        _windowHostService = windowHostService;
 
         _fallbackConfigTab = new RequestConfigTabViewModel(null);
         _fallbackResponseSection = new ResponseSectionViewModel();

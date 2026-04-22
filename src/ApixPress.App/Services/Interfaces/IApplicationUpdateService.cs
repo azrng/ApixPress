@@ -11,5 +11,5 @@ public interface IApplicationUpdateService
 
     Task<IResultModel<AppUpdateCheckResultDto>> CheckForUpdatesAsync(string currentVersion, CancellationToken cancellationToken);
 
-    Task<IResultModel<bool>> StartUpdateAsync(string currentVersion, CancellationToken cancellationToken);
+    Task<IResultModel<bool>> StartUpdateAsync(AppUpdateCheckResultDto updateInfo, CancellationToken cancellationToken);
 }

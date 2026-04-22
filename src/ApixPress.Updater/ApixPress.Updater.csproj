@@ -17,8 +17,4 @@
     <PublishTrimmed>false</PublishTrimmed>
     <PublishAot>false</PublishAot>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="GeneralUpdate.Core" Version="10.4.6" />
-  </ItemGroup>
 </Project>

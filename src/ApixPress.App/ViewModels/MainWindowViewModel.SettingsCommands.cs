@@ -112,7 +112,7 @@ public partial class MainWindowViewModel
             StatusMessage = AboutUpdateStatus;
             NotifyShellState();
 
-            var startResult = await _applicationUpdateService.StartUpdateAsync(CurrentAppVersion, CancellationToken.None);
+            var startResult = await _applicationUpdateService.StartUpdateAsync(checkResult.Data, CancellationToken.None);
             if (!startResult.IsSuccess)
             {
                 AboutUpdateStatus = $"启动更新失败：{startResult.Message}";
@@ -124,6 +124,7 @@ public partial class MainWindowViewModel
             AboutUpdateStatus = $"更新程序已启动，将通过 {UpdateChannelName} 拉取新版本。";
             StatusMessage = AboutUpdateStatus;
             NotifyShellState();
+            _windowHostService.MainWindow?.Close();
         }
         finally
         {

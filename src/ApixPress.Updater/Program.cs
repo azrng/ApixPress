@@ -1,10 +1,11 @@
-using GeneralUpdate.Core;
+using ApixPress.Updater;
 
 try
 {
-    await GeneralUpdateOSS.Start();
+    return await UpdateRunner.RunAsync(args);
 }
 catch (Exception exception)
 {
-    Console.WriteLine(exception.Message);
+    Console.Error.WriteLine(exception.Message);
+    return 1;
 }

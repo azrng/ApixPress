@@ -2,6 +2,10 @@ namespace ApixPress.App.Models.DTOs;
 
 public sealed class AppUpdateCheckResultDto
 {
+    public string PackageName { get; init; } = string.Empty;
+
+    public string PackageHash { get; init; } = string.Empty;
+
     public string CurrentVersion { get; init; } = string.Empty;
 
     public string LatestVersion { get; init; } = string.Empty;

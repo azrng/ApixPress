@@ -3,6 +3,7 @@ using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTest
 using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
 using FakeRequestExecutionService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestExecutionService;
 using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
+using Avalonia.Controls;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
@@ -26,7 +27,8 @@ public sealed partial class MainWindowViewModelTests
             shellSettingsService ?? new FakeAppShellSettingsService(),
             applicationUpdateService ?? new FakeApplicationUpdateService(),
             new FakeApiWorkspaceService(),
-            new FakeFilePickerService());
+            new FakeFilePickerService(),
+            new FakeWindowHostService());
     }
 
     private sealed class FakeProjectWorkspaceService : IProjectWorkspaceService
@@ -227,13 +229,18 @@ public sealed partial class MainWindowViewModelTests
             return Task.FromResult<IResultModel<AppUpdateCheckResultDto>>(ResultModel<AppUpdateCheckResultDto>.Success(CheckResult));
         }
 
-        public Task<IResultModel<bool>> StartUpdateAsync(string currentVersion, CancellationToken cancellationToken)
+        public Task<IResultModel<bool>> StartUpdateAsync(AppUpdateCheckResultDto updateInfo, CancellationToken cancellationToken)
         {
             StartCalls++;
             return Task.FromResult<IResultModel<bool>>(StartSucceeded
                 ? ResultModel<bool>.Success(true)
                 : ResultModel<bool>.Failure(StartMessage));
         }
+    }
+
+    private sealed class FakeWindowHostService : IWindowHostService
+    {
+        public Window? MainWindow { get; set; }
     }
 
 }
