@@ -7,7 +7,7 @@ using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
-public sealed partial class MainWindowSettingsViewModel : ViewModelBase, IDisposable
+public sealed partial class MainWindowSettingsViewModel : ViewModelBase
 {
     private const string GeneralSection = "general";
     private const string AboutSection = "about";
@@ -21,7 +21,6 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase, IDispos
     private CancellationTokenSource? _shellSettingsSaveCancellationTokenSource;
     private bool _initialized;
     private bool _isApplyingShellSettings;
-    private bool _isDisposed;
 
     public MainWindowSettingsViewModel(
         IAppShellSettingsService appShellSettingsService,
@@ -91,20 +90,14 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase, IDispos
     [ObservableProperty]
     private string latestAvailableVersion = "尚未检查";
 
-    public void Dispose()
+    protected override void DisposeManaged()
     {
-        if (_isDisposed)
-        {
-            return;
-        }
-
-        _isDisposed = true;
         CancellationTokenSourceHelper.CancelAndDispose(ref _shellSettingsSaveCancellationTokenSource);
     }
 
     public async Task InitializeAsync()
     {
-        if (_initialized || _isDisposed)
+        if (_initialized || IsDisposed)
         {
             return;
         }
@@ -115,7 +108,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase, IDispos
 
     public void SelectGeneralSection()
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -181,7 +174,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase, IDispos
     [RelayCommand]
     private async Task CheckForUpdatesAsync()
     {
-        if (IsCheckingForUpdates || _isDisposed)
+        if (IsCheckingForUpdates || IsDisposed)
         {
             return;
         }
@@ -271,7 +264,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase, IDispos
 
     private void TriggerShellSettingsSave()
     {
-        if (_isApplyingShellSettings || !_initialized || _isDisposed)
+        if (_isApplyingShellSettings || !_initialized || IsDisposed)
         {
             return;
         }

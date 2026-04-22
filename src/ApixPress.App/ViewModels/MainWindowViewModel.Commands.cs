@@ -6,7 +6,7 @@ public partial class MainWindowViewModel
 {
     public async Task InitializeAsync()
     {
-        if (_initialized || _isDisposed)
+        if (_initialized || IsDisposed)
         {
             return;
         }

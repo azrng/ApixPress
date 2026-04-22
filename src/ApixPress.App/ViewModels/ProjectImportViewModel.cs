@@ -11,7 +11,7 @@ using Azrng.Core.Results;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class ProjectImportViewModel : ViewModelBase, IDisposable
+public partial class ProjectImportViewModel : ViewModelBase
 {
     private static class ImportDataModes
     {
@@ -33,7 +33,6 @@ public partial class ProjectImportViewModel : ViewModelBase, IDisposable
     private readonly Action<string> _setStatusMessage;
     private CancellationTokenSource? _importCancellationTokenSource;
     private PendingImportRequest? _pendingImportRequest;
-    private bool _isDisposed;
 
     public ProjectImportViewModel(
         string projectId,
@@ -155,14 +154,8 @@ public partial class ProjectImportViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private ApiImportPreviewDto? pendingImportPreview;
 
-    public void Dispose()
+    protected override void DisposeManaged()
     {
-        if (_isDisposed)
-        {
-            return;
-        }
-
-        _isDisposed = true;
         ImportedApiDocuments.CollectionChanged -= OnImportedApiDocumentsCollectionChanged;
         CancellationTokenSourceHelper.CancelAndDispose(ref _importCancellationTokenSource);
         ClearPendingImportConfirmation();
@@ -311,7 +304,7 @@ public partial class ProjectImportViewModel : ViewModelBase, IDisposable
 
     public async Task LoadImportedDocumentsAsync(bool manageBusyState = true)
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }

@@ -4,7 +4,7 @@ public partial class MainWindowViewModel
 {
     private void NotifyActiveProjectTabBindings()
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }

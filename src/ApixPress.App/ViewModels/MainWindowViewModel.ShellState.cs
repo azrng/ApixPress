@@ -7,7 +7,7 @@ public partial class MainWindowViewModel
 {
     partial void OnActiveProjectTabChanged(ProjectTabViewModel? oldValue, ProjectTabViewModel? newValue)
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -28,7 +28,7 @@ public partial class MainWindowViewModel
 
     private void OnProjectCreated()
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -40,7 +40,7 @@ public partial class MainWindowViewModel
 
     private void OnProjectTabShellStateChanged(ProjectTabViewModel tab)
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -56,7 +56,7 @@ public partial class MainWindowViewModel
 
     private void OnProjectPanelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -73,7 +73,7 @@ public partial class MainWindowViewModel
 
     private void OnNotificationPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -86,7 +86,7 @@ public partial class MainWindowViewModel
 
     private void NotifyShellState()
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }

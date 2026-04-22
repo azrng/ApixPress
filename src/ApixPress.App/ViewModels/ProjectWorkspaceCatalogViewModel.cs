@@ -9,7 +9,7 @@ using Azrng.Core.Results;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDisposable
+public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 {
     private const string ImportedEndpointKeyPrefix = "swagger-import:";
 
@@ -25,7 +25,6 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDisposab
     private int _navigationRebuildSuspendCount;
     private bool _interfaceNavigationRebuildPending;
     private bool _quickRequestNavigationRebuildPending;
-    private bool _isDisposed;
 
     public ProjectWorkspaceCatalogViewModel(
         string projectId,
@@ -103,14 +102,8 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDisposab
     [ObservableProperty]
     private ExplorerItemViewModel? pendingDeleteWorkspaceItem;
 
-    public void Dispose()
+    protected override void DisposeManaged()
     {
-        if (_isDisposed)
-        {
-            return;
-        }
-
-        _isDisposed = true;
         _useCasesPanel.RequestCases.CollectionChanged -= OnSavedRequestsCollectionChanged;
     }
 

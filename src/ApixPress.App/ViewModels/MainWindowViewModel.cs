@@ -6,7 +6,7 @@ using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class MainWindowViewModel : ViewModelBase, IDisposable
+public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IEnvironmentVariableService _environmentVariableService;
     private readonly IRequestCaseService _requestCaseService;
@@ -20,7 +20,6 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     private readonly UseCasesPanelViewModel _fallbackUseCasesPanel;
     private readonly RequestHistoryPanelViewModel _fallbackHistoryPanel;
     private bool _initialized;
-    private bool _isDisposed;
 
     public MainWindowViewModel(
         IRequestExecutionService requestExecutionService,
@@ -129,14 +128,8 @@ public partial class MainWindowViewModel : ViewModelBase, IDisposable
     [ObservableProperty]
     private bool isWindowMaximized;
 
-    public void Dispose()
+    protected override void DisposeManaged()
     {
-        if (_isDisposed)
-        {
-            return;
-        }
-
-        _isDisposed = true;
         ProjectTabs.CollectionChanged -= OnProjectTabsCollectionChanged;
         ProjectPanel.ProjectCreated -= OnProjectCreated;
         ProjectPanel.PropertyChanged -= OnProjectPanelPropertyChanged;

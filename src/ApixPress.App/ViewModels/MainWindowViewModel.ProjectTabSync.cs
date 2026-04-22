@@ -26,7 +26,7 @@ public partial class MainWindowViewModel
 
     private void ActivateProjectTabCore(ProjectTabViewModel tab)
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -37,7 +37,7 @@ public partial class MainWindowViewModel
 
     private void OnProjectsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -88,7 +88,7 @@ public partial class MainWindowViewModel
 
     private void OnProjectTabsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }

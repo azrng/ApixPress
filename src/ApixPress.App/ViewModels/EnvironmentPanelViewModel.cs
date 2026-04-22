@@ -8,14 +8,13 @@ using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class EnvironmentPanelViewModel : ViewModelBase, IDisposable
+public partial class EnvironmentPanelViewModel : ViewModelBase
 {
     private readonly IEnvironmentVariableService _environmentVariableService;
     private CancellationTokenSource? _loadProjectCancellationTokenSource;
     private CancellationTokenSource? _activateEnvironmentCancellationTokenSource;
     private string _currentProjectId = string.Empty;
     private bool _isUpdatingSelection;
-    private bool _isDisposed;
 
     public event Action<ProjectEnvironmentItemViewModel?>? SelectedEnvironmentChanged;
 
@@ -35,14 +34,8 @@ public partial class EnvironmentPanelViewModel : ViewModelBase, IDisposable
 
     public string ActiveEnvironmentName => SelectedEnvironment?.Name ?? string.Empty;
 
-    public void Dispose()
+    protected override void DisposeManaged()
     {
-        if (_isDisposed)
-        {
-            return;
-        }
-
-        _isDisposed = true;
         CancellationTokenSourceHelper.CancelAndDispose(ref _loadProjectCancellationTokenSource);
         CancellationTokenSourceHelper.CancelAndDispose(ref _activateEnvironmentCancellationTokenSource);
         SelectedEnvironmentChanged = null;
@@ -50,7 +43,7 @@ public partial class EnvironmentPanelViewModel : ViewModelBase, IDisposable
 
     public async Task LoadProjectAsync(string projectId, string? preferredEnvironmentId = null)
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -379,7 +372,7 @@ public partial class EnvironmentPanelViewModel : ViewModelBase, IDisposable
 
     partial void OnSelectedEnvironmentChanged(ProjectEnvironmentItemViewModel? value)
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }

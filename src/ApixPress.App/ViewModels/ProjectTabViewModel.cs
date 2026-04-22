@@ -6,12 +6,11 @@ using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class ProjectTabViewModel : ViewModelBase, IDisposable
+public partial class ProjectTabViewModel : ViewModelBase
 {
     private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
     private readonly ProjectTabComposition _composition;
     private readonly ProjectTabLifecycleCoordinator _lifecycle;
-    private bool _isDisposed;
 
     public event Action<ProjectTabViewModel>? ShellStateChanged;
 
@@ -137,21 +136,15 @@ public partial class ProjectTabViewModel : ViewModelBase, IDisposable
         _lifecycle.LoadHistoryRequest(item);
     }
 
-    public void Dispose()
+    protected override void DisposeManaged()
     {
-        if (_isDisposed)
-        {
-            return;
-        }
-
-        _isDisposed = true;
         _composition.Dispose();
         ShellStateChanged = null;
     }
 
     private void NotifyShellState()
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -163,7 +156,7 @@ public partial class ProjectTabViewModel : ViewModelBase, IDisposable
 
     private void NotifyWorkspaceBindingsChanged()
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }
@@ -174,7 +167,7 @@ public partial class ProjectTabViewModel : ViewModelBase, IDisposable
 
     private void NotifyWorkspaceEditorState()
     {
-        if (_isDisposed)
+        if (IsDisposed)
         {
             return;
         }
