@@ -98,6 +98,60 @@ public sealed partial class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task RequestCaseService_ShouldReturnSummaryWithoutBodyUntilDetailRequested()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var serializer = CreateSerializer();
+        var caseRepository = new RequestCaseRepository(factory);
+        var caseService = new RequestCaseService(caseRepository, serializer);
+
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "详情按需项目"
+        }, CancellationToken.None)).Data!;
+
+        var saveResult = await caseService.SaveAsync(new RequestCaseDto
+        {
+            ProjectId = project.Id,
+            EntryType = "http-interface",
+            Name = "创建订单",
+            GroupName = "接口",
+            FolderPath = "订单",
+            Description = "创建订单接口",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                EndpointId = "swagger-import:POST /orders",
+                Method = "POST",
+                Url = "/orders",
+                BodyMode = BodyModes.RawJson,
+                BodyContent = "{\"customerId\":1,\"amount\":128}"
+            },
+            UpdatedAt = DateTime.UtcNow
+        }, CancellationToken.None);
+
+        Assert.True(saveResult.IsSuccess);
+        Assert.NotNull(saveResult.Data);
+
+        var summary = Assert.Single(await caseService.GetCasesAsync(project.Id, CancellationToken.None));
+        Assert.False(summary.HasLoadedDetail);
+        Assert.Equal("POST", summary.RequestSnapshot.Method);
+        Assert.Equal("/orders", summary.RequestSnapshot.Url);
+        Assert.Equal("swagger-import:POST /orders", summary.RequestSnapshot.EndpointId);
+        Assert.Equal(string.Empty, summary.RequestSnapshot.BodyContent);
+
+        var detail = await caseService.GetDetailAsync(project.Id, summary.Id, CancellationToken.None);
+        Assert.NotNull(detail);
+        Assert.True(detail!.HasLoadedDetail);
+        Assert.Equal(BodyModes.RawJson, detail.RequestSnapshot.BodyMode);
+        Assert.Equal("{\"customerId\":1,\"amount\":128}", detail.RequestSnapshot.BodyContent);
+    }
+
+    [Fact]
     public async Task RequestHistoryRepository_ShouldProjectHistorySummaryFromSqlite()
     {
         using var factory = new TestSqliteConnectionFactory();

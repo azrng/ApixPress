@@ -48,7 +48,7 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    private void LoadSavedRequest(ExplorerItemViewModel? item)
+    private async Task LoadSavedRequest(ExplorerItemViewModel? item)
     {
         if (item is null)
         {
@@ -67,7 +67,7 @@ public partial class MainWindowViewModel
             return;
         }
 
-        ActiveProjectTab.Catalog.LoadWorkspaceItem(item);
+        await ActiveProjectTab.Catalog.LoadWorkspaceItem(item);
         StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }

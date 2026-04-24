@@ -86,6 +86,7 @@ public static class ViewModelSharedTestDoubles
 
         public List<RequestCaseDto> Cases { get; } = [];
         public int GetCasesCallCount { get; private set; }
+        public int GetDetailCallCount { get; private set; }
 
         public Task<IReadOnlyList<RequestCaseDto>> GetCasesAsync(string projectId, CancellationToken cancellationToken)
         {
@@ -95,7 +96,35 @@ public static class ViewModelSharedTestDoubles
                 .OrderBy(item => item.EntryType, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(item => item.FolderPath, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(item => new RequestCaseDto
+                {
+                    Id = item.Id,
+                    ProjectId = item.ProjectId,
+                    EntryType = item.EntryType,
+                    Name = item.Name,
+                    GroupName = item.GroupName,
+                    FolderPath = item.FolderPath,
+                    ParentId = item.ParentId,
+                    Tags = item.Tags.ToList(),
+                    Description = item.Description,
+                    RequestSnapshot = new RequestSnapshotDto
+                    {
+                        EndpointId = item.RequestSnapshot.EndpointId,
+                        Method = item.RequestSnapshot.Method,
+                        Url = item.RequestSnapshot.Url
+                    },
+                    HasLoadedDetail = false,
+                    UpdatedAt = item.UpdatedAt
+                })
                 .ToList());
+        }
+
+        public Task<RequestCaseDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
+        {
+            GetDetailCallCount++;
+            return Task.FromResult<RequestCaseDto?>(Cases.FirstOrDefault(item =>
+                string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase)));
         }
 
         public Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
@@ -125,6 +154,7 @@ public static class ViewModelSharedTestDoubles
                     PathParameters = requestCase.RequestSnapshot.PathParameters.ToList(),
                     Headers = requestCase.RequestSnapshot.Headers.ToList()
                 },
+                HasLoadedDetail = true,
                 UpdatedAt = requestCase.UpdatedAt
             };
 
@@ -142,6 +172,7 @@ public static class ViewModelSharedTestDoubles
                     Tags = saved.Tags.ToList(),
                     Description = saved.Description,
                     RequestSnapshot = saved.RequestSnapshot,
+                    HasLoadedDetail = true,
                     UpdatedAt = saved.UpdatedAt
                 };
             }

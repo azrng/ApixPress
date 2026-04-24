@@ -111,14 +111,14 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         QuickRequestTreeItems.Clear();
     }
 
-    public void LoadWorkspaceItem(ExplorerItemViewModel? item)
+    public async Task LoadWorkspaceItem(ExplorerItemViewModel? item)
     {
         if (item is null || item.SourceCase is null)
         {
             return;
         }
 
-        var source = item.SourceCase;
+        var source = await EnsureCaseDetailLoadedAsync(item);
         var parentInterface = string.Equals(source.EntryType, ProjectTabRequestEntryTypes.HttpCase, StringComparison.OrdinalIgnoreCase)
             ? FindRequestById(source.ParentId)
             : null;
@@ -506,5 +506,28 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     private static bool IsImportedInterface(RequestCaseDto requestCase)
     {
         return requestCase.RequestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task<RequestCaseDto> EnsureCaseDetailLoadedAsync(ExplorerItemViewModel item)
+    {
+        var requestCase = item.SourceCase;
+        if (requestCase is null)
+        {
+            return new RequestCaseDto();
+        }
+
+        if (requestCase.HasLoadedDetail || string.IsNullOrWhiteSpace(requestCase.Id))
+        {
+            return requestCase;
+        }
+
+        var detail = await _requestCaseService.GetDetailAsync(_projectId, requestCase.Id, CancellationToken.None);
+        if (detail is null)
+        {
+            return requestCase;
+        }
+
+        item.SourceCase = detail;
+        return detail;
     }
 }

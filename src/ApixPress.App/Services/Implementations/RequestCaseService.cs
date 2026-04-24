@@ -27,7 +27,13 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
     public async Task<IReadOnlyList<RequestCaseDto>> GetCasesAsync(string projectId, CancellationToken cancellationToken)
     {
         var cases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
-        return cases.Select(ToDto).ToList();
+        return cases.Select(ToSummaryDto).ToList();
+    }
+
+    public async Task<RequestCaseDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
+    {
+        var entity = await _requestCaseRepository.GetByIdAsync(projectId, id, cancellationToken);
+        return entity is null ? null : ToDto(entity);
     }
 
     public async Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
@@ -334,6 +340,31 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             Tags = _serializer.ToObject<List<string>>(entity.TagsJson) ?? [],
             Description = entity.Description,
             RequestSnapshot = _serializer.ToObject<RequestSnapshotDto>(entity.RequestSnapshotJson) ?? new RequestSnapshotDto(),
+            HasLoadedDetail = true,
+            UpdatedAt = entity.UpdatedAt
+        };
+    }
+
+    private RequestCaseDto ToSummaryDto(RequestCaseEntity entity)
+    {
+        return new RequestCaseDto
+        {
+            Id = entity.Id,
+            ProjectId = entity.ProjectId,
+            EntryType = entity.EntryType,
+            Name = entity.Name,
+            GroupName = entity.GroupName,
+            FolderPath = entity.FolderPath,
+            ParentId = entity.ParentId,
+            Tags = _serializer.ToObject<List<string>>(entity.TagsJson) ?? [],
+            Description = entity.Description,
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                EndpointId = entity.EndpointId,
+                Method = entity.Method,
+                Url = entity.Url
+            },
+            HasLoadedDetail = false,
             UpdatedAt = entity.UpdatedAt
         };
     }

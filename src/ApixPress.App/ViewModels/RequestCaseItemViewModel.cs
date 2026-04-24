@@ -24,12 +24,17 @@ public partial class RequestCaseItemViewModel : ViewModelBase
     [ObservableProperty]
     private DateTime updatedAt;
 
-    public RequestCaseDto SourceCase { get; init; } = new();
+    public RequestCaseDto SourceCase { get; set; } = new();
 
     public string UpdatedAtText => $"更新于 {UpdatedAt:MM-dd HH:mm}";
 
     partial void OnUpdatedAtChanged(DateTime value)
     {
         OnPropertyChanged(nameof(UpdatedAtText));
+    }
+
+    public void ApplyDetail(RequestCaseDto detail)
+    {
+        SourceCase = detail;
     }
 }

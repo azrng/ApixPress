@@ -12,5 +12,8 @@ public sealed class RequestCaseEntity
     public string TagsJson { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string RequestSnapshotJson { get; set; } = string.Empty;
+    public string EndpointId { get; set; } = string.Empty;
+    public string Method { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
     public DateTime UpdatedAt { get; set; }
 }

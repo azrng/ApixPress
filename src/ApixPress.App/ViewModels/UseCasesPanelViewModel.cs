@@ -118,10 +118,11 @@ public partial class UseCasesPanelViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void LoadSelectedCase()
+    private async Task LoadSelectedCase()
     {
         if (SelectedRequestCase is null) return;
-        var snapshot = SelectedRequestCase.SourceCase.RequestSnapshot;
+        var detail = await EnsureCaseDetailLoadedAsync(SelectedRequestCase);
+        var snapshot = detail.RequestSnapshot;
         CaseName = SelectedRequestCase.SourceCase.Name;
         CaseGroupName = SelectedRequestCase.SourceCase.GroupName;
         ReplaceCaseTags(SelectedRequestCase.SourceCase.Tags);
@@ -227,5 +228,27 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         }
 
         return StringComparer.OrdinalIgnoreCase.Compare(left.SourceCase.Name, right.SourceCase.Name);
+    }
+
+    private async Task<RequestCaseDto> EnsureCaseDetailLoadedAsync(RequestCaseItemViewModel item)
+    {
+        if (item.SourceCase.HasLoadedDetail)
+        {
+            return item.SourceCase;
+        }
+
+        if (string.IsNullOrWhiteSpace(_currentProjectId))
+        {
+            return item.SourceCase;
+        }
+
+        var detail = await _requestCaseService.GetDetailAsync(_currentProjectId, item.Id, CancellationToken.None);
+        if (detail is null)
+        {
+            return item.SourceCase;
+        }
+
+        item.ApplyDetail(detail);
+        return detail;
     }
 }

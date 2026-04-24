@@ -29,6 +29,21 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                                tags_json TagsJson,
                                description Description,
                                request_snapshot_json RequestSnapshotJson,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.endpointId'),
+                                   json_extract(request_snapshot_json, '$.EndpointId'),
+                                   ''
+                               ) EndpointId,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.method'),
+                                   json_extract(request_snapshot_json, '$.Method'),
+                                   ''
+                               ) Method,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.url'),
+                                   json_extract(request_snapshot_json, '$.Url'),
+                                   ''
+                               ) Url,
                                updated_at UpdatedAt
                            from request_cases
                            where project_id = @ProjectId

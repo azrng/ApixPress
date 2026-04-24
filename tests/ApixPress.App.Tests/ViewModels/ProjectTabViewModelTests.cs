@@ -298,7 +298,7 @@ public sealed partial class ProjectTabViewModelTests
         var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
         Assert.NotNull(interfaceItem);
 
-        viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+        await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
         viewModel.Editor.CurrentHttpInterfaceName = "接口 1 已编辑";
 
         await viewModel.Workflow.SaveCurrentEditorAsync();
@@ -338,8 +338,8 @@ public sealed partial class ProjectTabViewModelTests
         Assert.NotNull(firstInterfaceItem);
         Assert.NotNull(secondInterfaceItem);
 
-        viewModel.Catalog.LoadWorkspaceItem(firstInterfaceItem);
-        viewModel.Catalog.LoadWorkspaceItem(secondInterfaceItem);
+        await viewModel.Catalog.LoadWorkspaceItem(firstInterfaceItem);
+        await viewModel.Catalog.LoadWorkspaceItem(secondInterfaceItem);
 
         Assert.Same(visibleTabs, viewModel.VisibleWorkspaceTabs);
         Assert.Equal(2, viewModel.VisibleWorkspaceTabs.Count);
@@ -366,7 +366,7 @@ public sealed partial class ProjectTabViewModelTests
         var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
         Assert.NotNull(interfaceItem);
 
-        viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+        await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
 
         Assert.NotNull(viewModel.ActiveWorkspaceTab);
         Assert.False(viewModel.ActiveWorkspaceTab!.IsLandingTab);
@@ -526,7 +526,7 @@ public sealed partial class ProjectTabViewModelTests
         Assert.NotNull(originalFolder);
         Assert.NotNull(originalInterface);
 
-        viewModel.Catalog.LoadWorkspaceItem(originalInterface);
+        await viewModel.Catalog.LoadWorkspaceItem(originalInterface);
         viewModel.Editor.CurrentHttpInterfaceName = "接口 1 已编辑";
 
         await viewModel.Workflow.SaveCurrentEditorAsync();
@@ -570,6 +570,49 @@ public sealed partial class ProjectTabViewModelTests
         Assert.NotNull(caseItem);
         Assert.Single(interfaceItem!.Children);
         Assert.Same(caseItem, interfaceItem.Children[0]);
+    }
+
+    [Fact]
+    public async Task LoadWorkspaceItem_ShouldLoadRequestCaseDetailOnDemand()
+    {
+        var requestCaseService = new FakeRequestCaseService();
+        requestCaseService.Cases.Add(new RequestCaseDto
+        {
+            Id = "case-1",
+            ProjectId = "project-1",
+            EntryType = ProjectTabRequestEntryTypes.HttpInterface,
+            Name = "创建订单",
+            GroupName = "接口",
+            FolderPath = "订单",
+            Description = "创建订单接口",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                EndpointId = "swagger-import:POST /orders",
+                Method = "POST",
+                Url = "/orders",
+                BodyMode = BodyModes.RawJson,
+                BodyContent = "{\"customerId\":1,\"amount\":128}"
+            },
+            UpdatedAt = DateTime.UtcNow
+        });
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestCaseService);
+
+        await viewModel.InitializeAsync();
+        await viewModel.Catalog.ReloadSavedRequestsAsync();
+
+        var folderItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "订单 (1)");
+        Assert.NotNull(folderItem);
+        folderItem!.IsExpanded = true;
+
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "创建订单");
+        Assert.NotNull(interfaceItem);
+        Assert.Equal(0, requestCaseService.GetDetailCallCount);
+
+        await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+
+        Assert.Equal(1, requestCaseService.GetDetailCallCount);
+        Assert.Equal(BodyModes.RawJson, viewModel.ActiveWorkspaceTab!.ConfigTab.SelectedBodyMode);
+        Assert.Equal("{\"customerId\":1,\"amount\":128}", viewModel.ActiveWorkspaceTab.ConfigTab.RequestBody);
     }
 
     [Fact]
