@@ -94,6 +94,8 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             using var response = await httpClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             stopwatch.Stop();
 
+            var mediaType = response.Content.Headers.ContentType?.MediaType;
+            var shouldCaptureBodyPreview = IsPreviewableTextContentType(mediaType);
             var contentPreview = await ReadResponseContentPreviewAsync(response.Content, cancellationToken);
             var headers = response.Headers.Concat(response.Content.Headers)
                 .SelectMany(header => header.Value.Select(value => new ResponseHeaderDto
@@ -110,6 +112,7 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
                 SizeBytes = contentPreview.SizeBytes,
                 CapturedSizeBytes = contentPreview.CapturedSizeBytes,
                 IsContentTruncated = contentPreview.IsTruncated,
+                IsBodyPreviewAvailable = shouldCaptureBodyPreview,
                 Content = contentPreview.Content,
                 Headers = headers,
                 RequestSummary = $"{request.Method.ToUpperInvariant()} {finalUrl}"
@@ -248,6 +251,26 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
 
     internal static async Task<ResponseContentPreviewResult> ReadResponseContentPreviewAsync(HttpContent content, CancellationToken cancellationToken)
     {
+        return await ReadResponseContentPreviewAsync(
+            content,
+            IsPreviewableTextContentType(content.Headers.ContentType?.MediaType),
+            cancellationToken);
+    }
+
+    internal static async Task<ResponseContentPreviewResult> ReadResponseContentPreviewAsync(
+        HttpContent content,
+        bool shouldCaptureBodyPreview,
+        CancellationToken cancellationToken)
+    {
+        if (!shouldCaptureBodyPreview)
+        {
+            return new ResponseContentPreviewResult(
+                string.Empty,
+                content.Headers.ContentLength ?? 0,
+                0,
+                false);
+        }
+
         await using var stream = await content.ReadAsStreamAsync(cancellationToken);
         var detectionLimit = ResponsePreviewByteLimit + 1;
         using var previewBuffer = new MemoryStream(Math.Min(ResponsePreviewByteLimit, (int)Math.Min(content.Headers.ContentLength ?? ResponsePreviewByteLimit, ResponsePreviewByteLimit)));
@@ -313,6 +336,29 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         {
             return Encoding.UTF8;
         }
+    }
+
+    internal static bool IsPreviewableTextContentType(string? mediaType)
+    {
+        if (string.IsNullOrWhiteSpace(mediaType))
+        {
+            return true;
+        }
+
+        if (mediaType.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return mediaType.Equals("application/json", StringComparison.OrdinalIgnoreCase)
+               || mediaType.Equals("text/json", StringComparison.OrdinalIgnoreCase)
+               || mediaType.Equals("application/xml", StringComparison.OrdinalIgnoreCase)
+               || mediaType.Equals("text/xml", StringComparison.OrdinalIgnoreCase)
+               || mediaType.Equals("application/javascript", StringComparison.OrdinalIgnoreCase)
+               || mediaType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
+               || mediaType.Equals("application/graphql-response+json", StringComparison.OrdinalIgnoreCase)
+               || mediaType.EndsWith("+json", StringComparison.OrdinalIgnoreCase)
+               || mediaType.EndsWith("+xml", StringComparison.OrdinalIgnoreCase);
     }
 
     private static HttpClient GetOrCreateHttpClient(bool ignoreSslErrors, bool allowAutoRedirect, int timeoutMilliseconds)

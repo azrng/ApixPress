@@ -111,6 +111,11 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     private static string BuildDisplayBody(ResponseSnapshotDto response)
     {
+        if (!response.IsBodyPreviewAvailable)
+        {
+            return BuildUnavailablePreviewNotice(response);
+        }
+
         var formattedBody = FormatResponseBody(response);
         if (!response.IsContentTruncated)
         {
@@ -135,6 +140,18 @@ public partial class ResponseSectionViewModel : ViewModelBase
         return response.SizeBytes > response.CapturedSizeBytes
             ? $"{UiFormatHelper.FormatBytes(response.SizeBytes)}（仅展示前 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}）"
             : $"至少 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}（仅展示前 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}）";
+    }
+
+    private static string BuildUnavailablePreviewNotice(ResponseSnapshotDto response)
+    {
+        var contentType = response.Headers.FirstOrDefault(header =>
+            string.Equals(header.Name, "Content-Type", StringComparison.OrdinalIgnoreCase))?.Value;
+        var summary = response.SizeBytes > 0
+            ? UiFormatHelper.FormatBytes(response.SizeBytes)
+            : "未知大小";
+        return string.IsNullOrWhiteSpace(contentType)
+            ? $"[当前响应为非文本内容，未加载正文预览。大小：{summary}]"
+            : $"[当前响应为非文本内容，未加载正文预览。类型：{contentType}；大小：{summary}]";
     }
 
     private static string FormatResponseBody(ResponseSnapshotDto response)

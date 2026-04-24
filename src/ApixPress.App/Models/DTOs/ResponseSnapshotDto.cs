@@ -7,6 +7,7 @@ public sealed class ResponseSnapshotDto
     public long SizeBytes { get; init; }
     public long CapturedSizeBytes { get; init; }
     public bool IsContentTruncated { get; init; }
+    public bool IsBodyPreviewAvailable { get; init; } = true;
     public string Content { get; init; } = string.Empty;
     public string ErrorMessage { get; init; } = string.Empty;
     public string RequestSummary { get; init; } = string.Empty;

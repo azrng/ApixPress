@@ -90,4 +90,35 @@ public sealed class RequestExecutionServiceTests
         Assert.Equal(body, preview.Content);
         Assert.Equal(preview.SizeBytes, preview.CapturedSizeBytes);
     }
+
+    [Theory]
+    [InlineData("image/png", false)]
+    [InlineData("application/octet-stream", false)]
+    [InlineData("application/pdf", false)]
+    [InlineData("application/json", true)]
+    [InlineData("text/plain", true)]
+    [InlineData("", true)]
+    public void IsPreviewableTextContentType_ShouldReturnExpectedResult(string mediaType, bool expected)
+    {
+        var normalizedMediaType = string.IsNullOrWhiteSpace(mediaType) ? null : mediaType;
+
+        var actual = RequestExecutionService.IsPreviewableTextContentType(normalizedMediaType);
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public async Task ReadResponseContentPreviewAsync_ShouldSkipBodyForBinaryResponse()
+    {
+        using var content = new ByteArrayContent(new byte[RequestExecutionService.ResponsePreviewByteLimit * 2]);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        content.Headers.ContentLength = RequestExecutionService.ResponsePreviewByteLimit * 2;
+
+        var preview = await RequestExecutionService.ReadResponseContentPreviewAsync(content, shouldCaptureBodyPreview: false, CancellationToken.None);
+
+        Assert.Equal(string.Empty, preview.Content);
+        Assert.Equal(0, preview.CapturedSizeBytes);
+        Assert.Equal(RequestExecutionService.ResponsePreviewByteLimit * 2, preview.SizeBytes);
+        Assert.False(preview.IsTruncated);
+    }
 }

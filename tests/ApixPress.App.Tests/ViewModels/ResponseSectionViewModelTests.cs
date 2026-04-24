@@ -144,4 +144,32 @@ public sealed class ResponseSectionViewModelTests
         Assert.Contains("响应体过大", viewModel.BodyText);
         Assert.Contains("仅展示前 1 MB", viewModel.SizeText);
     }
+
+    [Fact]
+    public void ApplyResult_ShouldShowUnavailablePreviewNotice_WhenBodyPreviewIsDisabled()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 16,
+                SizeBytes = 5 * 1024 * 1024,
+                IsBodyPreviewAvailable = false,
+                Headers =
+                [
+                    new ResponseHeaderDto
+                    {
+                        Name = "Content-Type",
+                        Value = "image/png"
+                    }
+                ]
+            }),
+            new RequestSnapshotDto());
+
+        Assert.Contains("非文本内容", viewModel.BodyText);
+        Assert.Contains("image/png", viewModel.BodyText);
+        Assert.Equal("5 MB", viewModel.SizeText);
+    }
 }
