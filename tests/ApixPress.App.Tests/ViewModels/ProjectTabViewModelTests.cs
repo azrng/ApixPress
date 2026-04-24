@@ -78,6 +78,10 @@ public sealed partial class ProjectTabViewModelTests
         {
             Id = "history-1",
             Timestamp = new DateTime(2026, 4, 24, 10, 0, 0, DateTimeKind.Utc),
+            HasResponse = true,
+            StatusCode = 200,
+            DurationMs = 12,
+            SizeBytes = 128,
             RequestSnapshot = new RequestSnapshotDto
             {
                 Method = "GET",
@@ -97,6 +101,7 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.InitializeAsync();
 
         Assert.Equal(0, requestHistoryService.GetHistoryCallCount);
+        Assert.Equal(0, requestHistoryService.GetDetailCallCount);
         Assert.Empty(viewModel.RequestHistory);
     }
 
@@ -379,6 +384,10 @@ public sealed partial class ProjectTabViewModelTests
         {
             Id = "history-1",
             Timestamp = new DateTime(2026, 4, 24, 10, 0, 0, DateTimeKind.Utc),
+            HasResponse = true,
+            StatusCode = 200,
+            DurationMs = 18,
+            SizeBytes = 256,
             RequestSnapshot = new RequestSnapshotDto
             {
                 Method = "GET",
@@ -400,7 +409,9 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.Shell.ShowRequestHistoryCommand.ExecuteAsync(null);
         Assert.Equal(ProjectWorkspaceContentMode.RequestHistory, viewModel.Shell.CurrentContentMode);
         Assert.Equal(1, requestHistoryService.GetHistoryCallCount);
+        Assert.Equal(0, requestHistoryService.GetDetailCallCount);
         Assert.Single(viewModel.RequestHistory);
+        Assert.Null(viewModel.RequestHistory[0].ResponseSnapshot);
 
         viewModel.Shell.ShowInterfaceManagementCommand.Execute(null);
         await viewModel.Shell.ShowRequestHistoryCommand.ExecuteAsync(null);
@@ -409,6 +420,46 @@ public sealed partial class ProjectTabViewModelTests
 
         viewModel.Settings.OpenWorkspaceCommand.Execute(null);
         Assert.Equal(ProjectWorkspaceContentMode.ProjectSettings, viewModel.Shell.CurrentContentMode);
+    }
+
+    [Fact]
+    public async Task LoadHistoryRequestAsync_ShouldLoadDetailOnDemand()
+    {
+        var requestHistoryService = new FakeRequestHistoryService();
+        requestHistoryService.Items.Add(new RequestHistoryItemDto
+        {
+            Id = "history-1",
+            Timestamp = new DateTime(2026, 4, 24, 10, 0, 0, DateTimeKind.Utc),
+            HasResponse = true,
+            StatusCode = 200,
+            DurationMs = 18,
+            SizeBytes = 256,
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "https://demo.local/orders"
+            },
+            ResponseSnapshot = new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 18,
+                SizeBytes = 256,
+                Content = "{\"items\":[]}"
+            }
+        });
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestHistoryService: requestHistoryService);
+        await viewModel.InitializeAsync();
+        await viewModel.Shell.ShowRequestHistoryCommand.ExecuteAsync(null);
+
+        var historyItem = Assert.Single(viewModel.RequestHistory);
+        Assert.Null(historyItem.ResponseSnapshot);
+
+        await viewModel.LoadHistoryRequestAsync(historyItem);
+
+        Assert.Equal(1, requestHistoryService.GetDetailCallCount);
+        Assert.NotNull(historyItem.ResponseSnapshot);
+        Assert.True(viewModel.ResponseSection.HasResponse);
+        Assert.Contains("\"items\":[]", viewModel.ResponseSection.BodyText);
     }
 
     [Fact]

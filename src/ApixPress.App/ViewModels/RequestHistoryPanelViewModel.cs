@@ -78,6 +78,41 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         }
     }
 
+    public async Task<RequestHistoryItemDto?> EnsureHistoryDetailLoadedAsync(RequestHistoryItemViewModel item)
+    {
+        if (item.HasLoadedDetail)
+        {
+            return new RequestHistoryItemDto
+            {
+                Id = item.Id,
+                Timestamp = item.Timestamp,
+                HasResponse = item.HasResponse,
+                StatusCode = ParseStatusCode(item.StatusText),
+                DurationMs = ParseDurationMilliseconds(item.DurationText),
+                SizeBytes = 0,
+                RequestSnapshot = item.RequestSnapshot,
+                ResponseSnapshot = item.ResponseSnapshot
+            };
+        }
+
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadHistoryCancellationTokenSource).Token;
+        try
+        {
+            var detail = await _requestHistoryService.GetDetailAsync(_currentProjectId, item.Id, cancellationToken);
+            if (detail is null)
+            {
+                return null;
+            }
+
+            item.ApplyDetail(detail);
+            return detail;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
+    }
+
     public void PrependHistoryItem(RequestHistoryItemDto item)
     {
         var viewModel = CreateHistoryItem(item);
@@ -115,19 +150,31 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     private static RequestHistoryItemViewModel CreateHistoryItem(RequestHistoryItemDto item)
     {
         var snapshot = item.RequestSnapshot;
-        var response = item.ResponseSnapshot;
         return new RequestHistoryItemViewModel
         {
             Id = item.Id,
             Method = snapshot.Method,
             Url = snapshot.Url,
             Timestamp = item.Timestamp,
-            HasResponse = response is not null,
-            StatusText = response?.StatusCode?.ToString() ?? "-",
-            DurationText = response?.DurationMs > 0 ? $"{response.DurationMs}ms" : "-",
-            SizeText = response?.SizeBytes > 0 ? UiFormatHelper.FormatBytes(response.SizeBytes) : "-",
+            HasResponse = item.HasResponse,
+            StatusText = item.StatusCode?.ToString() ?? "-",
+            DurationText = item.DurationMs > 0 ? $"{item.DurationMs}ms" : "-",
+            SizeText = item.SizeBytes > 0 ? UiFormatHelper.FormatBytes(item.SizeBytes) : "-",
             RequestSnapshot = snapshot,
-            ResponseSnapshot = response
+            ResponseSnapshot = null
         };
+    }
+
+    private static int? ParseStatusCode(string value)
+    {
+        return int.TryParse(value, out var statusCode) ? statusCode : null;
+    }
+
+    private static long ParseDurationMilliseconds(string value)
+    {
+        return value.EndsWith("ms", StringComparison.OrdinalIgnoreCase)
+               && long.TryParse(value[..^2], out var duration)
+            ? duration
+            : 0;
     }
 }

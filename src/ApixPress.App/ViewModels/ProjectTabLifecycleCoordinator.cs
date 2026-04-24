@@ -76,10 +76,18 @@ internal sealed class ProjectTabLifecycleCoordinator
         _hostContext.NotifyShellState();
     }
 
-    public void LoadHistoryRequest(RequestHistoryItemViewModel? item)
+    public async Task LoadHistoryRequestAsync(RequestHistoryItemViewModel? item)
     {
         if (item is null)
         {
+            return;
+        }
+
+        var detail = await _historyPanel.EnsureHistoryDetailLoadedAsync(item);
+        if (detail is null)
+        {
+            _hostContext.SetStatusMessage("载入历史请求失败，未找到对应记录。");
+            _hostContext.NotifyShellState();
             return;
         }
 
@@ -89,10 +97,10 @@ internal sealed class ProjectTabLifecycleCoordinator
 
         targetTab ??= _workspace.CreateWorkspaceTab(activate: false);
         targetTab.ConfigureAsQuickRequest();
-        targetTab.ApplySnapshot(item.RequestSnapshot);
-        if (item.ResponseSnapshot is not null)
+        targetTab.ApplySnapshot(detail.RequestSnapshot);
+        if (detail.ResponseSnapshot is not null)
         {
-            targetTab.ResponseSection.ApplyResult(Azrng.Core.Results.ResultModel<ResponseSnapshotDto>.Success(item.ResponseSnapshot), item.RequestSnapshot);
+            targetTab.ResponseSection.ApplyResult(Azrng.Core.Results.ResultModel<ResponseSnapshotDto>.Success(detail.ResponseSnapshot), detail.RequestSnapshot);
         }
 
         _workspace.ActivateWorkspaceTab(targetTab);

@@ -133,9 +133,9 @@ public partial class ProjectTabViewModel : ViewModelBase
         return _lifecycle.SaveCurrentEnvironmentAsync(Summary.CurrentEnvironmentLabel);
     }
 
-    public void LoadHistoryRequest(RequestHistoryItemViewModel? item)
+    public Task LoadHistoryRequestAsync(RequestHistoryItemViewModel? item)
     {
-        _lifecycle.LoadHistoryRequest(item);
+        return _lifecycle.LoadHistoryRequestAsync(item);
     }
 
     protected override void DisposeManaged()

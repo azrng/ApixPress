@@ -86,14 +86,14 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    private void LoadHistoryItem(RequestHistoryItemViewModel? item)
+    private async Task LoadHistoryItemAsync(RequestHistoryItemViewModel? item)
     {
         if (ActiveProjectTab is null || item is null)
         {
             return;
         }
 
-        ActiveProjectTab.LoadHistoryRequest(item);
+        await ActiveProjectTab.LoadHistoryRequestAsync(item);
         StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Models.DTOs;
+using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
@@ -23,9 +24,12 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
     [ObservableProperty]
     private string sizeText = string.Empty;
 
-    // Request snapshot for loading/saving
     public required RequestSnapshotDto RequestSnapshot { get; init; }
-    public ResponseSnapshotDto? ResponseSnapshot { get; init; }
+
+    [ObservableProperty]
+    private ResponseSnapshotDto? responseSnapshot;
+
+    public bool HasLoadedDetail { get; private set; }
 
     public string MethodBadgeClass => Method switch
     {
@@ -57,5 +61,11 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
     partial void OnStatusTextChanged(string value)
     {
         OnPropertyChanged(nameof(StatusBadgeClass));
+    }
+
+    public void ApplyDetail(RequestHistoryItemDto detail)
+    {
+        ResponseSnapshot = detail.ResponseSnapshot;
+        HasLoadedDetail = true;
     }
 }

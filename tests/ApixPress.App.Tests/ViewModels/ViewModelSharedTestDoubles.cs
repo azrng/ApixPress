@@ -250,11 +250,29 @@ public static class ViewModelSharedTestDoubles
     {
         public List<RequestHistoryItemDto> Items { get; } = [];
         public int GetHistoryCallCount { get; private set; }
+        public int GetDetailCallCount { get; private set; }
 
         public Task<IReadOnlyList<RequestHistoryItemDto>> GetHistoryAsync(string projectId, CancellationToken cancellationToken)
         {
             GetHistoryCallCount++;
-            return Task.FromResult<IReadOnlyList<RequestHistoryItemDto>>(Items.ToList());
+            return Task.FromResult<IReadOnlyList<RequestHistoryItemDto>>(Items.Select(item => new RequestHistoryItemDto
+            {
+                Id = item.Id,
+                Timestamp = item.Timestamp,
+                HasResponse = item.HasResponse,
+                StatusCode = item.StatusCode,
+                DurationMs = item.DurationMs,
+                SizeBytes = item.SizeBytes,
+                RequestSnapshot = item.RequestSnapshot,
+                ResponseSnapshot = null
+            }).ToList());
+        }
+
+        public Task<RequestHistoryItemDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
+        {
+            GetDetailCallCount++;
+            return Task.FromResult<RequestHistoryItemDto?>(Items.FirstOrDefault(item =>
+                string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase)));
         }
 
         public Task<IResultModel<RequestHistoryItemDto>> AddAsync(string projectId, RequestSnapshotDto request, ResponseSnapshotDto? response, CancellationToken cancellationToken)
@@ -263,6 +281,10 @@ public static class ViewModelSharedTestDoubles
             {
                 Id = Guid.NewGuid().ToString("N"),
                 Timestamp = DateTime.UtcNow,
+                HasResponse = response is not null,
+                StatusCode = response?.StatusCode,
+                DurationMs = response?.DurationMs ?? 0,
+                SizeBytes = response?.SizeBytes ?? 0,
                 RequestSnapshot = request,
                 ResponseSnapshot = response
             };

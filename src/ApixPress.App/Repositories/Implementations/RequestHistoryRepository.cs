@@ -36,6 +36,25 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
         return items.ToList();
     }
 
+    public async Task<RequestHistoryEntity?> GetByIdAsync(string projectId, string id, CancellationToken cancellationToken)
+    {
+        const string sql = """
+                           select
+                               id Id,
+                               project_id ProjectId,
+                               timestamp Timestamp,
+                               request_snapshot_json RequestSnapshotJson,
+                               response_snapshot_json ResponseSnapshotJson
+                           from request_history
+                           where project_id = @ProjectId and id = @Id
+                           limit 1
+                           """;
+
+        using var connection = _connectionFactory.CreateConnection();
+        return await connection.QueryFirstOrDefaultAsync<RequestHistoryEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId, Id = id }, cancellationToken: cancellationToken));
+    }
+
     public async Task UpsertAsync(RequestHistoryEntity entity, CancellationToken cancellationToken)
     {
         const string sql = """
