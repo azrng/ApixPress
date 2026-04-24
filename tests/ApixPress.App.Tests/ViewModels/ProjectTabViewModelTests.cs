@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Avalonia.Controls.Notifications;
 using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
 using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeAppNotificationService;
+using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels;
 using ApixPress.App.Services.Interfaces;
@@ -67,6 +68,36 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Equal(0, requestCaseService.GetCasesCallCount);
         Assert.Equal(0, apiWorkspaceService.GetDocumentsCallCount);
         Assert.Equal(0, apiWorkspaceService.GetProjectEndpointsCallCount);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_ShouldNotLoadRequestHistoryUntilHistorySectionOpened()
+    {
+        var requestHistoryService = new FakeRequestHistoryService();
+        requestHistoryService.Items.Add(new RequestHistoryItemDto
+        {
+            Id = "history-1",
+            Timestamp = new DateTime(2026, 4, 24, 10, 0, 0, DateTimeKind.Utc),
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "https://demo.local/orders"
+            },
+            ResponseSnapshot = new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 12,
+                SizeBytes = 128,
+                Content = "{\"ok\":true}"
+            }
+        });
+
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestHistoryService: requestHistoryService);
+
+        await viewModel.InitializeAsync();
+
+        Assert.Equal(0, requestHistoryService.GetHistoryCallCount);
+        Assert.Empty(viewModel.RequestHistory);
     }
 
     [Fact]
@@ -341,14 +372,40 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
-    public void WorkspaceShell_ShouldExposeCurrentContentModeForHistoryAndSettings()
+    public async Task WorkspaceShell_ShouldExposeCurrentContentModeForHistoryAndSettings()
     {
-        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+        var requestHistoryService = new FakeRequestHistoryService();
+        requestHistoryService.Items.Add(new RequestHistoryItemDto
+        {
+            Id = "history-1",
+            Timestamp = new DateTime(2026, 4, 24, 10, 0, 0, DateTimeKind.Utc),
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "https://demo.local/orders"
+            },
+            ResponseSnapshot = new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 18,
+                SizeBytes = 256,
+                Content = "{\"items\":[]}"
+            }
+        });
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestHistoryService: requestHistoryService);
+        await viewModel.InitializeAsync();
 
         Assert.Equal(ProjectWorkspaceContentMode.Landing, viewModel.Shell.CurrentContentMode);
 
-        viewModel.Shell.ShowRequestHistoryCommand.Execute(null);
+        await viewModel.Shell.ShowRequestHistoryCommand.ExecuteAsync(null);
         Assert.Equal(ProjectWorkspaceContentMode.RequestHistory, viewModel.Shell.CurrentContentMode);
+        Assert.Equal(1, requestHistoryService.GetHistoryCallCount);
+        Assert.Single(viewModel.RequestHistory);
+
+        viewModel.Shell.ShowInterfaceManagementCommand.Execute(null);
+        await viewModel.Shell.ShowRequestHistoryCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, requestHistoryService.GetHistoryCallCount);
 
         viewModel.Settings.OpenWorkspaceCommand.Execute(null);
         Assert.Equal(ProjectWorkspaceContentMode.ProjectSettings, viewModel.Shell.CurrentContentMode);

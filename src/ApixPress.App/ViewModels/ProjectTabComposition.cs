@@ -25,6 +25,7 @@ internal sealed class ProjectTabComposition : DisposableObject
         private ProjectQuickRequestSaveViewModel? _quickRequestSaveViewModel;
         private ProjectRequestWorkflowViewModel? _workflowViewModel;
         private ProjectWorkspaceShellViewModel? _shellViewModel;
+        private Func<Task> _ensureRequestHistoryLoadedAsync = static () => Task.CompletedTask;
 
         public Builder(
             ProjectWorkspaceItemViewModel project,
@@ -55,6 +56,7 @@ internal sealed class ProjectTabComposition : DisposableObject
             var environmentPanel = new EnvironmentPanelViewModel(_environmentVariableService);
             var useCasesPanel = new UseCasesPanelViewModel(_requestCaseService);
             var historyPanel = new RequestHistoryPanelViewModel(_requestHistoryService);
+            _ensureRequestHistoryLoadedAsync = historyPanel.EnsureHistoryLoadedAsync;
             var workspace = CreateWorkspace();
             var workspaceContext = CreateWorkspaceContext(workspace, environmentPanel, historyPanel);
             var shell = CreateShell(workspaceContext);
@@ -118,7 +120,8 @@ internal sealed class ProjectTabComposition : DisposableObject
         {
             var shell = new ProjectWorkspaceShellViewModel(
                 workspaceContext,
-                _hostContext);
+                _hostContext,
+                () => _ensureRequestHistoryLoadedAsync());
             _shellViewModel = shell;
             return shell;
         }

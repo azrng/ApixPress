@@ -17,13 +17,16 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
 
     private readonly ProjectTabWorkspaceContext _workspaceContext;
     private readonly ProjectTabHostContext _hostContext;
+    private readonly Func<Task> _ensureRequestHistoryLoadedAsync;
 
     internal ProjectWorkspaceShellViewModel(
         ProjectTabWorkspaceContext workspaceContext,
-        ProjectTabHostContext hostContext)
+        ProjectTabHostContext hostContext,
+        Func<Task> ensureRequestHistoryLoadedAsync)
     {
         _workspaceContext = workspaceContext;
         _hostContext = hostContext;
+        _ensureRequestHistoryLoadedAsync = ensureRequestHistoryLoadedAsync;
 
         NavigationItems.Add(new ProjectWorkspaceNavItemViewModel(
             Sections.InterfaceManagement,
@@ -96,9 +99,11 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void ShowRequestHistory()
+    private async Task ShowRequestHistory()
     {
         SelectRequestHistorySection();
+        _hostContext.SetStatusMessage("正在载入请求历史...");
+        await _ensureRequestHistoryLoadedAsync();
         _hostContext.SetStatusMessage(_workspaceContext.HasHistory() ? "这里展示当前项目的请求历史。" : "当前项目还没有请求历史。");
         _hostContext.NotifyShellState();
     }

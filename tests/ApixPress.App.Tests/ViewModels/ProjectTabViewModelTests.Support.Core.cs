@@ -17,6 +17,7 @@ public sealed partial class ProjectTabViewModelTests
     private static ProjectTabViewModel CreateViewModel(
         FakeApiWorkspaceService apiWorkspaceService,
         FakeRequestCaseService? requestCaseService = null,
+        FakeRequestHistoryService? requestHistoryService = null,
         FakeAppNotificationService? appNotificationService = null)
     {
         return new ProjectTabViewModel(
@@ -28,7 +29,7 @@ public sealed partial class ProjectTabViewModelTests
             },
             new FakeRequestExecutionService(),
             requestCaseService ?? new FakeRequestCaseService(),
-            new FakeRequestHistoryService(),
+            requestHistoryService ?? new FakeRequestHistoryService(),
             new FakeEnvironmentVariableService(),
             apiWorkspaceService,
             new FakeFilePickerService(),

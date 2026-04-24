@@ -13,6 +13,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     private readonly IRequestHistoryService _requestHistoryService;
     private CancellationTokenSource? _loadHistoryCancellationTokenSource;
     private string _currentProjectId = string.Empty;
+    private bool _hasLoadedHistory;
 
     public ObservableCollection<RequestHistoryItemViewModel> HistoryItems { get; } = [];
 
@@ -32,12 +33,24 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     public void SetProjectContext(string projectId)
     {
         _currentProjectId = projectId;
+        _hasLoadedHistory = false;
     }
 
     public void ClearProjectContext()
     {
         _currentProjectId = string.Empty;
+        _hasLoadedHistory = false;
         HistoryItems.Clear();
+    }
+
+    public async Task EnsureHistoryLoadedAsync()
+    {
+        if (_hasLoadedHistory)
+        {
+            return;
+        }
+
+        await LoadHistoryAsync();
     }
 
     public async Task LoadHistoryAsync()
@@ -58,6 +71,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
 
             var history = await _requestHistoryService.GetHistoryAsync(_currentProjectId, cancellationToken);
             HistoryItems.ReplaceWith(history.Select(CreateHistoryItem));
+            _hasLoadedHistory = true;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -89,6 +103,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         }
 
         await _requestHistoryService.ClearAsync(_currentProjectId, CancellationToken.None);
+        _hasLoadedHistory = true;
         HistoryItems.Clear();
     }
 

@@ -248,18 +248,31 @@ public static class ViewModelSharedTestDoubles
 
     public sealed class FakeRequestHistoryService : IRequestHistoryService
     {
+        public List<RequestHistoryItemDto> Items { get; } = [];
+        public int GetHistoryCallCount { get; private set; }
+
         public Task<IReadOnlyList<RequestHistoryItemDto>> GetHistoryAsync(string projectId, CancellationToken cancellationToken)
         {
-            return Task.FromResult<IReadOnlyList<RequestHistoryItemDto>>([]);
+            GetHistoryCallCount++;
+            return Task.FromResult<IReadOnlyList<RequestHistoryItemDto>>(Items.ToList());
         }
 
         public Task<IResultModel<RequestHistoryItemDto>> AddAsync(string projectId, RequestSnapshotDto request, ResponseSnapshotDto? response, CancellationToken cancellationToken)
         {
-            return Task.FromResult<IResultModel<RequestHistoryItemDto>>(ResultModel<RequestHistoryItemDto>.Success(new RequestHistoryItemDto()));
+            var item = new RequestHistoryItemDto
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Timestamp = DateTime.UtcNow,
+                RequestSnapshot = request,
+                ResponseSnapshot = response
+            };
+            Items.Insert(0, item);
+            return Task.FromResult<IResultModel<RequestHistoryItemDto>>(ResultModel<RequestHistoryItemDto>.Success(item));
         }
 
         public Task<IResultModel<bool>> ClearAsync(string projectId, CancellationToken cancellationToken)
         {
+            Items.Clear();
             return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
         }
 
