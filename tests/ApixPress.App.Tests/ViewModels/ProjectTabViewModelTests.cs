@@ -325,6 +325,7 @@ public sealed partial class ProjectTabViewModelTests
 
         Assert.True(viewModel.Shell.ShowInterfaceManagementLanding);
         Assert.False(viewModel.Shell.ShowRequestEditorWorkspace);
+        Assert.Equal(ProjectWorkspaceContentMode.Landing, viewModel.Shell.CurrentContentMode);
 
         var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
         Assert.NotNull(interfaceItem);
@@ -335,7 +336,42 @@ public sealed partial class ProjectTabViewModelTests
         Assert.False(viewModel.ActiveWorkspaceTab!.IsLandingTab);
         Assert.True(viewModel.Shell.ShowRequestEditorWorkspace);
         Assert.False(viewModel.Shell.ShowInterfaceManagementLanding);
+        Assert.Equal(ProjectWorkspaceContentMode.RequestEditor, viewModel.Shell.CurrentContentMode);
         Assert.Equal("接口 1", viewModel.Editor.CurrentHttpInterfaceDisplayName);
+    }
+
+    [Fact]
+    public void WorkspaceShell_ShouldExposeCurrentContentModeForHistoryAndSettings()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        Assert.Equal(ProjectWorkspaceContentMode.Landing, viewModel.Shell.CurrentContentMode);
+
+        viewModel.Shell.ShowRequestHistoryCommand.Execute(null);
+        Assert.Equal(ProjectWorkspaceContentMode.RequestHistory, viewModel.Shell.CurrentContentMode);
+
+        viewModel.Settings.OpenWorkspaceCommand.Execute(null);
+        Assert.Equal(ProjectWorkspaceContentMode.ProjectSettings, viewModel.Shell.CurrentContentMode);
+    }
+
+    [Fact]
+    public void RequestEditor_ShouldExposeCurrentContentModeWhenSwitchingEditorModes()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        Assert.Equal(RequestEditorContentMode.None, viewModel.Editor.CurrentContentMode);
+
+        viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
+        Assert.Equal(RequestEditorContentMode.QuickRequest, viewModel.Editor.CurrentContentMode);
+
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
+        Assert.Equal(RequestEditorContentMode.HttpWorkbench, viewModel.Editor.CurrentContentMode);
+
+        viewModel.Editor.ShowHttpDocumentPreviewModeCommand.Execute(null);
+        Assert.Equal(RequestEditorContentMode.HttpDocumentPreview, viewModel.Editor.CurrentContentMode);
+
+        viewModel.Editor.ShowHttpDebugEditorModeCommand.Execute(null);
+        Assert.Equal(RequestEditorContentMode.HttpWorkbench, viewModel.Editor.CurrentContentMode);
     }
 
     [Fact]

@@ -135,8 +135,6 @@
       </Grid>
     </Grid>
 
-    <views:QuickRequestWorkbenchView Grid.Row="2" />
-    <views:HttpInterfaceWorkbenchView Grid.Row="2" />
-    <views:HttpDocumentWorkspaceView Grid.Row="2" />
+    <views:RequestEditorContentHostView Grid.Row="2" />
   </Grid>
 </UserControl>

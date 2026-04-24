@@ -43,6 +43,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     public bool IsHttpDebugEditorMode => ActiveWorkspaceTab?.IsHttpDebugView ?? false;
     public bool IsHttpDesignEditorMode => ActiveWorkspaceTab?.IsHttpDesignView ?? false;
     public bool IsHttpDocumentPreviewMode => ActiveWorkspaceTab?.IsHttpDocumentPreviewView ?? false;
+    public RequestEditorContentMode CurrentContentMode => ResolveCurrentContentMode();
     public bool ShowHttpWorkbenchContent => IsHttpInterfaceEditor && !IsHttpDocumentPreviewMode;
     public bool ShowHttpDocumentPreviewContent => IsHttpInterfaceEditor && IsHttpDocumentPreviewMode;
     public bool ShowSaveHttpCaseAction => IsHttpInterfaceEditor;
@@ -203,6 +204,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsHttpDebugEditorMode));
         OnPropertyChanged(nameof(IsHttpDesignEditorMode));
         OnPropertyChanged(nameof(IsHttpDocumentPreviewMode));
+        OnPropertyChanged(nameof(CurrentContentMode));
         OnPropertyChanged(nameof(ShowHttpWorkbenchContent));
         OnPropertyChanged(nameof(ShowHttpDocumentPreviewContent));
         OnPropertyChanged(nameof(ShowSaveHttpCaseAction));
@@ -266,5 +268,27 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
 
         ActiveWorkspaceTab.ConfigTab.RequestName = normalizedValue;
         NotifyStateChanged();
+    }
+
+    private RequestEditorContentMode ResolveCurrentContentMode()
+    {
+        if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.IsLandingTab)
+        {
+            return RequestEditorContentMode.None;
+        }
+
+        if (ActiveWorkspaceTab.IsQuickRequestTab)
+        {
+            return RequestEditorContentMode.QuickRequest;
+        }
+
+        if (ActiveWorkspaceTab.IsHttpDocumentPreviewView)
+        {
+            return RequestEditorContentMode.HttpDocumentPreview;
+        }
+
+        return ActiveWorkspaceTab.IsHttpInterfaceTab
+            ? RequestEditorContentMode.HttpWorkbench
+            : RequestEditorContentMode.None;
     }
 }

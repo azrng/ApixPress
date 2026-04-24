@@ -43,6 +43,7 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
     public bool IsProjectSettingsSection => SelectedSection == Sections.ProjectSettings;
     public bool ShowInterfaceManagementLanding => IsInterfaceManagementSection && (_workspaceContext.GetActiveWorkspaceTab()?.IsLandingTab ?? true);
     public bool ShowRequestEditorWorkspace => IsInterfaceManagementSection && _workspaceContext.GetActiveWorkspaceTab() is { IsLandingTab: false };
+    public ProjectWorkspaceContentMode CurrentContentMode => ResolveCurrentContentMode();
 
     [ObservableProperty]
     private string selectedSection = Sections.InterfaceManagement;
@@ -79,6 +80,7 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
         OnPropertyChanged(nameof(ShowRequestEditorWorkspace));
+        OnPropertyChanged(nameof(CurrentContentMode));
     }
 
     [RelayCommand]
@@ -109,6 +111,7 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsProjectSettingsSection));
         OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
         OnPropertyChanged(nameof(ShowRequestEditorWorkspace));
+        OnPropertyChanged(nameof(CurrentContentMode));
     }
 
     partial void OnSelectedNavigationItemChanged(ProjectWorkspaceNavItemViewModel? value)
@@ -135,5 +138,22 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
         {
             SelectedNavigationItem = selectedItem;
         }
+    }
+
+    private ProjectWorkspaceContentMode ResolveCurrentContentMode()
+    {
+        if (IsProjectSettingsSection)
+        {
+            return ProjectWorkspaceContentMode.ProjectSettings;
+        }
+
+        if (IsRequestHistorySection)
+        {
+            return ProjectWorkspaceContentMode.RequestHistory;
+        }
+
+        return _workspaceContext.GetActiveWorkspaceTab() is { IsLandingTab: false }
+            ? ProjectWorkspaceContentMode.RequestEditor
+            : ProjectWorkspaceContentMode.Landing;
     }
 }
