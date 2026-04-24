@@ -85,7 +85,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     }
 
     [ObservableProperty]
-    private bool isInterfaceCatalogExpanded = true;
+    private bool isInterfaceCatalogExpanded;
 
     [ObservableProperty]
     private bool isDataModelCatalogExpanded;

@@ -17,17 +17,21 @@ public sealed partial class MainWindowViewModelTests
     private static MainWindowViewModel CreateViewModel(
         FakeProjectWorkspaceService? projectWorkspaceService = null,
         FakeAppShellSettingsService? shellSettingsService = null,
-        FakeApplicationUpdateService? applicationUpdateService = null)
+        FakeApplicationUpdateService? applicationUpdateService = null,
+        IRequestCaseService? requestCaseService = null,
+        IRequestHistoryService? requestHistoryService = null,
+        IEnvironmentVariableService? environmentVariableService = null,
+        IApiWorkspaceService? apiWorkspaceService = null)
     {
         return new MainWindowViewModel(
             new FakeRequestExecutionService(),
-            new FakeRequestCaseService(),
-            new FakeRequestHistoryService(),
-            new FakeEnvironmentVariableService(),
+            requestCaseService ?? new FakeRequestCaseService(),
+            requestHistoryService ?? new FakeRequestHistoryService(),
+            environmentVariableService ?? new FakeEnvironmentVariableService(),
             projectWorkspaceService ?? new FakeProjectWorkspaceService(),
             shellSettingsService ?? new FakeAppShellSettingsService(),
             applicationUpdateService ?? new FakeApplicationUpdateService(),
-            new FakeApiWorkspaceService(),
+            apiWorkspaceService ?? new FakeApiWorkspaceService(),
             new FakeFilePickerService(),
             new FakeAppNotificationService(),
             new FakeWindowHostService());

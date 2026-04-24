@@ -1,5 +1,7 @@
 using ApixPress.App.Models.DTOs;
+using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
+using Azrng.Core.Results;
 
 namespace ApixPress.App.Tests.ViewModels;
 
@@ -61,6 +63,33 @@ public sealed partial class MainWindowViewModelTests
         Assert.Same(viewModel.ProjectTabs[0], viewModel.ActiveProjectTab);
         Assert.Equal(project.Id, viewModel.ActiveProjectTab?.ProjectId);
         Assert.True(viewModel.IsWorkspaceMode);
+        Assert.Equal("已打开项目：订单项目", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task OpenProjectWorkspaceCommand_ShouldActivateProjectTabBeforeInitializationCompletes()
+    {
+        var projectService = new FakeProjectWorkspaceService();
+        projectService.SeedProjects(
+        [
+            new("project-1", "订单项目", "订单接口", true)
+        ]);
+        var loadGate = new TaskCompletionSource<bool>();
+        var environmentService = new DeferredEnvironmentVariableService(loadGate);
+        var viewModel = CreateViewModel(projectService, environmentVariableService: environmentService);
+        await viewModel.InitializeAsync();
+        var project = viewModel.ProjectPanel.Projects.Single();
+
+        var openTask = viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(project);
+
+        Assert.True(SpinWait.SpinUntil(() => viewModel.ActiveProjectTab is not null, TimeSpan.FromSeconds(1)));
+        Assert.Single(viewModel.ProjectTabs);
+        Assert.Same(viewModel.ProjectTabs[0], viewModel.ActiveProjectTab);
+        Assert.False(openTask.IsCompleted);
+
+        loadGate.SetResult(true);
+        await openTask;
+
         Assert.Equal("已打开项目：订单项目", viewModel.StatusMessage);
     }
 
@@ -254,5 +283,84 @@ public sealed partial class MainWindowViewModelTests
         Assert.Null(exception);
         Assert.Empty(viewModel.ProjectTabs);
         Assert.Null(viewModel.ActiveProjectTab);
+    }
+
+    private sealed class DeferredEnvironmentVariableService : IEnvironmentVariableService
+    {
+        private readonly TaskCompletionSource<bool> _loadGate;
+
+        public DeferredEnvironmentVariableService(TaskCompletionSource<bool> loadGate)
+        {
+            _loadGate = loadGate;
+        }
+
+        public async Task<IReadOnlyList<ProjectEnvironmentDto>> GetEnvironmentsAsync(string projectId, CancellationToken cancellationToken)
+        {
+            await _loadGate.Task.WaitAsync(cancellationToken);
+            return
+            [
+                new ProjectEnvironmentDto
+                {
+                    Id = "env-1",
+                    ProjectId = projectId,
+                    Name = "开发",
+                    BaseUrl = "https://api.demo.local",
+                    IsActive = true,
+                    SortOrder = 1
+                }
+            ];
+        }
+
+        public Task<IResultModel<ProjectEnvironmentDto>> SaveEnvironmentAsync(ProjectEnvironmentDto environment, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<ProjectEnvironmentDto>>(ResultModel<ProjectEnvironmentDto>.Success(environment));
+        }
+
+        public Task<IResultModel<ProjectEnvironmentDto>> SetActiveEnvironmentAsync(string projectId, string environmentId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<ProjectEnvironmentDto>>(ResultModel<ProjectEnvironmentDto>.Success(new ProjectEnvironmentDto
+            {
+                Id = environmentId,
+                ProjectId = projectId,
+                Name = "开发",
+                BaseUrl = "https://api.demo.local",
+                IsActive = true,
+                SortOrder = 1
+            }));
+        }
+
+        public Task<IResultModel<bool>> DeleteEnvironmentAsync(string projectId, string environmentId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
+        }
+
+        public Task<IReadOnlyList<EnvironmentVariableDto>> GetVariablesAsync(string environmentId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<EnvironmentVariableDto>>([]);
+        }
+
+        public Task<IResultModel<EnvironmentVariableDto>> SaveVariableAsync(EnvironmentVariableDto variable, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<EnvironmentVariableDto>>(ResultModel<EnvironmentVariableDto>.Success(variable));
+        }
+
+        public Task<IResultModel<IReadOnlyList<EnvironmentVariableDto>>> SaveVariablesAsync(
+            ProjectEnvironmentDto environment,
+            IReadOnlyList<EnvironmentVariableDto> variables,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<IReadOnlyList<EnvironmentVariableDto>>>(
+                ResultModel<IReadOnlyList<EnvironmentVariableDto>>.Success(variables));
+        }
+
+        public Task<IResultModel<bool>> DeleteVariableAsync(string id, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
+        }
+
+        public Task<IReadOnlyDictionary<string, string>> GetActiveDictionaryAsync(string environmentId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyDictionary<string, string>>(new Dictionary<string, string>());
+        }
     }
 }

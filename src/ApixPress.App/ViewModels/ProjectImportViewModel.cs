@@ -35,6 +35,7 @@ public partial class ProjectImportViewModel : ViewModelBase
     private readonly Action<string> _setStatusMessage;
     private CancellationTokenSource? _importCancellationTokenSource;
     private PendingImportRequest? _pendingImportRequest;
+    private bool _hasLoadedImportedDocuments;
 
     public ProjectImportViewModel(
         string projectId,
@@ -344,6 +345,7 @@ public partial class ProjectImportViewModel : ViewModelBase
                     ? endpointCount
                     : 0
             }));
+            _hasLoadedImportedDocuments = true;
 
             if (!HasImportedApiDocuments && ImportDataStatusState == ImportStatusStates.Info)
             {
@@ -364,6 +366,16 @@ public partial class ProjectImportViewModel : ViewModelBase
                 IsImportDataBusy = false;
             }
         }
+    }
+
+    public async Task EnsureImportedDocumentsLoadedAsync()
+    {
+        if (_hasLoadedImportedDocuments)
+        {
+            return;
+        }
+
+        await LoadImportedDocumentsAsync();
     }
 
     partial void OnSelectedImportDataModeChanged(string value)

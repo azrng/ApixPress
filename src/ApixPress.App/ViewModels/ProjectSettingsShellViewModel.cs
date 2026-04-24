@@ -16,6 +16,7 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
     private readonly Action _dismissImportDialog;
     private readonly Func<bool> _isProjectSettingsSection;
     private readonly Func<string> _getProjectDescription;
+    private readonly Func<Task> _ensureImportedDocumentsLoadedAsync;
     private readonly Action<string> _setStatusMessage;
     private readonly Action _notifyShellState;
 
@@ -24,6 +25,7 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         Action dismissImportDialog,
         Func<bool> isProjectSettingsSection,
         Func<string> getProjectDescription,
+        Func<Task> ensureImportedDocumentsLoadedAsync,
         Action<string> setStatusMessage,
         Action notifyShellState)
     {
@@ -31,6 +33,7 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         _dismissImportDialog = dismissImportDialog;
         _isProjectSettingsSection = isProjectSettingsSection;
         _getProjectDescription = getProjectDescription;
+        _ensureImportedDocumentsLoadedAsync = ensureImportedDocumentsLoadedAsync;
         _setStatusMessage = setStatusMessage;
         _notifyShellState = notifyShellState;
     }
@@ -61,11 +64,12 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void ShowImportData()
+    private async Task ShowImportDataAsync()
     {
         _showProjectSettingsWorkspace();
         SelectedSection = Sections.ImportData;
         _dismissImportDialog();
+        await _ensureImportedDocumentsLoadedAsync();
         _setStatusMessage(ProjectSettingsTexts.ImportDescription);
         _notifyShellState();
     }

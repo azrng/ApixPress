@@ -12,7 +12,7 @@ namespace ApixPress.App.Tests.ViewModels;
 public sealed partial class ProjectTabViewModelTests
 {
     [Fact]
-    public async Task InitializeAsync_ShouldLoadImportedSwaggerDocuments()
+    public async Task ShowImportDataCommand_ShouldLoadImportedSwaggerDocumentsOnDemand()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
         apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 3);
@@ -20,6 +20,11 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService);
 
         await viewModel.InitializeAsync();
+        Assert.Empty(viewModel.Import.ImportedApiDocuments);
+        Assert.Equal(0, apiWorkspaceService.GetDocumentsCallCount);
+        Assert.Equal(0, apiWorkspaceService.GetProjectEndpointsCallCount);
+
+        await viewModel.Settings.ShowImportDataCommand.ExecuteAsync(null);
 
         var imported = Assert.Single(viewModel.Import.ImportedApiDocuments);
         Assert.Equal("支付服务", imported.Name);
@@ -29,7 +34,7 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_ShouldShowImportedEndpointsInInterfaceCatalog()
+    public async Task ShowImportDataCommand_ShouldShowImportedEndpointsInInterfaceCatalog()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
         var requestCaseService = new FakeRequestCaseService();
@@ -38,6 +43,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
 
         await viewModel.InitializeAsync();
+        await viewModel.Settings.ShowImportDataCommand.ExecuteAsync(null);
 
         var titles = FlattenExplorerTitles(viewModel.Catalog.InterfaceCatalogItems).ToList();
 
@@ -48,7 +54,7 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_ShouldLoadSavedRequestsOnlyOnceWhenRefreshingImportedDocuments()
+    public async Task InitializeAsync_ShouldNotLoadImportedDocumentsUntilImportSectionOpened()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
         var requestCaseService = new FakeRequestCaseService();
@@ -59,6 +65,18 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.InitializeAsync();
 
         Assert.Equal(0, requestCaseService.GetCasesCallCount);
+        Assert.Equal(0, apiWorkspaceService.GetDocumentsCallCount);
+        Assert.Equal(0, apiWorkspaceService.GetProjectEndpointsCallCount);
+    }
+
+    [Fact]
+    public async Task InterfaceCatalog_ShouldBeCollapsedByDefault()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        await viewModel.InitializeAsync();
+
+        Assert.False(viewModel.Catalog.IsInterfaceCatalogExpanded);
     }
 
     [Fact]
@@ -69,7 +87,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
         await viewModel.InitializeAsync();
 
-        viewModel.Settings.ShowImportDataCommand.Execute(null);
+        await viewModel.Settings.ShowImportDataCommand.ExecuteAsync(null);
         viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
 
         await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
@@ -90,6 +108,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
 
         await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
 
         var folderItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "默认分组 (1)");
         var unnamedInterface = Assert.Single(folderItem!.Children);
@@ -106,7 +125,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, appNotificationService: notificationService);
         await viewModel.InitializeAsync();
 
-        viewModel.Settings.ShowImportDataCommand.Execute(null);
+        await viewModel.Settings.ShowImportDataCommand.ExecuteAsync(null);
         viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
 
         await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
@@ -133,7 +152,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService);
         await viewModel.InitializeAsync();
 
-        viewModel.Settings.ShowImportDataCommand.Execute(null);
+        await viewModel.Settings.ShowImportDataCommand.ExecuteAsync(null);
         viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
 
         var importTask = viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
@@ -158,7 +177,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
         await viewModel.InitializeAsync();
 
-        viewModel.Settings.ShowImportDataCommand.Execute(null);
+        await viewModel.Settings.ShowImportDataCommand.ExecuteAsync(null);
         viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
 
         await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
@@ -181,7 +200,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
         await viewModel.InitializeAsync();
 
-        viewModel.Settings.ShowImportDataCommand.Execute(null);
+        await viewModel.Settings.ShowImportDataCommand.ExecuteAsync(null);
         viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
 
         await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
@@ -207,6 +226,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
 
         await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
 
         var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
         Assert.NotNull(interfaceItem);
@@ -243,6 +263,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
 
         await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
 
         var visibleTabs = viewModel.VisibleWorkspaceTabs;
         var firstInterfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
@@ -269,6 +290,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
 
         await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
 
         Assert.True(viewModel.Shell.ShowInterfaceManagementLanding);
         Assert.False(viewModel.Shell.ShowRequestEditorWorkspace);
@@ -294,6 +316,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
 
         await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
 
         var originalFolder = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "默认分组 (1)");
         Assert.NotNull(originalFolder);
@@ -321,6 +344,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
 
         await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
 
         var originalFolder = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "默认分组 (1)");
         var originalInterface = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
@@ -392,6 +416,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
 
         await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
 
         var folderItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "默认分组 (2)");
         Assert.NotNull(folderItem);
@@ -413,6 +438,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
 
         await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
 
         var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
         Assert.NotNull(interfaceItem);
@@ -433,6 +459,7 @@ public sealed partial class ProjectTabViewModelTests
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
 
         await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
 
         var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
         Assert.NotNull(interfaceItem);
@@ -447,7 +474,7 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
-    public void ProjectSettingsCommands_ShouldSwitchBetweenOverviewAndImportDataSections()
+    public async Task ProjectSettingsCommands_ShouldSwitchBetweenOverviewAndImportDataSections()
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
 
@@ -459,7 +486,7 @@ public sealed partial class ProjectTabViewModelTests
         Assert.False(viewModel.Settings.IsImportDataSelected);
         Assert.Equal("基本设置", viewModel.Settings.CurrentTitle);
 
-        viewModel.Settings.ShowImportDataCommand.Execute(null);
+        await viewModel.Settings.ShowImportDataCommand.ExecuteAsync(null);
 
         Assert.True(viewModel.Shell.IsProjectSettingsSection);
         Assert.False(viewModel.Settings.IsOverviewSelected);

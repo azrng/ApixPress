@@ -130,6 +130,7 @@ internal sealed class ProjectTabComposition : DisposableObject
                 () => _importViewModel?.DismissDialog(),
                 () => _shellViewModel?.IsProjectSettingsSection ?? false,
                 () => _project.Description,
+                () => _importViewModel?.EnsureImportedDocumentsLoadedAsync() ?? Task.CompletedTask,
                 _hostContext.SetStatusMessage,
                 _hostContext.NotifyShellState);
         }

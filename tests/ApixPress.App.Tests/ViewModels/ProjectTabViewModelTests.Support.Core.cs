@@ -74,6 +74,8 @@ public sealed partial class ProjectTabViewModelTests
         public string LastImportedUrl { get; private set; } = string.Empty;
         public TaskCompletionSource<bool>? UrlPreviewGate { get; set; }
         public TaskCompletionSource<bool>? UrlImportGate { get; set; }
+        public int GetDocumentsCallCount { get; private set; }
+        public int GetProjectEndpointsCallCount { get; private set; }
 
         public void SeedDocument(string projectId, string name, string sourceType, string sourceValue, string baseUrl, int endpointCount)
         {
@@ -122,6 +124,7 @@ public sealed partial class ProjectTabViewModelTests
 
         public Task<IReadOnlyList<ApiDocumentDto>> GetDocumentsAsync(string projectId, CancellationToken cancellationToken)
         {
+            GetDocumentsCallCount++;
             IReadOnlyList<ApiDocumentDto> documents = _documentsByProject.TryGetValue(projectId, out var items)
                 ? items.ToList()
                 : [];
@@ -138,6 +141,7 @@ public sealed partial class ProjectTabViewModelTests
 
         public Task<IReadOnlyList<ApiEndpointDto>> GetProjectEndpointsAsync(string projectId, CancellationToken cancellationToken)
         {
+            GetProjectEndpointsCallCount++;
             IReadOnlyList<ApiEndpointDto> endpoints = _documentsByProject.TryGetValue(projectId, out var documents)
                 ? documents.SelectMany(document => _endpointsByDocument.TryGetValue(document.Id, out var items) ? items : []).ToList()
                 : [];

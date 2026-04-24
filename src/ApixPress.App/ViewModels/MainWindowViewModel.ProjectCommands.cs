@@ -13,24 +13,35 @@ public partial class MainWindowViewModel
         }
 
         IsBusy = true;
-        var tab = ProjectTabs.FirstOrDefault(item => string.Equals(item.ProjectId, project.Id, StringComparison.OrdinalIgnoreCase));
-        if (tab is null)
+        try
         {
-            tab = CreateProjectTab(project);
-            ProjectTabs.Add(tab);
-            await tab.InitializeAsync();
-        }
-        else
-        {
-            SyncTabProject(tab, project);
-        }
+            var tab = ProjectTabs.FirstOrDefault(item => string.Equals(item.ProjectId, project.Id, StringComparison.OrdinalIgnoreCase));
+            if (tab is null)
+            {
+                tab = CreateProjectTab(project);
+                ProjectTabs.Add(tab);
+                ActivateProjectTabCore(tab);
+                ProjectPanel.SelectedProject = ProjectPanel.Projects.FirstOrDefault(item =>
+                    string.Equals(item.Id, project.Id, StringComparison.OrdinalIgnoreCase));
+                StatusMessage = $"正在打开项目：{tab.Project.Name}";
+                NotifyShellState();
+                await tab.InitializeAsync();
+            }
+            else
+            {
+                SyncTabProject(tab, project);
+                ActivateProjectTabCore(tab);
+                ProjectPanel.SelectedProject = ProjectPanel.Projects.FirstOrDefault(item =>
+                    string.Equals(item.Id, project.Id, StringComparison.OrdinalIgnoreCase));
+            }
 
-        ActivateProjectTabCore(tab);
-        ProjectPanel.SelectedProject = ProjectPanel.Projects.FirstOrDefault(item =>
-            string.Equals(item.Id, project.Id, StringComparison.OrdinalIgnoreCase));
-        StatusMessage = $"已打开项目：{tab.Project.Name}";
-        IsBusy = false;
-        NotifyShellState();
+            StatusMessage = $"已打开项目：{tab.Project.Name}";
+        }
+        finally
+        {
+            IsBusy = false;
+            NotifyShellState();
+        }
     }
 
     [RelayCommand]
