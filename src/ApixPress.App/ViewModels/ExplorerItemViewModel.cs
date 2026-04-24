@@ -8,6 +8,9 @@ namespace ApixPress.App.ViewModels;
 
 public partial class ExplorerItemViewModel : ViewModelBase
 {
+    private Func<IReadOnlyList<ExplorerItemViewModel>>? _childLoader;
+    private bool _childrenLoaded = true;
+
     public ExplorerItemViewModel()
     {
         Children.CollectionChanged += OnChildrenCollectionChanged;
@@ -35,11 +38,17 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public ObservableCollection<ExplorerItemViewModel> Children { get; } = [];
 
-    public bool HasChildren => Children.Count > 0;
+    public bool HasChildren => Children.Count > 0 || HasDeferredChildren;
+
+    public bool HasDeferredChildren => _childLoader is not null && !_childrenLoaded;
+
+    public bool AreChildrenLoaded => _childrenLoaded || _childLoader is null;
 
     public bool IsClickable => CanLoad || HasChildren;
 
-    public bool CanDelete => SourceCase is not null || Children.Any(child => child.CanDelete);
+    public bool CanDelete => SourceCase is not null
+        || (string.Equals(NodeType, "folder", StringComparison.OrdinalIgnoreCase) && HasChildren)
+        || Children.Any(child => child.CanDelete);
 
     public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
 
@@ -107,6 +116,8 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public void SyncFrom(ExplorerItemViewModel source)
     {
+        var wasChildrenLoaded = _childrenLoaded;
+
         NodeKey = source.NodeKey;
         Title = source.Title;
         Subtitle = source.Subtitle;
@@ -116,10 +127,50 @@ public partial class ExplorerItemViewModel : ViewModelBase
         DeleteCommand = source.DeleteCommand;
         SourceCase = source.SourceCase;
         Endpoint = source.Endpoint;
+        _childLoader = source._childLoader;
+        if (_childLoader is null)
+        {
+            _childrenLoaded = true;
+        }
+        else if (!wasChildrenLoaded)
+        {
+            _childrenLoaded = false;
+        }
 
+        OnPropertyChanged(nameof(HasChildren));
+        OnPropertyChanged(nameof(HasDeferredChildren));
+        OnPropertyChanged(nameof(AreChildrenLoaded));
+        OnPropertyChanged(nameof(IsClickable));
         OnPropertyChanged(nameof(CanDelete));
         OnPropertyChanged(nameof(MethodBadgeText));
         OnPropertyChanged(nameof(MethodBadgeClass));
+    }
+
+    public void SetDeferredChildren(Func<IReadOnlyList<ExplorerItemViewModel>> childLoader)
+    {
+        _childLoader = childLoader;
+        _childrenLoaded = false;
+        OnPropertyChanged(nameof(HasChildren));
+        OnPropertyChanged(nameof(HasDeferredChildren));
+        OnPropertyChanged(nameof(AreChildrenLoaded));
+        OnPropertyChanged(nameof(IsClickable));
+        OnPropertyChanged(nameof(CanDelete));
+    }
+
+    public void EnsureChildrenLoaded()
+    {
+        if (IsDisposed || _childrenLoaded || _childLoader is null)
+        {
+            return;
+        }
+
+        ReplaceChildren(_childLoader());
+        _childrenLoaded = true;
+        OnPropertyChanged(nameof(HasChildren));
+        OnPropertyChanged(nameof(HasDeferredChildren));
+        OnPropertyChanged(nameof(AreChildrenLoaded));
+        OnPropertyChanged(nameof(IsClickable));
+        OnPropertyChanged(nameof(CanDelete));
     }
 
     private void OnChildrenCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -140,6 +191,14 @@ public partial class ExplorerItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsClickable));
     }
 
+    partial void OnIsExpandedChanged(bool value)
+    {
+        if (value)
+        {
+            EnsureChildrenLoaded();
+        }
+    }
+
     partial void OnTitleChanged(string value)
     {
         OnPropertyChanged(nameof(DisplayTitle));
@@ -154,5 +213,19 @@ public partial class ExplorerItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowTrailingDot));
         OnPropertyChanged(nameof(NodeGlyph));
         OnPropertyChanged(nameof(DisplayTitle));
+    }
+
+    private void ReplaceChildren(IReadOnlyList<ExplorerItemViewModel> items)
+    {
+        foreach (var child in Children.ToList())
+        {
+            child.Dispose();
+        }
+
+        Children.Clear();
+        foreach (var item in items)
+        {
+            Children.Add(item);
+        }
     }
 }

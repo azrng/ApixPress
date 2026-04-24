@@ -80,6 +80,37 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task InterfaceCatalog_ShouldLazyLoadNestedNodesWhenExpanded()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local",
+        [
+            ("订单/支付", "查询支付状态", "GET", "/payments/status")
+        ]);
+
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
+
+        var folderItem = Assert.Single(viewModel.Catalog.InterfaceCatalogItems);
+        Assert.True(folderItem.HasChildren);
+        Assert.Empty(folderItem.Children);
+
+        folderItem.IsExpanded = true;
+
+        var nestedFolder = Assert.Single(folderItem.Children);
+        Assert.Equal("支付 (1)", nestedFolder.Title);
+        Assert.Empty(nestedFolder.Children);
+
+        nestedFolder.IsExpanded = true;
+
+        var interfaceItem = Assert.Single(nestedFolder.Children);
+        Assert.Equal("查询支付状态", interfaceItem.Title);
+    }
+
+    [Fact]
     public async Task ImportSwaggerUrlCommand_ShouldNotReloadAllSavedRequestsAfterSyncImportedInterfaces()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();

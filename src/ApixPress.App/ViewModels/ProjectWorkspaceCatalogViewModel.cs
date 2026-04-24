@@ -430,7 +430,21 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
             {
                 var existingItem = target[currentIndex];
                 existingItem.SyncFrom(desiredItem);
-                SynchronizeExplorerItems(existingItem.Children, desiredItem.Children);
+
+                if (existingItem.AreChildrenLoaded)
+                {
+                    desiredItem.EnsureChildrenLoaded();
+                }
+                else if (desiredItem.AreChildrenLoaded)
+                {
+                    existingItem.EnsureChildrenLoaded();
+                }
+
+                if (existingItem.AreChildrenLoaded || desiredItem.AreChildrenLoaded)
+                {
+                    SynchronizeExplorerItems(existingItem.Children, desiredItem.Children);
+                }
+
                 if (currentIndex != index)
                 {
                     target.Move(currentIndex, index);

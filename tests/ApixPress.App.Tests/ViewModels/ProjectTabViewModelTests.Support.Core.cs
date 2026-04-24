@@ -39,6 +39,7 @@ public sealed partial class ProjectTabViewModelTests
     {
         foreach (var item in items)
         {
+            item.EnsureChildrenLoaded();
             yield return item.Title;
             foreach (var child in FlattenExplorerTitles(item.Children))
             {
@@ -53,9 +54,11 @@ public sealed partial class ProjectTabViewModelTests
         {
             if (string.Equals(item.Title, title, StringComparison.Ordinal))
             {
+                item.EnsureChildrenLoaded();
                 return item;
             }
 
+            item.EnsureChildrenLoaded();
             var child = FindExplorerItemByTitle(item.Children, title);
             if (child is not null)
             {
