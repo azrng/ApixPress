@@ -23,7 +23,37 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
                                project_id ProjectId,
                                timestamp Timestamp,
                                request_snapshot_json RequestSnapshotJson,
-                               response_snapshot_json ResponseSnapshotJson
+                               response_snapshot_json ResponseSnapshotJson,
+                               case
+                                   when trim(coalesce(response_snapshot_json, '')) = '' then 0
+                                   when json_valid(response_snapshot_json) = 0 then 1
+                                   when json_type(response_snapshot_json, '$') = 'object' and trim(response_snapshot_json) = '{}' then 0
+                                   when json_type(response_snapshot_json, '$') = 'object' then 1
+                                   else 0
+                               end HasResponse,
+                               case
+                                   when json_valid(response_snapshot_json) = 1 and json_type(response_snapshot_json, '$') = 'object'
+                                       then cast(coalesce(
+                                           json_extract(response_snapshot_json, '$.statusCode'),
+                                           json_extract(response_snapshot_json, '$.StatusCode')) as integer)
+                                   else null
+                               end StatusCode,
+                               case
+                                   when json_valid(response_snapshot_json) = 1 and json_type(response_snapshot_json, '$') = 'object'
+                                       then cast(coalesce(
+                                           json_extract(response_snapshot_json, '$.durationMs'),
+                                           json_extract(response_snapshot_json, '$.DurationMs'),
+                                           0) as integer)
+                                   else 0
+                               end DurationMs,
+                               case
+                                   when json_valid(response_snapshot_json) = 1 and json_type(response_snapshot_json, '$') = 'object'
+                                       then cast(coalesce(
+                                           json_extract(response_snapshot_json, '$.sizeBytes'),
+                                           json_extract(response_snapshot_json, '$.SizeBytes'),
+                                           0) as integer)
+                                   else 0
+                               end SizeBytes
                            from request_history
                            where project_id = @ProjectId
                            order by timestamp desc

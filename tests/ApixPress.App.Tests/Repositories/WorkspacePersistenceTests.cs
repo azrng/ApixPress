@@ -98,6 +98,48 @@ public sealed partial class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task RequestHistoryRepository_ShouldProjectHistorySummaryFromSqlite()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var serializer = CreateSerializer();
+        var requestHistoryRepository = new RequestHistoryRepository(factory);
+        var requestHistoryService = new RequestHistoryService(requestHistoryRepository, serializer);
+
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "请求历史项目"
+        }, CancellationToken.None)).Data!;
+
+        var addResult = await requestHistoryService.AddAsync(project.Id, new RequestSnapshotDto
+        {
+            Method = "POST",
+            Url = "/users"
+        }, new ResponseSnapshotDto
+        {
+            StatusCode = 201,
+            DurationMs = 128,
+            SizeBytes = 2048,
+            Content = "{\"id\":1}"
+        }, CancellationToken.None);
+
+        Assert.True(addResult.IsSuccess);
+
+        var items = await requestHistoryRepository.GetHistoryAsync(project.Id, 10, CancellationToken.None);
+        var item = Assert.Single(items);
+
+        Assert.True(item.HasResponse);
+        Assert.Equal(201, item.StatusCode);
+        Assert.Equal(128, item.DurationMs);
+        Assert.Equal(2048, item.SizeBytes);
+        Assert.NotEmpty(item.ResponseSnapshotJson);
+    }
+
+    [Fact]
     public async Task RequestCaseService_ShouldPersistHttpInterfaceHierarchy()
     {
         using var factory = new TestSqliteConnectionFactory();

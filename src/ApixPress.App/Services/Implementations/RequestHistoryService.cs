@@ -6,7 +6,6 @@ using Azrng.Core;
 using Azrng.Core.DependencyInjection;
 using Azrng.Core.Json;
 using Azrng.Core.Results;
-using System.Text.Json;
 
 namespace ApixPress.App.Services.Implementations;
 
@@ -64,15 +63,14 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
     private RequestHistoryItemDto ToSummaryDto(RequestHistoryEntity entity)
     {
         var requestSnapshot = _serializer.ToObject<RequestSnapshotDto>(entity.RequestSnapshotJson) ?? new RequestSnapshotDto();
-        var responseSummary = ParseResponseSummary(entity.ResponseSnapshotJson);
         return new RequestHistoryItemDto
         {
             Id = entity.Id,
             Timestamp = entity.Timestamp,
-            HasResponse = responseSummary.HasResponse,
-            StatusCode = responseSummary.StatusCode,
-            DurationMs = responseSummary.DurationMs,
-            SizeBytes = responseSummary.SizeBytes,
+            HasResponse = entity.HasResponse,
+            StatusCode = entity.StatusCode,
+            DurationMs = entity.DurationMs,
+            SizeBytes = entity.SizeBytes,
             RequestSnapshot = requestSnapshot,
             ResponseSnapshot = null
         };
@@ -102,36 +100,5 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
             RequestSnapshot = requestSnapshot,
             ResponseSnapshot = responseSnapshot
         };
-    }
-
-    private static (bool HasResponse, int? StatusCode, long DurationMs, long SizeBytes) ParseResponseSummary(string responseSnapshotJson)
-    {
-        if (string.IsNullOrWhiteSpace(responseSnapshotJson) || string.Equals(responseSnapshotJson, "{}", StringComparison.Ordinal))
-        {
-            return (false, null, 0, 0);
-        }
-
-        try
-        {
-            using var document = JsonDocument.Parse(responseSnapshotJson);
-            var root = document.RootElement;
-            var hasMeaningfulResponse = root.ValueKind == JsonValueKind.Object && root.EnumerateObject().Any();
-            if (!hasMeaningfulResponse)
-            {
-                return (false, null, 0, 0);
-            }
-
-            return (
-                true,
-                root.TryGetProperty(nameof(ResponseSnapshotDto.StatusCode), out var statusCodeElement) && statusCodeElement.ValueKind != JsonValueKind.Null
-                    ? statusCodeElement.GetInt32()
-                    : null,
-                root.TryGetProperty(nameof(ResponseSnapshotDto.DurationMs), out var durationElement) ? durationElement.GetInt64() : 0,
-                root.TryGetProperty(nameof(ResponseSnapshotDto.SizeBytes), out var sizeElement) ? sizeElement.GetInt64() : 0);
-        }
-        catch (JsonException)
-        {
-            return (true, null, 0, 0);
-        }
     }
 }
