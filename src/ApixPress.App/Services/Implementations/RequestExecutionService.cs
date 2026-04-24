@@ -6,6 +6,7 @@ using Azrng.Core.Json;
 using Azrng.Core.Results;
 using System.Diagnostics;
 using System.Net.Http.Headers;
+using System.Buffers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Collections.Concurrent;
@@ -14,20 +15,32 @@ namespace ApixPress.App.Services.Implementations;
 
 public sealed partial class RequestExecutionService : IRequestExecutionService, ITransientDependency
 {
+    internal const int ResponsePreviewByteLimit = 1024 * 1024;
     private static readonly ConcurrentDictionary<RequestClientOptions, HttpClient> SharedHttpClients = new();
 
     private readonly IAppShellSettingsService _appShellSettingsService;
     private readonly IEnvironmentVariableService _environmentVariableService;
     private readonly IJsonSerializer _serializer;
+    private readonly Func<bool, bool, int, HttpClient> _httpClientFactory;
 
     public RequestExecutionService(
         IEnvironmentVariableService environmentVariableService,
         IAppShellSettingsService appShellSettingsService,
         IJsonSerializer serializer)
+        : this(environmentVariableService, appShellSettingsService, serializer, GetOrCreateHttpClient)
+    {
+    }
+
+    internal RequestExecutionService(
+        IEnvironmentVariableService environmentVariableService,
+        IAppShellSettingsService appShellSettingsService,
+        IJsonSerializer serializer,
+        Func<bool, bool, int, HttpClient> httpClientFactory)
     {
         _environmentVariableService = environmentVariableService;
         _appShellSettingsService = appShellSettingsService;
         _serializer = serializer;
+        _httpClientFactory = httpClientFactory;
     }
 
     public async Task<IResultModel<ResponseSnapshotDto>> SendAsync(
@@ -50,7 +63,7 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
 
             var finalUrl = BuildUrl(request, resolvedBaseUrl, activeVariables);
             var ignoreSslErrors = request.IgnoreSslErrors || !shellSettings.ValidateSslCertificate;
-            var httpClient = GetOrCreateHttpClient(
+            var httpClient = _httpClientFactory(
                 ignoreSslErrors,
                 shellSettings.AutoFollowRedirects,
                 shellSettings.RequestTimeoutMilliseconds);
@@ -78,11 +91,10 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             }
 
             var stopwatch = Stopwatch.StartNew();
-            using var response = await httpClient.SendAsync(message, cancellationToken);
+            using var response = await httpClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             stopwatch.Stop();
 
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            var sizeBytes = Encoding.UTF8.GetByteCount(content);
+            var contentPreview = await ReadResponseContentPreviewAsync(response.Content, cancellationToken);
             var headers = response.Headers.Concat(response.Content.Headers)
                 .SelectMany(header => header.Value.Select(value => new ResponseHeaderDto
                 {
@@ -95,8 +107,10 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             {
                 StatusCode = (int)response.StatusCode,
                 DurationMs = stopwatch.ElapsedMilliseconds,
-                SizeBytes = sizeBytes,
-                Content = content,
+                SizeBytes = contentPreview.SizeBytes,
+                CapturedSizeBytes = contentPreview.CapturedSizeBytes,
+                IsContentTruncated = contentPreview.IsTruncated,
+                Content = contentPreview.Content,
                 Headers = headers,
                 RequestSummary = $"{request.Method.ToUpperInvariant()} {finalUrl}"
             });
@@ -232,6 +246,75 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         return result;
     }
 
+    internal static async Task<ResponseContentPreviewResult> ReadResponseContentPreviewAsync(HttpContent content, CancellationToken cancellationToken)
+    {
+        await using var stream = await content.ReadAsStreamAsync(cancellationToken);
+        var detectionLimit = ResponsePreviewByteLimit + 1;
+        using var previewBuffer = new MemoryStream(Math.Min(ResponsePreviewByteLimit, (int)Math.Min(content.Headers.ContentLength ?? ResponsePreviewByteLimit, ResponsePreviewByteLimit)));
+        var rentedBuffer = ArrayPool<byte>.Shared.Rent(81920);
+
+        var storedBytes = 0;
+        var streamEnded = false;
+        try
+        {
+            while (storedBytes < detectionLimit)
+            {
+                var read = await stream.ReadAsync(rentedBuffer.AsMemory(0, rentedBuffer.Length), cancellationToken);
+                if (read == 0)
+                {
+                    streamEnded = true;
+                    break;
+                }
+
+                var bytesToWrite = Math.Min(read, detectionLimit - storedBytes);
+                previewBuffer.Write(rentedBuffer, 0, bytesToWrite);
+                storedBytes += bytesToWrite;
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(rentedBuffer);
+        }
+
+        var capturedSizeBytes = Math.Min(storedBytes, ResponsePreviewByteLimit);
+        var isTruncated = !streamEnded || storedBytes > ResponsePreviewByteLimit;
+        var totalSizeBytes = content.Headers.ContentLength ?? capturedSizeBytes;
+        if (content.Headers.ContentLength is long declaredLength && declaredLength > capturedSizeBytes)
+        {
+            isTruncated = true;
+        }
+
+        var previewBytes = previewBuffer.ToArray();
+        if (previewBytes.Length > capturedSizeBytes)
+        {
+            Array.Resize(ref previewBytes, (int)capturedSizeBytes);
+        }
+
+        var encoding = ResolveEncoding(content.Headers.ContentType?.CharSet);
+        return new ResponseContentPreviewResult(
+            encoding.GetString(previewBytes),
+            totalSizeBytes,
+            capturedSizeBytes,
+            isTruncated);
+    }
+
+    private static Encoding ResolveEncoding(string? charset)
+    {
+        if (string.IsNullOrWhiteSpace(charset))
+        {
+            return Encoding.UTF8;
+        }
+
+        try
+        {
+            return Encoding.GetEncoding(charset.Trim('"'));
+        }
+        catch (ArgumentException)
+        {
+            return Encoding.UTF8;
+        }
+    }
+
     private static HttpClient GetOrCreateHttpClient(bool ignoreSslErrors, bool allowAutoRedirect, int timeoutMilliseconds)
     {
         var options = new RequestClientOptions(ignoreSslErrors, allowAutoRedirect, timeoutMilliseconds);
@@ -258,6 +341,12 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
 
     [GeneratedRegex("\\{\\{\\s*([\\w.-]+)\\s*\\}\\}")]
     private static partial Regex VariableRegex();
+
+    internal readonly record struct ResponseContentPreviewResult(
+        string Content,
+        long SizeBytes,
+        long CapturedSizeBytes,
+        bool IsTruncated);
 
     private readonly record struct RequestClientOptions(bool IgnoreSslErrors, bool AllowAutoRedirect, int TimeoutMilliseconds);
 }

@@ -1,5 +1,6 @@
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Implementations;
+using System.Net.Http.Headers;
 
 namespace ApixPress.App.Tests.Services;
 
@@ -53,5 +54,40 @@ public sealed class RequestExecutionServiceTests
         });
 
         Assert.Equal("Bearer abc123 {{missing}}", result);
+    }
+
+    [Fact]
+    public async Task ReadResponseContentPreviewAsync_ShouldCapLargeResponseBody()
+    {
+        var oversizedBody = new string('a', RequestExecutionService.ResponsePreviewByteLimit + 8192);
+        using var content = new StringContent(oversizedBody);
+        content.Headers.ContentType = new MediaTypeHeaderValue("text/plain")
+        {
+            CharSet = "utf-8"
+        };
+
+        var preview = await RequestExecutionService.ReadResponseContentPreviewAsync(content, CancellationToken.None);
+
+        Assert.True(preview.IsTruncated);
+        Assert.Equal(RequestExecutionService.ResponsePreviewByteLimit, preview.CapturedSizeBytes);
+        Assert.True(preview.SizeBytes > preview.CapturedSizeBytes);
+        Assert.Equal(RequestExecutionService.ResponsePreviewByteLimit, preview.Content.Length);
+    }
+
+    [Fact]
+    public async Task ReadResponseContentPreviewAsync_ShouldKeepFullBodyWhenSmallResponse()
+    {
+        const string body = "{\"ok\":true}";
+        using var content = new StringContent(body);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/json")
+        {
+            CharSet = "utf-8"
+        };
+
+        var preview = await RequestExecutionService.ReadResponseContentPreviewAsync(content, CancellationToken.None);
+
+        Assert.False(preview.IsTruncated);
+        Assert.Equal(body, preview.Content);
+        Assert.Equal(preview.SizeBytes, preview.CapturedSizeBytes);
     }
 }

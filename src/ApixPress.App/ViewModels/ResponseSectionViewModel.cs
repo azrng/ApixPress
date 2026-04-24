@@ -88,8 +88,8 @@ public partial class ResponseSectionViewModel : ViewModelBase
         var r = result.Data;
         StatusText = r.StatusCode is { } code ? $"HTTP {code}" : "请求完成";
         DurationText = $"{r.DurationMs} ms";
-        SizeText = UiFormatHelper.FormatBytes(r.SizeBytes);
-        BodyText = FormatResponseBody(r);
+        SizeText = FormatResponseSizeText(r);
+        BodyText = BuildDisplayBody(r);
         HeadersText = string.Join(Environment.NewLine, r.Headers.Select(h => $"{h.Name}: {h.Value}"));
     }
 
@@ -107,6 +107,34 @@ public partial class ResponseSectionViewModel : ViewModelBase
     partial void OnStatusTextChanged(string value)
     {
         OnPropertyChanged(nameof(StatusBadgeClass));
+    }
+
+    private static string BuildDisplayBody(ResponseSnapshotDto response)
+    {
+        var formattedBody = FormatResponseBody(response);
+        if (!response.IsContentTruncated)
+        {
+            return formattedBody;
+        }
+
+        var notice = response.SizeBytes > response.CapturedSizeBytes
+            ? $"[响应体过大，当前仅展示前 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}，完整响应约 {UiFormatHelper.FormatBytes(response.SizeBytes)}。]"
+            : $"[响应体过大，当前仅展示前 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}，完整大小未知。]";
+        return string.IsNullOrWhiteSpace(formattedBody)
+            ? notice
+            : $"{formattedBody}{Environment.NewLine}{Environment.NewLine}{notice}";
+    }
+
+    private static string FormatResponseSizeText(ResponseSnapshotDto response)
+    {
+        if (!response.IsContentTruncated)
+        {
+            return UiFormatHelper.FormatBytes(response.SizeBytes);
+        }
+
+        return response.SizeBytes > response.CapturedSizeBytes
+            ? $"{UiFormatHelper.FormatBytes(response.SizeBytes)}（仅展示前 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}）"
+            : $"至少 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}（仅展示前 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}）";
     }
 
     private static string FormatResponseBody(ResponseSnapshotDto response)

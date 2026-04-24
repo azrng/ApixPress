@@ -115,4 +115,33 @@ public sealed class ResponseSectionViewModelTests
 
         Assert.Equal(rawContent, viewModel.BodyText);
     }
+
+    [Fact]
+    public void ApplyResult_ShouldAppendPreviewNotice_WhenResponseBodyIsTruncated()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 32,
+                SizeBytes = 2 * 1024 * 1024,
+                CapturedSizeBytes = 1024 * 1024,
+                IsContentTruncated = true,
+                Content = new string('a', 32),
+                Headers =
+                [
+                    new ResponseHeaderDto
+                    {
+                        Name = "Content-Type",
+                        Value = "text/plain"
+                    }
+                ]
+            }),
+            new RequestSnapshotDto());
+
+        Assert.Contains("响应体过大", viewModel.BodyText);
+        Assert.Contains("仅展示前 1 MB", viewModel.SizeText);
+    }
 }
