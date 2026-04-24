@@ -68,11 +68,11 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         }
     }
 
-    public async Task SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
+    public async Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(projectId))
         {
-            return;
+            return new ImportedHttpInterfaceSyncResultDto();
         }
 
         var existingCases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
@@ -132,6 +132,12 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             {
                 await _requestCaseRepository.UpsertRangeAsync(entitiesToUpsert, cancellationToken);
             }
+
+            return new ImportedHttpInterfaceSyncResultDto
+            {
+                UpsertedCases = entitiesToUpsert.Select(ToDto).ToList(),
+                DeletedCaseIds = deletedInterfaceIds
+            };
         }
         catch (SqliteException exception) when (exception.SqliteErrorCode == 19)
         {

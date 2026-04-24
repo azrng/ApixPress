@@ -1,3 +1,4 @@
+using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeAppNotificationService;
 using FakeEnvironmentVariableService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeEnvironmentVariableService;
 using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeFilePickerService;
 using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
@@ -13,7 +14,10 @@ namespace ApixPress.App.Tests.ViewModels;
 
 public sealed partial class ProjectTabViewModelTests
 {
-    private static ProjectTabViewModel CreateViewModel(FakeApiWorkspaceService apiWorkspaceService, FakeRequestCaseService? requestCaseService = null)
+    private static ProjectTabViewModel CreateViewModel(
+        FakeApiWorkspaceService apiWorkspaceService,
+        FakeRequestCaseService? requestCaseService = null,
+        FakeAppNotificationService? appNotificationService = null)
     {
         return new ProjectTabViewModel(
             new ProjectWorkspaceItemViewModel
@@ -27,7 +31,8 @@ public sealed partial class ProjectTabViewModelTests
             new FakeRequestHistoryService(),
             new FakeEnvironmentVariableService(),
             apiWorkspaceService,
-            new FakeFilePickerService());
+            new FakeFilePickerService(),
+            appNotificationService ?? new FakeAppNotificationService());
     }
 
     private static IEnumerable<string> FlattenExplorerTitles(IEnumerable<ExplorerItemViewModel> items)

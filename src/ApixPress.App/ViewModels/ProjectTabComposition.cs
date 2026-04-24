@@ -18,6 +18,7 @@ internal sealed class ProjectTabComposition : DisposableObject
         private readonly IEnvironmentVariableService _environmentVariableService;
         private readonly IApiWorkspaceService _apiWorkspaceService;
         private readonly IFilePickerService _filePickerService;
+        private readonly IAppNotificationService _appNotificationService;
         private readonly ProjectTabHostContext _hostContext;
 
         private ProjectImportViewModel? _importViewModel;
@@ -34,6 +35,7 @@ internal sealed class ProjectTabComposition : DisposableObject
             IEnvironmentVariableService environmentVariableService,
             IApiWorkspaceService apiWorkspaceService,
             IFilePickerService filePickerService,
+            IAppNotificationService appNotificationService,
             ProjectTabHostContext hostContext)
         {
             _project = project;
@@ -44,6 +46,7 @@ internal sealed class ProjectTabComposition : DisposableObject
             _environmentVariableService = environmentVariableService;
             _apiWorkspaceService = apiWorkspaceService;
             _filePickerService = filePickerService;
+            _appNotificationService = appNotificationService;
             _hostContext = hostContext;
         }
 
@@ -153,6 +156,7 @@ internal sealed class ProjectTabComposition : DisposableObject
                 _project.Id,
                 _apiWorkspaceService,
                 _filePickerService,
+                _appNotificationService,
                 catalog.SyncImportedInterfacesAsync,
                 _hostContext.SetStatusMessage);
             _importViewModel = import;
@@ -297,6 +301,7 @@ internal sealed class ProjectTabComposition : DisposableObject
         IEnvironmentVariableService environmentVariableService,
         IApiWorkspaceService apiWorkspaceService,
         IFilePickerService filePickerService,
+        IAppNotificationService appNotificationService,
         ProjectTabHostContext hostContext)
     {
         return new Builder(
@@ -308,6 +313,7 @@ internal sealed class ProjectTabComposition : DisposableObject
             environmentVariableService,
             apiWorkspaceService,
             filePickerService,
+            appNotificationService,
             hostContext)
             .Build();
     }

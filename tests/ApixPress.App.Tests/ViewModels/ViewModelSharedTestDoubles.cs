@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Avalonia.Controls.Notifications;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using Azrng.Core.Results;
@@ -150,7 +151,7 @@ public static class ViewModelSharedTestDoubles
             return Task.FromResult<IResultModel<RequestCaseDto>>(ResultModel<RequestCaseDto>.Success(saved));
         }
 
-        public async Task SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
+        public async Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
         {
             var existingImported = Cases
                 .Where(item => string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase))
@@ -160,18 +161,24 @@ public static class ViewModelSharedTestDoubles
             var targetKeys = endpoints
                 .Select(BuildImportedEndpointKey)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            Cases.RemoveAll(item =>
+            var deletedIds = Cases
+                .Where(item =>
                 string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(item.EntryType, "http-interface", StringComparison.OrdinalIgnoreCase)
                 && item.RequestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase)
-                && !targetKeys.Contains(item.RequestSnapshot.EndpointId));
+                && !targetKeys.Contains(item.RequestSnapshot.EndpointId))
+                .Select(item => item.Id)
+                .ToList();
+            var deletedIdLookup = deletedIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            Cases.RemoveAll(item => deletedIdLookup.Contains(item.Id));
+
+            var upsertedCases = new List<RequestCaseDto>();
 
             foreach (var endpoint in endpoints)
             {
                 var key = BuildImportedEndpointKey(endpoint);
                 existingImported.TryGetValue(key, out var existing);
-                await SaveAsync(new RequestCaseDto
+                var saveResult = await SaveAsync(new RequestCaseDto
                 {
                     Id = existing?.Id ?? string.Empty,
                     ProjectId = projectId,
@@ -190,7 +197,18 @@ public static class ViewModelSharedTestDoubles
                     },
                     UpdatedAt = DateTime.UtcNow
                 }, cancellationToken);
+
+                if (saveResult.Data is not null)
+                {
+                    upsertedCases.Add(saveResult.Data);
+                }
             }
+
+            return new ImportedHttpInterfaceSyncResultDto
+            {
+                UpsertedCases = upsertedCases,
+                DeletedCaseIds = deletedIds
+            };
         }
 
         public Task<IResultModel<RequestCaseDto>> DuplicateAsync(string projectId, string id, CancellationToken cancellationToken)
@@ -256,6 +274,26 @@ public static class ViewModelSharedTestDoubles
         public Task<string?> PickSwaggerJsonFileAsync(CancellationToken cancellationToken)
         {
             return Task.FromResult<string?>(null);
+        }
+    }
+
+    public sealed class FakeAppNotificationService : IAppNotificationService
+    {
+        public List<(string Title, string Content, NotificationType Type)> Notifications { get; } = [];
+
+        public void Show(string title, string content, NotificationType type = NotificationType.Information, TimeSpan? expiration = null)
+        {
+            Notifications.Add((title, content, type));
+        }
+
+        public void ShowSuccess(string title, string content, TimeSpan? expiration = null)
+        {
+            Show(title, content, NotificationType.Success, expiration);
+        }
+
+        public void ShowError(string title, string content, TimeSpan? expiration = null)
+        {
+            Show(title, content, NotificationType.Error, expiration);
         }
     }
 }

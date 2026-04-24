@@ -7,6 +7,7 @@ using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
+using Avalonia.Controls.Notifications;
 using Azrng.Core.Results;
 
 namespace ApixPress.App.ViewModels;
@@ -29,6 +30,7 @@ public partial class ProjectImportViewModel : ViewModelBase
     private readonly string _projectId;
     private readonly IApiWorkspaceService _apiWorkspaceService;
     private readonly IFilePickerService _filePickerService;
+    private readonly IAppNotificationService _appNotificationService;
     private readonly Func<IReadOnlyList<ApiEndpointDto>, Task> _syncImportedInterfacesAsync;
     private readonly Action<string> _setStatusMessage;
     private CancellationTokenSource? _importCancellationTokenSource;
@@ -38,12 +40,14 @@ public partial class ProjectImportViewModel : ViewModelBase
         string projectId,
         IApiWorkspaceService apiWorkspaceService,
         IFilePickerService filePickerService,
+        IAppNotificationService appNotificationService,
         Func<IReadOnlyList<ApiEndpointDto>, Task> syncImportedInterfacesAsync,
         Action<string> setStatusMessage)
     {
         _projectId = projectId;
         _apiWorkspaceService = apiWorkspaceService;
         _filePickerService = filePickerService;
+        _appNotificationService = appNotificationService;
         _syncImportedInterfacesAsync = syncImportedInterfacesAsync;
         _setStatusMessage = setStatusMessage;
 
@@ -429,6 +433,7 @@ public partial class ProjectImportViewModel : ViewModelBase
                     : previewResult.Message;
                 SetImportDataStatus(failureMessage, ImportStatusStates.Error);
                 _setStatusMessage(failureMessage);
+                PublishGlobalNotification("Swagger 导入失败", failureMessage, NotificationType.Error);
                 return;
             }
 
@@ -474,6 +479,7 @@ public partial class ProjectImportViewModel : ViewModelBase
                 : result.Message;
             SetImportDataStatus(failureMessage, ImportStatusStates.Error);
             _setStatusMessage(failureMessage);
+            PublishGlobalNotification("Swagger 导入失败", failureMessage, NotificationType.Error);
             return;
         }
 
@@ -484,6 +490,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         SetImportDataStatus(successMessage, ImportStatusStates.Success);
         IsDialogOpen = false;
         _setStatusMessage(successMessage);
+        PublishGlobalNotification("Swagger 导入成功", successMessage, NotificationType.Success);
     }
 
     private void HandleUnexpectedImportFailure(Exception exception, string fallbackMessage)
@@ -496,6 +503,24 @@ public partial class ProjectImportViewModel : ViewModelBase
 
         SetImportDataStatus(failureMessage, ImportStatusStates.Error);
         _setStatusMessage(failureMessage);
+        PublishGlobalNotification("Swagger 导入失败", failureMessage, NotificationType.Error);
+    }
+
+    private void PublishGlobalNotification(string title, string content, NotificationType type)
+    {
+        if (type == NotificationType.Success)
+        {
+            _appNotificationService.ShowSuccess(title, content);
+            return;
+        }
+
+        if (type == NotificationType.Error)
+        {
+            _appNotificationService.ShowError(title, content);
+            return;
+        }
+
+        _appNotificationService.Show(title, content, type);
     }
 
     private void SetImportDataStatus(string message, string statusState)

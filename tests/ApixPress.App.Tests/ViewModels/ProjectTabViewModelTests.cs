@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using Avalonia.Controls.Notifications;
 using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
+using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeAppNotificationService;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels;
 using ApixPress.App.Services.Interfaces;
@@ -56,7 +58,23 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.InitializeAsync();
 
-        Assert.Equal(1, requestCaseService.GetCasesCallCount);
+        Assert.Equal(0, requestCaseService.GetCasesCallCount);
+    }
+
+    [Fact]
+    public async Task ImportSwaggerUrlCommand_ShouldNotReloadAllSavedRequestsAfterSyncImportedInterfaces()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+        await viewModel.InitializeAsync();
+
+        viewModel.Settings.ShowImportDataCommand.Execute(null);
+        viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
+
+        await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
+
+        Assert.Equal(0, requestCaseService.GetCasesCallCount);
     }
 
     [Fact]
@@ -84,7 +102,8 @@ public sealed partial class ProjectTabViewModelTests
     public async Task ImportSwaggerUrlCommand_ShouldRefreshImportedDocumentList()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
-        var viewModel = CreateViewModel(apiWorkspaceService);
+        var notificationService = new FakeAppNotificationService();
+        var viewModel = CreateViewModel(apiWorkspaceService, appNotificationService: notificationService);
         await viewModel.InitializeAsync();
 
         viewModel.Settings.ShowImportDataCommand.Execute(null);
@@ -98,6 +117,10 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Equal("URL 导入", imported.SourceTypeText);
         Assert.True(viewModel.Import.ShowImportStatusSuccess);
         Assert.Equal("https://demo.local/swagger.json", apiWorkspaceService.LastImportedUrl);
+        var notification = Assert.Single(notificationService.Notifications);
+        Assert.Equal("Swagger 导入成功", notification.Title);
+        Assert.Equal("Swagger URL 导入成功：远程订单服务", notification.Content);
+        Assert.Equal(NotificationType.Success, notification.Type);
     }
 
     [Fact]

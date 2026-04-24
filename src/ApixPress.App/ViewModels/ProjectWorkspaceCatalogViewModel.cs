@@ -178,13 +178,10 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
             CancellationToken.None);
 
         _workspace.CloseTabsForDeletedCases(targets);
+        RemoveCases(targets.Select(target => target.Id));
         if (importedInterfaces.Count > 0)
         {
             await _reloadImportedDocumentsAsync();
-        }
-        else
-        {
-            RemoveCases(targets.Select(target => target.Id));
         }
 
         _setStatusMessage(targets.Count == 1
@@ -210,8 +207,8 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 
     public async Task SyncImportedInterfacesAsync(IReadOnlyList<ApiEndpointDto> endpoints)
     {
-        await _requestCaseService.SyncImportedHttpInterfacesAsync(_projectId, endpoints, CancellationToken.None);
-        await ReloadSavedRequestsAsync();
+        var syncResult = await _requestCaseService.SyncImportedHttpInterfacesAsync(_projectId, endpoints, CancellationToken.None);
+        ApplyImportedInterfaceSyncResult(syncResult);
     }
 
     [RelayCommand]
@@ -401,6 +398,24 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     private static bool IsQuickRequestCaseItem(RequestCaseItemViewModel item)
     {
         return string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void ApplyImportedInterfaceSyncResult(ImportedHttpInterfaceSyncResultDto syncResult)
+    {
+        if (syncResult.UpsertedCases.Count == 0 && syncResult.DeletedCaseIds.Count == 0)
+        {
+            return;
+        }
+
+        RunWithNavigationRebuildSuppressed(() =>
+        {
+            RemoveCases(syncResult.DeletedCaseIds);
+
+            foreach (var requestCase in syncResult.UpsertedCases)
+            {
+                UpsertCaseItem(requestCase);
+            }
+        });
     }
 
     private static void SynchronizeExplorerItems(

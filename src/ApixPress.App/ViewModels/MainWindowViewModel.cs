@@ -90,6 +90,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IRequestHistoryService _requestHistoryService;
     private readonly IApiWorkspaceService _apiWorkspaceService;
     private readonly IFilePickerService _filePickerService;
+    private readonly IAppNotificationService _appNotificationService;
     private readonly RequestConfigTabViewModel _fallbackConfigTab;
     private readonly ResponseSectionViewModel _fallbackResponseSection;
     private readonly EnvironmentPanelViewModel _fallbackEnvironmentPanel;
@@ -107,6 +108,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IApplicationUpdateService applicationUpdateService,
         IApiWorkspaceService apiWorkspaceService,
         IFilePickerService filePickerService,
+        IAppNotificationService appNotificationService,
         IWindowHostService windowHostService)
     {
         _requestExecutionService = requestExecutionService;
@@ -115,6 +117,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _environmentVariableService = environmentVariableService;
         _apiWorkspaceService = apiWorkspaceService;
         _filePickerService = filePickerService;
+        _appNotificationService = appNotificationService;
 
         var construction = new Builder(
             environmentVariableService,

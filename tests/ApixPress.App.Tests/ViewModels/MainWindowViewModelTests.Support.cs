@@ -1,3 +1,4 @@
+using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeAppNotificationService;
 using FakeEnvironmentVariableService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeEnvironmentVariableService;
 using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeFilePickerService;
 using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
@@ -28,6 +29,7 @@ public sealed partial class MainWindowViewModelTests
             applicationUpdateService ?? new FakeApplicationUpdateService(),
             new FakeApiWorkspaceService(),
             new FakeFilePickerService(),
+            new FakeAppNotificationService(),
             new FakeWindowHostService());
     }
 

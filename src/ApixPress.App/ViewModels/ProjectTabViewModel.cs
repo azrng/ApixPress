@@ -21,7 +21,8 @@ public partial class ProjectTabViewModel : ViewModelBase
         IRequestHistoryService requestHistoryService,
         IEnvironmentVariableService environmentVariableService,
         IApiWorkspaceService apiWorkspaceService,
-        IFilePickerService filePickerService)
+        IFilePickerService filePickerService,
+        IAppNotificationService appNotificationService)
     {
         Project = new ProjectWorkspaceItemViewModel
         {
@@ -53,6 +54,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             environmentVariableService,
             apiWorkspaceService,
             filePickerService,
+            appNotificationService,
             hostContext);
         EnvironmentPanel = _composition.EnvironmentPanel;
         UseCasesPanel = _composition.UseCasesPanel;
