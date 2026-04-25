@@ -21,10 +21,11 @@
                     Classes="ConfigTabControl HttpRequestTabs"
                     SelectedIndex="{Binding ConfigTab.SelectedTabIndex}">
           <TabItem Header="Params">
-            <DockPanel Margin="{StaticResource Pad.3}">
+            <DockPanel Margin="{StaticResource Pad.3}"
+                       HorizontalAlignment="Stretch">
               <Border DockPanel.Dock="Top"
                       Classes="HttpRequestTableHeader">
-                <Grid ColumnDefinitions="Auto,2.4*,2.4*,1.2*,2.2*,Auto"
+                <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
                       ColumnSpacing="{StaticResource Space.3}">
                   <TextBlock Grid.Column="1" Classes="CaptionText" Text="参数名" />
                   <TextBlock Grid.Column="2" Classes="CaptionText" Text="参数值" />
@@ -38,12 +39,15 @@
                       Margin="0,8,0,0"
                       Content="添加参数"
                       Command="{Binding ConfigTab.AddQueryParameterCommand}" />
-              <ScrollViewer>
-                <ItemsControl ItemsSource="{Binding ConfigTab.QueryParameters}">
+              <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                            VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding ConfigTab.QueryParameters}"
+                              HorizontalAlignment="Stretch">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
-                      <Border Classes="ParameterRow HttpRequestParameterRow">
-                        <Grid ColumnDefinitions="Auto,2.4*,2.4*,1.2*,2.2*,Auto"
+                      <Border Classes="ParameterRow HttpRequestParameterRow"
+                              HorizontalAlignment="Stretch">
+                        <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
                               ColumnSpacing="{StaticResource Space.3}">
                           <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
                           <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="添加参数" />
@@ -66,7 +70,8 @@
           </TabItem>
 
           <TabItem Header="Body">
-            <DockPanel Margin="{StaticResource Pad.3}">
+            <DockPanel Margin="{StaticResource Pad.3}"
+                       HorizontalAlignment="Stretch">
               <u:SelectionList DockPanel.Dock="Top"
                                ItemsSource="{Binding ConfigTab.BodyModeOptions}"
                                SelectedItem="{Binding ConfigTab.SelectedBodyModeOption}"
@@ -85,10 +90,11 @@
                 </u:SelectionList.ItemTemplate>
               </u:SelectionList>
 
-              <DockPanel IsVisible="{Binding ConfigTab.IsBodyModeFormData}">
+              <DockPanel IsVisible="{Binding ConfigTab.IsBodyModeFormData}"
+                         HorizontalAlignment="Stretch">
                 <Border DockPanel.Dock="Top"
                         Classes="HttpRequestTableHeader">
-                  <Grid ColumnDefinitions="Auto,2.4*,2.4*,1.2*,2.2*,Auto"
+                  <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
                         ColumnSpacing="{StaticResource Space.3}">
                     <TextBlock Grid.Column="1" Classes="CaptionText" Text="字段名" />
                     <TextBlock Grid.Column="2" Classes="CaptionText" Text="字段值" />
@@ -102,12 +108,15 @@
                         Margin="0,8,0,0"
                         Content="添加字段"
                         Command="{Binding ConfigTab.AddFormFieldCommand}" />
-                <ScrollViewer>
-                  <ItemsControl ItemsSource="{Binding ConfigTab.FormFields}">
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
+                  <ItemsControl ItemsSource="{Binding ConfigTab.FormFields}"
+                                HorizontalAlignment="Stretch">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
-                        <Border Classes="ParameterRow HttpRequestParameterRow">
-                          <Grid ColumnDefinitions="Auto,2.4*,2.4*,1.2*,2.2*,Auto"
+                        <Border Classes="ParameterRow HttpRequestParameterRow"
+                                HorizontalAlignment="Stretch">
+                          <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
                                 ColumnSpacing="{StaticResource Space.3}">
                             <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
                             <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="字段名" />
