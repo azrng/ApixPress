@@ -19,6 +19,7 @@
         SystemDecorations="None"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome"
+        Icon="/Assets/AppIcon.ico"
         Title="ApixPress">
   <Grid RowDefinitions="Auto,*">
     <views:MainWindowTitleBarView Grid.Row="0" />
