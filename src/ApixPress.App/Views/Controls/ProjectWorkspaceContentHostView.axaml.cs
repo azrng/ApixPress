@@ -62,17 +62,23 @@ public partial class ProjectWorkspaceContentHostView : UserControl
 
     private void UpdateHostedContent()
     {
-        HostGrid.Children.Clear();
-        HostGrid.ColumnDefinitions.Clear();
-
         if (_viewModel is null)
         {
             _currentMode = null;
+            HostGrid.Children.Clear();
+            HostGrid.ColumnDefinitions.Clear();
             return;
         }
 
         var mode = _viewModel.Shell.CurrentContentMode;
+        if (_currentMode == mode && HostGrid.Children.Count > 0)
+        {
+            return;
+        }
+
         _currentMode = mode;
+        HostGrid.Children.Clear();
+        HostGrid.ColumnDefinitions.Clear();
 
         if (mode == ProjectWorkspaceContentMode.ProjectSettings)
         {
