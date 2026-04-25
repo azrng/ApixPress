@@ -71,6 +71,12 @@ public partial class ProjectWorkspaceContentHostView : UserControl
         }
 
         var mode = _viewModel.Shell.CurrentContentMode;
+        if (IsInterfaceManagementMode(_currentMode) && IsInterfaceManagementMode(mode) && HostGrid.Children.Count > 0)
+        {
+            _currentMode = mode;
+            return;
+        }
+
         if (_currentMode == mode && HostGrid.Children.Count > 0)
         {
             return;
@@ -92,9 +98,20 @@ public partial class ProjectWorkspaceContentHostView : UserControl
         Grid.SetColumn(sidebarView, 1);
         HostGrid.Children.Add(sidebarView);
 
+        if (IsInterfaceManagementMode(mode))
+        {
+            var landingView = EnsureLandingView();
+            Grid.SetColumn(landingView, 2);
+            HostGrid.Children.Add(landingView);
+
+            var editorView = EnsureRequestEditorView();
+            Grid.SetColumn(editorView, 2);
+            HostGrid.Children.Add(editorView);
+            return;
+        }
+
         Control contentView = mode switch
         {
-            ProjectWorkspaceContentMode.RequestEditor => EnsureRequestEditorView(),
             ProjectWorkspaceContentMode.RequestHistory => EnsureRequestHistoryView(),
             _ => EnsureLandingView()
         };
@@ -157,5 +174,10 @@ public partial class ProjectWorkspaceContentHostView : UserControl
             DataContext = _viewModel
         };
         return _projectSettingsView;
+    }
+
+    private static bool IsInterfaceManagementMode(ProjectWorkspaceContentMode? mode)
+    {
+        return mode is ProjectWorkspaceContentMode.Landing or ProjectWorkspaceContentMode.RequestEditor;
     }
 }

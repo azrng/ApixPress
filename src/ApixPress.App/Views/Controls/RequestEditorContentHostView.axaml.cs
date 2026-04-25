@@ -26,6 +26,7 @@ public partial class RequestEditorContentHostView : UserControl
 
         _viewModel = DataContext as ProjectTabViewModel;
         SubscribeEditor();
+        EnsureHttpWorkbenchView();
         UpdateHostedContent();
     }
 
