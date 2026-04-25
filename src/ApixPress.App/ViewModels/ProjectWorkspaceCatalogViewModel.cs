@@ -111,11 +111,11 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         QuickRequestTreeItems.Clear();
     }
 
-    public async Task LoadWorkspaceItem(ExplorerItemViewModel? item)
+    public Task LoadWorkspaceItem(ExplorerItemViewModel? item)
     {
         if (item is null || item.SourceCase is null)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         var source = item.SourceCase;
@@ -133,16 +133,11 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 
         if (source.HasLoadedDetail)
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        var detail = await EnsureCaseDetailLoadedAsync(item);
-        if (string.Equals(detail.Id, source.Id, StringComparison.OrdinalIgnoreCase)
-            && IsTabStillEditingSource(targetTab, source))
-        {
-            ApplyWorkspaceItemToTab(targetTab, detail);
-            _notifyShellState();
-        }
+        _ = LoadWorkspaceItemDetailAsync(item, targetTab, source);
+        return Task.CompletedTask;
     }
 
     public async Task DeleteWorkspaceItemAsync(ExplorerItemViewModel? item)
@@ -521,6 +516,28 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
             ProjectTabRequestEntryTypes.HttpCase => string.Equals(tab.EditingCaseId, source.Id, StringComparison.OrdinalIgnoreCase),
             _ => false
         };
+    }
+
+    private async Task LoadWorkspaceItemDetailAsync(
+        ExplorerItemViewModel item,
+        RequestWorkspaceTabViewModel targetTab,
+        RequestCaseDto source)
+    {
+        try
+        {
+            var detail = await EnsureCaseDetailLoadedAsync(item);
+            if (string.Equals(detail.Id, source.Id, StringComparison.OrdinalIgnoreCase)
+                && IsTabStillEditingSource(targetTab, source))
+            {
+                ApplyWorkspaceItemToTab(targetTab, detail);
+                _notifyShellState();
+            }
+        }
+        catch (Exception exception)
+        {
+            _setStatusMessage($"加载接口详情失败：{exception.Message}");
+            _notifyShellState();
+        }
     }
 
     private string ResolveLatestCaseName(string interfaceId)

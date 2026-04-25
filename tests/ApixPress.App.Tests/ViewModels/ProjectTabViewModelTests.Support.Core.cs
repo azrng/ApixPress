@@ -70,6 +70,21 @@ public sealed partial class ProjectTabViewModelTests
         return null;
     }
 
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        for (var attempt = 0; attempt < 50; attempt++)
+        {
+            if (condition())
+            {
+                return;
+            }
+
+            await Task.Delay(10);
+        }
+
+        Assert.True(condition());
+    }
+
     private sealed class FakeApiWorkspaceService : IApiWorkspaceService
     {
         private readonly Dictionary<string, List<ApiDocumentDto>> _documentsByProject = new(StringComparer.OrdinalIgnoreCase);

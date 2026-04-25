@@ -463,15 +463,16 @@ public sealed partial class ProjectTabViewModelTests
         Assert.NotNull(interfaceItem);
 
         var loadTask = viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
-        await Task.Yield();
 
+        await loadTask;
+        Assert.True(loadTask.IsCompletedSuccessfully);
         Assert.True(viewModel.Shell.ShowRequestEditorWorkspace);
         Assert.Equal(ProjectWorkspaceContentMode.RequestEditor, viewModel.Shell.CurrentContentMode);
         Assert.Equal("/users", viewModel.Editor.RequestUrl);
         Assert.Empty(viewModel.Editor.ConfigTab.QueryParameters);
 
         requestCaseService.DetailLoadGate.SetResult(true);
-        await loadTask;
+        await WaitUntilAsync(() => viewModel.Editor.ConfigTab.QueryParameters.Count == 1);
 
         var parameter = Assert.Single(viewModel.Editor.ConfigTab.QueryParameters);
         Assert.Equal("page", parameter.Name);
