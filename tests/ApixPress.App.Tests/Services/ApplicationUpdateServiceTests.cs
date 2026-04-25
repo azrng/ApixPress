@@ -115,18 +115,20 @@ public sealed class ApplicationUpdateServiceTests
     }
 
     [Fact]
-    public async Task StartUpdateAsync_ShouldFailWhenUpdaterExecutableMissing()
+    public async Task StartUpdateAsync_ShouldFailWhenCurrentExecutableMissing()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Update:ChannelName"] = "GitHub Releases",
-                ["Update:VersionManifestUrl"] = "https://github.com/azrng/ApixPress/releases/latest/download/versions.json",
-                ["Update:UpgradeAppName"] = "MissingUpdater.exe"
-            })
-            .Build();
+        var configuration = CreateConfiguration();
         using var httpClient = new HttpClient(new FakeHttpMessageHandler("[]"));
-        var service = new ApplicationUpdateService(configuration, httpClient);
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"ApixPress-update-tests-{Guid.NewGuid():N}");
+        var missingExecutablePath = Path.Combine(tempRoot, "MissingApixPress.exe");
+        var service = new ApplicationUpdateService(
+            configuration,
+            httpClient,
+            startInfo => Process.GetCurrentProcess(),
+            () => missingExecutablePath,
+            () => 9527,
+            () => tempRoot,
+            () => tempRoot);
 
         var result = await service.StartUpdateAsync(new AppUpdateCheckResultDto
         {
@@ -138,11 +140,11 @@ public sealed class ApplicationUpdateServiceTests
         }, CancellationToken.None);
 
         Assert.False(result.IsSuccess);
-        Assert.Contains("MissingUpdater.exe", result.Message);
+        Assert.Contains("MissingApixPress.exe", result.Message);
     }
 
     [Fact]
-    public async Task StartUpdateAsync_ShouldWriteRequestFileAndLaunchUpdater()
+    public async Task StartUpdateAsync_ShouldWriteRequestFileAndLaunchSelfInUpdateMode()
     {
         var configuration = CreateConfiguration();
         using var httpClient = new HttpClient(new FakeHttpMessageHandler("[]"));
@@ -150,8 +152,8 @@ public sealed class ApplicationUpdateServiceTests
         var baseDirectory = Path.Combine(tempRoot, "app");
         Directory.CreateDirectory(baseDirectory);
 
-        var updaterPath = Path.Combine(baseDirectory, "ApixPress.Updater.exe");
-        await File.WriteAllTextAsync(updaterPath, "stub", Encoding.UTF8);
+        var appPath = Path.Combine(baseDirectory, "ApixPress.exe");
+        await File.WriteAllTextAsync(appPath, "stub", Encoding.UTF8);
 
         ProcessStartInfo? capturedStartInfo = null;
         var service = new ApplicationUpdateService(
@@ -162,7 +164,7 @@ public sealed class ApplicationUpdateServiceTests
                 capturedStartInfo = startInfo;
                 return Process.GetCurrentProcess();
             },
-            () => Path.Combine(baseDirectory, "ApixPress.exe"),
+            () => appPath,
             () => 9527,
             () => baseDirectory,
             () => tempRoot);
@@ -179,7 +181,8 @@ public sealed class ApplicationUpdateServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(capturedStartInfo);
-        Assert.Equal(updaterPath, capturedStartInfo!.FileName);
+        Assert.Equal(appPath, capturedStartInfo!.FileName);
+        Assert.Equal(baseDirectory, capturedStartInfo.WorkingDirectory);
 
         var requestFilePath = ExtractRequestFilePath(capturedStartInfo.Arguments);
         Assert.True(File.Exists(requestFilePath));
@@ -202,15 +205,14 @@ public sealed class ApplicationUpdateServiceTests
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["Update:ChannelName"] = "GitHub Releases",
-                ["Update:VersionManifestUrl"] = "https://github.com/azrng/ApixPress/releases/latest/download/versions.json",
-                ["Update:UpgradeAppName"] = "ApixPress.Updater.exe"
+                ["Update:VersionManifestUrl"] = "https://github.com/azrng/ApixPress/releases/latest/download/versions.json"
             })
             .Build();
     }
 
     private static string ExtractRequestFilePath(string arguments)
     {
-        const string prefix = "--request-file \"";
+        const string prefix = "--apply-update --request-file \"";
         Assert.StartsWith(prefix, arguments);
         Assert.EndsWith("\"", arguments);
         return arguments[prefix.Length..^1];

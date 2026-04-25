@@ -1,7 +1,6 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/ApixPress.App/Apifox.App.csproj" />
-    <Project Path="src/ApixPress.Updater/ApixPress.Updater.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ApixPress.App.Tests/ApixPress.App.Tests.csproj" />

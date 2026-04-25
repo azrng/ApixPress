@@ -148,8 +148,8 @@
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                   <WrapPanel Orientation="Horizontal"
-                             ItemWidth="334"
-                             ItemHeight="214" />
+                             ItemWidth="350"
+                             ItemHeight="230" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>

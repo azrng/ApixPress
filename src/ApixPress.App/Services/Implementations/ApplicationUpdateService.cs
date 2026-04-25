@@ -19,7 +19,6 @@ public sealed class ApplicationUpdateService : IApplicationUpdateService, ISingl
     private readonly Func<string> _baseDirectoryProvider;
     private readonly Func<string> _tempDirectoryProvider;
     private readonly string _versionManifestUrl;
-    private readonly string _upgradeAppName;
 
     public ApplicationUpdateService(IConfiguration configuration)
         : this(configuration, new HttpClient())
@@ -60,7 +59,6 @@ public sealed class ApplicationUpdateService : IApplicationUpdateService, ISingl
 
         ChannelName = ReadValue(configuration, "Update:ChannelName", "未配置更新通道");
         _versionManifestUrl = ReadValue(configuration, "Update:VersionManifestUrl");
-        _upgradeAppName = ReadValue(configuration, "Update:UpgradeAppName", "ApixPress.Updater.exe");
         IsConfigured = !string.IsNullOrWhiteSpace(_versionManifestUrl);
     }
 
@@ -140,12 +138,6 @@ public sealed class ApplicationUpdateService : IApplicationUpdateService, ISingl
             return ResultModel<bool>.Failure("尚未配置更新清单地址。", "app_update_not_configured");
         }
 
-        var upgradeAppPath = Path.Combine(_baseDirectoryProvider(), _upgradeAppName);
-        if (!File.Exists(upgradeAppPath))
-        {
-            return ResultModel<bool>.Failure($"未找到升级程序：{_upgradeAppName}", "app_update_updater_missing");
-        }
-
         if (updateInfo is null)
         {
             return ResultModel<bool>.Failure("更新信息不能为空。", "app_update_info_missing");
@@ -155,6 +147,11 @@ public sealed class ApplicationUpdateService : IApplicationUpdateService, ISingl
         if (string.IsNullOrWhiteSpace(currentProcessPath))
         {
             return ResultModel<bool>.Failure("无法识别当前主程序名称。", "app_update_app_name_missing");
+        }
+
+        if (!File.Exists(currentProcessPath))
+        {
+            return ResultModel<bool>.Failure($"未找到主程序：{currentProcessPath}", "app_update_launcher_missing");
         }
 
         if (string.IsNullOrWhiteSpace(updateInfo.DownloadUrl))
@@ -184,19 +181,20 @@ public sealed class ApplicationUpdateService : IApplicationUpdateService, ISingl
                     TargetDirectory = Path.GetDirectoryName(currentProcessPath) ?? _baseDirectoryProvider()
                 },
                 cancellationToken);
+            var targetDirectory = Path.GetDirectoryName(currentProcessPath) ?? _baseDirectoryProvider();
 
             var startInfo = new ProcessStartInfo
             {
-                FileName = upgradeAppPath,
-                Arguments = $"--request-file \"{requestFilePath}\"",
-                WorkingDirectory = _baseDirectoryProvider(),
+                FileName = currentProcessPath,
+                Arguments = $"{AppUpdateRunner.ApplyUpdateArgument} {AppUpdateRunner.RequestFileArgument} \"{requestFilePath}\"",
+                WorkingDirectory = targetDirectory,
                 UseShellExecute = true
             };
 
             var process = _processStarter(startInfo);
             if (process is null)
             {
-                return ResultModel<bool>.Failure("启动更新程序失败。", "app_update_updater_start_failed");
+                return ResultModel<bool>.Failure("启动更新程序失败。", "app_update_start_process_failed");
             }
 
             return ResultModel<bool>.Success(true);
@@ -213,7 +211,7 @@ public sealed class ApplicationUpdateService : IApplicationUpdateService, ISingl
 
     private async Task<string> WriteLaunchRequestAsync(AppUpdateLaunchRequestDto request, CancellationToken cancellationToken)
     {
-        var workspacePath = Path.Combine(_tempDirectoryProvider(), "ApixPress-Updater", Guid.NewGuid().ToString("N"));
+        var workspacePath = Path.Combine(_tempDirectoryProvider(), "ApixPress-Update", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(workspacePath);
 
         var requestFilePath = Path.Combine(workspacePath, "request.json");

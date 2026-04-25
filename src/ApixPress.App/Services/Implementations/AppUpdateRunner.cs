@@ -3,11 +3,20 @@ using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using ApixPress.App.Models.DTOs;
 
-namespace ApixPress.Updater;
+namespace ApixPress.App.Services.Implementations;
 
-internal static class UpdateRunner
+internal static class AppUpdateRunner
 {
+    public const string ApplyUpdateArgument = "--apply-update";
+    public const string RequestFileArgument = "--request-file";
+
+    public static bool IsUpdateMode(IReadOnlyList<string> args)
+    {
+        return args.Any(argument => string.Equals(argument, ApplyUpdateArgument, StringComparison.OrdinalIgnoreCase));
+    }
+
     public static async Task<int> RunAsync(string[] args)
     {
         var requestFilePath = ParseRequestFilePath(args);
@@ -42,7 +51,7 @@ internal static class UpdateRunner
 
         ZipFile.ExtractToDirectory(packageFilePath, extractPath, overwriteFiles: true);
 
-        var scriptPath = CreateApplyScript(workspacePath, extractPath, packageFilePath, request);
+        var scriptPath = CreateApplyScript(workspacePath, extractPath, packageFilePath, request, Environment.ProcessId);
         Process.Start(new ProcessStartInfo
         {
             FileName = scriptPath,
@@ -58,7 +67,7 @@ internal static class UpdateRunner
     {
         for (var index = 0; index < args.Count - 1; index++)
         {
-            if (string.Equals(args[index], "--request-file", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(args[index], RequestFileArgument, StringComparison.OrdinalIgnoreCase))
             {
                 return args[index + 1];
             }
@@ -67,13 +76,13 @@ internal static class UpdateRunner
         return string.Empty;
     }
 
-    private static async Task<UpdateLaunchRequest?> ReadRequestAsync(string requestFilePath)
+    private static async Task<AppUpdateLaunchRequestDto?> ReadRequestAsync(string requestFilePath)
     {
         var content = await File.ReadAllTextAsync(requestFilePath, Encoding.UTF8);
-        return JsonSerializer.Deserialize<UpdateLaunchRequest>(content);
+        return JsonSerializer.Deserialize<AppUpdateLaunchRequestDto>(content);
     }
 
-    private static void ValidateRequest(UpdateLaunchRequest request)
+    private static void ValidateRequest(AppUpdateLaunchRequestDto request)
     {
         if (string.IsNullOrWhiteSpace(request.PackageUrl))
         {
@@ -123,23 +132,32 @@ internal static class UpdateRunner
         string workspacePath,
         string extractPath,
         string packageFilePath,
-        UpdateLaunchRequest request)
+        AppUpdateLaunchRequestDto request,
+        int updateProcessId)
     {
         var scriptPath = Path.Combine(workspacePath, "apply-update.cmd");
         var scriptContent = $$"""
 @echo off
 setlocal
 set "WAIT_PID={{request.CurrentProcessId}}"
+set "UPDATE_PID={{updateProcessId}}"
 set "EXTRACT_DIR={{EscapeForBatch(extractPath)}}"
 set "TARGET_DIR={{EscapeForBatch(request.TargetDirectory)}}"
 set "RESTART_EXE={{EscapeForBatch(request.RestartExecutablePath)}}"
 set "PACKAGE_FILE={{EscapeForBatch(packageFilePath)}}"
 
-:wait_loop
+:wait_app_loop
 tasklist /FI "PID eq %WAIT_PID%" | find "%WAIT_PID%" >nul
 if not errorlevel 1 (
   timeout /t 1 /nobreak >nul
-  goto wait_loop
+  goto wait_app_loop
+)
+
+:wait_update_loop
+tasklist /FI "PID eq %UPDATE_PID%" | find "%UPDATE_PID%" >nul
+if not errorlevel 1 (
+  timeout /t 1 /nobreak >nul
+  goto wait_update_loop
 )
 
 robocopy "%EXTRACT_DIR%" "%TARGET_DIR%" /E /R:3 /W:1 /NFL /NDL /NJH /NJS /NP >nul

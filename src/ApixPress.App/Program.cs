@@ -1,5 +1,6 @@
 ﻿using Avalonia;
 using System;
+using ApixPress.App.Services.Implementations;
 
 namespace ApixPress.App;
 
@@ -9,10 +10,16 @@ class Program
     // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
     // yet and stuff might break.
     [STAThread]
-    public static void Main(string[] args)
+    public static int Main(string[] args)
     {
+        if (AppUpdateRunner.IsUpdateMode(args))
+        {
+            return AppUpdateRunner.RunAsync(args).GetAwaiter().GetResult();
+        }
+
         App.Services = ServiceBootstrapper.Build();
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        return 0;
     }
 
     // Avalonia configuration, don't remove; also used by visual designer.

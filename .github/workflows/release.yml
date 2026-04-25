@@ -16,9 +16,7 @@ concurrency:
 env:
   VERSION_FILE: VERSION
   APP_PROJECT_PATH: src/ApixPress.App/Apifox.App.csproj
-  UPDATER_PROJECT_PATH: src/ApixPress.Updater/ApixPress.Updater.csproj
   APP_PUBLISH_DIR: publish/win-x64/app
-  UPDATER_PUBLISH_DIR: publish/win-x64/updater
   RELEASE_DIR: publish/win-x64/release
   PACKAGE_NAME: ApixPress-win-x64-portable.zip
   MANIFEST_NAME: versions.json
@@ -101,30 +99,6 @@ jobs:
             -p:InformationalVersion=$informationalVersion `
             -p:Version=$version
 
-      - name: Publish updater
-        shell: pwsh
-        run: |
-          $version = "${{ steps.release_meta.outputs.version }}"
-          $informationalVersion = $version
-
-          if (Test-Path "${{ env.UPDATER_PUBLISH_DIR }}") {
-            Remove-Item "${{ env.UPDATER_PUBLISH_DIR }}" -Recurse -Force
-          }
-
-          dotnet publish "${{ env.UPDATER_PROJECT_PATH }}" `
-            -c Release `
-            -r win-x64 `
-            --self-contained true `
-            -o "${{ env.UPDATER_PUBLISH_DIR }}" `
-            -p:ApixPressVersionDate=$version `
-            -p:IncludeNativeLibrariesForSelfExtract=true `
-            -p:PublishAot=false `
-            -p:PublishTrimmed=false `
-            -p:DebugType=None `
-            -p:DebugSymbols=false `
-            -p:InformationalVersion=$informationalVersion `
-            -p:Version=$version
-
       - name: Build update package and manifest
         shell: pwsh
         run: |
@@ -139,7 +113,6 @@ jobs:
 
           New-Item -ItemType Directory -Path $releaseDir | Out-Null
           Copy-Item "${{ env.APP_PUBLISH_DIR }}\\*" $releaseDir -Recurse -Force
-          Copy-Item "${{ env.UPDATER_PUBLISH_DIR }}\\*" $releaseDir -Recurse -Force
 
           $symbolFiles = Get-ChildItem -Path $releaseDir -Filter *.pdb -File -Recurse
           foreach ($symbolFile in $symbolFiles) {

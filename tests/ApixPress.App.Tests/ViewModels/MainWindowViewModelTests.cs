@@ -119,7 +119,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task CheckForUpdatesCommand_ShouldStartUpdaterWhenNewVersionDetected()
+    public async Task CheckForUpdatesCommand_ShouldStartUpdateFlowWhenNewVersionDetected()
     {
         var updateService = new FakeApplicationUpdateService
         {
