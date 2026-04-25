@@ -118,23 +118,10 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
             return;
         }
 
-        var source = await EnsureCaseDetailLoadedAsync(item);
-        var parentInterface = string.Equals(source.EntryType, ProjectTabRequestEntryTypes.HttpCase, StringComparison.OrdinalIgnoreCase)
-            ? FindRequestById(source.ParentId)
-            : null;
-
+        var source = item.SourceCase;
         _showInterfaceManagementSection();
         var targetTab = _workspace.FindWorkspaceTabForSource(source) ?? _workspace.ReuseActiveLandingOrCreateWorkspace();
-        _workspace.RunWithNotificationsSuspended(() =>
-        {
-            targetTab.ApplySavedRequest(source, parentInterface);
-
-            if (string.Equals(source.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase))
-            {
-                targetTab.HttpCaseName = ResolveLatestCaseName(source.Id);
-            }
-        });
-
+        ApplyWorkspaceItemToTab(targetTab, source);
         _workspace.ActivateWorkspaceTab(targetTab);
         _setStatusMessage(source.EntryType switch
         {
@@ -143,6 +130,19 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
             _ => $"已加载快捷请求：{source.Name}"
         });
         _notifyShellState();
+
+        if (source.HasLoadedDetail)
+        {
+            return;
+        }
+
+        var detail = await EnsureCaseDetailLoadedAsync(item);
+        if (string.Equals(detail.Id, source.Id, StringComparison.OrdinalIgnoreCase)
+            && IsTabStillEditingSource(targetTab, source))
+        {
+            ApplyWorkspaceItemToTab(targetTab, detail);
+            _notifyShellState();
+        }
     }
 
     public async Task DeleteWorkspaceItemAsync(ExplorerItemViewModel? item)
@@ -493,6 +493,34 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         return SavedRequests
             .Select(item => item.SourceCase)
             .FirstOrDefault(item => string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void ApplyWorkspaceItemToTab(RequestWorkspaceTabViewModel targetTab, RequestCaseDto source)
+    {
+        var parentInterface = string.Equals(source.EntryType, ProjectTabRequestEntryTypes.HttpCase, StringComparison.OrdinalIgnoreCase)
+            ? FindRequestById(source.ParentId)
+            : null;
+
+        _workspace.RunWithNotificationsSuspended(() =>
+        {
+            targetTab.ApplySavedRequest(source, parentInterface);
+
+            if (string.Equals(source.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase))
+            {
+                targetTab.HttpCaseName = ResolveLatestCaseName(source.Id);
+            }
+        });
+    }
+
+    private static bool IsTabStillEditingSource(RequestWorkspaceTabViewModel tab, RequestCaseDto source)
+    {
+        return source.EntryType switch
+        {
+            ProjectTabRequestEntryTypes.QuickRequest => string.Equals(tab.EditingQuickRequestId, source.Id, StringComparison.OrdinalIgnoreCase),
+            ProjectTabRequestEntryTypes.HttpInterface => string.Equals(tab.EditingInterfaceId, source.Id, StringComparison.OrdinalIgnoreCase),
+            ProjectTabRequestEntryTypes.HttpCase => string.Equals(tab.EditingCaseId, source.Id, StringComparison.OrdinalIgnoreCase),
+            _ => false
+        };
     }
 
     private string ResolveLatestCaseName(string interfaceId)

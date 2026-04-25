@@ -85,6 +85,7 @@ public static class ViewModelSharedTestDoubles
         private const string ImportedEndpointKeyPrefix = "swagger-import:";
 
         public List<RequestCaseDto> Cases { get; } = [];
+        public TaskCompletionSource<bool>? DetailLoadGate { get; set; }
         public int GetCasesCallCount { get; private set; }
         public int GetDetailCallCount { get; private set; }
 
@@ -119,12 +120,17 @@ public static class ViewModelSharedTestDoubles
                 .ToList());
         }
 
-        public Task<RequestCaseDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
+        public async Task<RequestCaseDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
         {
             GetDetailCallCount++;
-            return Task.FromResult<RequestCaseDto?>(Cases.FirstOrDefault(item =>
+            if (DetailLoadGate is not null)
+            {
+                await DetailLoadGate.Task.WaitAsync(cancellationToken);
+            }
+
+            return Cases.FirstOrDefault(item =>
                 string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase)
-                && string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase)));
+                && string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase));
         }
 
         public Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)

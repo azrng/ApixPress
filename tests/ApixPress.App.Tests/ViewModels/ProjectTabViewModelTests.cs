@@ -423,6 +423,61 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task LoadWorkspaceItem_ShouldOpenEditorBeforeRequestDetailCompletes()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService
+        {
+            DetailLoadGate = new TaskCompletionSource<bool>()
+        };
+        requestCaseService.Cases.Add(new RequestCaseDto
+        {
+            Id = "interface-1",
+            ProjectId = "project-1",
+            EntryType = ProjectTabRequestEntryTypes.HttpInterface,
+            Name = "查询用户",
+            GroupName = "接口",
+            FolderPath = "用户",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                EndpointId = "swagger-import:GET /users",
+                Name = "查询用户",
+                Method = "GET",
+                Url = "/users",
+                QueryParameters =
+                [
+                    new RequestKeyValueDto
+                    {
+                        Name = "page",
+                        Value = "1"
+                    }
+                ]
+            },
+            HasLoadedDetail = true,
+            UpdatedAt = DateTime.UtcNow
+        });
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "查询用户");
+        Assert.NotNull(interfaceItem);
+
+        var loadTask = viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+        await Task.Yield();
+
+        Assert.True(viewModel.Shell.ShowRequestEditorWorkspace);
+        Assert.Equal(ProjectWorkspaceContentMode.RequestEditor, viewModel.Shell.CurrentContentMode);
+        Assert.Equal("/users", viewModel.Editor.RequestUrl);
+        Assert.Empty(viewModel.Editor.ConfigTab.QueryParameters);
+
+        requestCaseService.DetailLoadGate.SetResult(true);
+        await loadTask;
+
+        var parameter = Assert.Single(viewModel.Editor.ConfigTab.QueryParameters);
+        Assert.Equal("page", parameter.Name);
+    }
+
+    [Fact]
     public async Task WorkspaceShell_ShouldExposeCurrentContentModeForHistoryAndSettings()
     {
         var requestHistoryService = new FakeRequestHistoryService();
