@@ -50,6 +50,8 @@
   <ItemGroup>
     <EmbeddedResource Include="appsettings.json" />
     <EmbeddedResource Include="Data\Migrations\*.sql" />
+    <AvaloniaResource Include="Assets\AppIcon.ico" />
+    <AvaloniaResource Include="Assets\AppLogo.png" />
   </ItemGroup>
 
   <Target Name="RemoveNativeDebugSymbolsFromPublish"
