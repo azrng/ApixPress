@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -11,13 +12,13 @@ public partial class RequestConfigTabViewModel : ViewModelBase
 {
     private readonly IFilePickerService? _filePickerService;
 
-    public ObservableCollection<RequestParameterItemViewModel> QueryParameters { get; } = [];
+    public BatchObservableCollection<RequestParameterItemViewModel> QueryParameters { get; } = [];
 
-    public ObservableCollection<RequestParameterItemViewModel> PathParameters { get; } = [];
+    public BatchObservableCollection<RequestParameterItemViewModel> PathParameters { get; } = [];
 
-    public ObservableCollection<RequestParameterItemViewModel> Headers { get; } = [];
+    public BatchObservableCollection<RequestParameterItemViewModel> Headers { get; } = [];
 
-    public ObservableCollection<RequestParameterItemViewModel> FormFields { get; } = [];
+    public BatchObservableCollection<RequestParameterItemViewModel> FormFields { get; } = [];
 
     public ObservableCollection<BodyModeOptionViewModel> BodyModeOptions { get; } = [];
 
@@ -160,36 +161,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         SelectedBodyMode = string.IsNullOrWhiteSpace(endpoint.RequestBodyTemplate)
             ? BodyModes.None
             : BodyModes.RawJson;
-
-        QueryParameters.Clear();
-        PathParameters.Clear();
-        Headers.Clear();
-        FormFields.Clear();
-
-        foreach (var parameter in endpoint.Parameters)
-        {
-            var item = new RequestParameterItemViewModel
-            {
-                ParameterType = parameter.ParameterType,
-                Name = parameter.Name,
-                Value = parameter.DefaultValue,
-                Description = parameter.Description,
-                IsRequired = parameter.Required
-            };
-
-            switch (parameter.ParameterType)
-            {
-                case RequestParameterKind.Query:
-                    QueryParameters.Add(item);
-                    break;
-                case RequestParameterKind.Path:
-                    PathParameters.Add(item);
-                    break;
-                case RequestParameterKind.Header:
-                    Headers.Add(item);
-                    break;
-            }
-        }
+        ReplaceParameters(endpoint.Parameters);
     }
 
     public void ApplySnapshot(RequestSnapshotDto snapshot)
@@ -199,20 +171,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         RequestBody = snapshot.BodyContent;
         SelectedBodyMode = snapshot.BodyMode;
         IgnoreSslErrors = snapshot.IgnoreSslErrors;
-
-        QueryParameters.Clear();
-        PathParameters.Clear();
-        Headers.Clear();
-        FormFields.Clear();
-
-        foreach (var item in snapshot.QueryParameters)
-            QueryParameters.Add(ToParameterItem(item, RequestParameterKind.Query));
-
-        foreach (var item in snapshot.PathParameters)
-            PathParameters.Add(ToParameterItem(item, RequestParameterKind.Path));
-
-        foreach (var item in snapshot.Headers)
-            Headers.Add(ToParameterItem(item, RequestParameterKind.Header));
+        ReplaceParameters(snapshot);
     }
 
     public RequestSnapshotDto BuildRequestSnapshot(string endpointId, string method, string url)
@@ -252,10 +211,55 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         RequestBody = string.Empty;
         SelectedBodyMode = BodyModes.None;
         IgnoreSslErrors = false;
-        QueryParameters.Clear();
-        PathParameters.Clear();
-        Headers.Clear();
-        FormFields.Clear();
+        QueryParameters.ReplaceWith([]);
+        PathParameters.ReplaceWith([]);
+        Headers.ReplaceWith([]);
+        FormFields.ReplaceWith([]);
+    }
+
+    private void ReplaceParameters(IEnumerable<RequestParameterDto> parameters)
+    {
+        var queryParameters = new List<RequestParameterItemViewModel>();
+        var pathParameters = new List<RequestParameterItemViewModel>();
+        var headerParameters = new List<RequestParameterItemViewModel>();
+
+        foreach (var parameter in parameters)
+        {
+            var item = new RequestParameterItemViewModel
+            {
+                ParameterType = parameter.ParameterType,
+                Name = parameter.Name,
+                Value = parameter.DefaultValue,
+                Description = parameter.Description,
+                IsRequired = parameter.Required
+            };
+
+            switch (parameter.ParameterType)
+            {
+                case RequestParameterKind.Query:
+                    queryParameters.Add(item);
+                    break;
+                case RequestParameterKind.Path:
+                    pathParameters.Add(item);
+                    break;
+                case RequestParameterKind.Header:
+                    headerParameters.Add(item);
+                    break;
+            }
+        }
+
+        QueryParameters.ReplaceWith(queryParameters);
+        PathParameters.ReplaceWith(pathParameters);
+        Headers.ReplaceWith(headerParameters);
+        FormFields.ReplaceWith([]);
+    }
+
+    private void ReplaceParameters(RequestSnapshotDto snapshot)
+    {
+        QueryParameters.ReplaceWith(snapshot.QueryParameters.Select(item => ToParameterItem(item, RequestParameterKind.Query)));
+        PathParameters.ReplaceWith(snapshot.PathParameters.Select(item => ToParameterItem(item, RequestParameterKind.Path)));
+        Headers.ReplaceWith(snapshot.Headers.Select(item => ToParameterItem(item, RequestParameterKind.Header)));
+        FormFields.ReplaceWith([]);
     }
 
     private static RequestKeyValueDto ToKeyValue(RequestParameterItemViewModel item) =>
