@@ -55,19 +55,39 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
-    public async Task InitializeAsync_ShouldNotLoadImportedDocumentsUntilImportSectionOpened()
+    public async Task InitializeAsync_ShouldLoadSavedRequestSummariesWithoutImportedDocuments()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
         var requestCaseService = new FakeRequestCaseService();
         apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 2);
+        requestCaseService.Cases.Add(new RequestCaseDto
+        {
+            Id = "interface-1",
+            ProjectId = "project-1",
+            EntryType = "http-interface",
+            Name = "查询用户",
+            GroupName = "接口",
+            FolderPath = "用户",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                EndpointId = "swagger-import:GET /users",
+                Method = "GET",
+                Url = "/users"
+            },
+            UpdatedAt = DateTime.UtcNow
+        });
 
         var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
 
         await viewModel.InitializeAsync();
 
-        Assert.Equal(0, requestCaseService.GetCasesCallCount);
+        Assert.Equal(1, requestCaseService.GetCasesCallCount);
         Assert.Equal(0, apiWorkspaceService.GetDocumentsCallCount);
         Assert.Equal(0, apiWorkspaceService.GetProjectEndpointsCallCount);
+
+        var titles = FlattenExplorerTitles(viewModel.Catalog.InterfaceCatalogItems).ToList();
+        Assert.Contains("用户 (1)", titles);
+        Assert.Contains("查询用户", titles);
     }
 
     [Fact]
@@ -159,7 +179,7 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
 
-        Assert.Equal(0, requestCaseService.GetCasesCallCount);
+        Assert.Equal(1, requestCaseService.GetCasesCallCount);
     }
 
     [Fact]
