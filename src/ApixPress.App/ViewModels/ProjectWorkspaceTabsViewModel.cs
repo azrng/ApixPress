@@ -15,6 +15,12 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
     private readonly Action _selectInterfaceManagementSection;
     private readonly Action<string> _setStatusMessage;
     private readonly ObservableCollection<RequestWorkspaceTabViewModel> _visibleWorkspaceTabs = [];
+    private readonly Dictionary<RequestConfigTabViewModel, RequestWorkspaceTabViewModel> _tabByConfig = [];
+    private readonly Dictionary<INotifyCollectionChanged, RequestWorkspaceTabViewModel> _tabByConfigCollection = [];
+    private int _notificationSuspendCount;
+    private bool _stateChangedPending;
+    private bool _editorStateChangedPending;
+    private bool _visibleWorkspaceSyncPending;
 
     public ProjectWorkspaceTabsViewModel(
         Action selectInterfaceManagementSection,
@@ -100,6 +106,20 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
     public void ActivateWorkspaceTab(RequestWorkspaceTabViewModel tab)
     {
         ActiveWorkspaceTab = tab;
+    }
+
+    public void RunWithNotificationsSuspended(Action action)
+    {
+        _notificationSuspendCount++;
+        try
+        {
+            action();
+        }
+        finally
+        {
+            _notificationSuspendCount--;
+            FlushDeferredNotifications();
+        }
     }
 
     protected override void DisposeManaged()
@@ -298,13 +318,12 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         }
 
         ActiveWorkspaceTabChanged?.Invoke(oldValue, newValue);
-        EditorStateChanged?.Invoke();
-        StateChanged?.Invoke();
+        RequestNotifications(stateChanged: true, editorStateChanged: true);
     }
 
     partial void OnIsWorkspaceTabMenuOpenChanged(bool value)
     {
-        StateChanged?.Invoke();
+        RequestNotifications(stateChanged: true);
     }
 
     private void OnWorkspaceTabsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -317,8 +336,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             }
         }
 
-        SyncVisibleWorkspaceTabs();
-        StateChanged?.Invoke();
+        RequestNotifications(syncVisibleWorkspaceTabs: true, stateChanged: true);
     }
 
     private void OnWorkspaceTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -333,18 +351,19 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             if (e.PropertyName is nameof(RequestWorkspaceTabViewModel.EntryType)
                 or nameof(RequestWorkspaceTabViewModel.ShowInTabStrip))
             {
-                SyncVisibleWorkspaceTabs();
+                RequestNotifications(syncVisibleWorkspaceTabs: true, stateChanged: true);
+                return;
             }
 
-            StateChanged?.Invoke();
+            RequestNotifications(stateChanged: true);
             return;
         }
 
         if (e.PropertyName is nameof(RequestWorkspaceTabViewModel.EntryType)
             or nameof(RequestWorkspaceTabViewModel.ShowInTabStrip))
         {
-            SyncVisibleWorkspaceTabs();
-            StateChanged?.Invoke();
+            RequestNotifications(syncVisibleWorkspaceTabs: true, stateChanged: true, editorStateChanged: true);
+            return;
         }
 
         if (e.PropertyName is nameof(RequestWorkspaceTabViewModel.SelectedMethod)
@@ -355,33 +374,35 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             or nameof(RequestWorkspaceTabViewModel.ShowInTabStrip)
             or nameof(RequestWorkspaceTabViewModel.HeaderText))
         {
-            EditorStateChanged?.Invoke();
+            RequestNotifications(stateChanged: true, editorStateChanged: true);
+            return;
         }
+
+        RequestNotifications(stateChanged: true);
     }
 
     private void OnWorkspaceConfigPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        var tab = WorkspaceTabs.FirstOrDefault(item => ReferenceEquals(item.ConfigTab, sender));
-        if (tab is null || !ReferenceEquals(tab, ActiveWorkspaceTab))
+        if (sender is not RequestConfigTabViewModel configTab
+            || !_tabByConfig.TryGetValue(configTab, out var tab)
+            || !ReferenceEquals(tab, ActiveWorkspaceTab))
         {
             return;
         }
 
-        EditorStateChanged?.Invoke();
+        RequestNotifications(stateChanged: true, editorStateChanged: true);
     }
 
     private void OnWorkspaceConfigCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        var tab = WorkspaceTabs.FirstOrDefault(item =>
-            ReferenceEquals(item.ConfigTab.QueryParameters, sender)
-            || ReferenceEquals(item.ConfigTab.Headers, sender)
-            || ReferenceEquals(item.ConfigTab.FormFields, sender));
-        if (tab is null || !ReferenceEquals(tab, ActiveWorkspaceTab))
+        if (sender is not INotifyCollectionChanged collection
+            || !_tabByConfigCollection.TryGetValue(collection, out var tab)
+            || !ReferenceEquals(tab, ActiveWorkspaceTab))
         {
             return;
         }
 
-        EditorStateChanged?.Invoke();
+        RequestNotifications(stateChanged: true, editorStateChanged: true);
     }
 
     private void SyncVisibleWorkspaceTabs()
@@ -404,6 +425,10 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         tab.ConfigTab.QueryParameters.CollectionChanged += OnWorkspaceConfigCollectionChanged;
         tab.ConfigTab.Headers.CollectionChanged += OnWorkspaceConfigCollectionChanged;
         tab.ConfigTab.FormFields.CollectionChanged += OnWorkspaceConfigCollectionChanged;
+        _tabByConfig[tab.ConfigTab] = tab;
+        _tabByConfigCollection[tab.ConfigTab.QueryParameters] = tab;
+        _tabByConfigCollection[tab.ConfigTab.Headers] = tab;
+        _tabByConfigCollection[tab.ConfigTab.FormFields] = tab;
     }
 
     private void DetachWorkspaceTab(RequestWorkspaceTabViewModel tab)
@@ -413,6 +438,64 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         tab.ConfigTab.QueryParameters.CollectionChanged -= OnWorkspaceConfigCollectionChanged;
         tab.ConfigTab.Headers.CollectionChanged -= OnWorkspaceConfigCollectionChanged;
         tab.ConfigTab.FormFields.CollectionChanged -= OnWorkspaceConfigCollectionChanged;
+        _tabByConfig.Remove(tab.ConfigTab);
+        _tabByConfigCollection.Remove(tab.ConfigTab.QueryParameters);
+        _tabByConfigCollection.Remove(tab.ConfigTab.Headers);
+        _tabByConfigCollection.Remove(tab.ConfigTab.FormFields);
         tab.Dispose();
+    }
+
+    private void RequestNotifications(
+        bool syncVisibleWorkspaceTabs = false,
+        bool stateChanged = false,
+        bool editorStateChanged = false)
+    {
+        if (syncVisibleWorkspaceTabs)
+        {
+            _visibleWorkspaceSyncPending = true;
+        }
+
+        if (stateChanged)
+        {
+            _stateChangedPending = true;
+        }
+
+        if (editorStateChanged)
+        {
+            _editorStateChangedPending = true;
+        }
+
+        if (_notificationSuspendCount > 0)
+        {
+            return;
+        }
+
+        FlushDeferredNotifications();
+    }
+
+    private void FlushDeferredNotifications()
+    {
+        if (_notificationSuspendCount > 0)
+        {
+            return;
+        }
+
+        if (_visibleWorkspaceSyncPending)
+        {
+            _visibleWorkspaceSyncPending = false;
+            SyncVisibleWorkspaceTabs();
+        }
+
+        if (_editorStateChangedPending)
+        {
+            _editorStateChangedPending = false;
+            EditorStateChanged?.Invoke();
+        }
+
+        if (_stateChangedPending)
+        {
+            _stateChangedPending = false;
+            StateChanged?.Invoke();
+        }
     }
 }

@@ -349,6 +349,32 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task LoadWorkspaceItem_ShouldCoalesceShellRefreshWhenReusingLandingTab()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local",
+        [
+            ("默认分组", "创建订单", "POST", "/orders")
+        ]);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
+
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "创建订单");
+        Assert.NotNull(interfaceItem);
+
+        var shellStateChangedCount = 0;
+        viewModel.ShellStateChanged += _ => shellStateChangedCount++;
+
+        await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+
+        Assert.InRange(shellStateChangedCount, 1, 8);
+        Assert.Equal("创建订单", viewModel.Editor.CurrentHttpInterfaceDisplayName);
+    }
+
+    [Fact]
     public async Task LoadWorkspaceItem_ShouldShowRequestEditorWorkspaceWhenReusingLandingTab()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();

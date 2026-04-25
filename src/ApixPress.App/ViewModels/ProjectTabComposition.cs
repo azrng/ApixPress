@@ -338,7 +338,6 @@ internal sealed class ProjectTabComposition : DisposableObject
         Workspace.StateChanged += _hostContext.NotifyShellState;
         Workspace.EditorStateChanged += _hostContext.NotifyWorkspaceEditorState;
         Workspace.ActiveWorkspaceTabChanged += Lifecycle.OnWorkspaceActiveWorkspaceTabChanged;
-        Editor.PropertyChanged += OnChildPropertyChanged;
         Shell.PropertyChanged += OnShellPropertyChanged;
         Settings.PropertyChanged += OnChildPropertyChanged;
         Import.PropertyChanged += OnChildPropertyChanged;
@@ -363,7 +362,6 @@ internal sealed class ProjectTabComposition : DisposableObject
         Workspace.StateChanged -= _hostContext.NotifyShellState;
         Workspace.EditorStateChanged -= _hostContext.NotifyWorkspaceEditorState;
         Workspace.ActiveWorkspaceTabChanged -= Lifecycle.OnWorkspaceActiveWorkspaceTabChanged;
-        Editor.PropertyChanged -= OnChildPropertyChanged;
         Shell.PropertyChanged -= OnShellPropertyChanged;
         Settings.PropertyChanged -= OnChildPropertyChanged;
         Import.PropertyChanged -= OnChildPropertyChanged;

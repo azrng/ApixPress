@@ -125,12 +125,15 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 
         _showInterfaceManagementSection();
         var targetTab = _workspace.FindWorkspaceTabForSource(source) ?? _workspace.ReuseActiveLandingOrCreateWorkspace();
-        targetTab.ApplySavedRequest(source, parentInterface);
-
-        if (string.Equals(source.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase))
+        _workspace.RunWithNotificationsSuspended(() =>
         {
-            targetTab.HttpCaseName = ResolveLatestCaseName(source.Id);
-        }
+            targetTab.ApplySavedRequest(source, parentInterface);
+
+            if (string.Equals(source.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase))
+            {
+                targetTab.HttpCaseName = ResolveLatestCaseName(source.Id);
+            }
+        });
 
         _workspace.ActivateWorkspaceTab(targetTab);
         _setStatusMessage(source.EntryType switch
