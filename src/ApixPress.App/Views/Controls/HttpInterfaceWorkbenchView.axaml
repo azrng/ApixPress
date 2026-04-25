@@ -9,6 +9,8 @@
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
   <Grid RowDefinitions="Auto,2*,3*"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
         RowSpacing="{StaticResource Space.3}"
         IsVisible="{Binding Editor.ShowHttpWorkbenchContent}">
     <Border Grid.Row="0"

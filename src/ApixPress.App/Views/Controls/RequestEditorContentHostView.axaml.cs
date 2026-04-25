@@ -33,6 +33,8 @@ public partial class RequestEditorContentHostView : UserControl
     private void OnEditorPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (string.Equals(e.PropertyName, nameof(ProjectRequestEditorViewModel.CurrentContentMode), StringComparison.Ordinal)
+            || string.Equals(e.PropertyName, nameof(ProjectRequestEditorViewModel.ShowHttpWorkbenchContent), StringComparison.Ordinal)
+            || string.Equals(e.PropertyName, nameof(ProjectRequestEditorViewModel.ShowHttpDocumentPreviewContent), StringComparison.Ordinal)
             || string.IsNullOrWhiteSpace(e.PropertyName))
         {
             UpdateHostedContent();

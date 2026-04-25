@@ -9,6 +9,8 @@
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
   <Grid RowDefinitions="2*,3*"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
         RowSpacing="{StaticResource Space.3}"
         IsVisible="{Binding Summary.IsQuickRequestEditor}">
     <Border Grid.Row="0"

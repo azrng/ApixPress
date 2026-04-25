@@ -6,5 +6,9 @@
              x:Class="ApixPress.App.Views.Controls.RequestEditorContentHostView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <ContentControl x:Name="ContentHost" />
+  <ContentControl x:Name="ContentHost"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
+                  HorizontalContentAlignment="Stretch"
+                  VerticalContentAlignment="Stretch" />
 </UserControl>
