@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS api_endpoints (
     method TEXT NOT NULL,
     path TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
+    request_body_mode TEXT NOT NULL DEFAULT 'None',
     request_body_template TEXT NOT NULL DEFAULT '',
     FOREIGN KEY(document_id) REFERENCES api_documents(id) ON DELETE CASCADE
 );

@@ -1,3 +1,5 @@
+using ApixPress.App.Models.DTOs;
+
 namespace ApixPress.App.Models.Entities;
 
 public sealed class ApiEndpointEntity
@@ -9,5 +11,6 @@ public sealed class ApiEndpointEntity
     public string Method { get; set; } = string.Empty;
     public string Path { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public string RequestBodyMode { get; set; } = BodyModes.None;
     public string RequestBodyTemplate { get; set; } = string.Empty;
 }

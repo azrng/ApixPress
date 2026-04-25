@@ -72,6 +72,7 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
                                method Method,
                                path Path,
                                description Description,
+                               request_body_mode RequestBodyMode,
                                request_body_template RequestBodyTemplate
                            from api_endpoints
                            where document_id = @DocumentId
@@ -119,6 +120,7 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
                                ep.method Method,
                                ep.path Path,
                                ep.description Description,
+                               ep.request_body_mode RequestBodyMode,
                                ep.request_body_template RequestBodyTemplate
                            from api_endpoints ep
                            inner join api_documents ad on ad.id = ep.document_id
@@ -234,9 +236,9 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
 
         const string insertEndpointSql = """
                                          insert into api_endpoints (
-                                             id, document_id, group_name, name, method, path, description, request_body_template
+                                             id, document_id, group_name, name, method, path, description, request_body_mode, request_body_template
                                          ) values (
-                                             @Id, @DocumentId, @GroupName, @Name, @Method, @Path, @Description, @RequestBodyTemplate
+                                             @Id, @DocumentId, @GroupName, @Name, @Method, @Path, @Description, @RequestBodyMode, @RequestBodyTemplate
                                          )
                                          """;
 

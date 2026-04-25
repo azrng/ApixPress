@@ -9,6 +9,7 @@ public sealed class ApiEndpointDto
     public string Method { get; init; } = string.Empty;
     public string Path { get; init; } = string.Empty;
     public string Description { get; init; } = string.Empty;
+    public string RequestBodyMode { get; init; } = BodyModes.None;
     public string RequestBodyTemplate { get; init; } = string.Empty;
     public List<RequestParameterDto> Parameters { get; init; } = [];
 }

@@ -40,7 +40,7 @@ public static class OpenApiJsonParser
         foreach (var pathProperty in pathsElement.EnumerateObject())
         {
             var pathItem = pathProperty.Value;
-            var sharedParameters = ReadParameters(pathItem, null);
+            var sharedParameters = ReadParameters(pathItem, BodyModes.None);
 
             foreach (var operation in pathItem.EnumerateObject())
             {
@@ -51,7 +51,7 @@ public static class OpenApiJsonParser
 
                 var endpointId = Guid.NewGuid().ToString("N");
                 var operationElement = operation.Value;
-                var requestBodyTemplate = ResolveRequestBodyTemplate(operationElement);
+                var requestBody = ResolveRequestBody(operationElement, root);
                 var endpoint = new ApiEndpointEntity
                 {
                     Id = endpointId,
@@ -61,12 +61,13 @@ public static class OpenApiJsonParser
                     Method = operation.Name.ToUpperInvariant(),
                     Path = pathProperty.Name,
                     Description = ResolveDescription(operationElement),
-                    RequestBodyTemplate = requestBodyTemplate
+                    RequestBodyMode = requestBody.Mode,
+                    RequestBodyTemplate = requestBody.Template
                 };
 
                 endpoints.Add(endpoint);
 
-                foreach (var parameter in sharedParameters.Concat(ReadParameters(operationElement, requestBodyTemplate)))
+                foreach (var parameter in sharedParameters.Concat(ReadParameters(operationElement, requestBody.Mode)))
                 {
                     parameters.Add(parameter with { EndpointId = endpointId });
                 }
@@ -217,21 +218,21 @@ public static class OpenApiJsonParser
         return string.Empty;
     }
 
-    private static string ResolveRequestBodyTemplate(JsonElement operationElement)
+    private static RequestBodySeed ResolveRequestBody(JsonElement operationElement, JsonElement root)
     {
         if (!operationElement.TryGetProperty("requestBody", out var requestBody)
             || requestBody.ValueKind != JsonValueKind.Object
             || !requestBody.TryGetProperty("content", out var content)
             || content.ValueKind != JsonValueKind.Object)
         {
-            return string.Empty;
+            return RequestBodySeed.Empty;
         }
 
         if (content.TryGetProperty("application/json", out var jsonContent))
         {
             if (jsonContent.TryGetProperty("example", out var example))
             {
-                return JsonSerializer.Serialize(example, new JsonSerializerOptions { WriteIndented = true });
+                return new RequestBodySeed(BodyModes.RawJson, JsonSerializer.Serialize(example, new JsonSerializerOptions { WriteIndented = true }));
             }
 
             if (jsonContent.TryGetProperty("examples", out var examples)
@@ -241,16 +242,35 @@ public static class OpenApiJsonParser
                 {
                     if (exampleItem.Value.TryGetProperty("value", out var exampleValue))
                     {
-                        return JsonSerializer.Serialize(exampleValue, new JsonSerializerOptions { WriteIndented = true });
+                        return new RequestBodySeed(BodyModes.RawJson, JsonSerializer.Serialize(exampleValue, new JsonSerializerOptions { WriteIndented = true }));
                     }
+                }
+            }
+
+            if (jsonContent.TryGetProperty("schema", out var jsonSchema))
+            {
+                var exampleValue = BuildSchemaExampleValue(jsonSchema, root, 0);
+                if (exampleValue is not null)
+                {
+                    return new RequestBodySeed(BodyModes.RawJson, JsonSerializer.Serialize(exampleValue, new JsonSerializerOptions { WriteIndented = true }));
                 }
             }
         }
 
-        return string.Empty;
+        if (content.TryGetProperty("multipart/form-data", out var formDataContent))
+        {
+            return new RequestBodySeed(BodyModes.FormData, BuildFormBodyTemplate(formDataContent, root));
+        }
+
+        if (content.TryGetProperty("application/x-www-form-urlencoded", out var formUrlEncodedContent))
+        {
+            return new RequestBodySeed(BodyModes.FormUrlEncoded, BuildFormBodyTemplate(formUrlEncodedContent, root));
+        }
+
+        return RequestBodySeed.Empty;
     }
 
-    private static IEnumerable<ParameterSeed> ReadParameters(JsonElement element, string? requestBodyTemplate)
+    private static IEnumerable<ParameterSeed> ReadParameters(JsonElement element, string requestBodyMode)
     {
         var result = new List<ParameterSeed>();
         if (element.TryGetProperty("parameters", out var parametersElement) && parametersElement.ValueKind == JsonValueKind.Array)
@@ -297,7 +317,7 @@ public static class OpenApiJsonParser
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(requestBodyTemplate))
+        if (requestBodyMode == BodyModes.RawJson)
         {
             result.Add(new ParameterSeed
             {
@@ -311,6 +331,142 @@ public static class OpenApiJsonParser
         }
 
         return result;
+    }
+
+    private static string BuildFormBodyTemplate(JsonElement content, JsonElement root)
+    {
+        if (!content.TryGetProperty("schema", out var schema))
+        {
+            return string.Empty;
+        }
+
+        schema = ResolveSchemaReference(schema, root);
+        if (!schema.TryGetProperty("properties", out var properties) || properties.ValueKind != JsonValueKind.Object)
+        {
+            return string.Empty;
+        }
+
+        var parts = new List<string>();
+        foreach (var property in properties.EnumerateObject())
+        {
+            var value = ResolveFormFieldExampleValue(property.Value, root);
+            parts.Add($"{Uri.EscapeDataString(property.Name)}={Uri.EscapeDataString(value)}");
+        }
+
+        return string.Join("&", parts);
+    }
+
+    private static object? BuildSchemaExampleValue(JsonElement schema, JsonElement root, int depth)
+    {
+        if (depth > 8 || schema.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        schema = ResolveSchemaReference(schema, root);
+
+        if (schema.TryGetProperty("example", out var example))
+        {
+            return JsonSerializer.Deserialize<object>(example.GetRawText());
+        }
+
+        if (schema.TryGetProperty("default", out var defaultValue))
+        {
+            return JsonSerializer.Deserialize<object>(defaultValue.GetRawText());
+        }
+
+        if (schema.TryGetProperty("enum", out var enumValues)
+            && enumValues.ValueKind == JsonValueKind.Array
+            && enumValues.GetArrayLength() > 0)
+        {
+            return JsonSerializer.Deserialize<object>(enumValues[0].GetRawText());
+        }
+
+        var type = ResolveSchemaType(schema);
+        if (type == "array")
+        {
+            return schema.TryGetProperty("items", out var items)
+                ? new[] { BuildSchemaExampleValue(items, root, depth + 1) }
+                : Array.Empty<object>();
+        }
+
+        if (type == "object" || schema.TryGetProperty("properties", out _))
+        {
+            var result = new Dictionary<string, object?>(StringComparer.Ordinal);
+            if (schema.TryGetProperty("properties", out var properties) && properties.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var property in properties.EnumerateObject())
+                {
+                    result[property.Name] = BuildSchemaExampleValue(property.Value, root, depth + 1);
+                }
+            }
+
+            return result;
+        }
+
+        return type switch
+        {
+            "integer" => 0,
+            "number" => 0,
+            "boolean" => true,
+            _ => "string"
+        };
+    }
+
+    private static string ResolveFormFieldExampleValue(JsonElement schema, JsonElement root)
+    {
+        var value = BuildSchemaExampleValue(schema, root, 0);
+        if (value is object?[] array)
+        {
+            return array.Length == 0 ? string.Empty : ResolveScalarExampleText(array[0]);
+        }
+
+        return ResolveScalarExampleText(value);
+    }
+
+    private static string ResolveScalarExampleText(object? value)
+    {
+        return value switch
+        {
+            null => string.Empty,
+            string text => text,
+            bool boolean => boolean ? "true" : "false",
+            JsonElement element when element.ValueKind == JsonValueKind.String => element.GetString() ?? string.Empty,
+            JsonElement element => element.GetRawText(),
+            _ => Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty
+        };
+    }
+
+    private static JsonElement ResolveSchemaReference(JsonElement schema, JsonElement root)
+    {
+        if (!schema.TryGetProperty("$ref", out var refElement) || refElement.ValueKind != JsonValueKind.String)
+        {
+            return schema;
+        }
+
+        var reference = refElement.GetString();
+        const string prefix = "#/components/schemas/";
+        if (string.IsNullOrWhiteSpace(reference) || !reference.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return schema;
+        }
+
+        var schemaName = reference[prefix.Length..];
+        return root.TryGetProperty("components", out var components)
+               && components.TryGetProperty("schemas", out var schemas)
+               && schemas.TryGetProperty(schemaName, out var resolved)
+            ? resolved
+            : schema;
+    }
+
+    private static string ResolveSchemaType(JsonElement schema)
+    {
+        if (schema.TryGetProperty("type", out var type) && type.ValueKind == JsonValueKind.String)
+        {
+            return type.GetString() ?? string.Empty;
+        }
+
+        return string.Empty;
     }
 
     private static string ResolveParameterDefaultValue(JsonElement parameter)
@@ -366,5 +522,10 @@ public static class OpenApiJsonParser
                 Required = seed.Required
             };
         }
+    }
+
+    private readonly record struct RequestBodySeed(string Mode, string Template)
+    {
+        public static RequestBodySeed Empty { get; } = new(BodyModes.None, string.Empty);
     }
 }

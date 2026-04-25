@@ -39,6 +39,7 @@ public sealed class DatabaseInitializer : ISingletonDependency
         EnsureProjectWorkspaceTables(connection);
         EnsureColumn(connection, "api_documents", "project_id", "TEXT");
         EnsureColumn(connection, "request_cases", "project_id", "TEXT");
+        EnsureColumn(connection, "api_endpoints", "request_body_mode", "TEXT NOT NULL DEFAULT 'None'");
         EnsureColumn(connection, "request_cases", "entry_type", "TEXT NOT NULL DEFAULT 'quick-request'");
         EnsureColumn(connection, "request_cases", "folder_path", "TEXT NOT NULL DEFAULT ''");
         EnsureColumn(connection, "request_cases", "parent_id", "TEXT NOT NULL DEFAULT ''");

@@ -270,7 +270,7 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             Method = string.IsNullOrWhiteSpace(endpoint.Method) ? "GET" : endpoint.Method.Trim().ToUpperInvariant(),
             Url = endpoint.Path,
             Description = endpoint.Description,
-            BodyMode = string.IsNullOrWhiteSpace(endpoint.RequestBodyTemplate) ? BodyModes.None : BodyModes.RawJson,
+            BodyMode = ResolveImportedBodyMode(endpoint),
             BodyContent = endpoint.RequestBodyTemplate,
             Headers = endpoint.Parameters
                 .Where(item => item.ParameterType == RequestParameterKind.Header)
@@ -285,6 +285,18 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
                 .Select(ToKeyValue)
                 .ToList()
         };
+    }
+
+    private static string ResolveImportedBodyMode(ApiEndpointDto endpoint)
+    {
+        if (!string.IsNullOrWhiteSpace(endpoint.RequestBodyMode) && endpoint.RequestBodyMode != BodyModes.None)
+        {
+            return endpoint.RequestBodyMode;
+        }
+
+        return string.IsNullOrWhiteSpace(endpoint.RequestBodyTemplate)
+            ? BodyModes.None
+            : BodyModes.RawJson;
     }
 
     private RequestCaseEntity BuildImportedInterfaceEntity(string projectId, ApiEndpointDto endpoint, string endpointKey, string? id)

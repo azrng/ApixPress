@@ -158,10 +158,9 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         RequestName = endpoint.Name;
         RequestDescription = endpoint.Description;
         RequestBody = endpoint.RequestBodyTemplate;
-        SelectedBodyMode = string.IsNullOrWhiteSpace(endpoint.RequestBodyTemplate)
-            ? BodyModes.None
-            : BodyModes.RawJson;
+        SelectedBodyMode = ResolveEndpointBodyMode(endpoint);
         ReplaceParameters(endpoint.Parameters);
+        ReplaceFormFieldsFromBodyContent(SelectedBodyMode, endpoint.RequestBodyTemplate);
     }
 
     public void ApplySnapshot(RequestSnapshotDto snapshot)
@@ -172,6 +171,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         SelectedBodyMode = snapshot.BodyMode;
         IgnoreSslErrors = snapshot.IgnoreSslErrors;
         ReplaceParameters(snapshot);
+        ReplaceFormFieldsFromBodyContent(SelectedBodyMode, snapshot.BodyContent);
     }
 
     public RequestSnapshotDto BuildRequestSnapshot(string endpointId, string method, string url)
@@ -267,4 +267,48 @@ public partial class RequestConfigTabViewModel : ViewModelBase
 
     private static RequestParameterItemViewModel ToParameterItem(RequestKeyValueDto item, RequestParameterKind kind) =>
         new() { ParameterType = kind, Name = item.Name, Value = item.Value, IsEnabled = item.IsEnabled };
+
+    private static string ResolveEndpointBodyMode(ApiEndpointDto endpoint)
+    {
+        if (!string.IsNullOrWhiteSpace(endpoint.RequestBodyMode) && endpoint.RequestBodyMode != BodyModes.None)
+        {
+            return endpoint.RequestBodyMode;
+        }
+
+        return string.IsNullOrWhiteSpace(endpoint.RequestBodyTemplate)
+            ? BodyModes.None
+            : BodyModes.RawJson;
+    }
+
+    private void ReplaceFormFieldsFromBodyContent(string bodyMode, string bodyContent)
+    {
+        if (bodyMode is not (BodyModes.FormData or BodyModes.FormUrlEncoded))
+        {
+            FormFields.ReplaceWith([]);
+            return;
+        }
+
+        FormFields.ReplaceWith(ParseFormFields(bodyContent));
+    }
+
+    private static IEnumerable<RequestParameterItemViewModel> ParseFormFields(string bodyContent)
+    {
+        foreach (var pair in bodyContent.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = pair.Split('=', 2);
+            var name = Uri.UnescapeDataString(parts[0]);
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                continue;
+            }
+
+            yield return new RequestParameterItemViewModel
+            {
+                ParameterType = RequestParameterKind.Query,
+                Name = name,
+                Value = parts.Length > 1 ? Uri.UnescapeDataString(parts[1]) : string.Empty,
+                IsEnabled = true
+            };
+        }
+    }
 }

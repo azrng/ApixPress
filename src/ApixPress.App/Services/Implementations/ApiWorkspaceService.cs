@@ -350,6 +350,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
             Method = endpoint.Method,
             Path = endpoint.Path,
             Description = endpoint.Description,
+            RequestBodyMode = string.IsNullOrWhiteSpace(endpoint.RequestBodyMode) ? BodyModes.None : endpoint.RequestBodyMode,
             RequestBodyTemplate = endpoint.RequestBodyTemplate,
             Parameters = parameterLookup.TryGetValue(endpoint.Id, out var endpointParameters)
                 ? endpointParameters

@@ -88,6 +88,41 @@ public sealed class RequestConfigTabViewModelTests
         Assert.False(viewModel.QueryParameters[1].IsEnabled);
     }
 
+    [Fact]
+    public void PopulateFromEndpoint_ShouldApplyJsonBodyModeAndTemplate()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        viewModel.PopulateFromEndpoint(new ApiEndpointDto
+        {
+            Name = "获取用户列表",
+            RequestBodyMode = BodyModes.RawJson,
+            RequestBodyTemplate = "{\n  \"pageIndex\": 1\n}"
+        });
+
+        Assert.Equal(BodyModes.RawJson, viewModel.SelectedBodyMode);
+        Assert.Equal("{\n  \"pageIndex\": 1\n}", viewModel.RequestBody);
+        Assert.Empty(viewModel.FormFields);
+    }
+
+    [Fact]
+    public void PopulateFromEndpoint_ShouldApplyFormBodyModeAndFields()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        viewModel.PopulateFromEndpoint(new ApiEndpointDto
+        {
+            Name = "上传",
+            RequestBodyMode = BodyModes.FormData,
+            RequestBodyTemplate = "file=&userId=u-1"
+        });
+
+        Assert.Equal(BodyModes.FormData, viewModel.SelectedBodyMode);
+        Assert.Equal(2, viewModel.FormFields.Count);
+        Assert.Contains(viewModel.FormFields, item => item.Name == "file" && item.Value == string.Empty);
+        Assert.Contains(viewModel.FormFields, item => item.Name == "userId" && item.Value == "u-1");
+    }
+
     private static void AssertResetNotification(NotifyCollectionChangedEventArgs e, ref int count)
     {
         count++;
