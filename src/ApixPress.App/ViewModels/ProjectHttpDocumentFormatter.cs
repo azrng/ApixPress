@@ -32,7 +32,7 @@ public static class ProjectHttpDocumentFormatter
         }
 
         var queryString = string.Join("&", queryParameters
-            .Where(item => !string.IsNullOrWhiteSpace(item.Name))
+            .Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name))
             .Select(item =>
                 $"{Uri.EscapeDataString(item.Name.Trim())}={Uri.EscapeDataString((item.Value ?? string.Empty).Trim())}"));
 
@@ -89,7 +89,7 @@ public static class ProjectHttpDocumentFormatter
         if (configTab.SelectedBodyMode is BodyModes.FormData or BodyModes.FormUrlEncoded)
         {
             return string.Join("&", configTab.FormFields
-                .Where(item => !string.IsNullOrWhiteSpace(item.Name))
+                .Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name))
                 .Select(item =>
                     $"{Uri.EscapeDataString(item.Name.Trim())}={Uri.EscapeDataString((item.Value ?? string.Empty).Trim())}"));
         }

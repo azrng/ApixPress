@@ -44,6 +44,50 @@ public sealed class RequestConfigTabViewModelTests
         Assert.Equal(2, viewModel.Headers.Count);
     }
 
+    [Fact]
+    public void BuildRequestSnapshot_ShouldSerializeOnlyEnabledFormFields()
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = BodyModes.FormUrlEncoded
+        };
+
+        viewModel.FormFields.Add(new RequestParameterItemViewModel
+        {
+            Name = "enabled",
+            Value = "yes",
+            IsEnabled = true
+        });
+        viewModel.FormFields.Add(new RequestParameterItemViewModel
+        {
+            Name = "disabled",
+            Value = "no",
+            IsEnabled = false
+        });
+
+        var snapshot = viewModel.BuildRequestSnapshot("endpoint-1", "POST", "/submit");
+
+        Assert.Equal("enabled=yes", snapshot.BodyContent);
+    }
+
+    [Fact]
+    public void ApplySnapshot_ShouldRestoreParameterEnabledState()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        viewModel.ApplySnapshot(new RequestSnapshotDto
+        {
+            QueryParameters =
+            [
+                new RequestKeyValueDto { Name = "enabled", Value = "1", IsEnabled = true },
+                new RequestKeyValueDto { Name = "disabled", Value = "0", IsEnabled = false }
+            ]
+        });
+
+        Assert.True(viewModel.QueryParameters[0].IsEnabled);
+        Assert.False(viewModel.QueryParameters[1].IsEnabled);
+    }
+
     private static void AssertResetNotification(NotifyCollectionChangedEventArgs e, ref int count)
     {
         count++;

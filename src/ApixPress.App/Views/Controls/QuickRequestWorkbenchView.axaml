@@ -22,12 +22,12 @@
             <DockPanel Margin="{StaticResource Pad.3}">
               <Border DockPanel.Dock="Top"
                       Classes="HttpRequestTableHeader">
-                <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,Auto"
+                <Grid ColumnDefinitions="Auto,2.4*,2.4*,1.2*,2.2*,Auto"
                       ColumnSpacing="{StaticResource Space.3}">
-                  <TextBlock Grid.Column="0" Classes="CaptionText" Text="参数名" />
-                  <TextBlock Grid.Column="1" Classes="CaptionText" Text="参数值" />
-                  <TextBlock Grid.Column="2" Classes="CaptionText" Text="类型" />
-                  <TextBlock Grid.Column="3" Classes="CaptionText" Text="说明" />
+                  <TextBlock Grid.Column="1" Classes="CaptionText" Text="参数名" />
+                  <TextBlock Grid.Column="2" Classes="CaptionText" Text="参数值" />
+                  <TextBlock Grid.Column="3" Classes="CaptionText" Text="类型" />
+                  <TextBlock Grid.Column="4" Classes="CaptionText" Text="说明" />
                 </Grid>
               </Border>
               <Button DockPanel.Dock="Bottom"
@@ -41,13 +41,14 @@
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
                       <Border Classes="ParameterRow HttpRequestParameterRow">
-                        <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,Auto"
+                        <Grid ColumnDefinitions="Auto,2.4*,2.4*,1.2*,2.2*,Auto"
                               ColumnSpacing="{StaticResource Space.3}">
-                          <TextBox Grid.Column="0" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="添加参数" />
-                          <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" Watermark="参数值" />
-                          <TextBlock Grid.Column="2" Classes="CaptionText" Text="String" VerticalAlignment="Center" />
-                          <TextBox Grid.Column="3" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" Watermark="说明" />
-                          <u:IconButton Grid.Column="4"
+                          <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
+                          <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="添加参数" />
+                          <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" Watermark="参数值" />
+                          <TextBlock Grid.Column="3" Classes="CaptionText" Text="String" VerticalAlignment="Center" />
+                          <TextBox Grid.Column="4" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" Watermark="说明" />
+                          <u:IconButton Grid.Column="5"
                                         Classes="Danger"
                                         Theme="{DynamicResource BorderlessIconButton}"
                                         Icon="{StaticResource SemiIconDelete}"
@@ -85,12 +86,12 @@
               <DockPanel IsVisible="{Binding ConfigTab.IsBodyModeFormData}">
                 <Border DockPanel.Dock="Top"
                         Classes="HttpRequestTableHeader">
-                  <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,Auto"
+                  <Grid ColumnDefinitions="Auto,2.4*,2.4*,1.2*,2.2*,Auto"
                         ColumnSpacing="{StaticResource Space.3}">
-                    <TextBlock Grid.Column="0" Classes="CaptionText" Text="字段名" />
-                    <TextBlock Grid.Column="1" Classes="CaptionText" Text="字段值" />
-                    <TextBlock Grid.Column="2" Classes="CaptionText" Text="类型" />
-                    <TextBlock Grid.Column="3" Classes="CaptionText" Text="说明" />
+                    <TextBlock Grid.Column="1" Classes="CaptionText" Text="字段名" />
+                    <TextBlock Grid.Column="2" Classes="CaptionText" Text="字段值" />
+                    <TextBlock Grid.Column="3" Classes="CaptionText" Text="类型" />
+                    <TextBlock Grid.Column="4" Classes="CaptionText" Text="说明" />
                   </Grid>
                 </Border>
                 <Button DockPanel.Dock="Bottom"
@@ -104,13 +105,14 @@
                     <ItemsControl.ItemTemplate>
                       <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
                         <Border Classes="ParameterRow HttpRequestParameterRow">
-                          <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,Auto"
+                          <Grid ColumnDefinitions="Auto,2.4*,2.4*,1.2*,2.2*,Auto"
                                 ColumnSpacing="{StaticResource Space.3}">
-                            <TextBox Grid.Column="0" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="字段名" />
-                            <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" Watermark="字段值" />
-                            <TextBlock Grid.Column="2" Classes="CaptionText" Text="String" VerticalAlignment="Center" />
-                            <TextBox Grid.Column="3" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" Watermark="说明" />
-                            <u:IconButton Grid.Column="4"
+                            <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
+                            <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="字段名" />
+                            <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" Watermark="字段值" />
+                            <TextBlock Grid.Column="3" Classes="CaptionText" Text="String" VerticalAlignment="Center" />
+                            <TextBox Grid.Column="4" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" Watermark="说明" />
+                            <u:IconButton Grid.Column="5"
                                           Classes="Danger"
                                           Theme="{DynamicResource BorderlessIconButton}"
                                           Icon="{StaticResource SemiIconDelete}"

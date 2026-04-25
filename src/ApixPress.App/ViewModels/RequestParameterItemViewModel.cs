@@ -18,5 +18,8 @@ public partial class RequestParameterItemViewModel : ViewModelBase
     [ObservableProperty]
     private bool isRequired;
 
+    [ObservableProperty]
+    private bool isEnabled = true;
+
     public RequestParameterKind ParameterType { get; init; }
 }

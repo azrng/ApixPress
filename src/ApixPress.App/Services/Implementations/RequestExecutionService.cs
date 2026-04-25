@@ -206,7 +206,7 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
 
         var builder = new UriBuilder(url);
         var queryItems = ParseQuery(builder.Query);
-        foreach (var queryParameter in request.QueryParameters.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
+        foreach (var queryParameter in request.QueryParameters.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
         {
             queryItems[queryParameter.Name] = ReplaceVariables(queryParameter.Value, effectiveVariables);
         }

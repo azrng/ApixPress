@@ -183,7 +183,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         if (bodyMode == BodyModes.FormData || bodyMode == BodyModes.FormUrlEncoded)
         {
             var parts = FormFields
-                .Where(f => !string.IsNullOrWhiteSpace(f.Name))
+                .Where(f => f.IsEnabled && !string.IsNullOrWhiteSpace(f.Name))
                 .Select(f => $"{Uri.EscapeDataString(f.Name)}={Uri.EscapeDataString(f.Value)}");
             bodyContent = string.Join("&", parts);
         }
@@ -263,8 +263,8 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     }
 
     private static RequestKeyValueDto ToKeyValue(RequestParameterItemViewModel item) =>
-        new() { Name = item.Name, Value = item.Value };
+        new() { Name = item.Name, Value = item.Value, IsEnabled = item.IsEnabled };
 
     private static RequestParameterItemViewModel ToParameterItem(RequestKeyValueDto item, RequestParameterKind kind) =>
-        new() { ParameterType = kind, Name = item.Name, Value = item.Value };
+        new() { ParameterType = kind, Name = item.Name, Value = item.Value, IsEnabled = item.IsEnabled };
 }

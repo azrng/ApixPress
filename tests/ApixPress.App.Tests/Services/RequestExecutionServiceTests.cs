@@ -32,6 +32,25 @@ public sealed class RequestExecutionServiceTests
     }
 
     [Fact]
+    public void BuildUrl_ShouldSkipDisabledQueryParameters()
+    {
+        var request = new RequestSnapshotDto
+        {
+            Method = "GET",
+            Url = "https://api.example.com/users",
+            QueryParameters =
+            [
+                new RequestKeyValueDto { Name = "enabled", Value = "1", IsEnabled = true },
+                new RequestKeyValueDto { Name = "disabled", Value = "0", IsEnabled = false }
+            ]
+        };
+
+        var url = RequestExecutionService.BuildUrl(request, "https://api.example.com", new Dictionary<string, string>());
+
+        Assert.Equal("https://api.example.com/users?enabled=1", url);
+    }
+
+    [Fact]
     public void BuildUrl_ShouldCombineRelativePathWithEnvironmentBaseUrl()
     {
         var request = new RequestSnapshotDto
