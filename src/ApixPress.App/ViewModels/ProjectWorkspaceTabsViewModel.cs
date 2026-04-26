@@ -157,7 +157,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             .ToList();
         foreach (var tab in tabsToClose)
         {
-            CloseWorkspaceTab(tab);
+            CloseWorkspaceTab(tab, respectPin: false);
         }
     }
 
@@ -219,38 +219,14 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
     private void CloseCurrentWorkspaceFromMenu()
     {
         IsWorkspaceTabMenuOpen = false;
-        CloseWorkspaceTab(ActiveWorkspaceTab);
+        CloseWorkspaceTab(ActiveWorkspaceTab, respectPin: true);
     }
 
     [RelayCommand]
     private void CloseOtherWorkspaceTabs()
     {
         IsWorkspaceTabMenuOpen = false;
-        if (ActiveWorkspaceTab is null)
-        {
-            return;
-        }
-
-        var tabsToRemove = WorkspaceTabs
-            .Where(item => !ReferenceEquals(item, ActiveWorkspaceTab))
-            .ToList();
-        foreach (var tab in tabsToRemove)
-        {
-            DetachWorkspaceTab(tab);
-            WorkspaceTabs.Remove(tab);
-        }
-
-        if (!WorkspaceTabs.Contains(ActiveWorkspaceTab))
-        {
-            EnsureLandingWorkspaceTab();
-        }
-        else
-        {
-            ActivateWorkspaceTab(ActiveWorkspaceTab);
-        }
-
-        _setStatusMessage(tabsToRemove.Count == 0 ? "当前没有其它标签页可关闭。" : "已关闭其它标签页。");
-        StateChanged?.Invoke();
+        CloseOtherWorkspaceTabs(ActiveWorkspaceTab);
     }
 
     [RelayCommand]
@@ -262,24 +238,51 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             return;
         }
 
-        foreach (var tab in WorkspaceTabs.ToList())
+        var tabsToRemove = WorkspaceTabs
+            .Where(item => !item.IsPinned)
+            .ToList();
+        if (tabsToRemove.Count == 0)
         {
-            DetachWorkspaceTab(tab);
+            _setStatusMessage("当前没有可关闭的非固定标签页。");
+            StateChanged?.Invoke();
+            return;
         }
 
-        WorkspaceTabs.Clear();
-        ActiveWorkspaceTab = null;
-        EnsureLandingWorkspaceTab();
-        _setStatusMessage("已关闭全部标签页。");
+        foreach (var tab in tabsToRemove)
+        {
+            DetachWorkspaceTab(tab);
+            WorkspaceTabs.Remove(tab);
+        }
+
+        if (ActiveWorkspaceTab is null || !WorkspaceTabs.Contains(ActiveWorkspaceTab))
+        {
+            ActiveWorkspaceTab = null;
+            EnsureLandingWorkspaceTab();
+        }
+
+        _setStatusMessage(WorkspaceTabs.Any(item => item.IsPinned) ? "已关闭全部非固定标签页。" : "已关闭全部标签页。");
         StateChanged?.Invoke();
     }
 
     [RelayCommand]
     private void CloseWorkspaceTab(RequestWorkspaceTabViewModel? tab)
     {
+        CloseWorkspaceTab(tab, respectPin: true);
+    }
+
+    private bool CloseWorkspaceTab(RequestWorkspaceTabViewModel? tab, bool respectPin)
+    {
         if (tab is null || !WorkspaceTabs.Contains(tab))
         {
-            return;
+            return false;
+        }
+
+        if (respectPin && tab.IsPinned)
+        {
+            IsWorkspaceTabMenuOpen = false;
+            _setStatusMessage("固定标签页请先取消固定后再关闭。");
+            StateChanged?.Invoke();
+            return false;
         }
 
         IsWorkspaceTabMenuOpen = false;
@@ -299,6 +302,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
         _setStatusMessage("工作标签已关闭。");
         StateChanged?.Invoke();
+        return true;
     }
 
     partial void OnActiveWorkspaceTabChanged(RequestWorkspaceTabViewModel? oldValue, RequestWorkspaceTabViewModel? newValue)
@@ -410,6 +414,35 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         _visibleWorkspaceTabs.ReplaceWith(WorkspaceTabs.Where(item => !item.IsLandingTab || item.ShowInTabStrip));
     }
 
+    private void CloseOtherWorkspaceTabs(RequestWorkspaceTabViewModel? keepTab)
+    {
+        if (keepTab is null)
+        {
+            return;
+        }
+
+        var tabsToRemove = WorkspaceTabs
+            .Where(item => !ReferenceEquals(item, keepTab) && !item.IsPinned)
+            .ToList();
+        foreach (var tab in tabsToRemove)
+        {
+            DetachWorkspaceTab(tab);
+            WorkspaceTabs.Remove(tab);
+        }
+
+        if (WorkspaceTabs.Contains(keepTab))
+        {
+            ActivateWorkspaceTab(keepTab);
+        }
+        else
+        {
+            EnsureLandingWorkspaceTab();
+        }
+
+        _setStatusMessage(tabsToRemove.Count == 0 ? "当前没有其它非固定标签页可关闭。" : "已关闭其它非固定标签页。");
+        StateChanged?.Invoke();
+    }
+
     private RequestWorkspaceTabViewModel? FindLandingWorkspaceTab()
     {
         return WorkspaceTabs
@@ -420,6 +453,9 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
     private void AttachWorkspaceTab(RequestWorkspaceTabViewModel tab)
     {
+        tab.CloseRequested = item => CloseWorkspaceTab(item, respectPin: true);
+        tab.CloseOtherRequested = CloseOtherWorkspaceTabs;
+        tab.CloseAllRequested = CloseAllWorkspaceTabs;
         tab.PropertyChanged += OnWorkspaceTabPropertyChanged;
         tab.ConfigTab.PropertyChanged += OnWorkspaceConfigPropertyChanged;
         tab.ConfigTab.QueryParameters.CollectionChanged += OnWorkspaceConfigCollectionChanged;
@@ -433,6 +469,9 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
     private void DetachWorkspaceTab(RequestWorkspaceTabViewModel tab)
     {
+        tab.CloseRequested = null;
+        tab.CloseOtherRequested = null;
+        tab.CloseAllRequested = null;
         tab.PropertyChanged -= OnWorkspaceTabPropertyChanged;
         tab.ConfigTab.PropertyChanged -= OnWorkspaceConfigPropertyChanged;
         tab.ConfigTab.QueryParameters.CollectionChanged -= OnWorkspaceConfigCollectionChanged;

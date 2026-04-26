@@ -307,6 +307,14 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
 
+  <Style Selector="TextBlock.ProjectWorkspacePinnedGlyph">
+    <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,0,2,0" />
+  </Style>
+
   <Style Selector="Button.ProjectWorkspaceInnerTabAddButton">
     <Setter Property="Width" Value="26" />
     <Setter Property="Height" Value="26" />
@@ -368,6 +376,21 @@
   <Style Selector="Button.WorkspaceTabCompactMenuItem">
     <Setter Property="Padding" Value="10,6" />
     <Setter Property="MinHeight" Value="28" />
+  </Style>
+
+  <Style Selector="ContextMenu.WorkspaceTabContextMenu">
+    <Setter Property="MinWidth" Value="230" />
+  </Style>
+
+  <Style Selector="MenuItem.WorkspaceTabContextMenuItem">
+    <Setter Property="Padding" Value="10,8" />
+  </Style>
+
+  <Style Selector="TextBlock.WorkspaceTabContextMenuIcon">
+    <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Body}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
   <Style Selector="Button.WorkspaceTabMenuItem:pointerover">

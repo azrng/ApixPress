@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels.Base;
 
@@ -68,7 +69,14 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     private bool showInTabStrip = true;
 
     [ObservableProperty]
+    private bool isPinned;
+
+    [ObservableProperty]
     private string headerText = "新建...";
+
+    internal Action<RequestWorkspaceTabViewModel>? CloseRequested { get; set; }
+    internal Action<RequestWorkspaceTabViewModel>? CloseOtherRequested { get; set; }
+    internal Action? CloseAllRequested { get; set; }
 
     public bool IsLandingTab => EntryType == WorkspaceEntryTypes.Landing;
     public bool IsQuickRequestTab => EntryType == WorkspaceEntryTypes.QuickRequest;
@@ -78,6 +86,8 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     public bool IsHttpDocumentPreviewView => IsHttpInterfaceTab && HttpEditorViewIndex == 2;
     public bool ShowMethodBadge => IsHttpInterfaceTab;
     public string MethodBadgeText => SelectedMethod;
+    public bool CanCloseFromTab => !IsPinned;
+    public string PinMenuHeader => IsPinned ? "取消固定标签页" : "固定标签页";
     public string EditorTitle => IsHttpInterfaceTab ? "HTTP 接口" : IsQuickRequestTab ? "快捷请求" : "新建...";
     public string EditorDescription => IsHttpInterfaceTab
         ? "HTTP 接口会自动使用当前环境的 BaseUrl，请在右侧输入相对路径。"
@@ -230,6 +240,30 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         return ResolveGeneratedRequestName();
     }
 
+    [RelayCommand]
+    private void TogglePin()
+    {
+        IsPinned = !IsPinned;
+    }
+
+    [RelayCommand]
+    private void CloseCurrentFromTabMenu()
+    {
+        CloseRequested?.Invoke(this);
+    }
+
+    [RelayCommand]
+    private void CloseOtherFromTabMenu()
+    {
+        CloseOtherRequested?.Invoke(this);
+    }
+
+    [RelayCommand]
+    private void CloseAllFromTabMenu()
+    {
+        CloseAllRequested?.Invoke();
+    }
+
     protected override void DisposeManaged()
     {
         ConfigTab.PropertyChanged -= OnConfigTabPropertyChanged;
@@ -270,6 +304,12 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(MethodBadgeText));
         UpdateTabHeader();
+    }
+
+    partial void OnIsPinnedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanCloseFromTab));
+        OnPropertyChanged(nameof(PinMenuHeader));
     }
 
     partial void OnRequestUrlChanged(string value)

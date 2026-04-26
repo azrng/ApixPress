@@ -22,15 +22,50 @@
               <TabStrip.ItemTemplate>
                 <DataTemplate x:DataType="vm:RequestWorkspaceTabViewModel">
                   <Border Classes="ProjectWorkspaceInnerTabCapsule">
-                    <Grid ColumnDefinitions="Auto,Auto"
+                    <Border.ContextMenu>
+                      <ContextMenu Classes="WorkspaceTabContextMenu"
+                                   DataContext="{Binding}">
+                        <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                  Header="{Binding PinMenuHeader}"
+                                  Command="{Binding TogglePinCommand}">
+                          <MenuItem.Icon>
+                            <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                                       Text="&#xE718;" />
+                          </MenuItem.Icon>
+                        </MenuItem>
+                        <Separator />
+                        <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                  Header="关闭当前标签页"
+                                  IsEnabled="{Binding CanCloseFromTab}"
+                                  Command="{Binding CloseCurrentFromTabMenuCommand}">
+                          <MenuItem.Icon>
+                            <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                                       Text="&#xE711;" />
+                          </MenuItem.Icon>
+                          <MenuItem.InputGesture>Ctrl+W</MenuItem.InputGesture>
+                        </MenuItem>
+                        <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                  Header="关闭其它标签页"
+                                  Command="{Binding CloseOtherFromTabMenuCommand}" />
+                        <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                  Header="关闭全部标签页"
+                                  Command="{Binding CloseAllFromTabMenuCommand}" />
+                      </ContextMenu>
+                    </Border.ContextMenu>
+                    <Grid ColumnDefinitions="Auto,Auto,Auto"
                           ColumnSpacing="{StaticResource Space.1}">
                       <TextBlock Grid.Column="0"
                                  MaxWidth="180"
                                  VerticalAlignment="Center"
                                  Text="{Binding HeaderText}"
                                  TextTrimming="CharacterEllipsis" />
-                      <Button Grid.Column="1"
+                      <TextBlock Grid.Column="1"
+                                 Classes="ProjectWorkspacePinnedGlyph"
+                                 IsVisible="{Binding IsPinned}"
+                                 Text="&#xE718;" />
+                      <Button Grid.Column="2"
                               Classes="ProjectWorkspaceInnerTabCloseButton"
+                              IsVisible="{Binding CanCloseFromTab}"
                               Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActiveProjectTab.Workspace.CloseWorkspaceTabCommand}"
                               CommandParameter="{Binding}"
                               Content="×" />

@@ -24,6 +24,39 @@ public sealed class ViewModelLifecycleTests
     }
 
     [Fact]
+    public void PinnedWorkspaceTab_ShouldExposePinStateAndRejectDirectClose()
+    {
+        var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, _ => { });
+        var tab = viewModel.CreateWorkspaceTab(activate: true, showInTabStrip: true);
+
+        Assert.False(tab.IsPinned);
+        Assert.True(tab.CanCloseFromTab);
+        Assert.Equal("固定标签页", tab.PinMenuHeader);
+
+        tab.TogglePinCommand.Execute(null);
+        viewModel.CloseWorkspaceTabCommand.Execute(tab);
+
+        Assert.True(tab.IsPinned);
+        Assert.False(tab.CanCloseFromTab);
+        Assert.Equal("取消固定标签页", tab.PinMenuHeader);
+        Assert.Contains(tab, viewModel.WorkspaceTabs);
+    }
+
+    [Fact]
+    public void CloseAllWorkspaceTabsCommand_ShouldKeepPinnedTabs()
+    {
+        var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, _ => { });
+        var pinnedTab = viewModel.CreateWorkspaceTab(activate: true, showInTabStrip: true);
+        var normalTab = viewModel.CreateWorkspaceTab(activate: true, showInTabStrip: true);
+        pinnedTab.TogglePinCommand.Execute(null);
+
+        viewModel.CloseAllWorkspaceTabsCommand.Execute(null);
+
+        Assert.Contains(pinnedTab, viewModel.WorkspaceTabs);
+        Assert.DoesNotContain(normalTab, viewModel.WorkspaceTabs);
+    }
+
+    [Fact]
     public void ExplorerItemDispose_ShouldStopChildCollectionNotifications()
     {
         var viewModel = new ExplorerItemViewModel
