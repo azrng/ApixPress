@@ -2,6 +2,7 @@ using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
 using Azrng.Core.Results;
+using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
 
 namespace ApixPress.App.Tests.ViewModels;
 
@@ -25,7 +26,8 @@ public sealed partial class MainWindowViewModelTests
                 AutoFollowRedirects = false,
                 SendNoCacheHeader = true,
                 EnableVerboseLogging = true,
-                EnableUpdateReminder = false
+                EnableUpdateReminder = false,
+                StorageDirectoryPath = @"D:\ApixPressData"
             }
         };
         var viewModel = CreateViewModel(projectService, shellSettingsService);
@@ -39,9 +41,36 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(viewModel.SettingsCenter.SendNoCacheHeader);
         Assert.True(viewModel.SettingsCenter.EnableVerboseLogging);
         Assert.False(viewModel.SettingsCenter.EnableUpdateReminder);
+        Assert.Equal(@"D:\ApixPressData", viewModel.SettingsCenter.StorageDirectoryPath);
         Assert.Equal(viewModel.BrowserStatusText, viewModel.StatusMessage);
         Assert.True(viewModel.IsHomeTabActive);
         Assert.False(viewModel.ShowProjectListEmptyState);
+    }
+
+    [Fact]
+    public async Task ConfirmClearHistoryDataCommand_ShouldClearAllHistoryAfterConfirmation()
+    {
+        var historyService = new FakeRequestHistoryService();
+        historyService.Items.Add(new RequestHistoryItemDto
+        {
+            Id = "history-1",
+            Timestamp = DateTime.UtcNow,
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "/users"
+            }
+        });
+        var viewModel = CreateViewModel(requestHistoryService: historyService);
+        await viewModel.InitializeAsync();
+
+        viewModel.SettingsCenter.RequestClearHistoryDataCommand.Execute(null);
+        await viewModel.SettingsCenter.ConfirmClearHistoryDataCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.SettingsCenter.IsClearHistoryConfirmDialogOpen);
+        Assert.Empty(historyService.Items);
+        Assert.Equal("已清空所有请求历史数据。", viewModel.SettingsCenter.ClearHistoryStatus);
+        Assert.Equal(viewModel.SettingsCenter.ClearHistoryStatus, viewModel.StatusMessage);
     }
 
     [Fact]
@@ -241,7 +270,7 @@ public sealed partial class MainWindowViewModelTests
         Assert.False(viewModel.ShellPanels.IsNotificationCenterOpen);
         Assert.True(viewModel.SettingsCenter.ShowGeneralSettingsSection);
         Assert.False(viewModel.SettingsCenter.ShowAboutSettingsSection);
-        Assert.Equal("可在这里调整通用设置和查看版本信息。", viewModel.StatusMessage);
+        Assert.Equal("可在这里调整通用、存储设置和查看版本信息。", viewModel.StatusMessage);
     }
 
     [Fact]

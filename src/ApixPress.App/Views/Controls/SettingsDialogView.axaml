@@ -18,11 +18,16 @@
               <TextBlock Classes="SectionTitle"
                          Text="设置中心" />
                <TextBlock Classes="CaptionText"
-                          Text="先保留通用和关于两个分组。" />
+                          Text="按配置类型分组管理本地偏好。" />
                <ToggleButton Classes="SettingsNavButton"
                              Command="{Binding ShellPanels.SettingsCenter.ShowGeneralSettingsCommand}"
                              IsChecked="{Binding ShellPanels.SettingsCenter.ShowGeneralSettingsSection, Mode=OneWay}">
                  <TextBlock Text="通用" />
+               </ToggleButton>
+               <ToggleButton Classes="SettingsNavButton"
+                             Command="{Binding ShellPanels.SettingsCenter.ShowStorageSettingsCommand}"
+                             IsChecked="{Binding ShellPanels.SettingsCenter.ShowStorageSettingsSection, Mode=OneWay}">
+                 <TextBlock Text="存储" />
                </ToggleButton>
                <ToggleButton Classes="SettingsNavButton"
                              Command="{Binding ShellPanels.SettingsCenter.ShowAboutSettingsCommand}"
@@ -41,7 +46,7 @@
                 <TextBlock Classes="PageTitle"
                            Text="{Binding ShellPanels.SettingsCenter.CurrentSettingsTitle}" />
                 <TextBlock Classes="CaptionText"
-                           Text="设置会自动保存到本地工作目录，并在后续请求中生效。" />
+                           Text="{Binding ShellPanels.SettingsCenter.CurrentSettingsSubtitle}" />
               </StackPanel>
               <Button Grid.Column="1"
                       Classes="DialogIconButton"
@@ -144,6 +149,73 @@
                   </StackPanel>
                 </Grid>
 
+                <Grid IsVisible="{Binding ShellPanels.SettingsCenter.ShowStorageSettingsSection}">
+                  <StackPanel Spacing="{StaticResource Space.4}">
+                    <Border Classes="SettingsPageSection">
+                      <StackPanel Spacing="{StaticResource Space.3}">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="{StaticResource Space.4}">
+                          <StackPanel Spacing="4">
+                            <TextBlock Classes="SettingsGroupTitle"
+                                       Text="数据库存储目录" />
+                            <TextBlock Classes="CaptionText"
+                                       Text="{Binding ShellPanels.SettingsCenter.StorageDirectoryModeText}" />
+                          </StackPanel>
+                          <StackPanel Grid.Column="1"
+                                      Orientation="Horizontal"
+                                      Spacing="{StaticResource Space.2}">
+                            <Button Classes="DialogSecondaryButton"
+                                    Content="选择目录"
+                                    Command="{Binding ShellPanels.SettingsCenter.ChooseStorageDirectoryCommand}" />
+                            <Button Classes="DialogSecondaryButton"
+                                    Content="恢复默认"
+                                    Command="{Binding ShellPanels.SettingsCenter.ResetStorageDirectoryCommand}" />
+                          </StackPanel>
+                        </Grid>
+
+                        <Grid RowDefinitions="Auto,Auto,Auto"
+                              RowSpacing="{StaticResource Space.2}">
+                          <StackPanel Spacing="4">
+                            <TextBlock Classes="AboutMetaLabel"
+                                       Text="当前目录" />
+                            <TextBox Classes="SectionInput"
+                                     IsReadOnly="True"
+                                     Text="{Binding ShellPanels.SettingsCenter.EffectiveStorageDirectoryPath}" />
+                          </StackPanel>
+                          <StackPanel Grid.Row="1"
+                                      Spacing="4">
+                            <TextBlock Classes="AboutMetaLabel"
+                                       Text="数据库文件" />
+                            <TextBox Classes="SectionInput"
+                                     IsReadOnly="True"
+                                     Text="{Binding ShellPanels.SettingsCenter.CurrentDatabaseFilePath}" />
+                          </StackPanel>
+                          <TextBlock Grid.Row="2"
+                                     Classes="CaptionText"
+                                     Text="{Binding ShellPanels.SettingsCenter.StorageSettingsSaveStatus}" />
+                        </Grid>
+                      </StackPanel>
+                    </Border>
+
+                    <Border Classes="SettingsPageSection SettingsDangerSection">
+                      <Grid ColumnDefinitions="*,Auto"
+                            ColumnSpacing="{StaticResource Space.4}">
+                        <StackPanel Spacing="4">
+                          <TextBlock Classes="SettingsGroupTitle"
+                                     Text="历史数据" />
+                          <TextBlock Classes="CaptionText"
+                                     Text="{Binding ShellPanels.SettingsCenter.ClearHistoryStatus}"
+                                     TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Classes="DialogDangerButton"
+                                Content="{Binding ShellPanels.SettingsCenter.ClearHistoryButtonText}"
+                                Command="{Binding ShellPanels.SettingsCenter.RequestClearHistoryDataCommand}" />
+                      </Grid>
+                    </Border>
+                  </StackPanel>
+                </Grid>
+
                 <Grid IsVisible="{Binding ShellPanels.SettingsCenter.ShowAboutSettingsSection}">
                   <StackPanel Spacing="{StaticResource Space.4}">
                     <Border Classes="AboutHeroCard">
@@ -226,6 +298,35 @@
               </StackPanel>
             </ScrollViewer>
           </Grid>
+        </Grid>
+      </Border>
+
+      <Border Classes="SettingsDialogBackdrop"
+              IsVisible="{Binding ShellPanels.SettingsCenter.IsClearHistoryConfirmDialogOpen}">
+        <Grid HorizontalAlignment="Center"
+              VerticalAlignment="Center">
+          <Border Classes="SettingsDangerConfirmCard">
+            <StackPanel Spacing="{StaticResource Space.4}">
+              <StackPanel Spacing="{StaticResource Space.2}">
+                <TextBlock Classes="DialogTitle"
+                           Text="确认清空历史数据？" />
+                <TextBlock Classes="CaptionText"
+                           Text="此操作会删除所有项目的请求历史记录，不能撤销；项目、接口、用例和环境配置不会被删除。"
+                           TextWrapping="Wrap" />
+              </StackPanel>
+              <Border Classes="CreateProjectDialogDivider" />
+              <StackPanel Orientation="Horizontal"
+                          HorizontalAlignment="Right"
+                          Spacing="{StaticResource Space.2}">
+                <Button Classes="DialogSecondaryButton"
+                        Content="取消"
+                        Command="{Binding ShellPanels.SettingsCenter.CancelClearHistoryDataCommand}" />
+                <Button Classes="DialogDangerButton"
+                        Content="{Binding ShellPanels.SettingsCenter.ClearHistoryButtonText}"
+                        Command="{Binding ShellPanels.SettingsCenter.ConfirmClearHistoryDataCommand}" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
         </Grid>
       </Border>
     </Grid>

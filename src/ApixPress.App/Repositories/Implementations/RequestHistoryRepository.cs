@@ -116,4 +116,12 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
             new { ProjectId = projectId },
             cancellationToken: cancellationToken));
     }
+
+    public async Task ClearAllAsync(CancellationToken cancellationToken)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        await connection.ExecuteAsync(new CommandDefinition(
+            "delete from request_history",
+            cancellationToken: cancellationToken));
+    }
 }

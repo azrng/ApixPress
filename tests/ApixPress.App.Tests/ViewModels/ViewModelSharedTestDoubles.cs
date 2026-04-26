@@ -335,6 +335,12 @@ public static class ViewModelSharedTestDoubles
             return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
         }
 
+        public Task<IResultModel<bool>> ClearAllAsync(CancellationToken cancellationToken)
+        {
+            Items.Clear();
+            return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
+        }
+
         public Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
         {
             return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
@@ -344,6 +350,11 @@ public static class ViewModelSharedTestDoubles
     public sealed class FakeFilePickerService : IFilePickerService
     {
         public Task<string?> PickSwaggerJsonFileAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult<string?>(null);
+        }
+
+        public Task<string?> PickStorageDirectoryAsync(CancellationToken cancellationToken)
         {
             return Task.FromResult<string?>(null);
         }

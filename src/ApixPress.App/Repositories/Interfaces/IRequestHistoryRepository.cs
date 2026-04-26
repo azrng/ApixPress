@@ -13,4 +13,6 @@ public interface IRequestHistoryRepository
     Task DeleteAsync(string projectId, string id, CancellationToken cancellationToken);
 
     Task ClearAsync(string projectId, CancellationToken cancellationToken);
+
+    Task ClearAllAsync(CancellationToken cancellationToken);
 }

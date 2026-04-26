@@ -351,6 +351,11 @@
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
+  <Style Selector="Border.SettingsDangerSection">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.Background}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Danger}" />
+  </Style>
+
   <Style Selector="TextBlock.SettingsGroupTitle">
     <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
     <Setter Property="FontWeight" Value="SemiBold" />
@@ -528,6 +533,29 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="MinWidth" Value="112" />
+  </Style>
+
+  <Style Selector="Button.DialogDangerButton">
+    <Setter Property="Background" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="Padding" Value="16,12" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="MinWidth" Value="112" />
+  </Style>
+
+  <Style Selector="Button.DialogDangerButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Text.Danger}" />
+  </Style>
+
+  <Style Selector="Border.SettingsDangerConfirmCard">
+    <Setter Property="Width" Value="460" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.6}" />
+    <Setter Property="BoxShadow" Value="0 28 60 0 #0F172A20" />
   </Style>
 
   <Style Selector="Button.ProjectCardButton">

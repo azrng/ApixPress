@@ -47,6 +47,18 @@ public sealed class RequestHistoryServiceTests
         Assert.Equal("/users", item.RequestSnapshot.Url);
     }
 
+    [Fact]
+    public async Task ClearAllAsync_ShouldClearAllRequestHistory()
+    {
+        var repository = new StubRequestHistoryRepository();
+        var service = new RequestHistoryService(repository, CreateSerializer());
+
+        var result = await service.ClearAllAsync(CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(repository.ClearAllCalled);
+    }
+
     private static SysTextJsonSerializer CreateSerializer()
     {
         return new SysTextJsonSerializer(Options.Create(new DefaultJsonSerializerOptions()));
@@ -55,6 +67,8 @@ public sealed class RequestHistoryServiceTests
     private sealed class StubRequestHistoryRepository : IRequestHistoryRepository
     {
         public IReadOnlyList<RequestHistoryEntity> HistoryItems { get; init; } = [];
+
+        public bool ClearAllCalled { get; private set; }
 
         public Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryAsync(string projectId, int limit, CancellationToken cancellationToken)
         {
@@ -79,6 +93,12 @@ public sealed class RequestHistoryServiceTests
         public Task ClearAsync(string projectId, CancellationToken cancellationToken)
         {
             throw new NotSupportedException();
+        }
+
+        public Task ClearAllAsync(CancellationToken cancellationToken)
+        {
+            ClearAllCalled = true;
+            return Task.CompletedTask;
         }
     }
 }

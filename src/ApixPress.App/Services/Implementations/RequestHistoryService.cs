@@ -54,6 +54,12 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
         return ResultModel<bool>.Success(true);
     }
 
+    public async Task<IResultModel<bool>> ClearAllAsync(CancellationToken cancellationToken)
+    {
+        await _requestHistoryRepository.ClearAllAsync(cancellationToken);
+        return ResultModel<bool>.Success(true);
+    }
+
     public async Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
     {
         await _requestHistoryRepository.DeleteAsync(projectId, id, cancellationToken);

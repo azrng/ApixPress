@@ -27,10 +27,12 @@ public partial class MainWindowViewModel : ViewModelBase
         private readonly IProjectWorkspaceService _projectWorkspaceService;
         private readonly IAppShellSettingsService _appShellSettingsService;
         private readonly IApplicationUpdateService _applicationUpdateService;
+        private readonly IFilePickerService _filePickerService;
         private readonly IWindowHostService _windowHostService;
         private readonly string _currentAppVersion;
         private readonly Action<string> _setStatusMessage;
         private readonly Action _notifyShellState;
+        private readonly Action _clearRequestHistoryViews;
         private readonly Func<string> _getDefaultStatusMessage;
 
         public Builder(
@@ -40,10 +42,12 @@ public partial class MainWindowViewModel : ViewModelBase
             IProjectWorkspaceService projectWorkspaceService,
             IAppShellSettingsService appShellSettingsService,
             IApplicationUpdateService applicationUpdateService,
+            IFilePickerService filePickerService,
             IWindowHostService windowHostService,
             string currentAppVersion,
             Action<string> setStatusMessage,
             Action notifyShellState,
+            Action clearRequestHistoryViews,
             Func<string> getDefaultStatusMessage)
         {
             _environmentVariableService = environmentVariableService;
@@ -52,10 +56,12 @@ public partial class MainWindowViewModel : ViewModelBase
             _projectWorkspaceService = projectWorkspaceService;
             _appShellSettingsService = appShellSettingsService;
             _applicationUpdateService = applicationUpdateService;
+            _filePickerService = filePickerService;
             _windowHostService = windowHostService;
             _currentAppVersion = currentAppVersion;
             _setStatusMessage = setStatusMessage;
             _notifyShellState = notifyShellState;
+            _clearRequestHistoryViews = clearRequestHistoryViews;
             _getDefaultStatusMessage = getDefaultStatusMessage;
         }
 
@@ -74,9 +80,12 @@ public partial class MainWindowViewModel : ViewModelBase
                         _appShellSettingsService,
                         _applicationUpdateService,
                         _windowHostService,
+                        _filePickerService,
+                        _requestHistoryService,
                         _currentAppVersion,
                         _setStatusMessage,
-                        _notifyShellState),
+                        _notifyShellState,
+                        _clearRequestHistoryViews),
                     CreateNotifications(),
                     _setStatusMessage,
                     _getDefaultStatusMessage)
@@ -126,10 +135,12 @@ public partial class MainWindowViewModel : ViewModelBase
             projectWorkspaceService,
             appShellSettingsService,
             applicationUpdateService,
+            filePickerService,
             windowHostService,
             ResolveCurrentAppVersion(),
             message => StatusMessage = message,
             NotifyShellState,
+            ClearRequestHistoryViews,
             () => ActiveProjectTab?.StatusMessage ?? BrowserStatusText)
             .Build();
 
@@ -255,5 +266,17 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         return assembly.GetName().Version?.ToString() ?? "1.0.0.0";
+    }
+
+    private void ClearRequestHistoryViews()
+    {
+        _fallbackHistoryPanel.HistoryItems.Clear();
+
+        foreach (var tab in ProjectTabs)
+        {
+            tab.HistoryPanel.HistoryItems.Clear();
+        }
+
+        OnPropertyChanged(nameof(RequestHistory));
     }
 }

@@ -10,13 +10,17 @@ namespace ApixPress.App.ViewModels;
 public sealed partial class MainWindowSettingsViewModel : ViewModelBase
 {
     private const string GeneralSection = "general";
+    private const string StorageSection = "storage";
     private const string AboutSection = "about";
 
     private readonly IAppShellSettingsService _appShellSettingsService;
     private readonly IApplicationUpdateService _applicationUpdateService;
     private readonly IWindowHostService _windowHostService;
+    private readonly IFilePickerService _filePickerService;
+    private readonly IRequestHistoryService _requestHistoryService;
     private readonly Action<string> _setStatusMessage;
     private readonly Action _notifyShellState;
+    private readonly Action _clearRequestHistoryViews;
     private readonly SemaphoreSlim _shellSettingsSaveSemaphore = new(1, 1);
     private CancellationTokenSource? _shellSettingsSaveCancellationTokenSource;
     private bool _initialized;
@@ -26,15 +30,21 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
         IAppShellSettingsService appShellSettingsService,
         IApplicationUpdateService applicationUpdateService,
         IWindowHostService windowHostService,
+        IFilePickerService filePickerService,
+        IRequestHistoryService requestHistoryService,
         string currentAppVersion,
         Action<string> setStatusMessage,
-        Action notifyShellState)
+        Action notifyShellState,
+        Action clearRequestHistoryViews)
     {
         _appShellSettingsService = appShellSettingsService;
         _applicationUpdateService = applicationUpdateService;
         _windowHostService = windowHostService;
+        _filePickerService = filePickerService;
+        _requestHistoryService = requestHistoryService;
         _setStatusMessage = setStatusMessage;
         _notifyShellState = notifyShellState;
+        _clearRequestHistoryViews = clearRequestHistoryViews;
         CurrentAppVersion = currentAppVersion;
         UpdateChannelName = _applicationUpdateService.ChannelName;
         AboutUpdateStatus = _applicationUpdateService.IsConfigured
@@ -48,11 +58,39 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
 
     public bool ShowGeneralSettingsSection => CurrentSettingsSection == GeneralSection;
 
+    public bool ShowStorageSettingsSection => CurrentSettingsSection == StorageSection;
+
     public bool ShowAboutSettingsSection => CurrentSettingsSection == AboutSection;
 
-    public string CurrentSettingsTitle => ShowAboutSettingsSection ? "关于" : "通用";
+    public string CurrentSettingsTitle => CurrentSettingsSection switch
+    {
+        StorageSection => "存储",
+        AboutSection => "关于",
+        _ => "通用"
+    };
+
+    public string CurrentSettingsSubtitle => CurrentSettingsSection switch
+    {
+        StorageSection => "设置数据库保存目录，并管理本地请求历史数据。",
+        AboutSection => "查看版本信息和更新状态。",
+        _ => "设置会自动保存到本地工作目录，并在后续请求中生效。"
+    };
 
     public string CheckForUpdatesButtonText => IsCheckingForUpdates ? "检查中..." : "检查更新";
+
+    public string ClearHistoryButtonText => IsClearingHistoryData ? "清空中..." : "一键清空历史数据";
+
+    public string DefaultStorageDirectoryPath => AppStoragePaths.DefaultStorageDirectory;
+
+    public string EffectiveStorageDirectoryPath => string.IsNullOrWhiteSpace(StorageDirectoryPath)
+        ? DefaultStorageDirectoryPath
+        : AppStoragePaths.ResolveStorageDirectory(StorageDirectoryPath);
+
+    public string CurrentDatabaseFilePath => AppStoragePaths.ResolveDatabasePath(StorageDirectoryPath);
+
+    public string StorageDirectoryModeText => string.IsNullOrWhiteSpace(StorageDirectoryPath)
+        ? "当前使用默认存储目录"
+        : "当前使用自定义存储目录";
 
     [ObservableProperty]
     private string currentSettingsSection = GeneralSection;
@@ -77,6 +115,21 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     private string generalSettingsSaveStatus = "设置会自动保存到本地工作目录。";
+
+    [ObservableProperty]
+    private string storageDirectoryPath = string.Empty;
+
+    [ObservableProperty]
+    private string storageSettingsSaveStatus = "数据库目录修改后将在下次启动时生效。";
+
+    [ObservableProperty]
+    private string clearHistoryStatus = "清空后会删除所有项目的请求历史记录，不影响项目、接口、用例或环境配置。";
+
+    [ObservableProperty]
+    private bool isClearHistoryConfirmDialogOpen;
+
+    [ObservableProperty]
+    private bool isClearingHistoryData;
 
     [ObservableProperty]
     private bool isCheckingForUpdates;
@@ -116,11 +169,23 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
         CurrentSettingsSection = GeneralSection;
     }
 
+    public void SelectStorageSection()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        CurrentSettingsSection = StorageSection;
+    }
+
     partial void OnCurrentSettingsSectionChanged(string value)
     {
         OnPropertyChanged(nameof(ShowGeneralSettingsSection));
+        OnPropertyChanged(nameof(ShowStorageSettingsSection));
         OnPropertyChanged(nameof(ShowAboutSettingsSection));
         OnPropertyChanged(nameof(CurrentSettingsTitle));
+        OnPropertyChanged(nameof(CurrentSettingsSubtitle));
         _notifyShellState();
     }
 
@@ -154,9 +219,22 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
         TriggerShellSettingsSave();
     }
 
+    partial void OnStorageDirectoryPathChanged(string value)
+    {
+        OnPropertyChanged(nameof(EffectiveStorageDirectoryPath));
+        OnPropertyChanged(nameof(CurrentDatabaseFilePath));
+        OnPropertyChanged(nameof(StorageDirectoryModeText));
+        TriggerShellSettingsSave();
+    }
+
     partial void OnIsCheckingForUpdatesChanged(bool value)
     {
         OnPropertyChanged(nameof(CheckForUpdatesButtonText));
+    }
+
+    partial void OnIsClearingHistoryDataChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ClearHistoryButtonText));
     }
 
     [RelayCommand]
@@ -166,9 +244,105 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void ShowStorageSettings()
+    {
+        SelectStorageSection();
+    }
+
+    [RelayCommand]
     private void ShowAboutSettings()
     {
         CurrentSettingsSection = AboutSection;
+    }
+
+    [RelayCommand]
+    private async Task ChooseStorageDirectoryAsync()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        var directory = await _filePickerService.PickStorageDirectoryAsync(CancellationToken.None);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            StorageSettingsSaveStatus = "未选择目录，当前数据库存储设置保持不变。";
+            return;
+        }
+
+        StorageDirectoryPath = directory;
+        StorageSettingsSaveStatus = "已选择新的数据库存储目录，保存后将在下次启动时生效。";
+        PublishStatus("已更新数据库存储目录，下次启动后生效。");
+    }
+
+    [RelayCommand]
+    private void ResetStorageDirectory()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        StorageDirectoryPath = string.Empty;
+        StorageSettingsSaveStatus = "已恢复默认数据库存储目录，下次启动后生效。";
+        PublishStatus("已恢复默认数据库存储目录。");
+    }
+
+    [RelayCommand]
+    private void RequestClearHistoryData()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        IsClearHistoryConfirmDialogOpen = true;
+    }
+
+    [RelayCommand]
+    private void CancelClearHistoryData()
+    {
+        if (IsDisposed || IsClearingHistoryData)
+        {
+            return;
+        }
+
+        IsClearHistoryConfirmDialogOpen = false;
+        ClearHistoryStatus = "已取消清空历史数据。";
+    }
+
+    [RelayCommand]
+    private async Task ConfirmClearHistoryDataAsync()
+    {
+        if (IsDisposed || IsClearingHistoryData)
+        {
+            return;
+        }
+
+        IsClearingHistoryData = true;
+        ClearHistoryStatus = "正在清空所有请求历史数据...";
+
+        try
+        {
+            var result = await _requestHistoryService.ClearAllAsync(CancellationToken.None);
+            if (!result.IsSuccess)
+            {
+                var failedMessage = $"清空历史数据失败：{result.Message}";
+                ClearHistoryStatus = failedMessage;
+                PublishStatus(failedMessage);
+                return;
+            }
+
+            _clearRequestHistoryViews();
+            IsClearHistoryConfirmDialogOpen = false;
+            var successMessage = "已清空所有请求历史数据。";
+            ClearHistoryStatus = successMessage;
+            PublishStatus(successMessage);
+        }
+        finally
+        {
+            IsClearingHistoryData = false;
+        }
     }
 
     [RelayCommand]
@@ -246,6 +420,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
             var result = await _appShellSettingsService.LoadAsync(CancellationToken.None);
             var settings = result.Data ?? new AppShellSettingsDto();
 
+            StorageDirectoryPath = settings.StorageDirectoryPath;
             RequestTimeoutMilliseconds = settings.RequestTimeoutMilliseconds;
             ValidateSslCertificate = settings.ValidateSslCertificate;
             AutoFollowRedirects = settings.AutoFollowRedirects;
@@ -255,6 +430,9 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
             GeneralSettingsSaveStatus = result.IsSuccess
                 ? "设置会自动保存到本地工作目录。"
                 : "设置读取失败，已回退默认值。";
+            StorageSettingsSaveStatus = result.IsSuccess
+                ? "数据库目录修改后将在下次启动时生效。"
+                : "设置读取失败，已回退默认存储目录。";
         }
         finally
         {
@@ -292,6 +470,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
         {
             var result = await _appShellSettingsService.SaveAsync(new AppShellSettingsDto
             {
+                StorageDirectoryPath = StorageDirectoryPath,
                 RequestTimeoutMilliseconds = (int)RequestTimeoutMilliseconds,
                 ValidateSslCertificate = ValidateSslCertificate,
                 AutoFollowRedirects = AutoFollowRedirects,
@@ -302,6 +481,9 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
 
             GeneralSettingsSaveStatus = result.IsSuccess
                 ? $"已自动保存 {DateTime.Now:HH:mm:ss}"
+                : $"保存失败：{result.Message}";
+            StorageSettingsSaveStatus = result.IsSuccess
+                ? $"已保存存储设置 {DateTime.Now:HH:mm:ss}，下次启动后生效。"
                 : $"保存失败：{result.Message}";
             _notifyShellState();
         }

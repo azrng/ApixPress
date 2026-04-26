@@ -150,6 +150,7 @@ public sealed partial class MainWindowViewModelTests
         {
             return new AppShellSettingsDto
             {
+                StorageDirectoryPath = settings.StorageDirectoryPath,
                 RequestTimeoutMilliseconds = settings.RequestTimeoutMilliseconds,
                 ValidateSslCertificate = settings.ValidateSslCertificate,
                 AutoFollowRedirects = settings.AutoFollowRedirects,

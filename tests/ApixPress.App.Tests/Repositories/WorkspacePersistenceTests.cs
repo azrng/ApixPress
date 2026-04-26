@@ -194,6 +194,45 @@ public sealed partial class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task RequestHistoryRepository_ShouldClearAllHistoryAcrossProjects()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var serializer = CreateSerializer();
+        var requestHistoryRepository = new RequestHistoryRepository(factory);
+        var requestHistoryService = new RequestHistoryService(requestHistoryRepository, serializer);
+
+        var projectA = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "历史项目 A"
+        }, CancellationToken.None)).Data!;
+        var projectB = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "历史项目 B"
+        }, CancellationToken.None)).Data!;
+
+        await requestHistoryService.AddAsync(projectA.Id, new RequestSnapshotDto
+        {
+            Method = "GET",
+            Url = "/a"
+        }, null, CancellationToken.None);
+        await requestHistoryService.AddAsync(projectB.Id, new RequestSnapshotDto
+        {
+            Method = "GET",
+            Url = "/b"
+        }, null, CancellationToken.None);
+
+        await requestHistoryRepository.ClearAllAsync(CancellationToken.None);
+
+        Assert.Empty(await requestHistoryRepository.GetHistoryAsync(projectA.Id, 10, CancellationToken.None));
+        Assert.Empty(await requestHistoryRepository.GetHistoryAsync(projectB.Id, 10, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task RequestCaseService_ShouldPersistHttpInterfaceHierarchy()
     {
         using var factory = new TestSqliteConnectionFactory();

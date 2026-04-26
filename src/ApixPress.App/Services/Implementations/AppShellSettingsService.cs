@@ -10,13 +10,19 @@ namespace ApixPress.App.Services.Implementations;
 
 public sealed class AppShellSettingsService : IAppShellSettingsService, ISingletonDependency
 {
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true
+    };
+
     private readonly string _settingsFilePath;
     private readonly Lock _cacheLock = new();
     private AppShellSettingsDto? _cachedSettings;
     private bool _hasLoaded;
 
     public AppShellSettingsService()
-        : this(WorkspacePaths.ResolveFromBaseDirectory(Path.Combine("Data", "app-shell-settings.json")))
+        : this(ResolveDefaultSettingsFilePath())
     {
     }
 
@@ -52,7 +58,7 @@ public sealed class AppShellSettingsService : IAppShellSettingsService, ISinglet
                 return ResultModel<AppShellSettingsDto>.Success(CloneSettings(emptySettings));
             }
 
-            var settings = JsonSerializer.Deserialize<AppShellSettingsDto>(json) ?? new AppShellSettingsDto();
+            var settings = JsonSerializer.Deserialize<AppShellSettingsDto>(json, SerializerOptions) ?? new AppShellSettingsDto();
             CacheSettings(settings);
             return ResultModel<AppShellSettingsDto>.Success(CloneSettings(settings));
         }
@@ -80,10 +86,7 @@ public sealed class AppShellSettingsService : IAppShellSettingsService, ISinglet
                 Directory.CreateDirectory(directory);
             }
 
-            var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
+            var json = JsonSerializer.Serialize(settings, SerializerOptions);
             await File.WriteAllTextAsync(_settingsFilePath, json, Encoding.UTF8, cancellationToken);
             CacheSettings(settings);
             return ResultModel<AppShellSettingsDto>.Success(CloneSettings(settings));
@@ -95,6 +98,31 @@ public sealed class AppShellSettingsService : IAppShellSettingsService, ISinglet
         catch (Exception exception)
         {
             return ResultModel<AppShellSettingsDto>.Failure($"设置保存失败：{exception.Message}", "app_shell_settings_save_failed");
+        }
+    }
+
+    public static string ResolveDefaultSettingsFilePath()
+    {
+        return WorkspacePaths.ResolveFromBaseDirectory(Path.Combine("Data", "app-shell-settings.json"));
+    }
+
+    public static AppShellSettingsDto LoadFromFileOrDefault(string settingsFilePath)
+    {
+        try
+        {
+            if (!File.Exists(settingsFilePath))
+            {
+                return new AppShellSettingsDto();
+            }
+
+            var json = File.ReadAllText(settingsFilePath, Encoding.UTF8);
+            return string.IsNullOrWhiteSpace(json)
+                ? new AppShellSettingsDto()
+                : JsonSerializer.Deserialize<AppShellSettingsDto>(json, SerializerOptions) ?? new AppShellSettingsDto();
+        }
+        catch
+        {
+            return new AppShellSettingsDto();
         }
     }
 
@@ -111,6 +139,7 @@ public sealed class AppShellSettingsService : IAppShellSettingsService, ISinglet
     {
         return new AppShellSettingsDto
         {
+            StorageDirectoryPath = settings.StorageDirectoryPath,
             RequestTimeoutMilliseconds = settings.RequestTimeoutMilliseconds,
             ValidateSslCertificate = settings.ValidateSslCertificate,
             AutoFollowRedirects = settings.AutoFollowRedirects,

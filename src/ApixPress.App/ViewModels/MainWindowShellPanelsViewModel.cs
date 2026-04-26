@@ -57,7 +57,7 @@ public sealed partial class MainWindowShellPanelsViewModel : ViewModelBase
         SettingsCenter.SelectGeneralSection();
         IsSettingsDialogOpen = true;
         IsNotificationCenterOpen = false;
-        _setStatusMessage("可在这里调整通用设置和查看版本信息。");
+        _setStatusMessage("可在这里调整通用、存储设置和查看版本信息。");
     }
 
     [RelayCommand]

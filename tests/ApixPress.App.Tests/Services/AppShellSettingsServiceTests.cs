@@ -14,6 +14,7 @@ public sealed class AppShellSettingsServiceTests
         {
             var saveResult = await service.SaveAsync(new AppShellSettingsDto
             {
+                StorageDirectoryPath = @"D:\ApixPressData",
                 RequestTimeoutMilliseconds = 45000,
                 ValidateSslCertificate = false,
                 AutoFollowRedirects = false,
@@ -28,7 +29,8 @@ public sealed class AppShellSettingsServiceTests
 
             Assert.True(loadResult.IsSuccess);
             Assert.NotNull(loadResult.Data);
-            Assert.Equal(45000, loadResult.Data!.RequestTimeoutMilliseconds);
+            Assert.Equal(@"D:\ApixPressData", loadResult.Data!.StorageDirectoryPath);
+            Assert.Equal(45000, loadResult.Data.RequestTimeoutMilliseconds);
             Assert.False(loadResult.Data.ValidateSslCertificate);
             Assert.False(loadResult.Data.AutoFollowRedirects);
             Assert.True(loadResult.Data.SendNoCacheHeader);

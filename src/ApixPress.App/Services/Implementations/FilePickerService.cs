@@ -36,4 +36,21 @@ public sealed class FilePickerService : IFilePickerService, ITransientDependency
         cancellationToken.ThrowIfCancellationRequested();
         return files.FirstOrDefault() is { } file ? file.TryGetLocalPath() : null;
     }
+
+    public async Task<string?> PickStorageDirectoryAsync(CancellationToken cancellationToken)
+    {
+        if (_windowHostService.MainWindow is null)
+        {
+            return null;
+        }
+
+        var folders = await _windowHostService.MainWindow.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "选择数据库存储目录",
+            AllowMultiple = false
+        });
+
+        cancellationToken.ThrowIfCancellationRequested();
+        return folders.FirstOrDefault() is { } folder ? folder.TryGetLocalPath() : null;
+    }
 }

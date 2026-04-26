@@ -13,5 +13,7 @@ public interface IRequestHistoryService
 
     Task<IResultModel<bool>> ClearAsync(string projectId, CancellationToken cancellationToken);
 
+    Task<IResultModel<bool>> ClearAllAsync(CancellationToken cancellationToken);
+
     Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken);
 }
