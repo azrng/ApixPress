@@ -326,6 +326,8 @@
 
   <Style Selector="Border.HomeBodyEmptyCard">
     <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="{StaticResource Pad.7}" />
+    <Setter Property="VerticalAlignment" Value="Top" />
   </Style>
 
   <Style Selector="Border.HomeBodyEmptyBadge">
@@ -335,5 +337,25 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="10,6" />
     <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Border.HomeBodyEmptyBadgeMuted">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+  </Style>
+
+  <Style Selector="Border.HomeBodyEmptySurface">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.6}" />
+    <Setter Property="MaxWidth" Value="760" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="BoxShadow" Value="0 14 32 0 #0F172A0D" />
+  </Style>
+
+  <Style Selector="TextBlock.HomeBodyEmptyDescription">
+    <Setter Property="MaxWidth" Value="500" />
+    <Setter Property="LineHeight" Value="20" />
   </Style>
 </Styles>

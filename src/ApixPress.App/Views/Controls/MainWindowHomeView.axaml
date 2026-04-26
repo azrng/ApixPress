@@ -101,46 +101,61 @@
           <Grid>
             <Border Classes="HomeBodyEmptyCard"
                     IsVisible="{Binding ShowProjectListEmptyState}">
-              <StackPanel Spacing="{StaticResource Space.3}"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center">
-                <Border Classes="HomeBodyEmptyBadge">
-                  <TextBlock Classes="CaptionText"
-                             Text="项目列表" />
-                </Border>
-                <TextBlock Classes="PageTitle"
-                           Text="还没有项目" />
-                <TextBlock Classes="CaptionText"
-                           Text="从这里创建第一个项目后，就可以像图里的工作台一样直接筛选、浏览并打开项目。"
-                           TextAlignment="Center"
-                           TextWrapping="Wrap"
-                           MaxWidth="420" />
-                <Button Classes="PrimaryButton HomeCreateProjectButton"
-                        Content="新建项目"
-                        Command="{Binding OpenCreateProjectDialogCommand}" />
-              </StackPanel>
+              <Border Classes="HomeBodyEmptySurface">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="{StaticResource Space.6}">
+                  <StackPanel Spacing="{StaticResource Space.2}"
+                              VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="{StaticResource Space.2}">
+                      <Border Classes="HomeBodyEmptyBadge">
+                        <TextBlock Classes="CaptionText"
+                                   Text="项目列表" />
+                      </Border>
+                      <Border Classes="HomeBodyEmptyBadge HomeBodyEmptyBadgeMuted">
+                        <TextBlock Classes="CaptionText"
+                                   Text="0 个项目" />
+                      </Border>
+                    </StackPanel>
+                    <TextBlock Classes="PageTitle"
+                               Text="还没有项目" />
+                    <TextBlock Classes="CaptionText HomeBodyEmptyDescription"
+                               Text="创建第一个项目后，就可以在这里直接筛选、浏览并打开项目工作区。"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                  <Button Grid.Column="1"
+                          Classes="PrimaryButton HomeCreateProjectButton"
+                          Content="+ 新建项目"
+                          VerticalAlignment="Center"
+                          Command="{Binding OpenCreateProjectDialogCommand}" />
+                </Grid>
+              </Border>
             </Border>
 
             <Border Classes="HomeBodyEmptyCard"
                     IsVisible="{Binding ShowProjectSearchEmptyState}">
-              <StackPanel Spacing="{StaticResource Space.3}"
-                          HorizontalAlignment="Center"
-                          VerticalAlignment="Center">
-                <Border Classes="HomeBodyEmptyBadge">
-                  <TextBlock Classes="CaptionText"
-                             Text="搜索结果" />
-                </Border>
-                <TextBlock Classes="PageTitle"
-                           Text="没有找到匹配项目" />
-                <TextBlock Classes="CaptionText"
-                           Text="可以换一个关键词继续搜索，或者直接新建一个项目。"
-                           TextAlignment="Center"
-                           TextWrapping="Wrap"
-                           MaxWidth="360" />
-                <Button Classes="SecondaryButton HomeSidebarCreateButton"
-                        Content="新建项目"
-                        Command="{Binding OpenCreateProjectDialogCommand}" />
-              </StackPanel>
+              <Border Classes="HomeBodyEmptySurface">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="{StaticResource Space.6}">
+                  <StackPanel Spacing="{StaticResource Space.2}"
+                              VerticalAlignment="Center">
+                    <Border Classes="HomeBodyEmptyBadge">
+                      <TextBlock Classes="CaptionText"
+                                 Text="搜索结果" />
+                    </Border>
+                    <TextBlock Classes="PageTitle"
+                               Text="没有找到匹配项目" />
+                    <TextBlock Classes="CaptionText HomeBodyEmptyDescription"
+                               Text="可以换一个关键词继续搜索，或者直接新建一个项目。"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                  <Button Grid.Column="1"
+                          Classes="SecondaryButton HomeSidebarCreateButton"
+                          Content="新建项目"
+                          VerticalAlignment="Center"
+                          Command="{Binding OpenCreateProjectDialogCommand}" />
+                </Grid>
+              </Border>
             </Border>
 
             <ItemsControl ItemsSource="{Binding ProjectPanel.FilteredProjects}"
