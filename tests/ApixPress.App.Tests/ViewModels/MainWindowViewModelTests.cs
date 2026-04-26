@@ -2,7 +2,7 @@ using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
 using Azrng.Core.Results;
-using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
+using FakeSystemDataService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeSystemDataService;
 
 namespace ApixPress.App.Tests.ViewModels;
 
@@ -48,29 +48,31 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task ConfirmClearHistoryDataCommand_ShouldClearAllHistoryAfterConfirmation()
+    public async Task ConfirmClearSystemDataCommand_ShouldClearProjectsAndTabsAfterConfirmation()
     {
-        var historyService = new FakeRequestHistoryService();
-        historyService.Items.Add(new RequestHistoryItemDto
-        {
-            Id = "history-1",
-            Timestamp = DateTime.UtcNow,
-            RequestSnapshot = new RequestSnapshotDto
-            {
-                Method = "GET",
-                Url = "/users"
-            }
-        });
-        var viewModel = CreateViewModel(requestHistoryService: historyService);
+        var projectService = new FakeProjectWorkspaceService();
+        projectService.SeedProjects(
+        [
+            new("project-1", "订单项目", "订单接口", true)
+        ]);
+        var systemDataService = new FakeSystemDataService();
+        var viewModel = CreateViewModel(projectService, systemDataService: systemDataService);
         await viewModel.InitializeAsync();
+        var project = viewModel.ProjectPanel.Projects.Single();
+        await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(project);
 
-        viewModel.SettingsCenter.RequestClearHistoryDataCommand.Execute(null);
-        await viewModel.SettingsCenter.ConfirmClearHistoryDataCommand.ExecuteAsync(null);
+        viewModel.SettingsCenter.RequestClearSystemDataCommand.Execute(null);
+        await viewModel.SettingsCenter.ConfirmClearSystemDataCommand.ExecuteAsync(null);
 
-        Assert.False(viewModel.SettingsCenter.IsClearHistoryConfirmDialogOpen);
-        Assert.Empty(historyService.Items);
-        Assert.Equal("已清空所有请求历史数据。", viewModel.SettingsCenter.ClearHistoryStatus);
-        Assert.Equal(viewModel.SettingsCenter.ClearHistoryStatus, viewModel.StatusMessage);
+        Assert.Equal(1, systemDataService.ClearAllCallCount);
+        Assert.False(viewModel.SettingsCenter.IsClearSystemDataConfirmDialogOpen);
+        Assert.Empty(viewModel.ProjectPanel.Projects);
+        Assert.Empty(viewModel.ProjectPanel.FilteredProjects);
+        Assert.Empty(viewModel.ProjectTabs);
+        Assert.Null(viewModel.ActiveProjectTab);
+        Assert.True(viewModel.ShowProjectListEmptyState);
+        Assert.Equal("已清空所有系统数据。", viewModel.SettingsCenter.ClearSystemDataStatus);
+        Assert.Equal(viewModel.SettingsCenter.ClearSystemDataStatus, viewModel.StatusMessage);
     }
 
     [Fact]

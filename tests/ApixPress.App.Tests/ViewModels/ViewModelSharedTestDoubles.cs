@@ -347,6 +347,21 @@ public static class ViewModelSharedTestDoubles
         }
     }
 
+    public sealed class FakeSystemDataService : ISystemDataService
+    {
+        public int ClearAllCallCount { get; private set; }
+
+        public bool ShouldSucceed { get; set; } = true;
+
+        public Task<IResultModel<bool>> ClearAllAsync(CancellationToken cancellationToken)
+        {
+            ClearAllCallCount++;
+            return Task.FromResult<IResultModel<bool>>(ShouldSucceed
+                ? ResultModel<bool>.Success(true)
+                : ResultModel<bool>.Failure("清空失败"));
+        }
+    }
+
     public sealed class FakeFilePickerService : IFilePickerService
     {
         public Task<string?> PickSwaggerJsonFileAsync(CancellationToken cancellationToken)

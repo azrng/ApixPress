@@ -79,6 +79,25 @@ public partial class ProjectPanelViewModel : ViewModelBase
         }
     }
 
+    public void ClearProjects()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        _allProjects.Clear();
+        Projects.Clear();
+        FilteredProjects.Clear();
+        _isUpdatingSelection = true;
+        SelectedProject = null;
+        _isUpdatingSelection = false;
+        SearchText = string.Empty;
+        OnPropertyChanged(nameof(HasSelectedProject));
+        OnPropertyChanged(nameof(HasProjects));
+        OnPropertyChanged(nameof(HasAnyProjects));
+    }
+
     private async Task<bool> CreateProjectAsync(string projectName, string projectDescription)
     {
         var result = await _projectWorkspaceService.SaveAsync(new ProjectWorkspaceDto

@@ -24,6 +24,7 @@ public partial class MainWindowViewModel : ViewModelBase
         private readonly IEnvironmentVariableService _environmentVariableService;
         private readonly IRequestCaseService _requestCaseService;
         private readonly IRequestHistoryService _requestHistoryService;
+        private readonly ISystemDataService _systemDataService;
         private readonly IProjectWorkspaceService _projectWorkspaceService;
         private readonly IAppShellSettingsService _appShellSettingsService;
         private readonly IApplicationUpdateService _applicationUpdateService;
@@ -32,13 +33,14 @@ public partial class MainWindowViewModel : ViewModelBase
         private readonly string _currentAppVersion;
         private readonly Action<string> _setStatusMessage;
         private readonly Action _notifyShellState;
-        private readonly Action _clearRequestHistoryViews;
+        private readonly Action _clearSystemDataViews;
         private readonly Func<string> _getDefaultStatusMessage;
 
         public Builder(
             IEnvironmentVariableService environmentVariableService,
             IRequestCaseService requestCaseService,
             IRequestHistoryService requestHistoryService,
+            ISystemDataService systemDataService,
             IProjectWorkspaceService projectWorkspaceService,
             IAppShellSettingsService appShellSettingsService,
             IApplicationUpdateService applicationUpdateService,
@@ -47,12 +49,13 @@ public partial class MainWindowViewModel : ViewModelBase
             string currentAppVersion,
             Action<string> setStatusMessage,
             Action notifyShellState,
-            Action clearRequestHistoryViews,
+            Action clearSystemDataViews,
             Func<string> getDefaultStatusMessage)
         {
             _environmentVariableService = environmentVariableService;
             _requestCaseService = requestCaseService;
             _requestHistoryService = requestHistoryService;
+            _systemDataService = systemDataService;
             _projectWorkspaceService = projectWorkspaceService;
             _appShellSettingsService = appShellSettingsService;
             _applicationUpdateService = applicationUpdateService;
@@ -61,7 +64,7 @@ public partial class MainWindowViewModel : ViewModelBase
             _currentAppVersion = currentAppVersion;
             _setStatusMessage = setStatusMessage;
             _notifyShellState = notifyShellState;
-            _clearRequestHistoryViews = clearRequestHistoryViews;
+            _clearSystemDataViews = clearSystemDataViews;
             _getDefaultStatusMessage = getDefaultStatusMessage;
         }
 
@@ -81,11 +84,11 @@ public partial class MainWindowViewModel : ViewModelBase
                         _applicationUpdateService,
                         _windowHostService,
                         _filePickerService,
-                        _requestHistoryService,
+                        _systemDataService,
                         _currentAppVersion,
                         _setStatusMessage,
                         _notifyShellState,
-                        _clearRequestHistoryViews),
+                        _clearSystemDataViews),
                     CreateNotifications(),
                     _setStatusMessage,
                     _getDefaultStatusMessage)
@@ -111,6 +114,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IRequestExecutionService requestExecutionService,
         IRequestCaseService requestCaseService,
         IRequestHistoryService requestHistoryService,
+        ISystemDataService systemDataService,
         IEnvironmentVariableService environmentVariableService,
         IProjectWorkspaceService projectWorkspaceService,
         IAppShellSettingsService appShellSettingsService,
@@ -132,6 +136,7 @@ public partial class MainWindowViewModel : ViewModelBase
             environmentVariableService,
             requestCaseService,
             requestHistoryService,
+            systemDataService,
             projectWorkspaceService,
             appShellSettingsService,
             applicationUpdateService,
@@ -140,7 +145,7 @@ public partial class MainWindowViewModel : ViewModelBase
             ResolveCurrentAppVersion(),
             message => StatusMessage = message,
             NotifyShellState,
-            ClearRequestHistoryViews,
+            ClearSystemDataViews,
             () => ActiveProjectTab?.StatusMessage ?? BrowserStatusText)
             .Build();
 
@@ -268,15 +273,20 @@ public partial class MainWindowViewModel : ViewModelBase
         return assembly.GetName().Version?.ToString() ?? "1.0.0.0";
     }
 
-    private void ClearRequestHistoryViews()
+    private void ClearSystemDataViews()
     {
         _fallbackHistoryPanel.HistoryItems.Clear();
+        ProjectPanel.ClearProjects();
 
-        foreach (var tab in ProjectTabs)
+        foreach (var tab in ProjectTabs.ToList())
         {
-            tab.HistoryPanel.HistoryItems.Clear();
+            ProjectTabs.Remove(tab);
+            ReleaseProjectTab(tab);
         }
 
-        OnPropertyChanged(nameof(RequestHistory));
+        ActiveProjectTab = null;
+        IsEnvironmentManagerOpen = false;
+        NotifyActiveProjectTabBindings();
+        NotifyShellState();
     }
 }

@@ -17,10 +17,10 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     private readonly IApplicationUpdateService _applicationUpdateService;
     private readonly IWindowHostService _windowHostService;
     private readonly IFilePickerService _filePickerService;
-    private readonly IRequestHistoryService _requestHistoryService;
+    private readonly ISystemDataService _systemDataService;
     private readonly Action<string> _setStatusMessage;
     private readonly Action _notifyShellState;
-    private readonly Action _clearRequestHistoryViews;
+    private readonly Action _clearSystemDataViews;
     private readonly SemaphoreSlim _shellSettingsSaveSemaphore = new(1, 1);
     private CancellationTokenSource? _shellSettingsSaveCancellationTokenSource;
     private bool _initialized;
@@ -31,20 +31,20 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
         IApplicationUpdateService applicationUpdateService,
         IWindowHostService windowHostService,
         IFilePickerService filePickerService,
-        IRequestHistoryService requestHistoryService,
+        ISystemDataService systemDataService,
         string currentAppVersion,
         Action<string> setStatusMessage,
         Action notifyShellState,
-        Action clearRequestHistoryViews)
+        Action clearSystemDataViews)
     {
         _appShellSettingsService = appShellSettingsService;
         _applicationUpdateService = applicationUpdateService;
         _windowHostService = windowHostService;
         _filePickerService = filePickerService;
-        _requestHistoryService = requestHistoryService;
+        _systemDataService = systemDataService;
         _setStatusMessage = setStatusMessage;
         _notifyShellState = notifyShellState;
-        _clearRequestHistoryViews = clearRequestHistoryViews;
+        _clearSystemDataViews = clearSystemDataViews;
         CurrentAppVersion = currentAppVersion;
         UpdateChannelName = _applicationUpdateService.ChannelName;
         AboutUpdateStatus = _applicationUpdateService.IsConfigured
@@ -71,22 +71,20 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
 
     public string CurrentSettingsSubtitle => CurrentSettingsSection switch
     {
-        StorageSection => "设置数据库保存目录，并管理本地请求历史数据。",
+        StorageSection => "设置数据库保存目录，并管理本地系统数据。",
         AboutSection => "查看版本信息和更新状态。",
         _ => "设置会自动保存到本地工作目录，并在后续请求中生效。"
     };
 
     public string CheckForUpdatesButtonText => IsCheckingForUpdates ? "检查中..." : "检查更新";
 
-    public string ClearHistoryButtonText => IsClearingHistoryData ? "清空中..." : "一键清空历史数据";
+    public string ClearSystemDataButtonText => IsClearingSystemData ? "清空中..." : "一键清空系统数据";
 
     public string DefaultStorageDirectoryPath => AppStoragePaths.DefaultStorageDirectory;
 
     public string EffectiveStorageDirectoryPath => string.IsNullOrWhiteSpace(StorageDirectoryPath)
         ? DefaultStorageDirectoryPath
         : AppStoragePaths.ResolveStorageDirectory(StorageDirectoryPath);
-
-    public string CurrentDatabaseFilePath => AppStoragePaths.ResolveDatabasePath(StorageDirectoryPath);
 
     public string StorageDirectoryModeText => string.IsNullOrWhiteSpace(StorageDirectoryPath)
         ? "当前使用默认存储目录"
@@ -123,13 +121,13 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     private string storageSettingsSaveStatus = "数据库目录修改后将在下次启动时生效。";
 
     [ObservableProperty]
-    private string clearHistoryStatus = "清空后会删除所有项目的请求历史记录，不影响项目、接口、用例或环境配置。";
+    private string clearSystemDataStatus = "清空后会删除所有项目、接口、用例、环境与请求历史数据，应用会回到空项目状态。";
 
     [ObservableProperty]
-    private bool isClearHistoryConfirmDialogOpen;
+    private bool isClearSystemDataConfirmDialogOpen;
 
     [ObservableProperty]
-    private bool isClearingHistoryData;
+    private bool isClearingSystemData;
 
     [ObservableProperty]
     private bool isCheckingForUpdates;
@@ -222,7 +220,6 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     partial void OnStorageDirectoryPathChanged(string value)
     {
         OnPropertyChanged(nameof(EffectiveStorageDirectoryPath));
-        OnPropertyChanged(nameof(CurrentDatabaseFilePath));
         OnPropertyChanged(nameof(StorageDirectoryModeText));
         TriggerShellSettingsSave();
     }
@@ -232,9 +229,9 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
         OnPropertyChanged(nameof(CheckForUpdatesButtonText));
     }
 
-    partial void OnIsClearingHistoryDataChanged(bool value)
+    partial void OnIsClearingSystemDataChanged(bool value)
     {
-        OnPropertyChanged(nameof(ClearHistoryButtonText));
+        OnPropertyChanged(nameof(ClearSystemDataButtonText));
     }
 
     [RelayCommand]
@@ -289,59 +286,59 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void RequestClearHistoryData()
+    private void RequestClearSystemData()
     {
         if (IsDisposed)
         {
             return;
         }
 
-        IsClearHistoryConfirmDialogOpen = true;
+        IsClearSystemDataConfirmDialogOpen = true;
     }
 
     [RelayCommand]
-    private void CancelClearHistoryData()
+    private void CancelClearSystemData()
     {
-        if (IsDisposed || IsClearingHistoryData)
+        if (IsDisposed || IsClearingSystemData)
         {
             return;
         }
 
-        IsClearHistoryConfirmDialogOpen = false;
-        ClearHistoryStatus = "已取消清空历史数据。";
+        IsClearSystemDataConfirmDialogOpen = false;
+        ClearSystemDataStatus = "已取消清空系统数据。";
     }
 
     [RelayCommand]
-    private async Task ConfirmClearHistoryDataAsync()
+    private async Task ConfirmClearSystemDataAsync()
     {
-        if (IsDisposed || IsClearingHistoryData)
+        if (IsDisposed || IsClearingSystemData)
         {
             return;
         }
 
-        IsClearingHistoryData = true;
-        ClearHistoryStatus = "正在清空所有请求历史数据...";
+        IsClearingSystemData = true;
+        ClearSystemDataStatus = "正在清空所有系统数据...";
 
         try
         {
-            var result = await _requestHistoryService.ClearAllAsync(CancellationToken.None);
+            var result = await _systemDataService.ClearAllAsync(CancellationToken.None);
             if (!result.IsSuccess)
             {
-                var failedMessage = $"清空历史数据失败：{result.Message}";
-                ClearHistoryStatus = failedMessage;
+                var failedMessage = $"清空系统数据失败：{result.Message}";
+                ClearSystemDataStatus = failedMessage;
                 PublishStatus(failedMessage);
                 return;
             }
 
-            _clearRequestHistoryViews();
-            IsClearHistoryConfirmDialogOpen = false;
-            var successMessage = "已清空所有请求历史数据。";
-            ClearHistoryStatus = successMessage;
+            _clearSystemDataViews();
+            IsClearSystemDataConfirmDialogOpen = false;
+            var successMessage = "已清空所有系统数据。";
+            ClearSystemDataStatus = successMessage;
             PublishStatus(successMessage);
         }
         finally
         {
-            IsClearingHistoryData = false;
+            IsClearingSystemData = false;
         }
     }
 

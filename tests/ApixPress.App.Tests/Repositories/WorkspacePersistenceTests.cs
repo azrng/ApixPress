@@ -233,6 +233,62 @@ public sealed partial class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task SystemDataRepository_ShouldClearProjectsAndRelatedConfiguration()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var serializer = CreateSerializer();
+        var caseRepository = new RequestCaseRepository(factory);
+        var caseService = new RequestCaseService(caseRepository, serializer);
+        var historyRepository = new RequestHistoryRepository(factory);
+        var historyService = new RequestHistoryService(historyRepository, serializer);
+        var environmentService = new EnvironmentVariableService(new EnvironmentVariableRepository(factory), environmentRepository);
+        var systemDataRepository = new SystemDataRepository(factory);
+
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "系统数据清空项目"
+        }, CancellationToken.None)).Data!;
+        var environment = Assert.Single(await environmentService.GetEnvironmentsAsync(project.Id, CancellationToken.None));
+
+        await environmentService.SaveVariableAsync(new EnvironmentVariableDto
+        {
+            EnvironmentId = environment.Id,
+            Key = "token",
+            Value = "secret",
+            IsEnabled = true
+        }, CancellationToken.None);
+        await caseService.SaveAsync(new RequestCaseDto
+        {
+            ProjectId = project.Id,
+            EntryType = "quick-request",
+            Name = "保存请求",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "https://api.example.com/users"
+            },
+            UpdatedAt = DateTime.UtcNow
+        }, CancellationToken.None);
+        await historyService.AddAsync(project.Id, new RequestSnapshotDto
+        {
+            Method = "GET",
+            Url = "/users"
+        }, null, CancellationToken.None);
+
+        await systemDataRepository.ClearAllAsync(CancellationToken.None);
+
+        Assert.Empty(await projectService.GetProjectsAsync(CancellationToken.None));
+        Assert.Empty(await environmentService.GetEnvironmentsAsync(project.Id, CancellationToken.None));
+        Assert.Empty(await caseService.GetCasesAsync(project.Id, CancellationToken.None));
+        Assert.Empty(await historyRepository.GetHistoryAsync(project.Id, 10, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task RequestCaseService_ShouldPersistHttpInterfaceHierarchy()
     {
         using var factory = new TestSqliteConnectionFactory();

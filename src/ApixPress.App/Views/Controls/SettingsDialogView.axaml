@@ -194,15 +194,15 @@
                             ColumnSpacing="{StaticResource Space.4}">
                         <StackPanel Spacing="4">
                           <TextBlock Classes="SettingsGroupTitle"
-                                     Text="历史数据" />
+                                     Text="一键清空系统数据" />
                           <TextBlock Classes="CaptionText"
-                                     Text="{Binding ShellPanels.SettingsCenter.ClearHistoryStatus}"
+                                     Text="{Binding ShellPanels.SettingsCenter.ClearSystemDataStatus}"
                                      TextWrapping="Wrap" />
                         </StackPanel>
                         <Button Grid.Column="1"
                                 Classes="DialogDangerButton"
-                                Content="{Binding ShellPanels.SettingsCenter.ClearHistoryButtonText}"
-                                Command="{Binding ShellPanels.SettingsCenter.RequestClearHistoryDataCommand}" />
+                                Content="{Binding ShellPanels.SettingsCenter.ClearSystemDataButtonText}"
+                                Command="{Binding ShellPanels.SettingsCenter.RequestClearSystemDataCommand}" />
                       </Grid>
                     </Border>
                   </StackPanel>
@@ -294,16 +294,16 @@
       </Border>
 
       <Border Classes="SettingsDialogBackdrop"
-              IsVisible="{Binding ShellPanels.SettingsCenter.IsClearHistoryConfirmDialogOpen}">
+              IsVisible="{Binding ShellPanels.SettingsCenter.IsClearSystemDataConfirmDialogOpen}">
         <Grid HorizontalAlignment="Center"
               VerticalAlignment="Center">
           <Border Classes="SettingsDangerConfirmCard">
             <StackPanel Spacing="{StaticResource Space.4}">
               <StackPanel Spacing="{StaticResource Space.2}">
                 <TextBlock Classes="DialogTitle"
-                           Text="确认清空历史数据？" />
+                           Text="确认清空系统数据？" />
                 <TextBlock Classes="CaptionText"
-                           Text="此操作会删除所有项目的请求历史记录，不能撤销；项目、接口、用例和环境配置不会被删除。"
+                           Text="此操作会删除所有项目、接口、用例、环境配置和请求历史记录，不能撤销。"
                            TextWrapping="Wrap" />
               </StackPanel>
               <Border Classes="CreateProjectDialogDivider" />
@@ -312,10 +312,10 @@
                           Spacing="{StaticResource Space.2}">
                 <Button Classes="DialogSecondaryButton"
                         Content="取消"
-                        Command="{Binding ShellPanels.SettingsCenter.CancelClearHistoryDataCommand}" />
+                        Command="{Binding ShellPanels.SettingsCenter.CancelClearSystemDataCommand}" />
                 <Button Classes="DialogDangerButton"
-                        Content="{Binding ShellPanels.SettingsCenter.ClearHistoryButtonText}"
-                        Command="{Binding ShellPanels.SettingsCenter.ConfirmClearHistoryDataCommand}" />
+                        Content="{Binding ShellPanels.SettingsCenter.ClearSystemDataButtonText}"
+                        Command="{Binding ShellPanels.SettingsCenter.ConfirmClearSystemDataCommand}" />
               </StackPanel>
             </StackPanel>
           </Border>
