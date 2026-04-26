@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Models.DTOs;
@@ -9,6 +10,7 @@ namespace ApixPress.App.ViewModels;
 public partial class RequestWorkspaceTabViewModel : ViewModelBase
 {
     private const string DefaultInterfaceFolderName = "默认模块";
+    private string _cleanStateSignature = string.Empty;
 
     private static class WorkspaceEntryTypes
     {
@@ -87,6 +89,8 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     public bool ShowMethodBadge => IsHttpInterfaceTab;
     public string MethodBadgeText => SelectedMethod;
     public bool CanCloseFromTab => !IsPinned;
+    public bool HasUnsavedChanges => !string.Equals(_cleanStateSignature, BuildStateSignature(), StringComparison.Ordinal);
+    public bool CanReuseForWorkspaceNavigation => !IsPinned && !IsLandingTab && !HasUnsavedChanges;
     public string PinMenuHeader => IsPinned ? "取消固定标签页" : "固定标签页";
     public string EditorTitle => IsHttpInterfaceTab ? "HTTP 接口" : IsQuickRequestTab ? "快捷请求" : "新建...";
     public string EditorDescription => IsHttpInterfaceTab
@@ -112,6 +116,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         ConfigTab.Reset();
         ResponseSection.Reset();
         UpdateTabHeader();
+        MarkCleanState();
     }
 
     public void ConfigureAsQuickRequest()
@@ -129,6 +134,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         ConfigTab.Reset();
         ResponseSection.Reset();
         UpdateTabHeader();
+        MarkCleanState();
     }
 
     public void ConfigureAsHttpInterface()
@@ -146,6 +152,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         ConfigTab.Reset();
         ResponseSection.Reset();
         UpdateTabHeader();
+        MarkCleanState();
     }
 
     public void ApplySavedRequest(RequestCaseDto source, RequestCaseDto? parentInterface = null)
@@ -194,6 +201,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         }
 
         UpdateTabHeader();
+        MarkCleanState();
     }
 
     public void ApplySnapshot(RequestSnapshotDto snapshot)
@@ -202,6 +210,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         RequestUrl = snapshot.Url;
         ConfigTab.ApplySnapshot(snapshot);
         UpdateTabHeader();
+        MarkCleanState();
     }
 
     public RequestSnapshotDto BuildSnapshot(string? requestNameOverride = null)
@@ -238,6 +247,13 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         }
 
         return ResolveGeneratedRequestName();
+    }
+
+    public void MarkCleanState()
+    {
+        _cleanStateSignature = BuildStateSignature();
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+        OnPropertyChanged(nameof(CanReuseForWorkspaceNavigation));
     }
 
     [RelayCommand]
@@ -309,6 +325,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     partial void OnIsPinnedChanged(bool value)
     {
         OnPropertyChanged(nameof(CanCloseFromTab));
+        OnPropertyChanged(nameof(CanReuseForWorkspaceNavigation));
         OnPropertyChanged(nameof(PinMenuHeader));
     }
 
@@ -333,6 +350,52 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
             WorkspaceEntryTypes.QuickRequest => ResolveQuickRequestTabHeader(),
             _ => ResolveRequestName()
         };
+    }
+
+    private string BuildStateSignature()
+    {
+        var builder = new StringBuilder();
+        Append(builder, EntryType);
+        Append(builder, SelectedMethod);
+        Append(builder, RequestUrl);
+        Append(builder, InterfaceFolderPath);
+        Append(builder, HttpCaseName);
+        Append(builder, SourceEndpointId);
+        Append(builder, EditingQuickRequestId);
+        Append(builder, EditingInterfaceId);
+        Append(builder, EditingCaseId);
+        Append(builder, HttpEditorViewIndex.ToString());
+        Append(builder, ConfigTab.RequestName);
+        Append(builder, ConfigTab.RequestDescription);
+        Append(builder, ConfigTab.RequestBody);
+        Append(builder, ConfigTab.SelectedBodyMode);
+        Append(builder, ConfigTab.IgnoreSslErrors ? "1" : "0");
+        AppendParameters(builder, ConfigTab.QueryParameters);
+        AppendParameters(builder, ConfigTab.PathParameters);
+        AppendParameters(builder, ConfigTab.Headers);
+        AppendParameters(builder, ConfigTab.FormFields);
+        return builder.ToString();
+    }
+
+    private static void Append(StringBuilder builder, string? value)
+    {
+        builder.Append(value?.Length ?? 0);
+        builder.Append(':');
+        builder.Append(value);
+        builder.Append('|');
+    }
+
+    private static void AppendParameters(StringBuilder builder, IEnumerable<RequestParameterItemViewModel> parameters)
+    {
+        foreach (var parameter in parameters)
+        {
+            Append(builder, parameter.Name);
+            Append(builder, parameter.Value);
+            Append(builder, parameter.Description);
+            Append(builder, parameter.IsEnabled ? "1" : "0");
+        }
+
+        builder.Append(';');
     }
 
     private string ResolveHttpInterfaceTabHeader()

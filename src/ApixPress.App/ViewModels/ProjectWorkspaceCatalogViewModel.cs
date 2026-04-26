@@ -120,7 +120,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 
         var source = item.SourceCase;
         _showInterfaceManagementSection();
-        var targetTab = _workspace.FindWorkspaceTabForSource(source) ?? _workspace.ReuseActiveLandingOrCreateWorkspace();
+        var targetTab = _workspace.ResolveTabForWorkspaceNavigation(source);
         ApplyWorkspaceItemToTab(targetTab, source);
         _workspace.ActivateWorkspaceTab(targetTab);
         _setStatusMessage(source.EntryType switch

@@ -208,6 +208,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         {
             workspaceTab.EditingQuickRequestId = result.Data.Id;
             _catalog.UpsertCaseItem(result.Data);
+            workspaceTab.MarkCleanState();
             _hostContext.SetStatusMessage("快捷请求已保存到左侧目录。");
         }
         else
@@ -257,6 +258,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             workspaceTab.EditingCaseId = result.Data.Id;
             workspaceTab.SourceEndpointId = result.Data.RequestSnapshot.EndpointId;
             _catalog.UpsertCaseItem(result.Data);
+            workspaceTab.MarkCleanState();
             _hostContext.SetStatusMessage("HTTP 接口用例已保存。");
         }
         else
@@ -326,6 +328,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             _catalog.UpsertCaseItem(result.Data);
         }
 
+        workspaceTab.MarkCleanState();
         return result.Data;
     }
 

@@ -342,7 +342,7 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
-    public async Task LoadWorkspaceItem_ShouldKeepVisibleWorkspaceTabsStableWhenSwitchingHttpInterfaces()
+    public async Task LoadWorkspaceItem_ShouldReuseCleanActiveTabWhenSwitchingHttpInterfaces()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
         var requestCaseService = new FakeRequestCaseService();
@@ -362,8 +362,35 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.Catalog.LoadWorkspaceItem(secondInterfaceItem);
 
         Assert.Same(visibleTabs, viewModel.VisibleWorkspaceTabs);
+        var tab = Assert.Single(viewModel.VisibleWorkspaceTabs);
+        Assert.Equal("接口 2", tab.HeaderText);
+        Assert.Equal("接口 2", viewModel.ActiveWorkspaceTab?.HeaderText);
+    }
+
+    [Fact]
+    public async Task LoadWorkspaceItem_ShouldOpenNewTabWhenActiveTabHasUnsavedChanges()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 2);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
+
+        var firstInterfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
+        var secondInterfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 2");
+        Assert.NotNull(firstInterfaceItem);
+        Assert.NotNull(secondInterfaceItem);
+
+        await viewModel.Catalog.LoadWorkspaceItem(firstInterfaceItem);
+        viewModel.Editor.CurrentHttpInterfaceName = "接口 1 未保存修改";
+        Assert.True(viewModel.ActiveWorkspaceTab?.HasUnsavedChanges);
+
+        await viewModel.Catalog.LoadWorkspaceItem(secondInterfaceItem);
+
         Assert.Equal(2, viewModel.VisibleWorkspaceTabs.Count);
-        Assert.Equal("接口 1", viewModel.VisibleWorkspaceTabs[0].HeaderText);
+        Assert.Equal("接口 1 未保存修改", viewModel.VisibleWorkspaceTabs[0].HeaderText);
         Assert.Equal("接口 2", viewModel.VisibleWorkspaceTabs[1].HeaderText);
         Assert.Equal("接口 2", viewModel.ActiveWorkspaceTab?.HeaderText);
     }

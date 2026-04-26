@@ -56,6 +56,22 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         return CreateWorkspaceTab(activate: false);
     }
 
+    public RequestWorkspaceTabViewModel ResolveTabForWorkspaceNavigation(RequestCaseDto source)
+    {
+        var existingTab = FindWorkspaceTabForSource(source);
+        if (existingTab is not null)
+        {
+            return existingTab;
+        }
+
+        if (ActiveWorkspaceTab?.IsLandingTab == true || ActiveWorkspaceTab?.CanReuseForWorkspaceNavigation == true)
+        {
+            return ActiveWorkspaceTab;
+        }
+
+        return CreateWorkspaceTab(activate: false);
+    }
+
     public RequestWorkspaceTabViewModel CreateWorkspaceTab(bool activate, bool showInTabStrip = true)
     {
         var tab = new RequestWorkspaceTabViewModel();
