@@ -12,6 +12,8 @@
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         RowSpacing="{StaticResource Space.3}"
+        MinHeight="0"
+        ClipToBounds="True"
         IsVisible="{Binding Editor.ShowHttpWorkbenchContent}">
     <Border Grid.Row="0"
             Classes="PanelCard HttpDesignMetaCard"
@@ -46,7 +48,8 @@
                     SelectedIndex="{Binding ConfigTab.SelectedTabIndex}">
           <TabItem Header="Params">
             <DockPanel Margin="{StaticResource Pad.3}"
-                       HorizontalAlignment="Stretch">
+                       HorizontalAlignment="Stretch"
+                       MinHeight="0">
               <Border DockPanel.Dock="Top"
                       Classes="HttpRequestTableHeader">
                 <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
@@ -201,10 +204,12 @@
           </TabItem>
 
           <TabItem Header="Headers">
-            <DockPanel Margin="{StaticResource Pad.3}">
+            <DockPanel Margin="{StaticResource Pad.3}"
+                       HorizontalAlignment="Stretch"
+                       MinHeight="0">
               <Border DockPanel.Dock="Top"
                       Classes="HttpRequestTableHeader">
-                <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,Auto"
+                <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,48"
                       ColumnSpacing="{StaticResource Space.3}">
                   <TextBlock Grid.Column="0" Classes="CaptionText" Text="Header 名" />
                   <TextBlock Grid.Column="1" Classes="CaptionText" Text="Header 值" />
@@ -218,12 +223,15 @@
                       Margin="0,8,0,0"
                       Content="添加 Header"
                       Command="{Binding ConfigTab.AddHeaderCommand}" />
-              <ScrollViewer>
-                <ItemsControl ItemsSource="{Binding ConfigTab.Headers}">
+              <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                            VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding ConfigTab.Headers}"
+                              HorizontalAlignment="Stretch">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
-                      <Border Classes="ParameterRow HttpRequestParameterRow">
-                        <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,Auto"
+                      <Border Classes="ParameterRow HttpRequestParameterRow"
+                              HorizontalAlignment="Stretch">
+                        <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,48"
                               ColumnSpacing="{StaticResource Space.3}">
                           <TextBox Grid.Column="0" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="Header 名" />
                           <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" Watermark="Header 值" />

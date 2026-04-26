@@ -188,6 +188,8 @@
 
   <Style Selector="TabControl.ResponseTabs">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="ClipToBounds" Value="True" />
   </Style>
 
   <Style Selector="Border.StatusInfo">

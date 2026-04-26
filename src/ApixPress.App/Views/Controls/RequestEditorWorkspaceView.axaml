@@ -9,12 +9,16 @@
              mc:Ignorable="d">
   <Grid IsVisible="{Binding Shell.ShowRequestEditorWorkspace}"
         RowDefinitions="Auto,Auto,*"
-        RowSpacing="{StaticResource Space.3}">
+        RowSpacing="{StaticResource Space.3}"
+        MinHeight="0"
+        ClipToBounds="True">
     <views:ProjectWorkspaceToolbarView />
 
     <Grid Grid.Row="1"
           RowDefinitions="Auto,Auto"
           RowSpacing="{StaticResource Space.2}"
+          MinHeight="0"
+          ClipToBounds="True"
           IsVisible="{Binding Editor.IsQuickRequestEditor}">
       <TextBox Grid.Row="0"
                Classes="SectionInput HttpInterfaceNameInput"
@@ -60,6 +64,8 @@
     <Grid Grid.Row="1"
           RowDefinitions="Auto,Auto"
           RowSpacing="{StaticResource Space.2}"
+          MinHeight="0"
+          ClipToBounds="True"
           IsVisible="{Binding Editor.IsHttpInterfaceEditor}">
       <Grid ColumnDefinitions="Auto,*"
             ColumnSpacing="{StaticResource Space.3}">
@@ -135,7 +141,9 @@
       </Grid>
     </Grid>
 
-    <Grid Grid.Row="2">
+    <Grid Grid.Row="2"
+          MinHeight="0"
+          ClipToBounds="True">
       <views:QuickRequestWorkbenchView />
       <views:HttpInterfaceWorkbenchView />
       <views:HttpDocumentWorkspaceView />

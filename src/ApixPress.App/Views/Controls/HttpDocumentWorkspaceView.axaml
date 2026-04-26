@@ -7,12 +7,17 @@
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
   <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto"
                 IsVisible="{Binding Editor.ShowHttpDocumentPreviewContent}">
-    <StackPanel Spacing="{StaticResource Space.4}">
+    <StackPanel Spacing="{StaticResource Space.4}"
+                MinWidth="0">
       <Border Classes="PanelCard HttpDocumentHeroCard">
         <Grid ColumnDefinitions="*,Auto"
-              ColumnSpacing="{StaticResource Space.4}">
+              ColumnSpacing="{StaticResource Space.4}"
+              MinWidth="0"
+              ClipToBounds="True">
           <StackPanel Grid.Column="0"
+                      MinWidth="0"
                       Spacing="{StaticResource Space.3}">
             <StackPanel Orientation="Horizontal"
                         Spacing="{StaticResource Space.2}">
@@ -60,8 +65,10 @@
       </Border>
 
       <Grid ColumnDefinitions="1.3*,*"
-            ColumnSpacing="{StaticResource Space.3}">
-        <StackPanel Spacing="{StaticResource Space.3}">
+            ColumnSpacing="{StaticResource Space.3}"
+            MinWidth="0">
+        <StackPanel Spacing="{StaticResource Space.3}"
+                    MinWidth="0">
           <Border Classes="PanelCard HttpDocumentPreviewCard">
             <StackPanel Spacing="{StaticResource Space.3}">
               <TextBlock Classes="SectionTitle"
@@ -130,6 +137,7 @@
         </StackPanel>
 
         <StackPanel Grid.Column="1"
+                    MinWidth="0"
                     Spacing="{StaticResource Space.3}">
           <Border Classes="PanelCard HttpDocumentPreviewCard">
             <StackPanel Spacing="{StaticResource Space.3}">

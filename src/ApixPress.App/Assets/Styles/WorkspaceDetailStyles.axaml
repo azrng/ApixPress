@@ -114,8 +114,9 @@
   </Style>
 
   <Style Selector="Border.HttpWorkbenchConfigCard">
-    <Setter Property="MinHeight" Value="220" />
+    <Setter Property="MinHeight" Value="180" />
     <Setter Property="MaxHeight" Value="340" />
+    <Setter Property="ClipToBounds" Value="True" />
   </Style>
 
   <Style Selector="Border.ProjectWorkspaceSettingsHeader">
