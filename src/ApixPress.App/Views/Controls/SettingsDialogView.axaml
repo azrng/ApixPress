@@ -157,7 +157,7 @@
                               ColumnSpacing="{StaticResource Space.4}">
                           <StackPanel Spacing="4">
                             <TextBlock Classes="SettingsGroupTitle"
-                                       Text="数据库存储目录" />
+                                       Text="存储目录" />
                             <TextBlock Classes="CaptionText"
                                        Text="{Binding ShellPanels.SettingsCenter.StorageDirectoryModeText}" />
                           </StackPanel>
@@ -173,24 +173,16 @@
                           </StackPanel>
                         </Grid>
 
-                        <Grid RowDefinitions="Auto,Auto,Auto"
+                        <Grid RowDefinitions="Auto,Auto"
                               RowSpacing="{StaticResource Space.2}">
                           <StackPanel Spacing="4">
                             <TextBlock Classes="AboutMetaLabel"
-                                       Text="当前目录" />
+                                       Text="目录" />
                             <TextBox Classes="SectionInput"
                                      IsReadOnly="True"
                                      Text="{Binding ShellPanels.SettingsCenter.EffectiveStorageDirectoryPath}" />
                           </StackPanel>
-                          <StackPanel Grid.Row="1"
-                                      Spacing="4">
-                            <TextBlock Classes="AboutMetaLabel"
-                                       Text="数据库文件" />
-                            <TextBox Classes="SectionInput"
-                                     IsReadOnly="True"
-                                     Text="{Binding ShellPanels.SettingsCenter.CurrentDatabaseFilePath}" />
-                          </StackPanel>
-                          <TextBlock Grid.Row="2"
+                          <TextBlock Grid.Row="1"
                                      Classes="CaptionText"
                                      Text="{Binding ShellPanels.SettingsCenter.StorageSettingsSaveStatus}" />
                         </Grid>
