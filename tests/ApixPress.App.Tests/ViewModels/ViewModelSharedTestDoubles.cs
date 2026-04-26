@@ -362,6 +362,21 @@ public static class ViewModelSharedTestDoubles
         }
     }
 
+    public sealed class FakeApplicationRestartService : IApplicationRestartService
+    {
+        public int RestartCallCount { get; private set; }
+
+        public bool ShouldSucceed { get; set; } = true;
+
+        public Task<IResultModel<bool>> RestartAsync(CancellationToken cancellationToken)
+        {
+            RestartCallCount++;
+            return Task.FromResult<IResultModel<bool>>(ShouldSucceed
+                ? ResultModel<bool>.Success(true)
+                : ResultModel<bool>.Failure("重启失败"));
+        }
+    }
+
     public sealed class FakeFilePickerService : IFilePickerService
     {
         public Task<string?> PickSwaggerJsonFileAsync(CancellationToken cancellationToken)

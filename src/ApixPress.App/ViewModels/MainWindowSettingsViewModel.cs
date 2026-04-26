@@ -15,6 +15,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
 
     private readonly IAppShellSettingsService _appShellSettingsService;
     private readonly IApplicationUpdateService _applicationUpdateService;
+    private readonly IApplicationRestartService _applicationRestartService;
     private readonly IWindowHostService _windowHostService;
     private readonly IFilePickerService _filePickerService;
     private readonly ISystemDataService _systemDataService;
@@ -29,6 +30,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     public MainWindowSettingsViewModel(
         IAppShellSettingsService appShellSettingsService,
         IApplicationUpdateService applicationUpdateService,
+        IApplicationRestartService applicationRestartService,
         IWindowHostService windowHostService,
         IFilePickerService filePickerService,
         ISystemDataService systemDataService,
@@ -39,6 +41,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     {
         _appShellSettingsService = appShellSettingsService;
         _applicationUpdateService = applicationUpdateService;
+        _applicationRestartService = applicationRestartService;
         _windowHostService = windowHostService;
         _filePickerService = filePickerService;
         _systemDataService = systemDataService;
@@ -127,7 +130,13 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     private bool isClearSystemDataConfirmDialogOpen;
 
     [ObservableProperty]
+    private bool isSystemDataRestartPromptOpen;
+
+    [ObservableProperty]
     private bool isClearingSystemData;
+
+    [ObservableProperty]
+    private bool isRestartingApplication;
 
     [ObservableProperty]
     private bool isCheckingForUpdates;
@@ -234,6 +243,13 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
         OnPropertyChanged(nameof(ClearSystemDataButtonText));
     }
 
+    partial void OnIsRestartingApplicationChanged(bool value)
+    {
+        OnPropertyChanged(nameof(RestartApplicationButtonText));
+    }
+
+    public string RestartApplicationButtonText => IsRestartingApplication ? "重启中..." : "立即重启";
+
     [RelayCommand]
     private void ShowGeneralSettings()
     {
@@ -332,13 +348,56 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
 
             _clearSystemDataViews();
             IsClearSystemDataConfirmDialogOpen = false;
-            var successMessage = "已清空所有系统数据。";
+            IsSystemDataRestartPromptOpen = true;
+            var successMessage = "已清空所有系统数据，建议重启应用以释放全部运行状态。";
             ClearSystemDataStatus = successMessage;
             PublishStatus(successMessage);
         }
         finally
         {
             IsClearingSystemData = false;
+        }
+    }
+
+    [RelayCommand]
+    private void DismissSystemDataRestartPrompt()
+    {
+        if (IsDisposed || IsRestartingApplication)
+        {
+            return;
+        }
+
+        IsSystemDataRestartPromptOpen = false;
+        PublishStatus("已稍后重启，系统数据已清空。");
+    }
+
+    [RelayCommand]
+    private async Task RestartApplicationAsync()
+    {
+        if (IsDisposed || IsRestartingApplication)
+        {
+            return;
+        }
+
+        IsRestartingApplication = true;
+        PublishStatus("正在重启 ApixPress...");
+
+        try
+        {
+            var result = await _applicationRestartService.RestartAsync(CancellationToken.None);
+            if (!result.IsSuccess)
+            {
+                var failedMessage = $"重启失败：{result.Message}";
+                PublishStatus(failedMessage);
+                ClearSystemDataStatus = failedMessage;
+                return;
+            }
+
+            _windowHostService.MainWindow?.Close();
+        }
+        finally
+        {
+            IsRestartingApplication = false;
         }
     }
 

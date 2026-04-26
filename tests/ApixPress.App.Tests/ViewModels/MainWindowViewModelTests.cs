@@ -2,6 +2,7 @@ using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
 using Azrng.Core.Results;
+using FakeApplicationRestartService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeApplicationRestartService;
 using FakeSystemDataService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeSystemDataService;
 
 namespace ApixPress.App.Tests.ViewModels;
@@ -71,8 +72,46 @@ public sealed partial class MainWindowViewModelTests
         Assert.Empty(viewModel.ProjectTabs);
         Assert.Null(viewModel.ActiveProjectTab);
         Assert.True(viewModel.ShowProjectListEmptyState);
-        Assert.Equal("已清空所有系统数据。", viewModel.SettingsCenter.ClearSystemDataStatus);
+        Assert.True(viewModel.SettingsCenter.IsSystemDataRestartPromptOpen);
+        Assert.Equal("已清空所有系统数据，建议重启应用以释放全部运行状态。", viewModel.SettingsCenter.ClearSystemDataStatus);
         Assert.Equal(viewModel.SettingsCenter.ClearSystemDataStatus, viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task DismissSystemDataRestartPromptCommand_ShouldKeepApplicationOpen()
+    {
+        var systemDataService = new FakeSystemDataService();
+        var restartService = new FakeApplicationRestartService();
+        var viewModel = CreateViewModel(
+            systemDataService: systemDataService,
+            applicationRestartService: restartService);
+        await viewModel.InitializeAsync();
+        viewModel.SettingsCenter.RequestClearSystemDataCommand.Execute(null);
+        await viewModel.SettingsCenter.ConfirmClearSystemDataCommand.ExecuteAsync(null);
+
+        viewModel.SettingsCenter.DismissSystemDataRestartPromptCommand.Execute(null);
+
+        Assert.False(viewModel.SettingsCenter.IsSystemDataRestartPromptOpen);
+        Assert.Equal(0, restartService.RestartCallCount);
+        Assert.Equal("已稍后重启，系统数据已清空。", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task RestartApplicationCommand_ShouldStartRestartService()
+    {
+        var systemDataService = new FakeSystemDataService();
+        var restartService = new FakeApplicationRestartService();
+        var viewModel = CreateViewModel(
+            systemDataService: systemDataService,
+            applicationRestartService: restartService);
+        await viewModel.InitializeAsync();
+        viewModel.SettingsCenter.RequestClearSystemDataCommand.Execute(null);
+        await viewModel.SettingsCenter.ConfirmClearSystemDataCommand.ExecuteAsync(null);
+
+        await viewModel.SettingsCenter.RestartApplicationCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, restartService.RestartCallCount);
+        Assert.Equal("正在重启 ApixPress...", viewModel.StatusMessage);
     }
 
     [Fact]

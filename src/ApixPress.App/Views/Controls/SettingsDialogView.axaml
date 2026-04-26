@@ -321,6 +321,35 @@
           </Border>
         </Grid>
       </Border>
+
+      <Border Classes="SettingsDialogBackdrop"
+              IsVisible="{Binding ShellPanels.SettingsCenter.IsSystemDataRestartPromptOpen}">
+        <Grid HorizontalAlignment="Center"
+              VerticalAlignment="Center">
+          <Border Classes="SettingsDangerConfirmCard">
+            <StackPanel Spacing="{StaticResource Space.4}">
+              <StackPanel Spacing="{StaticResource Space.2}">
+                <TextBlock Classes="DialogTitle"
+                           Text="系统数据已清空" />
+                <TextBlock Classes="CaptionText"
+                           Text="建议重启应用以释放全部运行状态，也可以稍后手动重启。"
+                           TextWrapping="Wrap" />
+              </StackPanel>
+              <Border Classes="CreateProjectDialogDivider" />
+              <StackPanel Orientation="Horizontal"
+                          HorizontalAlignment="Right"
+                          Spacing="{StaticResource Space.2}">
+                <Button Classes="DialogSecondaryButton"
+                        Content="稍后重启"
+                        Command="{Binding ShellPanels.SettingsCenter.DismissSystemDataRestartPromptCommand}" />
+                <Button Classes="DialogDangerButton"
+                        Content="{Binding ShellPanels.SettingsCenter.RestartApplicationButtonText}"
+                        Command="{Binding ShellPanels.SettingsCenter.RestartApplicationCommand}" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
     </Grid>
   </Border>
 </UserControl>

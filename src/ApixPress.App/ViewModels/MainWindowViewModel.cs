@@ -28,6 +28,7 @@ public partial class MainWindowViewModel : ViewModelBase
         private readonly IProjectWorkspaceService _projectWorkspaceService;
         private readonly IAppShellSettingsService _appShellSettingsService;
         private readonly IApplicationUpdateService _applicationUpdateService;
+        private readonly IApplicationRestartService _applicationRestartService;
         private readonly IFilePickerService _filePickerService;
         private readonly IWindowHostService _windowHostService;
         private readonly string _currentAppVersion;
@@ -44,6 +45,7 @@ public partial class MainWindowViewModel : ViewModelBase
             IProjectWorkspaceService projectWorkspaceService,
             IAppShellSettingsService appShellSettingsService,
             IApplicationUpdateService applicationUpdateService,
+            IApplicationRestartService applicationRestartService,
             IFilePickerService filePickerService,
             IWindowHostService windowHostService,
             string currentAppVersion,
@@ -59,6 +61,7 @@ public partial class MainWindowViewModel : ViewModelBase
             _projectWorkspaceService = projectWorkspaceService;
             _appShellSettingsService = appShellSettingsService;
             _applicationUpdateService = applicationUpdateService;
+            _applicationRestartService = applicationRestartService;
             _filePickerService = filePickerService;
             _windowHostService = windowHostService;
             _currentAppVersion = currentAppVersion;
@@ -82,6 +85,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     new MainWindowSettingsViewModel(
                         _appShellSettingsService,
                         _applicationUpdateService,
+                        _applicationRestartService,
                         _windowHostService,
                         _filePickerService,
                         _systemDataService,
@@ -119,6 +123,7 @@ public partial class MainWindowViewModel : ViewModelBase
         IProjectWorkspaceService projectWorkspaceService,
         IAppShellSettingsService appShellSettingsService,
         IApplicationUpdateService applicationUpdateService,
+        IApplicationRestartService applicationRestartService,
         IApiWorkspaceService apiWorkspaceService,
         IFilePickerService filePickerService,
         IAppNotificationService appNotificationService,
@@ -140,6 +145,7 @@ public partial class MainWindowViewModel : ViewModelBase
             projectWorkspaceService,
             appShellSettingsService,
             applicationUpdateService,
+            applicationRestartService,
             filePickerService,
             windowHostService,
             ResolveCurrentAppVersion(),

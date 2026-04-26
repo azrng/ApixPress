@@ -4,6 +4,7 @@ using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTest
 using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
 using FakeRequestExecutionService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestExecutionService;
 using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
+using FakeApplicationRestartService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeApplicationRestartService;
 using FakeSystemDataService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeSystemDataService;
 using Avalonia.Controls;
 using ApixPress.App.Models.DTOs;
@@ -22,6 +23,7 @@ public sealed partial class MainWindowViewModelTests
         IRequestCaseService? requestCaseService = null,
         IRequestHistoryService? requestHistoryService = null,
         ISystemDataService? systemDataService = null,
+        IApplicationRestartService? applicationRestartService = null,
         IEnvironmentVariableService? environmentVariableService = null,
         IApiWorkspaceService? apiWorkspaceService = null)
     {
@@ -34,6 +36,7 @@ public sealed partial class MainWindowViewModelTests
             projectWorkspaceService ?? new FakeProjectWorkspaceService(),
             shellSettingsService ?? new FakeAppShellSettingsService(),
             applicationUpdateService ?? new FakeApplicationUpdateService(),
+            applicationRestartService ?? new FakeApplicationRestartService(),
             apiWorkspaceService ?? new FakeApiWorkspaceService(),
             new FakeFilePickerService(),
             new FakeAppNotificationService(),
