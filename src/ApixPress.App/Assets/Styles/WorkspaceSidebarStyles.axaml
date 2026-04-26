@@ -349,6 +349,11 @@
     <Setter Property="MinWidth" Value="160" />
   </Style>
 
+  <Style Selector="Border.WorkspaceTabInlineMenuCard">
+    <Setter Property="HorizontalAlignment" Value="Right" />
+    <Setter Property="Margin" Value="0,6,0,0" />
+  </Style>
+
   <Style Selector="Button.WorkspaceTabMenuItem">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
