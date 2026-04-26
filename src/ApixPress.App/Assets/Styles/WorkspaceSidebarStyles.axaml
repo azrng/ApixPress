@@ -349,9 +349,11 @@
     <Setter Property="MinWidth" Value="160" />
   </Style>
 
-  <Style Selector="Border.WorkspaceTabInlineMenuCard">
+  <Style Selector="Border.WorkspaceTabCompactMenuCard">
     <Setter Property="HorizontalAlignment" Value="Right" />
-    <Setter Property="Margin" Value="0,6,0,0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Padding" Value="3" />
+    <Setter Property="MinWidth" Value="0" />
   </Style>
 
   <Style Selector="Button.WorkspaceTabMenuItem">
@@ -361,6 +363,11 @@
     <Setter Property="HorizontalContentAlignment" Value="Left" />
     <Setter Property="Padding" Value="12,10" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Button.WorkspaceTabCompactMenuItem">
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="MinHeight" Value="28" />
   </Style>
 
   <Style Selector="Button.WorkspaceTabMenuItem:pointerover">

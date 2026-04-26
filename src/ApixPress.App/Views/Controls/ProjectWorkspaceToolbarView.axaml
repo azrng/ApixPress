@@ -7,8 +7,7 @@
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
   <Border Classes="ProjectWorkspaceTopActionBar">
-    <Grid RowDefinitions="Auto,Auto"
-          ColumnDefinitions="*,Auto"
+    <Grid ColumnDefinitions="*,Auto"
           ColumnSpacing="{StaticResource Space.3}">
       <Grid Grid.Column="0"
             ColumnDefinitions="*,Auto"
@@ -41,6 +40,23 @@
               </TabStrip.ItemTemplate>
             </TabStrip>
           </ScrollViewer>
+        </Border>
+
+        <Border Grid.Column="0"
+                Classes="WorkspaceTabMenuCard WorkspaceTabCompactMenuCard"
+                IsVisible="{Binding Workspace.IsWorkspaceTabMenuOpen}">
+          <StackPanel Orientation="Horizontal"
+                      Spacing="{StaticResource Space.1}">
+            <Button Classes="WorkspaceTabMenuItem WorkspaceTabCompactMenuItem"
+                    Content="关闭全部标签页"
+                    Command="{Binding Workspace.CloseAllWorkspaceTabsCommand}" />
+            <Button Classes="WorkspaceTabMenuItem WorkspaceTabCompactMenuItem"
+                    Content="关闭当前标签页"
+                    Command="{Binding Workspace.CloseCurrentWorkspaceFromMenuCommand}" />
+            <Button Classes="WorkspaceTabMenuItem WorkspaceTabCompactMenuItem"
+                    Content="关闭其它标签页"
+                    Command="{Binding Workspace.CloseOtherWorkspaceTabsCommand}" />
+          </StackPanel>
         </Border>
 
         <Grid Grid.Column="1"
@@ -85,23 +101,6 @@
                 Content="☰"
                 Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
       </Grid>
-
-      <Border Grid.Row="1"
-              Grid.Column="0"
-              Classes="WorkspaceTabMenuCard WorkspaceTabInlineMenuCard"
-              IsVisible="{Binding Workspace.IsWorkspaceTabMenuOpen}">
-        <StackPanel Spacing="{StaticResource Space.1}">
-          <Button Classes="WorkspaceTabMenuItem"
-                  Content="关闭全部标签页"
-                  Command="{Binding Workspace.CloseAllWorkspaceTabsCommand}" />
-          <Button Classes="WorkspaceTabMenuItem"
-                  Content="关闭当前标签页"
-                  Command="{Binding Workspace.CloseCurrentWorkspaceFromMenuCommand}" />
-          <Button Classes="WorkspaceTabMenuItem"
-                  Content="关闭其它标签页"
-                  Command="{Binding Workspace.CloseOtherWorkspaceTabsCommand}" />
-        </StackPanel>
-      </Border>
     </Grid>
   </Border>
 </UserControl>
