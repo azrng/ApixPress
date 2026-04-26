@@ -71,6 +71,34 @@ public sealed class RequestConfigTabViewModelTests
     }
 
     [Fact]
+    public void FormFieldsState_ShouldTrackBodyModeAndCollectionChanges()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        Assert.False(viewModel.HasFormFields);
+        Assert.False(viewModel.ShowFormDataEmptyState);
+
+        viewModel.SelectedBodyMode = BodyModes.FormData;
+
+        Assert.False(viewModel.HasFormFields);
+        Assert.True(viewModel.ShowFormDataEmptyState);
+
+        viewModel.AddFormFieldCommand.Execute(null);
+
+        Assert.True(viewModel.HasFormFields);
+        Assert.False(viewModel.ShowFormDataEmptyState);
+
+        viewModel.FormFields.Clear();
+
+        Assert.False(viewModel.HasFormFields);
+        Assert.True(viewModel.ShowFormDataEmptyState);
+
+        viewModel.SelectedBodyMode = BodyModes.RawJson;
+
+        Assert.False(viewModel.ShowFormDataEmptyState);
+    }
+
+    [Fact]
     public void ApplySnapshot_ShouldRestoreParameterEnabledState()
     {
         var viewModel = new RequestConfigTabViewModel();

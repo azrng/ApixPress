@@ -65,6 +65,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
             BodyModeOptions.Add(new BodyModeOptionViewModel { Mode = mode, DisplayName = displayName });
         }
 
+        FormFields.CollectionChanged += (_, _) => OnFormFieldsChanged();
         SelectedBodyModeOption = BodyModeOptions[0];
     }
 
@@ -72,6 +73,10 @@ public partial class RequestConfigTabViewModel : ViewModelBase
 
     public bool IsBodyModeFormData =>
         SelectedBodyMode == BodyModes.FormData || SelectedBodyMode == BodyModes.FormUrlEncoded;
+
+    public bool HasFormFields => FormFields.Count > 0;
+
+    public bool ShowFormDataEmptyState => IsBodyModeFormData && !HasFormFields;
 
     public bool HasRawBodyEditor =>
         SelectedBodyMode is BodyModes.RawJson or BodyModes.RawXml or BodyModes.RawText;
@@ -95,6 +100,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     partial void OnSelectedBodyModeChanged(string value)
     {
         OnPropertyChanged(nameof(IsBodyModeFormData));
+        OnPropertyChanged(nameof(ShowFormDataEmptyState));
         OnPropertyChanged(nameof(HasRawBodyEditor));
         OnPropertyChanged(nameof(HasBodyContent));
         OnPropertyChanged(nameof(RequestBodyWatermark));
@@ -103,6 +109,12 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         var match = BodyModeOptions.FirstOrDefault(o => o.Mode == value);
         if (match is not null && SelectedBodyModeOption != match)
             SelectedBodyModeOption = match;
+    }
+
+    private void OnFormFieldsChanged()
+    {
+        OnPropertyChanged(nameof(HasFormFields));
+        OnPropertyChanged(nameof(ShowFormDataEmptyState));
     }
 
     // --- Commands ---

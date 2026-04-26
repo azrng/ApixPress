@@ -435,6 +435,40 @@
     <Setter Property="Padding" Value="4,6" />
   </Style>
 
+  <Style Selector="Border.FormDataTableSurface">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="MinHeight" Value="128" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="Border.FormDataTableHeader">
+    <Setter Property="Margin" Value="0" />
+    <Setter Property="Padding" Value="8,8" />
+  </Style>
+
+  <Style Selector="Border.FormDataEmptyState">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+    <Setter Property="MinHeight" Value="84" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="Border.FormDataEmptyState TextBlock">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="Button.FormDataAddButton">
+    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="MinHeight" Value="32" />
+  </Style>
+
   <Style Selector="TextBox.HttpTableInput">
     <Setter Property="Padding" Value="6,4" />
   </Style>

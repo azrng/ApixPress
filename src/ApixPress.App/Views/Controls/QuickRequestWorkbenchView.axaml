@@ -70,12 +70,13 @@
           </TabItem>
 
           <TabItem Header="Body">
-            <DockPanel Margin="{StaticResource Pad.3}"
-                       HorizontalAlignment="Stretch">
-              <u:SelectionList DockPanel.Dock="Top"
+            <Grid Margin="{StaticResource Pad.3}"
+                  RowDefinitions="Auto,*"
+                  RowSpacing="{StaticResource Space.3}"
+                  HorizontalAlignment="Stretch">
+              <u:SelectionList Grid.Row="0"
                                ItemsSource="{Binding ConfigTab.BodyModeOptions}"
-                               SelectedItem="{Binding ConfigTab.SelectedBodyModeOption}"
-                               Margin="0,0,0,12">
+                               SelectedItem="{Binding ConfigTab.SelectedBodyModeOption}">
                 <u:SelectionList.ItemsPanel>
                   <ItemsPanelTemplate>
                     <StackPanel Orientation="Horizontal" />
@@ -90,65 +91,89 @@
                 </u:SelectionList.ItemTemplate>
               </u:SelectionList>
 
-              <DockPanel IsVisible="{Binding ConfigTab.IsBodyModeFormData}"
-                         HorizontalAlignment="Stretch">
-                <Border DockPanel.Dock="Top"
-                        Classes="HttpRequestTableHeader">
-                  <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
-                        ColumnSpacing="{StaticResource Space.3}">
-                    <TextBlock Grid.Column="1" Classes="CaptionText" Text="字段名" />
-                    <TextBlock Grid.Column="2" Classes="CaptionText" Text="字段值" />
-                    <TextBlock Grid.Column="3" Classes="CaptionText" Text="类型" />
-                    <TextBlock Grid.Column="4" Classes="CaptionText" Text="说明" />
-                  </Grid>
-                </Border>
-                <Button DockPanel.Dock="Bottom"
-                        Classes="AddButton"
-                        HorizontalAlignment="Left"
-                        Margin="0,8,0,0"
-                        Content="添加字段"
-                        Command="{Binding ConfigTab.AddFormFieldCommand}" />
-                <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                              VerticalScrollBarVisibility="Auto">
-                  <ItemsControl ItemsSource="{Binding ConfigTab.FormFields}"
-                                HorizontalAlignment="Stretch">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
-                        <Border Classes="ParameterRow HttpRequestParameterRow"
-                                HorizontalAlignment="Stretch">
-                          <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
-                                ColumnSpacing="{StaticResource Space.3}">
-                            <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
-                            <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="字段名" />
-                            <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" Watermark="字段值" />
-                            <TextBlock Grid.Column="3" Classes="CaptionText" Text="String" VerticalAlignment="Center" />
-                            <TextBox Grid.Column="4" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" Watermark="说明" />
-                            <u:IconButton Grid.Column="5"
-                                          Classes="Danger"
-                                          Theme="{DynamicResource BorderlessIconButton}"
-                                          Icon="{StaticResource SemiIconDelete}"
-                                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
-                                          CommandParameter="{Binding}" />
-                          </Grid>
-                        </Border>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </ScrollViewer>
-              </DockPanel>
+              <Grid Grid.Row="1"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch">
+                <Grid IsVisible="{Binding ConfigTab.IsBodyModeFormData}"
+                      RowDefinitions="Auto,*"
+                      RowSpacing="{StaticResource Space.2}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch">
+                  <Button Grid.Row="0"
+                          Classes="AddButton FormDataAddButton"
+                          HorizontalAlignment="Right"
+                          Content="添加字段"
+                          Command="{Binding ConfigTab.AddFormFieldCommand}" />
 
-              <Border IsVisible="{Binding ConfigTab.HasRawBodyEditor}"
-                      Classes="RawEditorCard">
-                <TextBox AcceptsReturn="True"
-                         BorderThickness="0"
-                         Background="Transparent"
-                         TextWrapping="Wrap"
-                         VerticalContentAlignment="Top"
-                         Watermark="{Binding ConfigTab.RequestBodyWatermark}"
-                         Text="{Binding ConfigTab.RequestBody}"
-                         FontFamily="{StaticResource Font.Monospace}" />
-              </Border>
-            </DockPanel>
+                  <Border Grid.Row="1"
+                          Classes="FormDataTableSurface">
+                    <Grid RowDefinitions="Auto,*">
+                      <Border Grid.Row="0"
+                              Classes="HttpRequestTableHeader FormDataTableHeader">
+                        <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
+                              ColumnSpacing="{StaticResource Space.3}">
+                          <TextBlock Grid.Column="1" Classes="CaptionText" Text="字段名" />
+                          <TextBlock Grid.Column="2" Classes="CaptionText" Text="字段值" />
+                          <TextBlock Grid.Column="3" Classes="CaptionText" Text="类型" />
+                          <TextBlock Grid.Column="4" Classes="CaptionText" Text="说明" />
+                        </Grid>
+                      </Border>
+
+                      <Grid Grid.Row="1"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch">
+                        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto"
+                                      IsVisible="{Binding ConfigTab.HasFormFields}">
+                          <ItemsControl ItemsSource="{Binding ConfigTab.FormFields}"
+                                        HorizontalAlignment="Stretch">
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
+                                <Border Classes="ParameterRow HttpRequestParameterRow"
+                                        HorizontalAlignment="Stretch">
+                                  <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
+                                        ColumnSpacing="{StaticResource Space.3}">
+                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="字段名" />
+                                    <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" Watermark="字段值" />
+                                    <TextBlock Grid.Column="3" Classes="CaptionText" Text="String" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="4" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" Watermark="说明" />
+                                    <u:IconButton Grid.Column="5"
+                                                  Classes="Danger"
+                                                  Theme="{DynamicResource BorderlessIconButton}"
+                                                  Icon="{StaticResource SemiIconDelete}"
+                                                  Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
+                                                  CommandParameter="{Binding}" />
+                                  </Grid>
+                                </Border>
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                        </ScrollViewer>
+
+                        <Border Classes="FormDataEmptyState"
+                                IsVisible="{Binding ConfigTab.ShowFormDataEmptyState}">
+                          <TextBlock Classes="CaptionText"
+                                     Text="暂无字段" />
+                        </Border>
+                      </Grid>
+                    </Grid>
+                  </Border>
+                </Grid>
+
+                <Border IsVisible="{Binding ConfigTab.HasRawBodyEditor}"
+                        Classes="RawEditorCard">
+                  <TextBox AcceptsReturn="True"
+                           BorderThickness="0"
+                           Background="Transparent"
+                           TextWrapping="Wrap"
+                           VerticalContentAlignment="Top"
+                           Watermark="{Binding ConfigTab.RequestBodyWatermark}"
+                           Text="{Binding ConfigTab.RequestBody}"
+                           FontFamily="{StaticResource Font.Monospace}" />
+                </Border>
+              </Grid>
+            </Grid>
           </TabItem>
 
           <TabItem Header="Headers">
