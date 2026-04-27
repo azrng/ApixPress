@@ -259,9 +259,29 @@
             Classes="PanelCard HttpResponseCard">
       <Grid RowDefinitions="Auto,*"
             RowSpacing="{StaticResource Space.3}">
-        <Grid Grid.Row="0">
-          <TextBlock Classes="SectionTitle"
+        <Grid Grid.Row="0"
+              ColumnDefinitions="Auto,*"
+              ColumnSpacing="{StaticResource Space.3}">
+          <TextBlock Grid.Column="0"
+                     Classes="SectionTitle"
                      Text="返回响应" />
+          <Grid Grid.Column="1"
+                ColumnDefinitions="Auto,Auto,Auto"
+                ColumnSpacing="{StaticResource Space.3}"
+                HorizontalAlignment="Right"
+                IsVisible="{Binding ResponseSection.HasResponse}">
+            <u:Badge Grid.Column="0"
+                     Header="{Binding ResponseSection.StatusText}"
+                     iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
+            <TextBlock Grid.Column="1"
+                       Classes="CaptionText"
+                       VerticalAlignment="Center"
+                       Text="{Binding ResponseSection.DurationText}" />
+            <TextBlock Grid.Column="2"
+                       Classes="CaptionText"
+                       VerticalAlignment="Center"
+                       Text="{Binding ResponseSection.SizeText}" />
+          </Grid>
         </Grid>
 
         <Border Grid.Row="1"
@@ -279,18 +299,8 @@
 
         <Grid Grid.Row="1"
               IsVisible="{Binding ResponseSection.HasResponse}"
-              RowDefinitions="Auto,*"
-              RowSpacing="{StaticResource Space.2}">
-          <Grid ColumnDefinitions="Auto,Auto,Auto,*"
-                ColumnSpacing="{StaticResource Space.3}">
-            <u:Badge Grid.Column="0"
-                     Header="{Binding ResponseSection.StatusText}"
-                     iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
-            <TextBlock Grid.Column="1" Classes="CaptionText" Text="{Binding ResponseSection.DurationText}" />
-            <TextBlock Grid.Column="2" Classes="CaptionText" Text="{Binding ResponseSection.SizeText}" />
-          </Grid>
-
-          <TabControl Grid.Row="1"
+              RowDefinitions="*">
+          <TabControl Grid.Row="0"
                       Classes="ResponseTabs"
                       SelectedIndex="{Binding ResponseSection.SelectedResponseTab}">
             <TabItem Header="Body">
