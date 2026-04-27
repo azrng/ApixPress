@@ -12,14 +12,19 @@ public partial class MainWindowViewModel
             return;
         }
 
+        if (ReferenceEquals(oldValue, newValue))
+        {
+            return;
+        }
+
         if (oldValue is not null)
         {
             oldValue.IsActive = false;
         }
 
-        foreach (var tab in ProjectTabs)
+        if (newValue is not null)
         {
-            tab.IsActive = ReferenceEquals(tab, newValue);
+            newValue.IsActive = true;
         }
 
         NotifyActiveProjectTabBindings();
@@ -45,13 +50,18 @@ public partial class MainWindowViewModel
             return;
         }
 
-        if (ReferenceEquals(tab, ActiveProjectTab) && !string.IsNullOrWhiteSpace(tab.StatusMessage))
+        if (!ReferenceEquals(tab, ActiveProjectTab))
         {
-            StatusMessage = tab.StatusMessage;
-            NotifyActiveProjectTabBindings();
+            return;
         }
 
-        NotifyShellState();
+        if (!string.IsNullOrWhiteSpace(tab.StatusMessage))
+        {
+            StatusMessage = tab.StatusMessage;
+        }
+
+        NotifyActiveProjectTabBindings();
+        NotifyActiveProjectShellState();
     }
 
     private void OnProjectPanelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -85,6 +95,18 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(IsWorkspaceMode));
         OnPropertyChanged(nameof(ShowProjectListEmptyState));
         OnPropertyChanged(nameof(ShowProjectSearchEmptyState));
+        NotifyActiveProjectShellState();
+        OnPropertyChanged(nameof(BrowserStatusText));
+        OnPropertyChanged(nameof(WindowMaximizeGlyph));
+    }
+
+    private void NotifyActiveProjectShellState()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
         OnPropertyChanged(nameof(HasEnvironmentContext));
         OnPropertyChanged(nameof(ShowQuickRequestSaveDialog));
         OnPropertyChanged(nameof(ShowProjectImportDialog));
@@ -93,8 +115,6 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(CurrentProjectName));
         OnPropertyChanged(nameof(CurrentProjectSummary));
         OnPropertyChanged(nameof(CurrentEnvironmentLabel));
-        OnPropertyChanged(nameof(BrowserStatusText));
-        OnPropertyChanged(nameof(WindowMaximizeGlyph));
     }
 
     private static ObservableCollection<NotificationItemViewModel> CreateNotifications()

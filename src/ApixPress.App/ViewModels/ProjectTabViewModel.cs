@@ -155,7 +155,6 @@ public partial class ProjectTabViewModel : ViewModelBase
         }
 
         Summary.NotifyStateChanged();
-        OnPropertyChanged(nameof(VisibleWorkspaceTabs));
         ShellStateChanged?.Invoke(this);
     }
 

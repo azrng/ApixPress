@@ -50,7 +50,6 @@ public partial class MainWindowViewModel
         ActiveProjectTab = null;
         IsEnvironmentManagerOpen = false;
         StatusMessage = BrowserStatusText;
-        NotifyShellState();
     }
 
     [RelayCommand]
@@ -63,7 +62,6 @@ public partial class MainWindowViewModel
 
         ActivateProjectTabCore(tab);
         StatusMessage = tab.StatusMessage;
-        NotifyShellState();
     }
 
     [RelayCommand]

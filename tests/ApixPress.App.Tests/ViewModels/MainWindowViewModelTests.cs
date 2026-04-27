@@ -4,6 +4,7 @@ using ApixPress.App.ViewModels;
 using Azrng.Core.Results;
 using FakeApplicationRestartService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeApplicationRestartService;
 using FakeSystemDataService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeSystemDataService;
+using System.ComponentModel;
 
 namespace ApixPress.App.Tests.ViewModels;
 
@@ -161,6 +162,94 @@ public sealed partial class MainWindowViewModelTests
         await openTask;
 
         Assert.Equal("已打开项目：订单项目", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task ActivateProjectTabCommand_ShouldNotifyMainWindowShellBindingsOnlyOncePerSwitch()
+    {
+        var projectService = new FakeProjectWorkspaceService();
+        projectService.SeedProjects(
+        [
+            new("project-1", "订单项目", "订单接口", true),
+            new("project-2", "用户项目", "用户接口", false)
+        ]);
+        var viewModel = CreateViewModel(projectService);
+        await viewModel.InitializeAsync();
+
+        await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(viewModel.ProjectPanel.Projects[0]);
+        var firstTab = Assert.Single(viewModel.ProjectTabs);
+
+        await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(viewModel.ProjectPanel.Projects[1]);
+        var secondTab = Assert.Single(viewModel.ProjectTabs, tab => tab.ProjectId == "project-2");
+
+        var propertyChangeCount = 0;
+        void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(MainWindowViewModel.CurrentProjectName))
+            {
+                propertyChangeCount++;
+            }
+        }
+
+        viewModel.PropertyChanged += OnPropertyChanged;
+        try
+        {
+            viewModel.ActivateProjectTabCommand.Execute(firstTab);
+        }
+        finally
+        {
+            viewModel.PropertyChanged -= OnPropertyChanged;
+        }
+
+        Assert.Same(firstTab, viewModel.ActiveProjectTab);
+        Assert.False(secondTab.IsActive);
+        Assert.True(firstTab.IsActive);
+        Assert.Equal(1, propertyChangeCount);
+    }
+
+    [Fact]
+    public async Task InactiveProjectTabStateChange_ShouldNotRefreshMainWindowShellState()
+    {
+        var projectService = new FakeProjectWorkspaceService();
+        projectService.SeedProjects(
+        [
+            new("project-1", "订单项目", "订单接口", true),
+            new("project-2", "用户项目", "用户接口", false)
+        ]);
+        var viewModel = CreateViewModel(projectService);
+        await viewModel.InitializeAsync();
+
+        await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(viewModel.ProjectPanel.Projects[0]);
+        var firstTab = Assert.Single(viewModel.ProjectTabs);
+
+        await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(viewModel.ProjectPanel.Projects[1]);
+        var secondTab = Assert.Single(viewModel.ProjectTabs, tab => tab.ProjectId == "project-2");
+
+        viewModel.ActivateProjectTabCommand.Execute(firstTab);
+        var statusBefore = viewModel.StatusMessage;
+        var propertyChanges = new List<string>();
+        void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(e.PropertyName))
+            {
+                propertyChanges.Add(e.PropertyName!);
+            }
+        }
+
+        viewModel.PropertyChanged += OnPropertyChanged;
+        try
+        {
+            secondTab.Workspace.ToggleWorkspaceTabMenuCommand.Execute(null);
+        }
+        finally
+        {
+            viewModel.PropertyChanged -= OnPropertyChanged;
+        }
+
+        Assert.True(secondTab.Workspace.IsWorkspaceTabMenuOpen);
+        Assert.Same(firstTab, viewModel.ActiveProjectTab);
+        Assert.Equal(statusBefore, viewModel.StatusMessage);
+        Assert.Empty(propertyChanges);
     }
 
     [Fact]
