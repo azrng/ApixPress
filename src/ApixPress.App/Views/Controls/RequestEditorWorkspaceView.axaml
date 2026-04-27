@@ -141,12 +141,9 @@
       </Grid>
     </Grid>
 
-    <Grid Grid.Row="2"
+    <Grid x:Name="EditorContentHost"
+          Grid.Row="2"
           MinHeight="0"
-          ClipToBounds="True">
-      <views:QuickRequestWorkbenchView />
-      <views:HttpInterfaceWorkbenchView />
-      <views:HttpDocumentWorkspaceView />
-    </Grid>
+          ClipToBounds="True" />
   </Grid>
 </UserControl>
