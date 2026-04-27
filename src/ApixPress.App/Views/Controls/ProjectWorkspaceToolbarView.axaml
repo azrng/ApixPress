@@ -77,23 +77,6 @@
           </ScrollViewer>
         </Border>
 
-        <Border Grid.Column="0"
-                Classes="WorkspaceTabMenuCard WorkspaceTabCompactMenuCard"
-                IsVisible="{Binding Workspace.IsWorkspaceTabMenuOpen}">
-          <StackPanel Orientation="Horizontal"
-                      Spacing="{StaticResource Space.1}">
-            <Button Classes="WorkspaceTabMenuItem WorkspaceTabCompactMenuItem"
-                    Content="关闭全部标签页"
-                    Command="{Binding Workspace.CloseAllWorkspaceTabsCommand}" />
-            <Button Classes="WorkspaceTabMenuItem WorkspaceTabCompactMenuItem"
-                    Content="关闭当前标签页"
-                    Command="{Binding Workspace.CloseCurrentWorkspaceFromMenuCommand}" />
-            <Button Classes="WorkspaceTabMenuItem WorkspaceTabCompactMenuItem"
-                    Content="关闭其它标签页"
-                    Command="{Binding Workspace.CloseOtherWorkspaceTabsCommand}" />
-          </StackPanel>
-        </Border>
-
         <Grid Grid.Column="1"
               Width="72"
               Height="26"
@@ -107,7 +90,32 @@
             <Button x:Name="WorkspaceTabMenuButton"
                     Classes="ProjectWorkspaceInnerTabMoreButton"
                     Content="..."
-                    Command="{Binding Workspace.ToggleWorkspaceTabMenuCommand}" />
+                    Click="OnWorkspaceTabMenuButtonClick">
+              <Button.ContextMenu>
+                <ContextMenu x:Name="WorkspaceTabMoreContextMenu"
+                             Classes="WorkspaceTabContextMenu"
+                             DataContext="{Binding}"
+                             Opened="OnWorkspaceTabMoreContextMenuOpened"
+                             Closed="OnWorkspaceTabMoreContextMenuClosed">
+                  <MenuItem Classes="WorkspaceTabContextMenuItem"
+                            Header="关闭当前标签页"
+                            IsEnabled="{Binding ActiveWorkspaceTab.CanCloseFromTab}"
+                            Command="{Binding Workspace.CloseCurrentWorkspaceFromMenuCommand}">
+                    <MenuItem.Icon>
+                      <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                                 Text="&#xE711;" />
+                    </MenuItem.Icon>
+                    <MenuItem.InputGesture>Ctrl+W</MenuItem.InputGesture>
+                  </MenuItem>
+                  <MenuItem Classes="WorkspaceTabContextMenuItem"
+                            Header="关闭其它标签页"
+                            Command="{Binding Workspace.CloseOtherWorkspaceTabsCommand}" />
+                  <MenuItem Classes="WorkspaceTabContextMenuItem"
+                            Header="关闭全部标签页"
+                            Command="{Binding Workspace.CloseAllWorkspaceTabsCommand}" />
+                </ContextMenu>
+              </Button.ContextMenu>
+            </Button>
           </StackPanel>
         </Grid>
       </Grid>
