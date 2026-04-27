@@ -29,8 +29,15 @@ public sealed class SqliteConnectionFactory : IDbConnectionFactory, ISingletonDe
         if (rawConnectionString.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
         {
             var relativePath = rawConnectionString[prefix.Length..].Trim();
-            var fullPath = WorkspacePaths.ResolveFromBaseDirectory(relativePath);
+            var isDefaultEmbeddedDatabasePath = IsDefaultEmbeddedDatabasePath(relativePath);
+            var fullPath = isDefaultEmbeddedDatabasePath
+                ? AppStoragePaths.ResolveDatabasePath(null)
+                : WorkspacePaths.ResolveFromBaseDirectory(relativePath);
             EnsureDirectory(fullPath);
+            if (isDefaultEmbeddedDatabasePath)
+            {
+                CopyLegacyDefaultDatabaseIfNeeded(fullPath);
+            }
 
             _connectionString = $"{prefix}{fullPath};Foreign Keys=True";
         }
@@ -54,5 +61,28 @@ public sealed class SqliteConnectionFactory : IDbConnectionFactory, ISingletonDe
         {
             Directory.CreateDirectory(directory);
         }
+    }
+
+    private static bool IsDefaultEmbeddedDatabasePath(string path)
+    {
+        var normalizedPath = path.Replace('\\', '/').TrimStart('/');
+        return string.Equals(normalizedPath, "data/ApixPress.db", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void CopyLegacyDefaultDatabaseIfNeeded(string databasePath)
+    {
+        if (File.Exists(databasePath))
+        {
+            return;
+        }
+
+        var legacyDatabasePath = WorkspacePaths.ResolveFromBaseDirectory(Path.Combine("data", AppStoragePaths.DatabaseFileName));
+        if (string.Equals(legacyDatabasePath, databasePath, StringComparison.OrdinalIgnoreCase)
+            || !File.Exists(legacyDatabasePath))
+        {
+            return;
+        }
+
+        File.Copy(legacyDatabasePath, databasePath);
     }
 }

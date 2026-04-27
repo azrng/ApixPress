@@ -76,7 +76,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     {
         StorageSection => "设置数据库保存目录，并管理本地系统数据。",
         AboutSection => "查看版本信息和更新状态。",
-        _ => "设置会自动保存到本地工作目录，并在后续请求中生效。"
+        _ => "设置会自动保存到用户数据目录，并在后续请求中生效。"
     };
 
     public string CheckForUpdatesButtonText => IsCheckingForUpdates ? "检查中..." : "检查更新";
@@ -115,7 +115,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     private bool enableUpdateReminder = true;
 
     [ObservableProperty]
-    private string generalSettingsSaveStatus = "设置会自动保存到本地工作目录。";
+    private string generalSettingsSaveStatus = "设置会自动保存到用户数据目录。";
 
     [ObservableProperty]
     private string storageDirectoryPath = string.Empty;
@@ -484,7 +484,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
             EnableVerboseLogging = settings.EnableVerboseLogging;
             EnableUpdateReminder = settings.EnableUpdateReminder;
             GeneralSettingsSaveStatus = result.IsSuccess
-                ? "设置会自动保存到本地工作目录。"
+                ? "设置会自动保存到用户数据目录。"
                 : "设置读取失败，已回退默认值。";
             StorageSettingsSaveStatus = result.IsSuccess
                 ? "数据库目录修改后将在下次启动时生效。"

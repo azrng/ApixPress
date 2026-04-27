@@ -43,14 +43,15 @@ public sealed class AppShellSettingsService : IAppShellSettingsService, ISinglet
                 }
             }
 
-            if (!File.Exists(_settingsFilePath))
+            var readableSettingsFilePath = ResolveReadableSettingsFilePath(_settingsFilePath);
+            if (string.IsNullOrWhiteSpace(readableSettingsFilePath))
             {
                 var emptySettings = new AppShellSettingsDto();
                 CacheSettings(emptySettings);
                 return ResultModel<AppShellSettingsDto>.Success(CloneSettings(emptySettings));
             }
 
-            var json = await File.ReadAllTextAsync(_settingsFilePath, Encoding.UTF8, cancellationToken);
+            var json = await File.ReadAllTextAsync(readableSettingsFilePath, Encoding.UTF8, cancellationToken);
             if (string.IsNullOrWhiteSpace(json))
             {
                 var emptySettings = new AppShellSettingsDto();
@@ -103,19 +104,20 @@ public sealed class AppShellSettingsService : IAppShellSettingsService, ISinglet
 
     public static string ResolveDefaultSettingsFilePath()
     {
-        return WorkspacePaths.ResolveFromBaseDirectory(Path.Combine("Data", "app-shell-settings.json"));
+        return Path.Combine(AppStoragePaths.DefaultApplicationDataDirectory, "app-shell-settings.json");
     }
 
     public static AppShellSettingsDto LoadFromFileOrDefault(string settingsFilePath)
     {
         try
         {
-            if (!File.Exists(settingsFilePath))
+            var readableSettingsFilePath = ResolveReadableSettingsFilePath(settingsFilePath);
+            if (string.IsNullOrWhiteSpace(readableSettingsFilePath))
             {
                 return new AppShellSettingsDto();
             }
 
-            var json = File.ReadAllText(settingsFilePath, Encoding.UTF8);
+            var json = File.ReadAllText(readableSettingsFilePath, Encoding.UTF8);
             return string.IsNullOrWhiteSpace(json)
                 ? new AppShellSettingsDto()
                 : JsonSerializer.Deserialize<AppShellSettingsDto>(json, SerializerOptions) ?? new AppShellSettingsDto();
@@ -124,6 +126,23 @@ public sealed class AppShellSettingsService : IAppShellSettingsService, ISinglet
         {
             return new AppShellSettingsDto();
         }
+    }
+
+    private static string? ResolveReadableSettingsFilePath(string settingsFilePath)
+    {
+        if (File.Exists(settingsFilePath))
+        {
+            return settingsFilePath;
+        }
+
+        var defaultSettingsFilePath = ResolveDefaultSettingsFilePath();
+        if (!string.Equals(Path.GetFullPath(settingsFilePath), Path.GetFullPath(defaultSettingsFilePath), StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var legacySettingsFilePath = WorkspacePaths.ResolveFromBaseDirectory(Path.Combine("Data", "app-shell-settings.json"));
+        return File.Exists(legacySettingsFilePath) ? legacySettingsFilePath : null;
     }
 
     private void CacheSettings(AppShellSettingsDto settings)

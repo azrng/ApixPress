@@ -137,7 +137,7 @@ API 协作平台需求文档
 
   • 本地存储方案：sqlite + 本地备份
 
-  • 设置中心提供“存储”分组，可选择数据库存储目录；目录设置保存到 `Data/app-shell-settings.json`，数据库文件名固定为 `ApixPress.db`，重启后生效。
+  • 设置中心提供“存储”分组，可选择数据库存储目录；默认数据库目录位于用户本地应用数据目录（Windows 下为 `%LOCALAPPDATA%\ApixPress\data`），目录设置保存到用户数据目录下的 `app-shell-settings.json`，数据库文件名固定为 `ApixPress.db`，重启后生效。
 
   • 设置中心支持一键清空系统数据，执行前会弹出二次确认；该操作会删除所有项目、接口、用例、环境配置和请求历史记录。
 
