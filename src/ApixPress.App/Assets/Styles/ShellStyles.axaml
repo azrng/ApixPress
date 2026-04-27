@@ -226,7 +226,15 @@
 
   <Style Selector="Border.AppIconBadge">
     <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="6" />
+  </Style>
+
+  <Style Selector="Image.AppLogoImage">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
   </Style>
 
   <Style Selector="Border.StatusStrip">
