@@ -39,7 +39,12 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
     public async Task<RequestCaseDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
     {
         var entity = await _requestCaseRepository.GetByIdAsync(projectId, id, cancellationToken);
-        return entity is null ? null : ToDto(entity);
+        if (entity is null)
+        {
+            return null;
+        }
+
+        return await Task.Run(() => ToDto(entity), cancellationToken);
     }
 
     public async Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)

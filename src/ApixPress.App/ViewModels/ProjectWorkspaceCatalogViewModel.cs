@@ -525,6 +525,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     {
         try
         {
+            await Task.Yield();
             var detail = await EnsureCaseDetailLoadedAsync(item);
             if (string.Equals(detail.Id, source.Id, StringComparison.OrdinalIgnoreCase)
                 && IsTabStillEditingSource(targetTab, source))

@@ -861,8 +861,8 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Equal(0, requestCaseService.GetDetailCallCount);
 
         await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+        await WaitUntilAsync(() => requestCaseService.GetDetailCallCount == 1);
 
-        Assert.Equal(1, requestCaseService.GetDetailCallCount);
         Assert.Equal(BodyModes.RawJson, viewModel.ActiveWorkspaceTab!.ConfigTab.SelectedBodyMode);
         Assert.Equal("{\"customerId\":1,\"amount\":128}", viewModel.ActiveWorkspaceTab.ConfigTab.RequestBody);
     }
