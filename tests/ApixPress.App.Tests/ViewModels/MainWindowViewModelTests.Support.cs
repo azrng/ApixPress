@@ -26,7 +26,8 @@ public sealed partial class MainWindowViewModelTests
         ISystemDataService? systemDataService = null,
         IApplicationRestartService? applicationRestartService = null,
         IEnvironmentVariableService? environmentVariableService = null,
-        IApiWorkspaceService? apiWorkspaceService = null)
+        IApiWorkspaceService? apiWorkspaceService = null,
+        FakeAppNotificationService? appNotificationService = null)
     {
         return new MainWindowViewModel(
             new FakeRequestExecutionService(),
@@ -40,7 +41,7 @@ public sealed partial class MainWindowViewModelTests
             applicationRestartService ?? new FakeApplicationRestartService(),
             apiWorkspaceService ?? new FakeApiWorkspaceService(),
             new FakeFilePickerService(),
-            new FakeAppNotificationService(),
+            appNotificationService ?? new FakeAppNotificationService(),
             new FakeProjectDataExportService(),
             new FakeWindowHostService());
     }
@@ -141,7 +142,10 @@ public sealed partial class MainWindowViewModelTests
 
     private sealed class FakeAppShellSettingsService : IAppShellSettingsService
     {
-        public AppShellSettingsDto CurrentSettings { get; set; } = new();
+        public AppShellSettingsDto CurrentSettings { get; set; } = new()
+        {
+            EnableUpdateReminder = false
+        };
 
         public Task<IResultModel<AppShellSettingsDto>> LoadAsync(CancellationToken cancellationToken)
         {

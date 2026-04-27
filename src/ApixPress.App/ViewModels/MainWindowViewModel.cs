@@ -104,6 +104,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IRequestCaseService _requestCaseService;
     private readonly IRequestExecutionService _requestExecutionService;
     private readonly IRequestHistoryService _requestHistoryService;
+    private readonly IApplicationUpdateService _applicationUpdateService;
     private readonly IApiWorkspaceService _apiWorkspaceService;
     private readonly IFilePickerService _filePickerService;
     private readonly IAppNotificationService _appNotificationService;
@@ -135,6 +136,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _requestCaseService = requestCaseService;
         _requestHistoryService = requestHistoryService;
         _environmentVariableService = environmentVariableService;
+        _applicationUpdateService = applicationUpdateService;
         _apiWorkspaceService = apiWorkspaceService;
         _filePickerService = filePickerService;
         _appNotificationService = appNotificationService;

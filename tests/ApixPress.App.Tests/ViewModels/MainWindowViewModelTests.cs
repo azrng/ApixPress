@@ -2,6 +2,7 @@ using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
 using Azrng.Core.Results;
+using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeAppNotificationService;
 using FakeApplicationRestartService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeApplicationRestartService;
 using FakeSystemDataService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeSystemDataService;
 using System.ComponentModel;
@@ -297,6 +298,78 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(1, updateService.CheckCalls);
         Assert.Equal(1, updateService.StartCalls);
         Assert.Equal("1.1.0.0", viewModel.SettingsCenter.LatestAvailableVersion);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_ShouldNotifyWhenUpdateReminderEnabledAndNewVersionDetected()
+    {
+        var shellSettingsService = new FakeAppShellSettingsService
+        {
+            CurrentSettings = new AppShellSettingsDto
+            {
+                EnableUpdateReminder = true
+            }
+        };
+        var updateService = new FakeApplicationUpdateService
+        {
+            CheckResult = new AppUpdateCheckResultDto
+            {
+                CurrentVersion = "1.0.0.0",
+                LatestVersion = "1.2.0.0",
+                HasUpdate = true
+            }
+        };
+        var notificationService = new FakeAppNotificationService();
+        var viewModel = CreateViewModel(
+            shellSettingsService: shellSettingsService,
+            applicationUpdateService: updateService,
+            appNotificationService: notificationService);
+
+        await viewModel.InitializeAsync();
+
+        Assert.True(SpinWait.SpinUntil(() => notificationService.Notifications.Count == 1, TimeSpan.FromSeconds(1)));
+        Assert.Equal(1, updateService.CheckCalls);
+        var toast = Assert.Single(notificationService.Notifications);
+        Assert.Equal("发现新版本", toast.Title);
+        Assert.Contains("1.2.0.0", toast.Content);
+
+        var notification = viewModel.ShellPanels.Notifications[0];
+        Assert.True(notification.IsUnread);
+        Assert.Equal("发现新版本", notification.Title);
+        Assert.Contains("1.2.0.0", notification.Message);
+        Assert.True(viewModel.ShellPanels.HasUnreadNotifications);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_ShouldSkipStartupUpdateCheckWhenReminderDisabled()
+    {
+        var shellSettingsService = new FakeAppShellSettingsService
+        {
+            CurrentSettings = new AppShellSettingsDto
+            {
+                EnableUpdateReminder = false
+            }
+        };
+        var updateService = new FakeApplicationUpdateService
+        {
+            CheckResult = new AppUpdateCheckResultDto
+            {
+                CurrentVersion = "1.0.0.0",
+                LatestVersion = "1.2.0.0",
+                HasUpdate = true
+            }
+        };
+        var notificationService = new FakeAppNotificationService();
+        var viewModel = CreateViewModel(
+            shellSettingsService: shellSettingsService,
+            applicationUpdateService: updateService,
+            appNotificationService: notificationService);
+
+        await viewModel.InitializeAsync();
+
+        Assert.Equal(0, updateService.CheckCalls);
+        Assert.Empty(notificationService.Notifications);
+        Assert.DoesNotContain(viewModel.ShellPanels.Notifications, item => item.Title == "发现新版本");
     }
 
     [Fact]
