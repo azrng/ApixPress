@@ -61,11 +61,10 @@
                             Tag="{Binding IsActive}">
                       <Grid ColumnDefinitions="*,Auto"
                             ColumnSpacing="{StaticResource Space.2}">
-                        <ToggleButton Grid.Column="0"
-                                      Classes="WorkspaceTabButton"
-                                      Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActivateProjectTabCommand}"
-                                      CommandParameter="{Binding}"
-                                      IsChecked="{Binding IsActive, Mode=OneWay}">
+                        <Button Grid.Column="0"
+                                Classes="WorkspaceTabButton"
+                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActivateProjectTabCommand}"
+                                CommandParameter="{Binding}">
                           <StackPanel Orientation="Horizontal"
                                       Spacing="{StaticResource Space.2}">
                             <TextBlock Text="{Binding Summary.TabTitle}" />
@@ -73,7 +72,7 @@
                                      IsVisible="{Binding Project.IsDefault}"
                                      iri:ClassHelper.Classes="Light Primary" />
                           </StackPanel>
-                        </ToggleButton>
+                        </Button>
                         <Button Grid.Column="1"
                                 Classes="WorkspaceTabCloseButton"
                                 Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CloseProjectTabCommand}"
