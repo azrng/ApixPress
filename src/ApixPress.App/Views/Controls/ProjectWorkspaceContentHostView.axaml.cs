@@ -24,9 +24,15 @@ public partial class ProjectWorkspaceContentHostView : UserControl
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         UnsubscribeShell();
-        ClearCachedViews();
 
         _viewModel = DataContext as ProjectTabViewModel;
+        if (_viewModel is null)
+        {
+            ClearCachedViews();
+            return;
+        }
+
+        UpdateCachedViewDataContexts();
         SubscribeShell();
         UpdateHostedContent();
     }
@@ -129,6 +135,34 @@ public partial class ProjectWorkspaceContentHostView : UserControl
         _requestEditorView = null;
         _requestHistoryView = null;
         _projectSettingsView = null;
+    }
+
+    private void UpdateCachedViewDataContexts()
+    {
+        if (_sidebarView is not null)
+        {
+            _sidebarView.DataContext = _viewModel;
+        }
+
+        if (_landingView is not null)
+        {
+            _landingView.DataContext = _viewModel;
+        }
+
+        if (_requestEditorView is not null)
+        {
+            _requestEditorView.DataContext = _viewModel;
+        }
+
+        if (_requestHistoryView is not null)
+        {
+            _requestHistoryView.DataContext = _viewModel;
+        }
+
+        if (_projectSettingsView is not null)
+        {
+            _projectSettingsView.DataContext = _viewModel;
+        }
     }
 
     private ProjectWorkspaceSidebarView EnsureSidebarView()

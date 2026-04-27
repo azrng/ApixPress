@@ -23,9 +23,15 @@ public partial class HttpInterfaceWorkbenchView : UserControl
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         Unsubscribe();
-        ClearCachedViews();
 
         _viewModel = DataContext as ProjectTabViewModel;
+        if (_viewModel is null)
+        {
+            ClearCachedViews();
+            return;
+        }
+
+        UpdateCachedViewDataContexts();
         Subscribe();
         UpdateHostedContent();
     }
@@ -120,6 +126,24 @@ public partial class HttpInterfaceWorkbenchView : UserControl
         _paramsTabView = null;
         _bodyTabView = null;
         _headersTabView = null;
+    }
+
+    private void UpdateCachedViewDataContexts()
+    {
+        if (_paramsTabView is not null)
+        {
+            _paramsTabView.DataContext = _viewModel;
+        }
+
+        if (_bodyTabView is not null)
+        {
+            _bodyTabView.DataContext = _viewModel;
+        }
+
+        if (_headersTabView is not null)
+        {
+            _headersTabView.DataContext = _viewModel;
+        }
     }
 
     private HttpInterfaceParamsTabView EnsureParamsTabView()

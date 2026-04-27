@@ -22,9 +22,15 @@ public partial class RequestEditorWorkspaceView : UserControl
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         UnsubscribeEditor();
-        ClearCachedViews();
 
         _viewModel = DataContext as ProjectTabViewModel;
+        if (_viewModel is null)
+        {
+            ClearCachedViews();
+            return;
+        }
+
+        UpdateCachedViewDataContexts();
         SubscribeEditor();
         UpdateHostedContent();
     }
@@ -97,6 +103,24 @@ public partial class RequestEditorWorkspaceView : UserControl
         _quickRequestWorkbenchView = null;
         _httpInterfaceWorkbenchView = null;
         _httpDocumentWorkspaceView = null;
+    }
+
+    private void UpdateCachedViewDataContexts()
+    {
+        if (_quickRequestWorkbenchView is not null)
+        {
+            _quickRequestWorkbenchView.DataContext = _viewModel;
+        }
+
+        if (_httpInterfaceWorkbenchView is not null)
+        {
+            _httpInterfaceWorkbenchView.DataContext = _viewModel;
+        }
+
+        if (_httpDocumentWorkspaceView is not null)
+        {
+            _httpDocumentWorkspaceView.DataContext = _viewModel;
+        }
     }
 
     private QuickRequestWorkbenchView EnsureQuickRequestWorkbenchView()
