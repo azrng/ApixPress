@@ -14,7 +14,8 @@ public partial class MainWindowViewModel
             _environmentVariableService,
             _apiWorkspaceService,
             _filePickerService,
-            _appNotificationService);
+            _appNotificationService,
+            _projectDataExportService);
         tab.ShellStateChanged += OnProjectTabShellStateChanged;
         return tab;
     }

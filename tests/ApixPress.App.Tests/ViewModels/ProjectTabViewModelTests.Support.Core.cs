@@ -1,6 +1,7 @@
 using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeAppNotificationService;
 using FakeEnvironmentVariableService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeEnvironmentVariableService;
 using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeFilePickerService;
+using FakeProjectDataExportService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectDataExportService;
 using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
 using FakeRequestExecutionService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestExecutionService;
 using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
@@ -18,7 +19,9 @@ public sealed partial class ProjectTabViewModelTests
         FakeApiWorkspaceService apiWorkspaceService,
         FakeRequestCaseService? requestCaseService = null,
         FakeRequestHistoryService? requestHistoryService = null,
-        FakeAppNotificationService? appNotificationService = null)
+        FakeAppNotificationService? appNotificationService = null,
+        FakeFilePickerService? filePickerService = null,
+        FakeProjectDataExportService? projectDataExportService = null)
     {
         return new ProjectTabViewModel(
             new ProjectWorkspaceItemViewModel
@@ -32,8 +35,9 @@ public sealed partial class ProjectTabViewModelTests
             requestHistoryService ?? new FakeRequestHistoryService(),
             new FakeEnvironmentVariableService(),
             apiWorkspaceService,
-            new FakeFilePickerService(),
-            appNotificationService ?? new FakeAppNotificationService());
+            filePickerService ?? new FakeFilePickerService(),
+            appNotificationService ?? new FakeAppNotificationService(),
+            projectDataExportService ?? new FakeProjectDataExportService());
     }
 
     private static IEnumerable<string> FlattenExplorerTitles(IEnumerable<ExplorerItemViewModel> items)

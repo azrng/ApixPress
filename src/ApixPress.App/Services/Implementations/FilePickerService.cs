@@ -37,6 +37,32 @@ public sealed class FilePickerService : IFilePickerService, ITransientDependency
         return files.FirstOrDefault() is { } file ? file.TryGetLocalPath() : null;
     }
 
+    public async Task<string?> SaveProjectDataExportFileAsync(string suggestedFileName, CancellationToken cancellationToken)
+    {
+        if (_windowHostService.MainWindow is null)
+        {
+            return null;
+        }
+
+        var file = await _windowHostService.MainWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "导出项目数据包",
+            SuggestedFileName = suggestedFileName,
+            ShowOverwritePrompt = true,
+            DefaultExtension = "apixpkg.json",
+            FileTypeChoices =
+            [
+                new FilePickerFileType("ApixPress 项目数据包")
+                {
+                    Patterns = ["*.apixpkg.json"]
+                }
+            ]
+        });
+
+        cancellationToken.ThrowIfCancellationRequested();
+        return file?.TryGetLocalPath();
+    }
+
     public async Task<string?> PickStorageDirectoryAsync(CancellationToken cancellationToken)
     {
         if (_windowHostService.MainWindow is null)

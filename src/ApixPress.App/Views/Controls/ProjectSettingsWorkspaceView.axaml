@@ -173,6 +173,37 @@
                       </StackPanel>
                     </Grid>
                   </Button>
+
+                  <Border Classes="ProjectSettingsSectionDivider" />
+                  <StackPanel Spacing="2">
+                    <TextBlock Classes="SectionTitle"
+                               Text="{Binding Summary.ProjectSettingsExportCardTitle}" />
+                    <TextBlock Classes="CaptionText"
+                               Text="{Binding Summary.ProjectSettingsExportCardDescription}" />
+                  </StackPanel>
+                  <Button Classes="ProjectImportCatalogButton"
+                          Command="{Binding Import.ExportProjectDataCommand}">
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="{StaticResource Space.3}">
+                      <Border Width="42"
+                              Height="42"
+                              Classes="ProjectImportFormatIcon">
+                        <TextBlock HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="{StaticResource Font.Size.BodyLarge}"
+                                   FontWeight="Bold"
+                                   Text="E" />
+                      </Border>
+                      <StackPanel Grid.Column="1"
+                                  Spacing="2"
+                                  VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Summary.ProjectSettingsExportFormatName}"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="{Binding Summary.ProjectSettingsExportFormatDescription}" />
+                      </StackPanel>
+                    </Grid>
+                  </Button>
                 </StackPanel>
               </Border>
             </StackPanel>

@@ -44,6 +44,10 @@ public class ProjectTabSummaryViewModel : ViewModelBase
     public string ProjectSettingsImportCardDescription => ProjectSettingsTexts.ImportCardDescription;
     public string ProjectSettingsImportFormatName => ProjectSettingsTexts.ImportFormatName;
     public string ProjectSettingsImportFormatDescription => ProjectSettingsTexts.ImportFormatDescription;
+    public string ProjectSettingsExportCardTitle => ProjectSettingsTexts.ExportCardTitle;
+    public string ProjectSettingsExportCardDescription => ProjectSettingsTexts.ExportCardDescription;
+    public string ProjectSettingsExportFormatName => ProjectSettingsTexts.ExportFormatName;
+    public string ProjectSettingsExportFormatDescription => ProjectSettingsTexts.ExportFormatDescription;
 
     public string TabTitle => _getProject().Name;
     public string ProjectSummary => string.IsNullOrWhiteSpace(_getProject().Description) ? "暂无项目备注" : _getProject().Description;

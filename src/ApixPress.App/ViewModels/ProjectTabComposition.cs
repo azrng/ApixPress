@@ -19,6 +19,7 @@ internal sealed class ProjectTabComposition : DisposableObject
         private readonly IApiWorkspaceService _apiWorkspaceService;
         private readonly IFilePickerService _filePickerService;
         private readonly IAppNotificationService _appNotificationService;
+        private readonly IProjectDataExportService _projectDataExportService;
         private readonly ProjectTabHostContext _hostContext;
 
         private ProjectImportViewModel? _importViewModel;
@@ -37,6 +38,7 @@ internal sealed class ProjectTabComposition : DisposableObject
             IApiWorkspaceService apiWorkspaceService,
             IFilePickerService filePickerService,
             IAppNotificationService appNotificationService,
+            IProjectDataExportService projectDataExportService,
             ProjectTabHostContext hostContext)
         {
             _project = project;
@@ -48,6 +50,7 @@ internal sealed class ProjectTabComposition : DisposableObject
             _apiWorkspaceService = apiWorkspaceService;
             _filePickerService = filePickerService;
             _appNotificationService = appNotificationService;
+            _projectDataExportService = projectDataExportService;
             _hostContext = hostContext;
         }
 
@@ -161,6 +164,8 @@ internal sealed class ProjectTabComposition : DisposableObject
                 _apiWorkspaceService,
                 _filePickerService,
                 _appNotificationService,
+                _projectDataExportService,
+                () => _project,
                 catalog.SyncImportedInterfacesAsync,
                 _hostContext.SetStatusMessage);
             _importViewModel = import;
@@ -306,6 +311,7 @@ internal sealed class ProjectTabComposition : DisposableObject
         IApiWorkspaceService apiWorkspaceService,
         IFilePickerService filePickerService,
         IAppNotificationService appNotificationService,
+        IProjectDataExportService projectDataExportService,
         ProjectTabHostContext hostContext)
     {
         return new Builder(
@@ -318,6 +324,7 @@ internal sealed class ProjectTabComposition : DisposableObject
             apiWorkspaceService,
             filePickerService,
             appNotificationService,
+            projectDataExportService,
             hostContext)
             .Build();
     }

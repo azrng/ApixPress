@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using Avalonia.Controls.Notifications;
 using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
 using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeAppNotificationService;
+using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeFilePickerService;
+using FakeProjectDataExportService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectDataExportService;
 using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels;
@@ -273,6 +275,62 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Equal(3, requestCaseService.Cases.Count(item => item.EntryType == "http-interface"));
         Assert.Contains(requestCaseService.Cases, item => item.Name == "接口 1" && item.RequestSnapshot.Url == "/endpoint-1");
         Assert.Contains(requestCaseService.Cases, item => item.Name == "查询订单列表" && item.RequestSnapshot.Url == "/orders");
+    }
+
+    [Fact]
+    public async Task ExportProjectDataCommand_ShouldExportInterfacesAndTestCases()
+    {
+        var filePickerService = new FakeFilePickerService
+        {
+            SaveProjectDataExportFileResult = @"C:\temp\project-export.apixpkg.json"
+        };
+        var exportService = new FakeProjectDataExportService
+        {
+            Result = ResultModel<ProjectDataExportResultDto>.Success(new ProjectDataExportResultDto
+            {
+                FilePath = @"C:\temp\project-export.apixpkg.json",
+                InterfaceCount = 2,
+                TestCaseCount = 3
+            })
+        };
+        var notificationService = new FakeAppNotificationService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            appNotificationService: notificationService,
+            filePickerService: filePickerService,
+            projectDataExportService: exportService);
+
+        await viewModel.InitializeAsync();
+        await viewModel.Import.ExportProjectDataCommand.ExecuteAsync(null);
+
+        Assert.NotNull(exportService.LastRequest);
+        Assert.Equal("project-1", exportService.LastRequest!.ProjectId);
+        Assert.Equal("测试项目", exportService.LastRequest.ProjectName);
+        Assert.Equal("用于验证项目设置数据管理", exportService.LastRequest.ProjectDescription);
+        Assert.Equal(@"C:\temp\project-export.apixpkg.json", exportService.LastRequest.OutputFilePath);
+        Assert.Equal("项目数据导出成功：2 个接口、3 个测试用例，已保存到 project-export.apixpkg.json", viewModel.StatusMessage);
+        Assert.True(viewModel.Import.ShowImportStatusSuccess);
+        var notification = Assert.Single(notificationService.Notifications);
+        Assert.Equal("项目数据导出成功", notification.Title);
+        Assert.Equal(NotificationType.Success, notification.Type);
+    }
+
+    [Fact]
+    public async Task ExportProjectDataCommand_ShouldKeepInfoStatusWhenUserCancelsSaveDialog()
+    {
+        var filePickerService = new FakeFilePickerService();
+        var exportService = new FakeProjectDataExportService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            filePickerService: filePickerService,
+            projectDataExportService: exportService);
+
+        await viewModel.InitializeAsync();
+        await viewModel.Import.ExportProjectDataCommand.ExecuteAsync(null);
+
+        Assert.Null(exportService.LastRequest);
+        Assert.Equal("已取消导出项目数据。", viewModel.StatusMessage);
+        Assert.True(viewModel.Import.ShowImportStatusInfo);
     }
 
     [Fact]

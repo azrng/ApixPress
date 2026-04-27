@@ -31,6 +31,8 @@ public partial class ProjectImportViewModel : ViewModelBase
     private readonly IApiWorkspaceService _apiWorkspaceService;
     private readonly IFilePickerService _filePickerService;
     private readonly IAppNotificationService _appNotificationService;
+    private readonly IProjectDataExportService _projectDataExportService;
+    private readonly Func<ProjectWorkspaceItemViewModel> _getProject;
     private readonly Func<IReadOnlyList<ApiEndpointDto>, Task> _syncImportedInterfacesAsync;
     private readonly Action<string> _setStatusMessage;
     private CancellationTokenSource? _importCancellationTokenSource;
@@ -42,6 +44,8 @@ public partial class ProjectImportViewModel : ViewModelBase
         IApiWorkspaceService apiWorkspaceService,
         IFilePickerService filePickerService,
         IAppNotificationService appNotificationService,
+        IProjectDataExportService projectDataExportService,
+        Func<ProjectWorkspaceItemViewModel> getProject,
         Func<IReadOnlyList<ApiEndpointDto>, Task> syncImportedInterfacesAsync,
         Action<string> setStatusMessage)
     {
@@ -49,6 +53,8 @@ public partial class ProjectImportViewModel : ViewModelBase
         _apiWorkspaceService = apiWorkspaceService;
         _filePickerService = filePickerService;
         _appNotificationService = appNotificationService;
+        _projectDataExportService = projectDataExportService;
+        _getProject = getProject;
         _syncImportedInterfacesAsync = syncImportedInterfacesAsync;
         _setStatusMessage = setStatusMessage;
 
@@ -368,6 +374,74 @@ public partial class ProjectImportViewModel : ViewModelBase
         }
     }
 
+    [RelayCommand]
+    private async Task ExportProjectDataAsync()
+    {
+        if (IsImportDataBusy)
+        {
+            return;
+        }
+
+        var project = _getProject();
+        var suggestedFileName = BuildSuggestedExportFileName(project.Name);
+        var filePath = await _filePickerService.SaveProjectDataExportFileAsync(suggestedFileName, CancellationToken.None);
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            SetImportDataStatus(ImportTexts.ExportCancelledStatus, ImportStatusStates.Info);
+            _setStatusMessage(ImportTexts.ExportCancelledStatus);
+            return;
+        }
+
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _importCancellationTokenSource).Token;
+        ImportDataBusyText = ImportTexts.ExportBusyProcessing;
+        IsImportDataBusy = true;
+        try
+        {
+            var exportResult = await _projectDataExportService.ExportAsync(new ProjectDataExportRequestDto
+            {
+                ProjectId = _projectId,
+                ProjectName = project.Name,
+                ProjectDescription = project.Description,
+                OutputFilePath = filePath
+            }, cancellationToken);
+
+            if (!exportResult.IsSuccess || exportResult.Data is null)
+            {
+                var failureMessage = string.IsNullOrWhiteSpace(exportResult.Message)
+                    ? ImportTexts.ExportFailureFallback
+                    : exportResult.Message;
+                SetImportDataStatus(failureMessage, ImportStatusStates.Error);
+                _setStatusMessage(failureMessage);
+                PublishGlobalNotification("项目数据导出失败", failureMessage, NotificationType.Error);
+                return;
+            }
+
+            var successMessage = ImportTexts.FormatExportSuccess(
+                exportResult.Data.InterfaceCount,
+                exportResult.Data.TestCaseCount,
+                Path.GetFileName(exportResult.Data.FilePath));
+            SetImportDataStatus(successMessage, ImportStatusStates.Success);
+            _setStatusMessage(successMessage);
+            PublishGlobalNotification("项目数据导出成功", successMessage, NotificationType.Success);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            var failureMessage = string.IsNullOrWhiteSpace(exception.Message)
+                ? ImportTexts.ExportFailureFallback
+                : $"{ImportTexts.ExportFailureFallback} {exception.Message}";
+            SetImportDataStatus(failureMessage, ImportStatusStates.Error);
+            _setStatusMessage(failureMessage);
+            PublishGlobalNotification("项目数据导出失败", failureMessage, NotificationType.Error);
+        }
+        finally
+        {
+            IsImportDataBusy = false;
+        }
+    }
+
     public async Task EnsureImportedDocumentsLoadedAsync()
     {
         if (_hasLoadedImportedDocuments)
@@ -553,6 +627,19 @@ public partial class ProjectImportViewModel : ViewModelBase
         return string.Equals(sourceType, "URL", StringComparison.OrdinalIgnoreCase)
             ? ImportTexts.SourceTypeUrl
             : ImportTexts.SourceTypeFile;
+    }
+
+    private static string BuildSuggestedExportFileName(string projectName)
+    {
+        var fallbackName = string.IsNullOrWhiteSpace(projectName) ? "project-data" : projectName.Trim();
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var safeName = new string(fallbackName.Select(character => invalidChars.Contains(character) ? '-' : character).ToArray()).Trim();
+        if (string.IsNullOrWhiteSpace(safeName))
+        {
+            safeName = "project-data";
+        }
+
+        return $"{safeName}-{DateTime.Now:yyyyMMdd-HHmmss}.apixpkg.json";
     }
 
     private sealed class PendingImportRequest

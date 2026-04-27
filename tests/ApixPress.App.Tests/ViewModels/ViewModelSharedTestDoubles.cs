@@ -120,6 +120,15 @@ public static class ViewModelSharedTestDoubles
                 .ToList());
         }
 
+        public Task<IReadOnlyList<RequestCaseDto>> GetCaseDetailsAsync(string projectId, CancellationToken cancellationToken)
+        {
+            IReadOnlyList<RequestCaseDto> cases = Cases
+                .Where(item => string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase))
+                .Select(CloneCase)
+                .ToList();
+            return Task.FromResult(cases);
+        }
+
         public async Task<RequestCaseDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
         {
             GetDetailCallCount++;
@@ -273,6 +282,59 @@ public static class ViewModelSharedTestDoubles
         {
             return $"{ImportedEndpointKeyPrefix}{endpoint.Method.ToUpperInvariant()} {endpoint.Path}";
         }
+
+        private static RequestCaseDto CloneCase(RequestCaseDto requestCase)
+        {
+            return new RequestCaseDto
+            {
+                Id = requestCase.Id,
+                ProjectId = requestCase.ProjectId,
+                EntryType = requestCase.EntryType,
+                Name = requestCase.Name,
+                GroupName = requestCase.GroupName,
+                FolderPath = requestCase.FolderPath,
+                ParentId = requestCase.ParentId,
+                Tags = requestCase.Tags.ToList(),
+                Description = requestCase.Description,
+                RequestSnapshot = new RequestSnapshotDto
+                {
+                    EndpointId = requestCase.RequestSnapshot.EndpointId,
+                    Name = requestCase.RequestSnapshot.Name,
+                    Method = requestCase.RequestSnapshot.Method,
+                    Url = requestCase.RequestSnapshot.Url,
+                    Description = requestCase.RequestSnapshot.Description,
+                    BodyMode = requestCase.RequestSnapshot.BodyMode,
+                    BodyContent = requestCase.RequestSnapshot.BodyContent,
+                    IgnoreSslErrors = requestCase.RequestSnapshot.IgnoreSslErrors,
+                    QueryParameters = requestCase.RequestSnapshot.QueryParameters
+                        .Select(item => new RequestKeyValueDto
+                        {
+                            Name = item.Name,
+                            Value = item.Value,
+                            IsEnabled = item.IsEnabled
+                        })
+                        .ToList(),
+                    PathParameters = requestCase.RequestSnapshot.PathParameters
+                        .Select(item => new RequestKeyValueDto
+                        {
+                            Name = item.Name,
+                            Value = item.Value,
+                            IsEnabled = item.IsEnabled
+                        })
+                        .ToList(),
+                    Headers = requestCase.RequestSnapshot.Headers
+                        .Select(item => new RequestKeyValueDto
+                        {
+                            Name = item.Name,
+                            Value = item.Value,
+                            IsEnabled = item.IsEnabled
+                        })
+                        .ToList()
+                },
+                HasLoadedDetail = requestCase.HasLoadedDetail,
+                UpdatedAt = requestCase.UpdatedAt
+            };
+        }
     }
 
     public sealed class FakeRequestExecutionService : IRequestExecutionService
@@ -379,14 +441,39 @@ public static class ViewModelSharedTestDoubles
 
     public sealed class FakeFilePickerService : IFilePickerService
     {
+        public string? SaveProjectDataExportFileResult { get; set; }
+
         public Task<string?> PickSwaggerJsonFileAsync(CancellationToken cancellationToken)
         {
             return Task.FromResult<string?>(null);
         }
 
+        public Task<string?> SaveProjectDataExportFileAsync(string suggestedFileName, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(SaveProjectDataExportFileResult);
+        }
+
         public Task<string?> PickStorageDirectoryAsync(CancellationToken cancellationToken)
         {
             return Task.FromResult<string?>(null);
+        }
+    }
+
+    public sealed class FakeProjectDataExportService : IProjectDataExportService
+    {
+        public ProjectDataExportRequestDto? LastRequest { get; private set; }
+
+        public IResultModel<ProjectDataExportResultDto> Result { get; set; } = ResultModel<ProjectDataExportResultDto>.Success(new ProjectDataExportResultDto
+        {
+            FilePath = @"C:\temp\project-data.apixpkg.json",
+            InterfaceCount = 0,
+            TestCaseCount = 0
+        });
+
+        public Task<IResultModel<ProjectDataExportResultDto>> ExportAsync(ProjectDataExportRequestDto request, CancellationToken cancellationToken)
+        {
+            LastRequest = request;
+            return Task.FromResult(Result);
         }
     }
 

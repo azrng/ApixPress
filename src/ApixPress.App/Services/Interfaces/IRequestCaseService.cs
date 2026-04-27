@@ -7,6 +7,8 @@ public interface IRequestCaseService
 {
     Task<IReadOnlyList<RequestCaseDto>> GetCasesAsync(string projectId, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<RequestCaseDto>> GetCaseDetailsAsync(string projectId, CancellationToken cancellationToken);
+
     Task<RequestCaseDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken);
 
     Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken);

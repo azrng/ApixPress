@@ -30,6 +30,12 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         return cases.Select(ToSummaryDto).ToList();
     }
 
+    public async Task<IReadOnlyList<RequestCaseDto>> GetCaseDetailsAsync(string projectId, CancellationToken cancellationToken)
+    {
+        var cases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
+        return cases.Select(ToDto).ToList();
+    }
+
     public async Task<RequestCaseDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
     {
         var entity = await _requestCaseRepository.GetByIdAsync(projectId, id, cancellationToken);

@@ -12,12 +12,16 @@ internal static class ProjectSettingsTexts
     public const string OverviewCardDescription = "在这里维护当前项目名称、项目 ID 和项目简介。";
     public const string EmptyDescription = "当前项目还没有补充备注，可在这里继续维护环境与工作区说明。";
     public const string ImportDataTitle = "导入数据";
-    public const string ImportDescription = "这里可以导入 Swagger 文档。";
-    public const string ImportSubtitle = "支持 Swagger 文件上传和 URL 导入，导入结果会持久化保存到当前项目。";
+    public const string ImportDescription = "这里可以导入 Swagger 文档，也可以导出当前项目数据。";
+    public const string ImportSubtitle = "支持 Swagger 文件上传、URL 导入，以及将当前项目中的接口和测试用例导出为项目数据包。";
     public const string ImportCardTitle = "导入 API 数据";
     public const string ImportCardDescription = "请选择要导入的数据源格式";
     public const string ImportFormatName = "OpenAPI / Swagger";
     public const string ImportFormatDescription = "支持导入 OpenAPI 3.x 与 Swagger 2.0 的 JSON 或 YAML 文档";
+    public const string ExportCardTitle = "导出项目数据";
+    public const string ExportCardDescription = "导出当前项目中的接口与测试用例";
+    public const string ExportFormatName = "ApixPress 项目数据包";
+    public const string ExportFormatDescription = "导出为可读的 UTF-8 JSON 数据包，扩展名为 .apixpkg.json";
 
     public static string FormatCurrentEnvironmentSummary(string environmentLabel)
     {
@@ -45,13 +49,15 @@ internal static class ImportTexts
     public const string ImportUrlButton = "导入 URL";
     public const string BusyOverlayDescription = "导入期间会暂时锁定当前对话框，完成后会自动展示结果。";
     public const string BusyProcessing = "正在处理 Swagger 导入...";
+    public const string ExportBusyProcessing = "正在导出当前项目数据...";
     public const string BusyRefreshResult = "正在刷新导入结果...";
-    public const string DefaultStatus = "请选择 Swagger/OpenAPI JSON 文件，或输入可访问的文档 URL。";
+    public const string DefaultStatus = "可导入 Swagger 文档，或导出当前项目中的接口与测试用例数据包。";
     public const string EmptyStateStatus = "当前项目还没有导入 Swagger 数据，可先从文件或 URL 开始导入。";
     public const string EmptyRefreshStatus = "已刷新导入数据，当前项目还没有 Swagger 文档。";
     public const string OpenDialogStatus = "请选择 OpenAPI / Swagger 导入方式。";
     public const string CloseDialogStatus = "已返回导入数据页面。";
     public const string PickFileCancelledStatus = "未选择文件，当前保持原有导入配置。";
+    public const string ExportCancelledStatus = "已取消导出项目数据。";
     public const string MissingFileStatus = "请先选择要导入的 Swagger/OpenAPI JSON 文件。";
     public const string MissingFileShellStatus = "请先选择要导入的 Swagger 文件。";
     public const string MissingUrlStatus = "请输入 Swagger/OpenAPI 文档 URL。";
@@ -60,6 +66,7 @@ internal static class ImportTexts
     public const string ImportFailureFallback = "Swagger 导入失败，请检查文档格式后重试。";
     public const string UnexpectedFailureFallback = "Swagger 导入失败，应用已阻止异常继续扩散。";
     public const string RefreshAfterImportFailure = "导入结果已写入，但刷新接口列表时发生错误。";
+    public const string ExportFailureFallback = "项目数据导出失败，请检查导出路径后重试。";
     public const string OverwriteCancelled = "已取消本次覆盖导入。";
     public const string OverwritePendingShellStatus = "检测到同路径接口，等待确认是否更新接口定义。";
     public const string OverwriteDetailPrefix = "同路径接口会更新为最新定义，当前已保存的用例不会因本次导入被自动删除。";
@@ -86,6 +93,11 @@ internal static class ImportTexts
     public static string FormatUrlImportSuccess(string documentName)
     {
         return $"Swagger URL 导入成功：{documentName}";
+    }
+
+    public static string FormatExportSuccess(int interfaceCount, int testCaseCount, string fileName)
+    {
+        return $"项目数据导出成功：{interfaceCount} 个接口、{testCaseCount} 个测试用例，已保存到 {fileName}";
     }
 
     public static string FormatRefreshImportedDocumentsSuccess(int count)
