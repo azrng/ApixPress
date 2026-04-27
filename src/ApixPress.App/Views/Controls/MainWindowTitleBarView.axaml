@@ -14,14 +14,14 @@
             ColumnSpacing="{StaticResource Space.3}">
         <StackPanel Grid.Column="0"
                     Orientation="Horizontal"
-                    Spacing="{StaticResource Space.3}"
+                    Spacing="{StaticResource Space.2}"
                     VerticalAlignment="Center">
-          <Border Width="42"
-                  Height="42"
+          <Border Width="36"
+                  Height="36"
                   Classes="AppIconBadge">
             <Image Classes="AppLogoImage"
                    Source="/Assets/AppLogo.png"
-                   Stretch="Uniform" />
+                   Stretch="UniformToFill" />
           </Border>
 
           <TextBlock Classes="PageTitle"
