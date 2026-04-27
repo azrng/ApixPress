@@ -68,8 +68,6 @@ public partial class MainWindowViewModel
         }
 
         await ActiveProjectTab.Catalog.LoadWorkspaceItem(item);
-        StatusMessage = ActiveProjectTab.StatusMessage;
-        NotifyShellState();
     }
 
     [RelayCommand]

@@ -412,6 +412,16 @@ internal sealed class ProjectTabComposition : DisposableObject
             Settings.NotifyWorkspaceSectionChanged();
         }
 
+        if (e.PropertyName is nameof(ProjectWorkspaceShellViewModel.ShowInterfaceManagementLanding)
+            or nameof(ProjectWorkspaceShellViewModel.ShowRequestEditorWorkspace)
+            or nameof(ProjectWorkspaceShellViewModel.CurrentContentMode)
+            or nameof(ProjectWorkspaceShellViewModel.IsInterfaceManagementSection)
+            or nameof(ProjectWorkspaceShellViewModel.IsRequestHistorySection)
+            or nameof(ProjectWorkspaceShellViewModel.IsProjectSettingsSection))
+        {
+            return;
+        }
+
         _hostContext.NotifyShellState();
     }
 }

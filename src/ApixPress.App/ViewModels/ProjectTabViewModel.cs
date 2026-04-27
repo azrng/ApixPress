@@ -179,6 +179,5 @@ public partial class ProjectTabViewModel : ViewModelBase
         NotifyWorkspaceBindingsChanged();
         Shell.NotifyWorkspaceStateChanged();
         Editor.NotifyStateChanged();
-        NotifyShellState();
     }
 }

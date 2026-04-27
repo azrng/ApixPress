@@ -11,6 +11,8 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
 {
     private const string DefaultInterfaceFolderName = "默认模块";
     private string _cleanStateSignature = string.Empty;
+    private int _bulkStateMutationDepth;
+    private bool _tabHeaderUpdatePending;
 
     private static class WorkspaceEntryTypes
     {
@@ -103,113 +105,121 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
 
     public void ConfigureAsLanding()
     {
-        EntryType = WorkspaceEntryTypes.Landing;
-        SelectedMethod = "GET";
-        RequestUrl = string.Empty;
-        InterfaceFolderPath = DefaultInterfaceFolderName;
-        HttpCaseName = "成功";
-        SourceEndpointId = string.Empty;
-        EditingQuickRequestId = string.Empty;
-        EditingInterfaceId = string.Empty;
-        EditingCaseId = string.Empty;
-        HttpEditorViewIndex = 0;
-        ConfigTab.Reset();
-        ResponseSection.Reset();
-        UpdateTabHeader();
+        RunWithBulkStateMutation(() =>
+        {
+            EntryType = WorkspaceEntryTypes.Landing;
+            SelectedMethod = "GET";
+            RequestUrl = string.Empty;
+            InterfaceFolderPath = DefaultInterfaceFolderName;
+            HttpCaseName = "成功";
+            SourceEndpointId = string.Empty;
+            EditingQuickRequestId = string.Empty;
+            EditingInterfaceId = string.Empty;
+            EditingCaseId = string.Empty;
+            HttpEditorViewIndex = 0;
+            ConfigTab.Reset();
+            ResponseSection.Reset();
+        });
+
         MarkCleanState();
     }
 
     public void ConfigureAsQuickRequest()
     {
-        EntryType = WorkspaceEntryTypes.QuickRequest;
-        SelectedMethod = "GET";
-        RequestUrl = string.Empty;
-        InterfaceFolderPath = DefaultInterfaceFolderName;
-        HttpCaseName = "成功";
-        SourceEndpointId = string.Empty;
-        EditingQuickRequestId = string.Empty;
-        EditingInterfaceId = string.Empty;
-        EditingCaseId = string.Empty;
-        HttpEditorViewIndex = 0;
-        ConfigTab.Reset();
-        ResponseSection.Reset();
-        UpdateTabHeader();
+        RunWithBulkStateMutation(() =>
+        {
+            EntryType = WorkspaceEntryTypes.QuickRequest;
+            SelectedMethod = "GET";
+            RequestUrl = string.Empty;
+            InterfaceFolderPath = DefaultInterfaceFolderName;
+            HttpCaseName = "成功";
+            SourceEndpointId = string.Empty;
+            EditingQuickRequestId = string.Empty;
+            EditingInterfaceId = string.Empty;
+            EditingCaseId = string.Empty;
+            HttpEditorViewIndex = 0;
+            ConfigTab.Reset();
+            ResponseSection.Reset();
+        });
+
         MarkCleanState();
     }
 
     public void ConfigureAsHttpInterface()
     {
-        EntryType = WorkspaceEntryTypes.HttpInterface;
-        SelectedMethod = "GET";
-        RequestUrl = string.Empty;
-        InterfaceFolderPath = DefaultInterfaceFolderName;
-        HttpCaseName = "成功";
-        SourceEndpointId = string.Empty;
-        EditingQuickRequestId = string.Empty;
-        EditingInterfaceId = string.Empty;
-        EditingCaseId = string.Empty;
-        HttpEditorViewIndex = 0;
-        ConfigTab.Reset();
-        ResponseSection.Reset();
-        UpdateTabHeader();
+        RunWithBulkStateMutation(() =>
+        {
+            EntryType = WorkspaceEntryTypes.HttpInterface;
+            SelectedMethod = "GET";
+            RequestUrl = string.Empty;
+            InterfaceFolderPath = DefaultInterfaceFolderName;
+            HttpCaseName = "成功";
+            SourceEndpointId = string.Empty;
+            EditingQuickRequestId = string.Empty;
+            EditingInterfaceId = string.Empty;
+            EditingCaseId = string.Empty;
+            HttpEditorViewIndex = 0;
+            ConfigTab.Reset();
+            ResponseSection.Reset();
+        });
+
         MarkCleanState();
     }
 
     public void ApplySavedRequest(RequestCaseDto source, RequestCaseDto? parentInterface = null)
     {
-        switch (source.EntryType)
+        RunWithBulkStateMutation(() =>
         {
-            case WorkspaceEntryTypes.HttpInterface:
-                EntryType = WorkspaceEntryTypes.HttpInterface;
-                EditingInterfaceId = source.Id;
-                EditingCaseId = string.Empty;
-                EditingQuickRequestId = string.Empty;
-                InterfaceFolderPath = string.IsNullOrWhiteSpace(source.FolderPath) ? DefaultInterfaceFolderName : source.FolderPath;
-                HttpCaseName = "成功";
-                SourceEndpointId = source.RequestSnapshot.EndpointId;
-                break;
-            case "http-case":
-                EntryType = WorkspaceEntryTypes.HttpInterface;
-                EditingCaseId = source.Id;
-                EditingQuickRequestId = string.Empty;
-                EditingInterfaceId = parentInterface?.Id ?? source.ParentId;
-                InterfaceFolderPath = !string.IsNullOrWhiteSpace(parentInterface?.FolderPath)
-                    ? parentInterface.FolderPath
-                    : string.IsNullOrWhiteSpace(source.FolderPath)
-                        ? DefaultInterfaceFolderName
-                        : source.FolderPath;
-                HttpCaseName = source.Name;
-                SourceEndpointId = !string.IsNullOrWhiteSpace(source.RequestSnapshot.EndpointId)
-                    ? source.RequestSnapshot.EndpointId
-                    : parentInterface?.RequestSnapshot.EndpointId ?? string.Empty;
-                break;
-            default:
-                EntryType = WorkspaceEntryTypes.QuickRequest;
-                EditingQuickRequestId = source.Id;
-                EditingInterfaceId = string.Empty;
-                EditingCaseId = string.Empty;
-                InterfaceFolderPath = DefaultInterfaceFolderName;
-                HttpCaseName = "成功";
-                SourceEndpointId = source.RequestSnapshot.EndpointId;
-                break;
-        }
+            switch (source.EntryType)
+            {
+                case WorkspaceEntryTypes.HttpInterface:
+                    EntryType = WorkspaceEntryTypes.HttpInterface;
+                    EditingInterfaceId = source.Id;
+                    EditingCaseId = string.Empty;
+                    EditingQuickRequestId = string.Empty;
+                    InterfaceFolderPath = string.IsNullOrWhiteSpace(source.FolderPath) ? DefaultInterfaceFolderName : source.FolderPath;
+                    HttpCaseName = "成功";
+                    SourceEndpointId = source.RequestSnapshot.EndpointId;
+                    break;
+                case "http-case":
+                    EntryType = WorkspaceEntryTypes.HttpInterface;
+                    EditingCaseId = source.Id;
+                    EditingQuickRequestId = string.Empty;
+                    EditingInterfaceId = parentInterface?.Id ?? source.ParentId;
+                    InterfaceFolderPath = !string.IsNullOrWhiteSpace(parentInterface?.FolderPath)
+                        ? parentInterface.FolderPath
+                        : string.IsNullOrWhiteSpace(source.FolderPath)
+                            ? DefaultInterfaceFolderName
+                            : source.FolderPath;
+                    HttpCaseName = source.Name;
+                    SourceEndpointId = !string.IsNullOrWhiteSpace(source.RequestSnapshot.EndpointId)
+                        ? source.RequestSnapshot.EndpointId
+                        : parentInterface?.RequestSnapshot.EndpointId ?? string.Empty;
+                    break;
+                default:
+                    EntryType = WorkspaceEntryTypes.QuickRequest;
+                    EditingQuickRequestId = source.Id;
+                    EditingInterfaceId = string.Empty;
+                    EditingCaseId = string.Empty;
+                    InterfaceFolderPath = DefaultInterfaceFolderName;
+                    HttpCaseName = "成功";
+                    SourceEndpointId = source.RequestSnapshot.EndpointId;
+                    break;
+            }
 
-        ApplySnapshot(source.RequestSnapshot);
-        if (source.EntryType == "http-case" && parentInterface is not null && string.IsNullOrWhiteSpace(ConfigTab.RequestName))
-        {
-            ConfigTab.RequestName = parentInterface.Name;
-        }
+            ApplySnapshotCore(source.RequestSnapshot);
+            if (source.EntryType == "http-case" && parentInterface is not null && string.IsNullOrWhiteSpace(ConfigTab.RequestName))
+            {
+                ConfigTab.RequestName = parentInterface.Name;
+            }
+        });
 
-        UpdateTabHeader();
         MarkCleanState();
     }
 
     public void ApplySnapshot(RequestSnapshotDto snapshot)
     {
-        SelectedMethod = string.IsNullOrWhiteSpace(snapshot.Method) ? "GET" : snapshot.Method;
-        RequestUrl = snapshot.Url;
-        ConfigTab.ApplySnapshot(snapshot);
-        UpdateTabHeader();
+        RunWithBulkStateMutation(() => ApplySnapshotCore(snapshot));
         MarkCleanState();
     }
 
@@ -295,7 +305,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         if (e.PropertyName is nameof(RequestConfigTabViewModel.RequestName)
             or nameof(RequestConfigTabViewModel.RequestDescription))
         {
-            UpdateTabHeader();
+            RequestTabHeaderUpdate();
         }
     }
 
@@ -313,13 +323,13 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(EditorDescription));
         OnPropertyChanged(nameof(PrimaryActionText));
         OnPropertyChanged(nameof(UrlWatermark));
-        UpdateTabHeader();
+        RequestTabHeaderUpdate();
     }
 
     partial void OnSelectedMethodChanged(string value)
     {
         OnPropertyChanged(nameof(MethodBadgeText));
-        UpdateTabHeader();
+        RequestTabHeaderUpdate();
     }
 
     partial void OnIsPinnedChanged(bool value)
@@ -331,7 +341,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
 
     partial void OnRequestUrlChanged(string value)
     {
-        UpdateTabHeader();
+        RequestTabHeaderUpdate();
     }
 
     partial void OnHttpEditorViewIndexChanged(int value)
@@ -350,6 +360,50 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
             WorkspaceEntryTypes.QuickRequest => ResolveQuickRequestTabHeader(),
             _ => ResolveRequestName()
         };
+    }
+
+    private void ApplySnapshotCore(RequestSnapshotDto snapshot)
+    {
+        SelectedMethod = string.IsNullOrWhiteSpace(snapshot.Method) ? "GET" : snapshot.Method;
+        RequestUrl = snapshot.Url;
+        ConfigTab.ApplySnapshot(snapshot);
+    }
+
+    private void RunWithBulkStateMutation(Action action)
+    {
+        _bulkStateMutationDepth++;
+        try
+        {
+            action();
+        }
+        finally
+        {
+            _bulkStateMutationDepth--;
+            if (_bulkStateMutationDepth == 0)
+            {
+                FlushDeferredStateUpdates();
+            }
+        }
+    }
+
+    private void RequestTabHeaderUpdate()
+    {
+        if (_bulkStateMutationDepth > 0)
+        {
+            _tabHeaderUpdatePending = true;
+            return;
+        }
+
+        UpdateTabHeader();
+    }
+
+    private void FlushDeferredStateUpdates()
+    {
+        if (_tabHeaderUpdatePending)
+        {
+            _tabHeaderUpdatePending = false;
+            UpdateTabHeader();
+        }
     }
 
     private string BuildStateSignature()

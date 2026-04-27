@@ -540,7 +540,7 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
 
-        Assert.InRange(shellStateChangedCount, 1, 8);
+        Assert.InRange(shellStateChangedCount, 1, 4);
         Assert.Equal("创建订单", viewModel.Editor.CurrentHttpInterfaceDisplayName);
     }
 
