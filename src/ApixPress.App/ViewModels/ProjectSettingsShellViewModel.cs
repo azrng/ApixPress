@@ -10,6 +10,7 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
     {
         public const string Overview = "overview";
         public const string ImportData = "import-data";
+        public const string ExportData = "export-data";
     }
 
     private readonly Action _showProjectSettingsWorkspace;
@@ -40,13 +41,25 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
 
     public bool IsOverviewSelected => SelectedSection == Sections.Overview;
     public bool IsImportDataSelected => SelectedSection == Sections.ImportData;
+    public bool IsExportDataSelected => SelectedSection == Sections.ExportData;
     public bool ShowOverviewSection => _isProjectSettingsSection() && IsOverviewSelected;
     public bool ShowImportDataSection => _isProjectSettingsSection() && IsImportDataSelected;
+    public bool ShowExportDataSection => _isProjectSettingsSection() && IsExportDataSelected;
     public string ProjectDescription => string.IsNullOrWhiteSpace(_getProjectDescription())
         ? ProjectSettingsTexts.EmptyDescription
         : _getProjectDescription();
-    public string CurrentTitle => IsImportDataSelected ? ProjectSettingsTexts.ImportDataTitle : ProjectSettingsTexts.OverviewTitle;
-    public string CurrentSubtitle => IsImportDataSelected ? ProjectSettingsTexts.ImportSubtitle : string.Empty;
+    public string CurrentTitle => SelectedSection switch
+    {
+        Sections.ImportData => ProjectSettingsTexts.ImportDataTitle,
+        Sections.ExportData => ProjectSettingsTexts.ExportDataTitle,
+        _ => ProjectSettingsTexts.OverviewTitle
+    };
+    public string CurrentSubtitle => SelectedSection switch
+    {
+        Sections.ImportData => ProjectSettingsTexts.ImportSubtitle,
+        Sections.ExportData => ProjectSettingsTexts.ExportSubtitle,
+        _ => string.Empty
+    };
 
     [ObservableProperty]
     private string selectedSection = Sections.Overview;
@@ -74,10 +87,21 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         _notifyShellState();
     }
 
+    [RelayCommand]
+    private void ShowExportData()
+    {
+        _showProjectSettingsWorkspace();
+        SelectedSection = Sections.ExportData;
+        _dismissImportDialog();
+        _setStatusMessage(ProjectSettingsTexts.ExportDescription);
+        _notifyShellState();
+    }
+
     public void NotifyWorkspaceSectionChanged()
     {
         OnPropertyChanged(nameof(ShowOverviewSection));
         OnPropertyChanged(nameof(ShowImportDataSection));
+        OnPropertyChanged(nameof(ShowExportDataSection));
     }
 
     public void NotifyProjectChanged()
@@ -89,8 +113,10 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsOverviewSelected));
         OnPropertyChanged(nameof(IsImportDataSelected));
+        OnPropertyChanged(nameof(IsExportDataSelected));
         OnPropertyChanged(nameof(ShowOverviewSection));
         OnPropertyChanged(nameof(ShowImportDataSection));
+        OnPropertyChanged(nameof(ShowExportDataSection));
         OnPropertyChanged(nameof(CurrentTitle));
         OnPropertyChanged(nameof(CurrentSubtitle));
     }

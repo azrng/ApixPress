@@ -38,6 +38,7 @@ public class ProjectTabSummaryViewModel : ViewModelBase
     public string ProjectSettingsOverviewGroupTitle => ProjectSettingsTexts.OverviewGroupTitle;
     public string ProjectSettingsImportGroupTitle => ProjectSettingsTexts.ImportGroupTitle;
     public string ProjectSettingsImportDataTitle => ProjectSettingsTexts.ImportDataTitle;
+    public string ProjectSettingsExportDataTitle => ProjectSettingsTexts.ExportDataTitle;
     public string ProjectSettingsOverviewCardTitle => ProjectSettingsTexts.OverviewCardTitle;
     public string ProjectSettingsOverviewCardDescription => ProjectSettingsTexts.OverviewCardDescription;
     public string ProjectSettingsImportCardTitle => ProjectSettingsTexts.ImportCardTitle;

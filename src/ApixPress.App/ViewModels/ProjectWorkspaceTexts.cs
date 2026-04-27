@@ -3,21 +3,24 @@ namespace ApixPress.App.ViewModels;
 internal static class ProjectSettingsTexts
 {
     public const string SidebarTitle = "项目设置";
-    public const string SidebarDescription = "在这里管理项目设置、环境和导入数据入口。";
+    public const string SidebarDescription = "在这里管理项目设置、环境以及项目数据的导入导出入口。";
     public const string OverviewGroupTitle = "基本设置";
     public const string ImportGroupTitle = "数据管理";
+    public const string ExportDataTitle = "导出数据";
     public const string OverviewTitle = "基本设置";
     public const string OverviewDescription = "这里可以查看当前项目的基本设置。";
     public const string OverviewCardTitle = "基本信息";
     public const string OverviewCardDescription = "在这里维护当前项目名称、项目 ID 和项目简介。";
     public const string EmptyDescription = "当前项目还没有补充备注，可在这里继续维护环境与工作区说明。";
     public const string ImportDataTitle = "导入数据";
-    public const string ImportDescription = "这里可以导入 Swagger 文档，也可以导出当前项目数据。";
-    public const string ImportSubtitle = "支持 Swagger 文件上传、URL 导入，以及将当前项目中的接口和测试用例导出为项目数据包。";
+    public const string ImportDescription = "这里可以导入 Swagger 文档。";
+    public const string ImportSubtitle = "支持 Swagger 文件上传和 URL 导入，导入结果会持久化保存到当前项目。";
     public const string ImportCardTitle = "导入 API 数据";
     public const string ImportCardDescription = "请选择要导入的数据源格式";
     public const string ImportFormatName = "OpenAPI / Swagger";
     public const string ImportFormatDescription = "支持导入 OpenAPI 3.x 与 Swagger 2.0 的 JSON 或 YAML 文档";
+    public const string ExportDescription = "这里可以导出当前项目中的接口与测试用例。";
+    public const string ExportSubtitle = "将当前项目中的接口和测试用例导出为可复用的项目数据包。";
     public const string ExportCardTitle = "导出项目数据";
     public const string ExportCardDescription = "导出当前项目中的接口与测试用例";
     public const string ExportFormatName = "ApixPress 项目数据包";

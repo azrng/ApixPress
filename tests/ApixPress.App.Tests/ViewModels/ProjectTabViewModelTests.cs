@@ -879,7 +879,7 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
-    public async Task ProjectSettingsCommands_ShouldSwitchBetweenOverviewAndImportDataSections()
+    public async Task ProjectSettingsCommands_ShouldSwitchBetweenOverviewImportAndExportSections()
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
 
@@ -896,13 +896,23 @@ public sealed partial class ProjectTabViewModelTests
         Assert.True(viewModel.Shell.IsProjectSettingsSection);
         Assert.False(viewModel.Settings.IsOverviewSelected);
         Assert.True(viewModel.Settings.IsImportDataSelected);
+        Assert.False(viewModel.Settings.IsExportDataSelected);
         Assert.Equal("导入数据", viewModel.Settings.CurrentTitle);
+
+        viewModel.Settings.ShowExportDataCommand.Execute(null);
+
+        Assert.True(viewModel.Shell.IsProjectSettingsSection);
+        Assert.False(viewModel.Settings.IsOverviewSelected);
+        Assert.False(viewModel.Settings.IsImportDataSelected);
+        Assert.True(viewModel.Settings.IsExportDataSelected);
+        Assert.Equal("导出数据", viewModel.Settings.CurrentTitle);
 
         viewModel.Settings.OpenWorkspaceCommand.Execute(null);
 
         Assert.True(viewModel.Shell.IsProjectSettingsSection);
         Assert.True(viewModel.Settings.IsOverviewSelected);
         Assert.False(viewModel.Settings.IsImportDataSelected);
+        Assert.False(viewModel.Settings.IsExportDataSelected);
         Assert.Equal("基本设置", viewModel.Settings.CurrentTitle);
     }
 

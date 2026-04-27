@@ -43,6 +43,11 @@
                         Command="{Binding Settings.ShowImportDataCommand}">
                   <TextBlock Text="{Binding Summary.ProjectSettingsImportDataTitle}" />
                 </Button>
+                <Button Classes="ProjectSettingsSidebarItemButton"
+                        Classes.ProjectSettingsSidebarItemSelected="{Binding Settings.IsExportDataSelected}"
+                        Command="{Binding Settings.ShowExportDataCommand}">
+                  <TextBlock Text="{Binding Summary.ProjectSettingsExportDataTitle}" />
+                </Button>
               </StackPanel>
 
               <Border Classes="ProjectSettingsSidebarMetaCard">
@@ -72,6 +77,9 @@
             <TextBlock Classes="CaptionText"
                        Text="{Binding Settings.CurrentSubtitle}"
                        IsVisible="{Binding Settings.IsImportDataSelected}" />
+            <TextBlock Classes="CaptionText"
+                       Text="{Binding Settings.CurrentSubtitle}"
+                       IsVisible="{Binding Settings.IsExportDataSelected}" />
           </StackPanel>
         </Grid>
 
@@ -173,7 +181,16 @@
                       </StackPanel>
                     </Grid>
                   </Button>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
 
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                        IsVisible="{Binding Settings.IsExportDataSelected}">
+            <StackPanel Spacing="{StaticResource Space.4}">
+              <Border Classes="ProjectSettingsInfoCard">
+                <StackPanel Spacing="{StaticResource Space.3}">
                   <Border Classes="ProjectSettingsSectionDivider" />
                   <StackPanel Spacing="2">
                     <TextBlock Classes="SectionTitle"
