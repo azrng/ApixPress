@@ -31,6 +31,10 @@ public sealed partial class MainWindowShellPanelsViewModel : ViewModelBase
 
     public ObservableCollection<NotificationItemViewModel> Notifications { get; }
 
+    public bool HasNotifications => Notifications.Count > 0;
+
+    public bool ShowNotificationEmptyState => !HasNotifications;
+
     public bool HasUnreadNotifications => Notifications.Any(item => item.IsUnread);
 
     [ObservableProperty]
@@ -123,6 +127,8 @@ public sealed partial class MainWindowShellPanelsViewModel : ViewModelBase
             AttachNotificationHandlers(e.NewItems.OfType<NotificationItemViewModel>());
         }
 
+        OnPropertyChanged(nameof(HasNotifications));
+        OnPropertyChanged(nameof(ShowNotificationEmptyState));
         OnPropertyChanged(nameof(HasUnreadNotifications));
     }
 

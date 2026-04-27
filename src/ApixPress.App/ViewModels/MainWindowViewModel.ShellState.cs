@@ -119,29 +119,6 @@ public partial class MainWindowViewModel
 
     private static ObservableCollection<NotificationItemViewModel> CreateNotifications()
     {
-        return
-        [
-            new NotificationItemViewModel
-            {
-                Title = "欢迎使用 ApixPress",
-                Message = "首页会固定展示项目列表，打开项目后会在顶部新增工作标签。",
-                RelativeTimeText = "刚刚",
-                IsUnread = true
-            },
-            new NotificationItemViewModel
-            {
-                Title = "快捷请求已切到项目工作区",
-                Message = "每个项目标签页会独立保存环境、历史记录和保存请求。",
-                RelativeTimeText = "2 分钟前",
-                IsUnread = true
-            },
-            new NotificationItemViewModel
-            {
-                Title = "环境管理弹框已上线",
-                Message = "现在可以在项目页右上角集中管理项目级环境和变量。",
-                RelativeTimeText = "5 分钟前",
-                IsUnread = false
-            }
-        ];
+        return [];
     }
 }

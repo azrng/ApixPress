@@ -48,6 +48,10 @@ public sealed partial class MainWindowViewModelTests
         Assert.Equal(viewModel.BrowserStatusText, viewModel.StatusMessage);
         Assert.True(viewModel.IsHomeTabActive);
         Assert.False(viewModel.ShowProjectListEmptyState);
+        Assert.Empty(viewModel.ShellPanels.Notifications);
+        Assert.False(viewModel.ShellPanels.HasNotifications);
+        Assert.True(viewModel.ShellPanels.ShowNotificationEmptyState);
+        Assert.False(viewModel.ShellPanels.HasUnreadNotifications);
     }
 
     [Fact]
@@ -448,8 +452,17 @@ public sealed partial class MainWindowViewModelTests
     public void ToggleNotificationCenterCommand_ShouldMarkNotificationsAsRead()
     {
         var viewModel = CreateViewModel();
+        viewModel.ShellPanels.Notifications.Add(new NotificationItemViewModel
+        {
+            Title = "发现新版本",
+            Message = "发现 ApixPress 1.2.0.0。",
+            RelativeTimeText = "刚刚",
+            IsUnread = true
+        });
 
         Assert.True(viewModel.ShellPanels.HasUnreadNotifications);
+        Assert.True(viewModel.ShellPanels.HasNotifications);
+        Assert.False(viewModel.ShellPanels.ShowNotificationEmptyState);
 
         viewModel.ShellPanels.ToggleNotificationCenterCommand.Execute(null);
 

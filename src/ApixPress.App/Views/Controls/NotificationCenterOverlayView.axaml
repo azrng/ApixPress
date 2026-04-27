@@ -27,7 +27,8 @@
       </Grid>
 
       <ItemsControl Grid.Row="1"
-                    ItemsSource="{Binding ShellPanels.Notifications}">
+                    ItemsSource="{Binding ShellPanels.Notifications}"
+                    IsVisible="{Binding ShellPanels.HasNotifications}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:NotificationItemViewModel">
             <Border Classes="NotificationItemCard">
@@ -56,6 +57,14 @@
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
+
+      <Border Grid.Row="1"
+              Classes="NotificationItemCard"
+              IsVisible="{Binding ShellPanels.ShowNotificationEmptyState}">
+        <TextBlock Classes="CaptionText"
+                   Text="暂无通知。"
+                   HorizontalAlignment="Center" />
+      </Border>
 
       <TextBlock Grid.Row="2"
                  Classes="CaptionText"
