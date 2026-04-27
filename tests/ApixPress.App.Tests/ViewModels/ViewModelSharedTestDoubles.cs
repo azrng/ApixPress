@@ -441,11 +441,17 @@ public static class ViewModelSharedTestDoubles
 
     public sealed class FakeFilePickerService : IFilePickerService
     {
+        public string? PickProjectDataPackageFileResult { get; set; }
         public string? SaveProjectDataExportFileResult { get; set; }
 
         public Task<string?> PickSwaggerJsonFileAsync(CancellationToken cancellationToken)
         {
             return Task.FromResult<string?>(null);
+        }
+
+        public Task<string?> PickProjectDataPackageFileAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult(PickProjectDataPackageFileResult);
         }
 
         public Task<string?> SaveProjectDataExportFileAsync(string suggestedFileName, CancellationToken cancellationToken)
@@ -474,6 +480,44 @@ public static class ViewModelSharedTestDoubles
         {
             LastRequest = request;
             return Task.FromResult(Result);
+        }
+
+        public IResultModel<ApiImportPreviewDto> PreviewImportResult { get; set; } = ResultModel<ApiImportPreviewDto>.Success(new ApiImportPreviewDto
+        {
+            DocumentName = "导入项目",
+            SourceType = "APIXPKG",
+            SourceValue = @"C:\temp\project-data.apixpkg.json",
+            TotalEndpointCount = 1,
+            NewEndpointCount = 1,
+            ConflictCount = 0
+        });
+
+        public IResultModel<ApiDocumentDto> ImportResult { get; set; } = ResultModel<ApiDocumentDto>.Success(new ApiDocumentDto
+        {
+            Id = "doc-1",
+            ProjectId = "project-1",
+            Name = "导入项目",
+            SourceType = "APIXPKG",
+            SourceValue = @"C:\temp\project-data.apixpkg.json",
+            ImportedAt = DateTime.UtcNow
+        });
+
+        public string? LastImportProjectId { get; private set; }
+
+        public string? LastImportFilePath { get; private set; }
+
+        public Task<IResultModel<ApiImportPreviewDto>> PreviewImportPackageAsync(string projectId, string filePath, CancellationToken cancellationToken)
+        {
+            LastImportProjectId = projectId;
+            LastImportFilePath = filePath;
+            return Task.FromResult(PreviewImportResult);
+        }
+
+        public Task<IResultModel<ApiDocumentDto>> ImportPackageAsync(string projectId, string filePath, CancellationToken cancellationToken)
+        {
+            LastImportProjectId = projectId;
+            LastImportFilePath = filePath;
+            return Task.FromResult(ImportResult);
         }
     }
 

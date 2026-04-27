@@ -3,6 +3,7 @@ using ApixPress.App.Models.Entities;
 using ApixPress.App.Helpers;
 using ApixPress.App.Repositories.Implementations;
 using ApixPress.App.Services.Implementations;
+using System.Text;
 
 namespace ApixPress.App.Tests.Repositories;
 
@@ -531,6 +532,144 @@ public sealed partial class WorkspacePersistenceTests
 
             var document = Assert.Single(await service.GetDocumentsAsync(project.Id, CancellationToken.None));
             Assert.Equal("File Import Demo", document.Name);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ProjectDataExportService_ShouldImportProjectPackageIntoDocumentsAndCases()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var serializer = CreateSerializer();
+        var caseRepository = new RequestCaseRepository(factory);
+        var caseService = new RequestCaseService(caseRepository, serializer);
+        var apiRepository = new ApiDocumentRepository(factory);
+        var service = new ProjectDataExportService(apiRepository, caseService);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "项目数据包导入项目"
+        }, CancellationToken.None)).Data!;
+        var tempFile = Path.Combine(Path.GetTempPath(), $"project-package-{Guid.NewGuid():N}.apixpkg.json");
+
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, """
+                                                 {
+                                                   "SchemaVersion": "apixpress.project-data.v1",
+                                                   "ExportedAt": "2026-04-27T03:00:00Z",
+                                                   "Project": {
+                                                     "Id": "source-project",
+                                                     "Name": "中文项目",
+                                                     "Description": "用于验证导入"
+                                                   },
+                                                   "Interfaces": [
+                                                     {
+                                                       "Id": "interface-1",
+                                                       "Name": "查询订单",
+                                                       "GroupName": "接口",
+                                                       "FolderPath": "订单",
+                                                       "ParentId": "",
+                                                       "Tags": ["core"],
+                                                       "Description": "查询订单接口",
+                                                       "RequestSnapshot": {
+                                                         "EndpointId": "swagger-import:GET /orders",
+                                                         "Name": "查询订单",
+                                                         "Method": "GET",
+                                                         "Url": "/orders",
+                                                         "Description": "查询订单接口",
+                                                         "BodyMode": "None",
+                                                         "BodyContent": "",
+                                                         "IgnoreSslErrors": false,
+                                                         "QueryParameters": [
+                                                           {
+                                                             "Name": "page",
+                                                             "Value": "1",
+                                                             "IsEnabled": true
+                                                           }
+                                                         ],
+                                                         "PathParameters": [],
+                                                         "Headers": [
+                                                           {
+                                                             "Name": "X-Tenant",
+                                                             "Value": "demo",
+                                                             "IsEnabled": true
+                                                           }
+                                                         ]
+                                                       },
+                                                       "UpdatedAt": "2026-04-27T03:10:00Z"
+                                                     }
+                                                   ],
+                                                   "TestCases": [
+                                                     {
+                                                       "Id": "case-1",
+                                                       "Name": "查询订单-成功",
+                                                       "GroupName": "用例",
+                                                       "FolderPath": "订单",
+                                                       "ParentId": "interface-1",
+                                                       "Tags": ["happy-path"],
+                                                       "Description": "成功场景",
+                                                       "RequestSnapshot": {
+                                                         "EndpointId": "swagger-import:GET /orders",
+                                                         "Name": "查询订单-成功",
+                                                         "Method": "GET",
+                                                         "Url": "/orders",
+                                                         "Description": "成功场景",
+                                                         "BodyMode": "None",
+                                                         "BodyContent": "",
+                                                         "IgnoreSslErrors": false,
+                                                         "QueryParameters": [],
+                                                         "PathParameters": [],
+                                                         "Headers": []
+                                                       },
+                                                       "UpdatedAt": "2026-04-27T03:20:00Z"
+                                                     }
+                                                   ]
+                                                 }
+                                                 """, new UTF8Encoding(true));
+
+            var previewResult = await service.PreviewImportPackageAsync(project.Id, tempFile, CancellationToken.None);
+            var importResult = await service.ImportPackageAsync(project.Id, tempFile, CancellationToken.None);
+
+            Assert.True(previewResult.IsSuccess);
+            Assert.NotNull(previewResult.Data);
+            Assert.Equal("中文项目", previewResult.Data!.DocumentName);
+            Assert.Equal(1, previewResult.Data.TotalEndpointCount);
+
+            Assert.True(importResult.IsSuccess);
+            Assert.NotNull(importResult.Data);
+            Assert.Equal("中文项目", importResult.Data!.Name);
+            Assert.Equal("APIXPKG", importResult.Data.SourceType);
+
+            var documents = await apiRepository.GetDocumentsAsync(project.Id, CancellationToken.None);
+            var document = Assert.Single(documents);
+            Assert.Equal("中文项目", document.Name);
+            Assert.Equal("APIXPKG", document.SourceType);
+
+            var endpoints = await apiRepository.GetEndpointDetailsByProjectIdAsync(project.Id, CancellationToken.None);
+            var endpoint = Assert.Single(endpoints);
+            Assert.Equal("订单", endpoint.GroupName);
+            Assert.Equal("GET", endpoint.Method);
+            Assert.Equal("/orders", endpoint.Path);
+
+            var cases = await caseService.GetCaseDetailsAsync(project.Id, CancellationToken.None);
+            var interfaceCase = Assert.Single(cases, item => item.EntryType == "http-interface");
+            var testCase = Assert.Single(cases, item => item.EntryType == "http-case");
+            Assert.Equal("查询订单", interfaceCase.Name);
+            Assert.Equal("订单", interfaceCase.FolderPath);
+            Assert.Equal("swagger-import:GET /orders", interfaceCase.RequestSnapshot.EndpointId);
+            Assert.Equal(interfaceCase.Id, testCase.ParentId);
+            Assert.Equal("查询订单-成功", testCase.Name);
         }
         finally
         {

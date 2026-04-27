@@ -37,6 +37,30 @@ public sealed class FilePickerService : IFilePickerService, ITransientDependency
         return files.FirstOrDefault() is { } file ? file.TryGetLocalPath() : null;
     }
 
+    public async Task<string?> PickProjectDataPackageFileAsync(CancellationToken cancellationToken)
+    {
+        if (_windowHostService.MainWindow is null)
+        {
+            return null;
+        }
+
+        var files = await _windowHostService.MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "选择 ApixPress 项目数据包",
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("ApixPress 项目数据包")
+                {
+                    Patterns = ["*.apixpkg.json"]
+                }
+            ]
+        });
+
+        cancellationToken.ThrowIfCancellationRequested();
+        return files.FirstOrDefault() is { } file ? file.TryGetLocalPath() : null;
+    }
+
     public async Task<string?> SaveProjectDataExportFileAsync(string suggestedFileName, CancellationToken cancellationToken)
     {
         if (_windowHostService.MainWindow is null)

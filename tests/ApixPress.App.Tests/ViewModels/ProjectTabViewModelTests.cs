@@ -334,6 +334,71 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task ImportProjectDataPackageFileCommand_ShouldImportPackageFromFile()
+    {
+        var filePickerService = new FakeFilePickerService
+        {
+            PickProjectDataPackageFileResult = @"C:\temp\orders.apixpkg.json"
+        };
+        var exportService = new FakeProjectDataExportService
+        {
+            PreviewImportResult = ResultModel<ApiImportPreviewDto>.Success(new ApiImportPreviewDto
+            {
+                DocumentName = "订单项目",
+                SourceType = "APIXPKG",
+                SourceValue = @"C:\temp\orders.apixpkg.json",
+                TotalEndpointCount = 2,
+                NewEndpointCount = 2,
+                ConflictCount = 0
+            }),
+            ImportResult = ResultModel<ApiDocumentDto>.Success(new ApiDocumentDto
+            {
+                Id = "doc-pkg-1",
+                ProjectId = "project-1",
+                Name = "订单项目",
+                SourceType = "APIXPKG",
+                SourceValue = @"C:\temp\orders.apixpkg.json",
+                ImportedAt = DateTime.UtcNow
+            })
+        };
+        var notificationService = new FakeAppNotificationService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            appNotificationService: notificationService,
+            filePickerService: filePickerService,
+            projectDataExportService: exportService);
+
+        await viewModel.InitializeAsync();
+        await viewModel.Import.ImportProjectDataPackageFileCommand.ExecuteAsync(null);
+
+        Assert.Equal("project-1", exportService.LastImportProjectId);
+        Assert.Equal(@"C:\temp\orders.apixpkg.json", exportService.LastImportFilePath);
+        Assert.Equal("项目数据包导入成功：订单项目", viewModel.StatusMessage);
+        Assert.True(viewModel.Import.ShowImportStatusSuccess);
+        var notification = Assert.Single(notificationService.Notifications);
+        Assert.Equal("项目数据包导入成功", notification.Title);
+        Assert.Equal(NotificationType.Success, notification.Type);
+    }
+
+    [Fact]
+    public async Task ImportProjectDataPackageFileCommand_ShouldKeepInfoStatusWhenUserCancelsPicker()
+    {
+        var filePickerService = new FakeFilePickerService();
+        var exportService = new FakeProjectDataExportService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            filePickerService: filePickerService,
+            projectDataExportService: exportService);
+
+        await viewModel.InitializeAsync();
+        await viewModel.Import.ImportProjectDataPackageFileCommand.ExecuteAsync(null);
+
+        Assert.Null(exportService.LastImportFilePath);
+        Assert.Equal("未选择项目数据包文件。", viewModel.StatusMessage);
+        Assert.True(viewModel.Import.ShowImportStatusInfo);
+    }
+
+    [Fact]
     public async Task ImportSwaggerUrlCommand_ShouldRequireConfirmationBeforeOverwritingConflictingEndpoints()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();

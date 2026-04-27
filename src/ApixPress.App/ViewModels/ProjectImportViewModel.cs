@@ -38,6 +38,20 @@ public partial class ProjectImportViewModel : ViewModelBase
     private CancellationTokenSource? _importCancellationTokenSource;
     private PendingImportRequest? _pendingImportRequest;
     private bool _hasLoadedImportedDocuments;
+    private static readonly ImportOperationTextBundle SwaggerImportTextBundle = new(
+        "Swagger 导入成功",
+        "Swagger 导入失败",
+        ImportTexts.PreviewFailureFallback,
+        ImportTexts.ImportFailureFallback,
+        ImportTexts.UnexpectedFailureFallback,
+        ImportTexts.OverwritePendingShellStatus);
+    private static readonly ImportOperationTextBundle ProjectPackageImportTextBundle = new(
+        "项目数据包导入成功",
+        "项目数据包导入失败",
+        ImportTexts.PackagePreviewFailureFallback,
+        ImportTexts.PackageImportFailureFallback,
+        ImportTexts.PackageUnexpectedFailureFallback,
+        ImportTexts.PackageOverwritePendingShellStatus);
 
     public ProjectImportViewModel(
         string projectId,
@@ -242,7 +256,8 @@ public partial class ProjectImportViewModel : ViewModelBase
             cancellationToken => _apiWorkspaceService.ImportFromFileAsync(_projectId, SelectedImportFilePath.Trim(), cancellationToken),
             document => ImportTexts.FormatFileImportSuccess(document.Name),
             ImportTexts.PreviewLocalBusyText,
-            ImportTexts.ImportLocalBusyText);
+            ImportTexts.ImportLocalBusyText,
+            SwaggerImportTextBundle);
     }
 
     [RelayCommand]
@@ -261,7 +276,33 @@ public partial class ProjectImportViewModel : ViewModelBase
             cancellationToken => _apiWorkspaceService.ImportFromUrlAsync(_projectId, importTargetUrl, cancellationToken),
             document => ImportTexts.FormatUrlImportSuccess(document.Name),
             ImportTexts.PreviewUrlBusyText,
-            ImportTexts.ImportUrlBusyText);
+            ImportTexts.ImportUrlBusyText,
+            SwaggerImportTextBundle);
+    }
+
+    [RelayCommand]
+    private async Task ImportProjectDataPackageFileAsync()
+    {
+        if (IsImportDataBusy)
+        {
+            return;
+        }
+
+        var filePath = await _filePickerService.PickProjectDataPackageFileAsync(CancellationToken.None);
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            SetImportDataStatus(ImportTexts.PickPackageCancelledStatus, ImportStatusStates.Info);
+            _setStatusMessage(ImportTexts.PickPackageCancelledStatus);
+            return;
+        }
+
+        await ImportSwaggerAsync(
+            cancellationToken => _projectDataExportService.PreviewImportPackageAsync(_projectId, filePath, cancellationToken),
+            cancellationToken => _projectDataExportService.ImportPackageAsync(_projectId, filePath, cancellationToken),
+            document => ImportTexts.FormatPackageImportSuccess(document.Name),
+            ImportTexts.PreviewPackageBusyText,
+            ImportTexts.ImportPackageBusyText,
+            ProjectPackageImportTextBundle);
     }
 
     [RelayCommand]
@@ -298,6 +339,7 @@ public partial class ProjectImportViewModel : ViewModelBase
                 _pendingImportRequest.ImportAction,
                 _pendingImportRequest.BuildSuccessMessage,
                 _pendingImportRequest.ImportBusyText,
+                _pendingImportRequest.OperationTexts,
                 cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -305,7 +347,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         }
         catch (Exception exception)
         {
-            HandleUnexpectedImportFailure(exception, ImportTexts.UnexpectedFailureFallback);
+            HandleUnexpectedImportFailure(exception, _pendingImportRequest.OperationTexts);
         }
         finally
         {
@@ -499,7 +541,8 @@ public partial class ProjectImportViewModel : ViewModelBase
         Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> importAction,
         Func<ApiDocumentDto, string> buildSuccessMessage,
         string previewBusyText,
-        string importBusyText)
+        string importBusyText,
+        ImportOperationTextBundle operationTexts)
     {
         if (IsImportDataBusy)
         {
@@ -515,34 +558,34 @@ public partial class ProjectImportViewModel : ViewModelBase
             if (!previewResult.IsSuccess || previewResult.Data is null)
             {
                 var failureMessage = string.IsNullOrWhiteSpace(previewResult.Message)
-                    ? ImportTexts.PreviewFailureFallback
+                    ? operationTexts.PreviewFailureFallback
                     : previewResult.Message;
                 SetImportDataStatus(failureMessage, ImportStatusStates.Error);
                 _setStatusMessage(failureMessage);
-                PublishGlobalNotification("Swagger 导入失败", failureMessage, NotificationType.Error);
+                PublishGlobalNotification(operationTexts.FailureNotificationTitle, failureMessage, NotificationType.Error);
                 return;
             }
 
             if (previewResult.Data.ConflictCount > 0)
             {
-                _pendingImportRequest = new PendingImportRequest(importAction, buildSuccessMessage, importBusyText);
+                _pendingImportRequest = new PendingImportRequest(importAction, buildSuccessMessage, importBusyText, operationTexts);
                 PendingImportPreview = previewResult.Data;
                 IsOverwriteConfirmDialogOpen = true;
                 SetImportDataStatus(
                     ImportTexts.FormatOverwriteDetectedStatus(previewResult.Data.ConflictCount),
                     ImportStatusStates.Info);
-                _setStatusMessage(ImportTexts.OverwritePendingShellStatus);
+                _setStatusMessage(operationTexts.OverwritePendingShellStatus);
                 return;
             }
 
-            await ExecuteImportAsync(importAction, buildSuccessMessage, importBusyText, cancellationToken);
+            await ExecuteImportAsync(importAction, buildSuccessMessage, importBusyText, operationTexts, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
         }
         catch (Exception exception)
         {
-            HandleUnexpectedImportFailure(exception, ImportTexts.UnexpectedFailureFallback);
+            HandleUnexpectedImportFailure(exception, operationTexts);
         }
         finally
         {
@@ -554,6 +597,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> importAction,
         Func<ApiDocumentDto, string> buildSuccessMessage,
         string importBusyText,
+        ImportOperationTextBundle operationTexts,
         CancellationToken cancellationToken)
     {
         ImportDataBusyText = importBusyText;
@@ -561,11 +605,11 @@ public partial class ProjectImportViewModel : ViewModelBase
         if (!result.IsSuccess || result.Data is null)
         {
             var failureMessage = string.IsNullOrWhiteSpace(result.Message)
-                ? ImportTexts.ImportFailureFallback
+                ? operationTexts.ImportFailureFallback
                 : result.Message;
             SetImportDataStatus(failureMessage, ImportStatusStates.Error);
             _setStatusMessage(failureMessage);
-            PublishGlobalNotification("Swagger 导入失败", failureMessage, NotificationType.Error);
+            PublishGlobalNotification(operationTexts.FailureNotificationTitle, failureMessage, NotificationType.Error);
             return;
         }
 
@@ -576,7 +620,20 @@ public partial class ProjectImportViewModel : ViewModelBase
         SetImportDataStatus(successMessage, ImportStatusStates.Success);
         IsDialogOpen = false;
         _setStatusMessage(successMessage);
-        PublishGlobalNotification("Swagger 导入成功", successMessage, NotificationType.Success);
+        PublishGlobalNotification(operationTexts.SuccessNotificationTitle, successMessage, NotificationType.Success);
+    }
+
+    private void HandleUnexpectedImportFailure(Exception exception, ImportOperationTextBundle operationTexts)
+    {
+        ClearPendingImportConfirmation();
+
+        var failureMessage = string.IsNullOrWhiteSpace(exception.Message)
+            ? operationTexts.UnexpectedFailureFallback
+            : $"{operationTexts.UnexpectedFailureFallback} {exception.Message}";
+
+        SetImportDataStatus(failureMessage, ImportStatusStates.Error);
+        _setStatusMessage(failureMessage);
+        PublishGlobalNotification(operationTexts.FailureNotificationTitle, failureMessage, NotificationType.Error);
     }
 
     private void HandleUnexpectedImportFailure(Exception exception, string fallbackMessage)
@@ -624,6 +681,11 @@ public partial class ProjectImportViewModel : ViewModelBase
 
     private static string ResolveImportSourceTypeText(string sourceType)
     {
+        if (string.Equals(sourceType, "APIXPKG", StringComparison.OrdinalIgnoreCase))
+        {
+            return ImportTexts.SourceTypeProjectPackage;
+        }
+
         return string.Equals(sourceType, "URL", StringComparison.OrdinalIgnoreCase)
             ? ImportTexts.SourceTypeUrl
             : ImportTexts.SourceTypeFile;
@@ -647,11 +709,13 @@ public partial class ProjectImportViewModel : ViewModelBase
         public PendingImportRequest(
             Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> importAction,
             Func<ApiDocumentDto, string> buildSuccessMessage,
-            string importBusyText)
+            string importBusyText,
+            ImportOperationTextBundle operationTexts)
         {
             ImportAction = importAction;
             BuildSuccessMessage = buildSuccessMessage;
             ImportBusyText = importBusyText;
+            OperationTexts = operationTexts;
         }
 
         public Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> ImportAction { get; }
@@ -659,5 +723,38 @@ public partial class ProjectImportViewModel : ViewModelBase
         public Func<ApiDocumentDto, string> BuildSuccessMessage { get; }
 
         public string ImportBusyText { get; }
+
+        public ImportOperationTextBundle OperationTexts { get; }
+    }
+
+    private sealed class ImportOperationTextBundle
+    {
+        public ImportOperationTextBundle(
+            string successNotificationTitle,
+            string failureNotificationTitle,
+            string previewFailureFallback,
+            string importFailureFallback,
+            string unexpectedFailureFallback,
+            string overwritePendingShellStatus)
+        {
+            SuccessNotificationTitle = successNotificationTitle;
+            FailureNotificationTitle = failureNotificationTitle;
+            PreviewFailureFallback = previewFailureFallback;
+            ImportFailureFallback = importFailureFallback;
+            UnexpectedFailureFallback = unexpectedFailureFallback;
+            OverwritePendingShellStatus = overwritePendingShellStatus;
+        }
+
+        public string SuccessNotificationTitle { get; }
+
+        public string FailureNotificationTitle { get; }
+
+        public string PreviewFailureFallback { get; }
+
+        public string ImportFailureFallback { get; }
+
+        public string UnexpectedFailureFallback { get; }
+
+        public string OverwritePendingShellStatus { get; }
     }
 }

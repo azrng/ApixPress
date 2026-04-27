@@ -181,6 +181,37 @@
                       </StackPanel>
                     </Grid>
                   </Button>
+
+                  <Border Classes="ProjectSettingsSectionDivider" />
+                  <StackPanel Spacing="2">
+                    <TextBlock Classes="SectionTitle"
+                               Text="{Binding Summary.ProjectSettingsImportPackageCardTitle}" />
+                    <TextBlock Classes="CaptionText"
+                               Text="{Binding Summary.ProjectSettingsImportPackageCardDescription}" />
+                  </StackPanel>
+                  <Button Classes="ProjectImportCatalogButton"
+                          Command="{Binding Import.ImportProjectDataPackageFileCommand}">
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="{StaticResource Space.3}">
+                      <Border Width="42"
+                              Height="42"
+                              Classes="ProjectImportFormatIcon">
+                        <TextBlock HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="{StaticResource Font.Size.BodyLarge}"
+                                   FontWeight="Bold"
+                                   Text="P" />
+                      </Border>
+                      <StackPanel Grid.Column="1"
+                                  Spacing="2"
+                                  VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Summary.ProjectSettingsImportPackageFormatName}"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="{Binding Summary.ProjectSettingsImportPackageFormatDescription}" />
+                      </StackPanel>
+                    </Grid>
+                  </Button>
                 </StackPanel>
               </Border>
             </StackPanel>

@@ -45,6 +45,10 @@ public class ProjectTabSummaryViewModel : ViewModelBase
     public string ProjectSettingsImportCardDescription => ProjectSettingsTexts.ImportCardDescription;
     public string ProjectSettingsImportFormatName => ProjectSettingsTexts.ImportFormatName;
     public string ProjectSettingsImportFormatDescription => ProjectSettingsTexts.ImportFormatDescription;
+    public string ProjectSettingsImportPackageCardTitle => ProjectSettingsTexts.ImportPackageCardTitle;
+    public string ProjectSettingsImportPackageCardDescription => ProjectSettingsTexts.ImportPackageCardDescription;
+    public string ProjectSettingsImportPackageFormatName => ProjectSettingsTexts.ImportPackageFormatName;
+    public string ProjectSettingsImportPackageFormatDescription => ProjectSettingsTexts.ImportPackageFormatDescription;
     public string ProjectSettingsExportCardTitle => ProjectSettingsTexts.ExportCardTitle;
     public string ProjectSettingsExportCardDescription => ProjectSettingsTexts.ExportCardDescription;
     public string ProjectSettingsExportFormatName => ProjectSettingsTexts.ExportFormatName;
