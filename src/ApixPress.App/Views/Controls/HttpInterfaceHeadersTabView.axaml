@@ -1,0 +1,56 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.HttpInterfaceHeadersTabView"
+             x:DataType="vm:ProjectTabViewModel"
+             mc:Ignorable="d">
+  <DockPanel Margin="{StaticResource Pad.3}"
+             HorizontalAlignment="Stretch"
+             MinHeight="0">
+    <Border DockPanel.Dock="Top"
+            Classes="HttpRequestTableHeader">
+      <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,48"
+            ColumnSpacing="{StaticResource Space.3}">
+        <TextBlock Grid.Column="0" Classes="CaptionText" Text="Header 名" />
+        <TextBlock Grid.Column="1" Classes="CaptionText" Text="Header 值" />
+        <TextBlock Grid.Column="2" Classes="CaptionText" Text="类型" />
+        <TextBlock Grid.Column="3" Classes="CaptionText" Text="说明" />
+      </Grid>
+    </Border>
+    <Button DockPanel.Dock="Bottom"
+            Classes="AddButton"
+            HorizontalAlignment="Left"
+            Margin="0,8,0,0"
+            Content="添加 Header"
+            Command="{Binding ConfigTab.AddHeaderCommand}" />
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+      <ItemsControl ItemsSource="{Binding ConfigTab.Headers}"
+                    HorizontalAlignment="Stretch">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
+            <Border Classes="ParameterRow HttpRequestParameterRow"
+                    HorizontalAlignment="Stretch">
+              <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,48"
+                    ColumnSpacing="{StaticResource Space.3}">
+                <TextBox Grid.Column="0" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="Header 名" />
+                <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" Watermark="Header 值" />
+                <TextBlock Grid.Column="2" Classes="CaptionText" Text="String" VerticalAlignment="Center" />
+                <TextBox Grid.Column="3" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" Watermark="说明" />
+                <u:IconButton Grid.Column="4"
+                              Classes="Danger"
+                              Theme="{DynamicResource BorderlessIconButton}"
+                              Icon="{StaticResource SemiIconDelete}"
+                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
+                              CommandParameter="{Binding}" />
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+  </DockPanel>
+</UserControl>
