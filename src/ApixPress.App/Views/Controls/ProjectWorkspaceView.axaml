@@ -5,13 +5,10 @@
              xmlns:views="using:ApixPress.App.Views.Controls"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.ProjectWorkspaceView"
-             x:DataType="vm:MainWindowViewModel"
+             x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <Border IsVisible="{Binding HasActiveProjectTab}"
-          Background="Transparent">
-    <Grid DataContext="{Binding ActiveProjectTab}"
-          x:DataType="vm:ProjectTabViewModel"
-          Margin="{StaticResource Pad.5}"
+  <Border Background="Transparent">
+    <Grid Margin="{StaticResource Pad.5}"
           RowDefinitions="*">
       <Grid ColumnDefinitions="84,*"
             ColumnSpacing="{StaticResource Space.3}">
