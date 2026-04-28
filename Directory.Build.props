@@ -5,7 +5,7 @@
     <ApixPressLegacyVersionIsExplicit Condition="'$(ApixPressLegacyVersion)' != ''">$([System.Text.RegularExpressions.Regex]::IsMatch('$(ApixPressLegacyVersion)', '^\d+\.\d+\.\d+(?:\.\d+)?$'))</ApixPressLegacyVersionIsExplicit>
     <ApixPressResolvedVersion Condition="'$(ApixPressResolvedVersion)' == '' and '$(ApixPressVersionDate)' != ''">$(ApixPressVersionDate)</ApixPressResolvedVersion>
     <ApixPressResolvedVersion Condition="'$(ApixPressResolvedVersion)' == '' and '$(ApixPressLegacyVersionIsExplicit)' == 'True'">$(ApixPressLegacyVersion)</ApixPressResolvedVersion>
-    <ApixPressResolvedVersion Condition="'$(ApixPressResolvedVersion)' == ''">$([System.DateTime]::Now.ToString('yyyy.M.d'))</ApixPressResolvedVersion>
+    <ApixPressResolvedVersion Condition="'$(ApixPressResolvedVersion)' == ''">$([System.DateTime]::UtcNow.ToString('yyyy.M.d.HH'))</ApixPressResolvedVersion>
     <ApixPressResolvedVersionHasRevision Condition="'$(ApixPressResolvedVersion)' != ''">$([System.Text.RegularExpressions.Regex]::IsMatch('$(ApixPressResolvedVersion)', '^\d+\.\d+\.\d+\.\d+$'))</ApixPressResolvedVersionHasRevision>
     <ApixPressAssemblyVersion Condition="'$(ApixPressAssemblyVersion)' == '' and '$(ApixPressResolvedVersionHasRevision)' == 'True'">$(ApixPressResolvedVersion)</ApixPressAssemblyVersion>
     <ApixPressAssemblyVersion Condition="'$(ApixPressAssemblyVersion)' == ''">$(ApixPressResolvedVersion).0</ApixPressAssemblyVersion>

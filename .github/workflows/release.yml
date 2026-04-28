@@ -50,7 +50,7 @@ jobs:
             $version = $legacyVersion
           }
           else {
-            $version = Get-Date -Format "yyyy.M.d"
+            $version = (Get-Date).ToUniversalTime().ToString("yyyy.M.d.HH")
           }
 
           $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
