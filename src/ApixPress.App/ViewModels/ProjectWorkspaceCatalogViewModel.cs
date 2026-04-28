@@ -56,7 +56,9 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     public IReadOnlyList<ExplorerItemViewModel> InterfaceCatalogItems => InterfaceTreeItems.FirstOrDefault()?.Children ?? [];
     public bool HasQuickRequestEntries => SavedRequests.Any(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase));
     public bool HasInterfaceEntries => SavedRequests.Any(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase));
-    public bool ShowInterfaceEntriesEmptyState => !HasInterfaceEntries;
+    public bool HasInterfaceSearchText => !string.IsNullOrWhiteSpace(InterfaceSearchText);
+    public bool ShowInterfaceEntriesEmptyState => !HasInterfaceEntries || (HasInterfaceSearchText && InterfaceCatalogItems.Count == 0);
+    public string InterfaceEmptyStateText => HasInterfaceSearchText ? "没有匹配的 HTTP 接口" : "当前还没有保存的 HTTP 接口";
     public bool ShowQuickRequestEntriesEmptyState => !HasQuickRequestEntries;
     public bool ShowSavedRequestsEmptyState => !HasQuickRequestEntries && !HasInterfaceEntries;
     public string InterfaceSectionHint => HasInterfaceEntries ? "默认模块 / 接口" : "默认模块下还没有保存的 HTTP 接口";
@@ -98,6 +100,9 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool isDeleteConfirmDialogOpen;
+
+    [ObservableProperty]
+    private string interfaceSearchText = string.Empty;
 
     [ObservableProperty]
     private ExplorerItemViewModel? pendingDeleteWorkspaceItem;
@@ -255,6 +260,14 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         OnPropertyChanged(nameof(PendingDeleteDescription));
     }
 
+    partial void OnInterfaceSearchTextChanged(string value)
+    {
+        RequestWorkspaceNavigationRebuild(rebuildQuickRequestNavigation: false);
+        OnPropertyChanged(nameof(HasInterfaceSearchText));
+        OnPropertyChanged(nameof(InterfaceEmptyStateText));
+        OnPropertyChanged(nameof(ShowInterfaceEntriesEmptyState));
+    }
+
     private void OnSavedRequestsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         var (rebuildInterfaceNavigation, rebuildQuickRequestNavigation) = ResolveWorkspaceNavigationRebuildScope(e);
@@ -267,7 +280,9 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(HasQuickRequestEntries));
         OnPropertyChanged(nameof(HasInterfaceEntries));
+        OnPropertyChanged(nameof(HasInterfaceSearchText));
         OnPropertyChanged(nameof(ShowInterfaceEntriesEmptyState));
+        OnPropertyChanged(nameof(InterfaceEmptyStateText));
         OnPropertyChanged(nameof(ShowQuickRequestEntriesEmptyState));
         OnPropertyChanged(nameof(ShowSavedRequestsEmptyState));
         OnPropertyChanged(nameof(InterfaceSectionHint));
@@ -278,8 +293,12 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     {
         SynchronizeExplorerItems(
             InterfaceTreeItems,
-            [ProjectWorkspaceTreeBuilder.BuildInterfaceRoot(SavedRequests, RequestDeleteWorkspaceTreeItemCommand)]);
+            [ProjectWorkspaceTreeBuilder.BuildInterfaceRoot(
+                ResolveInterfaceNavigationItems(),
+                RequestDeleteWorkspaceTreeItemCommand,
+                HasInterfaceSearchText)]);
         OnPropertyChanged(nameof(InterfaceCatalogItems));
+        OnPropertyChanged(nameof(ShowInterfaceEntriesEmptyState));
     }
 
     private void RebuildQuickRequestNavigation()
@@ -287,6 +306,42 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         SynchronizeExplorerItems(
             QuickRequestTreeItems,
             ProjectWorkspaceTreeBuilder.BuildQuickRequests(SavedRequests, RequestDeleteWorkspaceTreeItemCommand));
+    }
+
+    private IReadOnlyList<RequestCaseItemViewModel> ResolveInterfaceNavigationItems()
+    {
+        var keyword = InterfaceSearchText.Trim();
+        if (string.IsNullOrWhiteSpace(keyword))
+        {
+            return SavedRequests;
+        }
+
+        var matchedInterfaceIds = SavedRequests
+            .Where(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase))
+            .Where(item => InterfaceMatchesSearch(item, keyword))
+            .Select(item => item.SourceCase.Id)
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return SavedRequests
+            .Where(item =>
+                string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpInterface, StringComparison.OrdinalIgnoreCase)
+                    && matchedInterfaceIds.Contains(item.SourceCase.Id)
+                || string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpCase, StringComparison.OrdinalIgnoreCase)
+                    && matchedInterfaceIds.Contains(item.SourceCase.ParentId))
+            .ToList();
+    }
+
+    private static bool InterfaceMatchesSearch(RequestCaseItemViewModel item, string keyword)
+    {
+        return ContainsSearchText(item.Name, keyword)
+            || ContainsSearchText(item.SourceCase.Name, keyword)
+            || ContainsSearchText(item.SourceCase.RequestSnapshot.Url, keyword);
+    }
+
+    private static bool ContainsSearchText(string value, string keyword)
+    {
+        return value.Contains(keyword, StringComparison.OrdinalIgnoreCase);
     }
 
     private void RequestWorkspaceNavigationRebuild(bool rebuildInterfaceNavigation = true, bool rebuildQuickRequestNavigation = true)

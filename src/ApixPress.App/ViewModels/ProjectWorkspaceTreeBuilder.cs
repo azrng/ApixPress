@@ -14,7 +14,8 @@ public static class ProjectWorkspaceTreeBuilder
 
     public static ExplorerItemViewModel BuildInterfaceRoot(
         IEnumerable<RequestCaseItemViewModel> savedRequests,
-        ICommand deleteCommand)
+        ICommand deleteCommand,
+        bool expandAll = false)
     {
         var requestItems = savedRequests.ToList();
         var httpInterfaces = requestItems
@@ -83,12 +84,12 @@ public static class ProjectWorkspaceTreeBuilder
 
         foreach (var folderSpec in rootFolderSpecs.Values.OrderBy(item => item.Path, StringComparer.OrdinalIgnoreCase))
         {
-            interfaceRoot.Children.Add(BuildFolderNode(folderSpec, deleteCommand));
+            interfaceRoot.Children.Add(BuildFolderNode(folderSpec, deleteCommand, expandAll));
         }
 
         foreach (var interfaceSpec in rootInterfaces.OrderBy(item => item.Item.Name, StringComparer.OrdinalIgnoreCase))
         {
-            interfaceRoot.Children.Add(BuildInterfaceNode(interfaceSpec, deleteCommand));
+            interfaceRoot.Children.Add(BuildInterfaceNode(interfaceSpec, deleteCommand, expandAll));
         }
 
         return interfaceRoot;
@@ -146,7 +147,7 @@ public static class ProjectWorkspaceTreeBuilder
         };
     }
 
-    private static ExplorerItemViewModel BuildFolderNode(FolderNodeSpec spec, ICommand deleteCommand)
+    private static ExplorerItemViewModel BuildFolderNode(FolderNodeSpec spec, ICommand deleteCommand, bool expandAll)
     {
         var node = new ExplorerItemViewModel
         {
@@ -155,30 +156,40 @@ public static class ProjectWorkspaceTreeBuilder
             Subtitle = string.Empty,
             IsGroup = true,
             NodeType = "folder",
-            IsExpanded = false,
+            IsExpanded = expandAll,
             DeleteCommand = deleteCommand
         };
         if (spec.HasChildren)
         {
-            node.SetDeferredChildren(() => BuildFolderChildren(spec, deleteCommand));
+            if (expandAll)
+            {
+                foreach (var child in BuildFolderChildren(spec, deleteCommand, expandAll))
+                {
+                    node.Children.Add(child);
+                }
+            }
+            else
+            {
+                node.SetDeferredChildren(() => BuildFolderChildren(spec, deleteCommand, expandAll));
+            }
         }
 
         return node;
     }
 
-    private static IReadOnlyList<ExplorerItemViewModel> BuildFolderChildren(FolderNodeSpec spec, ICommand deleteCommand)
+    private static IReadOnlyList<ExplorerItemViewModel> BuildFolderChildren(FolderNodeSpec spec, ICommand deleteCommand, bool expandAll)
     {
         var children = new List<ExplorerItemViewModel>();
         children.AddRange(spec.Children.Values
             .OrderBy(item => item.Path, StringComparer.OrdinalIgnoreCase)
-            .Select(item => BuildFolderNode(item, deleteCommand)));
+            .Select(item => BuildFolderNode(item, deleteCommand, expandAll)));
         children.AddRange(spec.Interfaces
             .OrderBy(item => item.Item.Name, StringComparer.OrdinalIgnoreCase)
-            .Select(item => BuildInterfaceNode(item, deleteCommand)));
+            .Select(item => BuildInterfaceNode(item, deleteCommand, expandAll)));
         return children;
     }
 
-    private static ExplorerItemViewModel BuildInterfaceNode(InterfaceNodeSpec spec, ICommand deleteCommand)
+    private static ExplorerItemViewModel BuildInterfaceNode(InterfaceNodeSpec spec, ICommand deleteCommand, bool expandAll)
     {
         var interfaceNode = new ExplorerItemViewModel
         {
@@ -187,14 +198,14 @@ public static class ProjectWorkspaceTreeBuilder
             Subtitle = string.Empty,
             NodeType = ProjectTabRequestEntryTypes.HttpInterface,
             CanLoad = true,
-            IsExpanded = false,
+            IsExpanded = expandAll,
             DeleteCommand = deleteCommand,
             SourceCase = spec.Item.SourceCase
         };
 
         if (spec.Cases.Count > 0)
         {
-            interfaceNode.SetDeferredChildren(() => spec.Cases.Select(caseItem => new ExplorerItemViewModel
+            var caseChildren = spec.Cases.Select(caseItem => new ExplorerItemViewModel
             {
                 NodeKey = $"http-case:{caseItem.SourceCase.Id}",
                 Title = caseItem.Name,
@@ -203,7 +214,18 @@ public static class ProjectWorkspaceTreeBuilder
                 CanLoad = true,
                 DeleteCommand = deleteCommand,
                 SourceCase = caseItem.SourceCase
-            }).ToList());
+            }).ToList();
+            if (expandAll)
+            {
+                foreach (var child in caseChildren)
+                {
+                    interfaceNode.Children.Add(child);
+                }
+            }
+            else
+            {
+                interfaceNode.SetDeferredChildren(() => caseChildren);
+            }
         }
 
         return interfaceNode;

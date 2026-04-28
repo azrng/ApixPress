@@ -105,7 +105,8 @@
               ColumnSpacing="{StaticResource Space.2}">
           <TextBox Grid.Column="0"
                    Classes="ProjectSidebarSearchBox"
-                   Watermark="搜索" />
+                   Watermark="搜索接口名称或 Path"
+                   Text="{Binding Catalog.InterfaceSearchText, Mode=TwoWay}" />
           <Button Grid.Column="1"
                   Classes="ProjectSidebarAddButton"
                   Command="{Binding Workspace.OpenHttpInterfaceWorkspaceCommand}">
@@ -163,7 +164,7 @@
                           IsVisible="{Binding Catalog.IsInterfaceCatalogExpanded}">
                     <StackPanel Classes="ProjectSidebarCatalogContent">
                       <TextBlock Classes="CaptionText ProjectSidebarEmptyHint"
-                                 Text="当前还没有保存的 HTTP 接口"
+                                 Text="{Binding Catalog.InterfaceEmptyStateText}"
                                  IsVisible="{Binding Catalog.ShowInterfaceEntriesEmptyState}" />
                       <ItemsControl Classes="ProjectSidebarInlineTree"
                                     ItemsSource="{Binding Catalog.InterfaceCatalogItems}">

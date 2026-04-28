@@ -60,6 +60,38 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task InterfaceCatalogSearch_ShouldMatchInterfaceNameAndPath()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "订单服务", "FILE", @"C:\temp\orders-swagger.json", "https://order.demo.local",
+        [
+            ("订单/查询", "查询订单列表", "GET", "/orders"),
+            ("用户", "获取用户详情", "GET", "/users/{id}")
+        ]);
+
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
+
+        viewModel.Catalog.InterfaceSearchText = "用户详情";
+        var nameMatchTitles = FlattenExplorerTitles(viewModel.Catalog.InterfaceCatalogItems).ToList();
+
+        Assert.Contains("用户 (1)", nameMatchTitles);
+        Assert.Contains("获取用户详情", nameMatchTitles);
+        Assert.DoesNotContain("查询订单列表", nameMatchTitles);
+
+        viewModel.Catalog.InterfaceSearchText = "/orders";
+        var pathMatchTitles = FlattenExplorerTitles(viewModel.Catalog.InterfaceCatalogItems).ToList();
+
+        Assert.Contains("订单 (1)", pathMatchTitles);
+        Assert.Contains("查询 (1)", pathMatchTitles);
+        Assert.Contains("查询订单列表", pathMatchTitles);
+        Assert.DoesNotContain("获取用户详情", pathMatchTitles);
+    }
+
+    [Fact]
     public async Task InitializeAsync_ShouldLoadSavedRequestSummariesWithoutImportedDocuments()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
