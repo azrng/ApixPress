@@ -105,7 +105,7 @@
               ColumnSpacing="{StaticResource Space.2}">
           <TextBox Grid.Column="0"
                    Classes="ProjectSidebarSearchBox"
-                   Watermark="搜索接口名称或 Path"
+                   Watermark="搜索"
                    Text="{Binding Catalog.InterfaceSearchText, Mode=TwoWay}" />
           <Button Grid.Column="1"
                   Classes="ProjectSidebarAddButton"
