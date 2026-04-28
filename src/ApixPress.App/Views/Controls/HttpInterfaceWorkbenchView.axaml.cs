@@ -12,11 +12,17 @@ public partial class HttpInterfaceWorkbenchView : UserControl
     private HttpInterfaceBodyTabView? _bodyTabView;
     private HttpInterfaceHeadersTabView? _headersTabView;
     private int? _currentSelectedTabIndex;
+    private bool _isSubscribed;
 
     public HttpInterfaceWorkbenchView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        AttachedToVisualTree += (_, _) =>
+        {
+            Subscribe();
+            UpdateHostedContent();
+        };
         DetachedFromVisualTree += (_, _) => Unsubscribe();
     }
 
@@ -38,23 +44,25 @@ public partial class HttpInterfaceWorkbenchView : UserControl
 
     private void Subscribe()
     {
-        if (_viewModel is null)
+        if (_viewModel is null || _isSubscribed)
         {
             return;
         }
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         WireConfigTab(_viewModel.ConfigTab);
+        _isSubscribed = true;
     }
 
     private void Unsubscribe()
     {
-        if (_viewModel is not null)
+        if (_viewModel is not null && _isSubscribed)
         {
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         }
 
         WireConfigTab(null);
+        _isSubscribed = false;
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

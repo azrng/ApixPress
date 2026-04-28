@@ -11,11 +11,17 @@ public partial class RequestEditorWorkspaceView : UserControl
     private HttpInterfaceWorkbenchView? _httpInterfaceWorkbenchView;
     private HttpDocumentWorkspaceView? _httpDocumentWorkspaceView;
     private RequestEditorContentMode? _currentMode;
+    private bool _isEditorSubscribed;
 
     public RequestEditorWorkspaceView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        AttachedToVisualTree += (_, _) =>
+        {
+            SubscribeEditor();
+            UpdateHostedContent();
+        };
         DetachedFromVisualTree += (_, _) => UnsubscribeEditor();
     }
 
@@ -46,22 +52,24 @@ public partial class RequestEditorWorkspaceView : UserControl
 
     private void SubscribeEditor()
     {
-        if (_viewModel is null)
+        if (_viewModel is null || _isEditorSubscribed)
         {
             return;
         }
 
         _viewModel.Editor.PropertyChanged += OnEditorPropertyChanged;
+        _isEditorSubscribed = true;
     }
 
     private void UnsubscribeEditor()
     {
-        if (_viewModel is null)
+        if (_viewModel is null || !_isEditorSubscribed)
         {
             return;
         }
 
         _viewModel.Editor.PropertyChanged -= OnEditorPropertyChanged;
+        _isEditorSubscribed = false;
     }
 
     private void UpdateHostedContent()

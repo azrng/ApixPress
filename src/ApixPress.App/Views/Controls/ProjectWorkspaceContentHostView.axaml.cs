@@ -13,11 +13,17 @@ public partial class ProjectWorkspaceContentHostView : UserControl
     private RequestHistoryDetailView? _requestHistoryView;
     private ProjectSettingsWorkspaceView? _projectSettingsView;
     private ProjectWorkspaceContentMode? _currentMode;
+    private bool _isShellSubscribed;
 
     public ProjectWorkspaceContentHostView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        AttachedToVisualTree += (_, _) =>
+        {
+            SubscribeShell();
+            UpdateHostedContent();
+        };
         DetachedFromVisualTree += (_, _) => UnsubscribeShell();
     }
 
@@ -48,22 +54,24 @@ public partial class ProjectWorkspaceContentHostView : UserControl
 
     private void SubscribeShell()
     {
-        if (_viewModel is null)
+        if (_viewModel is null || _isShellSubscribed)
         {
             return;
         }
 
         _viewModel.Shell.PropertyChanged += OnShellPropertyChanged;
+        _isShellSubscribed = true;
     }
 
     private void UnsubscribeShell()
     {
-        if (_viewModel is null)
+        if (_viewModel is null || !_isShellSubscribed)
         {
             return;
         }
 
         _viewModel.Shell.PropertyChanged -= OnShellPropertyChanged;
+        _isShellSubscribed = false;
     }
 
     private void UpdateHostedContent()
