@@ -84,6 +84,29 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task ConfirmDeleteProjectFromSettingsCommand_ShouldRemoveProjectTabAndListItem()
+    {
+        var projectService = new FakeProjectWorkspaceService();
+        projectService.SeedProjects(
+        [
+            new("project-1", "订单项目", "订单接口", true),
+            new("project-2", "用户项目", "用户接口", false)
+        ]);
+        var viewModel = CreateViewModel(projectService);
+        await viewModel.InitializeAsync();
+        var project = viewModel.ProjectPanel.Projects.Single(item => item.Id == "project-1");
+        await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(project);
+
+        viewModel.ActiveProjectTab!.Settings.RequestDeleteProjectCommand.Execute(null);
+        await viewModel.ActiveProjectTab.Settings.ConfirmDeleteProjectCommand.ExecuteAsync(null);
+
+        Assert.DoesNotContain(viewModel.ProjectPanel.Projects, item => item.Id == "project-1");
+        Assert.DoesNotContain(viewModel.ProjectTabs, item => item.ProjectId == "project-1");
+        Assert.True(viewModel.IsHomeTabActive);
+        Assert.Equal("项目已删除，已返回项目列表。", viewModel.StatusMessage);
+    }
+
+    [Fact]
     public async Task DismissSystemDataRestartPromptCommand_ShouldKeepApplicationOpen()
     {
         var systemDataService = new FakeSystemDataService();

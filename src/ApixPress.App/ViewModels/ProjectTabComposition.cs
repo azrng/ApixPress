@@ -15,11 +15,14 @@ internal sealed class ProjectTabComposition : DisposableObject
         private readonly IRequestExecutionService _requestExecutionService;
         private readonly IRequestCaseService _requestCaseService;
         private readonly IRequestHistoryService _requestHistoryService;
+        private readonly ISystemDataService _systemDataService;
+        private readonly IProjectWorkspaceService _projectWorkspaceService;
         private readonly IEnvironmentVariableService _environmentVariableService;
         private readonly IApiWorkspaceService _apiWorkspaceService;
         private readonly IFilePickerService _filePickerService;
         private readonly IAppNotificationService _appNotificationService;
         private readonly IProjectDataExportService _projectDataExportService;
+        private readonly Func<string, Task> _handleProjectDeletedAsync;
         private readonly ProjectTabHostContext _hostContext;
 
         private ProjectImportViewModel? _importViewModel;
@@ -34,11 +37,14 @@ internal sealed class ProjectTabComposition : DisposableObject
             IRequestExecutionService requestExecutionService,
             IRequestCaseService requestCaseService,
             IRequestHistoryService requestHistoryService,
+            ISystemDataService systemDataService,
+            IProjectWorkspaceService projectWorkspaceService,
             IEnvironmentVariableService environmentVariableService,
             IApiWorkspaceService apiWorkspaceService,
             IFilePickerService filePickerService,
             IAppNotificationService appNotificationService,
             IProjectDataExportService projectDataExportService,
+            Func<string, Task> handleProjectDeletedAsync,
             ProjectTabHostContext hostContext)
         {
             _project = project;
@@ -46,11 +52,14 @@ internal sealed class ProjectTabComposition : DisposableObject
             _requestExecutionService = requestExecutionService;
             _requestCaseService = requestCaseService;
             _requestHistoryService = requestHistoryService;
+            _systemDataService = systemDataService;
+            _projectWorkspaceService = projectWorkspaceService;
             _environmentVariableService = environmentVariableService;
             _apiWorkspaceService = apiWorkspaceService;
             _filePickerService = filePickerService;
             _appNotificationService = appNotificationService;
             _projectDataExportService = projectDataExportService;
+            _handleProjectDeletedAsync = handleProjectDeletedAsync;
             _hostContext = hostContext;
         }
 
@@ -64,13 +73,13 @@ internal sealed class ProjectTabComposition : DisposableObject
             var workspaceContext = CreateWorkspaceContext(workspace, environmentPanel, historyPanel);
             var shell = CreateShell(workspaceContext);
             var editor = new ProjectRequestEditorViewModel(workspaceContext);
-            var settings = CreateSettings();
             var catalog = CreateCatalog(useCasesPanel, workspace);
             var import = CreateImport(catalog);
             var workflow = CreateWorkflow(workspace, historyPanel, environmentPanel, catalog, workspaceContext);
             var quickRequestSave = CreateQuickRequestSave(workspaceContext);
             var summary = CreateSummary(environmentPanel, useCasesPanel, historyPanel, import);
             var lifecycle = CreateLifecycle(useCasesPanel, environmentPanel, historyPanel, import, workspace, quickRequestSave, shell, editor);
+            var settings = CreateSettings(lifecycle.ReloadAfterProjectDataClearedAsync);
 
             return new ProjectTabComposition(
                 _project,
@@ -129,14 +138,20 @@ internal sealed class ProjectTabComposition : DisposableObject
             return shell;
         }
 
-        private ProjectSettingsShellViewModel CreateSettings()
+        private ProjectSettingsShellViewModel CreateSettings(Func<Task> reloadAfterProjectDataClearedAsync)
         {
             return new ProjectSettingsShellViewModel(
                 () => _shellViewModel?.ShowProjectSettingsSection(),
                 () => _importViewModel?.DismissDialog(),
                 () => _shellViewModel?.IsProjectSettingsSection ?? false,
+                _project.Id,
+                () => _project.Name,
                 () => _project.Description,
                 () => _importViewModel?.EnsureImportedDocumentsLoadedAsync() ?? Task.CompletedTask,
+                reloadAfterProjectDataClearedAsync,
+                _handleProjectDeletedAsync,
+                _systemDataService,
+                _projectWorkspaceService,
                 _hostContext.SetStatusMessage,
                 _hostContext.NotifyShellState);
         }
@@ -307,11 +322,14 @@ internal sealed class ProjectTabComposition : DisposableObject
         IRequestExecutionService requestExecutionService,
         IRequestCaseService requestCaseService,
         IRequestHistoryService requestHistoryService,
+        ISystemDataService systemDataService,
+        IProjectWorkspaceService projectWorkspaceService,
         IEnvironmentVariableService environmentVariableService,
         IApiWorkspaceService apiWorkspaceService,
         IFilePickerService filePickerService,
         IAppNotificationService appNotificationService,
         IProjectDataExportService projectDataExportService,
+        Func<string, Task> handleProjectDeletedAsync,
         ProjectTabHostContext hostContext)
     {
         return new Builder(
@@ -320,11 +338,14 @@ internal sealed class ProjectTabComposition : DisposableObject
             requestExecutionService,
             requestCaseService,
             requestHistoryService,
+            systemDataService,
+            projectWorkspaceService,
             environmentVariableService,
             apiWorkspaceService,
             filePickerService,
             appNotificationService,
             projectDataExportService,
+            handleProjectDeletedAsync,
             hostContext)
             .Build();
     }

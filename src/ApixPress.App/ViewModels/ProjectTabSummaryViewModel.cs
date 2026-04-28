@@ -41,6 +41,12 @@ public class ProjectTabSummaryViewModel : ViewModelBase
     public string ProjectSettingsExportDataTitle => ProjectSettingsTexts.ExportDataTitle;
     public string ProjectSettingsOverviewCardTitle => ProjectSettingsTexts.OverviewCardTitle;
     public string ProjectSettingsOverviewCardDescription => ProjectSettingsTexts.OverviewCardDescription;
+    public string ProjectSettingsDangerCardTitle => ProjectSettingsTexts.DangerCardTitle;
+    public string ProjectSettingsDangerCardDescription => ProjectSettingsTexts.DangerCardDescription;
+    public string ProjectSettingsClearProjectDataTitle => ProjectSettingsTexts.ClearProjectDataTitle;
+    public string ProjectSettingsClearProjectDataDescription => ProjectSettingsTexts.ClearProjectDataDescription;
+    public string ProjectSettingsDeleteProjectTitle => ProjectSettingsTexts.DeleteProjectTitle;
+    public string ProjectSettingsDeleteProjectDescription => ProjectSettingsTexts.DeleteProjectDescription;
     public string ProjectSettingsImportCardTitle => ProjectSettingsTexts.ImportCardTitle;
     public string ProjectSettingsImportCardDescription => ProjectSettingsTexts.ImportCardDescription;
     public string ProjectSettingsImportFormatName => ProjectSettingsTexts.ImportFormatName;

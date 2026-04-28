@@ -4,7 +4,9 @@ using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTes
 using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeAppNotificationService;
 using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeFilePickerService;
 using FakeProjectDataExportService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectDataExportService;
+using FakeProjectWorkspaceService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectWorkspaceService;
 using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
+using FakeSystemDataService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeSystemDataService;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels;
 using ApixPress.App.Services.Interfaces;
@@ -979,6 +981,73 @@ public sealed partial class ProjectTabViewModelTests
         Assert.False(viewModel.Settings.IsImportDataSelected);
         Assert.False(viewModel.Settings.IsExportDataSelected);
         Assert.Equal("基本设置", viewModel.Settings.CurrentTitle);
+    }
+
+    [Fact]
+    public async Task ConfirmClearProjectDataCommand_ShouldClearProjectAndReloadWorkspaceState()
+    {
+        var systemDataService = new FakeSystemDataService();
+        var requestCaseService = new FakeRequestCaseService();
+        requestCaseService.Cases.Add(new RequestCaseDto
+        {
+            Id = "case-1",
+            ProjectId = "project-1",
+            EntryType = ProjectTabRequestEntryTypes.QuickRequest,
+            Name = "待清空请求",
+            GroupName = "默认分组",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "/before-clear"
+            },
+            UpdatedAt = DateTime.UtcNow
+        });
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            requestCaseService,
+            systemDataService: systemDataService);
+
+        await viewModel.InitializeAsync();
+        Assert.NotEmpty(viewModel.SavedRequests);
+
+        viewModel.Settings.RequestClearProjectDataCommand.Execute(null);
+        Assert.True(viewModel.Settings.IsClearProjectDataConfirmDialogOpen);
+
+        requestCaseService.Cases.Clear();
+        await viewModel.Settings.ConfirmClearProjectDataCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, systemDataService.ClearProjectCallCount);
+        Assert.Equal("project-1", systemDataService.LastClearedProjectId);
+        Assert.False(viewModel.Settings.IsClearProjectDataConfirmDialogOpen);
+        Assert.Empty(viewModel.SavedRequests);
+        Assert.True(viewModel.Settings.IsOverviewSelected);
+        Assert.Contains("数据已清空", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task ConfirmDeleteProjectCommand_ShouldDeleteProjectAndNotifyHost()
+    {
+        var projectWorkspaceService = new FakeProjectWorkspaceService();
+        var deletedProjectId = string.Empty;
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            projectWorkspaceService: projectWorkspaceService,
+            handleProjectDeletedAsync: projectId =>
+            {
+                deletedProjectId = projectId;
+                return Task.CompletedTask;
+            });
+
+        viewModel.Settings.RequestDeleteProjectCommand.Execute(null);
+        Assert.True(viewModel.Settings.IsDeleteProjectConfirmDialogOpen);
+
+        await viewModel.Settings.ConfirmDeleteProjectCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, projectWorkspaceService.DeleteCallCount);
+        Assert.Equal("project-1", projectWorkspaceService.LastDeletedProjectId);
+        Assert.Equal("project-1", deletedProjectId);
+        Assert.False(viewModel.Settings.IsDeleteProjectConfirmDialogOpen);
+        Assert.False(viewModel.Settings.IsProjectDangerOperationBusy);
     }
 
     [Fact]

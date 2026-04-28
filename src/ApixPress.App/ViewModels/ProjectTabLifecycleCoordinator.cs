@@ -62,6 +62,18 @@ internal sealed class ProjectTabLifecycleCoordinator
         _hostContext.NotifyShellState();
     }
 
+    public async Task ReloadAfterProjectDataClearedAsync()
+    {
+        _quickRequestSave.Dismiss();
+        _import.DismissDialog();
+        _import.ResetImportedDocuments();
+        _workspace.ResetToLanding();
+        await LoadWorkspaceAsync();
+        _shell.ShowProjectSettingsSection();
+        _hostContext.NotifyWorkspaceBindingsChanged();
+        _hostContext.NotifyShellState();
+    }
+
     public async Task SaveCurrentEnvironmentAsync(string currentEnvironmentLabel)
     {
         if (!_environmentPanel.HasSelectedEnvironment)

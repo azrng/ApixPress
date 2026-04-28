@@ -104,6 +104,20 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         }
     }
 
+    public void ResetToLanding()
+    {
+        IsWorkspaceTabMenuOpen = false;
+        foreach (var tab in WorkspaceTabs.ToList())
+        {
+            DetachWorkspaceTab(tab);
+            WorkspaceTabs.Remove(tab);
+        }
+
+        ActiveWorkspaceTab = null;
+        EnsureLandingWorkspaceTab();
+        StateChanged?.Invoke();
+    }
+
     public RequestWorkspaceTabViewModel? FindFirstQuickRequestTab()
     {
         return WorkspaceTabs.FirstOrDefault(item => item.IsQuickRequestTab);

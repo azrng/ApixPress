@@ -413,7 +413,20 @@ public static class ViewModelSharedTestDoubles
     {
         public int ClearAllCallCount { get; private set; }
 
+        public int ClearProjectCallCount { get; private set; }
+
+        public string LastClearedProjectId { get; private set; } = string.Empty;
+
         public bool ShouldSucceed { get; set; } = true;
+
+        public Task<IResultModel<bool>> ClearProjectAsync(string projectId, CancellationToken cancellationToken)
+        {
+            ClearProjectCallCount++;
+            LastClearedProjectId = projectId;
+            return Task.FromResult<IResultModel<bool>>(ShouldSucceed
+                ? ResultModel<bool>.Success(true)
+                : ResultModel<bool>.Failure("清空失败"));
+        }
 
         public Task<IResultModel<bool>> ClearAllAsync(CancellationToken cancellationToken)
         {
@@ -421,6 +434,44 @@ public static class ViewModelSharedTestDoubles
             return Task.FromResult<IResultModel<bool>>(ShouldSucceed
                 ? ResultModel<bool>.Success(true)
                 : ResultModel<bool>.Failure("清空失败"));
+        }
+    }
+
+    public sealed class FakeProjectWorkspaceService : IProjectWorkspaceService
+    {
+        public int DeleteCallCount { get; private set; }
+
+        public string LastDeletedProjectId { get; private set; } = string.Empty;
+
+        public bool DeleteShouldSucceed { get; set; } = true;
+
+        public Task<IReadOnlyList<ProjectWorkspaceDto>> GetProjectsAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyList<ProjectWorkspaceDto>>([]);
+        }
+
+        public Task<ProjectWorkspaceDto?> GetStartupProjectAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult<ProjectWorkspaceDto?>(null);
+        }
+
+        public Task<IResultModel<ProjectWorkspaceDto>> SaveAsync(ProjectWorkspaceDto project, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<ProjectWorkspaceDto>>(ResultModel<ProjectWorkspaceDto>.Success(project));
+        }
+
+        public Task<IResultModel<ProjectWorkspaceDto>> SetDefaultAsync(string projectId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<ProjectWorkspaceDto>>(ResultModel<ProjectWorkspaceDto>.Failure("未实现"));
+        }
+
+        public Task<IResultModel<bool>> DeleteAsync(string projectId, CancellationToken cancellationToken)
+        {
+            DeleteCallCount++;
+            LastDeletedProjectId = projectId;
+            return Task.FromResult<IResultModel<bool>>(DeleteShouldSucceed
+                ? ResultModel<bool>.Success(true)
+                : ResultModel<bool>.Failure("删除失败"));
         }
     }
 

@@ -143,6 +143,62 @@
                   </Border>
                 </StackPanel>
               </Border>
+
+              <Border Classes="SettingsPageSection SettingsDangerSection">
+                <StackPanel Spacing="{StaticResource Space.3}">
+                  <StackPanel Spacing="2">
+                    <TextBlock Classes="SettingsGroupTitle"
+                               Text="{Binding Summary.ProjectSettingsDangerCardTitle}" />
+                    <TextBlock Classes="CaptionText"
+                               Text="{Binding Summary.ProjectSettingsDangerCardDescription}"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+
+                  <Border Classes="ProjectSettingsBasicCard">
+                    <StackPanel>
+                      <Border Classes="ProjectSettingsBasicRow">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="{StaticResource Space.4}">
+                          <StackPanel Spacing="4">
+                            <TextBlock Classes="ProjectSettingsRowLabel"
+                                       Text="{Binding Summary.ProjectSettingsClearProjectDataTitle}" />
+                            <TextBlock Classes="CaptionText"
+                                       Text="{Binding Summary.ProjectSettingsClearProjectDataDescription}"
+                                       TextWrapping="Wrap" />
+                          </StackPanel>
+                          <Button Grid.Column="1"
+                                  Classes="DialogDangerButton"
+                                  Content="{Binding Settings.ClearProjectDataButtonText}"
+                                  IsEnabled="{Binding Settings.CanRunProjectDangerOperation}"
+                                  Command="{Binding Settings.RequestClearProjectDataCommand}" />
+                        </Grid>
+                      </Border>
+
+                      <Border Classes="ProjectSettingsBasicRow ProjectSettingsBasicRowLast">
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="{StaticResource Space.4}">
+                          <StackPanel Spacing="4">
+                            <TextBlock Classes="ProjectSettingsRowLabel"
+                                       Text="{Binding Summary.ProjectSettingsDeleteProjectTitle}" />
+                            <TextBlock Classes="CaptionText"
+                                       Text="{Binding Summary.ProjectSettingsDeleteProjectDescription}"
+                                       TextWrapping="Wrap" />
+                          </StackPanel>
+                          <Button Grid.Column="1"
+                                  Classes="DialogDangerButton"
+                                  Content="{Binding Settings.DeleteProjectButtonText}"
+                                  IsEnabled="{Binding Settings.CanRunProjectDangerOperation}"
+                                  Command="{Binding Settings.RequestDeleteProjectCommand}" />
+                        </Grid>
+                      </Border>
+                    </StackPanel>
+                  </Border>
+
+                  <TextBlock Classes="CaptionText"
+                             Text="{Binding Settings.ProjectDangerOperationStatus}"
+                             TextWrapping="Wrap" />
+                </StackPanel>
+              </Border>
             </StackPanel>
           </ScrollViewer>
 
@@ -257,6 +313,66 @@
             </StackPanel>
           </ScrollViewer>
         </Grid>
+      </Grid>
+    </Border>
+
+    <Border Grid.ColumnSpan="2"
+            Classes="CreateProjectDialogBackdrop"
+            IsVisible="{Binding Settings.IsClearProjectDataConfirmDialogOpen}">
+      <Grid HorizontalAlignment="Center"
+            VerticalAlignment="Center">
+        <Border Classes="SettingsDangerConfirmCard">
+          <StackPanel Spacing="{StaticResource Space.4}">
+            <StackPanel Spacing="{StaticResource Space.2}">
+              <TextBlock Classes="DialogTitle"
+                         Text="确认清空项目数据？" />
+              <TextBlock Classes="CaptionText"
+                         Text="{Binding Project.Name, StringFormat='将清空项目 {0} 的接口、用例、导入文档、环境变量和请求历史，项目本身会保留。'}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+            <Border Classes="CreateProjectDialogDivider" />
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="{StaticResource Space.2}">
+              <Button Classes="DialogSecondaryButton"
+                      Content="取消"
+                      Command="{Binding Settings.CancelClearProjectDataCommand}" />
+              <Button Classes="DialogDangerButton"
+                      Content="{Binding Settings.ClearProjectDataButtonText}"
+                      Command="{Binding Settings.ConfirmClearProjectDataCommand}" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Border>
+
+    <Border Grid.ColumnSpan="2"
+            Classes="CreateProjectDialogBackdrop"
+            IsVisible="{Binding Settings.IsDeleteProjectConfirmDialogOpen}">
+      <Grid HorizontalAlignment="Center"
+            VerticalAlignment="Center">
+        <Border Classes="SettingsDangerConfirmCard">
+          <StackPanel Spacing="{StaticResource Space.4}">
+            <StackPanel Spacing="{StaticResource Space.2}">
+              <TextBlock Classes="DialogTitle"
+                         Text="确认删除项目？" />
+              <TextBlock Classes="CaptionText"
+                         Text="{Binding Project.Name, StringFormat='项目 {0} 会被删除，相关接口、用例、导入文档、环境配置和请求历史都会一并删除，不能撤销。'}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+            <Border Classes="CreateProjectDialogDivider" />
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="{StaticResource Space.2}">
+              <Button Classes="DialogSecondaryButton"
+                      Content="取消"
+                      Command="{Binding Settings.CancelDeleteProjectCommand}" />
+              <Button Classes="DialogDangerButton"
+                      Content="{Binding Settings.DeleteProjectButtonText}"
+                      Command="{Binding Settings.ConfirmDeleteProjectCommand}" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
       </Grid>
     </Border>
   </Grid>

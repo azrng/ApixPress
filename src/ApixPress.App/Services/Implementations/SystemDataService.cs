@@ -14,6 +14,19 @@ public sealed class SystemDataService : ISystemDataService, ITransientDependency
         _systemDataRepository = systemDataRepository;
     }
 
+    public async Task<IResultModel<bool>> ClearProjectAsync(string projectId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(projectId))
+        {
+            return ResultModel<bool>.Failure("项目 ID 不能为空。", "project_id_required");
+        }
+
+        var cleared = await _systemDataRepository.ClearProjectAsync(projectId, cancellationToken);
+        return cleared
+            ? ResultModel<bool>.Success(true)
+            : ResultModel<bool>.Failure("未找到待清空的项目。", "project_not_found");
+    }
+
     public async Task<IResultModel<bool>> ClearAllAsync(CancellationToken cancellationToken)
     {
         await _systemDataRepository.ClearAllAsync(cancellationToken);

@@ -12,6 +12,23 @@ internal static class ProjectSettingsTexts
     public const string OverviewCardTitle = "基本信息";
     public const string OverviewCardDescription = "在这里维护当前项目名称、项目 ID 和项目简介。";
     public const string EmptyDescription = "当前项目还没有补充备注，可在这里继续维护环境与工作区说明。";
+    public const string DangerCardTitle = "危险操作";
+    public const string DangerCardDescription = "这些操作会直接影响当前项目数据，请确认已导出或备份后再继续。";
+    public const string DangerOperationStatus = "危险操作需要二次确认后才会执行。";
+    public const string ClearProjectDataTitle = "清空项目数据";
+    public const string ClearProjectDataDescription = "删除当前项目的接口、用例、导入文档、环境变量和请求历史，保留项目名称与简介，并重建一个空的开发环境。";
+    public const string ClearProjectDataAction = "清空项目数据";
+    public const string ClearProjectDataPendingStatus = "等待确认清空当前项目数据。";
+    public const string ClearProjectDataCancelledStatus = "已取消清空项目数据。";
+    public const string ClearingProjectDataStatus = "正在清空当前项目数据...";
+    public const string ClearProjectDataFailureFallback = "清空项目数据失败，请稍后重试。";
+    public const string DeleteProjectTitle = "删除项目";
+    public const string DeleteProjectDescription = "删除当前项目及其全部接口、用例、导入文档、环境配置和请求历史；删除后会关闭该项目标签。";
+    public const string DeleteProjectAction = "删除项目";
+    public const string DeleteProjectPendingStatus = "等待确认删除当前项目。";
+    public const string DeleteProjectCancelledStatus = "已取消删除项目。";
+    public const string DeletingProjectStatus = "正在删除当前项目...";
+    public const string DeleteProjectFailureFallback = "删除项目失败，请稍后重试。";
     public const string ImportDataTitle = "导入数据";
     public const string ImportDescription = "这里可以导入 Swagger 文档或 ApixPress 项目数据包。";
     public const string ImportSubtitle = "支持 Swagger 文件上传、URL 导入，以及导入 `.apixpkg.json` 项目数据包。";
@@ -38,6 +55,16 @@ internal static class ProjectSettingsTexts
     public static string FormatImportedApiDocumentSummary(int count)
     {
         return $"已导入：{count} 份文档";
+    }
+
+    public static string FormatClearProjectDataSuccess(string projectName)
+    {
+        return $"项目 {projectName} 的数据已清空。";
+    }
+
+    public static string FormatDeleteProjectSuccess(string projectName)
+    {
+        return $"项目 {projectName} 已删除。";
     }
 }
 

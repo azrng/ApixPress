@@ -289,6 +289,82 @@ public sealed partial class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task SystemDataRepository_ShouldClearSingleProjectDataAndKeepProject()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var serializer = CreateSerializer();
+        var caseRepository = new RequestCaseRepository(factory);
+        var caseService = new RequestCaseService(caseRepository, serializer);
+        var historyRepository = new RequestHistoryRepository(factory);
+        var historyService = new RequestHistoryService(historyRepository, serializer);
+        var environmentService = new EnvironmentVariableService(new EnvironmentVariableRepository(factory), environmentRepository);
+        var systemDataRepository = new SystemDataRepository(factory);
+
+        var projectA = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "待清空项目"
+        }, CancellationToken.None)).Data!;
+        var projectB = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "保留数据项目"
+        }, CancellationToken.None)).Data!;
+        var environmentA = Assert.Single(await environmentService.GetEnvironmentsAsync(projectA.Id, CancellationToken.None));
+
+        await environmentService.SaveVariableAsync(new EnvironmentVariableDto
+        {
+            EnvironmentId = environmentA.Id,
+            Key = "token",
+            Value = "secret",
+            IsEnabled = true
+        }, CancellationToken.None);
+        await caseService.SaveAsync(new RequestCaseDto
+        {
+            ProjectId = projectA.Id,
+            EntryType = "quick-request",
+            Name = "待清空请求",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "/a"
+            },
+            UpdatedAt = DateTime.UtcNow
+        }, CancellationToken.None);
+        await caseService.SaveAsync(new RequestCaseDto
+        {
+            ProjectId = projectB.Id,
+            EntryType = "quick-request",
+            Name = "保留请求",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "/b"
+            },
+            UpdatedAt = DateTime.UtcNow
+        }, CancellationToken.None);
+        await historyService.AddAsync(projectA.Id, new RequestSnapshotDto
+        {
+            Method = "GET",
+            Url = "/a"
+        }, null, CancellationToken.None);
+
+        var cleared = await systemDataRepository.ClearProjectAsync(projectA.Id, CancellationToken.None);
+
+        Assert.True(cleared);
+        Assert.Contains(await projectService.GetProjectsAsync(CancellationToken.None), item => item.Id == projectA.Id);
+        Assert.Empty(await caseService.GetCasesAsync(projectA.Id, CancellationToken.None));
+        Assert.Empty(await historyRepository.GetHistoryAsync(projectA.Id, 10, CancellationToken.None));
+        var resetEnvironment = Assert.Single(await environmentService.GetEnvironmentsAsync(projectA.Id, CancellationToken.None));
+        Assert.Equal("开发", resetEnvironment.Name);
+        Assert.Empty(await environmentService.GetVariablesAsync(resetEnvironment.Id, CancellationToken.None));
+        Assert.Single(await caseService.GetCasesAsync(projectB.Id, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task RequestCaseService_ShouldPersistHttpInterfaceHierarchy()
     {
         using var factory = new TestSqliteConnectionFactory();

@@ -11,11 +11,14 @@ public partial class MainWindowViewModel
             _requestExecutionService,
             _requestCaseService,
             _requestHistoryService,
+            _systemDataService,
+            _projectWorkspaceService,
             _environmentVariableService,
             _apiWorkspaceService,
             _filePickerService,
             _appNotificationService,
-            _projectDataExportService);
+            _projectDataExportService,
+            HandleProjectDeletedFromSettingsAsync);
         tab.ShellStateChanged += OnProjectTabShellStateChanged;
         return tab;
     }
@@ -96,6 +99,38 @@ public partial class MainWindowViewModel
         }
 
         OnPropertyChanged(nameof(HasProjectTabs));
+        NotifyShellState();
+    }
+
+    private async Task HandleProjectDeletedFromSettingsAsync(string projectId)
+    {
+        await ProjectPanel.LoadProjectsAsync(autoSelect: false);
+
+        var deletedTabs = ProjectTabs
+            .Where(tab => string.Equals(tab.ProjectId, projectId, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        foreach (var tab in deletedTabs)
+        {
+            ProjectTabs.Remove(tab);
+            ReleaseProjectTab(tab);
+        }
+
+        if (ActiveProjectTab is not null && !ProjectTabs.Contains(ActiveProjectTab))
+        {
+            ActiveProjectTab = ProjectTabs.FirstOrDefault();
+        }
+
+        if (ActiveProjectTab is null)
+        {
+            IsEnvironmentManagerOpen = false;
+            StatusMessage = "项目已删除，已返回项目列表。";
+        }
+        else
+        {
+            StatusMessage = ActiveProjectTab.StatusMessage;
+        }
+
+        NotifyActiveProjectTabBindings();
         NotifyShellState();
     }
 }

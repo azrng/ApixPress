@@ -2,9 +2,11 @@ using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelShare
 using FakeEnvironmentVariableService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeEnvironmentVariableService;
 using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeFilePickerService;
 using FakeProjectDataExportService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectDataExportService;
+using FakeProjectWorkspaceService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectWorkspaceService;
 using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
 using FakeRequestExecutionService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestExecutionService;
 using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
+using FakeSystemDataService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeSystemDataService;
 using System.Collections.Generic;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
@@ -21,7 +23,10 @@ public sealed partial class ProjectTabViewModelTests
         FakeRequestHistoryService? requestHistoryService = null,
         FakeAppNotificationService? appNotificationService = null,
         FakeFilePickerService? filePickerService = null,
-        FakeProjectDataExportService? projectDataExportService = null)
+        FakeProjectDataExportService? projectDataExportService = null,
+        FakeSystemDataService? systemDataService = null,
+        FakeProjectWorkspaceService? projectWorkspaceService = null,
+        Func<string, Task>? handleProjectDeletedAsync = null)
     {
         return new ProjectTabViewModel(
             new ProjectWorkspaceItemViewModel
@@ -33,11 +38,14 @@ public sealed partial class ProjectTabViewModelTests
             new FakeRequestExecutionService(),
             requestCaseService ?? new FakeRequestCaseService(),
             requestHistoryService ?? new FakeRequestHistoryService(),
+            systemDataService ?? new FakeSystemDataService(),
+            projectWorkspaceService ?? new FakeProjectWorkspaceService(),
             new FakeEnvironmentVariableService(),
             apiWorkspaceService,
             filePickerService ?? new FakeFilePickerService(),
             appNotificationService ?? new FakeAppNotificationService(),
-            projectDataExportService ?? new FakeProjectDataExportService());
+            projectDataExportService ?? new FakeProjectDataExportService(),
+            handleProjectDeletedAsync ?? (_ => Task.CompletedTask));
     }
 
     private static IEnumerable<string> FlattenExplorerTitles(IEnumerable<ExplorerItemViewModel> items)

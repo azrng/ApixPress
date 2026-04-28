@@ -19,11 +19,14 @@ public partial class ProjectTabViewModel : ViewModelBase
         IRequestExecutionService requestExecutionService,
         IRequestCaseService requestCaseService,
         IRequestHistoryService requestHistoryService,
+        ISystemDataService systemDataService,
+        IProjectWorkspaceService projectWorkspaceService,
         IEnvironmentVariableService environmentVariableService,
         IApiWorkspaceService apiWorkspaceService,
         IFilePickerService filePickerService,
         IAppNotificationService appNotificationService,
-        IProjectDataExportService projectDataExportService)
+        IProjectDataExportService projectDataExportService,
+        Func<string, Task> handleProjectDeletedAsync)
     {
         Project = new ProjectWorkspaceItemViewModel
         {
@@ -52,11 +55,14 @@ public partial class ProjectTabViewModel : ViewModelBase
             requestExecutionService,
             requestCaseService,
             requestHistoryService,
+            systemDataService,
+            projectWorkspaceService,
             environmentVariableService,
             apiWorkspaceService,
             filePickerService,
             appNotificationService,
             projectDataExportService,
+            handleProjectDeletedAsync,
             hostContext);
         EnvironmentPanel = _composition.EnvironmentPanel;
         UseCasesPanel = _composition.UseCasesPanel;

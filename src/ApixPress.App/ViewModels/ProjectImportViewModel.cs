@@ -208,6 +208,16 @@ public partial class ProjectImportViewModel : ViewModelBase
         ClearPendingImportConfirmation();
     }
 
+    public void ResetImportedDocuments()
+    {
+        ImportedApiDocuments.Clear();
+        _hasLoadedImportedDocuments = false;
+        SelectedImportFilePath = string.Empty;
+        ImportUrl = string.Empty;
+        SetImportDataStatus(ImportTexts.EmptyStateStatus, ImportStatusStates.Info);
+        ClearPendingImportConfirmation();
+    }
+
     [RelayCommand]
     private void ShowImportFileMode()
     {
