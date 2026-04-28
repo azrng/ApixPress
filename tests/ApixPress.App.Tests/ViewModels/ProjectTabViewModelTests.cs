@@ -5,6 +5,7 @@ using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelShare
 using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeFilePickerService;
 using FakeProjectDataExportService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectDataExportService;
 using FakeProjectWorkspaceService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectWorkspaceService;
+using FakeRequestExecutionService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestExecutionService;
 using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
 using FakeSystemDataService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeSystemDataService;
 using ApixPress.App.Models.DTOs;
@@ -734,6 +735,28 @@ public sealed partial class ProjectTabViewModelTests
 
         viewModel.Editor.ShowHttpDebugEditorModeCommand.Execute(null);
         Assert.Equal(RequestEditorContentMode.HttpWorkbench, viewModel.Editor.CurrentContentMode);
+    }
+
+    [Fact]
+    public async Task SendRequestCommand_ShouldSendQuickRequestWithAbsoluteUrl()
+    {
+        var requestExecutionService = new FakeRequestExecutionService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            requestExecutionService: requestExecutionService);
+        const string requestUrl = "http://172.16.127.100:37797/be/notification/notification/negotiate";
+
+        viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = requestUrl;
+
+        Assert.True(viewModel.SendRequestCommand.CanExecute(null));
+
+        await viewModel.SendRequestCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, requestExecutionService.SendCallCount);
+        Assert.NotNull(requestExecutionService.LastRequest);
+        Assert.Equal(requestUrl, requestExecutionService.LastRequest!.Url);
+        Assert.Equal("快捷请求发送完成。", viewModel.StatusMessage);
     }
 
     [Fact]

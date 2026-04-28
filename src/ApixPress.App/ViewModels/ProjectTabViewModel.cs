@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -139,6 +140,27 @@ public partial class ProjectTabViewModel : ViewModelBase
     public Task SaveCurrentEnvironmentAsync()
     {
         return _lifecycle.SaveCurrentEnvironmentAsync(Summary.CurrentEnvironmentLabel);
+    }
+
+    [RelayCommand]
+    private async Task SendRequestAsync()
+    {
+        await Workflow.SendRequestAsync();
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private async Task SaveCaseAsync()
+    {
+        await Workflow.SaveCurrentEditorAsync();
+        NotifyShellState();
+    }
+
+    [RelayCommand]
+    private async Task SaveHttpCaseAsync()
+    {
+        await Workflow.SaveHttpCaseAsync();
+        NotifyShellState();
     }
 
     public Task LoadHistoryRequestAsync(RequestHistoryItemViewModel? item)

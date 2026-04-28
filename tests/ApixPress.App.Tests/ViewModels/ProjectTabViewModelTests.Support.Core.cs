@@ -24,6 +24,7 @@ public sealed partial class ProjectTabViewModelTests
         FakeAppNotificationService? appNotificationService = null,
         FakeFilePickerService? filePickerService = null,
         FakeProjectDataExportService? projectDataExportService = null,
+        FakeRequestExecutionService? requestExecutionService = null,
         FakeSystemDataService? systemDataService = null,
         FakeProjectWorkspaceService? projectWorkspaceService = null,
         Func<string, Task>? handleProjectDeletedAsync = null)
@@ -35,7 +36,7 @@ public sealed partial class ProjectTabViewModelTests
                 Name = "测试项目",
                 Description = "用于验证项目设置数据管理"
             },
-            new FakeRequestExecutionService(),
+            requestExecutionService ?? new FakeRequestExecutionService(),
             requestCaseService ?? new FakeRequestCaseService(),
             requestHistoryService ?? new FakeRequestHistoryService(),
             systemDataService ?? new FakeSystemDataService(),

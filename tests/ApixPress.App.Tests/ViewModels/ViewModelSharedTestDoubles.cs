@@ -339,8 +339,14 @@ public static class ViewModelSharedTestDoubles
 
     public sealed class FakeRequestExecutionService : IRequestExecutionService
     {
+        public int SendCallCount { get; private set; }
+
+        public RequestSnapshotDto? LastRequest { get; private set; }
+
         public Task<IResultModel<ResponseSnapshotDto>> SendAsync(RequestSnapshotDto request, ProjectEnvironmentDto environment, CancellationToken cancellationToken)
         {
+            SendCallCount++;
+            LastRequest = request;
             return Task.FromResult<IResultModel<ResponseSnapshotDto>>(ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto()));
         }
     }
