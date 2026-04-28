@@ -184,11 +184,14 @@ public sealed partial class MainWindowViewModelTests
         Assert.True(SpinWait.SpinUntil(() => viewModel.ActiveProjectTab is not null, TimeSpan.FromSeconds(1)));
         Assert.Single(viewModel.ProjectTabs);
         Assert.Same(viewModel.ProjectTabs[0], viewModel.ActiveProjectTab);
+        Assert.True(viewModel.ActiveProjectTab!.IsWorkspaceLoading);
+        Assert.Contains("订单项目", viewModel.ActiveProjectTab.WorkspaceLoadingText);
         Assert.False(openTask.IsCompleted);
 
         loadGate.SetResult(true);
         await openTask;
 
+        Assert.False(viewModel.ActiveProjectTab.IsWorkspaceLoading);
         Assert.Equal("已打开项目：订单项目", viewModel.StatusMessage);
     }
 

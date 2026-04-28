@@ -15,6 +15,24 @@
         <views:ProjectWorkspaceNavigationRailView Grid.Column="0" />
         <views:ProjectWorkspaceContentHostView Grid.Column="1" />
       </Grid>
+
+      <Border Classes="ProjectWorkspaceLoadingOverlay"
+              IsVisible="{Binding IsWorkspaceLoading}">
+        <Border Classes="ProjectWorkspaceLoadingCard">
+          <StackPanel Spacing="{StaticResource Space.3}">
+            <ProgressBar Classes="ProjectWorkspaceLoadingProgress"
+                         IsIndeterminate="True" />
+            <StackPanel Spacing="{StaticResource Space.1}">
+              <TextBlock Classes="SectionTitle"
+                         HorizontalAlignment="Center"
+                         Text="正在进入项目工作区" />
+              <TextBlock Classes="CaptionText"
+                         HorizontalAlignment="Center"
+                         Text="{Binding WorkspaceLoadingText}" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+      </Border>
     </Grid>
   </Border>
 </UserControl>

@@ -222,6 +222,28 @@
     <Setter Property="BoxShadow" Value="0 14 30 0 #0F172A0C" />
   </Style>
 
+  <Style Selector="Border.ProjectWorkspaceLoadingOverlay">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Overlay}" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="Border.ProjectWorkspaceLoadingCard">
+    <Setter Property="Width" Value="360" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
+    <Setter Property="BoxShadow" Value="0 24 48 0 #0F172A24" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="ProgressBar.ProjectWorkspaceLoadingProgress">
+    <Setter Property="Height" Value="4" />
+  </Style>
+
   <Style Selector="Border.ProjectWorkspaceTopActionBar">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />

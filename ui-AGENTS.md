@@ -130,6 +130,8 @@ src/AppName/
 - 页面状态必须完整：`loading`、`empty`、`error`、`no-permission`。
 - 使用 Ursa.Avalonia 控件库优先，必要时使用 Avalonia 官方控件。
 - 图标统一使用 Avalonia 官方图形能力、Ursa 组件能力或仓库既有素材。
+- 对请求编辑器、工作区内容区等核心区域，优先使用 XAML 可见性绑定或稳定 ContentControl/DataTemplate 切换；只有确有性能证据时才用 code-behind 手动增删子视图。
+- 若必须用 code-behind 懒挂载子视图，必须同时处理 `DataContextChanged`、`AttachedToVisualTree`、`DetachedFromVisualTree` 的订阅恢复与幂等退订，并提供等价验证，避免重新附着后出现空白内容区。
 
 ### MVVM 模式规则
 - 所有 ViewModel 最终都必须继承 `ObservableObject`；若项目已有 `BaseViewModel`，应由基类继承 `ObservableObject` 后统一复用。

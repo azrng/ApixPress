@@ -141,9 +141,12 @@
       </Grid>
     </Grid>
 
-    <Grid x:Name="EditorContentHost"
-          Grid.Row="2"
+    <Grid Grid.Row="2"
           MinHeight="0"
-          ClipToBounds="True" />
+          ClipToBounds="True">
+      <views:QuickRequestWorkbenchView IsVisible="{Binding Editor.IsQuickRequestEditor}" />
+      <views:HttpInterfaceWorkbenchView IsVisible="{Binding Editor.ShowHttpWorkbenchContent}" />
+      <views:HttpDocumentWorkspaceView IsVisible="{Binding Editor.ShowHttpDocumentPreviewContent}" />
+    </Grid>
   </Grid>
 </UserControl>

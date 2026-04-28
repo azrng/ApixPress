@@ -122,19 +122,43 @@ public partial class ProjectTabViewModel : ViewModelBase
     private bool isBusy;
 
     [ObservableProperty]
+    private bool isWorkspaceLoading;
+
+    [ObservableProperty]
+    private string workspaceLoadingText = "正在打开项目工作区...";
+
+    [ObservableProperty]
     private string statusMessage = "项目工作区已就绪。";
 
     [ObservableProperty]
     private bool responseValidationEnabled = true;
 
-    public Task InitializeAsync()
+    public async Task InitializeAsync()
     {
-        return _lifecycle.InitializeAsync();
+        WorkspaceLoadingText = $"正在打开项目：{Project.Name}";
+        IsWorkspaceLoading = true;
+        try
+        {
+            await _lifecycle.InitializeAsync();
+        }
+        finally
+        {
+            IsWorkspaceLoading = false;
+        }
     }
 
-    public Task RefreshAsync()
+    public async Task RefreshAsync()
     {
-        return _lifecycle.RefreshAsync();
+        WorkspaceLoadingText = $"正在刷新项目：{Project.Name}";
+        IsWorkspaceLoading = true;
+        try
+        {
+            await _lifecycle.RefreshAsync();
+        }
+        finally
+        {
+            IsWorkspaceLoading = false;
+        }
     }
 
     public Task SaveCurrentEnvironmentAsync()
