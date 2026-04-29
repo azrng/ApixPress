@@ -83,6 +83,9 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         }
 
         _hostContext.SetBusyState(true);
+        workspaceTab.ResponseSection.BeginLoading(workspaceTab.IsHttpInterfaceTab
+            ? "正在发送 HTTP 接口请求..."
+            : "正在发送快捷请求...");
         var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _sendRequestCancellationTokenSource).Token;
         try
         {
@@ -110,6 +113,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         }
         finally
         {
+            workspaceTab.ResponseSection.EndLoading();
             _hostContext.SetBusyState(false);
             _hostContext.NotifyShellState();
         }

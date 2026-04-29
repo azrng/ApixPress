@@ -343,10 +343,17 @@ public static class ViewModelSharedTestDoubles
 
         public RequestSnapshotDto? LastRequest { get; private set; }
 
+        public TaskCompletionSource<IResultModel<ResponseSnapshotDto>>? PendingSendResult { get; set; }
+
         public Task<IResultModel<ResponseSnapshotDto>> SendAsync(RequestSnapshotDto request, ProjectEnvironmentDto environment, CancellationToken cancellationToken)
         {
             SendCallCount++;
             LastRequest = request;
+            if (PendingSendResult is not null)
+            {
+                return PendingSendResult.Task;
+            }
+
             return Task.FromResult<IResultModel<ResponseSnapshotDto>>(ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto()));
         }
     }

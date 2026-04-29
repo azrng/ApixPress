@@ -127,6 +127,18 @@
             </TabItem>
           </TabControl>
         </Grid>
+
+        <Border Grid.Row="1"
+                Classes="HttpResponseLoadingOverlay"
+                IsVisible="{Binding ResponseSection.IsLoading}">
+          <StackPanel Classes="HttpResponseLoadingContent"
+                      Spacing="{StaticResource Space.3}">
+            <ProgressBar Classes="HttpResponseLoadingProgress"
+                         IsIndeterminate="True" />
+            <TextBlock Classes="SubtleText HttpResponseLoadingText"
+                       Text="{Binding ResponseSection.LoadingText}" />
+          </StackPanel>
+        </Border>
       </Grid>
     </Border>
   </Grid>

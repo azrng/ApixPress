@@ -7,6 +7,47 @@ namespace ApixPress.App.Tests.ViewModels;
 public sealed class ResponseSectionViewModelTests
 {
     [Fact]
+    public void BeginLoading_ShouldHidePlaceholderUntilRequestCompletes_WhenNoResponseExists()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.BeginLoading("正在发送 HTTP 接口请求...");
+
+        Assert.True(viewModel.IsLoading);
+        Assert.False(viewModel.ShowPlaceholder);
+        Assert.False(viewModel.HasResponse);
+        Assert.Equal("正在发送 HTTP 接口请求...", viewModel.LoadingText);
+
+        viewModel.EndLoading();
+
+        Assert.False(viewModel.IsLoading);
+        Assert.True(viewModel.ShowPlaceholder);
+        Assert.False(viewModel.HasResponse);
+    }
+
+    [Fact]
+    public void BeginLoading_ShouldKeepExistingResponseVisibleBehindLoading()
+    {
+        var viewModel = new ResponseSectionViewModel();
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 12,
+                SizeBytes = 2,
+                Content = "{}"
+            }),
+            new RequestSnapshotDto());
+
+        viewModel.BeginLoading();
+
+        Assert.True(viewModel.IsLoading);
+        Assert.True(viewModel.HasResponse);
+        Assert.False(viewModel.ShowPlaceholder);
+        Assert.Equal("HTTP 200", viewModel.StatusText);
+    }
+
+    [Fact]
     public void ApplyResult_ShouldFormatIndentedBody_WhenContentTypeIsApplicationJson()
     {
         var viewModel = new ResponseSectionViewModel();

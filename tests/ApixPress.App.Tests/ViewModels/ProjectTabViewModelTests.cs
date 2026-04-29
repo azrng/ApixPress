@@ -792,6 +792,41 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task SendRequestCommand_ShouldShowResponseLoadingWhileRequestIsPending()
+    {
+        var requestExecutionService = new FakeRequestExecutionService
+        {
+            PendingSendResult = new TaskCompletionSource<IResultModel<ResponseSnapshotDto>>(TaskCreationOptions.RunContinuationsAsynchronously)
+        };
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            requestExecutionService: requestExecutionService);
+
+        viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = "https://demo.local/orders";
+
+        var sendTask = viewModel.SendRequestCommand.ExecuteAsync(null);
+
+        Assert.True(SpinWait.SpinUntil(
+            () => requestExecutionService.SendCallCount == 1 && viewModel.ResponseSection.IsLoading,
+            TimeSpan.FromSeconds(1)));
+        Assert.False(viewModel.ResponseSection.ShowPlaceholder);
+        Assert.Contains("快捷请求", viewModel.ResponseSection.LoadingText);
+
+        requestExecutionService.PendingSendResult.SetResult(ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+        {
+            StatusCode = 204,
+            DurationMs = 31,
+            SizeBytes = 0
+        }));
+        await sendTask;
+
+        Assert.False(viewModel.ResponseSection.IsLoading);
+        Assert.True(viewModel.ResponseSection.HasResponse);
+        Assert.Equal("HTTP 204", viewModel.ResponseSection.StatusText);
+    }
+
+    [Fact]
     public async Task ConfirmQuickRequestSaveAsync_ShouldKeepExistingInterfaceTreeNodesStable()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();

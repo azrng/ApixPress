@@ -78,6 +78,27 @@
     <Setter Property="TextAlignment" Value="Center" />
   </Style>
 
+  <Style Selector="Border.HttpResponseLoadingOverlay">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Overlay}" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="StackPanel.HttpResponseLoadingContent">
+    <Setter Property="Width" Value="280" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="ProgressBar.HttpResponseLoadingProgress">
+    <Setter Property="Height" Value="4" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpResponseLoadingText">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextAlignment" Value="Center" />
+  </Style>
+
   <Style Selector="Border.EnvironmentSummaryPill">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />

@@ -23,6 +23,12 @@ public partial class ResponseSectionViewModel : ViewModelBase
     private bool showPlaceholder = true;
 
     [ObservableProperty]
+    private bool isLoading;
+
+    [ObservableProperty]
+    private string loadingText = "正在发送请求...";
+
+    [ObservableProperty]
     private string statusText = string.Empty;
 
     [ObservableProperty]
@@ -72,6 +78,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     public void ApplyResult(IResultModel<ResponseSnapshotDto> result, RequestSnapshotDto request)
     {
+        IsLoading = false;
         HasResponse = true;
         ShowPlaceholder = false;
 
@@ -95,6 +102,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     public void Reset()
     {
+        IsLoading = false;
         HasResponse = false;
         ShowPlaceholder = true;
         StatusText = string.Empty;
@@ -102,6 +110,29 @@ public partial class ResponseSectionViewModel : ViewModelBase
         SizeText = string.Empty;
         BodyText = string.Empty;
         HeadersText = string.Empty;
+    }
+
+    public void BeginLoading(string? loadingText = null)
+    {
+        LoadingText = string.IsNullOrWhiteSpace(loadingText)
+            ? "正在发送请求..."
+            : loadingText.Trim();
+        IsLoading = true;
+
+        if (!HasResponse)
+        {
+            ShowPlaceholder = false;
+        }
+    }
+
+    public void EndLoading()
+    {
+        IsLoading = false;
+
+        if (!HasResponse)
+        {
+            ShowPlaceholder = true;
+        }
     }
 
     partial void OnStatusTextChanged(string value)
