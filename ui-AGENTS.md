@@ -1,7 +1,7 @@
 ---
 rule_id: ui-agents
-version: 1.0.1
-last_updated: 2026-04-29
+version: 1.2.0
+last_updated: 2026-04-16
 dependencies: [agents-root]
 ---
 
@@ -9,19 +9,6 @@ dependencies: [agents-root]
 
 ## 适用范围
 
-- 作用域：界面、布局、导航、样式、状态、交互与界面测试
-- 触发场景：涉及页面、窗口、布局、组件、交互、样式、UI smoke test 时阅读
-
-### 阅读摘要
-- 建议阅读：新增页面或窗口、改导航、改表单交互、改组件样式、补界面验证
-- 可先跳过：纯服务层逻辑、纯数据访问、仅文档整理、仅部署配置调整
-- 优先查看：界面规则、组件 / 状态规则、测试规则
-
-### 常见任务入口
-- 新增页面、窗口或布局：先看界面结构与组件规则
-- 改表单、对话框、导航、交互：先看状态管理与事件处理规则
-- 改样式、主题、视觉展示：先看样式规则与设计系统约束
-- 补界面回归：先看 `提交前最小回归` 与测试规则
 - 作用域：界面、布局、导航、样式、状态、交互与界面测试
 - 触发场景：涉及页面、窗口、布局、组件、交互、样式、UI smoke test 时阅读
 
@@ -130,8 +117,6 @@ src/AppName/
 - 页面状态必须完整：`loading`、`empty`、`error`、`no-permission`。
 - 使用 Ursa.Avalonia 控件库优先，必要时使用 Avalonia 官方控件。
 - 图标统一使用 Avalonia 官方图形能力、Ursa 组件能力或仓库既有素材。
-- 对请求编辑器、工作区内容区等核心区域，优先使用 XAML 可见性绑定或稳定 ContentControl/DataTemplate 切换；只有确有性能证据时才用 code-behind 手动增删子视图。
-- 若必须用 code-behind 懒挂载子视图，必须同时处理 `DataContextChanged`、`AttachedToVisualTree`、`DetachedFromVisualTree` 的订阅恢复与幂等退订，并提供等价验证，避免重新附着后出现空白内容区。
 
 ### MVVM 模式规则
 - 所有 ViewModel 最终都必须继承 `ObservableObject`；若项目已有 `BaseViewModel`，应由基类继承 `ObservableObject` 后统一复用。
@@ -151,7 +136,6 @@ src/AppName/
 - 对话框内容必须使用 ViewModel，禁止在 Code-behind 编写业务逻辑。
 - 对话框结果通过异步返回，禁止依赖隐式全局状态。
 - 危险操作需提供明确的二次确认。
-- 请求编辑器、工作区内容区等高频切换区域内不得内联挂载隐藏弹框；这类弹框应放到主窗口统一 Overlay 层，内容在打开命令中生成并缓存，关闭时清空或失效，避免接口切换时隐藏内容参与求值或布局导致右侧空白、递归测量或闪退。
 
 ### 数据绑定规则
 - 列表数据使用 `ObservableCollection<T>` 或适合当前项目的可观察集合。

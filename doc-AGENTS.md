@@ -1,6 +1,6 @@
 ---
 rule_id: doc-agents
-version: 1.0.0
+version: 1.2.0
 last_updated: 2026-04-16
 dependencies: [agents-root]
 ---
