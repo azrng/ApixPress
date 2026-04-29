@@ -8,7 +8,7 @@
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
   <Border Background="Transparent">
-    <Grid Margin="12,0,12,12"
+    <Grid Margin="12,4,12,12"
           RowDefinitions="*">
       <Grid ColumnDefinitions="84,*"
             ColumnSpacing="{StaticResource Space.3}">
