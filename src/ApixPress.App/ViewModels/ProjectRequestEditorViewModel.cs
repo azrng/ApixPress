@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Services.Implementations;
 using ApixPress.App.ViewModels.Base;
 using System.Text.RegularExpressions;
@@ -72,6 +73,11 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         ? ResponseSection.BodyText
         : "{ }";
     public string CurrentHttpDocumentCurlSnippet => ProjectHttpDocumentFormatter.BuildCurlSnippet(SelectedMethod, RequestUrl, CurrentHttpInterfaceBaseUrl, ConfigTab);
+    public bool CanGenerateRequestCode => ActiveWorkspaceTab is not null && !ActiveWorkspaceTab.IsLandingTab;
+    public string CurrentRequestCodeTitle => IsHttpInterfaceEditor ? "HTTP 接口请求代码" : "快捷请求代码";
+    public string CurrentRequestCodeCurlCommand => CanGenerateRequestCode
+        ? CurrentHttpDocumentCurlSnippet
+        : "请先打开一个 HTTP 接口或快捷请求标签。";
     public string CurrentResponseValidationResultText
     {
         get
@@ -157,6 +163,28 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         }
     }
 
+    [ObservableProperty]
+    private bool isRequestCodeDialogOpen;
+
+    [RelayCommand]
+    private void OpenRequestCodeDialog()
+    {
+        if (!CanGenerateRequestCode)
+        {
+            return;
+        }
+
+        IsRequestCodeDialogOpen = true;
+        OnPropertyChanged(nameof(CurrentRequestCodeTitle));
+        OnPropertyChanged(nameof(CurrentRequestCodeCurlCommand));
+    }
+
+    [RelayCommand]
+    private void CloseRequestCodeDialog()
+    {
+        IsRequestCodeDialogOpen = false;
+    }
+
     [RelayCommand]
     private void ShowHttpDebugEditorMode()
     {
@@ -226,6 +254,9 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentHttpDocumentResponseSummary));
         OnPropertyChanged(nameof(CurrentHttpDocumentBodyPreview));
         OnPropertyChanged(nameof(CurrentHttpDocumentCurlSnippet));
+        OnPropertyChanged(nameof(CanGenerateRequestCode));
+        OnPropertyChanged(nameof(CurrentRequestCodeTitle));
+        OnPropertyChanged(nameof(CurrentRequestCodeCurlCommand));
         OnPropertyChanged(nameof(CurrentResponseValidationResultText));
         OnPropertyChanged(nameof(SelectedMethod));
         OnPropertyChanged(nameof(RequestUrl));

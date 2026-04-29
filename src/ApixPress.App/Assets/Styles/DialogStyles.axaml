@@ -10,6 +10,27 @@
     <Setter Property="BoxShadow" Value="0 24 60 0 #0F172A20" />
   </Style>
 
+  <Style Selector="Border.RequestCodeDialogCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
+    <Setter Property="Width" Value="720" />
+    <Setter Property="MaxHeight" Value="560" />
+    <Setter Property="BoxShadow" Value="0 24 60 0 #0F172A20" />
+  </Style>
+
+  <Style Selector="TextBox.RequestCodeDialogTextBox">
+    <Setter Property="MinHeight" Value="260" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
   <Style Selector="Border.ProjectSettingsInfoCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />

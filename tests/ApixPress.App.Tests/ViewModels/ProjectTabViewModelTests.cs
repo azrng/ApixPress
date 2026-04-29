@@ -770,6 +770,35 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public void RequestEditor_ShouldOpenRequestCodeDialogWithCurlCommand()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
+        viewModel.Editor.SelectedMethod = "POST";
+        viewModel.Editor.RequestUrl = "https://demo.local/orders";
+        viewModel.ConfigTab.SelectedBodyMode = BodyModes.RawJson;
+        viewModel.ConfigTab.RequestBody = "{\"name\":\"test\"}";
+        viewModel.ConfigTab.Headers.Add(new RequestParameterItemViewModel
+        {
+            Name = "Authorization",
+            Value = "Bearer token"
+        });
+
+        viewModel.Editor.OpenRequestCodeDialogCommand.Execute(null);
+
+        Assert.True(viewModel.Editor.IsRequestCodeDialogOpen);
+        Assert.Contains("curl --request POST", viewModel.Editor.CurrentRequestCodeCurlCommand);
+        Assert.Contains("https://demo.local/orders", viewModel.Editor.CurrentRequestCodeCurlCommand);
+        Assert.Contains("--header \"Authorization: Bearer token\"", viewModel.Editor.CurrentRequestCodeCurlCommand);
+        Assert.Contains("--data-raw \"{\\\"name\\\":\\\"test\\\"}\"", viewModel.Editor.CurrentRequestCodeCurlCommand);
+
+        viewModel.Editor.CloseRequestCodeDialogCommand.Execute(null);
+
+        Assert.False(viewModel.Editor.IsRequestCodeDialogOpen);
+    }
+
+    [Fact]
     public async Task SendRequestCommand_ShouldSendQuickRequestWithAbsoluteUrl()
     {
         var requestExecutionService = new FakeRequestExecutionService();
