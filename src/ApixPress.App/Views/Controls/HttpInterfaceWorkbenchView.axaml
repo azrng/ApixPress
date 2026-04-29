@@ -59,15 +59,31 @@
 
     <Border Grid.Row="2"
             Classes="PanelCard HttpResponseCard">
-      <Grid RowDefinitions="Auto,Auto,*"
+      <Grid RowDefinitions="Auto,*"
             RowSpacing="{StaticResource Space.3}">
         <Grid Grid.Row="0"
-              ColumnDefinitions="Auto,*"
+              ColumnDefinitions="Auto,*,Auto"
               ColumnSpacing="{StaticResource Space.3}">
           <TextBlock Grid.Column="0"
                      Classes="SectionTitle"
                      Text="返回响应" />
-          <Grid Grid.Column="1"
+          <Border Grid.Column="1"
+                  Classes="HttpResponseNoticeCard HttpResponseNoticeInlineCard"
+                  IsVisible="{Binding ResponseSection.ShowResponseNotice}">
+            <Grid ColumnDefinitions="Auto,*"
+                  ColumnSpacing="{StaticResource Space.2}">
+              <TextBlock Grid.Column="0"
+                         Classes="SectionTitle"
+                         VerticalAlignment="Center"
+                         Text="{Binding ResponseSection.ResponseNoticeTitle}" />
+              <TextBlock Grid.Column="1"
+                         Classes="CaptionText"
+                         VerticalAlignment="Center"
+                         Text="{Binding ResponseSection.ResponseNoticeText}"
+                         TextTrimming="CharacterEllipsis" />
+            </Grid>
+          </Border>
+          <Grid Grid.Column="2"
                 ColumnDefinitions="Auto,Auto,Auto,Auto,Auto"
                 ColumnSpacing="{StaticResource Space.2}"
                 HorizontalAlignment="Right"
@@ -95,18 +111,6 @@
         </Grid>
 
         <Border Grid.Row="1"
-                Classes="HttpResponseNoticeCard"
-                IsVisible="{Binding ResponseSection.ShowResponseNotice}">
-          <StackPanel Spacing="2">
-            <TextBlock Classes="SectionTitle"
-                       Text="{Binding ResponseSection.ResponseNoticeTitle}" />
-            <TextBlock Classes="CaptionText"
-                       Text="{Binding ResponseSection.ResponseNoticeText}"
-                       TextWrapping="Wrap" />
-          </StackPanel>
-        </Border>
-
-        <Border Grid.Row="2"
                 Classes="HttpResponsePlaceholderHost"
                 IsVisible="{Binding ResponseSection.ShowPlaceholder}">
           <StackPanel Classes="HttpResponsePlaceholderContent"
@@ -119,7 +123,7 @@
           </StackPanel>
         </Border>
 
-        <Grid Grid.Row="2"
+        <Grid Grid.Row="1"
               IsVisible="{Binding ResponseSection.HasResponse}"
               RowDefinitions="*">
           <TabControl Grid.Row="0"
@@ -148,7 +152,7 @@
           </TabControl>
         </Grid>
 
-        <Border Grid.Row="2"
+        <Border Grid.Row="1"
                 Classes="HttpResponseLoadingOverlay"
                 IsVisible="{Binding ResponseSection.IsLoading}">
           <StackPanel Classes="HttpResponseLoadingContent"

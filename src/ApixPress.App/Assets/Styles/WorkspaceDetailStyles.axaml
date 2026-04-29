@@ -111,6 +111,12 @@
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
 
+  <Style Selector="Border.HttpResponseNoticeInlineCard">
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
+
   <Style Selector="TextBox.HttpResponseSearchInput">
     <Setter Property="Width" Value="132" />
     <Setter Property="MinHeight" Value="28" />
