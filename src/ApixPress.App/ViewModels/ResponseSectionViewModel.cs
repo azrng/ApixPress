@@ -5,6 +5,7 @@ using ApixPress.App.ViewModels.Base;
 using Azrng.Core.Results;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace ApixPress.App.ViewModels;
 
@@ -44,7 +45,24 @@ public partial class ResponseSectionViewModel : ViewModelBase
     private string headersText = string.Empty;
 
     [ObservableProperty]
+    private bool showResponseNotice;
+
+    [ObservableProperty]
+    private string responseNoticeTitle = string.Empty;
+
+    [ObservableProperty]
+    private string responseNoticeText = string.Empty;
+
+    [ObservableProperty]
+    private string bodySearchText = string.Empty;
+
+    [ObservableProperty]
+    private string bodySearchResultText = string.Empty;
+
+    [ObservableProperty]
     private int selectedResponseTab;
+
+    public bool HasBodySearchMatches => !string.IsNullOrWhiteSpace(BodySearchResultText);
 
     public string StatusBadgeClass
     {
@@ -84,7 +102,8 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
         if (!result.IsSuccess || result.Data is null)
         {
-            StatusText = "请求失败";
+            ApplyFailureNotice(result.Code, result.Message);
+            StatusText = ResponseNoticeTitle;
             DurationText = string.Empty;
             SizeText = string.Empty;
             BodyText = result.Message;
@@ -98,6 +117,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
         SizeText = FormatResponseSizeText(r);
         BodyText = BuildDisplayBody(r);
         HeadersText = string.Join(Environment.NewLine, r.Headers.Select(h => $"{h.Name}: {h.Value}"));
+        ApplyStatusNotice(r.StatusCode);
     }
 
     public void Reset()
@@ -110,6 +130,9 @@ public partial class ResponseSectionViewModel : ViewModelBase
         SizeText = string.Empty;
         BodyText = string.Empty;
         HeadersText = string.Empty;
+        ClearResponseNotice();
+        BodySearchText = string.Empty;
+        BodySearchResultText = string.Empty;
     }
 
     public void BeginLoading(string? loadingText = null)
@@ -138,6 +161,106 @@ public partial class ResponseSectionViewModel : ViewModelBase
     partial void OnStatusTextChanged(string value)
     {
         OnPropertyChanged(nameof(StatusBadgeClass));
+    }
+
+    partial void OnBodyTextChanged(string value)
+    {
+        UpdateBodySearchResult();
+    }
+
+    partial void OnBodySearchTextChanged(string value)
+    {
+        UpdateBodySearchResult();
+    }
+
+    partial void OnBodySearchResultTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasBodySearchMatches));
+    }
+
+    private void ApplyFailureNotice(string? code, string message)
+    {
+        ShowResponseNotice = true;
+        ResponseNoticeTitle = code switch
+        {
+            "request_cancelled" => "请求已取消",
+            "request_timeout" => "请求超时",
+            "request_http_failed" => "网络请求失败",
+            "request_send_failed" => "请求发送失败",
+            _ => "请求失败"
+        };
+        ResponseNoticeText = string.IsNullOrWhiteSpace(message)
+            ? ResolveFailureHint(code)
+            : $"{message} {ResolveFailureHint(code)}".Trim();
+    }
+
+    private void ApplyStatusNotice(int? statusCode)
+    {
+        if (statusCode is null or < 300)
+        {
+            ClearResponseNotice();
+            return;
+        }
+
+        ShowResponseNotice = true;
+        ResponseNoticeTitle = statusCode switch
+        {
+            >= 300 and < 400 => $"重定向响应 HTTP {statusCode}",
+            >= 400 and < 500 => $"客户端错误 HTTP {statusCode}",
+            >= 500 => $"服务端错误 HTTP {statusCode}",
+            _ => $"HTTP {statusCode}"
+        };
+        ResponseNoticeText = statusCode switch
+        {
+            >= 300 and < 400 => "服务器返回重定向响应，可检查是否关闭了自动跳转或目标地址是否变化。",
+            >= 400 and < 500 => "请求已发送但服务器拒绝处理，请检查地址、参数、鉴权 Header 或请求体。",
+            >= 500 => "服务器处理请求时发生错误，请结合响应正文和服务端日志排查。",
+            _ => "请求已完成，但响应状态需要关注。"
+        };
+    }
+
+    private void ClearResponseNotice()
+    {
+        ShowResponseNotice = false;
+        ResponseNoticeTitle = string.Empty;
+        ResponseNoticeText = string.Empty;
+    }
+
+    private static string ResolveFailureHint(string? code)
+    {
+        return code switch
+        {
+            "request_cancelled" => "可以调整参数后重新发送。",
+            "request_timeout" => "请检查接口是否可达，或在通用设置中调整请求超时时间。",
+            "request_http_failed" => "请检查网络、DNS、代理、证书或目标服务状态。",
+            "request_send_failed" => "请检查请求地址、环境 BaseUrl、变量替换结果和请求配置。",
+            _ => string.Empty
+        };
+    }
+
+    private void UpdateBodySearchResult()
+    {
+        if (string.IsNullOrWhiteSpace(BodySearchText) || string.IsNullOrEmpty(BodyText))
+        {
+            BodySearchResultText = string.Empty;
+            return;
+        }
+
+        var count = 0;
+        var startIndex = 0;
+        while (startIndex < BodyText.Length)
+        {
+            var index = BodyText.IndexOf(BodySearchText, startIndex, StringComparison.OrdinalIgnoreCase);
+            if (index < 0)
+            {
+                break;
+            }
+
+            count++;
+            startIndex = index + Math.Max(BodySearchText.Length, 1);
+        }
+
+        BodySearchResultText = count == 0 ? "未找到匹配" : $"{count} 处匹配";
     }
 
     private static string BuildDisplayBody(ResponseSnapshotDto response)
@@ -187,7 +310,24 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     private static string FormatResponseBody(ResponseSnapshotDto response)
     {
-        if (string.IsNullOrWhiteSpace(response.Content) || !IsJsonResponse(response.Headers))
+        if (string.IsNullOrWhiteSpace(response.Content))
+        {
+            return response.Content;
+        }
+
+        if (IsXmlResponse(response.Headers))
+        {
+            try
+            {
+                return XDocument.Parse(response.Content).ToString();
+            }
+            catch (Exception) when (response.Content.Length > 0)
+            {
+                return response.Content;
+            }
+        }
+
+        if (!IsJsonResponse(response.Headers))
         {
             return response.Content;
         }
@@ -216,5 +356,20 @@ public partial class ResponseSectionViewModel : ViewModelBase
         return mediaType.Equals("application/json", StringComparison.OrdinalIgnoreCase)
                || mediaType.Equals("text/json", StringComparison.OrdinalIgnoreCase)
                || mediaType.EndsWith("+json", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsXmlResponse(IEnumerable<ResponseHeaderDto> headers)
+    {
+        var contentType = headers.FirstOrDefault(header =>
+            string.Equals(header.Name, "Content-Type", StringComparison.OrdinalIgnoreCase))?.Value;
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            return false;
+        }
+
+        var mediaType = contentType.Split(';', 2, StringSplitOptions.TrimEntries)[0];
+        return mediaType.Equals("application/xml", StringComparison.OrdinalIgnoreCase)
+               || mediaType.Equals("text/xml", StringComparison.OrdinalIgnoreCase)
+               || mediaType.EndsWith("+xml", StringComparison.OrdinalIgnoreCase);
     }
 }

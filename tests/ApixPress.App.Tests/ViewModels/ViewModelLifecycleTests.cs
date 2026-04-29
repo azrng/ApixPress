@@ -12,6 +12,7 @@ public sealed class ViewModelLifecycleTests
         var tab = viewModel.CreateWorkspaceTab(activate: true, showInTabStrip: true);
         tab.ConfigureAsQuickRequest();
         tab.ConfigTab.RequestName = "初始请求";
+        tab.MarkCleanState();
         Assert.Equal("初始请求", tab.HeaderText);
 
         viewModel.CloseWorkspaceTabCommand.Execute(tab);
@@ -21,6 +22,25 @@ public sealed class ViewModelLifecycleTests
 
         Assert.DoesNotContain(tab, viewModel.WorkspaceTabs);
         Assert.Equal(headerBeforeMutation, tab.HeaderText);
+    }
+
+    [Fact]
+    public void CloseWorkspaceTabCommand_ShouldRequireSecondClose_WhenTabHasUnsavedChanges()
+    {
+        var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, _ => { });
+        var tab = viewModel.CreateWorkspaceTab(activate: true, showInTabStrip: true);
+        tab.ConfigureAsQuickRequest();
+
+        tab.RequestUrl = "https://demo.local/orders";
+        viewModel.CloseWorkspaceTabCommand.Execute(tab);
+
+        Assert.True(tab.HasUnsavedChanges);
+        Assert.True(tab.IsCloseDiscardPending);
+        Assert.Contains(tab, viewModel.WorkspaceTabs);
+
+        viewModel.CloseWorkspaceTabCommand.Execute(tab);
+
+        Assert.DoesNotContain(tab, viewModel.WorkspaceTabs);
     }
 
     [Fact]

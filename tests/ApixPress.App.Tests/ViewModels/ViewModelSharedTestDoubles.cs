@@ -351,7 +351,7 @@ public static class ViewModelSharedTestDoubles
             LastRequest = request;
             if (PendingSendResult is not null)
             {
-                return PendingSendResult.Task;
+                return PendingSendResult.Task.WaitAsync(cancellationToken);
             }
 
             return Task.FromResult<IResultModel<ResponseSnapshotDto>>(ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto()));

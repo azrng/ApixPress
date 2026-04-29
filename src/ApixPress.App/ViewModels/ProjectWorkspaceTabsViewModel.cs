@@ -278,8 +278,16 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             return;
         }
 
+        var skippedUnsavedCount = 0;
         foreach (var tab in tabsToRemove)
         {
+            if (tab.HasUnsavedChanges && !tab.IsCloseDiscardPending)
+            {
+                tab.IsCloseDiscardPending = true;
+                skippedUnsavedCount++;
+                continue;
+            }
+
             DetachWorkspaceTab(tab);
             WorkspaceTabs.Remove(tab);
         }
@@ -290,7 +298,9 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             EnsureLandingWorkspaceTab();
         }
 
-        _setStatusMessage(WorkspaceTabs.Any(item => item.IsPinned) ? "已关闭全部非固定标签页。" : "已关闭全部标签页。");
+        _setStatusMessage(skippedUnsavedCount > 0
+            ? $"有 {skippedUnsavedCount} 个标签存在未保存修改，再次关闭全部将放弃修改。"
+            : WorkspaceTabs.Any(item => item.IsPinned) ? "已关闭全部非固定标签页。" : "已关闭全部标签页。");
         StateChanged?.Invoke();
     }
 
@@ -311,6 +321,15 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         {
             IsWorkspaceTabMenuOpen = false;
             _setStatusMessage("固定标签页请先取消固定后再关闭。");
+            StateChanged?.Invoke();
+            return false;
+        }
+
+        if (respectPin && tab.HasUnsavedChanges && !tab.IsCloseDiscardPending)
+        {
+            tab.IsCloseDiscardPending = true;
+            IsWorkspaceTabMenuOpen = false;
+            _setStatusMessage($"标签“{tab.HeaderText}”有未保存修改，再次关闭将放弃修改。");
             StateChanged?.Invoke();
             return false;
         }
@@ -424,6 +443,8 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             return;
         }
 
+        tab.IsCloseDiscardPending = false;
+        tab.NotifyDirtyStateChanged();
         RequestNotifications(stateChanged: true, editorStateChanged: true);
     }
 
@@ -436,6 +457,8 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             return;
         }
 
+        tab.IsCloseDiscardPending = false;
+        tab.NotifyDirtyStateChanged();
         RequestNotifications(stateChanged: true, editorStateChanged: true);
     }
 
@@ -454,8 +477,16 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         var tabsToRemove = WorkspaceTabs
             .Where(item => !ReferenceEquals(item, keepTab) && !item.IsPinned)
             .ToList();
+        var skippedUnsavedCount = 0;
         foreach (var tab in tabsToRemove)
         {
+            if (tab.HasUnsavedChanges && !tab.IsCloseDiscardPending)
+            {
+                tab.IsCloseDiscardPending = true;
+                skippedUnsavedCount++;
+                continue;
+            }
+
             DetachWorkspaceTab(tab);
             WorkspaceTabs.Remove(tab);
         }
@@ -469,7 +500,11 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             EnsureLandingWorkspaceTab();
         }
 
-        _setStatusMessage(tabsToRemove.Count == 0 ? "当前没有其它非固定标签页可关闭。" : "已关闭其它非固定标签页。");
+        _setStatusMessage(tabsToRemove.Count == 0
+            ? "当前没有其它非固定标签页可关闭。"
+            : skippedUnsavedCount > 0
+                ? $"有 {skippedUnsavedCount} 个其它标签存在未保存修改，再次关闭其它将放弃修改。"
+                : "已关闭其它非固定标签页。");
         StateChanged?.Invoke();
     }
 
@@ -489,10 +524,12 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         tab.PropertyChanged += OnWorkspaceTabPropertyChanged;
         tab.ConfigTab.PropertyChanged += OnWorkspaceConfigPropertyChanged;
         tab.ConfigTab.QueryParameters.CollectionChanged += OnWorkspaceConfigCollectionChanged;
+        tab.ConfigTab.PathParameters.CollectionChanged += OnWorkspaceConfigCollectionChanged;
         tab.ConfigTab.Headers.CollectionChanged += OnWorkspaceConfigCollectionChanged;
         tab.ConfigTab.FormFields.CollectionChanged += OnWorkspaceConfigCollectionChanged;
         _tabByConfig[tab.ConfigTab] = tab;
         _tabByConfigCollection[tab.ConfigTab.QueryParameters] = tab;
+        _tabByConfigCollection[tab.ConfigTab.PathParameters] = tab;
         _tabByConfigCollection[tab.ConfigTab.Headers] = tab;
         _tabByConfigCollection[tab.ConfigTab.FormFields] = tab;
     }
@@ -505,10 +542,12 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         tab.PropertyChanged -= OnWorkspaceTabPropertyChanged;
         tab.ConfigTab.PropertyChanged -= OnWorkspaceConfigPropertyChanged;
         tab.ConfigTab.QueryParameters.CollectionChanged -= OnWorkspaceConfigCollectionChanged;
+        tab.ConfigTab.PathParameters.CollectionChanged -= OnWorkspaceConfigCollectionChanged;
         tab.ConfigTab.Headers.CollectionChanged -= OnWorkspaceConfigCollectionChanged;
         tab.ConfigTab.FormFields.CollectionChanged -= OnWorkspaceConfigCollectionChanged;
         _tabByConfig.Remove(tab.ConfigTab);
         _tabByConfigCollection.Remove(tab.ConfigTab.QueryParameters);
+        _tabByConfigCollection.Remove(tab.ConfigTab.PathParameters);
         _tabByConfigCollection.Remove(tab.ConfigTab.Headers);
         _tabByConfigCollection.Remove(tab.ConfigTab.FormFields);
         tab.Dispose();

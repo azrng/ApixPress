@@ -505,4 +505,12 @@
     <Setter Property="MinHeight" Value="260" />
     <Setter Property="ClipToBounds" Value="True" />
   </Style>
+
+  <Style Selector="Border.RequestResolvedPreviewCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="10,6" />
+  </Style>
 </Styles>

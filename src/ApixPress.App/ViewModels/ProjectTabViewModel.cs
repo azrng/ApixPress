@@ -174,6 +174,13 @@ public partial class ProjectTabViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void CancelRequest()
+    {
+        Workflow.CancelRequest();
+        NotifyShellState();
+    }
+
+    [RelayCommand]
     private async Task SaveCaseAsync()
     {
         await Workflow.SaveCurrentEditorAsync();

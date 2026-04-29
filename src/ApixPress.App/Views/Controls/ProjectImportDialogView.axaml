@@ -158,6 +158,10 @@
                            Text="{Binding ActiveProjectTab.Import.BusyOverlayDescription}"
                            TextWrapping="Wrap"
                            TextAlignment="Center" />
+                <Button Classes="DialogSecondaryButton"
+                        HorizontalAlignment="Center"
+                        Content="取消导入"
+                        Command="{Binding ActiveProjectTab.Import.CancelImportDataCommand}" />
               </StackPanel>
             </Border>
           </Border>

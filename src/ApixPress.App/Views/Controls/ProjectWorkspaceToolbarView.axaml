@@ -52,7 +52,7 @@
                                   Command="{Binding CloseAllFromTabMenuCommand}" />
                       </ContextMenu>
                     </Border.ContextMenu>
-                    <Grid ColumnDefinitions="Auto,Auto,Auto"
+                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto"
                           ColumnSpacing="{StaticResource Space.1}">
                       <TextBlock Grid.Column="0"
                                  MaxWidth="180"
@@ -60,10 +60,14 @@
                                  Text="{Binding HeaderText}"
                                  TextTrimming="CharacterEllipsis" />
                       <TextBlock Grid.Column="1"
+                                 Classes="ProjectWorkspaceUnsavedGlyph"
+                                 IsVisible="{Binding ShowUnsavedChanges}"
+                                 Text="{Binding UnsavedChangesMarker}" />
+                      <TextBlock Grid.Column="2"
                                  Classes="ProjectWorkspacePinnedGlyph"
                                  IsVisible="{Binding IsPinned}"
                                  Text="&#xE718;" />
-                      <Button Grid.Column="2"
+                      <Button Grid.Column="3"
                               Classes="ProjectWorkspaceInnerTabCloseButton"
                               IsVisible="{Binding CanCloseFromTab}"
                               Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActiveProjectTab.Workspace.CloseWorkspaceTabCommand}"

@@ -208,6 +208,19 @@ public partial class ProjectImportViewModel : ViewModelBase
         ClearPendingImportConfirmation();
     }
 
+    [RelayCommand]
+    private void CancelImportData()
+    {
+        if (!IsImportDataBusy || _importCancellationTokenSource is null)
+        {
+            return;
+        }
+
+        _importCancellationTokenSource.Cancel();
+        SetImportDataStatus("正在取消当前导入操作...", ImportStatusStates.Info);
+        _setStatusMessage("正在取消当前导入操作...");
+    }
+
     public void ResetImportedDocuments()
     {
         ImportedApiDocuments.Clear();
@@ -354,6 +367,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            SetImportDataStatus("已取消刷新导入数据。", ImportStatusStates.Info);
         }
         catch (Exception exception)
         {
@@ -412,6 +426,8 @@ public partial class ProjectImportViewModel : ViewModelBase
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            SetImportDataStatus("已取消项目数据导出。", ImportStatusStates.Info);
+            _setStatusMessage("已取消项目数据导出。");
         }
         catch (Exception exception)
         {
@@ -478,6 +494,8 @@ public partial class ProjectImportViewModel : ViewModelBase
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            SetImportDataStatus("已取消当前导入操作。", ImportStatusStates.Info);
+            _setStatusMessage("已取消当前导入操作。");
         }
         catch (Exception exception)
         {
@@ -570,6 +588,13 @@ public partial class ProjectImportViewModel : ViewModelBase
                 var failureMessage = string.IsNullOrWhiteSpace(previewResult.Message)
                     ? operationTexts.PreviewFailureFallback
                     : previewResult.Message;
+                if (IsCancelledImportResult(previewResult.Code))
+                {
+                    SetImportDataStatus(failureMessage, ImportStatusStates.Info);
+                    _setStatusMessage(failureMessage);
+                    return;
+                }
+
                 SetImportDataStatus(failureMessage, ImportStatusStates.Error);
                 _setStatusMessage(failureMessage);
                 PublishGlobalNotification(operationTexts.FailureNotificationTitle, failureMessage, NotificationType.Error);
@@ -592,6 +617,8 @@ public partial class ProjectImportViewModel : ViewModelBase
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            SetImportDataStatus("已取消当前导入操作。", ImportStatusStates.Info);
+            _setStatusMessage("已取消当前导入操作。");
         }
         catch (Exception exception)
         {
@@ -617,6 +644,13 @@ public partial class ProjectImportViewModel : ViewModelBase
             var failureMessage = string.IsNullOrWhiteSpace(result.Message)
                 ? operationTexts.ImportFailureFallback
                 : result.Message;
+            if (IsCancelledImportResult(result.Code))
+            {
+                SetImportDataStatus(failureMessage, ImportStatusStates.Info);
+                _setStatusMessage(failureMessage);
+                return;
+            }
+
             SetImportDataStatus(failureMessage, ImportStatusStates.Error);
             _setStatusMessage(failureMessage);
             PublishGlobalNotification(operationTexts.FailureNotificationTitle, failureMessage, NotificationType.Error);
@@ -687,6 +721,12 @@ public partial class ProjectImportViewModel : ViewModelBase
         _pendingImportRequest = null;
         PendingImportPreview = null;
         IsOverwriteConfirmDialogOpen = false;
+    }
+
+    private static bool IsCancelledImportResult(string? code)
+    {
+        return !string.IsNullOrWhiteSpace(code)
+            && code.Contains("cancel", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ResolveImportSourceTypeText(string sourceType)

@@ -99,6 +99,23 @@
     <Setter Property="TextAlignment" Value="Center" />
   </Style>
 
+  <Style Selector="Button.HttpResponseCancelButton">
+    <Setter Property="MinWidth" Value="92" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseNoticeCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="TextBox.HttpResponseSearchInput">
+    <Setter Property="Width" Value="132" />
+    <Setter Property="MinHeight" Value="28" />
+  </Style>
+
   <Style Selector="Border.EnvironmentSummaryPill">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />

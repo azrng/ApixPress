@@ -337,6 +337,14 @@
     <Setter Property="Margin" Value="0,0,2,0" />
   </Style>
 
+  <Style Selector="TextBlock.ProjectWorkspaceUnsavedGlyph">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Body}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,0,2,0" />
+  </Style>
+
   <Style Selector="Button.ProjectWorkspaceInnerTabAddButton">
     <Setter Property="Width" Value="26" />
     <Setter Property="Height" Value="26" />

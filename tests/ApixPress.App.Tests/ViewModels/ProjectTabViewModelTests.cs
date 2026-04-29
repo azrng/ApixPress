@@ -827,6 +827,31 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task CancelRequestCommand_ShouldCancelPendingRequestAndHideLoading()
+    {
+        var requestExecutionService = new FakeRequestExecutionService
+        {
+            PendingSendResult = new TaskCompletionSource<IResultModel<ResponseSnapshotDto>>(TaskCreationOptions.RunContinuationsAsynchronously)
+        };
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            requestExecutionService: requestExecutionService);
+
+        viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = "https://demo.local/orders";
+
+        var sendTask = viewModel.SendRequestCommand.ExecuteAsync(null);
+        Assert.True(SpinWait.SpinUntil(() => viewModel.ResponseSection.IsLoading, TimeSpan.FromSeconds(1)));
+
+        viewModel.CancelRequestCommand.Execute(null);
+        await sendTask;
+
+        Assert.False(viewModel.ResponseSection.IsLoading);
+        Assert.False(viewModel.ResponseSection.HasResponse);
+        Assert.Equal("已取消当前请求。", viewModel.StatusMessage);
+    }
+
+    [Fact]
     public async Task ConfirmQuickRequestSaveAsync_ShouldKeepExistingInterfaceTreeNodesStable()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();

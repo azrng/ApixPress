@@ -48,6 +48,49 @@ public sealed class ResponseSectionViewModelTests
     }
 
     [Fact]
+    public void ApplyResult_ShouldShowTimeoutNotice_WhenRequestTimesOut()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Failure("请求超时。", "request_timeout"),
+            new RequestSnapshotDto());
+
+        Assert.True(viewModel.ShowResponseNotice);
+        Assert.Equal("请求超时", viewModel.ResponseNoticeTitle);
+        Assert.Contains("请求超时", viewModel.BodyText);
+        Assert.Contains("超时时间", viewModel.ResponseNoticeText);
+    }
+
+    [Fact]
+    public void BodySearchText_ShouldUpdateMatchCount()
+    {
+        var viewModel = new ResponseSectionViewModel();
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 12,
+                SizeBytes = 32,
+                Content = "{\"name\":\"order\",\"type\":\"Order\"}",
+                Headers =
+                [
+                    new ResponseHeaderDto
+                    {
+                        Name = "Content-Type",
+                        Value = "application/json"
+                    }
+                ]
+            }),
+            new RequestSnapshotDto());
+
+        viewModel.BodySearchText = "order";
+
+        Assert.Equal("2 处匹配", viewModel.BodySearchResultText);
+        Assert.True(viewModel.HasBodySearchMatches);
+    }
+
+    [Fact]
     public void ApplyResult_ShouldFormatIndentedBody_WhenContentTypeIsApplicationJson()
     {
         var viewModel = new ResponseSectionViewModel();
@@ -155,6 +198,33 @@ public sealed class ResponseSectionViewModelTests
             new RequestSnapshotDto());
 
         Assert.Equal(rawContent, viewModel.BodyText);
+    }
+
+    [Fact]
+    public void ApplyResult_ShouldFormatIndentedBody_WhenContentTypeIsXml()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 8,
+                SizeBytes = 32,
+                Content = "<root><item id=\"1\" /></root>",
+                Headers =
+                [
+                    new ResponseHeaderDto
+                    {
+                        Name = "Content-Type",
+                        Value = "application/xml"
+                    }
+                ]
+            }),
+            new RequestSnapshotDto());
+
+        Assert.Contains(Environment.NewLine, viewModel.BodyText);
+        Assert.Contains("<item id=\"1\" />", viewModel.BodyText);
     }
 
     [Fact]

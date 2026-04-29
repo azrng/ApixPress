@@ -76,6 +76,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     private bool isPinned;
 
     [ObservableProperty]
+    private bool isCloseDiscardPending;
+
+    [ObservableProperty]
     private string headerText = "新建...";
 
     internal Action<RequestWorkspaceTabViewModel>? CloseRequested { get; set; }
@@ -92,6 +95,8 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     public string MethodBadgeText => SelectedMethod;
     public bool CanCloseFromTab => !IsPinned;
     public bool HasUnsavedChanges => !string.Equals(_cleanStateSignature, BuildStateSignature(), StringComparison.Ordinal);
+    public bool ShowUnsavedChanges => HasUnsavedChanges;
+    public string UnsavedChangesMarker => HasUnsavedChanges ? "*" : string.Empty;
     public bool CanReuseForWorkspaceNavigation => !IsPinned && !IsLandingTab && !HasUnsavedChanges;
     public string PinMenuHeader => IsPinned ? "取消固定标签页" : "固定标签页";
     public string EditorTitle => IsHttpInterfaceTab ? "HTTP 接口" : IsQuickRequestTab ? "快捷请求" : "新建...";
@@ -262,7 +267,15 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     public void MarkCleanState()
     {
         _cleanStateSignature = BuildStateSignature();
+        IsCloseDiscardPending = false;
+        NotifyDirtyStateChanged();
+    }
+
+    public void NotifyDirtyStateChanged()
+    {
         OnPropertyChanged(nameof(HasUnsavedChanges));
+        OnPropertyChanged(nameof(ShowUnsavedChanges));
+        OnPropertyChanged(nameof(UnsavedChangesMarker));
         OnPropertyChanged(nameof(CanReuseForWorkspaceNavigation));
     }
 
@@ -311,6 +324,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
 
     partial void OnEntryTypeChanged(string value)
     {
+        IsCloseDiscardPending = false;
         OnPropertyChanged(nameof(IsLandingTab));
         OnPropertyChanged(nameof(IsQuickRequestTab));
         OnPropertyChanged(nameof(IsHttpInterfaceTab));
@@ -324,12 +338,15 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(PrimaryActionText));
         OnPropertyChanged(nameof(UrlWatermark));
         RequestTabHeaderUpdate();
+        NotifyDirtyStateChanged();
     }
 
     partial void OnSelectedMethodChanged(string value)
     {
+        IsCloseDiscardPending = false;
         OnPropertyChanged(nameof(MethodBadgeText));
         RequestTabHeaderUpdate();
+        NotifyDirtyStateChanged();
     }
 
     partial void OnIsPinnedChanged(bool value)
@@ -341,7 +358,21 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
 
     partial void OnRequestUrlChanged(string value)
     {
+        IsCloseDiscardPending = false;
         RequestTabHeaderUpdate();
+        NotifyDirtyStateChanged();
+    }
+
+    partial void OnInterfaceFolderPathChanged(string value)
+    {
+        IsCloseDiscardPending = false;
+        NotifyDirtyStateChanged();
+    }
+
+    partial void OnHttpCaseNameChanged(string value)
+    {
+        IsCloseDiscardPending = false;
+        NotifyDirtyStateChanged();
     }
 
     partial void OnHttpEditorViewIndexChanged(int value)
@@ -349,6 +380,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsHttpDebugView));
         OnPropertyChanged(nameof(IsHttpDesignView));
         OnPropertyChanged(nameof(IsHttpDocumentPreviewView));
+        NotifyDirtyStateChanged();
     }
 
     private void UpdateTabHeader()

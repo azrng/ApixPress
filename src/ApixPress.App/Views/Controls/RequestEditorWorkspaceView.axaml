@@ -15,7 +15,7 @@
     <views:ProjectWorkspaceToolbarView />
 
     <Grid Grid.Row="1"
-          RowDefinitions="Auto,Auto"
+          RowDefinitions="Auto,Auto,Auto"
           RowSpacing="{StaticResource Space.2}"
           MinHeight="0"
           ClipToBounds="True"
@@ -59,10 +59,18 @@
                 Content="保存"
                 Command="{Binding SaveCaseCommand}" />
       </Grid>
+
+      <Border Grid.Row="2"
+              Classes="RequestResolvedPreviewCard"
+              IsVisible="{Binding Editor.HasResolvedRequestPreview}">
+        <TextBlock Classes="CaptionText"
+                   Text="{Binding Editor.ResolvedRequestPreviewText}"
+                   TextTrimming="CharacterEllipsis" />
+      </Border>
     </Grid>
 
     <Grid Grid.Row="1"
-          RowDefinitions="Auto,Auto"
+          RowDefinitions="Auto,Auto,Auto"
           RowSpacing="{StaticResource Space.2}"
           MinHeight="0"
           ClipToBounds="True"
@@ -139,6 +147,14 @@
                 Content="保存"
                 Command="{Binding SaveCaseCommand}" />
       </Grid>
+
+      <Border Grid.Row="2"
+              Classes="RequestResolvedPreviewCard"
+              IsVisible="{Binding Editor.HasResolvedRequestPreview}">
+        <TextBlock Classes="CaptionText"
+                   Text="{Binding Editor.ResolvedRequestPreviewText}"
+                   TextTrimming="CharacterEllipsis" />
+      </Border>
     </Grid>
 
     <Grid Grid.Row="2"

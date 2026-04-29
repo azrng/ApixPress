@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using ApixPress.App.Services.Implementations;
 using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
@@ -52,6 +53,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         : IsQuickRequestEditor
             ? "完整地址"
             : string.Empty;
+    public bool HasResolvedRequestPreview => !string.IsNullOrWhiteSpace(ResolvedRequestPreviewText);
+    public string ResolvedRequestPreviewText => BuildResolvedRequestPreviewText();
     public bool HasHttpDocumentParameters => ConfigTab.QueryParameters.Count > 0;
     public bool HasHttpDocumentHeaders => ConfigTab.Headers.Count > 0;
     public bool HasHttpDocumentRequestDetails => HasHttpDocumentParameters || HasHttpDocumentHeaders || ConfigTab.HasBodyContent;
@@ -209,6 +212,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowHttpDocumentPreviewContent));
         OnPropertyChanged(nameof(ShowSaveHttpCaseAction));
         OnPropertyChanged(nameof(CurrentEditorBaseUrlCaption));
+        OnPropertyChanged(nameof(HasResolvedRequestPreview));
+        OnPropertyChanged(nameof(ResolvedRequestPreviewText));
         OnPropertyChanged(nameof(HasHttpDocumentParameters));
         OnPropertyChanged(nameof(HasHttpDocumentHeaders));
         OnPropertyChanged(nameof(HasHttpDocumentRequestDetails));
@@ -230,6 +235,33 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     private RequestWorkspaceTabViewModel ResolveWorkspaceTabOrFallback()
     {
         return ActiveWorkspaceTab ?? _workspaceContext.GetFallbackWorkspaceTab();
+    }
+
+    private string BuildResolvedRequestPreviewText()
+    {
+        var workspace = ActiveWorkspaceTab;
+        if (workspace is null || workspace.IsLandingTab || string.IsNullOrWhiteSpace(workspace.RequestUrl))
+        {
+            return string.Empty;
+        }
+
+        var variables = new Dictionary<string, string>(_workspaceContext.GetActiveVariables(), StringComparer.OrdinalIgnoreCase);
+        var baseUrl = RequestExecutionService.ReplaceVariables(_workspaceContext.GetCurrentBaseUrl(), variables);
+        if (!string.IsNullOrWhiteSpace(baseUrl))
+        {
+            variables["baseUrl"] = baseUrl;
+        }
+
+        try
+        {
+            var snapshot = workspace.BuildSnapshot();
+            var finalUrl = RequestExecutionService.BuildUrl(snapshot, baseUrl, variables);
+            return $"发送预览：{snapshot.Method.ToUpperInvariant()} {finalUrl}";
+        }
+        catch (Exception exception)
+        {
+            return $"发送预览不可用：{exception.Message}";
+        }
     }
 
     private string ResolveEditorRequestName(string fallbackName, Func<RequestWorkspaceTabViewModel, bool> matchEditorType)

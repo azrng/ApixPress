@@ -86,7 +86,8 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         workspaceTab.ResponseSection.BeginLoading(workspaceTab.IsHttpInterfaceTab
             ? "正在发送 HTTP 接口请求..."
             : "正在发送快捷请求...");
-        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _sendRequestCancellationTokenSource).Token;
+        var cancellationTokenSource = CancellationTokenSourceHelper.Refresh(ref _sendRequestCancellationTokenSource);
+        var cancellationToken = cancellationTokenSource.Token;
         try
         {
             var snapshot = workspaceTab.BuildSnapshot();
@@ -114,9 +115,32 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         finally
         {
             workspaceTab.ResponseSection.EndLoading();
+            if (cancellationToken.IsCancellationRequested)
+            {
+                _hostContext.SetStatusMessage("已取消当前请求。");
+            }
+
+            if (ReferenceEquals(_sendRequestCancellationTokenSource, cancellationTokenSource))
+            {
+                _sendRequestCancellationTokenSource.Dispose();
+                _sendRequestCancellationTokenSource = null;
+            }
+
             _hostContext.SetBusyState(false);
             _hostContext.NotifyShellState();
         }
+    }
+
+    public void CancelRequest()
+    {
+        if (IsDisposed || _sendRequestCancellationTokenSource is null)
+        {
+            return;
+        }
+
+        _sendRequestCancellationTokenSource.Cancel();
+        _hostContext.SetStatusMessage("已取消当前请求。");
+        _hostContext.NotifyShellState();
     }
 
     public async Task SaveCurrentEditorAsync()

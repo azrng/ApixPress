@@ -233,7 +233,7 @@
 
     <Border Grid.Row="1"
             Classes="PanelCard HttpResponseCard">
-      <Grid RowDefinitions="Auto,*"
+      <Grid RowDefinitions="Auto,Auto,*"
             RowSpacing="{StaticResource Space.3}">
         <Grid Grid.Row="0"
               ColumnDefinitions="Auto,*"
@@ -242,18 +242,26 @@
                      Classes="SectionTitle"
                      Text="返回响应" />
           <Grid Grid.Column="1"
-                ColumnDefinitions="Auto,Auto,Auto"
-                ColumnSpacing="{StaticResource Space.3}"
+                ColumnDefinitions="Auto,Auto,Auto,Auto,Auto"
+                ColumnSpacing="{StaticResource Space.2}"
                 HorizontalAlignment="Right"
                 IsVisible="{Binding ResponseSection.HasResponse}">
-            <u:Badge Grid.Column="0"
-                     Header="{Binding ResponseSection.StatusText}"
-                     iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
+            <TextBox Grid.Column="0"
+                     Classes="SectionInput HttpResponseSearchInput"
+                     Watermark="搜索响应"
+                     Text="{Binding ResponseSection.BodySearchText, UpdateSourceTrigger=PropertyChanged}" />
             <TextBlock Grid.Column="1"
                        Classes="CaptionText"
                        VerticalAlignment="Center"
+                       Text="{Binding ResponseSection.BodySearchResultText}" />
+            <u:Badge Grid.Column="2"
+                     Header="{Binding ResponseSection.StatusText}"
+                     iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
+            <TextBlock Grid.Column="3"
+                       Classes="CaptionText"
+                       VerticalAlignment="Center"
                        Text="{Binding ResponseSection.DurationText}" />
-            <TextBlock Grid.Column="2"
+            <TextBlock Grid.Column="4"
                        Classes="CaptionText"
                        VerticalAlignment="Center"
                        Text="{Binding ResponseSection.SizeText}" />
@@ -261,6 +269,18 @@
         </Grid>
 
         <Border Grid.Row="1"
+                Classes="HttpResponseNoticeCard"
+                IsVisible="{Binding ResponseSection.ShowResponseNotice}">
+          <StackPanel Spacing="2">
+            <TextBlock Classes="SectionTitle"
+                       Text="{Binding ResponseSection.ResponseNoticeTitle}" />
+            <TextBlock Classes="CaptionText"
+                       Text="{Binding ResponseSection.ResponseNoticeText}"
+                       TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2"
                 Classes="HttpResponsePlaceholderHost"
                 IsVisible="{Binding ResponseSection.ShowPlaceholder}">
           <StackPanel Classes="HttpResponsePlaceholderContent"
@@ -273,7 +293,7 @@
           </StackPanel>
         </Border>
 
-        <Grid Grid.Row="1"
+        <Grid Grid.Row="2"
               IsVisible="{Binding ResponseSection.HasResponse}"
               RowDefinitions="*">
           <TabControl Grid.Row="0"
@@ -302,7 +322,7 @@
           </TabControl>
         </Grid>
 
-        <Border Grid.Row="1"
+        <Border Grid.Row="2"
                 Classes="HttpResponseLoadingOverlay"
                 IsVisible="{Binding ResponseSection.IsLoading}">
           <StackPanel Classes="HttpResponseLoadingContent"
@@ -311,6 +331,10 @@
                          IsIndeterminate="True" />
             <TextBlock Classes="SubtleText HttpResponseLoadingText"
                        Text="{Binding ResponseSection.LoadingText}" />
+            <Button Classes="DialogSecondaryButton HttpResponseCancelButton"
+                    HorizontalAlignment="Center"
+                    Content="取消请求"
+                    Command="{Binding CancelRequestCommand}" />
           </StackPanel>
         </Border>
       </Grid>
