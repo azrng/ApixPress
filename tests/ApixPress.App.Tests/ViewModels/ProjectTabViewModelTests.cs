@@ -792,6 +792,43 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task SendRequestCommand_ShouldNormalizeMultilineQuickRequestPaste()
+    {
+        var requestExecutionService = new FakeRequestExecutionService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            requestExecutionService: requestExecutionService);
+
+        viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = """
+            curl -X POST "https://demo.local/orders?status=open" \
+              -H "Authorization: Bearer token"
+            """;
+
+        Assert.Equal("https://demo.local/orders?status=open", viewModel.Editor.RequestUrl);
+
+        await viewModel.SendRequestCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, requestExecutionService.SendCallCount);
+        Assert.NotNull(requestExecutionService.LastRequest);
+        Assert.Equal("https://demo.local/orders?status=open", requestExecutionService.LastRequest!.Url);
+    }
+
+    [Fact]
+    public void RequestEditor_ShouldSkipResolvedPreviewForOversizedQuickRequestUrl()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+        var longUrl = $"https://demo.local/{new string('a', 5000)}";
+
+        viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = longUrl;
+
+        Assert.True(viewModel.Editor.HasResolvedRequestPreview);
+        Assert.Equal(longUrl, viewModel.Editor.RequestUrl);
+        Assert.Contains("请求地址过长", viewModel.Editor.ResolvedRequestPreviewText);
+    }
+
+    [Fact]
     public async Task SendRequestCommand_ShouldShowResponseLoadingWhileRequestIsPending()
     {
         var requestExecutionService = new FakeRequestExecutionService

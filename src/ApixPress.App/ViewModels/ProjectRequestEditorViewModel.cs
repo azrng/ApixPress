@@ -1,11 +1,13 @@
 using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Services.Implementations;
 using ApixPress.App.ViewModels.Base;
+using System.Text.RegularExpressions;
 
 namespace ApixPress.App.ViewModels;
 
 public partial class ProjectRequestEditorViewModel : ViewModelBase
 {
+    private const int ResolvedPreviewUrlLengthLimit = 4096;
     private readonly ProjectTabWorkspaceContext _workspaceContext;
 
     internal ProjectRequestEditorViewModel(ProjectTabWorkspaceContext workspaceContext)
@@ -114,12 +116,13 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         get => ActiveWorkspaceTab?.RequestUrl ?? string.Empty;
         set
         {
-            if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.RequestUrl == value)
+            var normalizedValue = NormalizeRequestUrlInput(value);
+            if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.RequestUrl == normalizedValue)
             {
                 return;
             }
 
-            ActiveWorkspaceTab.RequestUrl = value;
+            ActiveWorkspaceTab.RequestUrl = normalizedValue;
             NotifyStateChanged();
         }
     }
@@ -245,6 +248,16 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
             return string.Empty;
         }
 
+        if (workspace.RequestUrl.Length > ResolvedPreviewUrlLengthLimit)
+        {
+            return "发送预览不可用：请求地址过长，请确认粘贴内容是否只包含 URL。";
+        }
+
+        if (workspace.RequestUrl.Contains('\r') || workspace.RequestUrl.Contains('\n'))
+        {
+            return "发送预览不可用：请求地址包含换行，请确认粘贴内容是否只包含 URL。";
+        }
+
         var variables = new Dictionary<string, string>(_workspaceContext.GetActiveVariables(), StringComparer.OrdinalIgnoreCase);
         var baseUrl = RequestExecutionService.ReplaceVariables(_workspaceContext.GetCurrentBaseUrl(), variables);
         if (!string.IsNullOrWhiteSpace(baseUrl))
@@ -323,4 +336,34 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
             ? RequestEditorContentMode.HttpWorkbench
             : RequestEditorContentMode.None;
     }
+
+    internal static string NormalizeRequestUrlInput(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = value.Trim();
+        var urlMatch = HttpUrlRegex().Match(trimmed);
+        if (urlMatch.Success)
+        {
+            return CleanUrlCandidate(urlMatch.Value);
+        }
+
+        return trimmed
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .FirstOrDefault() ?? string.Empty;
+    }
+
+    private static string CleanUrlCandidate(string value)
+    {
+        return value
+            .Trim()
+            .Trim('\'', '"', '`', '<', '>')
+            .TrimEnd('\\', ',', ';');
+    }
+
+    [GeneratedRegex("https?://[^\\s'\\\"<>]+", RegexOptions.IgnoreCase)]
+    private static partial Regex HttpUrlRegex();
 }
