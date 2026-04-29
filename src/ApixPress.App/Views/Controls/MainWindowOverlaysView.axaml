@@ -11,6 +11,7 @@
     <views:NotificationCenterOverlayView />
     <views:EnvironmentManagerDialogView />
     <views:QuickRequestSaveDialogView />
+    <views:RequestCodeDialogView />
     <views:WorkspaceDeleteConfirmDialogView />
     <views:ProjectImportDialogView />
     <views:ImportOverwriteConfirmDialogView />

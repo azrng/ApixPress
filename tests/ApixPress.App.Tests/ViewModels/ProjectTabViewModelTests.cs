@@ -10,6 +10,7 @@ using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelShared
 using FakeSystemDataService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeSystemDataService;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels;
+using ApixPress.App.Views.Controls;
 using ApixPress.App.Services.Interfaces;
 using Azrng.Core.Results;
 
@@ -551,6 +552,31 @@ public sealed partial class ProjectTabViewModelTests
         Assert.True(viewModel.Editor.IsRequestCodeDialogOpen);
         Assert.Contains("curl --request GET", viewModel.Editor.RequestCodeCurlCommand);
         Assert.Contains("/endpoint-1", viewModel.Editor.RequestCodeCurlCommand);
+    }
+
+    [Fact]
+    public async Task RequestEditorWorkspaceView_ShouldInstantiateAfterLoadingHttpInterface()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 1);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
+
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
+        Assert.NotNull(interfaceItem);
+        await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+
+        var exception = Record.Exception(() => new RequestEditorWorkspaceView
+        {
+            DataContext = viewModel
+        });
+        var requestCodeDialogException = Record.Exception(() => new RequestCodeDialogView());
+
+        Assert.Null(exception);
+        Assert.Null(requestCodeDialogException);
     }
 
     [Fact]

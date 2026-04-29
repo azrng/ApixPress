@@ -53,8 +53,7 @@
         <Button Grid.Column="1"
                 Classes="HttpSaveButton"
                 Content="生成代码"
-                Command="{Binding Editor.OpenRequestCodeDialogCommand}"
-                IsEnabled="{Binding Editor.CanGenerateRequestCode}" />
+                Command="{Binding Editor.OpenRequestCodeDialogCommand}" />
         <Button Grid.Column="2"
                 Classes="HttpSendButton"
                 Content="发送"
@@ -141,8 +140,7 @@
         <Button Grid.Column="2"
                 Classes="HttpSaveButton"
                 Content="生成代码"
-                Command="{Binding Editor.OpenRequestCodeDialogCommand}"
-                IsEnabled="{Binding Editor.CanGenerateRequestCode}" />
+                Command="{Binding Editor.OpenRequestCodeDialogCommand}" />
         <Button Grid.Column="3"
                 Classes="HttpSendButton"
                 Content="发送"
@@ -175,55 +173,5 @@
       <views:HttpDocumentWorkspaceView IsVisible="{Binding Editor.ShowHttpDocumentPreviewContent}" />
     </Grid>
 
-    <Border Grid.RowSpan="3"
-            Classes="CreateProjectDialogBackdrop"
-            IsVisible="{Binding Editor.IsRequestCodeDialogOpen}">
-      <Grid HorizontalAlignment="Center"
-            VerticalAlignment="Center">
-        <Border Classes="RequestCodeDialogCard">
-          <Grid RowDefinitions="Auto,Auto,*,Auto"
-                RowSpacing="{StaticResource Space.3}">
-            <Grid Grid.Row="0"
-                  ColumnDefinitions="*,Auto"
-                  ColumnSpacing="{StaticResource Space.3}">
-              <StackPanel Grid.Column="0"
-                          Spacing="{StaticResource Space.1}">
-                <TextBlock Classes="DialogTitle"
-                           Text="{Binding Editor.RequestCodeTitle}" />
-                <TextBlock Classes="CaptionText"
-                           Text="curl"
-                           TextWrapping="Wrap" />
-              </StackPanel>
-              <Button Grid.Column="1"
-                      Classes="DialogIconButton"
-                      Content="×"
-                      Command="{Binding Editor.CloseRequestCodeDialogCommand}" />
-            </Grid>
-
-            <Border Grid.Row="1"
-                    Classes="CreateProjectDialogDivider" />
-
-            <TextBox Grid.Row="2"
-                     Classes="RequestCodeDialogTextBox"
-                     AcceptsReturn="True"
-                     IsReadOnly="True"
-                     TextWrapping="NoWrap"
-                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                     ScrollViewer.VerticalScrollBarVisibility="Auto"
-                     Text="{Binding Editor.RequestCodeCurlCommand}"
-                     FontFamily="{StaticResource Font.Monospace}" />
-
-            <StackPanel Grid.Row="3"
-                        Orientation="Horizontal"
-                        HorizontalAlignment="Right"
-                        Spacing="{StaticResource Space.2}">
-              <Button Classes="DialogSecondaryButton"
-                      Content="关闭"
-                      Command="{Binding Editor.CloseRequestCodeDialogCommand}" />
-            </StackPanel>
-          </Grid>
-        </Border>
-      </Grid>
-    </Border>
   </Grid>
 </UserControl>

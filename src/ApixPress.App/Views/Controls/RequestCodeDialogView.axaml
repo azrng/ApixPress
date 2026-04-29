@@ -1,0 +1,58 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.RequestCodeDialogView"
+             x:DataType="vm:MainWindowViewModel"
+             mc:Ignorable="d">
+  <Border Classes="CreateProjectDialogBackdrop"
+          IsVisible="{Binding ShowRequestCodeDialog}">
+    <Grid HorizontalAlignment="Center"
+          VerticalAlignment="Center">
+      <Border Classes="RequestCodeDialogCard">
+        <Grid RowDefinitions="Auto,Auto,*,Auto"
+              RowSpacing="{StaticResource Space.3}">
+          <Grid Grid.Row="0"
+                ColumnDefinitions="*,Auto"
+                ColumnSpacing="{StaticResource Space.3}">
+            <StackPanel Grid.Column="0"
+                        Spacing="{StaticResource Space.1}">
+              <TextBlock Classes="DialogTitle"
+                         Text="{Binding ActiveProjectTab.Editor.RequestCodeTitle}" />
+              <TextBlock Classes="CaptionText"
+                         Text="curl"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+            <Button Grid.Column="1"
+                    Classes="DialogIconButton"
+                    Content="×"
+                    Command="{Binding ActiveProjectTab.Editor.CloseRequestCodeDialogCommand}" />
+          </Grid>
+
+          <Border Grid.Row="1"
+                  Classes="CreateProjectDialogDivider" />
+
+          <TextBox Grid.Row="2"
+                   Classes="RequestCodeDialogTextBox"
+                   AcceptsReturn="True"
+                   IsReadOnly="True"
+                   TextWrapping="NoWrap"
+                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                   ScrollViewer.VerticalScrollBarVisibility="Auto"
+                   Text="{Binding ActiveProjectTab.Editor.RequestCodeCurlCommand}"
+                   FontFamily="{StaticResource Font.Monospace}" />
+
+          <StackPanel Grid.Row="3"
+                      Orientation="Horizontal"
+                      HorizontalAlignment="Right"
+                      Spacing="{StaticResource Space.2}">
+            <Button Classes="DialogSecondaryButton"
+                    Content="关闭"
+                    Command="{Binding ActiveProjectTab.Editor.CloseRequestCodeDialogCommand}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

@@ -23,3 +23,11 @@
 - **Cause**: The test asserted a fake environment detail that was not part of the behavior under test.
 - **Correction**: Assert the stable behavior: dialog stays closed until command execution, curl is generated, method is correct, and the imported endpoint path is included.
 - **Prevention**: For ViewModel tests using shared fake services, assert only the behavior being protected unless the fake dependency contract is explicitly part of the scenario.
+
+## 2026-04-29 - PowerShell Set-Content introduced BOM risk
+
+- **Context**: Reopened `TASK.md` by piping `Get-Content` into `Set-Content -Encoding UTF8`.
+- **Error**: The diff showed a UTF-8 BOM added to the first line, violating the repository rule to avoid shell rewrite operations on Chinese files.
+- **Cause**: I used a broad PowerShell rewrite instead of `apply_patch` for a small markdown status edit.
+- **Correction**: Removed the BOM with `apply_patch` and continued using patches for tracked file edits.
+- **Prevention**: For tracked source or markdown files, especially files with Chinese content, use `apply_patch` for small edits and avoid `Set-Content`, `Out-File`, redirection, or whole-file rewrites.

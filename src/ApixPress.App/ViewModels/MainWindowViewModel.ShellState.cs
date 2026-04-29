@@ -109,6 +109,7 @@ public partial class MainWindowViewModel
 
         OnPropertyChanged(nameof(HasEnvironmentContext));
         OnPropertyChanged(nameof(ShowQuickRequestSaveDialog));
+        OnPropertyChanged(nameof(ShowRequestCodeDialog));
         OnPropertyChanged(nameof(ShowProjectImportDialog));
         OnPropertyChanged(nameof(ShowProjectImportOverwriteConfirmDialog));
         OnPropertyChanged(nameof(ShowWorkspaceDeleteConfirmDialog));

@@ -197,6 +197,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool ShowProjectSearchEmptyState => IsHomeTabActive && ProjectPanel.HasAnyProjects && !ProjectPanel.HasProjects;
     public bool HasEnvironmentContext => ActiveProjectTab?.Summary.HasEnvironmentContext ?? false;
     public bool ShowQuickRequestSaveDialog => ActiveProjectTab?.QuickRequestSave.IsDialogOpen ?? false;
+    public bool ShowRequestCodeDialog => ActiveProjectTab?.Editor.IsRequestCodeDialogOpen ?? false;
     public bool ShowProjectImportDialog => ActiveProjectTab?.Import.IsDialogOpen ?? false;
     public bool ShowProjectImportOverwriteConfirmDialog => ActiveProjectTab?.Import.IsOverwriteConfirmDialogOpen ?? false;
     public bool ShowWorkspaceDeleteConfirmDialog => ActiveProjectTab?.Catalog.IsDeleteConfirmDialogOpen ?? false;
