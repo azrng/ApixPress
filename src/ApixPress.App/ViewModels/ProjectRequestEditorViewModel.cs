@@ -96,9 +96,13 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     public string CurrentHttpDocumentCurlSnippet => _currentHttpDocumentCurlSnippet;
     public bool CanGenerateRequestCode => _canGenerateRequestCode;
     public string CurrentRequestCodeTitle => RequestCodeTitle;
+    public string CurrentRequestCodeLanguageTitle => SelectedRequestCodeLanguage == 1 ? "C#" : "Shell";
     public string CurrentRequestCodeCurlCommand => RequestCodeCurlCommand;
     public string CurrentRequestCodeWgetCommand => RequestCodeWgetCommand;
     public string CurrentRequestCodePowerShellCommand => RequestCodePowerShellCommand;
+    public string CurrentRequestCodeCSharpCommand => RequestCodeCSharpCommand;
+    public bool IsShellRequestCodeLanguageSelected => SelectedRequestCodeLanguage == 0;
+    public bool IsCSharpRequestCodeLanguageSelected => SelectedRequestCodeLanguage == 1;
     public string CurrentResponseValidationResultText => _currentResponseValidationResultText;
 
     public string SelectedMethod
@@ -180,6 +184,12 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     [ObservableProperty]
     private int selectedRequestCodeTab;
 
+    [ObservableProperty]
+    private int selectedRequestCodeLanguage;
+
+    [ObservableProperty]
+    private string requestCodeCSharpCommand = string.Empty;
+
     [RelayCommand]
     private void OpenRequestCodeDialog()
     {
@@ -189,6 +199,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         }
 
         RefreshRequestCodeDialogContent();
+        SelectedRequestCodeLanguage = 0;
         SelectedRequestCodeTab = 0;
         IsRequestCodeDialogOpen = true;
     }
@@ -234,6 +245,18 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
 
         ActiveWorkspaceTab.HttpEditorViewIndex = 2;
         NotifyStateChanged();
+    }
+
+    [RelayCommand]
+    private void ShowShellRequestCodeLanguage()
+    {
+        SelectedRequestCodeLanguage = 0;
+    }
+
+    [RelayCommand]
+    private void ShowCSharpRequestCodeLanguage()
+    {
+        SelectedRequestCodeLanguage = 1;
     }
 
     public void NotifyStateChanged()
@@ -360,10 +383,13 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         RequestCodeCurlCommand = BuildRequestCodeCurlCommand();
         RequestCodeWgetCommand = BuildRequestCodeWgetCommand();
         RequestCodePowerShellCommand = BuildRequestCodePowerShellCommand();
+        RequestCodeCSharpCommand = BuildRequestCodeCSharpCommand();
         OnPropertyChanged(nameof(CurrentRequestCodeTitle));
+        OnPropertyChanged(nameof(CurrentRequestCodeLanguageTitle));
         OnPropertyChanged(nameof(CurrentRequestCodeCurlCommand));
         OnPropertyChanged(nameof(CurrentRequestCodeWgetCommand));
         OnPropertyChanged(nameof(CurrentRequestCodePowerShellCommand));
+        OnPropertyChanged(nameof(CurrentRequestCodeCSharpCommand));
     }
 
     private string BuildRequestCodeCurlCommand()
@@ -417,17 +443,45 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         }
     }
 
+    private string BuildRequestCodeCSharpCommand()
+    {
+        if (!CanGenerateRequestCode)
+        {
+            return "请先打开一个 HTTP 接口或快捷请求标签。";
+        }
+
+        try
+        {
+            return ProjectHttpDocumentFormatter.BuildCSharpHttpClientSnippet(SelectedMethod, RequestUrl, CurrentHttpInterfaceBaseUrl, ConfigTab);
+        }
+        catch (Exception exception)
+        {
+            return $"生成 C# 代码失败：{exception.Message}";
+        }
+    }
+
     private void ClearRequestCodeDialogContent()
     {
         RequestCodeTitle = string.Empty;
         RequestCodeCurlCommand = string.Empty;
         RequestCodeWgetCommand = string.Empty;
         RequestCodePowerShellCommand = string.Empty;
+        RequestCodeCSharpCommand = string.Empty;
+        SelectedRequestCodeLanguage = 0;
         SelectedRequestCodeTab = 0;
         OnPropertyChanged(nameof(CurrentRequestCodeTitle));
+        OnPropertyChanged(nameof(CurrentRequestCodeLanguageTitle));
         OnPropertyChanged(nameof(CurrentRequestCodeCurlCommand));
         OnPropertyChanged(nameof(CurrentRequestCodeWgetCommand));
         OnPropertyChanged(nameof(CurrentRequestCodePowerShellCommand));
+        OnPropertyChanged(nameof(CurrentRequestCodeCSharpCommand));
+    }
+
+    partial void OnSelectedRequestCodeLanguageChanged(int value)
+    {
+        OnPropertyChanged(nameof(CurrentRequestCodeLanguageTitle));
+        OnPropertyChanged(nameof(IsShellRequestCodeLanguageSelected));
+        OnPropertyChanged(nameof(IsCSharpRequestCodeLanguageSelected));
     }
 
     private string BuildResolvedRequestPreviewText()

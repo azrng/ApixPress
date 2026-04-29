@@ -857,6 +857,18 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Contains("-Method POST", viewModel.Editor.CurrentRequestCodePowerShellCommand);
         Assert.Contains("-Headers $headers", viewModel.Editor.CurrentRequestCodePowerShellCommand);
         Assert.Contains("-Body \"{`\"name`\":`\"test`\"}\"", viewModel.Editor.CurrentRequestCodePowerShellCommand);
+        Assert.Contains("using var httpClient = new HttpClient();", viewModel.Editor.CurrentRequestCodeCSharpCommand);
+        Assert.Contains("new HttpRequestMessage(HttpMethod.Post, \"https://demo.local/orders\")", viewModel.Editor.CurrentRequestCodeCSharpCommand);
+        Assert.Contains("request.Headers.TryAddWithoutValidation(\"Authorization\", \"Bearer token\")", viewModel.Editor.CurrentRequestCodeCSharpCommand);
+        Assert.Contains("new StringContent(\"{\\\"name\\\":\\\"test\\\"}\", Encoding.UTF8, \"application/json\")", viewModel.Editor.CurrentRequestCodeCSharpCommand);
+
+        viewModel.Editor.ShowCSharpRequestCodeLanguageCommand.Execute(null);
+        Assert.True(viewModel.Editor.IsCSharpRequestCodeLanguageSelected);
+        Assert.False(viewModel.Editor.IsShellRequestCodeLanguageSelected);
+        Assert.Equal("C#", viewModel.Editor.CurrentRequestCodeLanguageTitle);
+
+        viewModel.Editor.ShowShellRequestCodeLanguageCommand.Execute(null);
+        Assert.True(viewModel.Editor.IsShellRequestCodeLanguageSelected);
 
         viewModel.Editor.CloseRequestCodeDialogCommand.Execute(null);
 

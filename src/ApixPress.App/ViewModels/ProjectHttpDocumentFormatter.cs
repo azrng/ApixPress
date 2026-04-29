@@ -166,6 +166,47 @@ public static class ProjectHttpDocumentFormatter
         return builder.ToString();
     }
 
+    public static string BuildCSharpHttpClientSnippet(
+        string method,
+        string requestUrl,
+        string currentBaseUrl,
+        RequestConfigTabViewModel configTab)
+    {
+        var resolvedUrl = ResolveSnippetUrl(requestUrl, currentBaseUrl, configTab.QueryParameters);
+        var builder = new StringBuilder();
+        builder.AppendLine("using System.Net.Http;");
+        builder.AppendLine("using System.Text;");
+        builder.AppendLine();
+        builder.AppendLine("using var httpClient = new HttpClient();");
+        builder.Append("using var request = new HttpRequestMessage(HttpMethod.")
+            .Append(ToHttpMethodProperty(method))
+            .Append(", \"")
+            .Append(EscapeCSharpString(resolvedUrl))
+            .AppendLine("\");");
+
+        var contentTypeHeader = configTab.Headers
+            .FirstOrDefault(item => string.Equals(item.Name?.Trim(), "Content-Type", StringComparison.OrdinalIgnoreCase));
+
+        foreach (var header in configTab.Headers.Where(item =>
+                     !string.IsNullOrWhiteSpace(item.Name)
+                     && !string.Equals(item.Name.Trim(), "Content-Type", StringComparison.OrdinalIgnoreCase)))
+        {
+            builder.Append("request.Headers.TryAddWithoutValidation(\"")
+                .Append(EscapeCSharpString(header.Name.Trim()))
+                .Append("\", \"")
+                .Append(EscapeCSharpString((header.Value ?? string.Empty).Trim()))
+                .AppendLine("\");");
+        }
+
+        AppendCSharpContent(builder, configTab, contentTypeHeader?.Value);
+
+        builder.AppendLine();
+        builder.AppendLine("using var response = await httpClient.SendAsync(request);");
+        builder.AppendLine("var responseBody = await response.Content.ReadAsStringAsync();");
+
+        return builder.ToString().TrimEnd();
+    }
+
     public static string ResolveBodyContent(RequestConfigTabViewModel configTab)
     {
         if (configTab.SelectedBodyMode is BodyModes.FormData or BodyModes.FormUrlEncoded)
@@ -200,5 +241,80 @@ public static class ProjectHttpDocumentFormatter
     {
         return value.Replace("`", "``", StringComparison.Ordinal)
             .Replace("\"", "`\"", StringComparison.Ordinal);
+    }
+
+    private static void AppendCSharpContent(StringBuilder builder, RequestConfigTabViewModel configTab, string? contentTypeHeaderValue)
+    {
+        if (configTab.SelectedBodyMode is BodyModes.FormUrlEncoded)
+        {
+            builder.AppendLine("request.Content = new FormUrlEncodedContent(new Dictionary<string, string>");
+            builder.AppendLine("{");
+            foreach (var field in configTab.FormFields.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
+            {
+                builder.Append("    [\"")
+                    .Append(EscapeCSharpString(field.Name.Trim()))
+                    .Append("\"] = \"")
+                    .Append(EscapeCSharpString((field.Value ?? string.Empty).Trim()))
+                    .AppendLine("\",");
+            }
+
+            builder.AppendLine("});");
+            return;
+        }
+
+        if (configTab.SelectedBodyMode is BodyModes.FormData)
+        {
+            builder.AppendLine("var formData = new MultipartFormDataContent();");
+            foreach (var field in configTab.FormFields.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
+            {
+                builder.Append("formData.Add(new StringContent(\"")
+                    .Append(EscapeCSharpString((field.Value ?? string.Empty).Trim()))
+                    .Append("\"), \"")
+                    .Append(EscapeCSharpString(field.Name.Trim()))
+                    .AppendLine("\");");
+            }
+
+            builder.AppendLine("request.Content = formData;");
+            return;
+        }
+
+        var bodyContent = ResolveBodyContent(configTab);
+        if (string.IsNullOrWhiteSpace(bodyContent))
+        {
+            return;
+        }
+
+        var mediaType = string.IsNullOrWhiteSpace(contentTypeHeaderValue)
+            ? "application/json"
+            : contentTypeHeaderValue.Trim();
+
+        builder.Append("request.Content = new StringContent(\"")
+            .Append(EscapeCSharpString(bodyContent))
+            .Append("\", Encoding.UTF8, \"")
+            .Append(EscapeCSharpString(mediaType))
+            .AppendLine("\");");
+    }
+
+    private static string ToHttpMethodProperty(string method)
+    {
+        return method.Trim().ToUpperInvariant() switch
+        {
+            "GET" => "Get",
+            "POST" => "Post",
+            "PUT" => "Put",
+            "DELETE" => "Delete",
+            "PATCH" => "Patch",
+            "HEAD" => "Head",
+            "OPTIONS" => "Options",
+            _ => "Get"
+        };
+    }
+
+    private static string EscapeCSharpString(string value)
+    {
+        return value.Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal);
     }
 }
