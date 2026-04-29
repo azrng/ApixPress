@@ -372,6 +372,7 @@ internal sealed class ProjectTabComposition : DisposableObject
         Workspace.EditorStateChanged += _hostContext.NotifyWorkspaceEditorState;
         Workspace.ActiveWorkspaceTabChanged += Lifecycle.OnWorkspaceActiveWorkspaceTabChanged;
         Shell.PropertyChanged += OnShellPropertyChanged;
+        Editor.PropertyChanged += OnEditorPropertyChanged;
         Settings.PropertyChanged += OnChildPropertyChanged;
         Import.PropertyChanged += OnChildPropertyChanged;
         QuickRequestSave.PropertyChanged += OnChildPropertyChanged;
@@ -397,6 +398,7 @@ internal sealed class ProjectTabComposition : DisposableObject
         Workspace.EditorStateChanged -= _hostContext.NotifyWorkspaceEditorState;
         Workspace.ActiveWorkspaceTabChanged -= Lifecycle.OnWorkspaceActiveWorkspaceTabChanged;
         Shell.PropertyChanged -= OnShellPropertyChanged;
+        Editor.PropertyChanged -= OnEditorPropertyChanged;
         Settings.PropertyChanged -= OnChildPropertyChanged;
         Import.PropertyChanged -= OnChildPropertyChanged;
         QuickRequestSave.PropertyChanged -= OnChildPropertyChanged;
@@ -435,6 +437,14 @@ internal sealed class ProjectTabComposition : DisposableObject
     private void OnChildPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         _hostContext.NotifyShellState();
+    }
+
+    private void OnEditorPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ProjectRequestEditorViewModel.IsRequestCodeDialogOpen))
+        {
+            _hostContext.NotifyShellState();
+        }
     }
 
     private void OnShellPropertyChanged(object? sender, PropertyChangedEventArgs e)

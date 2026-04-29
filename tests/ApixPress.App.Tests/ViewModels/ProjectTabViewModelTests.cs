@@ -827,6 +827,8 @@ public sealed partial class ProjectTabViewModelTests
     public void RequestEditor_ShouldOpenRequestCodeDialogWithCurlCommand()
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+        var shellStateChangedCount = 0;
+        viewModel.ShellStateChanged += _ => shellStateChangedCount++;
 
         viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
         viewModel.Editor.SelectedMethod = "POST";
@@ -842,6 +844,7 @@ public sealed partial class ProjectTabViewModelTests
         viewModel.Editor.OpenRequestCodeDialogCommand.Execute(null);
 
         Assert.True(viewModel.Editor.IsRequestCodeDialogOpen);
+        Assert.True(shellStateChangedCount > 0);
         Assert.Equal("生成代码", viewModel.Editor.CurrentRequestCodeTitle);
         Assert.Contains("curl --request POST", viewModel.Editor.CurrentRequestCodeCurlCommand);
         Assert.Contains("https://demo.local/orders", viewModel.Editor.CurrentRequestCodeCurlCommand);
@@ -858,6 +861,7 @@ public sealed partial class ProjectTabViewModelTests
         viewModel.Editor.CloseRequestCodeDialogCommand.Execute(null);
 
         Assert.False(viewModel.Editor.IsRequestCodeDialogOpen);
+        Assert.True(shellStateChangedCount > 1);
     }
 
     [Fact]
