@@ -15,19 +15,30 @@
     <views:ProjectWorkspaceToolbarView />
 
     <Grid Grid.Row="1"
-          RowDefinitions="Auto,Auto,Auto"
+          RowDefinitions="Auto,Auto"
           RowSpacing="{StaticResource Space.2}"
           MinHeight="0"
           ClipToBounds="True"
           IsVisible="{Binding Editor.IsQuickRequestEditor}">
-      <TextBox Grid.Row="0"
-               Classes="SectionInput HttpInterfaceNameInput"
-               HorizontalAlignment="Stretch"
-               Watermark="未命名请求"
-               Text="{Binding Editor.CurrentQuickRequestName}" />
+      <Grid Grid.Row="0"
+            ColumnDefinitions="Auto,Auto,*"
+            ColumnSpacing="{StaticResource Space.2}">
+        <TextBox Grid.Column="0"
+                 Classes="SectionInput HttpInterfaceNameInput HttpToolbarNameInput"
+                 HorizontalAlignment="Left"
+                 Watermark="未命名请求"
+                 Text="{Binding Editor.CurrentQuickRequestName}" />
+        <Button Grid.Column="1"
+                Classes="IconButton HttpCodeIconButton"
+                Command="{Binding Editor.OpenRequestCodeDialogCommand}"
+                ToolTip.Tip="生成代码">
+          <TextBlock Classes="HttpCodeIconGlyph"
+                     Text="&lt;/&gt;" />
+        </Button>
+      </Grid>
 
       <Grid Grid.Row="1"
-            ColumnDefinitions="*,Auto,Auto,Auto"
+            ColumnDefinitions="*,Auto,Auto"
             ColumnSpacing="{StaticResource Space.2}">
         <Border Grid.Column="0"
                 Classes="HttpRequestUrlShell">
@@ -51,35 +62,23 @@
           </Grid>
         </Border>
         <Button Grid.Column="1"
-                Classes="HttpSaveButton"
-                Content="生成代码"
-                Command="{Binding Editor.OpenRequestCodeDialogCommand}" />
-        <Button Grid.Column="2"
                 Classes="HttpSendButton"
                 Content="发送"
                 Command="{Binding SendRequestCommand}" />
-        <Button Grid.Column="3"
+        <Button Grid.Column="2"
                 Classes="HttpSaveButton"
                 Content="保存"
                 Command="{Binding SaveCaseCommand}" />
       </Grid>
-
-      <Border Grid.Row="2"
-              Classes="RequestResolvedPreviewCard"
-              IsVisible="{Binding Editor.HasResolvedRequestPreview}">
-        <TextBlock Classes="CaptionText"
-                   Text="{Binding Editor.ResolvedRequestPreviewText}"
-                   TextTrimming="CharacterEllipsis" />
-      </Border>
     </Grid>
 
     <Grid Grid.Row="1"
-          RowDefinitions="Auto,Auto,Auto"
+          RowDefinitions="Auto,Auto"
           RowSpacing="{StaticResource Space.2}"
           MinHeight="0"
           ClipToBounds="True"
           IsVisible="{Binding Editor.IsHttpInterfaceEditor}">
-      <Grid ColumnDefinitions="Auto,*"
+      <Grid ColumnDefinitions="Auto,Auto,Auto,*"
             ColumnSpacing="{StaticResource Space.3}">
         <Border Grid.Column="0"
                 Classes="HttpEditorModeBar">
@@ -101,14 +100,21 @@
         </Border>
 
         <TextBox Grid.Column="1"
-                 Classes="SectionInput HttpInterfaceNameInput"
-                 HorizontalAlignment="Stretch"
+                 Classes="SectionInput HttpInterfaceNameInput HttpToolbarNameInput"
+                 HorizontalAlignment="Left"
                  Watermark="未命名接口"
                  Text="{Binding Editor.CurrentHttpInterfaceName}" />
+        <Button Grid.Column="2"
+                Classes="IconButton HttpCodeIconButton"
+                Command="{Binding Editor.OpenRequestCodeDialogCommand}"
+                ToolTip.Tip="生成代码">
+          <TextBlock Classes="HttpCodeIconGlyph"
+                     Text="&lt;/&gt;" />
+        </Button>
       </Grid>
 
       <Grid Grid.Row="1"
-            ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto"
+            ColumnDefinitions="*,Auto,Auto,Auto,Auto"
             ColumnSpacing="{StaticResource Space.2}">
         <Border Grid.Column="0"
                 Classes="HttpRequestUrlShell">
@@ -138,31 +144,19 @@
                  Text="{Binding Editor.CurrentHttpCaseName}"
                  IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
         <Button Grid.Column="2"
-                Classes="HttpSaveButton"
-                Content="生成代码"
-                Command="{Binding Editor.OpenRequestCodeDialogCommand}" />
-        <Button Grid.Column="3"
                 Classes="HttpSendButton"
                 Content="发送"
                 Command="{Binding SendRequestCommand}" />
-        <Button Grid.Column="4"
+        <Button Grid.Column="3"
                 Classes="HttpSaveButton"
                 Content="保存测试用例"
                 Command="{Binding SaveHttpCaseCommand}"
                 IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
-        <Button Grid.Column="5"
+        <Button Grid.Column="4"
                 Classes="HttpSaveButton"
                 Content="保存"
                 Command="{Binding SaveCaseCommand}" />
       </Grid>
-
-      <Border Grid.Row="2"
-              Classes="RequestResolvedPreviewCard"
-              IsVisible="{Binding Editor.HasResolvedRequestPreview}">
-        <TextBlock Classes="CaptionText"
-                   Text="{Binding Editor.ResolvedRequestPreviewText}"
-                   TextTrimming="CharacterEllipsis" />
-      </Border>
     </Grid>
 
     <Grid Grid.Row="2"

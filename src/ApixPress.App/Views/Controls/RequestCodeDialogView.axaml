@@ -11,7 +11,7 @@
     <Grid HorizontalAlignment="Center"
           VerticalAlignment="Center">
       <Border Classes="RequestCodeDialogCard">
-        <Grid RowDefinitions="Auto,Auto,*,Auto"
+        <Grid RowDefinitions="Auto,Auto,Auto,*,Auto"
               RowSpacing="{StaticResource Space.3}">
           <Grid Grid.Row="0"
                 ColumnDefinitions="*,Auto"
@@ -21,7 +21,7 @@
               <TextBlock Classes="DialogTitle"
                          Text="{Binding ActiveProjectTab.Editor.RequestCodeTitle}" />
               <TextBlock Classes="CaptionText"
-                         Text="curl"
+                         Text="发送预览与 curl"
                          TextWrapping="Wrap" />
             </StackPanel>
             <Button Grid.Column="1"
@@ -33,7 +33,19 @@
           <Border Grid.Row="1"
                   Classes="CreateProjectDialogDivider" />
 
-          <TextBox Grid.Row="2"
+          <Border Grid.Row="2"
+                  Classes="RequestCodeDialogPreviewCard"
+                  IsVisible="{Binding ActiveProjectTab.Editor.HasResolvedRequestPreview}">
+            <StackPanel Spacing="{StaticResource Space.1}">
+              <TextBlock Classes="CaptionText"
+                         Text="发送预览" />
+              <TextBlock Classes="RequestCodeDialogPreviewText"
+                         Text="{Binding ActiveProjectTab.Editor.ResolvedRequestPreviewText}"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+
+          <TextBox Grid.Row="3"
                    Classes="RequestCodeDialogTextBox"
                    AcceptsReturn="True"
                    IsReadOnly="True"
@@ -43,7 +55,7 @@
                    Text="{Binding ActiveProjectTab.Editor.RequestCodeCurlCommand}"
                    FontFamily="{StaticResource Font.Monospace}" />
 
-          <StackPanel Grid.Row="3"
+          <StackPanel Grid.Row="4"
                       Orientation="Horizontal"
                       HorizontalAlignment="Right"
                       Spacing="{StaticResource Space.2}">
