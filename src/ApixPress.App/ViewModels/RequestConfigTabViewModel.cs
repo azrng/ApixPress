@@ -186,7 +186,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         ReplaceFormFieldsFromBodyContent(SelectedBodyMode, snapshot.BodyContent);
     }
 
-    public RequestSnapshotDto BuildRequestSnapshot(string endpointId, string method, string url)
+    public RequestSnapshotDto BuildRequestSnapshot(string endpointId, string method, string url, string? requestNameOverride = null)
     {
         // For form modes, serialize form fields into body content
         var bodyMode = SelectedBodyMode;
@@ -203,7 +203,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         return new RequestSnapshotDto
         {
             EndpointId = endpointId,
-            Name = RequestName,
+            Name = string.IsNullOrWhiteSpace(requestNameOverride) ? RequestName : requestNameOverride.Trim(),
             Method = method,
             Url = url,
             Description = RequestDescription,

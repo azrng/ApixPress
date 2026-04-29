@@ -232,13 +232,10 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
 
     public RequestSnapshotDto BuildSnapshot(string? requestNameOverride = null)
     {
-        var currentName = ConfigTab.RequestName;
-        ConfigTab.RequestName = string.IsNullOrWhiteSpace(requestNameOverride)
+        var resolvedRequestName = string.IsNullOrWhiteSpace(requestNameOverride)
             ? ResolveRequestName()
             : requestNameOverride.Trim();
-        var snapshot = ConfigTab.BuildRequestSnapshot(SourceEndpointId, SelectedMethod, RequestUrl);
-        ConfigTab.RequestName = currentName;
-        return snapshot;
+        return ConfigTab.BuildRequestSnapshot(SourceEndpointId, SelectedMethod, RequestUrl, resolvedRequestName);
     }
 
     public string ResolveGeneratedRequestName()

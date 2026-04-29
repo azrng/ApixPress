@@ -912,6 +912,31 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public void RequestEditor_ShouldNotMutateRequestNameWhenResolvingHttpInterfacePreview()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+        var requestNameChangedCount = 0;
+
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = "/time";
+        viewModel.ActiveWorkspaceTab!.ConfigTab.PropertyChanged += (_, eventArgs) =>
+        {
+            if (eventArgs.PropertyName == nameof(RequestConfigTabViewModel.RequestName))
+            {
+                requestNameChangedCount++;
+            }
+        };
+
+        var hasPreview = viewModel.Editor.HasResolvedRequestPreview;
+        var previewText = viewModel.Editor.ResolvedRequestPreviewText;
+
+        Assert.True(hasPreview);
+        Assert.Equal(0, requestNameChangedCount);
+        Assert.Equal(string.Empty, viewModel.ActiveWorkspaceTab.ConfigTab.RequestName);
+        Assert.Contains("发送预览", previewText);
+    }
+
+    [Fact]
     public async Task SendRequestCommand_ShouldShowResponseLoadingWhileRequestIsPending()
     {
         var requestExecutionService = new FakeRequestExecutionService
