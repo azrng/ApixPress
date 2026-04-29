@@ -35,7 +35,7 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
-    <Setter Property="Padding" Value="16,8" />
+    <Setter Property="Padding" Value="12,3" />
   </Style>
 
   <Style Selector="Path.ShellIconPath">
@@ -107,8 +107,8 @@
   </Style>
 
   <Style Selector="Button.ShellIconButton">
-    <Setter Property="Width" Value="32" />
-    <Setter Property="Height" Value="32" />
+    <Setter Property="Width" Value="28" />
+    <Setter Property="Height" Value="28" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
@@ -129,8 +129,8 @@
   </Style>
 
   <Style Selector="Button.WindowControlButton">
-    <Setter Property="Width" Value="44" />
-    <Setter Property="Height" Value="30" />
+    <Setter Property="Width" Value="40" />
+    <Setter Property="Height" Value="26" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />

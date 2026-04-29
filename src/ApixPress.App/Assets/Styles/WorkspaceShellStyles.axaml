@@ -5,7 +5,7 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="Padding" Value="3" />
+    <Setter Property="Padding" Value="1" />
   </Style>
 
   <Style Selector="Border.WorkspaceTabItemShell">
@@ -18,7 +18,7 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="4,3,6,3" />
+    <Setter Property="Padding" Value="2,1,4,1" />
   </Style>
 
   <Style Selector="Border.WorkspaceTabCapsule:pointerover">
@@ -36,7 +36,7 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="Padding" Value="8,2" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
   </Style>
@@ -100,7 +100,7 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="Padding" Value="8,2" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
   </Style>
@@ -138,12 +138,12 @@
   <Style Selector="Border.WorkspaceTabBadge">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="6,2" />
+    <Setter Property="Padding" Value="4,1" />
   </Style>
 
   <Style Selector="Button.WorkspaceTabCloseButton">
-    <Setter Property="Width" Value="18" />
-    <Setter Property="Height" Value="18" />
+    <Setter Property="Width" Value="16" />
+    <Setter Property="Height" Value="16" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
