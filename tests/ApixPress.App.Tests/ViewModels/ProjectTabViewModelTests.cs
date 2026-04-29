@@ -937,6 +937,60 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public void RequestEditor_ShouldRefreshDocumentPreviewWhenResponseChanges()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = "https://demo.local/orders";
+
+        Assert.Equal("等待调试后生成响应示例", viewModel.Editor.CurrentHttpDocumentResponseSummary);
+        Assert.Equal("{ }", viewModel.Editor.CurrentHttpDocumentBodyPreview);
+
+        viewModel.ResponseSection.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 18,
+                SizeBytes = 12,
+                Content = "{\"ok\":true}",
+                Headers =
+                [
+                    new ResponseHeaderDto
+                    {
+                        Name = "Content-Type",
+                        Value = "application/json"
+                    }
+                ]
+            }),
+            viewModel.ActiveWorkspaceTab!.BuildSnapshot());
+
+        Assert.Equal("成功 (200)", viewModel.Editor.CurrentHttpDocumentResponseSummary);
+        Assert.Contains("\"ok\": true", viewModel.Editor.CurrentHttpDocumentBodyPreview);
+    }
+
+    [Fact]
+    public void RequestEditor_ShouldRefreshCurlSnippetWhenQueryParametersChange()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = "https://demo.local/orders";
+
+        Assert.DoesNotContain("status=open", viewModel.Editor.CurrentHttpDocumentCurlSnippet);
+
+        viewModel.ConfigTab.QueryParameters.Add(new RequestParameterItemViewModel
+        {
+            ParameterType = RequestParameterKind.Query,
+            Name = "status",
+            Value = "open",
+            IsEnabled = true
+        });
+
+        Assert.Contains("status=open", viewModel.Editor.CurrentHttpDocumentCurlSnippet);
+    }
+
+    [Fact]
     public async Task SendRequestCommand_ShouldShowResponseLoadingWhileRequestIsPending()
     {
         var requestExecutionService = new FakeRequestExecutionService
