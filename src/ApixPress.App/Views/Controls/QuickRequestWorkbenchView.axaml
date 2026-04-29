@@ -11,7 +11,7 @@
   <Grid RowDefinitions="2*,3*"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
-        RowSpacing="{StaticResource Space.3}"
+        RowSpacing="0"
         MinHeight="0"
         ClipToBounds="True"
         IsVisible="{Binding Summary.IsQuickRequestEditor}">

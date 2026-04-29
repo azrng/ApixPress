@@ -249,7 +249,7 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="0,0,1,0" />
     <Setter Property="CornerRadius" Value="0" />
-    <Setter Property="Padding" Value="2,0,2,2" />
+    <Setter Property="Padding" Value="0" />
   </Style>
 
   <Style Selector="Border.ProjectWorkspaceTabViewport">
@@ -277,7 +277,7 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0" />
-    <Setter Property="Margin" Value="0,0,4,0" />
+    <Setter Property="Margin" Value="0,0,2,0" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
   </Style>
@@ -291,7 +291,7 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="8,2,4,2" />
+    <Setter Property="Padding" Value="6,1,4,1" />
   </Style>
 
   <Style Selector="TabStrip.ProjectWorkspaceEditorTabs TabStripItem:pointerover Border.ProjectWorkspaceInnerTabCapsule">
@@ -352,7 +352,7 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Body}" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
@@ -368,7 +368,7 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Body}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 

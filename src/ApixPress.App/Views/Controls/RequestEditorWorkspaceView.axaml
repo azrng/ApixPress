@@ -9,14 +9,14 @@
              mc:Ignorable="d">
   <Grid IsVisible="{Binding Shell.ShowRequestEditorWorkspace}"
         RowDefinitions="Auto,Auto,*"
-        RowSpacing="{StaticResource Space.2}"
+        RowSpacing="0"
         MinHeight="0"
         ClipToBounds="True">
     <views:ProjectWorkspaceToolbarView />
 
     <Grid Grid.Row="1"
           RowDefinitions="Auto,Auto"
-          RowSpacing="{StaticResource Space.1}"
+          RowSpacing="0"
           MinHeight="0"
           ClipToBounds="True"
           IsVisible="{Binding Editor.IsQuickRequestEditor}">
@@ -74,7 +74,7 @@
 
     <Grid Grid.Row="1"
           RowDefinitions="Auto,Auto"
-          RowSpacing="{StaticResource Space.1}"
+          RowSpacing="0"
           MinHeight="0"
           ClipToBounds="True"
           IsVisible="{Binding Editor.IsHttpInterfaceEditor}">

@@ -10,14 +10,14 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="1" />
+    <Setter Property="Padding" Value="0" />
   </Style>
 
   <Style Selector="ToggleButton.HttpEditorModeButton">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="8,3" />
+    <Setter Property="Padding" Value="8,2" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 
@@ -35,7 +35,7 @@
 
   <Style Selector="TextBox.HttpInterfaceNameInput">
     <Setter Property="MinHeight" Value="30" />
-    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="Padding" Value="8,3" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
   </Style>
 
@@ -447,8 +447,8 @@
   </Style>
 
   <Style Selector="TabControl.HttpRequestTabs TabItem">
-    <Setter Property="Padding" Value="10,12" />
-    <Setter Property="Margin" Value="0,0,10,0" />
+    <Setter Property="Padding" Value="8,8" />
+    <Setter Property="Margin" Value="0,0,8,0" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 

@@ -8,10 +8,10 @@
              mc:Ignorable="d">
   <Border Classes="ProjectWorkspaceTopActionBar">
     <Grid ColumnDefinitions="*,Auto"
-          ColumnSpacing="{StaticResource Space.3}">
+          ColumnSpacing="{StaticResource Space.2}">
       <Grid Grid.Column="0"
             ColumnDefinitions="*,Auto"
-            ColumnSpacing="{StaticResource Space.2}">
+            ColumnSpacing="{StaticResource Space.1}">
         <Border Grid.Column="0"
                 Classes="ProjectWorkspaceTabViewport">
           <ScrollViewer HorizontalScrollBarVisibility="Disabled"
