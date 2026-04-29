@@ -44,6 +44,32 @@ public sealed class ViewModelLifecycleTests
     }
 
     [Fact]
+    public void WorkspaceTabDirtyState_ShouldNotifyOnlyWhenDirtyStateChanges()
+    {
+        var tab = new RequestWorkspaceTabViewModel();
+        tab.ConfigureAsQuickRequest();
+        var dirtyPropertyChangedCount = 0;
+        tab.PropertyChanged += OnPropertyChanged;
+
+        tab.RequestUrl = "https://demo.local/orders";
+        tab.SelectedMethod = "POST";
+        tab.ConfigTab.RequestDescription = "list orders";
+        tab.MarkCleanState();
+
+        Assert.False(tab.HasUnsavedChanges);
+        Assert.Equal(2, dirtyPropertyChangedCount);
+        tab.PropertyChanged -= OnPropertyChanged;
+
+        void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(RequestWorkspaceTabViewModel.HasUnsavedChanges))
+            {
+                dirtyPropertyChangedCount++;
+            }
+        }
+    }
+
+    [Fact]
     public void PinnedWorkspaceTab_ShouldExposePinStateAndRejectDirectClose()
     {
         var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, _ => { });

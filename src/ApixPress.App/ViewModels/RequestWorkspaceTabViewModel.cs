@@ -12,6 +12,8 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     private const string DefaultInterfaceFolderName = "默认模块";
     private string _cleanStateSignature = string.Empty;
     private int _bulkStateMutationDepth;
+    private bool _hasUnsavedChanges;
+    private bool _dirtyStateUpdatePending;
     private bool _tabHeaderUpdatePending;
 
     private static class WorkspaceEntryTypes
@@ -94,7 +96,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     public bool ShowMethodBadge => IsHttpInterfaceTab;
     public string MethodBadgeText => SelectedMethod;
     public bool CanCloseFromTab => !IsPinned;
-    public bool HasUnsavedChanges => !string.Equals(_cleanStateSignature, BuildStateSignature(), StringComparison.Ordinal);
+    public bool HasUnsavedChanges => _hasUnsavedChanges;
     public bool ShowUnsavedChanges => HasUnsavedChanges;
     public string UnsavedChangesMarker => HasUnsavedChanges ? "*" : string.Empty;
     public bool CanReuseForWorkspaceNavigation => !IsPinned && !IsLandingTab && !HasUnsavedChanges;
@@ -268,11 +270,29 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     {
         _cleanStateSignature = BuildStateSignature();
         IsCloseDiscardPending = false;
-        NotifyDirtyStateChanged();
+        UpdateDirtyState(forceNotify: true);
     }
 
     public void NotifyDirtyStateChanged()
     {
+        if (_bulkStateMutationDepth > 0)
+        {
+            _dirtyStateUpdatePending = true;
+            return;
+        }
+
+        UpdateDirtyState(forceNotify: false);
+    }
+
+    private void UpdateDirtyState(bool forceNotify)
+    {
+        var hasUnsavedChanges = !string.Equals(_cleanStateSignature, BuildStateSignature(), StringComparison.Ordinal);
+        if (!forceNotify && _hasUnsavedChanges == hasUnsavedChanges)
+        {
+            return;
+        }
+
+        _hasUnsavedChanges = hasUnsavedChanges;
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(ShowUnsavedChanges));
         OnPropertyChanged(nameof(UnsavedChangesMarker));
@@ -435,6 +455,12 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         {
             _tabHeaderUpdatePending = false;
             UpdateTabHeader();
+        }
+
+        if (_dirtyStateUpdatePending)
+        {
+            _dirtyStateUpdatePending = false;
+            UpdateDirtyState(forceNotify: false);
         }
     }
 
