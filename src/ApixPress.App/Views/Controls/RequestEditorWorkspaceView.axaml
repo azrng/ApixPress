@@ -189,7 +189,7 @@
               <StackPanel Grid.Column="0"
                           Spacing="{StaticResource Space.1}">
                 <TextBlock Classes="DialogTitle"
-                           Text="{Binding Editor.CurrentRequestCodeTitle}" />
+                           Text="{Binding Editor.RequestCodeTitle}" />
                 <TextBlock Classes="CaptionText"
                            Text="curl"
                            TextWrapping="Wrap" />
@@ -210,7 +210,7 @@
                      TextWrapping="NoWrap"
                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
-                     Text="{Binding Editor.CurrentRequestCodeCurlCommand}"
+                     Text="{Binding Editor.RequestCodeCurlCommand}"
                      FontFamily="{StaticResource Font.Monospace}" />
 
             <StackPanel Grid.Row="3"

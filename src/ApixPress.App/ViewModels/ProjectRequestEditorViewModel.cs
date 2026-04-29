@@ -74,10 +74,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         : "{ }";
     public string CurrentHttpDocumentCurlSnippet => ProjectHttpDocumentFormatter.BuildCurlSnippet(SelectedMethod, RequestUrl, CurrentHttpInterfaceBaseUrl, ConfigTab);
     public bool CanGenerateRequestCode => ActiveWorkspaceTab is not null && !ActiveWorkspaceTab.IsLandingTab;
-    public string CurrentRequestCodeTitle => IsHttpInterfaceEditor ? "HTTP 接口请求代码" : "快捷请求代码";
-    public string CurrentRequestCodeCurlCommand => CanGenerateRequestCode
-        ? CurrentHttpDocumentCurlSnippet
-        : "请先打开一个 HTTP 接口或快捷请求标签。";
+    public string CurrentRequestCodeTitle => RequestCodeTitle;
+    public string CurrentRequestCodeCurlCommand => RequestCodeCurlCommand;
     public string CurrentResponseValidationResultText
     {
         get
@@ -166,6 +164,12 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     [ObservableProperty]
     private bool isRequestCodeDialogOpen;
 
+    [ObservableProperty]
+    private string requestCodeTitle = string.Empty;
+
+    [ObservableProperty]
+    private string requestCodeCurlCommand = string.Empty;
+
     [RelayCommand]
     private void OpenRequestCodeDialog()
     {
@@ -174,15 +178,15 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
             return;
         }
 
+        RefreshRequestCodeDialogContent();
         IsRequestCodeDialogOpen = true;
-        OnPropertyChanged(nameof(CurrentRequestCodeTitle));
-        OnPropertyChanged(nameof(CurrentRequestCodeCurlCommand));
     }
 
     [RelayCommand]
     private void CloseRequestCodeDialog()
     {
         IsRequestCodeDialogOpen = false;
+        ClearRequestCodeDialogContent();
     }
 
     [RelayCommand]
@@ -255,8 +259,15 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentHttpDocumentBodyPreview));
         OnPropertyChanged(nameof(CurrentHttpDocumentCurlSnippet));
         OnPropertyChanged(nameof(CanGenerateRequestCode));
-        OnPropertyChanged(nameof(CurrentRequestCodeTitle));
-        OnPropertyChanged(nameof(CurrentRequestCodeCurlCommand));
+        if (IsRequestCodeDialogOpen && CanGenerateRequestCode)
+        {
+            RefreshRequestCodeDialogContent();
+        }
+        else if (!CanGenerateRequestCode)
+        {
+            IsRequestCodeDialogOpen = false;
+            ClearRequestCodeDialogContent();
+        }
         OnPropertyChanged(nameof(CurrentResponseValidationResultText));
         OnPropertyChanged(nameof(SelectedMethod));
         OnPropertyChanged(nameof(RequestUrl));
@@ -269,6 +280,39 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     private RequestWorkspaceTabViewModel ResolveWorkspaceTabOrFallback()
     {
         return ActiveWorkspaceTab ?? _workspaceContext.GetFallbackWorkspaceTab();
+    }
+
+    private void RefreshRequestCodeDialogContent()
+    {
+        RequestCodeTitle = IsHttpInterfaceEditor ? "HTTP 接口请求代码" : "快捷请求代码";
+        RequestCodeCurlCommand = BuildRequestCodeCurlCommand();
+        OnPropertyChanged(nameof(CurrentRequestCodeTitle));
+        OnPropertyChanged(nameof(CurrentRequestCodeCurlCommand));
+    }
+
+    private string BuildRequestCodeCurlCommand()
+    {
+        if (!CanGenerateRequestCode)
+        {
+            return "请先打开一个 HTTP 接口或快捷请求标签。";
+        }
+
+        try
+        {
+            return ProjectHttpDocumentFormatter.BuildCurlSnippet(SelectedMethod, RequestUrl, CurrentHttpInterfaceBaseUrl, ConfigTab);
+        }
+        catch (Exception exception)
+        {
+            return $"生成请求代码失败：{exception.Message}";
+        }
+    }
+
+    private void ClearRequestCodeDialogContent()
+    {
+        RequestCodeTitle = string.Empty;
+        RequestCodeCurlCommand = string.Empty;
+        OnPropertyChanged(nameof(CurrentRequestCodeTitle));
+        OnPropertyChanged(nameof(CurrentRequestCodeCurlCommand));
     }
 
     private string BuildResolvedRequestPreviewText()

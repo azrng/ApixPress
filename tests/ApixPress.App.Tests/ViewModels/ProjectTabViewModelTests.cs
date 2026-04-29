@@ -526,6 +526,34 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task LoadWorkspaceItem_ShouldNotGenerateRequestCodeUntilDialogOpens()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 1);
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+        await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
+
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
+        Assert.NotNull(interfaceItem);
+
+        await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+
+        Assert.Equal(RequestEditorContentMode.HttpWorkbench, viewModel.Editor.CurrentContentMode);
+        Assert.True(viewModel.Editor.ShowHttpWorkbenchContent);
+        Assert.False(viewModel.Editor.IsRequestCodeDialogOpen);
+        Assert.Equal(string.Empty, viewModel.Editor.RequestCodeCurlCommand);
+
+        viewModel.Editor.OpenRequestCodeDialogCommand.Execute(null);
+
+        Assert.True(viewModel.Editor.IsRequestCodeDialogOpen);
+        Assert.Contains("curl --request GET", viewModel.Editor.RequestCodeCurlCommand);
+        Assert.Contains("/endpoint-1", viewModel.Editor.RequestCodeCurlCommand);
+    }
+
+    [Fact]
     public async Task LoadWorkspaceItem_ShouldOpenNewTabWhenActiveTabHasUnsavedChanges()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
