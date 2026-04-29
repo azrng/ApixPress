@@ -15,28 +15,41 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
-    <Setter Property="Width" Value="980" />
-    <Setter Property="MaxHeight" Value="680" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+    <Setter Property="Width" Value="960" />
+    <Setter Property="MaxHeight" Value="640" />
     <Setter Property="BoxShadow" Value="0 24 60 0 #0F172A20" />
   </Style>
 
+  <Style Selector="TextBlock.RequestCodeDialogTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.TitleSmall}" />
+  </Style>
+
+  <Style Selector="TextBlock.RequestCodeDialogSectionTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.TitleSmall}" />
+    <Setter Property="Margin" Value="0,2,0,0" />
+  </Style>
+
   <Style Selector="TextBox.RequestCodeDialogTextBox">
-    <Setter Property="MinHeight" Value="380" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="MinHeight" Value="332" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="10,8" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
 
   <Style Selector="Border.RequestCodeDialogSidebar">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
     <Setter Property="BorderThickness" Value="0,0,1,0" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="Padding" Value="4,2,10,2" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+  </Style>
+
+  <Style Selector="StackPanel.RequestCodeDialogLanguageList">
+    <Setter Property="Spacing" Value="{StaticResource Space.1}" />
   </Style>
 
   <Style Selector="ToggleButton.RequestCodeDialogLanguageToggle">
@@ -44,8 +57,10 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="12,10" />
+    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="MinHeight" Value="38" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
   </Style>
 
   <Style Selector="ToggleButton.RequestCodeDialogLanguageToggle:pointerover">
@@ -59,6 +74,7 @@
 
   <Style Selector="TextBlock.RequestCodeDialogLanguageGlyph">
     <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
@@ -68,17 +84,28 @@
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
     <Setter Property="FontWeight" Value="Medium" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+  </Style>
+
+  <Style Selector="Border.RequestCodeDialogEditorCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="8,6" />
   </Style>
 
   <Style Selector="TabControl.RequestCodeDialogTabs">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
   </Style>
 
   <Style Selector="TabControl.RequestCodeDialogTabs TabItem">
-    <Setter Property="Padding" Value="10,8" />
-    <Setter Property="Margin" Value="0,0,8,0" />
+    <Setter Property="Padding" Value="8,5" />
+    <Setter Property="Margin" Value="0,0,6,0" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
   </Style>
 
   <Style Selector="TabControl.RequestCodeDialogTabs TabItem:selected">

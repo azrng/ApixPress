@@ -12,18 +12,14 @@
           VerticalAlignment="Center">
       <Border Classes="RequestCodeDialogCard">
         <Grid RowDefinitions="Auto,Auto,*"
-              RowSpacing="{StaticResource Space.3}">
+              RowSpacing="{StaticResource Space.2}">
           <Grid Grid.Row="0"
                 ColumnDefinitions="*,Auto"
-                ColumnSpacing="{StaticResource Space.3}">
-            <StackPanel Grid.Column="0"
-                        Spacing="{StaticResource Space.1}">
-              <TextBlock Classes="DialogTitle"
-                         Text="{Binding ActiveProjectTab.Editor.RequestCodeTitle}" />
-              <TextBlock Classes="CaptionText"
-                         Text="{Binding ActiveProjectTab.Editor.CurrentRequestCodeLanguageTitle}"
-                         TextWrapping="Wrap" />
-            </StackPanel>
+                ColumnSpacing="{StaticResource Space.2}">
+            <TextBlock Grid.Column="0"
+                       Classes="DialogTitle RequestCodeDialogTitle"
+                       VerticalAlignment="Center"
+                       Text="{Binding ActiveProjectTab.Editor.RequestCodeTitle}" />
             <Button Grid.Column="1"
                     Classes="DialogIconButton"
                     Content="×"
@@ -34,14 +30,12 @@
                   Classes="CreateProjectDialogDivider" />
 
           <Grid Grid.Row="2"
-                ColumnDefinitions="220,*"
-                ColumnSpacing="{StaticResource Space.4}"
+                ColumnDefinitions="188,*"
+                ColumnSpacing="{StaticResource Space.3}"
                 MinHeight="0">
             <Border Grid.Column="0"
                     Classes="RequestCodeDialogSidebar">
-              <StackPanel Spacing="{StaticResource Space.3}">
-                <TextBlock Classes="CaptionText"
-                           Text="语言" />
+              <StackPanel Classes="RequestCodeDialogLanguageList">
                 <ToggleButton Classes="RequestCodeDialogLanguageToggle"
                               Command="{Binding ActiveProjectTab.Editor.ShowShellRequestCodeLanguageCommand}"
                               IsChecked="{Binding ActiveProjectTab.Editor.IsShellRequestCodeLanguageSelected, Mode=OneWay}">
@@ -52,7 +46,7 @@
                                Text="&gt;_" />
                     <TextBlock Grid.Column="1"
                                Classes="RequestCodeDialogLanguageText"
-                               Text="Shell" />
+                               Text="Shell(3)" />
                   </Grid>
                 </ToggleButton>
                 <ToggleButton Classes="RequestCodeDialogLanguageToggle"
@@ -65,7 +59,7 @@
                                Text="{}" />
                     <TextBlock Grid.Column="1"
                                Classes="RequestCodeDialogLanguageText"
-                               Text="C#" />
+                               Text="C#(1)" />
                   </Grid>
                 </ToggleButton>
               </StackPanel>
@@ -73,58 +67,62 @@
 
             <Grid Grid.Column="1"
                   RowDefinitions="Auto,*"
-                  RowSpacing="{StaticResource Space.3}"
+                  RowSpacing="{StaticResource Space.2}"
                   MinHeight="0">
               <TextBlock Grid.Row="0"
-                         Classes="SectionTitle"
+                         Classes="SectionTitle RequestCodeDialogSectionTitle"
                          Text="{Binding ActiveProjectTab.Editor.CurrentRequestCodeLanguageTitle}" />
 
-              <TabControl Grid.Row="1"
-                          Classes="RequestCodeDialogTabs"
-                          SelectedIndex="{Binding ActiveProjectTab.Editor.SelectedRequestCodeTab, Mode=TwoWay}"
-                          IsVisible="{Binding ActiveProjectTab.Editor.IsShellRequestCodeLanguageSelected}">
-                <TabItem Header="curl">
-                  <TextBox Classes="RequestCodeDialogTextBox"
-                           AcceptsReturn="True"
-                           IsReadOnly="True"
-                           TextWrapping="NoWrap"
-                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                           ScrollViewer.VerticalScrollBarVisibility="Auto"
-                           Text="{Binding ActiveProjectTab.Editor.RequestCodeCurlCommand}"
-                           FontFamily="{StaticResource Font.Monospace}" />
-                </TabItem>
-                <TabItem Header="wget">
-                  <TextBox Classes="RequestCodeDialogTextBox"
-                           AcceptsReturn="True"
-                           IsReadOnly="True"
-                           TextWrapping="NoWrap"
-                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                           ScrollViewer.VerticalScrollBarVisibility="Auto"
-                           Text="{Binding ActiveProjectTab.Editor.RequestCodeWgetCommand}"
-                           FontFamily="{StaticResource Font.Monospace}" />
-                </TabItem>
-                <TabItem Header="powershell">
-                  <TextBox Classes="RequestCodeDialogTextBox"
-                           AcceptsReturn="True"
-                           IsReadOnly="True"
-                           TextWrapping="NoWrap"
-                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                           ScrollViewer.VerticalScrollBarVisibility="Auto"
-                           Text="{Binding ActiveProjectTab.Editor.RequestCodePowerShellCommand}"
-                           FontFamily="{StaticResource Font.Monospace}" />
-                </TabItem>
-              </TabControl>
+              <Border Grid.Row="1"
+                      Classes="RequestCodeDialogEditorCard"
+                      IsVisible="{Binding ActiveProjectTab.Editor.IsShellRequestCodeLanguageSelected}">
+                <TabControl Classes="RequestCodeDialogTabs"
+                            SelectedIndex="{Binding ActiveProjectTab.Editor.SelectedRequestCodeTab, Mode=TwoWay}">
+                  <TabItem Header="curl">
+                    <TextBox Classes="RequestCodeDialogTextBox"
+                             AcceptsReturn="True"
+                             IsReadOnly="True"
+                             TextWrapping="NoWrap"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             Text="{Binding ActiveProjectTab.Editor.RequestCodeCurlCommand}"
+                             FontFamily="{StaticResource Font.Monospace}" />
+                  </TabItem>
+                  <TabItem Header="wget">
+                    <TextBox Classes="RequestCodeDialogTextBox"
+                             AcceptsReturn="True"
+                             IsReadOnly="True"
+                             TextWrapping="NoWrap"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             Text="{Binding ActiveProjectTab.Editor.RequestCodeWgetCommand}"
+                             FontFamily="{StaticResource Font.Monospace}" />
+                  </TabItem>
+                  <TabItem Header="powershell">
+                    <TextBox Classes="RequestCodeDialogTextBox"
+                             AcceptsReturn="True"
+                             IsReadOnly="True"
+                             TextWrapping="NoWrap"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             Text="{Binding ActiveProjectTab.Editor.RequestCodePowerShellCommand}"
+                             FontFamily="{StaticResource Font.Monospace}" />
+                  </TabItem>
+                </TabControl>
+              </Border>
 
-              <TextBox Grid.Row="1"
-                       Classes="RequestCodeDialogTextBox"
-                       AcceptsReturn="True"
-                       IsReadOnly="True"
-                       TextWrapping="NoWrap"
-                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                       ScrollViewer.VerticalScrollBarVisibility="Auto"
-                       Text="{Binding ActiveProjectTab.Editor.RequestCodeCSharpCommand}"
-                       FontFamily="{StaticResource Font.Monospace}"
-                       IsVisible="{Binding ActiveProjectTab.Editor.IsCSharpRequestCodeLanguageSelected}" />
+              <Border Grid.Row="1"
+                      Classes="RequestCodeDialogEditorCard"
+                      IsVisible="{Binding ActiveProjectTab.Editor.IsCSharpRequestCodeLanguageSelected}">
+                <TextBox Classes="RequestCodeDialogTextBox"
+                         AcceptsReturn="True"
+                         IsReadOnly="True"
+                         TextWrapping="NoWrap"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         Text="{Binding ActiveProjectTab.Editor.RequestCodeCSharpCommand}"
+                         FontFamily="{StaticResource Font.Monospace}" />
+              </Border>
             </Grid>
           </Grid>
         </Grid>
