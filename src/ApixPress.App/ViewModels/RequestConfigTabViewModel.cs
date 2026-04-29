@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Helpers;
@@ -11,6 +12,9 @@ namespace ApixPress.App.ViewModels;
 public partial class RequestConfigTabViewModel : ViewModelBase
 {
     private readonly IFilePickerService? _filePickerService;
+    private readonly List<RequestParameterItemViewModel> _subscribedQueryParameterItems = [];
+    private bool _isUpdatingQueryParametersSelectionState;
+    private bool? _queryParametersSelectionState;
 
     public BatchObservableCollection<RequestParameterItemViewModel> QueryParameters { get; } = [];
 
@@ -65,8 +69,10 @@ public partial class RequestConfigTabViewModel : ViewModelBase
             BodyModeOptions.Add(new BodyModeOptionViewModel { Mode = mode, DisplayName = displayName });
         }
 
+        QueryParameters.CollectionChanged += OnQueryParametersCollectionChanged;
         FormFields.CollectionChanged += (_, _) => OnFormFieldsChanged();
         SelectedBodyModeOption = BodyModeOptions[0];
+        UpdateQueryParametersSelectionState();
     }
 
     // --- Visibility helpers for the Body tab UI ---
@@ -82,6 +88,28 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         SelectedBodyMode is BodyModes.RawJson or BodyModes.RawXml or BodyModes.RawText;
 
     public bool HasBodyContent => SelectedBodyMode != BodyModes.None;
+
+    public bool? QueryParametersSelectionState
+    {
+        get => _queryParametersSelectionState;
+        set
+        {
+            if (_queryParametersSelectionState == value)
+            {
+                return;
+            }
+
+            _queryParametersSelectionState = value;
+            OnPropertyChanged(nameof(QueryParametersSelectionState));
+
+            if (_isUpdatingQueryParametersSelectionState || value is null)
+            {
+                return;
+            }
+
+            ApplyQueryParametersSelectionState(value.Value);
+        }
+    }
 
     public string RequestBodyWatermark => SelectedBodyMode switch
     {
@@ -229,6 +257,18 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         FormFields.ReplaceWith([]);
     }
 
+    protected override void DisposeManaged()
+    {
+        QueryParameters.CollectionChanged -= OnQueryParametersCollectionChanged;
+
+        foreach (var item in _subscribedQueryParameterItems)
+        {
+            item.PropertyChanged -= OnQueryParameterItemPropertyChanged;
+        }
+
+        _subscribedQueryParameterItems.Clear();
+    }
+
     private void ReplaceParameters(IEnumerable<RequestParameterDto> parameters)
     {
         var queryParameters = new List<RequestParameterItemViewModel>();
@@ -321,6 +361,94 @@ public partial class RequestConfigTabViewModel : ViewModelBase
                 Value = parts.Length > 1 ? Uri.UnescapeDataString(parts[1]) : string.Empty,
                 IsEnabled = true
             };
+        }
+    }
+
+    private void OnQueryParametersCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        SyncQueryParameterSubscriptions();
+        UpdateQueryParametersSelectionState();
+    }
+
+    private void OnQueryParameterItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(RequestParameterItemViewModel.IsEnabled) or null or "")
+        {
+            UpdateQueryParametersSelectionState();
+        }
+    }
+
+    private void SyncQueryParameterSubscriptions()
+    {
+        foreach (var item in _subscribedQueryParameterItems)
+        {
+            item.PropertyChanged -= OnQueryParameterItemPropertyChanged;
+        }
+
+        _subscribedQueryParameterItems.Clear();
+
+        foreach (var item in QueryParameters)
+        {
+            item.PropertyChanged += OnQueryParameterItemPropertyChanged;
+            _subscribedQueryParameterItems.Add(item);
+        }
+    }
+
+    private void ApplyQueryParametersSelectionState(bool isEnabled)
+    {
+        if (QueryParameters.Count == 0)
+        {
+            return;
+        }
+
+        _isUpdatingQueryParametersSelectionState = true;
+        try
+        {
+            foreach (var item in QueryParameters)
+            {
+                item.IsEnabled = isEnabled;
+            }
+        }
+        finally
+        {
+            _isUpdatingQueryParametersSelectionState = false;
+        }
+
+        UpdateQueryParametersSelectionState();
+    }
+
+    private void UpdateQueryParametersSelectionState()
+    {
+        bool? nextState;
+        if (QueryParameters.Count == 0)
+        {
+            nextState = false;
+        }
+        else
+        {
+            var enabledCount = QueryParameters.Count(item => item.IsEnabled);
+            nextState = enabledCount switch
+            {
+                0 => false,
+                var count when count == QueryParameters.Count => true,
+                _ => null
+            };
+        }
+
+        _isUpdatingQueryParametersSelectionState = true;
+        try
+        {
+            if (_queryParametersSelectionState == nextState)
+            {
+                return;
+            }
+
+            _queryParametersSelectionState = nextState;
+            OnPropertyChanged(nameof(QueryParametersSelectionState));
+        }
+        finally
+        {
+            _isUpdatingQueryParametersSelectionState = false;
         }
     }
 }

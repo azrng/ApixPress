@@ -117,6 +117,56 @@ public sealed class RequestConfigTabViewModelTests
     }
 
     [Fact]
+    public void QueryParametersSelectionState_ShouldToggleAllQueryParameters()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        viewModel.QueryParameters.Add(new RequestParameterItemViewModel
+        {
+            Name = "pageIndex",
+            IsEnabled = false
+        });
+        viewModel.QueryParameters.Add(new RequestParameterItemViewModel
+        {
+            Name = "pageSize",
+            IsEnabled = false
+        });
+
+        viewModel.QueryParametersSelectionState = true;
+
+        Assert.All(viewModel.QueryParameters, item => Assert.True(item.IsEnabled));
+        Assert.True(viewModel.QueryParametersSelectionState);
+
+        viewModel.QueryParametersSelectionState = false;
+
+        Assert.All(viewModel.QueryParameters, item => Assert.False(item.IsEnabled));
+        Assert.False(viewModel.QueryParametersSelectionState);
+    }
+
+    [Fact]
+    public void QueryParametersSelectionState_ShouldExposeMixedStateWhenPartiallySelected()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        viewModel.QueryParameters.Add(new RequestParameterItemViewModel
+        {
+            Name = "keyword",
+            IsEnabled = true
+        });
+        viewModel.QueryParameters.Add(new RequestParameterItemViewModel
+        {
+            Name = "pageSize",
+            IsEnabled = false
+        });
+
+        Assert.Null(viewModel.QueryParametersSelectionState);
+
+        viewModel.QueryParameters[1].IsEnabled = true;
+
+        Assert.True(viewModel.QueryParametersSelectionState);
+    }
+
+    [Fact]
     public void PopulateFromEndpoint_ShouldApplyJsonBodyModeAndTemplate()
     {
         var viewModel = new RequestConfigTabViewModel();
