@@ -109,6 +109,7 @@ src/AppName/
 - 所有样式使用 Avalonia Styles（`.axaml` 文件），禁止在控件中直接设置 `Background`、`Margin` 等样式属性。
 - 所有颜色来自 `design-system.yaml` 中定义的语义化 token，通过样式资源引用。
 - 所有间距使用统一的资源或样式类，禁止硬编码数值。
+- 新增或调整 `Font.Size.*`、`Font.*` 等字体资源引用前，必须先对照 `Assets/Styles/Fonts.axaml` 中已定义的 key；禁止凭经验直接写 `TitleSmall`、`TitleLarge` 等未落库资源名。
 - 响应式设计遵循窗口大小变化，必须在不同窗口尺寸下测试。
 
 ### 组件规则

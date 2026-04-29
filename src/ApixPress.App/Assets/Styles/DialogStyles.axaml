@@ -22,11 +22,11 @@
   </Style>
 
   <Style Selector="TextBlock.RequestCodeDialogTitle">
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.TitleSmall}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Title}" />
   </Style>
 
   <Style Selector="TextBlock.RequestCodeDialogSectionTitle">
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.TitleSmall}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
     <Setter Property="Margin" Value="0,2,0,0" />
   </Style>
 
