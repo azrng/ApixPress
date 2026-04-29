@@ -44,8 +44,8 @@
   </Style>
 
   <Style Selector="TextBox.HttpToolbarNameInput">
-    <Setter Property="MinWidth" Value="260" />
-    <Setter Property="MaxWidth" Value="380" />
+    <Setter Property="MinWidth" Value="220" />
+    <Setter Property="MaxWidth" Value="340" />
   </Style>
 
   <Style Selector="Button.HttpCodeIconButton">
@@ -53,10 +53,10 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="Padding" Value="8,4" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="MinWidth" Value="40" />
-    <Setter Property="MinHeight" Value="36" />
+    <Setter Property="MinWidth" Value="34" />
+    <Setter Property="MinHeight" Value="34" />
   </Style>
 
   <Style Selector="Button.HttpCodeIconButton:pointerover">
@@ -67,7 +67,7 @@
 
   <Style Selector="TextBlock.HttpCodeIconGlyph">
     <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.Body}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="VerticalAlignment" Value="Center" />

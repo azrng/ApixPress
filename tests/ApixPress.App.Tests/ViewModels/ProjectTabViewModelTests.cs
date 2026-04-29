@@ -842,10 +842,18 @@ public sealed partial class ProjectTabViewModelTests
         viewModel.Editor.OpenRequestCodeDialogCommand.Execute(null);
 
         Assert.True(viewModel.Editor.IsRequestCodeDialogOpen);
+        Assert.Equal("生成代码", viewModel.Editor.CurrentRequestCodeTitle);
         Assert.Contains("curl --request POST", viewModel.Editor.CurrentRequestCodeCurlCommand);
         Assert.Contains("https://demo.local/orders", viewModel.Editor.CurrentRequestCodeCurlCommand);
         Assert.Contains("--header \"Authorization: Bearer token\"", viewModel.Editor.CurrentRequestCodeCurlCommand);
         Assert.Contains("--data-raw \"{\\\"name\\\":\\\"test\\\"}\"", viewModel.Editor.CurrentRequestCodeCurlCommand);
+        Assert.Contains("wget --method=POST", viewModel.Editor.CurrentRequestCodeWgetCommand);
+        Assert.Contains("--header=\"Authorization: Bearer token\"", viewModel.Editor.CurrentRequestCodeWgetCommand);
+        Assert.Contains("--body-data=\"{\\\"name\\\":\\\"test\\\"}\"", viewModel.Editor.CurrentRequestCodeWgetCommand);
+        Assert.Contains("Invoke-WebRequest", viewModel.Editor.CurrentRequestCodePowerShellCommand);
+        Assert.Contains("-Method POST", viewModel.Editor.CurrentRequestCodePowerShellCommand);
+        Assert.Contains("-Headers $headers", viewModel.Editor.CurrentRequestCodePowerShellCommand);
+        Assert.Contains("-Body \"{`\"name`\":`\"test`\"}\"", viewModel.Editor.CurrentRequestCodePowerShellCommand);
 
         viewModel.Editor.CloseRequestCodeDialogCommand.Execute(null);
 

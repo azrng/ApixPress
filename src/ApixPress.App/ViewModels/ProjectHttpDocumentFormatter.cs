@@ -52,24 +52,21 @@ public static class ProjectHttpDocumentFormatter
         string currentBaseUrl,
         RequestConfigTabViewModel configTab)
     {
-        var url = BuildUrl(requestUrl, currentBaseUrl, configTab.QueryParameters);
-        var resolvedUrl = url.StartsWith("未配置", StringComparison.OrdinalIgnoreCase)
-            ? requestUrl.Trim()
-            : url;
+        var resolvedUrl = ResolveSnippetUrl(requestUrl, currentBaseUrl, configTab.QueryParameters);
 
         var builder = new StringBuilder();
         builder.Append("curl --request ")
             .Append(method)
             .Append(" \"")
-            .Append(EscapeCurlValue(resolvedUrl))
+            .Append(EscapeShellDoubleQuotedValue(resolvedUrl))
             .Append('"');
 
         foreach (var header in configTab.Headers.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
         {
             builder.Append(" \\\n  --header \"")
-                .Append(EscapeCurlValue(header.Name.Trim()))
+                .Append(EscapeShellDoubleQuotedValue(header.Name.Trim()))
                 .Append(": ")
-                .Append(EscapeCurlValue((header.Value ?? string.Empty).Trim()))
+                .Append(EscapeShellDoubleQuotedValue((header.Value ?? string.Empty).Trim()))
                 .Append('"');
         }
 
@@ -77,7 +74,92 @@ public static class ProjectHttpDocumentFormatter
         if (!string.IsNullOrWhiteSpace(bodyContent))
         {
             builder.Append(" \\\n  --data-raw \"")
-                .Append(EscapeCurlValue(bodyContent))
+                .Append(EscapeShellDoubleQuotedValue(bodyContent))
+                .Append('"');
+        }
+
+        return builder.ToString();
+    }
+
+    public static string BuildWgetSnippet(
+        string method,
+        string requestUrl,
+        string currentBaseUrl,
+        RequestConfigTabViewModel configTab)
+    {
+        var resolvedUrl = ResolveSnippetUrl(requestUrl, currentBaseUrl, configTab.QueryParameters);
+        var builder = new StringBuilder();
+        builder.Append("wget --method=")
+            .Append(method)
+            .Append(" \\\n  -O -");
+
+        foreach (var header in configTab.Headers.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
+        {
+            builder.Append(" \\\n  --header=\"")
+                .Append(EscapeShellDoubleQuotedValue(header.Name.Trim()))
+                .Append(": ")
+                .Append(EscapeShellDoubleQuotedValue((header.Value ?? string.Empty).Trim()))
+                .Append('"');
+        }
+
+        var bodyContent = ResolveBodyContent(configTab);
+        if (!string.IsNullOrWhiteSpace(bodyContent))
+        {
+            builder.Append(" \\\n  --body-data=\"")
+                .Append(EscapeShellDoubleQuotedValue(bodyContent))
+                .Append('"');
+        }
+
+        builder.Append(" \\\n  \"")
+            .Append(EscapeShellDoubleQuotedValue(resolvedUrl))
+            .Append('"');
+
+        return builder.ToString();
+    }
+
+    public static string BuildPowerShellSnippet(
+        string method,
+        string requestUrl,
+        string currentBaseUrl,
+        RequestConfigTabViewModel configTab)
+    {
+        var resolvedUrl = ResolveSnippetUrl(requestUrl, currentBaseUrl, configTab.QueryParameters);
+        var headers = configTab.Headers.Where(item => !string.IsNullOrWhiteSpace(item.Name)).ToList();
+        var bodyContent = ResolveBodyContent(configTab);
+        var builder = new StringBuilder();
+
+        if (headers.Count > 0)
+        {
+            builder.AppendLine("$headers = @{");
+            foreach (var header in headers)
+            {
+                builder.Append("    \"")
+                    .Append(EscapePowerShellDoubleQuotedValue(header.Name.Trim()))
+                    .Append("\" = \"")
+                    .Append(EscapePowerShellDoubleQuotedValue((header.Value ?? string.Empty).Trim()))
+                    .AppendLine("\"");
+            }
+
+            builder.AppendLine("}");
+        }
+
+        builder.Append("Invoke-WebRequest `\n")
+            .Append("  -Method ")
+            .Append(method)
+            .Append(" `\n")
+            .Append("  -Uri \"")
+            .Append(EscapePowerShellDoubleQuotedValue(resolvedUrl))
+            .Append('"');
+
+        if (headers.Count > 0)
+        {
+            builder.Append(" `\n  -Headers $headers");
+        }
+
+        if (!string.IsNullOrWhiteSpace(bodyContent))
+        {
+            builder.Append(" `\n  -Body \"")
+                .Append(EscapePowerShellDoubleQuotedValue(bodyContent))
                 .Append('"');
         }
 
@@ -97,9 +179,26 @@ public static class ProjectHttpDocumentFormatter
         return configTab.HasBodyContent ? configTab.RequestBody.Trim() : string.Empty;
     }
 
-    private static string EscapeCurlValue(string value)
+    private static string ResolveSnippetUrl(
+        string requestUrl,
+        string currentBaseUrl,
+        IEnumerable<RequestParameterItemViewModel> queryParameters)
+    {
+        var url = BuildUrl(requestUrl, currentBaseUrl, queryParameters);
+        return url.StartsWith("未配置", StringComparison.OrdinalIgnoreCase)
+            ? requestUrl.Trim()
+            : url;
+    }
+
+    private static string EscapeShellDoubleQuotedValue(string value)
     {
         return value.Replace("\\", "\\\\", StringComparison.Ordinal)
             .Replace("\"", "\\\"", StringComparison.Ordinal);
+    }
+
+    private static string EscapePowerShellDoubleQuotedValue(string value)
+    {
+        return value.Replace("`", "``", StringComparison.Ordinal)
+            .Replace("\"", "`\"", StringComparison.Ordinal);
     }
 }

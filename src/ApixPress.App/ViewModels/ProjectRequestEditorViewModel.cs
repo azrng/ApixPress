@@ -97,6 +97,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     public bool CanGenerateRequestCode => _canGenerateRequestCode;
     public string CurrentRequestCodeTitle => RequestCodeTitle;
     public string CurrentRequestCodeCurlCommand => RequestCodeCurlCommand;
+    public string CurrentRequestCodeWgetCommand => RequestCodeWgetCommand;
+    public string CurrentRequestCodePowerShellCommand => RequestCodePowerShellCommand;
     public string CurrentResponseValidationResultText => _currentResponseValidationResultText;
 
     public string SelectedMethod
@@ -169,6 +171,15 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     [ObservableProperty]
     private string requestCodeCurlCommand = string.Empty;
 
+    [ObservableProperty]
+    private string requestCodeWgetCommand = string.Empty;
+
+    [ObservableProperty]
+    private string requestCodePowerShellCommand = string.Empty;
+
+    [ObservableProperty]
+    private int selectedRequestCodeTab;
+
     [RelayCommand]
     private void OpenRequestCodeDialog()
     {
@@ -178,6 +189,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         }
 
         RefreshRequestCodeDialogContent();
+        SelectedRequestCodeTab = 0;
         IsRequestCodeDialogOpen = true;
     }
 
@@ -344,10 +356,14 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
 
     private void RefreshRequestCodeDialogContent()
     {
-        RequestCodeTitle = IsHttpInterfaceEditor ? "HTTP 接口请求代码" : "快捷请求代码";
+        RequestCodeTitle = "生成代码";
         RequestCodeCurlCommand = BuildRequestCodeCurlCommand();
+        RequestCodeWgetCommand = BuildRequestCodeWgetCommand();
+        RequestCodePowerShellCommand = BuildRequestCodePowerShellCommand();
         OnPropertyChanged(nameof(CurrentRequestCodeTitle));
         OnPropertyChanged(nameof(CurrentRequestCodeCurlCommand));
+        OnPropertyChanged(nameof(CurrentRequestCodeWgetCommand));
+        OnPropertyChanged(nameof(CurrentRequestCodePowerShellCommand));
     }
 
     private string BuildRequestCodeCurlCommand()
@@ -367,12 +383,51 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         }
     }
 
+    private string BuildRequestCodeWgetCommand()
+    {
+        if (!CanGenerateRequestCode)
+        {
+            return "请先打开一个 HTTP 接口或快捷请求标签。";
+        }
+
+        try
+        {
+            return ProjectHttpDocumentFormatter.BuildWgetSnippet(SelectedMethod, RequestUrl, CurrentHttpInterfaceBaseUrl, ConfigTab);
+        }
+        catch (Exception exception)
+        {
+            return $"生成 wget 代码失败：{exception.Message}";
+        }
+    }
+
+    private string BuildRequestCodePowerShellCommand()
+    {
+        if (!CanGenerateRequestCode)
+        {
+            return "请先打开一个 HTTP 接口或快捷请求标签。";
+        }
+
+        try
+        {
+            return ProjectHttpDocumentFormatter.BuildPowerShellSnippet(SelectedMethod, RequestUrl, CurrentHttpInterfaceBaseUrl, ConfigTab);
+        }
+        catch (Exception exception)
+        {
+            return $"生成 PowerShell 代码失败：{exception.Message}";
+        }
+    }
+
     private void ClearRequestCodeDialogContent()
     {
         RequestCodeTitle = string.Empty;
         RequestCodeCurlCommand = string.Empty;
+        RequestCodeWgetCommand = string.Empty;
+        RequestCodePowerShellCommand = string.Empty;
+        SelectedRequestCodeTab = 0;
         OnPropertyChanged(nameof(CurrentRequestCodeTitle));
         OnPropertyChanged(nameof(CurrentRequestCodeCurlCommand));
+        OnPropertyChanged(nameof(CurrentRequestCodeWgetCommand));
+        OnPropertyChanged(nameof(CurrentRequestCodePowerShellCommand));
     }
 
     private string BuildResolvedRequestPreviewText()
