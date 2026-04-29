@@ -249,7 +249,7 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="0,0,1,0" />
     <Setter Property="CornerRadius" Value="0" />
-    <Setter Property="Padding" Value="4,2,4,4" />
+    <Setter Property="Padding" Value="2,0,2,2" />
   </Style>
 
   <Style Selector="Border.ProjectWorkspaceTabViewport">
@@ -277,7 +277,7 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0" />
-    <Setter Property="Margin" Value="0,0,6,0" />
+    <Setter Property="Margin" Value="0,0,4,0" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="HorizontalContentAlignment" Value="Left" />
   </Style>
@@ -291,7 +291,7 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="10,4,6,4" />
+    <Setter Property="Padding" Value="8,2,4,2" />
   </Style>
 
   <Style Selector="TabStrip.ProjectWorkspaceEditorTabs TabStripItem:pointerover Border.ProjectWorkspaceInnerTabCapsule">
@@ -311,8 +311,8 @@
   </Style>
 
   <Style Selector="Button.ProjectWorkspaceInnerTabCloseButton">
-    <Setter Property="Width" Value="18" />
-    <Setter Property="Height" Value="18" />
+    <Setter Property="Width" Value="16" />
+    <Setter Property="Height" Value="16" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
@@ -346,8 +346,8 @@
   </Style>
 
   <Style Selector="Button.ProjectWorkspaceInnerTabAddButton">
-    <Setter Property="Width" Value="26" />
-    <Setter Property="Height" Value="26" />
+    <Setter Property="Width" Value="22" />
+    <Setter Property="Height" Value="22" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
@@ -362,8 +362,8 @@
   </Style>
 
   <Style Selector="Button.ProjectWorkspaceInnerTabMoreButton">
-    <Setter Property="Width" Value="30" />
-    <Setter Property="Height" Value="26" />
+    <Setter Property="Width" Value="24" />
+    <Setter Property="Height" Value="22" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
@@ -395,16 +395,16 @@
   <Style Selector="ComboBox.ProjectWorkspaceToolbarComboBox">
     <Setter Property="MinWidth" Value="156" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Height" Value="34" />
+    <Setter Property="Height" Value="28" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
 
   <Style Selector="Button.ProjectWorkspaceToolbarIconButton">
-    <Setter Property="Width" Value="40" />
-    <Setter Property="Height" Value="34" />
+    <Setter Property="Width" Value="34" />
+    <Setter Property="Height" Value="28" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Body}" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>

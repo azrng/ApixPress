@@ -10,14 +10,14 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="2" />
+    <Setter Property="Padding" Value="1" />
   </Style>
 
   <Style Selector="ToggleButton.HttpEditorModeButton">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="Padding" Value="8,3" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 
@@ -34,8 +34,8 @@
   </Style>
 
   <Style Selector="TextBox.HttpInterfaceNameInput">
-    <Setter Property="MinHeight" Value="36" />
-    <Setter Property="Padding" Value="10,6" />
+    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="Padding" Value="8,4" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
   </Style>
 
@@ -44,8 +44,8 @@
   </Style>
 
   <Style Selector="TextBox.HttpToolbarNameInput">
-    <Setter Property="MinWidth" Value="220" />
-    <Setter Property="MaxWidth" Value="340" />
+    <Setter Property="MinWidth" Value="168" />
+    <Setter Property="MaxWidth" Value="260" />
   </Style>
 
   <Style Selector="Button.HttpCodeIconButton">
@@ -53,10 +53,10 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="Padding" Value="6,2" />
+    <Setter Property="Padding" Value="4,1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="MinWidth" Value="30" />
-    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="MinWidth" Value="26" />
+    <Setter Property="MinHeight" Value="26" />
   </Style>
 
   <Style Selector="Button.HttpCodeIconButton:pointerover">
@@ -369,7 +369,7 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="4" />
+    <Setter Property="Padding" Value="2" />
     <Setter Property="ClipToBounds" Value="True" />
   </Style>
 
@@ -378,10 +378,10 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-    <Setter Property="Padding" Value="6,4" />
+    <Setter Property="Padding" Value="5,2" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
-    <Setter Property="MinWidth" Value="60" />
-    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="MinWidth" Value="56" />
+    <Setter Property="MinHeight" Value="28" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
@@ -406,25 +406,26 @@
   <Style Selector="Border.HttpBaseUrlPrefixCard">
     <Setter Property="Margin" Value="0" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="Padding" Value="8,6" />
-    <Setter Property="MinHeight" Value="34" />
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="MinHeight" Value="28" />
   </Style>
 
   <Style Selector="TextBox.HttpRequestPathInput">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Padding" Value="4,6" />
-    <Setter Property="MinHeight" Value="34" />
+    <Setter Property="Padding" Value="4,4" />
+    <Setter Property="MinHeight" Value="28" />
   </Style>
 
   <Style Selector="Button.HttpSendButton">
     <Setter Property="Background" Value="#8B6AE6" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
-    <Setter Property="Padding" Value="16,8" />
+    <Setter Property="Padding" Value="14,6" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="MinWidth" Value="88" />
+    <Setter Property="MinHeight" Value="30" />
   </Style>
 
   <Style Selector="Button.HttpSaveButton">
@@ -432,9 +433,10 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="Padding" Value="16,8" />
+    <Setter Property="Padding" Value="14,6" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="MinWidth" Value="78" />
+    <Setter Property="MinHeight" Value="30" />
   </Style>
 
   <Style Selector="TabControl.HttpRequestTabs">

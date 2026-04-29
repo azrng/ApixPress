@@ -82,8 +82,8 @@
         </Border>
 
         <Grid Grid.Column="1"
-              Width="72"
-              Height="26"
+              Width="60"
+              Height="22"
               HorizontalAlignment="Left"
               VerticalAlignment="Center">
           <StackPanel Orientation="Horizontal"
