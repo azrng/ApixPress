@@ -91,6 +91,20 @@ public sealed class ResponseSectionViewModelTests
     }
 
     [Fact]
+    public void BodySearchText_ShouldSkipMatchCount_WhenBodyIsTooLarge()
+    {
+        var viewModel = new ResponseSectionViewModel
+        {
+            BodyText = new string('a', 1024 * 1024 + 1)
+        };
+
+        viewModel.BodySearchText = "a";
+
+        Assert.Equal("正文较大，已跳过全文搜索", viewModel.BodySearchResultText);
+        Assert.True(viewModel.HasBodySearchMatches);
+    }
+
+    [Fact]
     public void ApplyResult_ShouldFormatIndentedBody_WhenContentTypeIsApplicationJson()
     {
         var viewModel = new ResponseSectionViewModel();
@@ -116,6 +130,33 @@ public sealed class ResponseSectionViewModelTests
         Assert.Contains(Environment.NewLine, viewModel.BodyText);
         Assert.Contains("\"data\": [", viewModel.BodyText);
         Assert.Contains("\"isSuccess\": true", viewModel.BodyText);
+    }
+
+    [Fact]
+    public void ApplyResult_ShouldKeepLargeJsonBodyUnformatted()
+    {
+        var viewModel = new ResponseSectionViewModel();
+        var rawContent = "{\"data\":\"" + new string('a', 256 * 1024 + 1) + "\"}";
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 20,
+                SizeBytes = rawContent.Length,
+                Content = rawContent,
+                Headers =
+                [
+                    new ResponseHeaderDto
+                    {
+                        Name = "Content-Type",
+                        Value = "application/json"
+                    }
+                ]
+            }),
+            new RequestSnapshotDto());
+
+        Assert.Equal(rawContent, viewModel.BodyText);
     }
 
     [Fact]

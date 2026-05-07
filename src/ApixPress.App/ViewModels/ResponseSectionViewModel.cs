@@ -11,6 +11,9 @@ namespace ApixPress.App.ViewModels;
 
 public partial class ResponseSectionViewModel : ViewModelBase
 {
+    private const int MaxSynchronousFormattedBodyLength = 256 * 1024;
+    private const int MaxSearchableBodyLength = 1024 * 1024;
+
     private static readonly JsonSerializerOptions PrettyJsonOptions = new()
     {
         WriteIndented = true,
@@ -246,6 +249,12 @@ public partial class ResponseSectionViewModel : ViewModelBase
             return;
         }
 
+        if (BodyText.Length > MaxSearchableBodyLength)
+        {
+            BodySearchResultText = "正文较大，已跳过全文搜索";
+            return;
+        }
+
         var count = 0;
         var startIndex = 0;
         while (startIndex < BodyText.Length)
@@ -311,6 +320,11 @@ public partial class ResponseSectionViewModel : ViewModelBase
     private static string FormatResponseBody(ResponseSnapshotDto response)
     {
         if (string.IsNullOrWhiteSpace(response.Content))
+        {
+            return response.Content;
+        }
+
+        if (response.Content.Length > MaxSynchronousFormattedBodyLength)
         {
             return response.Content;
         }
