@@ -8,7 +8,7 @@
              x:Class="ApixPress.App.Views.Controls.HttpInterfaceWorkbenchView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <Grid RowDefinitions="Auto,Auto,6,*"
+  <Grid RowDefinitions="Auto,*"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         RowSpacing="0"
@@ -39,142 +39,148 @@
       </StackPanel>
     </Border>
 
-    <Border Grid.Row="1"
-            Classes="PanelCard ProjectWorkspaceSettingsCard HttpWorkbenchConfigCard"
-            Padding="0"
-            MinHeight="118"
-            MaxHeight="420">
-      <Grid RowDefinitions="Auto,*">
-        <TabControl Grid.Row="0"
-                    Classes="ConfigTabControl HttpRequestTabs"
-                    SelectedIndex="{Binding ConfigTab.SelectedTabIndex}">
-          <TabItem Header="Params" />
-          <TabItem Header="Body" />
-          <TabItem Header="Headers" />
-        </TabControl>
-        <Grid x:Name="ConfigTabContentHost"
-              Grid.Row="1"
-              MinHeight="0"
-              ClipToBounds="True" />
-      </Grid>
-    </Border>
+    <Grid Grid.Row="1"
+          RowDefinitions="Auto,6,*"
+          RowSpacing="0"
+          MinHeight="0"
+          ClipToBounds="True">
+      <Border Grid.Row="0"
+              Classes="PanelCard ProjectWorkspaceSettingsCard HttpWorkbenchConfigCard"
+              Padding="0"
+              MinHeight="118"
+              MaxHeight="420">
+        <Grid RowDefinitions="Auto,*">
+          <TabControl Grid.Row="0"
+                      Classes="ConfigTabControl HttpRequestTabs"
+                      SelectedIndex="{Binding ConfigTab.SelectedTabIndex}">
+            <TabItem Header="Params" />
+            <TabItem Header="Body" />
+            <TabItem Header="Headers" />
+          </TabControl>
+          <Grid x:Name="ConfigTabContentHost"
+                Grid.Row="1"
+                MinHeight="0"
+                ClipToBounds="True" />
+        </Grid>
+      </Border>
 
-    <GridSplitter Grid.Row="2"
-                  Classes="HttpWorkbenchSplitter"
-                  ResizeDirection="Rows"
-                  HorizontalAlignment="Stretch" />
+      <GridSplitter Grid.Row="1"
+                    Classes="HttpWorkbenchSplitter"
+                    ResizeDirection="Rows"
+                    HorizontalAlignment="Stretch" />
 
-    <Border Grid.Row="3"
-            Classes="PanelCard HttpResponseCard">
-      <Grid RowDefinitions="Auto,*"
-            RowSpacing="{StaticResource Space.3}">
-        <Grid Grid.Row="0"
-              ColumnDefinitions="Auto,*,Auto"
-              ColumnSpacing="{StaticResource Space.3}">
-          <TextBlock Grid.Column="0"
-                     Classes="SectionTitle"
-                     Text="返回响应" />
-          <Border Grid.Column="1"
-                  Classes="HttpResponseNoticeCard HttpResponseNoticeInlineCard"
-                  IsVisible="{Binding ResponseSection.ShowResponseNotice}">
-            <Grid ColumnDefinitions="Auto,*"
-                  ColumnSpacing="{StaticResource Space.2}">
-              <TextBlock Grid.Column="0"
-                         Classes="SectionTitle"
-                         VerticalAlignment="Center"
-                         Text="{Binding ResponseSection.ResponseNoticeTitle}" />
+      <Border Grid.Row="2"
+              Classes="PanelCard HttpResponseCard">
+        <Grid RowDefinitions="Auto,*"
+              RowSpacing="{StaticResource Space.3}">
+          <Grid Grid.Row="0"
+                ColumnDefinitions="Auto,*,Auto"
+                ColumnSpacing="{StaticResource Space.3}">
+            <TextBlock Grid.Column="0"
+                       Classes="SectionTitle"
+                       Text="返回响应" />
+            <Border Grid.Column="1"
+                    Classes="HttpResponseNoticeCard HttpResponseNoticeInlineCard"
+                    IsVisible="{Binding ResponseSection.ShowResponseNotice}">
+              <Grid ColumnDefinitions="Auto,*"
+                    ColumnSpacing="{StaticResource Space.2}">
+                <TextBlock Grid.Column="0"
+                           Classes="SectionTitle"
+                           VerticalAlignment="Center"
+                           Text="{Binding ResponseSection.ResponseNoticeTitle}" />
+                <TextBlock Grid.Column="1"
+                           Classes="CaptionText"
+                           VerticalAlignment="Center"
+                           Text="{Binding ResponseSection.ResponseNoticeText}"
+                           TextTrimming="CharacterEllipsis" />
+              </Grid>
+            </Border>
+            <Grid Grid.Column="2"
+                  ColumnDefinitions="Auto,Auto,Auto,Auto,Auto"
+                  ColumnSpacing="{StaticResource Space.2}"
+                  HorizontalAlignment="Right"
+                  IsVisible="{Binding ResponseSection.HasResponse}">
+              <TextBox Grid.Column="0"
+                       Classes="SectionInput HttpResponseSearchInput"
+                       Watermark="搜索响应"
+                       Text="{Binding ResponseSection.BodySearchText, UpdateSourceTrigger=PropertyChanged}" />
               <TextBlock Grid.Column="1"
                          Classes="CaptionText"
                          VerticalAlignment="Center"
-                         Text="{Binding ResponseSection.ResponseNoticeText}"
-                         TextTrimming="CharacterEllipsis" />
+                         Text="{Binding ResponseSection.BodySearchResultText}" />
+              <u:Badge Grid.Column="2"
+                       Header="{Binding ResponseSection.StatusText}"
+                       iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
+              <TextBlock Grid.Column="3"
+                         Classes="CaptionText"
+                         VerticalAlignment="Center"
+                         Text="{Binding ResponseSection.DurationText}" />
+              <TextBlock Grid.Column="4"
+                         Classes="CaptionText"
+                         VerticalAlignment="Center"
+                         Text="{Binding ResponseSection.SizeText}" />
             </Grid>
-          </Border>
-          <Grid Grid.Column="2"
-                ColumnDefinitions="Auto,Auto,Auto,Auto,Auto"
-                ColumnSpacing="{StaticResource Space.2}"
-                HorizontalAlignment="Right"
-                IsVisible="{Binding ResponseSection.HasResponse}">
-            <TextBox Grid.Column="0"
-                     Classes="SectionInput HttpResponseSearchInput"
-                     Watermark="搜索响应"
-                     Text="{Binding ResponseSection.BodySearchText, UpdateSourceTrigger=PropertyChanged}" />
-            <TextBlock Grid.Column="1"
-                       Classes="CaptionText"
-                       VerticalAlignment="Center"
-                       Text="{Binding ResponseSection.BodySearchResultText}" />
-            <u:Badge Grid.Column="2"
-                     Header="{Binding ResponseSection.StatusText}"
-                     iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
-            <TextBlock Grid.Column="3"
-                       Classes="CaptionText"
-                       VerticalAlignment="Center"
-                       Text="{Binding ResponseSection.DurationText}" />
-            <TextBlock Grid.Column="4"
-                       Classes="CaptionText"
-                       VerticalAlignment="Center"
-                       Text="{Binding ResponseSection.SizeText}" />
           </Grid>
+
+          <Border Grid.Row="1"
+                  Classes="HttpResponsePlaceholderHost"
+                  IsVisible="{Binding ResponseSection.ShowPlaceholder}">
+            <StackPanel Classes="HttpResponsePlaceholderContent"
+                        Spacing="{StaticResource Space.2}">
+              <TextBlock Classes="HttpResponsePlaceholderIcon"
+                         FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                         Text="&#xE7C3;" />
+              <TextBlock Classes="SubtleText HttpResponsePlaceholderText"
+                         Text="点击“发送”按钮获取返回结果" />
+            </StackPanel>
+          </Border>
+
+          <Grid Grid.Row="1"
+                IsVisible="{Binding ResponseSection.HasResponse}"
+                RowDefinitions="*">
+            <TabControl Grid.Row="0"
+                        Classes="ResponseTabs"
+                        SelectedIndex="{Binding ResponseSection.SelectedResponseTab}">
+              <TabItem Header="Body">
+                <TextBox AcceptsReturn="True"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         IsReadOnly="True"
+                         TextWrapping="Wrap"
+                         VerticalContentAlignment="Top"
+                         Text="{Binding ResponseSection.BodyText}"
+                         FontFamily="{StaticResource Font.Monospace}" />
+              </TabItem>
+              <TabItem Header="Headers">
+                <TextBox AcceptsReturn="True"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         IsReadOnly="True"
+                         TextWrapping="Wrap"
+                         VerticalContentAlignment="Top"
+                         Text="{Binding ResponseSection.HeadersText}"
+                         FontFamily="{StaticResource Font.Monospace}" />
+              </TabItem>
+            </TabControl>
+          </Grid>
+
+          <Border Grid.Row="1"
+                  Classes="HttpResponseLoadingOverlay"
+                  IsVisible="{Binding ResponseSection.IsLoading}">
+            <StackPanel Classes="HttpResponseLoadingContent"
+                        Spacing="{StaticResource Space.3}">
+              <ProgressBar Classes="HttpResponseLoadingProgress"
+                           IsIndeterminate="True" />
+              <TextBlock Classes="SubtleText HttpResponseLoadingText"
+                         Text="{Binding ResponseSection.LoadingText}" />
+              <Button Classes="DialogSecondaryButton HttpResponseCancelButton"
+                      HorizontalAlignment="Center"
+                      Content="取消请求"
+                      Command="{Binding CancelRequestCommand}" />
+            </StackPanel>
+          </Border>
         </Grid>
-
-        <Border Grid.Row="1"
-                Classes="HttpResponsePlaceholderHost"
-                IsVisible="{Binding ResponseSection.ShowPlaceholder}">
-          <StackPanel Classes="HttpResponsePlaceholderContent"
-                      Spacing="{StaticResource Space.2}">
-            <TextBlock Classes="HttpResponsePlaceholderIcon"
-                       FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                       Text="&#xE7C3;" />
-            <TextBlock Classes="SubtleText HttpResponsePlaceholderText"
-                       Text="点击“发送”按钮获取返回结果" />
-          </StackPanel>
-        </Border>
-
-        <Grid Grid.Row="1"
-              IsVisible="{Binding ResponseSection.HasResponse}"
-              RowDefinitions="*">
-          <TabControl Grid.Row="0"
-                      Classes="ResponseTabs"
-                      SelectedIndex="{Binding ResponseSection.SelectedResponseTab}">
-            <TabItem Header="Body">
-              <TextBox AcceptsReturn="True"
-                       BorderThickness="0"
-                       Background="Transparent"
-                       IsReadOnly="True"
-                       TextWrapping="Wrap"
-                       VerticalContentAlignment="Top"
-                       Text="{Binding ResponseSection.BodyText}"
-                       FontFamily="{StaticResource Font.Monospace}" />
-            </TabItem>
-            <TabItem Header="Headers">
-              <TextBox AcceptsReturn="True"
-                       BorderThickness="0"
-                       Background="Transparent"
-                       IsReadOnly="True"
-                       TextWrapping="Wrap"
-                       VerticalContentAlignment="Top"
-                       Text="{Binding ResponseSection.HeadersText}"
-                       FontFamily="{StaticResource Font.Monospace}" />
-            </TabItem>
-          </TabControl>
-        </Grid>
-
-        <Border Grid.Row="1"
-                Classes="HttpResponseLoadingOverlay"
-                IsVisible="{Binding ResponseSection.IsLoading}">
-          <StackPanel Classes="HttpResponseLoadingContent"
-                      Spacing="{StaticResource Space.3}">
-            <ProgressBar Classes="HttpResponseLoadingProgress"
-                         IsIndeterminate="True" />
-            <TextBlock Classes="SubtleText HttpResponseLoadingText"
-                       Text="{Binding ResponseSection.LoadingText}" />
-            <Button Classes="DialogSecondaryButton HttpResponseCancelButton"
-                    HorizontalAlignment="Center"
-                    Content="取消请求"
-                    Command="{Binding CancelRequestCommand}" />
-          </StackPanel>
-        </Border>
-      </Grid>
-    </Border>
+      </Border>
+    </Grid>
   </Grid>
 </UserControl>

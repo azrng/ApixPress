@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using Avalonia;
 using Avalonia.Controls.Notifications;
+using ApixPress.App;
 using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
 using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeAppNotificationService;
 using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeFilePickerService;
@@ -18,6 +20,8 @@ namespace ApixPress.App.Tests.ViewModels;
 
 public sealed partial class ProjectTabViewModelTests
 {
+    private static bool _isAvaloniaInitialized;
+
     [Fact]
     public async Task ShowImportDataCommand_ShouldLoadImportedSwaggerDocumentsOnDemand()
     {
@@ -557,6 +561,8 @@ public sealed partial class ProjectTabViewModelTests
     [Fact]
     public async Task RequestEditorWorkspaceView_ShouldInstantiateAfterLoadingHttpInterface()
     {
+        EnsureAvaloniaInitialized();
+
         var apiWorkspaceService = new FakeApiWorkspaceService();
         var requestCaseService = new FakeRequestCaseService();
         apiWorkspaceService.SeedDocument("project-1", "支付服务", "FILE", @"C:\temp\pay-swagger.json", "https://pay.demo.local", 1);
@@ -577,6 +583,19 @@ public sealed partial class ProjectTabViewModelTests
 
         Assert.Null(exception);
         Assert.Null(requestCodeDialogException);
+    }
+
+    private static void EnsureAvaloniaInitialized()
+    {
+        if (_isAvaloniaInitialized)
+        {
+            return;
+        }
+
+        AppBuilder.Configure<App>()
+            .UsePlatformDetect()
+            .SetupWithoutStarting();
+        _isAvaloniaInitialized = true;
     }
 
     [Fact]
