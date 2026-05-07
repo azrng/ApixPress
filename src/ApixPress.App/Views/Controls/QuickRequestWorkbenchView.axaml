@@ -16,6 +16,7 @@
         IsVisible="{Binding Summary.IsQuickRequestEditor}">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"
+                     MinHeight="118"
                      MaxHeight="{Binding ConfigTab.ConfigPanelMaxHeight}" />
       <RowDefinition Height="6" />
       <RowDefinition Height="*" />

@@ -26,6 +26,7 @@ public sealed class WorkbenchLayoutTests
 
         Assert.Equal(3, rowDefinitions.Length);
         Assert.Equal("Auto", rowDefinitions[0].Attribute("Height")?.Value);
+        Assert.Equal("118", rowDefinitions[0].Attribute("MinHeight")?.Value);
         Assert.Equal("{Binding ConfigTab.ConfigPanelMaxHeight}", rowDefinitions[0].Attribute("MaxHeight")?.Value);
         Assert.Equal("6", rowDefinitions[1].Attribute("Height")?.Value);
         Assert.Equal("*", rowDefinitions[2].Attribute("Height")?.Value);
