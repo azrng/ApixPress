@@ -16,7 +16,9 @@ namespace ApixPress.App.Services.Implementations;
 public sealed partial class RequestExecutionService : IRequestExecutionService, ITransientDependency
 {
     internal const int ResponsePreviewByteLimit = 1024 * 1024;
-    private static readonly ConcurrentDictionary<RequestClientOptions, HttpClient> SharedHttpClients = new();
+    private const int MaxSharedHttpClients = 16;
+    private static readonly ConcurrentDictionary<RequestClientOptions, SharedHttpClientEntry> SharedHttpClients = new();
+    private static DateTimeOffset _lastClientCleanup = DateTimeOffset.MinValue;
 
     private readonly IAppShellSettingsService _appShellSettingsService;
     private readonly IEnvironmentVariableService _environmentVariableService;
@@ -361,10 +363,42 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
                || mediaType.EndsWith("+xml", StringComparison.OrdinalIgnoreCase);
     }
 
+    private static void CleanupExpiredClientsIfNeeded()
+    {
+        var now = DateTimeOffset.UtcNow;
+        if (now - _lastClientCleanup < TimeSpan.FromMinutes(5))
+        {
+            return;
+        }
+
+        _lastClientCleanup = now;
+
+        if (SharedHttpClients.Count <= MaxSharedHttpClients)
+        {
+            return;
+        }
+
+        var overflowCount = SharedHttpClients.Count - MaxSharedHttpClients;
+        var keysToRemove = SharedHttpClients
+            .OrderBy(item => item.Value.LastAccessedAt)
+            .Take(overflowCount)
+            .Select(item => item.Key)
+            .ToList();
+        foreach (var key in keysToRemove)
+        {
+            if (SharedHttpClients.TryRemove(key, out var entry))
+            {
+                entry.Client.Dispose();
+            }
+        }
+    }
+
     private static HttpClient GetOrCreateHttpClient(bool ignoreSslErrors, bool allowAutoRedirect, int timeoutMilliseconds)
     {
+        CleanupExpiredClientsIfNeeded();
+
         var options = new RequestClientOptions(ignoreSslErrors, allowAutoRedirect, timeoutMilliseconds);
-        return SharedHttpClients.GetOrAdd(options, static key =>
+        var entry = SharedHttpClients.GetOrAdd(options, static key =>
         {
             var handler = new HttpClientHandler
             {
@@ -379,8 +413,11 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             client.Timeout = key.TimeoutMilliseconds <= 0
                 ? Timeout.InfiniteTimeSpan
                 : TimeSpan.FromMilliseconds(key.TimeoutMilliseconds);
-            return client;
+            return new SharedHttpClientEntry(client);
         });
+
+        entry.Touch();
+        return entry.Client;
     }
 
 
@@ -395,4 +432,21 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         bool IsTruncated);
 
     private readonly record struct RequestClientOptions(bool IgnoreSslErrors, bool AllowAutoRedirect, int TimeoutMilliseconds);
+
+    private sealed class SharedHttpClientEntry
+    {
+        public SharedHttpClientEntry(HttpClient client)
+        {
+            Client = client;
+            Touch();
+        }
+
+        public HttpClient Client { get; }
+        public DateTimeOffset LastAccessedAt { get; private set; }
+
+        public void Touch()
+        {
+            LastAccessedAt = DateTimeOffset.UtcNow;
+        }
+    }
 }

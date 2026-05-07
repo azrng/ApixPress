@@ -8,6 +8,9 @@ namespace ApixPress.App.Data.Context;
 
 public sealed class DatabaseInitializer : ISingletonDependency
 {
+    private const int CurrentSchemaVersion = 1;
+    private const string SchemaMigrationsTable = "schema_migrations";
+
     private readonly IDbConnectionFactory _connectionFactory;
 
     public DatabaseInitializer(IDbConnectionFactory connectionFactory)
@@ -17,21 +20,74 @@ public sealed class DatabaseInitializer : ISingletonDependency
 
     public void Initialize()
     {
-        var migrationPath = WorkspacePaths.ResolveFromBaseDirectory(Path.Combine("Data", "Migrations", "001_Initial.sql"));
-        var sql = File.Exists(migrationPath)
-            ? File.ReadAllText(migrationPath)
-            : EmbeddedResourceReader.ReadRequiredText(Assembly.GetExecutingAssembly(), "Data.Migrations.001_Initial.sql");
-
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();
-        connection.Execute("PRAGMA foreign_keys = ON;");
-        if (HasExistingWorkspace(connection))
+
+        var hasExistingWorkspace = HasExistingWorkspace(connection);
+        EnsureMigrationsTable(connection);
+
+        if (GetAppliedMigrationVersion(connection) < CurrentSchemaVersion)
+        {
+            RunMigrations(connection, hasExistingWorkspace);
+        }
+    }
+
+    private static void RunMigrations(IDbConnection connection, bool hasExistingWorkspace)
+    {
+        if (hasExistingWorkspace)
         {
             UpgradeLegacyWorkspace(connection);
         }
 
-        connection.Execute(sql);
-        UpgradeLegacyWorkspace(connection);
+        var currentVersion = GetAppliedMigrationVersion(connection);
+        for (var version = currentVersion + 1; version <= CurrentSchemaVersion; version++)
+        {
+            connection.Execute(LoadMigrationSql(version));
+            UpgradeLegacyWorkspace(connection);
+            MigrateLegacyWorkspaceData(connection);
+            RecordMigrationVersion(connection, version);
+        }
+    }
+
+    private static string LoadMigrationSql(int version)
+    {
+        var fileName = $"{version:D3}_Initial.sql";
+        var migrationPath = WorkspacePaths.ResolveFromBaseDirectory(Path.Combine("Data", "Migrations", fileName));
+        return File.Exists(migrationPath)
+            ? File.ReadAllText(migrationPath)
+            : EmbeddedResourceReader.ReadRequiredText(Assembly.GetExecutingAssembly(), $"Data.Migrations.{fileName}");
+    }
+
+    private static void EnsureMigrationsTable(IDbConnection connection)
+    {
+        connection.Execute(
+            $"""
+             create table if not exists {SchemaMigrationsTable} (
+                 version integer primary key,
+                 applied_at text not null
+             )
+             """);
+    }
+
+    private static int GetAppliedMigrationVersion(IDbConnection connection)
+    {
+        var version = connection.ExecuteScalar<long?>(
+            $"select max(version) from {SchemaMigrationsTable}");
+        return version.HasValue ? (int)version.Value : 0;
+    }
+
+    private static void RecordMigrationVersion(IDbConnection connection, int version)
+    {
+        connection.Execute(
+            $"""
+             insert or ignore into {SchemaMigrationsTable} (version, applied_at)
+             values (@Version, @AppliedAt)
+             """,
+            new
+            {
+                Version = version,
+                AppliedAt = DateTime.UtcNow
+            });
     }
 
     private static void UpgradeLegacyWorkspace(IDbConnection connection)
@@ -65,7 +121,10 @@ public sealed class DatabaseInitializer : ISingletonDependency
         connection.Execute("update request_cases set entry_type = 'quick-request' where ifnull(entry_type, '') = ''");
         connection.Execute("update request_cases set folder_path = '' where folder_path is null");
         connection.Execute("update request_cases set parent_id = '' where parent_id is null");
+    }
 
+    private static void MigrateLegacyWorkspaceData(IDbConnection connection)
+    {
         var hasLegacyData = CountRows(connection, "api_documents") > 0
                             || CountRows(connection, "request_cases") > 0
                             || CountRows(connection, "request_history") > 0
@@ -74,65 +133,81 @@ public sealed class DatabaseInitializer : ISingletonDependency
 
         if (projectCount == 0 && hasLegacyData)
         {
-            var projectId = Guid.NewGuid().ToString("N");
-            var environmentId = Guid.NewGuid().ToString("N");
-            var baseUrl = ResolveLegacyBaseUrl(connection);
-            var now = DateTime.UtcNow;
-
-            using var transaction = connection.BeginTransaction();
-            connection.Execute(
-                """
-                insert into projects (id, name, description, is_default, created_at, updated_at)
-                values (@Id, @Name, @Description, 1, @CreatedAt, @UpdatedAt)
-                """,
-                new
-                {
-                    Id = projectId,
-                    Name = "默认项目",
-                    Description = "从旧版单项目工作区自动迁移",
-                    CreatedAt = now,
-                    UpdatedAt = now
-                },
-                transaction);
-            connection.Execute(
-                """
-                insert into project_environments (id, project_id, name, base_url, is_active, sort_order, created_at, updated_at)
-                values (@Id, @ProjectId, @Name, @BaseUrl, 1, 1, @CreatedAt, @UpdatedAt)
-                """,
-                new
-                {
-                    Id = environmentId,
-                    ProjectId = projectId,
-                    Name = "默认环境",
-                    BaseUrl = baseUrl,
-                    CreatedAt = now,
-                    UpdatedAt = now
-                },
-                transaction);
-            connection.Execute("update api_documents set project_id = @ProjectId where ifnull(project_id, '') = ''", new { ProjectId = projectId }, transaction);
-            connection.Execute("update request_cases set project_id = @ProjectId where ifnull(project_id, '') = ''", new { ProjectId = projectId }, transaction);
-            connection.Execute("update request_history set project_id = @ProjectId where ifnull(project_id, '') = ''", new { ProjectId = projectId }, transaction);
-            connection.Execute(
-                "update environment_variables set environment_id = @EnvironmentId, environment_name = @EnvironmentName where ifnull(environment_id, '') = ''",
-                new { EnvironmentId = environmentId, EnvironmentName = "默认环境" },
-                transaction);
-            connection.Execute("delete from environment_variables where lower(key) = 'baseurl'", transaction: transaction);
-            transaction.Commit();
+            CreateDefaultProjectForLegacyData(connection);
         }
 
-        if (CountRows(connection, "projects") > 0 && connection.ExecuteScalar<long>("select count(1) from projects where is_default = 1") == 0)
-        {
-            var firstProjectId = connection.ExecuteScalar<string>("select id from projects order by updated_at desc, name limit 1");
-            if (!string.IsNullOrWhiteSpace(firstProjectId))
+        EnsureDefaultProject(connection);
+        AssignLegacyRowsToDefaultProject(connection);
+        EnsureActiveEnvironment(connection);
+        connection.Execute("delete from environment_variables where lower(key) = 'baseurl'");
+    }
+
+    private static void CreateDefaultProjectForLegacyData(IDbConnection connection)
+    {
+        var projectId = Guid.NewGuid().ToString("N");
+        var environmentId = Guid.NewGuid().ToString("N");
+        var baseUrl = ResolveLegacyBaseUrl(connection);
+        var now = DateTime.UtcNow;
+
+        using var transaction = connection.BeginTransaction();
+        connection.Execute(
+            """
+            insert into projects (id, name, description, is_default, created_at, updated_at)
+            values (@Id, @Name, @Description, 1, @CreatedAt, @UpdatedAt)
+            """,
+            new
             {
-                connection.Execute("update projects set is_default = case when id = @Id then 1 else 0 end", new { Id = firstProjectId });
-            }
+                Id = projectId,
+                Name = "默认项目",
+                Description = "从旧版单项目工作区自动迁移",
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            transaction);
+        connection.Execute(
+            """
+            insert into project_environments (id, project_id, name, base_url, is_active, sort_order, created_at, updated_at)
+            values (@Id, @ProjectId, @Name, @BaseUrl, 1, 1, @CreatedAt, @UpdatedAt)
+            """,
+            new
+            {
+                Id = environmentId,
+                ProjectId = projectId,
+                Name = "默认环境",
+                BaseUrl = baseUrl,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            transaction);
+        connection.Execute("update api_documents set project_id = @ProjectId where ifnull(project_id, '') = ''", new { ProjectId = projectId }, transaction);
+        connection.Execute("update request_cases set project_id = @ProjectId where ifnull(project_id, '') = ''", new { ProjectId = projectId }, transaction);
+        connection.Execute("update request_history set project_id = @ProjectId where ifnull(project_id, '') = ''", new { ProjectId = projectId }, transaction);
+        connection.Execute(
+            "update environment_variables set environment_id = @EnvironmentId, environment_name = @EnvironmentName where ifnull(environment_id, '') = ''",
+            new { EnvironmentId = environmentId, EnvironmentName = "默认环境" },
+            transaction);
+        connection.Execute("delete from environment_variables where lower(key) = 'baseurl'", transaction: transaction);
+        transaction.Commit();
+    }
+
+    private static void EnsureDefaultProject(IDbConnection connection)
+    {
+        if (CountRows(connection, "projects") == 0
+            || connection.ExecuteScalar<long>("select count(1) from projects where is_default = 1") > 0)
+        {
+            return;
         }
 
-        var defaultProjectId = connection.ExecuteScalar<string?>(
-            "select id from projects where is_default = 1 order by updated_at desc limit 1")
-            ?? connection.ExecuteScalar<string?>(
-                "select id from projects order by updated_at desc, name limit 1");
+        var firstProjectId = connection.ExecuteScalar<string>("select id from projects order by updated_at desc, name limit 1");
+        if (!string.IsNullOrWhiteSpace(firstProjectId))
+        {
+            connection.Execute("update projects set is_default = case when id = @Id then 1 else 0 end", new { Id = firstProjectId });
+        }
+    }
+
+    private static void AssignLegacyRowsToDefaultProject(IDbConnection connection)
+    {
+        var defaultProjectId = ResolveDefaultProjectId(connection);
         if (string.IsNullOrWhiteSpace(defaultProjectId))
         {
             return;
@@ -141,12 +216,21 @@ public sealed class DatabaseInitializer : ISingletonDependency
         connection.Execute("update api_documents set project_id = @ProjectId where ifnull(project_id, '') = ''", new { ProjectId = defaultProjectId });
         connection.Execute("update request_cases set project_id = @ProjectId where ifnull(project_id, '') = ''", new { ProjectId = defaultProjectId });
         connection.Execute("update request_history set project_id = @ProjectId where ifnull(project_id, '') = ''", new { ProjectId = defaultProjectId });
+    }
+
+    private static void EnsureActiveEnvironment(IDbConnection connection)
+    {
+        var defaultProjectId = ResolveDefaultProjectId(connection);
+        if (string.IsNullOrWhiteSpace(defaultProjectId))
+        {
+            return;
+        }
 
         var activeEnvironmentId = connection.ExecuteScalar<string?>(
             "select id from project_environments where project_id = @ProjectId and is_active = 1 order by sort_order, name limit 1",
             new { ProjectId = defaultProjectId });
 
-        if (string.IsNullOrWhiteSpace(activeEnvironmentId) && CountRows(connection, "projects") > 0)
+        if (string.IsNullOrWhiteSpace(activeEnvironmentId))
         {
             activeEnvironmentId = Guid.NewGuid().ToString("N");
             connection.Execute(
@@ -165,22 +249,25 @@ public sealed class DatabaseInitializer : ISingletonDependency
                 });
         }
 
-        if (!string.IsNullOrWhiteSpace(activeEnvironmentId))
+        connection.Execute(
+            "update environment_variables set environment_id = @EnvironmentId, environment_name = @EnvironmentName where ifnull(environment_id, '') = ''",
+            new { EnvironmentId = activeEnvironmentId, EnvironmentName = "默认环境" });
+
+        var legacyBaseUrl = ResolveLegacyBaseUrl(connection);
+        if (!string.IsNullOrWhiteSpace(legacyBaseUrl))
         {
             connection.Execute(
-                "update environment_variables set environment_id = @EnvironmentId, environment_name = @EnvironmentName where ifnull(environment_id, '') = ''",
-                new { EnvironmentId = activeEnvironmentId, EnvironmentName = "默认环境" });
-
-            var legacyBaseUrl = ResolveLegacyBaseUrl(connection);
-            if (!string.IsNullOrWhiteSpace(legacyBaseUrl))
-            {
-                connection.Execute(
-                    "update project_environments set base_url = @BaseUrl where id = @EnvironmentId and ifnull(base_url, '') = ''",
-                    new { BaseUrl = legacyBaseUrl, EnvironmentId = activeEnvironmentId });
-            }
-
-            connection.Execute("delete from environment_variables where lower(key) = 'baseurl'");
+                "update project_environments set base_url = @BaseUrl where id = @EnvironmentId and ifnull(base_url, '') = ''",
+                new { BaseUrl = legacyBaseUrl, EnvironmentId = activeEnvironmentId });
         }
+    }
+
+    private static string? ResolveDefaultProjectId(IDbConnection connection)
+    {
+        return connection.ExecuteScalar<string?>(
+            "select id from projects where is_default = 1 order by updated_at desc limit 1")
+            ?? connection.ExecuteScalar<string?>(
+                "select id from projects order by updated_at desc, name limit 1");
     }
 
     private static void EnsureColumn(IDbConnection connection, string tableName, string columnName, string columnDefinition)
