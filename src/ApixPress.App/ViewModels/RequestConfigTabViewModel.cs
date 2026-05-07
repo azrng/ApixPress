@@ -15,6 +15,8 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     private readonly List<RequestParameterItemViewModel> _subscribedQueryParameterItems = [];
     private bool _isUpdatingQueryParametersSelectionState;
     private bool? _queryParametersSelectionState;
+    private const double CompactConfigPanelMaxHeight = 180;
+    private const double ExpandedConfigPanelMaxHeight = 420;
 
     public BatchObservableCollection<RequestParameterItemViewModel> QueryParameters { get; } = [];
 
@@ -70,6 +72,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         }
 
         QueryParameters.CollectionChanged += OnQueryParametersCollectionChanged;
+        Headers.CollectionChanged += OnHeadersCollectionChanged;
         FormFields.CollectionChanged += (_, _) => OnFormFieldsChanged();
         SelectedBodyModeOption = BodyModeOptions[0];
         UpdateQueryParametersSelectionState();
@@ -88,6 +91,16 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         SelectedBodyMode is BodyModes.RawJson or BodyModes.RawXml or BodyModes.RawText;
 
     public bool HasBodyContent => SelectedBodyMode != BodyModes.None;
+
+    public double ConfigPanelMaxHeight => SelectedTabIndex switch
+    {
+        0 when QueryParameters.Count == 0 => CompactConfigPanelMaxHeight,
+        1 when !HasExpandableBodyConfig => CompactConfigPanelMaxHeight,
+        2 when Headers.Count == 0 => CompactConfigPanelMaxHeight,
+        _ => ExpandedConfigPanelMaxHeight
+    };
+
+    private bool HasExpandableBodyConfig => HasRawBodyEditor || HasFormFields;
 
     public bool? QueryParametersSelectionState
     {
@@ -119,6 +132,11 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         _ => "请求体内容"
     };
 
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        OnPropertyChanged(nameof(ConfigPanelMaxHeight));
+    }
+
     partial void OnSelectedBodyModeOptionChanged(BodyModeOptionViewModel? value)
     {
         if (value is not null)
@@ -132,6 +150,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasRawBodyEditor));
         OnPropertyChanged(nameof(HasBodyContent));
         OnPropertyChanged(nameof(RequestBodyWatermark));
+        OnPropertyChanged(nameof(ConfigPanelMaxHeight));
 
         // Sync the option selection if changed programmatically
         var match = BodyModeOptions.FirstOrDefault(o => o.Mode == value);
@@ -143,6 +162,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(HasFormFields));
         OnPropertyChanged(nameof(ShowFormDataEmptyState));
+        OnPropertyChanged(nameof(ConfigPanelMaxHeight));
     }
 
     // --- Commands ---
@@ -260,6 +280,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     protected override void DisposeManaged()
     {
         QueryParameters.CollectionChanged -= OnQueryParametersCollectionChanged;
+        Headers.CollectionChanged -= OnHeadersCollectionChanged;
 
         foreach (var item in _subscribedQueryParameterItems)
         {
@@ -368,6 +389,12 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     {
         SyncQueryParameterSubscriptions();
         UpdateQueryParametersSelectionState();
+        OnPropertyChanged(nameof(ConfigPanelMaxHeight));
+    }
+
+    private void OnHeadersCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(ConfigPanelMaxHeight));
     }
 
     private void OnQueryParameterItemPropertyChanged(object? sender, PropertyChangedEventArgs e)

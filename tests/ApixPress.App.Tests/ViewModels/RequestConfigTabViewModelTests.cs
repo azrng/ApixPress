@@ -167,6 +167,56 @@ public sealed class RequestConfigTabViewModelTests
     }
 
     [Fact]
+    public void ConfigPanelMaxHeight_ShouldStayCompactForEmptyParamsAndHeaders()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        viewModel.SelectedTabIndex = 0;
+        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+
+        viewModel.SelectedTabIndex = 2;
+        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+    }
+
+    [Fact]
+    public void ConfigPanelMaxHeight_ShouldExpandForBodyWithEditorAndPopulatedParameterTabs()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        viewModel.SelectedTabIndex = 1;
+        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+
+        viewModel.SelectedBodyMode = BodyModes.RawJson;
+        Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
+
+        viewModel.SelectedTabIndex = 0;
+        viewModel.QueryParameters.Add(new RequestParameterItemViewModel());
+        Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
+
+        viewModel.SelectedTabIndex = 2;
+        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+
+        viewModel.Headers.Add(new RequestParameterItemViewModel());
+        Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
+    }
+
+    [Fact]
+    public void ConfigPanelMaxHeight_ShouldStayCompactForEmptyFormBody()
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedTabIndex = 1,
+            SelectedBodyMode = BodyModes.FormData
+        };
+
+        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+
+        viewModel.FormFields.Add(new RequestParameterItemViewModel());
+
+        Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
+    }
+
+    [Fact]
     public void PopulateFromEndpoint_ShouldApplyJsonBodyModeAndTemplate()
     {
         var viewModel = new RequestConfigTabViewModel();

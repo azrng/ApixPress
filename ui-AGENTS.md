@@ -118,6 +118,7 @@ src/AppName/
 - 页面状态必须完整：`loading`、`empty`、`error`、`no-permission`。
 - 使用 Ursa.Avalonia 控件库优先，必要时使用 Avalonia 官方控件。
 - 图标统一使用 Avalonia 官方图形能力、Ursa 组件能力或仓库既有素材。
+- 使用 `GridSplitter` 等可拖拽布局时，必须把分隔条放在只包含受影响区域的父级 Grid 中，并将 `MinHeight` / `MaxHeight` 等边界约束落到对应 `RowDefinition` / `ColumnDefinition` 上；只约束子控件不能防止拖拽后父级行列留下空白。
 
 ### MVVM 模式规则
 - 所有 ViewModel 最终都必须继承 `ObservableObject`；若项目已有 `BaseViewModel`，应由基类继承 `ObservableObject` 后统一复用。

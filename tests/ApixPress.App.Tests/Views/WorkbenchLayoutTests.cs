@@ -18,7 +18,17 @@ public sealed class WorkbenchLayoutTests
 
         Assert.NotNull(splitterHost);
         Assert.Equal("Grid", splitterHost!.Name.LocalName);
-        Assert.Equal("Auto,6,*", splitterHost.Attribute("RowDefinitions")?.Value);
+        var rowDefinitions = splitterHost.Elements()
+            .Single(element => element.Name.LocalName == "Grid.RowDefinitions")
+            .Elements()
+            .Where(element => element.Name.LocalName == "RowDefinition")
+            .ToArray();
+
+        Assert.Equal(3, rowDefinitions.Length);
+        Assert.Equal("Auto", rowDefinitions[0].Attribute("Height")?.Value);
+        Assert.Equal("{Binding ConfigTab.ConfigPanelMaxHeight}", rowDefinitions[0].Attribute("MaxHeight")?.Value);
+        Assert.Equal("6", rowDefinitions[1].Attribute("Height")?.Value);
+        Assert.Equal("*", rowDefinitions[2].Attribute("Height")?.Value);
         Assert.DoesNotContain(
             splitterHost.Descendants(),
             element => HasClass(element, "HttpDesignMetaCard"));
