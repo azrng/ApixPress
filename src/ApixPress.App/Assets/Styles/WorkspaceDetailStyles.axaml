@@ -112,9 +112,18 @@
   </Style>
 
   <Style Selector="Border.HttpResponseNoticeInlineCard">
-    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+    <Setter Property="Padding" Value="8,5" />
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="MinHeight" Value="0" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseNoticeInlineCard TextBlock.SectionTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseNoticeInlineCard TextBlock.CaptionText">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
   </Style>
 
   <Style Selector="TextBox.HttpResponseSearchInput">
