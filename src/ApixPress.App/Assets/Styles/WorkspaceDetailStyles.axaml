@@ -131,6 +131,19 @@
     <Setter Property="MinHeight" Value="28" />
   </Style>
 
+  <Style Selector="GridSplitter.HttpWorkbenchSplitter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="MinHeight" Value="6" />
+  </Style>
+
+  <Style Selector="GridSplitter.HttpWorkbenchSplitter:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseCard">
+    <Setter Property="MinHeight" Value="180" />
+  </Style>
+
   <Style Selector="Border.EnvironmentSummaryPill">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />

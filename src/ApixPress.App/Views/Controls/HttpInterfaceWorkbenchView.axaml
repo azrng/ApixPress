@@ -8,7 +8,7 @@
              x:Class="ApixPress.App.Views.Controls.HttpInterfaceWorkbenchView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <Grid RowDefinitions="Auto,2*,3*"
+  <Grid RowDefinitions="Auto,Auto,6,*"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
         RowSpacing="0"
@@ -41,7 +41,9 @@
 
     <Border Grid.Row="1"
             Classes="PanelCard ProjectWorkspaceSettingsCard HttpWorkbenchConfigCard"
-            Padding="0">
+            Padding="0"
+            MinHeight="118"
+            MaxHeight="420">
       <Grid RowDefinitions="Auto,*">
         <TabControl Grid.Row="0"
                     Classes="ConfigTabControl HttpRequestTabs"
@@ -57,7 +59,12 @@
       </Grid>
     </Border>
 
-    <Border Grid.Row="2"
+    <GridSplitter Grid.Row="2"
+                  Classes="HttpWorkbenchSplitter"
+                  ResizeDirection="Rows"
+                  HorizontalAlignment="Stretch" />
+
+    <Border Grid.Row="3"
             Classes="PanelCard HttpResponseCard">
       <Grid RowDefinitions="Auto,*"
             RowSpacing="{StaticResource Space.3}">
