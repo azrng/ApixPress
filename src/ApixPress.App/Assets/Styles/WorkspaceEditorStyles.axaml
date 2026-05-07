@@ -17,7 +17,7 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="8,2" />
+    <Setter Property="Padding" Value="9,3" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 
@@ -34,8 +34,8 @@
   </Style>
 
   <Style Selector="TextBox.HttpInterfaceNameInput">
-    <Setter Property="MinHeight" Value="30" />
-    <Setter Property="Padding" Value="8,3" />
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="Padding" Value="8,4" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
   </Style>
 
@@ -55,8 +55,8 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="Padding" Value="4,1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="MinWidth" Value="26" />
-    <Setter Property="MinHeight" Value="26" />
+    <Setter Property="MinWidth" Value="28" />
+    <Setter Property="MinHeight" Value="28" />
   </Style>
 
   <Style Selector="Button.HttpCodeIconButton:pointerover">
@@ -381,7 +381,7 @@
     <Setter Property="Padding" Value="5,2" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="MinWidth" Value="56" />
-    <Setter Property="MinHeight" Value="28" />
+    <Setter Property="MinHeight" Value="30" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
@@ -407,7 +407,7 @@
     <Setter Property="Margin" Value="0" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="Padding" Value="8,4" />
-    <Setter Property="MinHeight" Value="28" />
+    <Setter Property="MinHeight" Value="30" />
   </Style>
 
   <Style Selector="TextBox.HttpRequestPathInput">
@@ -415,7 +415,7 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="4,4" />
-    <Setter Property="MinHeight" Value="28" />
+    <Setter Property="MinHeight" Value="30" />
   </Style>
 
   <Style Selector="Button.HttpSendButton">
