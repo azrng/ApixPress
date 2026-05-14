@@ -40,6 +40,15 @@ public sealed class WorkbenchLayoutTests
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "ProjectInterfaceRootWorkspaceView.axaml"));
 
+        var rootLayout = document.Root?.Elements().SingleOrDefault();
+        Assert.NotNull(rootLayout);
+        Assert.Equal("Grid", rootLayout!.Name.LocalName);
+        Assert.Equal("Auto,*", rootLayout.Attribute("RowDefinitions")?.Value);
+        Assert.Equal("{StaticResource Space.1}", rootLayout.Attribute("RowSpacing")?.Value);
+        Assert.DoesNotContain(
+            (rootLayout.Attribute("Classes")?.Value ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries),
+            className => className is "PanelCard" or "ProjectWorkspaceCanvas");
+
         Assert.Contains(
             document.Descendants(),
             element => element.Name.LocalName == "Border"
