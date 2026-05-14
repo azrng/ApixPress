@@ -87,7 +87,7 @@ internal sealed class ProjectTabComposition : DisposableObject
                 async () =>
                 {
                     Messenger.Send(new StatusMessageRequest("正在打开接口根配置..."));
-                    workspace.DeactivateWorkspaceTab();
+                    workspace.EnsureInterfaceRootWorkspaceTab();
                     Messenger.Send(new NavigationRequestMessage(NavigationTarget.InterfaceRootWorkspace));
                     _shellViewModel?.SelectInterfaceManagementSection();
                     if (interfaceRoot is not null)

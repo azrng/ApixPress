@@ -47,7 +47,9 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
     public bool IsRequestHistorySection => SelectedSection == Sections.RequestHistory;
     public bool IsProjectSettingsSection => SelectedSection == Sections.ProjectSettings;
     public bool ShowInterfaceManagementLanding => IsInterfaceManagementSection && (_workspaceContext.GetActiveWorkspaceTab()?.IsLandingTab ?? true);
-    public bool ShowRequestEditorWorkspace => IsInterfaceManagementSection && _workspaceContext.GetActiveWorkspaceTab() is { IsLandingTab: false };
+    public bool ShowRequestEditorWorkspace => IsInterfaceManagementSection
+        && !_workspaceContext.IsInterfaceRootWorkspaceActive()
+        && _workspaceContext.GetActiveWorkspaceTab() is { IsLandingTab: false, IsInterfaceRootTab: false };
     public bool ShowInterfaceRootWorkspace => IsInterfaceManagementSection && _workspaceContext.IsInterfaceRootWorkspaceActive();
     public ProjectWorkspaceContentMode CurrentContentMode => ResolveCurrentContentMode();
 

@@ -112,6 +112,26 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         }
     }
 
+    public RequestWorkspaceTabViewModel EnsureInterfaceRootWorkspaceTab()
+    {
+        _selectInterfaceManagementSection();
+
+        var tab = FindInterfaceRootWorkspaceTab();
+        if (tab is null)
+        {
+            tab = ActiveWorkspaceTab?.IsLandingTab == true && !ActiveWorkspaceTab.ShowInTabStrip
+                ? ActiveWorkspaceTab
+                : CreateWorkspaceTab(activate: false);
+        }
+
+        tab.ConfigureAsInterfaceRoot();
+        tab.ShowInTabStrip = true;
+        IsWorkspaceTabMenuOpen = false;
+        ActivateWorkspaceTab(tab);
+        RequestNotifications(syncVisibleWorkspaceTabs: true, stateChanged: true, editorStateChanged: true);
+        return tab;
+    }
+
     public void ResetToLanding()
     {
         IsWorkspaceTabMenuOpen = false;
@@ -522,6 +542,11 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             .Where(item => item.IsLandingTab)
             .OrderByDescending(item => item.ShowInTabStrip)
             .FirstOrDefault();
+    }
+
+    private RequestWorkspaceTabViewModel? FindInterfaceRootWorkspaceTab()
+    {
+        return WorkspaceTabs.FirstOrDefault(item => item.IsInterfaceRootTab);
     }
 
     private void AttachWorkspaceTab(RequestWorkspaceTabViewModel tab)

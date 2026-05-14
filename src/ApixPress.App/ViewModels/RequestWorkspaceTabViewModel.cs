@@ -19,6 +19,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     private static class WorkspaceEntryTypes
     {
         public const string Landing = "landing";
+        public const string InterfaceRoot = "interface-root";
         public const string QuickRequest = "quick-request";
         public const string HttpInterface = "http-interface";
     }
@@ -88,6 +89,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     internal Action? CloseAllRequested { get; set; }
 
     public bool IsLandingTab => EntryType == WorkspaceEntryTypes.Landing;
+    public bool IsInterfaceRootTab => EntryType == WorkspaceEntryTypes.InterfaceRoot;
     public bool IsQuickRequestTab => EntryType == WorkspaceEntryTypes.QuickRequest;
     public bool IsHttpInterfaceTab => EntryType == WorkspaceEntryTypes.HttpInterface;
     public bool IsHttpDebugView => IsHttpInterfaceTab && HttpEditorViewIndex == 0;
@@ -99,13 +101,15 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     public bool HasUnsavedChanges => _hasUnsavedChanges;
     public bool ShowUnsavedChanges => HasUnsavedChanges;
     public string UnsavedChangesMarker => HasUnsavedChanges ? "*" : string.Empty;
-    public bool CanReuseForWorkspaceNavigation => !IsPinned && !IsLandingTab && !HasUnsavedChanges;
+    public bool CanReuseForWorkspaceNavigation => !IsPinned && !IsLandingTab && !IsInterfaceRootTab && !HasUnsavedChanges;
     public string PinMenuHeader => IsPinned ? "取消固定标签页" : "固定标签页";
-    public string EditorTitle => IsHttpInterfaceTab ? "HTTP 接口" : IsQuickRequestTab ? "快捷请求" : "新建...";
+    public string EditorTitle => IsHttpInterfaceTab ? "HTTP 接口" : IsQuickRequestTab ? "快捷请求" : IsInterfaceRootTab ? "根目录" : "新建...";
     public string EditorDescription => IsHttpInterfaceTab
         ? "HTTP 接口会自动使用当前环境的 BaseUrl，请在右侧输入相对路径。"
         : IsQuickRequestTab
             ? "快捷请求不固定 BaseUrl，请输入完整的 http:// 或 https:// 地址。"
+            : IsInterfaceRootTab
+                ? "根目录承载当前模块下的 Auth 与全部接口。"
             : "从下方卡片中选择要创建的工作内容。";
     public string PrimaryActionText => IsHttpInterfaceTab ? "保存接口" : "保存";
     public string UrlWatermark => IsHttpInterfaceTab ? "接口路径，如 /起始" : "输入完整地址，如 https://api.example.com/users";
@@ -136,6 +140,27 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         RunWithBulkStateMutation(() =>
         {
             EntryType = WorkspaceEntryTypes.QuickRequest;
+            SelectedMethod = "GET";
+            RequestUrl = string.Empty;
+            InterfaceFolderPath = DefaultInterfaceFolderName;
+            HttpCaseName = "成功";
+            SourceEndpointId = string.Empty;
+            EditingQuickRequestId = string.Empty;
+            EditingInterfaceId = string.Empty;
+            EditingCaseId = string.Empty;
+            HttpEditorViewIndex = 0;
+            ConfigTab.Reset();
+            ResponseSection.Reset();
+        });
+
+        MarkCleanState();
+    }
+
+    public void ConfigureAsInterfaceRoot()
+    {
+        RunWithBulkStateMutation(() =>
+        {
+            EntryType = WorkspaceEntryTypes.InterfaceRoot;
             SelectedMethod = "GET";
             RequestUrl = string.Empty;
             InterfaceFolderPath = DefaultInterfaceFolderName;
@@ -343,6 +368,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     {
         IsCloseDiscardPending = false;
         OnPropertyChanged(nameof(IsLandingTab));
+        OnPropertyChanged(nameof(IsInterfaceRootTab));
         OnPropertyChanged(nameof(IsQuickRequestTab));
         OnPropertyChanged(nameof(IsHttpInterfaceTab));
         OnPropertyChanged(nameof(IsHttpDebugView));
@@ -405,6 +431,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         HeaderText = EntryType switch
         {
             WorkspaceEntryTypes.Landing => "新建...",
+            WorkspaceEntryTypes.InterfaceRoot => "根目录（默认模块）",
             WorkspaceEntryTypes.HttpInterface => ResolveHttpInterfaceTabHeader(),
             WorkspaceEntryTypes.QuickRequest => ResolveQuickRequestTabHeader(),
             _ => ResolveRequestName()

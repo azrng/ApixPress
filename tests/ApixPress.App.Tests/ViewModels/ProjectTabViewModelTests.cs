@@ -934,6 +934,9 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.InterfaceRoot.SaveAuthCommand.ExecuteAsync(null);
 
         Assert.True(viewModel.Shell.ShowInterfaceRootWorkspace);
+        Assert.NotNull(viewModel.ActiveWorkspaceTab);
+        Assert.Equal("根目录（默认模块）", viewModel.ActiveWorkspaceTab!.HeaderText);
+        Assert.Contains(viewModel.ActiveWorkspaceTab, viewModel.VisibleWorkspaceTabs);
         Assert.True(viewModel.InterfaceRoot.IsAuthSelected);
         Assert.False(viewModel.InterfaceRoot.IsAllInterfacesSelected);
         Assert.Equal(1, projectHttpSettingsService.SaveCallCount);
