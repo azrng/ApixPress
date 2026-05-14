@@ -166,6 +166,29 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task OpenEnvironmentManagerCommand_ShouldOpenCurrentProjectEnvironmentSettings()
+    {
+        var projectService = new FakeProjectWorkspaceService();
+        projectService.SeedProjects(
+        [
+            new("project-1", "订单项目", "订单接口", true)
+        ]);
+        var viewModel = CreateViewModel(projectService);
+        await viewModel.InitializeAsync();
+        var project = viewModel.ProjectPanel.Projects.Single();
+        await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(project);
+
+        viewModel.OpenEnvironmentManagerCommand.Execute(null);
+
+        Assert.True(viewModel.IsEnvironmentManagerOpen);
+        Assert.Same(viewModel.ActiveProjectTab!.EnvironmentPanel, viewModel.EnvironmentPanel);
+        Assert.True(viewModel.EnvironmentPanel.HasSelectedEnvironment);
+        Assert.Equal("开发", viewModel.EnvironmentPanel.SelectedEnvironment?.Name);
+        Assert.Equal("https://api.demo.local", viewModel.EnvironmentPanel.SelectedEnvironment?.BaseUrl);
+        Assert.Equal("正在管理项目 订单项目 的环境。", viewModel.StatusMessage);
+    }
+
+    [Fact]
     public async Task OpenProjectWorkspaceCommand_ShouldActivateProjectTabBeforeInitializationCompletes()
     {
         var projectService = new FakeProjectWorkspaceService();

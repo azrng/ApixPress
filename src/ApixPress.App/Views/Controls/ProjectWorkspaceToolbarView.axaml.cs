@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using ApixPress.App.ViewModels;
 
 namespace ApixPress.App.Views.Controls;
@@ -41,6 +42,15 @@ public partial class ProjectWorkspaceToolbarView : UserControl
         if (DataContext is ProjectTabViewModel viewModel)
         {
             viewModel.IsWorkspaceTabMenuOpen = false;
+        }
+    }
+
+    private void OnEnvironmentManagerButtonClick(object? sender, RoutedEventArgs e)
+    {
+        if (this.FindAncestorOfType<Window>()?.DataContext is MainWindowViewModel viewModel
+            && viewModel.OpenEnvironmentManagerCommand.CanExecute(null))
+        {
+            viewModel.OpenEnvironmentManagerCommand.Execute(null);
         }
     }
 }

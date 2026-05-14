@@ -142,11 +142,13 @@
         </ComboBox>
 
         <Button Grid.Column="1"
+                x:Name="EnvironmentManagerButton"
                 Classes="SecondaryButton ProjectWorkspaceToolbarIconButton"
                 VerticalAlignment="Center"
                 FontFamily="Segoe UI Symbol, Segoe UI, Microsoft YaHei UI"
                 Content="☰"
-                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenEnvironmentManagerCommand}" />
+                ToolTip.Tip="环境设置"
+                Click="OnEnvironmentManagerButtonClick" />
       </Grid>
     </Grid>
   </Border>
