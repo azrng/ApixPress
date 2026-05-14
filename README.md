@@ -145,12 +145,22 @@ API 协作平台需求文档
 
 1. 桌面端主程序 `ApixPress` 默认按 `win-x64` 自包含单文件模式发布；更新流程已合并到主程序的隐藏更新模式中，不再发布独立更新器 exe。
 
-2. 主程序默认配置与数据库初始化脚本已内嵌到程序集：
+2. 根目录提供本地打包脚本，运行后会发布 Windows x64 单文件 exe：
+
+  • PowerShell：`.\package.ps1`
+
+  • 默认输出目录：`artifacts/package/win-x64`
+
+  • 默认输出文件：`artifacts/package/win-x64/ApixPress.exe`
+
+  • 可通过 `-OutputDirectory`、`-Runtime`、`-Configuration` 参数覆盖输出目录、运行时和构建配置。
+
+3. 主程序默认配置与数据库初始化脚本已内嵌到程序集：
 
   • 内嵌默认配置：`appsettings.json`
 
   • 内嵌迁移脚本：`Data/Migrations/001_Initial.sql`
 
-3. 若发布目录旁额外提供 `appsettings.json`，程序会优先使用内嵌默认配置，再叠加外部文件覆盖，便于按环境调整更新源或本地路径。
+4. 若发布目录旁额外提供 `appsettings.json`，程序会优先使用内嵌默认配置，再叠加外部文件覆盖，便于按环境调整更新源或本地路径。
 
-4. GitHub Actions 发布工作流位于 `.github/workflows/release.yml`，当前只发布主程序，并将主程序发布目录压缩为更新包。
+5. GitHub Actions 发布工作流位于 `.github/workflows/release.yml`，当前只发布主程序，并将主程序发布目录压缩为更新包。
