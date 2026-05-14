@@ -10,7 +10,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSCommandPath
-$projectPath = Join-Path $repoRoot "src/ApixPress.App/Apifox.App.csproj"
+$projectPath = Join-Path $repoRoot "src/ApixPress.App/ApixPress.App.csproj"
 $resolvedOutputDirectory = if ([System.IO.Path]::IsPathRooted($OutputDirectory)) {
     $OutputDirectory
 } else {

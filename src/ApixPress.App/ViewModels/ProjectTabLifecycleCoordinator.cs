@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
+using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
 
 namespace ApixPress.App.ViewModels;
@@ -61,8 +63,8 @@ internal sealed class ProjectTabLifecycleCoordinator
     public async Task RefreshAsync()
     {
         await LoadWorkspaceAsync(_environmentPanel.SelectedEnvironment?.Id);
-        _hostContext.SetStatusMessage($"项目 {_getProjectName()} 已刷新。");
-        _hostContext.NotifyShellState();
+        _hostContext.Messenger.Send(new StatusMessageRequest($"项目 {_getProjectName()} 已刷新。"));
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     public async Task ReloadAfterProjectDataClearedAsync()
@@ -73,22 +75,22 @@ internal sealed class ProjectTabLifecycleCoordinator
         _workspace.ResetToLanding();
         await LoadWorkspaceAsync();
         _shell.ShowProjectSettingsSection();
-        _hostContext.NotifyWorkspaceBindingsChanged();
-        _hostContext.NotifyShellState();
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.BindingsChanged));
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     public async Task SaveCurrentEnvironmentAsync(string currentEnvironmentLabel)
     {
         if (!_environmentPanel.HasSelectedEnvironment)
         {
-            _hostContext.SetStatusMessage("请先选择环境后再保存。");
-            _hostContext.NotifyShellState();
+            _hostContext.Messenger.Send(new StatusMessageRequest("请先选择环境后再保存。"));
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return;
         }
 
         await _environmentPanel.SaveEnvironmentCommand.ExecuteAsync(null);
-        _hostContext.SetStatusMessage($"环境 {currentEnvironmentLabel} 已保存。");
-        _hostContext.NotifyShellState();
+        _hostContext.Messenger.Send(new StatusMessageRequest($"环境 {currentEnvironmentLabel} 已保存。"));
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     public async Task LoadHistoryRequestAsync(RequestHistoryItemViewModel? item)
@@ -101,8 +103,8 @@ internal sealed class ProjectTabLifecycleCoordinator
         var detail = await _historyPanel.EnsureHistoryDetailLoadedAsync(item);
         if (detail is null)
         {
-            _hostContext.SetStatusMessage("载入历史请求失败，未找到对应记录。");
-            _hostContext.NotifyShellState();
+            _hostContext.Messenger.Send(new StatusMessageRequest("载入历史请求失败，未找到对应记录。"));
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return;
         }
 
@@ -120,15 +122,15 @@ internal sealed class ProjectTabLifecycleCoordinator
 
         _workspace.ActivateWorkspaceTab(targetTab);
         _shell.SelectRequestHistorySection();
-        _hostContext.SetStatusMessage($"已加载历史请求：{item.Method} {item.Url}");
-        _hostContext.NotifyShellState();
+        _hostContext.Messenger.Send(new StatusMessageRequest($"已加载历史请求：{item.Method} {item.Url}"));
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     public void OnSelectedEnvironmentChanged(ProjectEnvironmentItemViewModel? environment)
     {
-        _hostContext.SetStatusMessage(environment is null
+        _hostContext.Messenger.Send(new StatusMessageRequest(environment is null
             ? "当前项目尚未配置环境。"
-            : $"当前环境已切换为：{environment.Name}");
+            : $"当前环境已切换为：{environment.Name}"));
         NotifyWorkspaceEditorState();
     }
 
@@ -144,12 +146,12 @@ internal sealed class ProjectTabLifecycleCoordinator
     {
         if (e.PropertyName == nameof(ProjectWorkspaceTabsViewModel.ActiveWorkspaceTab))
         {
-            _hostContext.NotifyActiveWorkspaceTabChanged();
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ActiveTabChanged));
             _shell.NotifyWorkspaceStateChanged();
         }
         else if (e.PropertyName == nameof(ProjectWorkspaceTabsViewModel.IsWorkspaceTabMenuOpen))
         {
-            _hostContext.NotifyWorkspaceTabMenuChanged();
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.TabMenuChanged));
         }
     }
 
@@ -161,13 +163,12 @@ internal sealed class ProjectTabLifecycleCoordinator
         await _useCasesPanel.LoadCasesAsync();
         await _interfaceRoot.InitializeAsync();
         _workspace.EnsureLandingWorkspaceTab();
-        _hostContext.NotifyShellState();
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     private void NotifyWorkspaceEditorState()
     {
-        _hostContext.NotifyWorkspaceBindingsChanged();
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.EditorState | WorkspaceStateChangeFlags.ShellState));
         _editor.NotifyStateChanged();
-        _hostContext.NotifyShellState();
     }
 }

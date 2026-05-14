@@ -8,7 +8,7 @@ public sealed class ViewModelLifecycleTests
     [Fact]
     public void CloseWorkspaceTabCommand_ShouldDisposeRemovedWorkspaceTab()
     {
-        var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, _ => { });
+        var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, new CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger());
         var tab = viewModel.CreateWorkspaceTab(activate: true, showInTabStrip: true);
         tab.ConfigureAsQuickRequest();
         tab.ConfigTab.RequestName = "初始请求";
@@ -27,7 +27,7 @@ public sealed class ViewModelLifecycleTests
     [Fact]
     public void CloseWorkspaceTabCommand_ShouldRequireSecondClose_WhenTabHasUnsavedChanges()
     {
-        var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, _ => { });
+        var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, new CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger());
         var tab = viewModel.CreateWorkspaceTab(activate: true, showInTabStrip: true);
         tab.ConfigureAsQuickRequest();
 
@@ -72,7 +72,7 @@ public sealed class ViewModelLifecycleTests
     [Fact]
     public void PinnedWorkspaceTab_ShouldExposePinStateAndRejectDirectClose()
     {
-        var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, _ => { });
+        var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, new CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger());
         var tab = viewModel.CreateWorkspaceTab(activate: true, showInTabStrip: true);
 
         Assert.False(tab.IsPinned);
@@ -91,7 +91,7 @@ public sealed class ViewModelLifecycleTests
     [Fact]
     public void CloseAllWorkspaceTabsCommand_ShouldKeepPinnedTabs()
     {
-        var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, _ => { });
+        var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, new CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger());
         var pinnedTab = viewModel.CreateWorkspaceTab(activate: true, showInTabStrip: true);
         var normalTab = viewModel.CreateWorkspaceTab(activate: true, showInTabStrip: true);
         pinnedTab.TogglePinCommand.Execute(null);

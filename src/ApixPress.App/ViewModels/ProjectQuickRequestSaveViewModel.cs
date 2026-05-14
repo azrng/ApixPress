@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using ApixPress.App.Messages;
 using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
@@ -37,7 +39,7 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase
         DraftName = fallbackName;
         DraftDescription = workspaceTab.ConfigTab.RequestDescription;
         IsDialogOpen = true;
-        _hostContext.SetStatusMessage("请输入快捷请求名称后再保存。");
+        _hostContext.Messenger.Send(new StatusMessageRequest("请输入快捷请求名称后再保存。"));
     }
 
     public void Dismiss()
@@ -49,7 +51,7 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase
     private void CloseDialog()
     {
         Dismiss();
-        _hostContext.SetStatusMessage("已取消保存快捷请求。");
+        _hostContext.Messenger.Send(new StatusMessageRequest("已取消保存快捷请求。"));
     }
 
     [RelayCommand]
@@ -64,7 +66,7 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase
 
         if (string.IsNullOrWhiteSpace(DraftName))
         {
-            _hostContext.SetStatusMessage("请输入快捷请求名称。");
+            _hostContext.Messenger.Send(new StatusMessageRequest("请输入快捷请求名称。"));
             return;
         }
 

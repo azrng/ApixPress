@@ -1,17 +1,24 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class ProjectTabViewModel : ViewModelBase
+public partial class ProjectTabViewModel : ViewModelBase,
+    IRecipient<StatusMessageRequest>,
+    IRecipient<BusyStateChangedMessage>,
+    IRecipient<NavigationRequestMessage>,
+    IRecipient<WorkspaceStateChangedMessage>
 {
     private readonly RequestWorkspaceTabViewModel _fallbackWorkspaceTab;
     private readonly ProjectTabComposition _composition;
     private readonly ProjectTabLifecycleCoordinator _lifecycle;
+    private readonly IMessenger _messenger;
 
     public event Action<ProjectTabViewModel>? ShellStateChanged;
 
@@ -40,18 +47,14 @@ public partial class ProjectTabViewModel : ViewModelBase
 
         _fallbackWorkspaceTab = new RequestWorkspaceTabViewModel();
         _fallbackWorkspaceTab.ConfigureAsLanding();
+        _messenger = new WeakReferenceMessenger();
+        _messenger.RegisterAll(this);
+
         var hostContext = new ProjectTabHostContext
         {
             GetActiveWorkspaceTab = () => ActiveWorkspaceTab,
             IsInterfaceRootWorkspaceActive = () => IsInterfaceRootWorkspaceActive,
-            SetInterfaceRootWorkspaceActive = value => IsInterfaceRootWorkspaceActive = value,
-            SetStatusMessage = message => StatusMessage = message,
-            NotifyShellState = NotifyShellState,
-            NotifyWorkspaceEditorState = NotifyWorkspaceEditorState,
-            NotifyWorkspaceBindingsChanged = NotifyWorkspaceBindingsChanged,
-            NotifyActiveWorkspaceTabChanged = () => OnPropertyChanged(nameof(ActiveWorkspaceTab)),
-            NotifyWorkspaceTabMenuChanged = () => OnPropertyChanged(nameof(IsWorkspaceTabMenuOpen)),
-            SetBusyState = value => IsBusy = value
+            Messenger = _messenger
         };
         _composition = ProjectTabComposition.Create(
             Project,
@@ -208,8 +211,77 @@ public partial class ProjectTabViewModel : ViewModelBase
         return _lifecycle.LoadHistoryRequestAsync(item);
     }
 
+    public void Receive(StatusMessageRequest message)
+    {
+        StatusMessage = message.Message;
+    }
+
+    public void Receive(BusyStateChangedMessage message)
+    {
+        IsBusy = message.IsBusy;
+    }
+
+    public void Receive(NavigationRequestMessage message)
+    {
+        switch (message.Target)
+        {
+            case NavigationTarget.InterfaceRootWorkspace:
+                IsInterfaceRootWorkspaceActive = true;
+                break;
+            case NavigationTarget.LandingWorkspaceTab:
+                Workspace.EnsureLandingWorkspaceTab();
+                break;
+            case NavigationTarget.InterfaceManagementSection:
+                Shell.SelectInterfaceManagementSection();
+                break;
+            case NavigationTarget.ProjectSettingsWorkspace:
+                Shell.ShowProjectSettingsSection();
+                break;
+        }
+    }
+
+    public void Receive(WorkspaceStateChangedMessage message)
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        if (message.Changes.HasFlag(WorkspaceStateChangeFlags.ShellState))
+        {
+            Summary.NotifyStateChanged();
+            ShellStateChanged?.Invoke(this);
+        }
+
+        if (message.Changes.HasFlag(WorkspaceStateChangeFlags.EditorState))
+        {
+            IsInterfaceRootWorkspaceActive = false;
+            OnPropertyChanged(nameof(ConfigTab));
+            OnPropertyChanged(nameof(ResponseSection));
+            Shell.NotifyWorkspaceStateChanged();
+            Editor.NotifyStateChanged();
+        }
+
+        if (message.Changes.HasFlag(WorkspaceStateChangeFlags.BindingsChanged))
+        {
+            OnPropertyChanged(nameof(ConfigTab));
+            OnPropertyChanged(nameof(ResponseSection));
+        }
+
+        if (message.Changes.HasFlag(WorkspaceStateChangeFlags.ActiveTabChanged))
+        {
+            OnPropertyChanged(nameof(ActiveWorkspaceTab));
+        }
+
+        if (message.Changes.HasFlag(WorkspaceStateChangeFlags.TabMenuChanged))
+        {
+            OnPropertyChanged(nameof(IsWorkspaceTabMenuOpen));
+        }
+    }
+
     protected override void DisposeManaged()
     {
+        _messenger.UnregisterAll(this);
         _composition.Dispose();
         _fallbackWorkspaceTab.Dispose();
         ShellStateChanged = null;
@@ -226,28 +298,9 @@ public partial class ProjectTabViewModel : ViewModelBase
         ShellStateChanged?.Invoke(this);
     }
 
-    private void NotifyWorkspaceBindingsChanged()
+    partial void OnIsInterfaceRootWorkspaceActiveChanged(bool value)
     {
-        if (IsDisposed)
-        {
-            return;
-        }
-
-        OnPropertyChanged(nameof(ConfigTab));
-        OnPropertyChanged(nameof(ResponseSection));
-    }
-
-    private void NotifyWorkspaceEditorState()
-    {
-        if (IsDisposed)
-        {
-            return;
-        }
-
-        _composition.ClearInterfaceRootWorkspace();
-        NotifyWorkspaceBindingsChanged();
         Shell.NotifyWorkspaceStateChanged();
-        Editor.NotifyStateChanged();
     }
 
     public async Task ShowInterfaceRootWorkspaceAsync()
@@ -258,10 +311,5 @@ public partial class ProjectTabViewModel : ViewModelBase
         }
 
         await _composition.OpenInterfaceRootWorkspaceAsync();
-    }
-
-    partial void OnIsInterfaceRootWorkspaceActiveChanged(bool value)
-    {
-        Shell.NotifyWorkspaceStateChanged();
     }
 }

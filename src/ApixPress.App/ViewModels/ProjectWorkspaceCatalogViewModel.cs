@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -20,8 +22,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     private readonly ProjectWorkspaceTabsViewModel _workspace;
     private readonly Func<Task> _openInterfaceRootWorkspaceAsync;
     private readonly Action _showInterfaceManagementSection;
-    private readonly Action<string> _setStatusMessage;
-    private readonly Action _notifyShellState;
+    private readonly IMessenger _messenger;
     private readonly Func<Task> _reloadImportedDocumentsAsync;
     private int _navigationRebuildSuspendCount;
     private bool _interfaceNavigationRebuildPending;
@@ -35,8 +36,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         ProjectWorkspaceTabsViewModel workspace,
         Func<Task> openInterfaceRootWorkspaceAsync,
         Action showInterfaceManagementSection,
-        Action<string> setStatusMessage,
-        Action notifyShellState,
+        IMessenger messenger,
         Func<Task> reloadImportedDocumentsAsync)
     {
         _projectId = projectId;
@@ -46,8 +46,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         _workspace = workspace;
         _openInterfaceRootWorkspaceAsync = openInterfaceRootWorkspaceAsync;
         _showInterfaceManagementSection = showInterfaceManagementSection;
-        _setStatusMessage = setStatusMessage;
-        _notifyShellState = notifyShellState;
+        _messenger = messenger;
         _reloadImportedDocumentsAsync = reloadImportedDocumentsAsync;
 
         _useCasesPanel.RequestCases.CollectionChanged += OnSavedRequestsCollectionChanged;
@@ -142,13 +141,13 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         var targetTab = _workspace.ResolveTabForWorkspaceNavigation(source);
         ApplyWorkspaceItemToTab(targetTab, source);
         _workspace.ActivateWorkspaceTab(targetTab);
-        _setStatusMessage(source.EntryType switch
+        _messenger.Send(new StatusMessageRequest(source.EntryType switch
         {
             ProjectTabRequestEntryTypes.HttpInterface => $"已加载 HTTP 接口：{source.Name}",
             ProjectTabRequestEntryTypes.HttpCase => $"已加载接口用例：{source.Name}",
             _ => $"已加载快捷请求：{source.Name}"
-        });
-        _notifyShellState();
+        }));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
 
         if (source.HasLoadedDetail)
         {
@@ -181,8 +180,8 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
             .ToList();
         if (targets.Count == 0)
         {
-            _setStatusMessage("当前节点没有可删除的内容。");
-            _notifyShellState();
+            _messenger.Send(new StatusMessageRequest("当前节点没有可删除的内容。"));
+            _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return;
         }
 
@@ -211,10 +210,10 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
             await _reloadImportedDocumentsAsync();
         }
 
-        _setStatusMessage(targets.Count == 1
+        _messenger.Send(new StatusMessageRequest(targets.Count == 1
             ? $"已删除：{targets[0].Name}"
-            : $"已删除 {targets.Count} 项内容。");
-        _notifyShellState();
+            : $"已删除 {targets.Count} 项内容。"));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     public void UpsertCaseItem(RequestCaseDto requestCase)
@@ -254,8 +253,8 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 
         PendingDeleteWorkspaceItem = item;
         IsDeleteConfirmDialogOpen = true;
-        _setStatusMessage($"准备删除：{item.Title}");
-        _notifyShellState();
+        _messenger.Send(new StatusMessageRequest($"准备删除：{item.Title}"));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     [RelayCommand]
@@ -263,8 +262,8 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     {
         PendingDeleteWorkspaceItem = null;
         IsDeleteConfirmDialogOpen = false;
-        _setStatusMessage("已取消删除。");
-        _notifyShellState();
+        _messenger.Send(new StatusMessageRequest("已取消删除。"));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     [RelayCommand]
@@ -273,7 +272,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         if (PendingDeleteWorkspaceItem is null)
         {
             IsDeleteConfirmDialogOpen = false;
-            _notifyShellState();
+            _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return;
         }
 
@@ -303,7 +302,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         var (rebuildInterfaceNavigation, rebuildQuickRequestNavigation) = ResolveWorkspaceNavigationRebuildScope(e);
         RequestWorkspaceNavigationRebuild(rebuildInterfaceNavigation, rebuildQuickRequestNavigation);
         NotifySavedRequestStateChanged();
-        _notifyShellState();
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     private void NotifySavedRequestStateChanged()
@@ -616,13 +615,13 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
                 && IsTabStillEditingSource(targetTab, source))
             {
                 ApplyWorkspaceItemToTab(targetTab, detail);
-                _notifyShellState();
+                _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             }
         }
         catch (Exception exception)
         {
-            _setStatusMessage($"加载接口详情失败：{exception.Message}");
-            _notifyShellState();
+            _messenger.Send(new StatusMessageRequest($"加载接口详情失败：{exception.Message}"));
+            _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
         }
     }
 

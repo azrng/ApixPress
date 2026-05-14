@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using ApixPress.App.Helpers;
+using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -15,8 +17,7 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
     private readonly ObservableCollection<RequestCaseItemViewModel> _savedRequests;
     private readonly IProjectHttpSettingsService _settingsService;
     private readonly Func<RequestCaseDto, Task> _openHttpInterfaceAsync;
-    private readonly Action<string> _setStatusMessage;
-    private readonly Action _notifyShellState;
+    private readonly IMessenger _messenger;
     private readonly ObservableCollection<ProjectHttpInterfaceOverviewItemViewModel> _httpInterfaces = [];
 
     public ProjectInterfaceRootWorkspaceViewModel(
@@ -24,15 +25,13 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
         ObservableCollection<RequestCaseItemViewModel> savedRequests,
         IProjectHttpSettingsService settingsService,
         Func<RequestCaseDto, Task> openHttpInterfaceAsync,
-        Action<string> setStatusMessage,
-        Action notifyShellState)
+        IMessenger messenger)
     {
         _projectId = projectId;
         _savedRequests = savedRequests;
         _settingsService = settingsService;
         _openHttpInterfaceAsync = openHttpInterfaceAsync;
-        _setStatusMessage = setStatusMessage;
-        _notifyShellState = notifyShellState;
+        _messenger = messenger;
 
         HttpInterfaces = new ReadOnlyObservableCollection<ProjectHttpInterfaceOverviewItemViewModel>(_httpInterfaces);
         _savedRequests.CollectionChanged += OnSavedRequestsCollectionChanged;
@@ -147,18 +146,18 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
             {
                 ApplyAuthSettings(result.Data);
                 StatusText = IsBearerMode ? "HTTP 接口全局 Bearer Token 已保存。" : "HTTP 接口全局 Auth 已关闭。";
-                _setStatusMessage(StatusText);
+                _messenger.Send(new StatusMessageRequest(StatusText));
             }
             else
             {
                 StatusText = result.Message;
-                _setStatusMessage(result.Message);
+                _messenger.Send(new StatusMessageRequest(result.Message));
             }
         }
         finally
         {
             IsBusy = false;
-            _notifyShellState();
+            _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
         }
     }
 

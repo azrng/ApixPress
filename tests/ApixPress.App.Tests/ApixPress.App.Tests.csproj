@@ -27,7 +27,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ApixPress.App\Apifox.App.csproj" />
+    <ProjectReference Include="..\..\src\ApixPress.App\ApixPress.App.csproj" />
+    <ProjectReference Include="..\..\src\ApixPress.Core\ApixPress.Core.csproj" />
   </ItemGroup>
 
 </Project>

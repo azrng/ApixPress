@@ -15,7 +15,7 @@ concurrency:
 
 env:
   VERSION_FILE: VERSION
-  APP_PROJECT_PATH: src/ApixPress.App/Apifox.App.csproj
+  APP_PROJECT_PATH: src/ApixPress.App/ApixPress.App.csproj
   APP_PUBLISH_DIR: publish/win-x64/app
   RELEASE_DIR: publish/win-x64/release
   PACKAGE_NAME: ApixPress-win-x64-portable.zip

@@ -46,6 +46,9 @@
     <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="1.15.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ApixPress.Core\ApixPress.Core.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="appsettings.json" />

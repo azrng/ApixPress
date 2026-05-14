@@ -4,7 +4,9 @@ using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using ApixPress.App.Helpers;
+using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels.Base;
 
@@ -13,7 +15,7 @@ namespace ApixPress.App.ViewModels;
 public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 {
     private readonly Action _selectInterfaceManagementSection;
-    private readonly Action<string> _setStatusMessage;
+    private readonly IMessenger _messenger;
     private readonly ObservableCollection<RequestWorkspaceTabViewModel> _visibleWorkspaceTabs = [];
     private readonly Dictionary<RequestConfigTabViewModel, RequestWorkspaceTabViewModel> _tabByConfig = [];
     private readonly Dictionary<INotifyCollectionChanged, RequestWorkspaceTabViewModel> _tabByConfigCollection = [];
@@ -24,10 +26,10 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
     public ProjectWorkspaceTabsViewModel(
         Action selectInterfaceManagementSection,
-        Action<string> setStatusMessage)
+        IMessenger messenger)
     {
         _selectInterfaceManagementSection = selectInterfaceManagementSection;
-        _setStatusMessage = setStatusMessage;
+        _messenger = messenger;
 
         VisibleWorkspaceTabs = new ReadOnlyObservableCollection<RequestWorkspaceTabViewModel>(_visibleWorkspaceTabs);
         WorkspaceTabs.CollectionChanged += OnWorkspaceTabsCollectionChanged;
@@ -205,7 +207,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         tab.ConfigureAsQuickRequest();
         IsWorkspaceTabMenuOpen = false;
         ActivateWorkspaceTab(tab);
-        _setStatusMessage("快捷请求标签已打开。");
+        _messenger.Send(new StatusMessageRequest("快捷请求标签已打开。"));
         StateChanged?.Invoke();
     }
 
@@ -217,7 +219,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         tab.ConfigureAsHttpInterface();
         IsWorkspaceTabMenuOpen = false;
         ActivateWorkspaceTab(tab);
-        _setStatusMessage("HTTP 接口标签已打开。");
+        _messenger.Send(new StatusMessageRequest("HTTP 接口标签已打开。"));
         StateChanged?.Invoke();
     }
 
@@ -230,7 +232,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         landingTab.ShowInTabStrip = true;
         ActivateWorkspaceTab(landingTab);
         IsWorkspaceTabMenuOpen = false;
-        _setStatusMessage("已返回新建页。");
+        _messenger.Send(new StatusMessageRequest("已返回新建页。"));
         StateChanged?.Invoke();
     }
 
@@ -241,7 +243,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         var tab = CreateWorkspaceTab(activate: true, showInTabStrip: true);
         tab.ConfigureAsLanding();
         IsWorkspaceTabMenuOpen = false;
-        _setStatusMessage("已新建一个工作标签。");
+        _messenger.Send(new StatusMessageRequest("已新建一个工作标签。"));
         StateChanged?.Invoke();
     }
 
@@ -279,7 +281,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             .ToList();
         if (tabsToRemove.Count == 0)
         {
-            _setStatusMessage("当前没有可关闭的非固定标签页。");
+            _messenger.Send(new StatusMessageRequest("当前没有可关闭的非固定标签页。"));
             StateChanged?.Invoke();
             return;
         }
@@ -304,9 +306,9 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             EnsureLandingWorkspaceTab();
         }
 
-        _setStatusMessage(skippedUnsavedCount > 0
+        _messenger.Send(new StatusMessageRequest(skippedUnsavedCount > 0
             ? $"有 {skippedUnsavedCount} 个标签存在未保存修改，再次关闭全部将放弃修改。"
-            : WorkspaceTabs.Any(item => item.IsPinned) ? "已关闭全部非固定标签页。" : "已关闭全部标签页。");
+            : WorkspaceTabs.Any(item => item.IsPinned) ? "已关闭全部非固定标签页。" : "已关闭全部标签页。"));
         StateChanged?.Invoke();
     }
 
@@ -326,7 +328,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         if (respectPin && tab.IsPinned)
         {
             IsWorkspaceTabMenuOpen = false;
-            _setStatusMessage("固定标签页请先取消固定后再关闭。");
+            _messenger.Send(new StatusMessageRequest("固定标签页请先取消固定后再关闭。"));
             StateChanged?.Invoke();
             return false;
         }
@@ -335,7 +337,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         {
             tab.IsCloseDiscardPending = true;
             IsWorkspaceTabMenuOpen = false;
-            _setStatusMessage($"标签“{tab.HeaderText}”有未保存修改，再次关闭将放弃修改。");
+            _messenger.Send(new StatusMessageRequest($"标签“{tab.HeaderText}”有未保存修改，再次关闭将放弃修改。"));
             StateChanged?.Invoke();
             return false;
         }
@@ -355,7 +357,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             ActivateWorkspaceTab(WorkspaceTabs[nextIndex]);
         }
 
-        _setStatusMessage("工作标签已关闭。");
+        _messenger.Send(new StatusMessageRequest("工作标签已关闭。"));
         StateChanged?.Invoke();
         return true;
     }
@@ -371,9 +373,9 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         {
             newValue.IsActive = true;
             _selectInterfaceManagementSection();
-            _setStatusMessage(newValue.IsLandingTab
+            _messenger.Send(new StatusMessageRequest(newValue.IsLandingTab
                 ? "已切换到新建页。"
-                : $"已切换到标签：{newValue.HeaderText}");
+                : $"已切换到标签：{newValue.HeaderText}"));
         }
 
         ActiveWorkspaceTabChanged?.Invoke(oldValue, newValue);
@@ -506,11 +508,11 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             EnsureLandingWorkspaceTab();
         }
 
-        _setStatusMessage(tabsToRemove.Count == 0
+        _messenger.Send(new StatusMessageRequest(tabsToRemove.Count == 0
             ? "当前没有其它非固定标签页可关闭。"
             : skippedUnsavedCount > 0
                 ? $"有 {skippedUnsavedCount} 个其它标签存在未保存修改，再次关闭其它将放弃修改。"
-                : "已关闭其它非固定标签页。");
+                : "已关闭其它非固定标签页。"));
         StateChanged?.Invoke();
     }
 
