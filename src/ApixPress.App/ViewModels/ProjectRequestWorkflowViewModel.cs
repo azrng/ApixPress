@@ -16,6 +16,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
     private readonly RequestHistoryPanelViewModel _historyPanel;
     private readonly EnvironmentPanelViewModel _environmentPanel;
     private readonly ProjectWorkspaceCatalogViewModel _catalog;
+    private readonly ProjectInterfaceRootWorkspaceViewModel _interfaceRoot;
     private readonly ProjectTabWorkspaceContext _workspaceContext;
     private readonly Action<RequestWorkspaceTabViewModel> _openQuickRequestSaveDialog;
     private readonly ProjectTabHostContext _hostContext;
@@ -30,6 +31,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         RequestHistoryPanelViewModel historyPanel,
         EnvironmentPanelViewModel environmentPanel,
         ProjectWorkspaceCatalogViewModel catalog,
+        ProjectInterfaceRootWorkspaceViewModel interfaceRoot,
         ProjectTabWorkspaceContext workspaceContext,
         Action<RequestWorkspaceTabViewModel> openQuickRequestSaveDialog,
         ProjectTabHostContext hostContext)
@@ -42,6 +44,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         _historyPanel = historyPanel;
         _environmentPanel = environmentPanel;
         _catalog = catalog;
+        _interfaceRoot = interfaceRoot;
         _workspaceContext = workspaceContext;
         _openQuickRequestSaveDialog = openQuickRequestSaveDialog;
         _hostContext = hostContext;
@@ -90,7 +93,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         var cancellationToken = cancellationTokenSource.Token;
         try
         {
-            var snapshot = workspaceTab.BuildSnapshot();
+            var snapshot = BuildRequestSnapshotForSend(workspaceTab);
             var environment = BuildExecutionEnvironment();
             var result = await _requestExecutionService.SendAsync(snapshot, environment, cancellationToken);
             workspaceTab.ResponseSection.ApplyResult(result, snapshot);
@@ -314,6 +317,14 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             IsActive = false,
             SortOrder = 0
         };
+    }
+
+    private RequestSnapshotDto BuildRequestSnapshotForSend(RequestWorkspaceTabViewModel workspaceTab)
+    {
+        var snapshot = workspaceTab.BuildSnapshot();
+        return workspaceTab.IsHttpInterfaceTab
+            ? _interfaceRoot.ApplyGlobalAuth(snapshot)
+            : snapshot;
     }
 
     private async Task SaveHttpInterfaceAsync(RequestWorkspaceTabViewModel workspaceTab)

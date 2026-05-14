@@ -585,6 +585,37 @@ public static class ViewModelSharedTestDoubles
         }
     }
 
+    public sealed class FakeProjectHttpSettingsService : IProjectHttpSettingsService
+    {
+        public ProjectHttpAuthSettingsDto CurrentSettings { get; set; } = new();
+
+        public int SaveCallCount { get; private set; }
+
+        public Task<ProjectHttpAuthSettingsDto> GetAuthSettingsAsync(string projectId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new ProjectHttpAuthSettingsDto
+            {
+                ProjectId = string.IsNullOrWhiteSpace(CurrentSettings.ProjectId) ? projectId : CurrentSettings.ProjectId,
+                AuthMode = CurrentSettings.AuthMode,
+                BearerToken = CurrentSettings.BearerToken,
+                UpdatedAt = CurrentSettings.UpdatedAt
+            });
+        }
+
+        public Task<IResultModel<ProjectHttpAuthSettingsDto>> SaveAuthSettingsAsync(ProjectHttpAuthSettingsDto settings, CancellationToken cancellationToken)
+        {
+            SaveCallCount++;
+            CurrentSettings = new ProjectHttpAuthSettingsDto
+            {
+                ProjectId = settings.ProjectId,
+                AuthMode = settings.AuthMode,
+                BearerToken = settings.BearerToken,
+                UpdatedAt = settings.UpdatedAt
+            };
+            return Task.FromResult<IResultModel<ProjectHttpAuthSettingsDto>>(ResultModel<ProjectHttpAuthSettingsDto>.Success(CurrentSettings));
+        }
+    }
+
     public sealed class FakeAppNotificationService : IAppNotificationService
     {
         public List<(string Title, string Content, NotificationType Type)> Notifications { get; } = [];

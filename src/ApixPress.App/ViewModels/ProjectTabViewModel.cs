@@ -27,6 +27,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         IFilePickerService filePickerService,
         IAppNotificationService appNotificationService,
         IProjectDataExportService projectDataExportService,
+        IProjectHttpSettingsService projectHttpSettingsService,
         Func<string, Task> handleProjectDeletedAsync)
     {
         Project = new ProjectWorkspaceItemViewModel
@@ -42,6 +43,8 @@ public partial class ProjectTabViewModel : ViewModelBase
         var hostContext = new ProjectTabHostContext
         {
             GetActiveWorkspaceTab = () => ActiveWorkspaceTab,
+            IsInterfaceRootWorkspaceActive = () => IsInterfaceRootWorkspaceActive,
+            SetInterfaceRootWorkspaceActive = value => IsInterfaceRootWorkspaceActive = value,
             SetStatusMessage = message => StatusMessage = message,
             NotifyShellState = NotifyShellState,
             NotifyWorkspaceEditorState = NotifyWorkspaceEditorState,
@@ -63,6 +66,7 @@ public partial class ProjectTabViewModel : ViewModelBase
             filePickerService,
             appNotificationService,
             projectDataExportService,
+            projectHttpSettingsService,
             handleProjectDeletedAsync,
             hostContext);
         EnvironmentPanel = _composition.EnvironmentPanel;
@@ -73,6 +77,7 @@ public partial class ProjectTabViewModel : ViewModelBase
         Editor = _composition.Editor;
         Settings = _composition.Settings;
         Catalog = _composition.Catalog;
+        InterfaceRoot = _composition.InterfaceRoot;
         Import = _composition.Import;
         Workflow = _composition.Workflow;
         QuickRequestSave = _composition.QuickRequestSave;
@@ -90,6 +95,7 @@ public partial class ProjectTabViewModel : ViewModelBase
     public ProjectRequestEditorViewModel Editor { get; }
     public ProjectSettingsShellViewModel Settings { get; }
     public ProjectWorkspaceCatalogViewModel Catalog { get; }
+    public ProjectInterfaceRootWorkspaceViewModel InterfaceRoot { get; }
     public ProjectRequestWorkflowViewModel Workflow { get; }
     public ProjectImportViewModel Import { get; }
     public ProjectQuickRequestSaveViewModel QuickRequestSave { get; }
@@ -129,6 +135,9 @@ public partial class ProjectTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private string statusMessage = "项目工作区已就绪。";
+
+    [ObservableProperty]
+    private bool isInterfaceRootWorkspaceActive;
 
     [ObservableProperty]
     private bool responseValidationEnabled = true;
@@ -235,8 +244,24 @@ public partial class ProjectTabViewModel : ViewModelBase
             return;
         }
 
+        _composition.ClearInterfaceRootWorkspace();
         NotifyWorkspaceBindingsChanged();
         Shell.NotifyWorkspaceStateChanged();
         Editor.NotifyStateChanged();
+    }
+
+    public async Task ShowInterfaceRootWorkspaceAsync()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        await _composition.OpenInterfaceRootWorkspaceAsync();
+    }
+
+    partial void OnIsInterfaceRootWorkspaceActiveChanged(bool value)
+    {
+        Shell.NotifyWorkspaceStateChanged();
     }
 }

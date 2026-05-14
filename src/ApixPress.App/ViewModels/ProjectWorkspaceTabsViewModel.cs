@@ -46,6 +46,12 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
     [ObservableProperty]
     private bool isWorkspaceTabMenuOpen;
 
+    public void DeactivateWorkspaceTab()
+    {
+        ActiveWorkspaceTab = null;
+        RequestNotifications(stateChanged: true, editorStateChanged: true);
+    }
+
     public RequestWorkspaceTabViewModel ReuseActiveLandingOrCreateWorkspace()
     {
         if (ActiveWorkspaceTab?.IsLandingTab == true)

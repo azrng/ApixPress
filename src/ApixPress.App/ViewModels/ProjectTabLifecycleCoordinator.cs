@@ -15,6 +15,7 @@ internal sealed class ProjectTabLifecycleCoordinator
     private readonly ProjectQuickRequestSaveViewModel _quickRequestSave;
     private readonly ProjectWorkspaceShellViewModel _shell;
     private readonly ProjectRequestEditorViewModel _editor;
+    private readonly ProjectInterfaceRootWorkspaceViewModel _interfaceRoot;
     private readonly ProjectTabHostContext _hostContext;
     private bool _initialized;
 
@@ -29,6 +30,7 @@ internal sealed class ProjectTabLifecycleCoordinator
         ProjectQuickRequestSaveViewModel quickRequestSave,
         ProjectWorkspaceShellViewModel shell,
         ProjectRequestEditorViewModel editor,
+        ProjectInterfaceRootWorkspaceViewModel interfaceRoot,
         ProjectTabHostContext hostContext)
     {
         _projectId = projectId;
@@ -41,6 +43,7 @@ internal sealed class ProjectTabLifecycleCoordinator
         _quickRequestSave = quickRequestSave;
         _shell = shell;
         _editor = editor;
+        _interfaceRoot = interfaceRoot;
         _hostContext = hostContext;
     }
 
@@ -156,6 +159,7 @@ internal sealed class ProjectTabLifecycleCoordinator
         _historyPanel.SetProjectContext(_projectId);
         await _environmentPanel.LoadProjectAsync(_projectId, preferredEnvironmentId);
         await _useCasesPanel.LoadCasesAsync();
+        await _interfaceRoot.InitializeAsync();
         _workspace.EnsureLandingWorkspaceTab();
         _hostContext.NotifyShellState();
     }

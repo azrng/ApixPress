@@ -102,6 +102,7 @@ public sealed class DatabaseInitializer : ISingletonDependency
         EnsureColumn(connection, "request_history", "project_id", "TEXT");
         EnsureColumn(connection, "environment_variables", "environment_id", "TEXT");
         EnsureColumn(connection, "environment_variables", "environment_name", "TEXT NOT NULL DEFAULT ''");
+        EnsureProjectHttpSettingsTable(connection);
 
         connection.Execute("DROP INDEX IF EXISTS ux_request_cases_group_name;");
         connection.Execute("DROP INDEX IF EXISTS ux_request_cases_project_group_name;");
@@ -121,6 +122,20 @@ public sealed class DatabaseInitializer : ISingletonDependency
         connection.Execute("update request_cases set entry_type = 'quick-request' where ifnull(entry_type, '') = ''");
         connection.Execute("update request_cases set folder_path = '' where folder_path is null");
         connection.Execute("update request_cases set parent_id = '' where parent_id is null");
+    }
+
+    private static void EnsureProjectHttpSettingsTable(IDbConnection connection)
+    {
+        connection.Execute(
+            """
+            create table if not exists project_http_settings (
+                project_id text primary key,
+                auth_mode text not null default 'none',
+                bearer_token text not null default '',
+                updated_at text not null,
+                foreign key(project_id) references projects(id) on delete cascade
+            )
+            """);
     }
 
     private static void MigrateLegacyWorkspaceData(IDbConnection connection)

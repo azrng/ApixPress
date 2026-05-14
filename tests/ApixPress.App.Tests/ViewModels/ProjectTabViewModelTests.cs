@@ -6,6 +6,7 @@ using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTes
 using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeAppNotificationService;
 using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeFilePickerService;
 using FakeProjectDataExportService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectDataExportService;
+using FakeProjectHttpSettingsService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectHttpSettingsService;
 using FakeProjectWorkspaceService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectWorkspaceService;
 using FakeRequestExecutionService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestExecutionService;
 using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
@@ -915,6 +916,70 @@ public sealed partial class ProjectTabViewModelTests
         Assert.NotNull(requestExecutionService.LastRequest);
         Assert.Equal(requestUrl, requestExecutionService.LastRequest!.Url);
         Assert.Equal("快捷请求发送完成。", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task InterfaceRootCommand_ShouldOpenAuthByDefaultAndSaveBearerSettings()
+    {
+        var projectHttpSettingsService = new FakeProjectHttpSettingsService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            projectHttpSettingsService: projectHttpSettingsService);
+        await viewModel.InitializeAsync();
+        var root = Assert.Single(viewModel.Catalog.InterfaceTreeItems);
+
+        await viewModel.Catalog.LoadWorkspaceItem(root);
+        viewModel.InterfaceRoot.SelectedAuthModeIndex = 1;
+        viewModel.InterfaceRoot.BearerToken = "{{apiKey}}";
+        await viewModel.InterfaceRoot.SaveAuthCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.Shell.ShowInterfaceRootWorkspace);
+        Assert.True(viewModel.InterfaceRoot.IsAuthSelected);
+        Assert.False(viewModel.InterfaceRoot.IsAllInterfacesSelected);
+        Assert.Equal(1, projectHttpSettingsService.SaveCallCount);
+        Assert.Equal(ProjectHttpAuthSettingsDto.ModeBearer, projectHttpSettingsService.CurrentSettings.AuthMode);
+        Assert.Equal("{{apiKey}}", projectHttpSettingsService.CurrentSettings.BearerToken);
+    }
+
+    [Fact]
+    public async Task SendRequestCommand_ShouldApplyGlobalBearerAuthOnlyForHttpInterface()
+    {
+        var requestExecutionService = new FakeRequestExecutionService();
+        var projectHttpSettingsService = new FakeProjectHttpSettingsService
+        {
+            CurrentSettings = new ProjectHttpAuthSettingsDto
+            {
+                ProjectId = "project-1",
+                AuthMode = ProjectHttpAuthSettingsDto.ModeBearer,
+                BearerToken = "{{apiKey}}"
+            }
+        };
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            requestExecutionService: requestExecutionService,
+            projectHttpSettingsService: projectHttpSettingsService);
+        await viewModel.InitializeAsync();
+
+        Assert.False(viewModel.Shell.ShowInterfaceRootWorkspace);
+
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = "/orders";
+        await viewModel.SendRequestCommand.ExecuteAsync(null);
+
+        var httpRequest = requestExecutionService.LastRequest;
+        Assert.NotNull(httpRequest);
+        Assert.Contains(httpRequest!.Headers, item =>
+            item.Name == "Authorization"
+            && item.Value == "Bearer {{apiKey}}"
+            && item.IsEnabled);
+
+        viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = "https://demo.local/ping";
+        await viewModel.SendRequestCommand.ExecuteAsync(null);
+
+        var quickRequest = requestExecutionService.LastRequest;
+        Assert.NotNull(quickRequest);
+        Assert.DoesNotContain(quickRequest!.Headers, item => item.Name == "Authorization");
     }
 
     [Fact]

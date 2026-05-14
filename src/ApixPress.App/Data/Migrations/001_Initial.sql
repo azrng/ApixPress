@@ -105,6 +105,14 @@ ON request_cases(project_id, entry_type, group_name, folder_path, parent_id, nam
 CREATE INDEX IF NOT EXISTS ix_request_cases_project_parent_id
 ON request_cases(project_id, parent_id);
 
+CREATE TABLE IF NOT EXISTS project_http_settings (
+    project_id TEXT PRIMARY KEY,
+    auth_mode TEXT NOT NULL DEFAULT 'none',
+    bearer_token TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS environment_variables (
     id TEXT PRIMARY KEY,
     environment_id TEXT NOT NULL,

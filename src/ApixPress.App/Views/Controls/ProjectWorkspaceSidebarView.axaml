@@ -137,7 +137,8 @@
                 <StackPanel Classes="ProjectSidebarModuleChildren">
                   <ToggleButton x:Name="InterfaceCatalogToggle"
                                 Classes="ProjectSidebarCatalogToggleButton ProjectSidebarCatalogActiveButton ProjectSidebarCatalogFlatButton"
-                                IsChecked="{Binding Catalog.IsInterfaceCatalogExpanded, Mode=TwoWay}">
+                                IsChecked="{Binding Catalog.IsInterfaceCatalogExpanded, Mode=TwoWay}"
+                                Command="{Binding Catalog.OpenInterfaceRootCommand}">
                     <Grid ColumnDefinitions="Auto,Auto,*,Auto"
                           ColumnSpacing="{StaticResource Space.2}">
                       <TextBlock Grid.Column="0"

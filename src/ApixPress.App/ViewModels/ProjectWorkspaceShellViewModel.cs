@@ -46,6 +46,7 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
     public bool IsProjectSettingsSection => SelectedSection == Sections.ProjectSettings;
     public bool ShowInterfaceManagementLanding => IsInterfaceManagementSection && (_workspaceContext.GetActiveWorkspaceTab()?.IsLandingTab ?? true);
     public bool ShowRequestEditorWorkspace => IsInterfaceManagementSection && _workspaceContext.GetActiveWorkspaceTab() is { IsLandingTab: false };
+    public bool ShowInterfaceRootWorkspace => IsInterfaceManagementSection && _workspaceContext.IsInterfaceRootWorkspaceActive();
     public ProjectWorkspaceContentMode CurrentContentMode => ResolveCurrentContentMode();
 
     [ObservableProperty]
@@ -83,6 +84,7 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
         OnPropertyChanged(nameof(ShowRequestEditorWorkspace));
+        OnPropertyChanged(nameof(ShowInterfaceRootWorkspace));
         OnPropertyChanged(nameof(CurrentContentMode));
     }
 
@@ -116,6 +118,7 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsProjectSettingsSection));
         OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
         OnPropertyChanged(nameof(ShowRequestEditorWorkspace));
+        OnPropertyChanged(nameof(ShowInterfaceRootWorkspace));
         OnPropertyChanged(nameof(CurrentContentMode));
     }
 
@@ -155,6 +158,11 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
         if (IsRequestHistorySection)
         {
             return ProjectWorkspaceContentMode.RequestHistory;
+        }
+
+        if (_workspaceContext.IsInterfaceRootWorkspaceActive())
+        {
+            return ProjectWorkspaceContentMode.InterfaceRoot;
         }
 
         return _workspaceContext.GetActiveWorkspaceTab() is { IsLandingTab: false }

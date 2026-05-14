@@ -18,6 +18,7 @@ public partial class MainWindowViewModel
             _filePickerService,
             _appNotificationService,
             _projectDataExportService,
+            _projectHttpSettingsService,
             HandleProjectDeletedFromSettingsAsync);
         tab.ShellStateChanged += OnProjectTabShellStateChanged;
         return tab;

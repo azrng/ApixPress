@@ -9,6 +9,7 @@ public partial class ProjectWorkspaceContentHostView : UserControl
     private ProjectTabViewModel? _viewModel;
     private ProjectWorkspaceSidebarView? _sidebarView;
     private WorkspaceLandingView? _landingView;
+    private ProjectInterfaceRootWorkspaceView? _interfaceRootView;
     private RequestEditorWorkspaceView? _requestEditorView;
     private RequestHistoryDetailView? _requestHistoryView;
     private ProjectSettingsWorkspaceView? _projectSettingsView;
@@ -85,7 +86,7 @@ public partial class ProjectWorkspaceContentHostView : UserControl
         }
 
         var mode = _viewModel.Shell.CurrentContentMode;
-        if (IsInterfaceManagementMode(_currentMode) && IsInterfaceManagementMode(mode) && HostGrid.Children.Count > 0)
+        if (IsRequestWorkspaceMode(_currentMode) && IsRequestWorkspaceMode(mode) && HostGrid.Children.Count > 0)
         {
             _currentMode = mode;
             return;
@@ -114,10 +115,17 @@ public partial class ProjectWorkspaceContentHostView : UserControl
 
         if (IsInterfaceManagementMode(mode))
         {
+            if (mode == ProjectWorkspaceContentMode.InterfaceRoot)
+            {
+                var interfaceRootView = EnsureInterfaceRootView();
+                Grid.SetColumn(interfaceRootView, 2);
+                HostGrid.Children.Add(interfaceRootView);
+                return;
+            }
+
             var landingView = EnsureLandingView();
             Grid.SetColumn(landingView, 2);
             HostGrid.Children.Add(landingView);
-
             var editorView = EnsureRequestEditorView();
             Grid.SetColumn(editorView, 2);
             HostGrid.Children.Add(editorView);
@@ -140,6 +148,7 @@ public partial class ProjectWorkspaceContentHostView : UserControl
         _currentMode = null;
         _sidebarView = null;
         _landingView = null;
+        _interfaceRootView = null;
         _requestEditorView = null;
         _requestHistoryView = null;
         _projectSettingsView = null;
@@ -155,6 +164,11 @@ public partial class ProjectWorkspaceContentHostView : UserControl
         if (_landingView is not null)
         {
             _landingView.DataContext = _viewModel;
+        }
+
+        if (_interfaceRootView is not null)
+        {
+            _interfaceRootView.DataContext = _viewModel;
         }
 
         if (_requestEditorView is not null)
@@ -191,6 +205,15 @@ public partial class ProjectWorkspaceContentHostView : UserControl
         return _landingView;
     }
 
+    private ProjectInterfaceRootWorkspaceView EnsureInterfaceRootView()
+    {
+        _interfaceRootView ??= new ProjectInterfaceRootWorkspaceView
+        {
+            DataContext = _viewModel
+        };
+        return _interfaceRootView;
+    }
+
     private RequestEditorWorkspaceView EnsureRequestEditorView()
     {
         _requestEditorView ??= new RequestEditorWorkspaceView
@@ -220,6 +243,14 @@ public partial class ProjectWorkspaceContentHostView : UserControl
 
     private static bool IsInterfaceManagementMode(ProjectWorkspaceContentMode? mode)
     {
-        return mode is ProjectWorkspaceContentMode.Landing or ProjectWorkspaceContentMode.RequestEditor;
+        return mode is ProjectWorkspaceContentMode.Landing
+            or ProjectWorkspaceContentMode.InterfaceRoot
+            or ProjectWorkspaceContentMode.RequestEditor;
+    }
+
+    private static bool IsRequestWorkspaceMode(ProjectWorkspaceContentMode? mode)
+    {
+        return mode is ProjectWorkspaceContentMode.Landing
+            or ProjectWorkspaceContentMode.RequestEditor;
     }
 }

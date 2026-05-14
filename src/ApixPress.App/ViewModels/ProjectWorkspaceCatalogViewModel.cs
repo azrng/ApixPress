@@ -18,6 +18,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     private readonly IApiWorkspaceService _apiWorkspaceService;
     private readonly UseCasesPanelViewModel _useCasesPanel;
     private readonly ProjectWorkspaceTabsViewModel _workspace;
+    private readonly Func<Task> _openInterfaceRootWorkspaceAsync;
     private readonly Action _showInterfaceManagementSection;
     private readonly Action<string> _setStatusMessage;
     private readonly Action _notifyShellState;
@@ -32,6 +33,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         IApiWorkspaceService apiWorkspaceService,
         UseCasesPanelViewModel useCasesPanel,
         ProjectWorkspaceTabsViewModel workspace,
+        Func<Task> openInterfaceRootWorkspaceAsync,
         Action showInterfaceManagementSection,
         Action<string> setStatusMessage,
         Action notifyShellState,
@@ -42,6 +44,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         _apiWorkspaceService = apiWorkspaceService;
         _useCasesPanel = useCasesPanel;
         _workspace = workspace;
+        _openInterfaceRootWorkspaceAsync = openInterfaceRootWorkspaceAsync;
         _showInterfaceManagementSection = showInterfaceManagementSection;
         _setStatusMessage = setStatusMessage;
         _notifyShellState = notifyShellState;
@@ -116,11 +119,22 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         QuickRequestTreeItems.Clear();
     }
 
-    public Task LoadWorkspaceItem(ExplorerItemViewModel? item)
+    public async Task LoadWorkspaceItem(ExplorerItemViewModel? item)
     {
-        if (item is null || item.SourceCase is null)
+        if (item is null)
         {
-            return Task.CompletedTask;
+            return;
+        }
+
+        if (string.Equals(item.NodeType, "interface-root", StringComparison.OrdinalIgnoreCase))
+        {
+            await _openInterfaceRootWorkspaceAsync();
+            return;
+        }
+
+        if (item.SourceCase is null)
+        {
+            return;
         }
 
         var source = item.SourceCase;
@@ -138,11 +152,21 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 
         if (source.HasLoadedDetail)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         _ = LoadWorkspaceItemDetailAsync(item, targetTab, source);
-        return Task.CompletedTask;
+    }
+
+    public Task OpenHttpInterfaceAsync(RequestCaseDto source)
+    {
+        var item = new ExplorerItemViewModel
+        {
+            NodeType = ProjectTabRequestEntryTypes.HttpInterface,
+            CanLoad = true,
+            SourceCase = source
+        };
+        return LoadWorkspaceItem(item);
     }
 
     public async Task DeleteWorkspaceItemAsync(ExplorerItemViewModel? item)
@@ -212,6 +236,12 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     {
         var syncResult = await _requestCaseService.SyncImportedHttpInterfacesAsync(_projectId, endpoints, CancellationToken.None);
         ApplyImportedInterfaceSyncResult(syncResult);
+    }
+
+    [RelayCommand]
+    private async Task OpenInterfaceRootAsync()
+    {
+        await _openInterfaceRootWorkspaceAsync();
     }
 
     [RelayCommand]

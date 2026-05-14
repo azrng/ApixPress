@@ -31,3 +31,11 @@
 - **Cause**: I used a broad PowerShell rewrite instead of `apply_patch` for a small markdown status edit.
 - **Correction**: Removed the BOM with `apply_patch` and continued using patches for tracked file edits.
 - **Prevention**: For tracked source or markdown files, especially files with Chinese content, use `apply_patch` for small edits and avoid `Set-Content`, `Out-File`, redirection, or whole-file rewrites.
+
+## 2026-05-14 - Parallel dotnet build/test file lock
+
+- **Context**: Ran `dotnet build ApixPress.slnx` and a filtered `dotnet test` in parallel.
+- **Error**: The test build failed with `AVLN9999` because `src\ApixPress.App\obj\Debug\net10.0\ApixPress.dll` was being used by another process.
+- **Cause**: Parallel .NET commands shared the same build intermediate output path.
+- **Correction**: Re-run build and test sequentially for this repository.
+- **Prevention**: Do not parallelize `dotnet build` and `dotnet test` on the same solution/project unless each command uses isolated output/intermediate paths.
