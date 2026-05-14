@@ -255,7 +255,7 @@ public partial class ProjectTabViewModel : ViewModelBase,
 
         if (message.Changes.HasFlag(WorkspaceStateChangeFlags.EditorState))
         {
-            IsInterfaceRootWorkspaceActive = false;
+            SyncInterfaceRootWorkspaceStateWithActiveTab();
             OnPropertyChanged(nameof(ConfigTab));
             OnPropertyChanged(nameof(ResponseSection));
             Shell.NotifyWorkspaceStateChanged();
@@ -270,6 +270,7 @@ public partial class ProjectTabViewModel : ViewModelBase,
 
         if (message.Changes.HasFlag(WorkspaceStateChangeFlags.ActiveTabChanged))
         {
+            SyncInterfaceRootWorkspaceStateWithActiveTab();
             OnPropertyChanged(nameof(ActiveWorkspaceTab));
         }
 
@@ -301,6 +302,11 @@ public partial class ProjectTabViewModel : ViewModelBase,
     partial void OnIsInterfaceRootWorkspaceActiveChanged(bool value)
     {
         Shell.NotifyWorkspaceStateChanged();
+    }
+
+    private void SyncInterfaceRootWorkspaceStateWithActiveTab()
+    {
+        IsInterfaceRootWorkspaceActive = ActiveWorkspaceTab?.IsInterfaceRootTab == true;
     }
 
     public async Task ShowInterfaceRootWorkspaceAsync()

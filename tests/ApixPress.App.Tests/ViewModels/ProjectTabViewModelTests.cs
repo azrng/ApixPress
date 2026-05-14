@@ -945,6 +945,61 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task CloseInterfaceTabOpenedFromInterfaceRoot_ShouldKeepInterfaceRootTabActive()
+    {
+        var requestCaseService = new FakeRequestCaseService();
+        requestCaseService.Cases.Add(new RequestCaseDto
+        {
+            Id = "interface-1",
+            ProjectId = "project-1",
+            EntryType = ProjectTabRequestEntryTypes.HttpInterface,
+            Name = "查询用户",
+            GroupName = "接口",
+            FolderPath = "用户",
+            HasLoadedDetail = true,
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                EndpointId = "manual:GET /users",
+                Method = "GET",
+                Url = "/users"
+            },
+            UpdatedAt = DateTime.UtcNow
+        });
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestCaseService);
+        await viewModel.InitializeAsync();
+        var root = Assert.Single(viewModel.Catalog.InterfaceTreeItems);
+
+        await viewModel.Catalog.LoadWorkspaceItem(root);
+        var rootTab = viewModel.ActiveWorkspaceTab;
+        Assert.NotNull(rootTab);
+        Assert.True(rootTab!.IsInterfaceRootTab);
+        Assert.True(viewModel.Shell.ShowInterfaceRootWorkspace);
+
+        viewModel.InterfaceRoot.ShowAllInterfacesCommand.Execute(null);
+        var overviewItem = Assert.Single(viewModel.InterfaceRoot.HttpInterfaces);
+        await overviewItem.OpenCommand.ExecuteAsync(null);
+
+        var interfaceTab = viewModel.ActiveWorkspaceTab;
+        Assert.NotNull(interfaceTab);
+        Assert.NotSame(rootTab, interfaceTab);
+        Assert.True(interfaceTab!.IsHttpInterfaceTab);
+        var visibleTabsBeforeClose = viewModel.VisibleWorkspaceTabs.ToList();
+        Assert.Contains(rootTab, visibleTabsBeforeClose);
+        Assert.Contains(interfaceTab, visibleTabsBeforeClose);
+        Assert.True(viewModel.Shell.ShowRequestEditorWorkspace);
+
+        viewModel.Workspace.CloseWorkspaceTabCommand.Execute(interfaceTab);
+
+        Assert.Same(rootTab, viewModel.ActiveWorkspaceTab);
+        var visibleTabsAfterClose = viewModel.VisibleWorkspaceTabs.ToList();
+        Assert.Contains(rootTab, visibleTabsAfterClose);
+        Assert.DoesNotContain(interfaceTab, visibleTabsAfterClose);
+        Assert.True(viewModel.Shell.ShowInterfaceRootWorkspace);
+        Assert.False(viewModel.Shell.ShowRequestEditorWorkspace);
+        Assert.Equal(ProjectWorkspaceContentMode.InterfaceRoot, viewModel.Shell.CurrentContentMode);
+    }
+
+    [Fact]
     public async Task SendRequestCommand_ShouldApplyGlobalBearerAuthOnlyForHttpInterface()
     {
         var requestExecutionService = new FakeRequestExecutionService();
