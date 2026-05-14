@@ -22,6 +22,8 @@ public sealed class ProjectHttpSettingsRepository : IProjectHttpSettingsReposito
                                project_id ProjectId,
                                auth_mode AuthMode,
                                bearer_token BearerToken,
+                               basic_username BasicUsername,
+                               basic_password BasicPassword,
                                updated_at UpdatedAt
                            from project_http_settings
                            where project_id = @ProjectId
@@ -37,13 +39,15 @@ public sealed class ProjectHttpSettingsRepository : IProjectHttpSettingsReposito
     {
         const string sql = """
                            insert into project_http_settings (
-                               project_id, auth_mode, bearer_token, updated_at
+                               project_id, auth_mode, bearer_token, basic_username, basic_password, updated_at
                            ) values (
-                               @ProjectId, @AuthMode, @BearerToken, @UpdatedAt
+                               @ProjectId, @AuthMode, @BearerToken, @BasicUsername, @BasicPassword, @UpdatedAt
                            )
                            on conflict(project_id) do update set
                                auth_mode = excluded.auth_mode,
                                bearer_token = excluded.bearer_token,
+                               basic_username = excluded.basic_username,
+                               basic_password = excluded.basic_password,
                                updated_at = excluded.updated_at
                            """;
 

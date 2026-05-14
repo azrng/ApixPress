@@ -43,21 +43,32 @@ public sealed class ProjectHttpSettingsService : IProjectHttpSettingsService, IT
             return ResultModel<ProjectHttpAuthSettingsDto>.Failure("请输入 Bearer Token。", "bearer_token_required");
         }
 
+        if (string.Equals(normalized.AuthMode, ProjectHttpAuthSettingsDto.ModeBasic, StringComparison.OrdinalIgnoreCase)
+            && (string.IsNullOrWhiteSpace(normalized.BasicUsername) || string.IsNullOrWhiteSpace(normalized.BasicPassword)))
+        {
+            return ResultModel<ProjectHttpAuthSettingsDto>.Failure("请输入 Basic Auth 用户名和密码。", "basic_auth_required");
+        }
+
         await _repository.UpsertAuthSettingsAsync(ToEntity(normalized), cancellationToken);
         return ResultModel<ProjectHttpAuthSettingsDto>.Success(normalized);
     }
 
     private static ProjectHttpAuthSettingsDto Normalize(ProjectHttpAuthSettingsDto settings)
     {
-        var authMode = string.Equals(settings.AuthMode, ProjectHttpAuthSettingsDto.ModeBearer, StringComparison.OrdinalIgnoreCase)
-            ? ProjectHttpAuthSettingsDto.ModeBearer
-            : ProjectHttpAuthSettingsDto.ModeNone;
+        var authMode = settings.AuthMode.ToLowerInvariant() switch
+        {
+            ProjectHttpAuthSettingsDto.ModeBearer => ProjectHttpAuthSettingsDto.ModeBearer,
+            ProjectHttpAuthSettingsDto.ModeBasic => ProjectHttpAuthSettingsDto.ModeBasic,
+            _ => ProjectHttpAuthSettingsDto.ModeNone
+        };
 
         return new ProjectHttpAuthSettingsDto
         {
             ProjectId = settings.ProjectId.Trim(),
             AuthMode = authMode,
             BearerToken = authMode == ProjectHttpAuthSettingsDto.ModeBearer ? settings.BearerToken.Trim() : string.Empty,
+            BasicUsername = authMode == ProjectHttpAuthSettingsDto.ModeBasic ? settings.BasicUsername.Trim() : string.Empty,
+            BasicPassword = authMode == ProjectHttpAuthSettingsDto.ModeBasic ? settings.BasicPassword.Trim() : string.Empty,
             UpdatedAt = DateTime.UtcNow
         };
     }
@@ -69,6 +80,8 @@ public sealed class ProjectHttpSettingsService : IProjectHttpSettingsService, IT
             ProjectId = entity.ProjectId,
             AuthMode = string.IsNullOrWhiteSpace(entity.AuthMode) ? ProjectHttpAuthSettingsDto.ModeNone : entity.AuthMode,
             BearerToken = entity.BearerToken,
+            BasicUsername = entity.BasicUsername,
+            BasicPassword = entity.BasicPassword,
             UpdatedAt = entity.UpdatedAt
         };
     }
@@ -80,6 +93,8 @@ public sealed class ProjectHttpSettingsService : IProjectHttpSettingsService, IT
             ProjectId = dto.ProjectId,
             AuthMode = dto.AuthMode,
             BearerToken = dto.BearerToken,
+            BasicUsername = dto.BasicUsername,
+            BasicPassword = dto.BasicPassword,
             UpdatedAt = dto.UpdatedAt
         };
     }

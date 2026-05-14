@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -39,7 +40,7 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
     }
 
     public ReadOnlyObservableCollection<ProjectHttpInterfaceOverviewItemViewModel> HttpInterfaces { get; }
-    public IReadOnlyList<string> AuthModes { get; } = ["无", "Bearer Token"];
+    public IReadOnlyList<string> AuthModes { get; } = ["无", "Bearer Token", "Basic Auth"];
     public bool IsAuthSelected => SelectedTabIndex == 0;
     public bool IsAllInterfacesSelected => SelectedTabIndex == 1;
     public bool HasHttpInterfaces => HttpInterfaces.Count > 0;
@@ -48,7 +49,8 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
     public string HttpInterfacesEmptyText => string.IsNullOrWhiteSpace(SearchText) ? "当前还没有保存的 HTTP 接口" : "没有匹配的 HTTP 接口";
     public bool IsBearerMode => SelectedAuthModeIndex == 1;
     public bool IsNoAuthMode => SelectedAuthModeIndex == 0;
-    public string AuthBadgeText => IsBearerMode ? "1" : "0";
+    public bool IsBasicMode => SelectedAuthModeIndex == 2;
+    public string AuthBadgeText => IsBearerMode || IsBasicMode ? "1" : "0";
 
     [ObservableProperty]
     private int selectedTabIndex;
@@ -58,6 +60,12 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
 
     [ObservableProperty]
     private string bearerToken = string.Empty;
+
+    [ObservableProperty]
+    private string basicUsername = string.Empty;
+
+    [ObservableProperty]
+    private string basicPassword = string.Empty;
 
     [ObservableProperty]
     private string searchText = string.Empty;
@@ -93,8 +101,10 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
         return new ProjectHttpAuthSettingsDto
         {
             ProjectId = _projectId,
-            AuthMode = IsBearerMode ? ProjectHttpAuthSettingsDto.ModeBearer : ProjectHttpAuthSettingsDto.ModeNone,
+            AuthMode = IsBearerMode ? ProjectHttpAuthSettingsDto.ModeBearer : IsBasicMode ? ProjectHttpAuthSettingsDto.ModeBasic : ProjectHttpAuthSettingsDto.ModeNone,
             BearerToken = BearerToken.Trim(),
+            BasicUsername = BasicUsername.Trim(),
+            BasicPassword = BasicPassword.Trim(),
             UpdatedAt = DateTime.UtcNow
         };
     }
@@ -102,7 +112,7 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
     public RequestSnapshotDto ApplyGlobalAuth(RequestSnapshotDto snapshot)
     {
         var settings = BuildAuthSettings();
-        if (!settings.IsBearerEnabled || HasEnabledAuthorizationHeader(snapshot))
+        if ((!settings.IsBearerEnabled && !settings.IsBasicEnabled) || HasEnabledAuthorizationHeader(snapshot))
         {
             return snapshot;
         }
@@ -115,10 +125,13 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
                 IsEnabled = item.IsEnabled
             })
             .ToList();
+        var authorizationValue = settings.IsBearerEnabled
+            ? $"Bearer {settings.BearerToken}"
+            : $"Basic {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{settings.BasicUsername}:{settings.BasicPassword}"))}";
         headers.Add(new RequestKeyValueDto
         {
             Name = "Authorization",
-            Value = $"Bearer {settings.BearerToken}",
+            Value = authorizationValue,
             IsEnabled = true
         });
 
@@ -145,7 +158,11 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
             if (result.IsSuccess && result.Data is not null)
             {
                 ApplyAuthSettings(result.Data);
-                StatusText = IsBearerMode ? "HTTP 接口全局 Bearer Token 已保存。" : "HTTP 接口全局 Auth 已关闭。";
+                StatusText = IsBearerMode
+                    ? "HTTP 接口全局 Bearer Token 已保存。"
+                    : IsBasicMode
+                        ? "HTTP 接口全局 Basic Auth 已保存。"
+                        : "HTTP 接口全局 Auth 已关闭。";
                 _messenger.Send(new StatusMessageRequest(StatusText));
             }
             else
@@ -194,6 +211,7 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsBearerMode));
         OnPropertyChanged(nameof(IsNoAuthMode));
+        OnPropertyChanged(nameof(IsBasicMode));
         OnPropertyChanged(nameof(AuthBadgeText));
     }
 
@@ -231,8 +249,15 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
 
     private void ApplyAuthSettings(ProjectHttpAuthSettingsDto settings)
     {
-        SelectedAuthModeIndex = string.Equals(settings.AuthMode, ProjectHttpAuthSettingsDto.ModeBearer, StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+        SelectedAuthModeIndex = settings.AuthMode.ToLowerInvariant() switch
+        {
+            ProjectHttpAuthSettingsDto.ModeBearer => 1,
+            ProjectHttpAuthSettingsDto.ModeBasic => 2,
+            _ => 0
+        };
         BearerToken = settings.BearerToken;
+        BasicUsername = settings.BasicUsername;
+        BasicPassword = settings.BasicPassword;
     }
 
     private static bool HasEnabledAuthorizationHeader(RequestSnapshotDto snapshot)

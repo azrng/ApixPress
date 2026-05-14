@@ -21,11 +21,14 @@ public sealed class DatabaseInitializerTests
         var environmentCount = connection.ExecuteScalar<long>("select count(1) from project_environments");
         var httpSettingsTableCount = connection.ExecuteScalar<long>(
             "select count(1) from sqlite_master where type = 'table' and name = 'project_http_settings'");
+        var basicColumnCount = connection.ExecuteScalar<long>(
+            "select count(1) from pragma_table_info('project_http_settings') where name in ('basic_username', 'basic_password')");
 
-        Assert.Equal(2, schemaVersion);
+        Assert.Equal(3, schemaVersion);
         Assert.Equal(0, projectCount);
         Assert.Equal(0, environmentCount);
         Assert.Equal(1, httpSettingsTableCount);
+        Assert.Equal(2, basicColumnCount);
     }
 
     [Fact]
@@ -141,8 +144,11 @@ public sealed class DatabaseInitializerTests
         var schemaVersion = verificationConnection.ExecuteScalar<long>("select max(version) from schema_migrations");
         var httpSettingsTableCount = verificationConnection.ExecuteScalar<long>(
             "select count(1) from sqlite_master where type = 'table' and name = 'project_http_settings'");
+        var basicColumnCount = verificationConnection.ExecuteScalar<long>(
+            "select count(1) from pragma_table_info('project_http_settings') where name in ('basic_username', 'basic_password')");
 
-        Assert.Equal(2, schemaVersion);
+        Assert.Equal(3, schemaVersion);
         Assert.Equal(1, httpSettingsTableCount);
+        Assert.Equal(2, basicColumnCount);
     }
 }

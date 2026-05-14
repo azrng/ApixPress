@@ -15,8 +15,7 @@
 
       <Grid Grid.Row="1"
             RowDefinitions="Auto,*"
-            RowSpacing="{StaticResource Space.4}"
-            Margin="{StaticResource Pad.4}">
+            Margin="20,12,20,18">
         <Grid ColumnDefinitions="Auto,Auto,*"
               ColumnSpacing="{StaticResource Space.3}">
           <Button Grid.Column="0"
@@ -43,10 +42,11 @@
                      Text="{Binding InterfaceRoot.StatusText}" />
         </Grid>
 
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1"
+              Margin="0,12,0,0">
           <Border Classes="ProjectWorkspaceSettingsCard InterfaceRootAuthPanel"
                   IsVisible="{Binding InterfaceRoot.IsAuthSelected}">
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
                   RowSpacing="{StaticResource Space.4}">
               <StackPanel Spacing="{StaticResource Space.1}">
                 <TextBlock Classes="SectionTitle"
@@ -79,6 +79,25 @@
               </Grid>
 
               <Grid Grid.Row="3"
+                    RowDefinitions="Auto,Auto,Auto,Auto"
+                    RowSpacing="{StaticResource Space.2}"
+                    IsVisible="{Binding InterfaceRoot.IsBasicMode}">
+                <TextBlock Classes="CaptionText"
+                           Text="用户名" />
+                <TextBox Grid.Row="1"
+                         Classes="SectionInput"
+                         Watermark="Username"
+                         Text="{Binding InterfaceRoot.BasicUsername}" />
+                <TextBlock Grid.Row="2"
+                           Classes="CaptionText"
+                           Text="密码" />
+                <TextBox Grid.Row="3"
+                         Classes="SectionInput"
+                         Watermark="Password"
+                         Text="{Binding InterfaceRoot.BasicPassword}" />
+              </Grid>
+
+              <Grid Grid.Row="4"
                     ColumnDefinitions="*,Auto">
                 <TextBlock Classes="CaptionText"
                            VerticalAlignment="Center"
@@ -91,11 +110,11 @@
             </Grid>
           </Border>
 
-          <Border Classes="ProjectWorkspaceSettingsCard InterfaceRootAllPanel"
+          <Border Classes="InterfaceRootWorkbenchSurface"
                   IsVisible="{Binding InterfaceRoot.IsAllInterfacesSelected}">
-            <Grid RowDefinitions="Auto,Auto,*"
-                  RowSpacing="{StaticResource Space.3}">
-              <Grid ColumnDefinitions="*,Auto"
+            <Grid RowDefinitions="Auto,Auto,*">
+              <Grid Classes="InterfaceRootWorkbenchHeader"
+                    ColumnDefinitions="*,Auto"
                     ColumnSpacing="{StaticResource Space.3}">
                 <StackPanel Spacing="{StaticResource Space.1}">
                   <TextBlock Classes="SectionTitle"
@@ -111,76 +130,109 @@
               </Grid>
 
               <Border Grid.Row="1"
-                      Classes="InterfaceRootTableHeader">
-                <Grid ColumnDefinitions="36,2*,120,2*,180,110,140"
-                      ColumnSpacing="{StaticResource Space.3}">
-                  <TextBlock Grid.Column="1" Classes="CaptionText" Text="接口名称" />
-                  <TextBlock Grid.Column="2" Classes="CaptionText" Text="请求类型" />
-                  <TextBlock Grid.Column="3" Classes="CaptionText" Text="接口路径" />
-                  <TextBlock Grid.Column="4" Classes="CaptionText" Text="接口分组" />
-                  <TextBlock Grid.Column="5" Classes="CaptionText" Text="接口状态" />
-                  <TextBlock Grid.Column="6" Classes="CaptionText" Text="标签" />
+                      Classes="InterfaceRootFilterBar">
+                <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto"
+                      ColumnSpacing="{StaticResource Space.2}">
+                  <Border Classes="InterfaceRootFilterChip">
+                    <TextBlock Classes="CaptionText"
+                               Text="{Binding InterfaceRoot.InterfaceCountText, StringFormat='全部 {0}'}" />
+                  </Border>
+                  <Border Grid.Column="1"
+                          Classes="InterfaceRootFilterChip">
+                    <TextBlock Classes="CaptionText"
+                               Text="HTTP 接口" />
+                  </Border>
+                  <Border Grid.Column="2"
+                          Classes="InterfaceRootFilterChip">
+                    <TextBlock Classes="CaptionText"
+                               Text="已发布" />
+                  </Border>
+                  <TextBlock Grid.Column="4"
+                             Classes="CaptionText"
+                             VerticalAlignment="Center"
+                             Text="点击行进入接口详情" />
                 </Grid>
               </Border>
 
-              <Grid Grid.Row="2">
-                <ScrollViewer IsVisible="{Binding InterfaceRoot.HasHttpInterfaces}">
-                  <ItemsControl ItemsSource="{Binding InterfaceRoot.HttpInterfaces}">
-                    <ItemsControl.ItemTemplate>
-                      <DataTemplate x:DataType="vm:ProjectHttpInterfaceOverviewItemViewModel">
-                        <Button Classes="InterfaceRootTableRowButton"
-                                Command="{Binding OpenCommand}">
-                          <Grid ColumnDefinitions="36,2*,120,2*,180,110,140"
-                                ColumnSpacing="{StaticResource Space.3}">
-                            <CheckBox Grid.Column="0"
-                                      IsHitTestVisible="False" />
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding Name}"
-                                       TextTrimming="CharacterEllipsis" />
-                            <TextBlock Grid.Column="2"
-                                       Classes="InterfaceRootMethodText"
-                                       Classes.HttpMethodGet="{Binding IsGetMethod}"
-                                       Classes.HttpMethodPost="{Binding IsPostMethod}"
-                                       Classes.HttpMethodPut="{Binding IsPutMethod}"
-                                       Classes.HttpMethodDelete="{Binding IsDeleteMethod}"
-                                       Classes.HttpMethodPatch="{Binding IsPatchMethod}"
-                                       Text="{Binding Method}" />
-                            <TextBlock Grid.Column="3"
-                                       Text="{Binding Path}"
-                                       TextTrimming="CharacterEllipsis" />
-                            <TextBlock Grid.Column="4"
-                                       Text="{Binding GroupPath}"
-                                       TextTrimming="CharacterEllipsis" />
-                            <StackPanel Grid.Column="5"
-                                        Orientation="Horizontal"
-                                        Spacing="{StaticResource Space.1}">
-                              <Border Classes="InterfaceRootStatusDot" />
-                              <TextBlock Text="{Binding StatusText}" />
-                            </StackPanel>
-                            <Border Grid.Column="6"
-                                    Classes="InterfaceRootTag">
-                              <TextBlock Text="{Binding TagText}"
-                                         TextTrimming="CharacterEllipsis" />
-                            </Border>
-                          </Grid>
-                        </Button>
-                      </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                  </ItemsControl>
-                </ScrollViewer>
+              <Border Grid.Row="2"
+                      Classes="InterfaceRootTableSurface">
+                <Grid RowDefinitions="Auto,*">
+                  <Border Classes="InterfaceRootTableHeader">
+                    <Grid ColumnDefinitions="32,2.2*,82,2.4*,1.5*,90,110"
+                          ColumnSpacing="{StaticResource Space.3}">
+                      <TextBlock Grid.Column="1" Classes="CaptionText" Text="接口名称" />
+                      <TextBlock Grid.Column="2" Classes="CaptionText" Text="请求类型" />
+                      <TextBlock Grid.Column="3" Classes="CaptionText" Text="接口路径" />
+                      <TextBlock Grid.Column="4" Classes="CaptionText" Text="接口分组" />
+                      <TextBlock Grid.Column="5" Classes="CaptionText" Text="接口状态" />
+                      <TextBlock Grid.Column="6" Classes="CaptionText" Text="标签" />
+                    </Grid>
+                  </Border>
 
-                <Border Classes="InterfaceRootEmptyState"
-                        IsVisible="{Binding InterfaceRoot.ShowHttpInterfacesEmptyState}">
-                  <StackPanel Spacing="{StaticResource Space.2}"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center">
-                    <TextBlock Classes="SectionTitle"
-                               Text="{Binding InterfaceRoot.HttpInterfacesEmptyText}" />
-                    <TextBlock Classes="CaptionText"
-                               Text="保存 HTTP 接口后会显示在这里。" />
-                  </StackPanel>
-                </Border>
-              </Grid>
+                  <Grid Grid.Row="1">
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                  IsVisible="{Binding InterfaceRoot.HasHttpInterfaces}">
+                      <ItemsControl Classes="InterfaceRootTableRows"
+                                    HorizontalAlignment="Stretch"
+                                    ItemsSource="{Binding InterfaceRoot.HttpInterfaces}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="vm:ProjectHttpInterfaceOverviewItemViewModel">
+                            <Button Classes="InterfaceRootTableRowButton"
+                                    HorizontalAlignment="Stretch"
+                                    Command="{Binding OpenCommand}">
+                              <Grid ColumnDefinitions="32,2.2*,82,2.4*,1.5*,90,110"
+                                    ColumnSpacing="{StaticResource Space.3}">
+                                <CheckBox Grid.Column="0"
+                                          IsHitTestVisible="False" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding Name}"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Grid.Column="2"
+                                           Classes="InterfaceRootMethodText"
+                                           Classes.HttpMethodGet="{Binding IsGetMethod}"
+                                           Classes.HttpMethodPost="{Binding IsPostMethod}"
+                                           Classes.HttpMethodPut="{Binding IsPutMethod}"
+                                           Classes.HttpMethodDelete="{Binding IsDeleteMethod}"
+                                           Classes.HttpMethodPatch="{Binding IsPatchMethod}"
+                                           Text="{Binding Method}" />
+                                <TextBlock Grid.Column="3"
+                                           Text="{Binding Path}"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock Grid.Column="4"
+                                           Text="{Binding GroupPath}"
+                                           TextTrimming="CharacterEllipsis" />
+                                <StackPanel Grid.Column="5"
+                                            Orientation="Horizontal"
+                                            Spacing="{StaticResource Space.1}">
+                                  <Border Classes="InterfaceRootStatusDot" />
+                                  <TextBlock Text="{Binding StatusText}" />
+                                </StackPanel>
+                                <Border Grid.Column="6"
+                                        Classes="InterfaceRootTag">
+                                  <TextBlock Text="{Binding TagText}"
+                                             TextTrimming="CharacterEllipsis" />
+                                </Border>
+                              </Grid>
+                            </Button>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </ScrollViewer>
+
+                    <Border Classes="InterfaceRootEmptyState"
+                            IsVisible="{Binding InterfaceRoot.ShowHttpInterfacesEmptyState}">
+                      <StackPanel Spacing="{StaticResource Space.2}"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center">
+                        <TextBlock Classes="SectionTitle"
+                                   Text="{Binding InterfaceRoot.HttpInterfacesEmptyText}" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="保存 HTTP 接口后会显示在这里。" />
+                      </StackPanel>
+                    </Border>
+                  </Grid>
+                </Grid>
+              </Border>
             </Grid>
           </Border>
         </Grid>

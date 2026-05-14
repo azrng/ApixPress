@@ -8,7 +8,7 @@ namespace ApixPress.App.Data.Context;
 
 public sealed class DatabaseInitializer : ISingletonDependency
 {
-    private const int CurrentSchemaVersion = 2;
+    private const int CurrentSchemaVersion = 3;
     private const string SchemaMigrationsTable = "schema_migrations";
 
     private readonly IDbConnectionFactory _connectionFactory;
@@ -103,6 +103,8 @@ public sealed class DatabaseInitializer : ISingletonDependency
         EnsureColumn(connection, "environment_variables", "environment_id", "TEXT");
         EnsureColumn(connection, "environment_variables", "environment_name", "TEXT NOT NULL DEFAULT ''");
         EnsureProjectHttpSettingsTable(connection);
+        EnsureColumn(connection, "project_http_settings", "basic_username", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(connection, "project_http_settings", "basic_password", "TEXT NOT NULL DEFAULT ''");
 
         connection.Execute("DROP INDEX IF EXISTS ux_request_cases_group_name;");
         connection.Execute("DROP INDEX IF EXISTS ux_request_cases_project_group_name;");
@@ -132,6 +134,8 @@ public sealed class DatabaseInitializer : ISingletonDependency
                 project_id text primary key,
                 auth_mode text not null default 'none',
                 bearer_token text not null default '',
+                basic_username text not null default '',
+                basic_password text not null default '',
                 updated_at text not null,
                 foreign key(project_id) references projects(id) on delete cascade
             )

@@ -986,6 +986,38 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task SendRequestCommand_ShouldApplyGlobalBasicAuthForHttpInterface()
+    {
+        var requestExecutionService = new FakeRequestExecutionService();
+        var projectHttpSettingsService = new FakeProjectHttpSettingsService
+        {
+            CurrentSettings = new ProjectHttpAuthSettingsDto
+            {
+                ProjectId = "project-1",
+                AuthMode = ProjectHttpAuthSettingsDto.ModeBasic,
+                BasicUsername = "demo",
+                BasicPassword = "secret"
+            }
+        };
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            requestExecutionService: requestExecutionService,
+            projectHttpSettingsService: projectHttpSettingsService);
+        await viewModel.InitializeAsync();
+
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = "/orders";
+        await viewModel.SendRequestCommand.ExecuteAsync(null);
+
+        var httpRequest = requestExecutionService.LastRequest;
+        Assert.NotNull(httpRequest);
+        Assert.Contains(httpRequest!.Headers, item =>
+            item.Name == "Authorization"
+            && item.Value == "Basic ZGVtbzpzZWNyZXQ="
+            && item.IsEnabled);
+    }
+
+    [Fact]
     public async Task SendRequestCommand_ShouldNormalizeMultilineQuickRequestPaste()
     {
         var requestExecutionService = new FakeRequestExecutionService();

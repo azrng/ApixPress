@@ -578,15 +578,62 @@
     <Setter Property="HorizontalAlignment" Value="Left" />
   </Style>
 
+  <Style Selector="Border.InterfaceRootWorkbenchSurface">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="ClipToBounds" Value="True" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="Grid.InterfaceRootWorkbenchHeader">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="Margin" Value="0" />
+    <Setter Property="MinHeight" Value="64" />
+  </Style>
+
+  <Style Selector="Grid.InterfaceRootWorkbenchHeader > StackPanel">
+    <Setter Property="Margin" Value="16,14,0,12" />
+  </Style>
+
+  <Style Selector="Grid.InterfaceRootWorkbenchHeader > TextBox">
+    <Setter Property="Margin" Value="0,14,16,12" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootFilterBar">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,1" />
+    <Setter Property="Padding" Value="12,8" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootFilterChip">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="9,4" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootTableSurface">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+    <Setter Property="ClipToBounds" Value="True" />
+  </Style>
+
   <Style Selector="Border.InterfaceRootAllPanel">
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
   <Style Selector="Border.InterfaceRootTableHeader">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
-    <Setter Property="Padding" Value="10,8" />
+    <Setter Property="Padding" Value="12,8" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
   </Style>
 
   <Style Selector="Border.InterfaceRootEmptyState">
@@ -603,8 +650,17 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
     <Setter Property="CornerRadius" Value="0" />
-    <Setter Property="Padding" Value="10,9" />
+    <Setter Property="Padding" Value="12,9" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="ItemsControl.InterfaceRootTableRows">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="ItemsControl.InterfaceRootTableRows ContentPresenter">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
   </Style>
 
   <Style Selector="Button.InterfaceRootTableRowButton:pointerover">

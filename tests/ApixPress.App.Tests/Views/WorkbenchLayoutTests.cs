@@ -35,6 +35,21 @@ public sealed class WorkbenchLayoutTests
             element => HasClass(element, "HttpDesignMetaCard"));
     }
 
+    [Fact]
+    public void InterfaceRootWorkspace_ShouldUseFullWidthWorkbenchTable()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "ProjectInterfaceRootWorkspaceView.axaml"));
+
+        Assert.Contains(
+            document.Descendants(),
+            element => element.Name.LocalName == "Border"
+                && HasClass(element, "InterfaceRootWorkbenchSurface"));
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => element.Name.LocalName == "Border"
+                && HasClass(element, "InterfaceRootAllPanel"));
+    }
+
     private static bool HasClass(XElement element, string className)
     {
         return (element.Attribute("Classes")?.Value ?? string.Empty)

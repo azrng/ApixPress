@@ -598,6 +598,8 @@ public static class ViewModelSharedTestDoubles
                 ProjectId = string.IsNullOrWhiteSpace(CurrentSettings.ProjectId) ? projectId : CurrentSettings.ProjectId,
                 AuthMode = CurrentSettings.AuthMode,
                 BearerToken = CurrentSettings.BearerToken,
+                BasicUsername = CurrentSettings.BasicUsername,
+                BasicPassword = CurrentSettings.BasicPassword,
                 UpdatedAt = CurrentSettings.UpdatedAt
             });
         }
@@ -610,6 +612,8 @@ public static class ViewModelSharedTestDoubles
                 ProjectId = settings.ProjectId,
                 AuthMode = settings.AuthMode,
                 BearerToken = settings.BearerToken,
+                BasicUsername = settings.BasicUsername,
+                BasicPassword = settings.BasicPassword,
                 UpdatedAt = settings.UpdatedAt
             };
             return Task.FromResult<IResultModel<ProjectHttpAuthSettingsDto>>(ResultModel<ProjectHttpAuthSettingsDto>.Success(CurrentSettings));
