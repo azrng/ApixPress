@@ -18,7 +18,7 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
     internal const int ResponsePreviewByteLimit = 1024 * 1024;
     private const int MaxSharedHttpClients = 16;
     private static readonly ConcurrentDictionary<RequestClientOptions, SharedHttpClientEntry> SharedHttpClients = new();
-    private static DateTimeOffset _lastClientCleanup = DateTimeOffset.MinValue;
+    private static long _lastClientCleanupTicks;
 
     private readonly IAppShellSettingsService _appShellSettingsService;
     private readonly IEnvironmentVariableService _environmentVariableService;
@@ -365,13 +365,19 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
 
     private static void CleanupExpiredClientsIfNeeded()
     {
-        var now = DateTimeOffset.UtcNow;
-        if (now - _lastClientCleanup < TimeSpan.FromMinutes(5))
+        var nowTicks = DateTimeOffset.UtcNow.UtcTicks;
+        var cleanupInterval = TimeSpan.FromMinutes(5).Ticks;
+        var lastTicks = Interlocked.Read(ref _lastClientCleanupTicks);
+
+        if (nowTicks - lastTicks < cleanupInterval)
         {
             return;
         }
 
-        _lastClientCleanup = now;
+        if (Interlocked.CompareExchange(ref _lastClientCleanupTicks, nowTicks, lastTicks) != lastTicks)
+        {
+            return;
+        }
 
         if (SharedHttpClients.Count <= MaxSharedHttpClients)
         {

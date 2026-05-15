@@ -136,47 +136,40 @@ internal static class AppUpdateRunner
         int updateProcessId)
     {
         var scriptPath = Path.Combine(workspacePath, "apply-update.cmd");
-        var scriptContent = $$"""
-@echo off
-setlocal
-set "WAIT_PID={{request.CurrentProcessId}}"
-set "UPDATE_PID={{updateProcessId}}"
-set "EXTRACT_DIR={{EscapeForBatch(extractPath)}}"
-set "TARGET_DIR={{EscapeForBatch(request.TargetDirectory)}}"
-set "RESTART_EXE={{EscapeForBatch(request.RestartExecutablePath)}}"
-set "PACKAGE_FILE={{EscapeForBatch(packageFilePath)}}"
 
-:wait_app_loop
-tasklist /FI "PID eq %WAIT_PID%" | find "%WAIT_PID%" >nul
-if not errorlevel 1 (
-  timeout /t 1 /nobreak >nul
-  goto wait_app_loop
-)
+        var psScript = new StringBuilder()
+            .AppendLine("$waitPid = " + request.CurrentProcessId)
+            .AppendLine("$updatePid = " + updateProcessId)
+            .AppendLine("$extractDir = '" + EscapeForPowerShell(extractPath) + "'")
+            .AppendLine("$targetDir = '" + EscapeForPowerShell(request.TargetDirectory) + "'")
+            .AppendLine("$restartExe = '" + EscapeForPowerShell(request.RestartExecutablePath) + "'")
+            .AppendLine("$packageFile = '" + EscapeForPowerShell(packageFilePath) + "'")
+            .AppendLine()
+            .AppendLine("while (Get-Process -Id $waitPid -ErrorAction SilentlyContinue) {")
+            .AppendLine("    Start-Sleep -Seconds 1")
+            .AppendLine("}")
+            .AppendLine("while (Get-Process -Id $updatePid -ErrorAction SilentlyContinue) {")
+            .AppendLine("    Start-Sleep -Seconds 1")
+            .AppendLine("}")
+            .AppendLine()
+            .AppendLine("robocopy $extractDir $targetDir /E /R:3 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null")
+            .AppendLine("if ($LASTEXITCODE -ge 8) { exit $LASTEXITCODE }")
+            .AppendLine()
+            .AppendLine("Start-Process $restartExe")
+            .AppendLine("Remove-Item $extractDir -Recurse -Force -ErrorAction SilentlyContinue")
+            .AppendLine("Remove-Item $packageFile -Force -ErrorAction SilentlyContinue")
+            .AppendLine("Remove-Item $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue")
+            .ToString();
 
-:wait_update_loop
-tasklist /FI "PID eq %UPDATE_PID%" | find "%UPDATE_PID%" >nul
-if not errorlevel 1 (
-  timeout /t 1 /nobreak >nul
-  goto wait_update_loop
-)
-
-robocopy "%EXTRACT_DIR%" "%TARGET_DIR%" /E /R:3 /W:1 /NFL /NDL /NJH /NJS /NP >nul
-set "ROBOCOPY_EXIT=%ERRORLEVEL%"
-if %ROBOCOPY_EXIT% GEQ 8 exit /b %ROBOCOPY_EXIT%
-
-start "" "%RESTART_EXE%"
-rd /s /q "%EXTRACT_DIR%" 2>nul
-del /q "%PACKAGE_FILE%" 2>nul
-(goto) 2>nul & del "%~f0"
-""";
-
-        File.WriteAllText(scriptPath, scriptContent, new UTF8Encoding(false));
+        var encodedCommand = Convert.ToBase64String(Encoding.Unicode.GetBytes(psScript));
+        var cmdContent = $"@echo off\r\npowershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand {encodedCommand}\r\ndel /q \"%~f0\" 2>nul\r\n";
+        File.WriteAllText(scriptPath, cmdContent, new UTF8Encoding(false));
         return scriptPath;
     }
 
-    private static string EscapeForBatch(string value)
+    private static string EscapeForPowerShell(string value)
     {
-        return value.Replace("^", "^^").Replace("%", "%%");
+        return value.Replace("'", "''");
     }
 
     private static string SanitizeFileName(string fileName)

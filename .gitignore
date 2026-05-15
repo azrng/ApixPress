@@ -341,8 +341,15 @@ ASALocalRun/
 # BeatPulse healthcheck temp database 
 healthchecksdb
 
-# 忽略xml文件
+# 忽略xml文件（排除项目、解决方案、AXAML 等必要文件）
 *.xml
+!src/**/*.xml
+!src/**/*.axaml
+!*.csproj
+!*.slnx
+!*.props
+!*.targets
+!Directory.Build.*
 
 # 忽略生成的文档
 docs/

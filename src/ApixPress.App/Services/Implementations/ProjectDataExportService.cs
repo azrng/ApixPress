@@ -161,6 +161,7 @@ public sealed class ProjectDataExportService : IProjectDataExportService, ITrans
                 item => BuildImportedEndpointKey(item.Endpoint.Method, item.Endpoint.Path),
                 StringComparer.OrdinalIgnoreCase);
 
+            var testCaseDtos = new List<RequestCaseDto>();
             foreach (var testCase in package.TestCases)
             {
                 if (!packageInterfaceKeyById.TryGetValue(testCase.ParentId, out var parentEndpointKey)
@@ -171,7 +172,7 @@ public sealed class ProjectDataExportService : IProjectDataExportService, ITrans
                         "project_data_package_case_parent_missing");
                 }
 
-                var saveResult = await _requestCaseService.SaveAsync(new RequestCaseDto
+                testCaseDtos.Add(new RequestCaseDto
                 {
                     Id = testCase.Id,
                     ProjectId = projectId,
@@ -197,14 +198,16 @@ public sealed class ProjectDataExportService : IProjectDataExportService, ITrans
                         Headers = CloneKeyValues(testCase.RequestSnapshot.Headers)
                     },
                     UpdatedAt = testCase.UpdatedAt == default ? importTime : testCase.UpdatedAt
-                }, cancellationToken);
+                });
+            }
 
-                if (!saveResult.IsSuccess)
+            if (testCaseDtos.Count > 0)
+            {
+                var batchResult = await _requestCaseService.SaveRangeAsync(testCaseDtos, cancellationToken);
+                if (!batchResult.IsSuccess)
                 {
                     return ResultModel<ApiDocumentDto>.Failure(
-                        string.IsNullOrWhiteSpace(saveResult.Message)
-                            ? $"项目数据包导入失败：保存用例“{testCase.Name}”时发生错误。"
-                            : saveResult.Message,
+                        batchResult.Message ?? "项目数据包导入失败：用例批量保存出错。",
                         "project_data_package_case_save_failed");
                 }
             }

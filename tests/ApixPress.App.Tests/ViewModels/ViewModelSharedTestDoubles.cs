@@ -144,57 +144,38 @@ public static class ViewModelSharedTestDoubles
 
         public Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
         {
-            var saved = new RequestCaseDto
+            var id = string.IsNullOrWhiteSpace(requestCase.Id) ? Guid.NewGuid().ToString("N") : requestCase.Id;
+            var saved = CloneFullCase(requestCase);
+            saved = new RequestCaseDto
             {
-                Id = requestCase.Id,
-                ProjectId = requestCase.ProjectId,
-                EntryType = requestCase.EntryType,
-                Name = requestCase.Name,
-                GroupName = requestCase.GroupName,
-                FolderPath = requestCase.FolderPath,
-                ParentId = requestCase.ParentId,
-                Tags = requestCase.Tags.ToList(),
-                Description = requestCase.Description,
-                RequestSnapshot = new RequestSnapshotDto
-                {
-                    EndpointId = requestCase.RequestSnapshot.EndpointId,
-                    Name = requestCase.RequestSnapshot.Name,
-                    Method = requestCase.RequestSnapshot.Method,
-                    Url = requestCase.RequestSnapshot.Url,
-                    Description = requestCase.RequestSnapshot.Description,
-                    BodyMode = requestCase.RequestSnapshot.BodyMode,
-                    BodyContent = requestCase.RequestSnapshot.BodyContent,
-                    IgnoreSslErrors = requestCase.RequestSnapshot.IgnoreSslErrors,
-                    QueryParameters = requestCase.RequestSnapshot.QueryParameters.ToList(),
-                    PathParameters = requestCase.RequestSnapshot.PathParameters.ToList(),
-                    Headers = requestCase.RequestSnapshot.Headers.ToList()
-                },
+                Id = id,
+                ProjectId = saved.ProjectId,
+                EntryType = saved.EntryType,
+                Name = saved.Name,
+                GroupName = saved.GroupName,
+                FolderPath = saved.FolderPath,
+                ParentId = saved.ParentId,
+                Tags = saved.Tags,
+                Description = saved.Description,
+                RequestSnapshot = saved.RequestSnapshot,
                 HasLoadedDetail = true,
-                UpdatedAt = requestCase.UpdatedAt
+                UpdatedAt = saved.UpdatedAt
             };
-
-            if (string.IsNullOrWhiteSpace(saved.Id))
-            {
-                saved = new RequestCaseDto
-                {
-                    Id = Guid.NewGuid().ToString("N"),
-                    ProjectId = saved.ProjectId,
-                    EntryType = saved.EntryType,
-                    Name = saved.Name,
-                    GroupName = saved.GroupName,
-                    FolderPath = saved.FolderPath,
-                    ParentId = saved.ParentId,
-                    Tags = saved.Tags.ToList(),
-                    Description = saved.Description,
-                    RequestSnapshot = saved.RequestSnapshot,
-                    HasLoadedDetail = true,
-                    UpdatedAt = saved.UpdatedAt
-                };
-            }
 
             Cases.RemoveAll(item => string.Equals(item.Id, saved.Id, StringComparison.OrdinalIgnoreCase));
             Cases.Add(saved);
             return Task.FromResult<IResultModel<RequestCaseDto>>(ResultModel<RequestCaseDto>.Success(saved));
+        }
+
+        public async Task<IResultModel<int>> SaveRangeAsync(IEnumerable<RequestCaseDto> requestCases, CancellationToken cancellationToken)
+        {
+            var count = 0;
+            foreach (var requestCase in requestCases)
+            {
+                await SaveAsync(requestCase, cancellationToken);
+                count++;
+            }
+            return ResultModel<int>.Success(count);
         }
 
         public async Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
@@ -276,6 +257,38 @@ public static class ViewModelSharedTestDoubles
                 string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase)
                 && targetIds.Contains(item.Id));
             return Task.CompletedTask;
+        }
+
+        private static RequestCaseDto CloneFullCase(RequestCaseDto requestCase)
+        {
+            return new RequestCaseDto
+            {
+                Id = requestCase.Id,
+                ProjectId = requestCase.ProjectId,
+                EntryType = requestCase.EntryType,
+                Name = requestCase.Name,
+                GroupName = requestCase.GroupName,
+                FolderPath = requestCase.FolderPath,
+                ParentId = requestCase.ParentId,
+                Tags = requestCase.Tags.ToList(),
+                Description = requestCase.Description,
+                RequestSnapshot = new RequestSnapshotDto
+                {
+                    EndpointId = requestCase.RequestSnapshot.EndpointId,
+                    Name = requestCase.RequestSnapshot.Name,
+                    Method = requestCase.RequestSnapshot.Method,
+                    Url = requestCase.RequestSnapshot.Url,
+                    Description = requestCase.RequestSnapshot.Description,
+                    BodyMode = requestCase.RequestSnapshot.BodyMode,
+                    BodyContent = requestCase.RequestSnapshot.BodyContent,
+                    IgnoreSslErrors = requestCase.RequestSnapshot.IgnoreSslErrors,
+                    QueryParameters = requestCase.RequestSnapshot.QueryParameters.ToList(),
+                    PathParameters = requestCase.RequestSnapshot.PathParameters.ToList(),
+                    Headers = requestCase.RequestSnapshot.Headers.ToList()
+                },
+                HasLoadedDetail = true,
+                UpdatedAt = requestCase.UpdatedAt
+            };
         }
 
         private static string BuildImportedEndpointKey(ApiEndpointDto endpoint)

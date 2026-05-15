@@ -356,14 +356,32 @@ public static class OpenApiJsonParser
         return string.Join("&", parts);
     }
 
-    private static object? BuildSchemaExampleValue(JsonElement schema, JsonElement root, int depth)
+    private static object? BuildSchemaExampleValue(JsonElement schema, JsonElement root, int depth, HashSet<string>? visitedRefs = null)
     {
         if (depth > 8 || schema.ValueKind != JsonValueKind.Object)
         {
             return null;
         }
 
-        schema = ResolveSchemaReference(schema, root);
+        visitedRefs ??= new HashSet<string>(StringComparer.Ordinal);
+        if (TryGetSchemaReference(schema, out var reference))
+        {
+            if (!visitedRefs.Add(reference))
+            {
+                return null;
+            }
+
+            var resolved = ResolveSchemaReferencePath(reference, root);
+            if (resolved.ValueKind == JsonValueKind.Undefined)
+            {
+                visitedRefs.Remove(reference);
+                return null;
+            }
+
+            var value = BuildSchemaExampleValue(resolved, root, depth, visitedRefs);
+            visitedRefs.Remove(reference);
+            return value;
+        }
 
         if (schema.TryGetProperty("example", out var example))
         {
@@ -386,7 +404,7 @@ public static class OpenApiJsonParser
         if (type == "array")
         {
             return schema.TryGetProperty("items", out var items)
-                ? new[] { BuildSchemaExampleValue(items, root, depth + 1) }
+                ? new[] { BuildSchemaExampleValue(items, root, depth + 1, visitedRefs) }
                 : Array.Empty<object>();
         }
 
@@ -397,7 +415,7 @@ public static class OpenApiJsonParser
             {
                 foreach (var property in properties.EnumerateObject())
                 {
-                    result[property.Name] = BuildSchemaExampleValue(property.Value, root, depth + 1);
+                    result[property.Name] = BuildSchemaExampleValue(property.Value, root, depth + 1, visitedRefs);
                 }
             }
 
@@ -439,24 +457,53 @@ public static class OpenApiJsonParser
 
     private static JsonElement ResolveSchemaReference(JsonElement schema, JsonElement root)
     {
-        if (!schema.TryGetProperty("$ref", out var refElement) || refElement.ValueKind != JsonValueKind.String)
+        if (!TryGetSchemaReference(schema, out var reference))
         {
             return schema;
         }
 
-        var reference = refElement.GetString();
-        const string prefix = "#/components/schemas/";
-        if (string.IsNullOrWhiteSpace(reference) || !reference.StartsWith(prefix, StringComparison.Ordinal))
+        var resolved = ResolveSchemaReferencePath(reference, root);
+        return resolved.ValueKind != JsonValueKind.Undefined ? resolved : schema;
+    }
+
+    private static bool TryGetSchemaReference(JsonElement schema, out string reference)
+    {
+        reference = string.Empty;
+        if (schema.ValueKind != JsonValueKind.Object
+            || !schema.TryGetProperty("$ref", out var refElement)
+            || refElement.ValueKind != JsonValueKind.String)
         {
-            return schema;
+            return false;
         }
 
-        var schemaName = reference[prefix.Length..];
-        return root.TryGetProperty("components", out var components)
-               && components.TryGetProperty("schemas", out var schemas)
-               && schemas.TryGetProperty(schemaName, out var resolved)
-            ? resolved
-            : schema;
+        reference = refElement.GetString() ?? string.Empty;
+        return !string.IsNullOrWhiteSpace(reference);
+    }
+
+    private static JsonElement ResolveSchemaReferencePath(string reference, JsonElement root)
+    {
+        const string openApi3Prefix = "#/components/schemas/";
+        if (reference.StartsWith(openApi3Prefix, StringComparison.Ordinal))
+        {
+            var schemaName = reference[openApi3Prefix.Length..];
+            return root.TryGetProperty("components", out var components)
+                   && components.TryGetProperty("schemas", out var schemas)
+                   && schemas.TryGetProperty(schemaName, out var resolved)
+                ? resolved
+                : default;
+        }
+
+        const string swagger2Prefix = "#/definitions/";
+        if (reference.StartsWith(swagger2Prefix, StringComparison.Ordinal))
+        {
+            var definitionName = reference[swagger2Prefix.Length..];
+            return root.TryGetProperty("definitions", out var definitions)
+                   && definitions.TryGetProperty(definitionName, out var resolved)
+                ? resolved
+                : default;
+        }
+
+        return default;
     }
 
     private static string ResolveSchemaType(JsonElement schema)

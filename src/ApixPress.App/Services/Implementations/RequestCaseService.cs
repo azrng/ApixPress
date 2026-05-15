@@ -49,14 +49,10 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
 
     public async Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(requestCase.ProjectId))
+        var validationError = ValidateSaveRequest(requestCase);
+        if (validationError is not null)
         {
-            return ResultModel<RequestCaseDto>.Failure("请先选择项目后再保存用例。", "request_case_project_required");
-        }
-
-        if (string.IsNullOrWhiteSpace(requestCase.Name))
-        {
-            return ResultModel<RequestCaseDto>.Failure("请输入用例名称。", "request_case_name_required");
+            return ResultModel<RequestCaseDto>.Failure(validationError.Message, validationError.ErrorCode);
         }
 
         var entity = ToEntity(requestCase);
@@ -83,6 +79,71 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         {
             return ResultModel<RequestCaseDto>.Failure($"保存失败：{exception.Message}", "request_case_save_failed");
         }
+    }
+
+    public async Task<IResultModel<int>> SaveRangeAsync(IEnumerable<RequestCaseDto> requestCases, CancellationToken cancellationToken)
+    {
+        var caseList = requestCases.ToList();
+        foreach (var requestCase in caseList)
+        {
+            var validationError = ValidateSaveRequest(requestCase);
+            if (validationError is not null)
+            {
+                return ResultModel<int>.Failure(validationError.Message, validationError.ErrorCode);
+            }
+        }
+
+        var entities = caseList
+            .Select(dto =>
+            {
+                var entity = ToEntity(dto);
+                if (string.IsNullOrWhiteSpace(entity.Id))
+                {
+                    entity.Id = Guid.NewGuid().ToString("N");
+                }
+
+                if (entity.UpdatedAt == default)
+                {
+                    entity.UpdatedAt = DateTime.UtcNow;
+                }
+
+                return entity;
+            })
+            .ToList();
+
+        if (entities.Count == 0)
+        {
+            return ResultModel<int>.Success(0);
+        }
+
+        try
+        {
+            await _requestCaseRepository.UpsertRangeAsync(entities, cancellationToken);
+            return ResultModel<int>.Success(entities.Count);
+        }
+        catch (SqliteException exception) when (exception.SqliteErrorCode == 19)
+        {
+            return ResultModel<int>.Failure("批量保存失败：存在同名接口或用例冲突。", "request_case_batch_unique_conflict");
+        }
+        catch (Exception exception)
+        {
+            return ResultModel<int>.Failure($"批量保存失败：{exception.Message}", "request_case_batch_save_failed");
+        }
+    }
+
+    private static RequestCaseValidationError? ValidateSaveRequest(RequestCaseDto requestCase)
+    {
+        if (string.IsNullOrWhiteSpace(requestCase.ProjectId))
+        {
+            return new RequestCaseValidationError("请先选择项目后再保存用例。", "request_case_project_required");
+        }
+
+        if (string.IsNullOrWhiteSpace(requestCase.Name))
+        {
+            return new RequestCaseValidationError("请输入用例名称。", "request_case_name_required");
+        }
+
+        return null;
     }
 
     public async Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
@@ -443,4 +504,6 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
 
         public string Description => Entity.Description;
     }
+
+    private sealed record RequestCaseValidationError(string Message, string ErrorCode);
 }

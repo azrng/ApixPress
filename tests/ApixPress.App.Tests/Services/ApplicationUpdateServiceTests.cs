@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http;
 using System.Diagnostics;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using ApixPress.App.Models.DTOs;
@@ -197,6 +198,68 @@ public sealed class ApplicationUpdateServiceTests
         Assert.Equal(Path.Combine(baseDirectory, "ApixPress.exe"), request.RestartExecutablePath);
 
         Directory.Delete(tempRoot, recursive: true);
+    }
+
+    [Fact]
+    public async Task AppUpdateRunner_ShouldGeneratePowerShellApplyScriptWithEscapedPaths()
+    {
+        var tempRoot = Path.Combine(Path.GetTempPath(), $"ApixPress-update-script-tests-{Guid.NewGuid():N}");
+        var workspacePath = Path.Combine(tempRoot, "work space");
+        var extractPath = Path.Combine(workspacePath, "package '版本'");
+        var packageFilePath = Path.Combine(workspacePath, "update '包'.zip");
+        var targetDirectory = Path.Combine(tempRoot, "target '目录'");
+        var restartExecutablePath = Path.Combine(targetDirectory, "ApixPress.exe");
+        Directory.CreateDirectory(extractPath);
+        Directory.CreateDirectory(targetDirectory);
+
+        try
+        {
+            var method = typeof(AppUpdateRunner).GetMethod(
+                "CreateApplyScript",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.NotNull(method);
+
+            var scriptPath = (string)method!.Invoke(null,
+            [
+                workspacePath,
+                extractPath,
+                packageFilePath,
+                new AppUpdateLaunchRequestDto
+                {
+                    CurrentProcessId = 1234,
+                    TargetDirectory = targetDirectory,
+                    RestartExecutablePath = restartExecutablePath
+                },
+                5678
+            ])!;
+
+            var cmdContent = await File.ReadAllTextAsync(scriptPath, Encoding.UTF8);
+            const string marker = " -EncodedCommand ";
+            var markerIndex = cmdContent.IndexOf(marker, StringComparison.Ordinal);
+            Assert.True(markerIndex >= 0);
+
+            var encodedStart = markerIndex + marker.Length;
+            var encodedEnd = cmdContent.IndexOf("\r\n", encodedStart, StringComparison.Ordinal);
+            Assert.True(encodedEnd > encodedStart);
+
+            var encodedCommand = cmdContent[encodedStart..encodedEnd];
+            var powerShellScript = Encoding.Unicode.GetString(Convert.FromBase64String(encodedCommand));
+
+            Assert.Contains("$waitPid = 1234", powerShellScript);
+            Assert.Contains("$updatePid = 5678", powerShellScript);
+            Assert.Contains("robocopy $extractDir $targetDir", powerShellScript);
+            Assert.Contains("Start-Process $restartExe", powerShellScript);
+            Assert.Contains("package ''版本''", powerShellScript);
+            Assert.Contains("target ''目录''", powerShellScript);
+            Assert.Contains("update ''包''.zip", powerShellScript);
+        }
+        finally
+        {
+            if (Directory.Exists(tempRoot))
+            {
+                Directory.Delete(tempRoot, recursive: true);
+            }
+        }
     }
 
     private static IConfiguration CreateConfiguration()

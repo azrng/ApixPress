@@ -152,6 +152,47 @@ public sealed partial class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task RequestCaseService_SaveRangeAsync_ShouldRejectCasesWithoutProjectOrName()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var serializer = CreateSerializer();
+        var caseRepository = new RequestCaseRepository(factory);
+        var caseService = new RequestCaseService(caseRepository, serializer);
+
+        var missingProjectResult = await caseService.SaveRangeAsync(
+        [
+            new RequestCaseDto
+            {
+                Name = "缺少项目",
+                RequestSnapshot = new RequestSnapshotDto
+                {
+                    Method = "GET",
+                    Url = "/missing-project"
+                }
+            }
+        ], CancellationToken.None);
+        var missingNameResult = await caseService.SaveRangeAsync(
+        [
+            new RequestCaseDto
+            {
+                ProjectId = "project-1",
+                RequestSnapshot = new RequestSnapshotDto
+                {
+                    Method = "GET",
+                    Url = "/missing-name"
+                }
+            }
+        ], CancellationToken.None);
+
+        Assert.False(missingProjectResult.IsSuccess);
+        Assert.Contains("请先选择项目", missingProjectResult.Message, StringComparison.Ordinal);
+        Assert.False(missingNameResult.IsSuccess);
+        Assert.Contains("请输入用例名称", missingNameResult.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task RequestHistoryRepository_ShouldProjectHistorySummaryFromSqlite()
     {
         using var factory = new TestSqliteConnectionFactory();

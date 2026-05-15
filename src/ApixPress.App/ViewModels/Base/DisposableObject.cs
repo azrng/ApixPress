@@ -2,16 +2,17 @@ namespace ApixPress.App.ViewModels.Base;
 
 public abstract class DisposableObject : IDisposable
 {
-    protected bool IsDisposed { get; private set; }
+    private int _isDisposed;
+
+    protected bool IsDisposed => _isDisposed != 0;
 
     public void Dispose()
     {
-        if (IsDisposed)
+        if (Interlocked.CompareExchange(ref _isDisposed, 1, 0) != 0)
         {
             return;
         }
 
-        IsDisposed = true;
         DisposeManaged();
         GC.SuppressFinalize(this);
     }

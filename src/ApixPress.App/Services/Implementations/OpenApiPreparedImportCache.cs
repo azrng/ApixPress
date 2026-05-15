@@ -6,6 +6,7 @@ namespace ApixPress.App.Services.Implementations;
 internal sealed class OpenApiPreparedImportCache
 {
     private static readonly TimeSpan PreparedImportCacheLifetime = TimeSpan.FromMinutes(10);
+    private const int MaxCacheEntries = 32;
 
     private readonly Dictionary<string, PreparedImportPayload> _preparedImports = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock _preparedImportCacheLock = new();
@@ -53,8 +54,23 @@ internal sealed class OpenApiPreparedImportCache
     {
         lock (_preparedImportCacheLock)
         {
+            EvictExpiredEntries();
+
             _preparedImports[BuildPreparedImportKey(projectId, sourceType, sourceValue)] =
                 new PreparedImportPayload(graph, preview, DateTime.UtcNow);
+
+            if (_preparedImports.Count > MaxCacheEntries)
+            {
+                var overflowKeys = _preparedImports
+                    .OrderBy(item => item.Value.CachedAt)
+                    .Take(_preparedImports.Count - MaxCacheEntries)
+                    .Select(item => item.Key)
+                    .ToList();
+                foreach (var key in overflowKeys)
+                {
+                    _preparedImports.Remove(key);
+                }
+            }
         }
     }
 
@@ -63,6 +79,19 @@ internal sealed class OpenApiPreparedImportCache
         lock (_preparedImportCacheLock)
         {
             _preparedImports.Remove(BuildPreparedImportKey(projectId, sourceType, sourceValue));
+        }
+    }
+
+    private void EvictExpiredEntries()
+    {
+        var now = DateTime.UtcNow;
+        var expiredKeys = _preparedImports
+            .Where(item => now - item.Value.CachedAt > PreparedImportCacheLifetime)
+            .Select(item => item.Key)
+            .ToList();
+        foreach (var key in expiredKeys)
+        {
+            _preparedImports.Remove(key);
         }
     }
 
