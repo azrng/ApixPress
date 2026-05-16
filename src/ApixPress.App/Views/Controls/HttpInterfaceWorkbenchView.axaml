@@ -34,7 +34,7 @@
                    Text="{Binding ConfigTab.RequestDescription}"
                    TextWrapping="Wrap"
                    VerticalContentAlignment="Top"
-                   Watermark="补充接口用途、前置条件和返回约定" />
+                   PlaceholderText="补充接口用途、前置条件和返回约定" />
         </StackPanel>
       </StackPanel>
     </Border>
@@ -108,7 +108,7 @@
                   IsVisible="{Binding ResponseSection.HasResponse}">
               <TextBox Grid.Column="0"
                        Classes="SectionInput HttpResponseSearchInput"
-                       Watermark="搜索响应"
+                       PlaceholderText="搜索响应"
                        Text="{Binding ResponseSection.BodySearchText, UpdateSourceTrigger=PropertyChanged}" />
               <TextBlock Grid.Column="1"
                          Classes="CaptionText"

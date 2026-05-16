@@ -41,7 +41,7 @@ public partial class ProjectSettingsWorkspaceView : UserControl
         try
         {
             var topLevelHashCode = TopLevel.GetTopLevel(this)?.GetHashCode() ?? GetHashCode();
-            await Drawer.ShowModal(
+            await OverlayDrawer.ShowStandardAsync(
                 new ProjectDrawerView(),
                 viewModel,
                 null,

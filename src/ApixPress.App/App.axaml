@@ -17,7 +17,7 @@
 
     <Application.Styles>
         <semi:SemiTheme Locale="zh-CN" />
-        <u-semi:SemiTheme Locale="zh-CN" />
+        <semi:UrsaSemiTheme Locale="zh-CN" />
         <StyleInclude Source="/Assets/Styles/Global.axaml" />
     </Application.Styles>
 </Application>

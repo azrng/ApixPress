@@ -26,14 +26,14 @@
             <u:Form LabelPosition="Top">
               <TextBox Classes="SectionInput DialogInput"
                        u:FormItem.Label="快捷请求名称"
-                       Watermark="请输入保存名称"
+                       PlaceholderText="请输入保存名称"
                        Text="{Binding ActiveProjectTab.QuickRequestSave.DraftName}" />
               <TextBox Classes="SectionInput DialogInput"
                        u:FormItem.Label="备注"
                        AcceptsReturn="True"
                        Height="96"
                        TextWrapping="Wrap"
-                       Watermark="可选，补充请求用途说明"
+                       PlaceholderText="可选，补充请求用途说明"
                        Text="{Binding ActiveProjectTab.QuickRequestSave.DraftDescription}" />
             </u:Form>
           </Border>

@@ -87,7 +87,7 @@
             <TextBox Grid.Column="2"
                      Width="240"
                      Classes="ToolbarSearchBox"
-                     Watermark="搜索"
+                     PlaceholderText="搜索"
                      Text="{Binding ProjectPanel.SearchText}" />
             <Button Grid.Column="3"
                     Classes="PrimaryButton HomeCreateProjectButton"

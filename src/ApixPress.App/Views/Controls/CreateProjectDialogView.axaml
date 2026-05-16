@@ -55,7 +55,7 @@
                            Text="建议使用系统名、服务名或团队名，方便后续在首页和工作区快速识别。"
                            TextWrapping="Wrap" />
                 <TextBox Classes="SectionInput DialogInput"
-                         Watermark="请输入项目名称"
+                         PlaceholderText="请输入项目名称"
                          Text="{Binding ProjectPanel.Creation.DraftProjectName}" />
               </StackPanel>
 
@@ -79,7 +79,7 @@
                          AcceptsReturn="True"
                          Height="120"
                          TextWrapping="Wrap"
-                         Watermark="补充项目用途、团队或说明"
+                         PlaceholderText="补充项目用途、团队或说明"
                          Text="{Binding ProjectPanel.Creation.DraftProjectDescription}" />
               </StackPanel>
             </StackPanel>

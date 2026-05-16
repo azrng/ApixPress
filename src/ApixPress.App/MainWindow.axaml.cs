@@ -87,7 +87,7 @@ public partial class MainWindow : Window
             _isUseCasesDrawerOpen = true;
             try
             {
-                await Drawer.ShowModal(
+                await OverlayDrawer.ShowStandardAsync(
                     new UseCasesDrawerView(),
                     _viewModel,
                     null,
@@ -121,7 +121,7 @@ public partial class MainWindow : Window
             _isCreateProjectDrawerOpen = true;
             try
             {
-                await Drawer.ShowModal(
+                await OverlayDrawer.ShowStandardAsync(
                     new CreateProjectDrawerView(),
                     _viewModel,
                     null,
@@ -155,7 +155,7 @@ public partial class MainWindow : Window
             _isEnvironmentDrawerOpen = true;
             try
             {
-                await Drawer.ShowModal(
+                await OverlayDrawer.ShowStandardAsync(
                     new EnvironmentDrawerView(),
                     _viewModel,
                     null,

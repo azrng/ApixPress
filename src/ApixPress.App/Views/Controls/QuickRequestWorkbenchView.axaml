@@ -66,10 +66,10 @@
                         <Grid ColumnDefinitions="72,2.2*,2.2*,96,2.4*,48"
                               ColumnSpacing="{StaticResource Space.3}">
                           <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
-                          <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="添加参数" />
-                          <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" Watermark="参数值" />
+                          <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" PlaceholderText="添加参数" />
+                          <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" PlaceholderText="参数值" />
                           <TextBlock Grid.Column="3" Classes="CaptionText" Text="String" VerticalAlignment="Center" />
-                          <TextBox Grid.Column="4" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" Watermark="说明" />
+                          <TextBox Grid.Column="4" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" PlaceholderText="说明" />
                           <u:IconButton Grid.Column="5"
                                         Classes="Danger"
                                         Theme="{DynamicResource BorderlessIconButton}"
@@ -150,10 +150,10 @@
                                   <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
                                         ColumnSpacing="{StaticResource Space.3}">
                                     <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="字段名" />
-                                    <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" Watermark="字段值" />
+                                    <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" PlaceholderText="字段名" />
+                                    <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" PlaceholderText="字段值" />
                                     <TextBlock Grid.Column="3" Classes="CaptionText" Text="String" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="4" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" Watermark="说明" />
+                                    <TextBox Grid.Column="4" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" PlaceholderText="说明" />
                                     <u:IconButton Grid.Column="5"
                                                   Classes="Danger"
                                                   Theme="{DynamicResource BorderlessIconButton}"
@@ -184,7 +184,7 @@
                            Background="Transparent"
                            TextWrapping="Wrap"
                            VerticalContentAlignment="Top"
-                           Watermark="{Binding ConfigTab.RequestBodyWatermark}"
+                           PlaceholderText="{Binding ConfigTab.RequestBodyWatermark}"
                            Text="{Binding ConfigTab.RequestBody}"
                            FontFamily="{StaticResource Font.Monospace}" />
                 </Border>
@@ -222,10 +222,10 @@
                               HorizontalAlignment="Stretch">
                         <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,48"
                               ColumnSpacing="{StaticResource Space.3}">
-                          <TextBox Grid.Column="0" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="Header 名" />
-                          <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" Watermark="Header 值" />
+                          <TextBox Grid.Column="0" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" PlaceholderText="Header 名" />
+                          <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" PlaceholderText="Header 值" />
                           <TextBlock Grid.Column="2" Classes="CaptionText" Text="String" VerticalAlignment="Center" />
-                          <TextBox Grid.Column="3" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" Watermark="说明" />
+                          <TextBox Grid.Column="3" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" PlaceholderText="说明" />
                           <u:IconButton Grid.Column="4"
                                         Classes="Danger"
                                         Theme="{DynamicResource BorderlessIconButton}"
@@ -282,7 +282,7 @@
                 IsVisible="{Binding ResponseSection.HasResponse}">
             <TextBox Grid.Column="0"
                      Classes="SectionInput HttpResponseSearchInput"
-                     Watermark="搜索响应"
+                     PlaceholderText="搜索响应"
                      Text="{Binding ResponseSection.BodySearchText, UpdateSourceTrigger=PropertyChanged}" />
             <TextBlock Grid.Column="1"
                        Classes="CaptionText"

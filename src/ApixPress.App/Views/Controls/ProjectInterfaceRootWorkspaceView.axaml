@@ -75,7 +75,7 @@
                            Text="Bearer Token" />
                 <TextBox Grid.Row="1"
                          Classes="SectionInput"
-                         Watermark="例如 {{apiKey}}"
+                         PlaceholderText="例如 {{apiKey}}"
                          Text="{Binding InterfaceRoot.BearerToken}" />
               </Grid>
 
@@ -87,14 +87,14 @@
                            Text="用户名" />
                 <TextBox Grid.Row="1"
                          Classes="SectionInput"
-                         Watermark="Username"
+                         PlaceholderText="Username"
                          Text="{Binding InterfaceRoot.BasicUsername}" />
                 <TextBlock Grid.Row="2"
                            Classes="CaptionText"
                            Text="密码" />
                 <TextBox Grid.Row="3"
                          Classes="SectionInput"
-                         Watermark="Password"
+                         PlaceholderText="Password"
                          Text="{Binding InterfaceRoot.BasicPassword}" />
               </Grid>
 
@@ -126,7 +126,7 @@
                 <TextBox Grid.Column="1"
                          Width="220"
                          Classes="SectionInput"
-                         Watermark="搜索接口名称或路径"
+                         PlaceholderText="搜索接口名称或路径"
                          Text="{Binding InterfaceRoot.SearchText}" />
               </Grid>
 

@@ -128,7 +128,7 @@
                   <TextBlock Classes="CaptionText"
                              Text="{Binding ActiveProjectTab.Import.UrlDescription}" />
                   <TextBox Classes="SectionInput DialogInput"
-                           Watermark="{Binding ActiveProjectTab.Import.UrlWatermark}"
+                           PlaceholderText="{Binding ActiveProjectTab.Import.UrlWatermark}"
                            Text="{Binding ActiveProjectTab.Import.ImportUrl}" />
                   <StackPanel Orientation="Horizontal"
                               HorizontalAlignment="Right"

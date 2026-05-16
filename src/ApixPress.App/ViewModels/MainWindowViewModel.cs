@@ -212,7 +212,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public string BrowserStatusText => ProjectPanel.HasProjects
         ? "选择一个项目会在顶部新开标签页，并保留首页列表。"
         : "当前还没有项目，请先创建一个项目。";
-    public string RuntimeStackText { get; } = ".NET 10 / Avalonia 11 / Ursa";
+    public string RuntimeStackText { get; } = ".NET 10 / Avalonia 12 / Ursa 2";
     public string WindowMaximizeGlyph => IsWindowMaximized ? "\u2750" : "\u25A1";
 
     [ObservableProperty]

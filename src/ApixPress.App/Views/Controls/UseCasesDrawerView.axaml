@@ -25,14 +25,14 @@
       <u:Form LabelPosition="Top">
         <TextBox Classes="SectionInput"
                  u:FormItem.Label="用例名称"
-                 Watermark="请输入用例名称"
+                 PlaceholderText="请输入用例名称"
                  Text="{Binding UseCasesPanel.CaseName}" />
         <TextBox Classes="SectionInput"
                  u:FormItem.Label="分组名称"
-                 Watermark="请输入分组名称"
+                 PlaceholderText="请输入分组名称"
                  Text="{Binding UseCasesPanel.CaseGroupName}" />
         <u:TagInput u:FormItem.Label="标签"
-                    Watermark="输入标签后按回车"
+                    PlaceholderText="输入标签后按回车"
                     Tags="{Binding UseCasesPanel.CaseTags}" />
       </u:Form>
 

@@ -4,7 +4,6 @@ using Avalonia.Controls.Notifications;
 using Avalonia.Threading;
 using ApixPress.App.Services.Interfaces;
 using Azrng.Core.DependencyInjection;
-using UrsaNotification = Ursa.Controls.Notification;
 using UrsaWindowNotificationManager = Ursa.Controls.WindowNotificationManager;
 
 namespace ApixPress.App.Services.Implementations;
@@ -37,7 +36,7 @@ public sealed class AppNotificationService : IAppNotificationService, ISingleton
                 return;
             }
 
-            manager.Show(new UrsaNotification(title, content, type, expiration ?? DefaultExpiration, true, null, null));
+            manager.Show(content, type, expiration ?? DefaultExpiration, true, true, null, null);
         });
     }
 

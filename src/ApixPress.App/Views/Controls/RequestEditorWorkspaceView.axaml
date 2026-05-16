@@ -26,7 +26,7 @@
         <TextBox Grid.Column="0"
                  Classes="SectionInput HttpInterfaceNameInput HttpToolbarNameInput"
                  HorizontalAlignment="Left"
-                 Watermark="未命名请求"
+                 PlaceholderText="未命名请求"
                  Text="{Binding Editor.CurrentQuickRequestName}" />
         <Button Grid.Column="1"
                 Classes="IconButton HttpCodeIconButton"
@@ -57,7 +57,7 @@
             </Border>
             <TextBox Grid.Column="2"
                      Classes="HttpRequestPathInput"
-                     Watermark="{Binding Editor.CurrentEditorUrlWatermark}"
+                     PlaceholderText="{Binding Editor.CurrentEditorUrlWatermark}"
                      Text="{Binding Editor.RequestUrl}" />
           </Grid>
         </Border>
@@ -102,7 +102,7 @@
         <TextBox Grid.Column="1"
                  Classes="SectionInput HttpInterfaceNameInput HttpToolbarNameInput"
                  HorizontalAlignment="Left"
-                 Watermark="未命名接口"
+                 PlaceholderText="未命名接口"
                  Text="{Binding Editor.CurrentHttpInterfaceName}" />
         <Button Grid.Column="2"
                 Classes="IconButton HttpCodeIconButton"
@@ -133,14 +133,14 @@
             </Border>
             <TextBox Grid.Column="2"
                      Classes="HttpRequestPathInput"
-                     Watermark="{Binding Editor.CurrentEditorUrlWatermark}"
+                     PlaceholderText="{Binding Editor.CurrentEditorUrlWatermark}"
                      Text="{Binding Editor.RequestUrl}" />
           </Grid>
         </Border>
         <TextBox Grid.Column="1"
                  Classes="SectionInput HttpInterfaceNameInput HttpCaseNameInput"
                  HorizontalAlignment="Stretch"
-                 Watermark="用例名称"
+                 PlaceholderText="用例名称"
                  Text="{Binding Editor.CurrentHttpCaseName}"
                  IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
         <Button Grid.Column="2"

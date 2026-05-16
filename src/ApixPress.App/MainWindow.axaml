@@ -18,7 +18,6 @@
         WindowState="Maximized"
         SystemDecorations="None"
         ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="NoChrome"
         Icon="/Assets/AppIcon.ico"
         Title="ApixPress">
   <Grid RowDefinitions="Auto,*">

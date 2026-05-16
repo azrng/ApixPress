@@ -54,7 +54,7 @@
               <TextBlock Classes="CaptionText"
                          Text="测试用例" />
               <TextBox Classes="SectionInput HttpInterfaceNameInput HttpCaseNameInput"
-                       Watermark="用例名称"
+                       PlaceholderText="用例名称"
                        Text="{Binding Editor.CurrentHttpCaseName}" />
               <Button Classes="HttpSaveButton"
                       Content="保存测试用例"

@@ -22,7 +22,7 @@
           <TextBlock Classes="CaptionText"
                      Text="先输入项目名称，再创建项目。创建后会自动生成一个默认环境。" />
           <TextBox Classes="SectionInput"
-                   Watermark="请输入项目名称"
+                   PlaceholderText="请输入项目名称"
                    Text="{Binding ProjectPanel.Creation.DraftProjectName}" />
         </StackPanel>
         <StackPanel Grid.Column="1"
@@ -35,7 +35,7 @@
                    AcceptsReturn="True"
                    Height="88"
                    TextWrapping="Wrap"
-                   Watermark="例如：支付域联调、会员系统 OpenAPI、测试导出项目"
+                   PlaceholderText="例如：支付域联调、会员系统 OpenAPI、测试导出项目"
                    Text="{Binding ProjectPanel.Creation.DraftProjectDescription}" />
         </StackPanel>
         <StackPanel Grid.Column="2"
@@ -133,14 +133,14 @@
           <u:Form LabelPosition="Top">
             <TextBox Classes="SectionInput"
                      u:FormItem.Label="项目名称"
-                     Watermark="请输入项目名称"
+                     PlaceholderText="请输入项目名称"
                      Text="{Binding ProjectPanel.SelectedProject.Name}" />
             <TextBox Classes="SectionInput"
                      AcceptsReturn="True"
                      Height="120"
                      TextWrapping="Wrap"
                      u:FormItem.Label="项目说明"
-                     Watermark="用于区分服务域、环境或团队"
+                     PlaceholderText="用于区分服务域、环境或团队"
                      Text="{Binding ProjectPanel.SelectedProject.Description}" />
           </u:Form>
 

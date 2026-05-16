@@ -42,10 +42,10 @@
               <Grid ColumnDefinitions="72,2.2*,2.2*,96,2.4*,48"
                     ColumnSpacing="{StaticResource Space.3}">
                 <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
-                <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="添加参数" />
-                <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" Watermark="参数值" />
+                <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" PlaceholderText="添加参数" />
+                <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" PlaceholderText="参数值" />
                 <TextBlock Grid.Column="3" Classes="CaptionText" Text="String" VerticalAlignment="Center" />
-                <TextBox Grid.Column="4" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" Watermark="说明" />
+                <TextBox Grid.Column="4" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" PlaceholderText="说明" />
                 <u:IconButton Grid.Column="5"
                               Classes="Danger"
                               Theme="{DynamicResource BorderlessIconButton}"
