@@ -4,20 +4,6 @@
     <Setter Property="Padding" Value="{StaticResource Pad.5}" />
   </Style>
 
-  <Style Selector="Border.HttpDocumentMethodBadge">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="10,6" />
-  </Style>
-
-  <Style Selector="Border.HttpDocumentStatusBadge">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="10,6" />
-  </Style>
-
   <Style Selector="Border.HttpDocumentUrlCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
@@ -55,12 +41,6 @@
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
     <Setter Property="MinHeight" Value="180" />
     <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
-  </Style>
-
-  <Style Selector="TextBlock.HttpResponsePlaceholderIcon">
-    <Setter Property="FontSize" Value="44" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
-    <Setter Property="HorizontalAlignment" Value="Center" />
   </Style>
 
   <Style Selector="Border.HttpResponsePlaceholderHost">
@@ -193,9 +173,4 @@
     <Setter Property="CornerRadius" Value="12,12,0,0" />
   </Style>
 
-  <Style Selector="Border.RequestHistoryLoadingOverlay">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Overlay}" />
-    <Setter Property="HorizontalAlignment" Value="Stretch" />
-    <Setter Property="VerticalAlignment" Value="Stretch" />
-  </Style>
 </Styles>

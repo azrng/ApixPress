@@ -190,13 +190,6 @@
     <Setter Property="MinHeight" Value="40" />
   </Style>
 
-  <Style Selector="Border.HomeProjectTileDefaultBadge">
-    <Setter Property="Background" Value="{DynamicResource Brush.Status.Warning.Background}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="Padding" Value="8,4" />
-    <Setter Property="VerticalAlignment" Value="Top" />
-  </Style>
-
   <Style Selector="Border.HomeProjectTileTag">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />

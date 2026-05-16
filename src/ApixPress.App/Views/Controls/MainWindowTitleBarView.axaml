@@ -41,10 +41,7 @@
                 <StackPanel Orientation="Horizontal"
                             Spacing="{StaticResource Space.1}">
                   <TextBlock Text="首页" />
-                  <Border Classes="WorkspaceTabBadge">
-                    <TextBlock Classes="CaptionText"
-                               Text="{Binding ProjectPanel.Projects.Count}" />
-                  </Border>
+                  <u:Badge Header="{Binding ProjectPanel.Projects.Count}" />
                 </StackPanel>
               </ToggleButton>
 

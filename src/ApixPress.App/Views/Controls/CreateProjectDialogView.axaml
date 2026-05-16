@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.CreateProjectDialogView"
              x:DataType="vm:MainWindowViewModel"
@@ -47,10 +48,8 @@
 
           <Border Grid.Row="1"
                   Classes="CreateProjectDialogFormCard">
-            <StackPanel Spacing="{StaticResource Space.4}">
-              <StackPanel Spacing="{StaticResource Space.2}">
-                <TextBlock Classes="CreateProjectDialogFieldLabel"
-                           Text="项目名称" />
+            <u:Form LabelPosition="Top" LabelWidth="*">
+              <StackPanel u:FormItem.Label="项目名称" Spacing="{StaticResource Space.1}">
                 <TextBlock Classes="CreateProjectDialogFieldHint"
                            Text="建议使用系统名、服务名或团队名，方便后续在首页和工作区快速识别。"
                            TextWrapping="Wrap" />
@@ -59,19 +58,7 @@
                          Text="{Binding ProjectPanel.Creation.DraftProjectName}" />
               </StackPanel>
 
-              <Border Classes="CreateProjectDialogDivider" />
-
-              <StackPanel Spacing="{StaticResource Space.2}">
-                <Grid ColumnDefinitions="*,Auto"
-                      ColumnSpacing="{StaticResource Space.2}">
-                  <TextBlock Classes="CreateProjectDialogFieldLabel"
-                             Text="备注信息" />
-                  <Border Grid.Column="1"
-                          Classes="CreateProjectDialogOptionalTag">
-                    <TextBlock Classes="CreateProjectDialogOptionalTagText"
-                               Text="可选" />
-                  </Border>
-                </Grid>
+              <StackPanel u:FormItem.Label="备注信息" Spacing="{StaticResource Space.1}">
                 <TextBlock Classes="CreateProjectDialogFieldHint"
                            Text="补充项目用途、协作背景或使用说明，后续切换项目时会更容易区分。"
                            TextWrapping="Wrap" />
@@ -82,7 +69,7 @@
                          PlaceholderText="补充项目用途、团队或说明"
                          Text="{Binding ProjectPanel.Creation.DraftProjectDescription}" />
               </StackPanel>
-            </StackPanel>
+            </u:Form>
           </Border>
 
           <Border Grid.Row="2"

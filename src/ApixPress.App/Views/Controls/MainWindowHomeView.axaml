@@ -21,10 +21,7 @@
                           Spacing="{StaticResource Space.2}">
                 <TextBlock Classes="PageTitle"
                            Text="项目首页" />
-                <Border Classes="HomeContentOwnerBadge">
-                  <TextBlock Classes="CaptionText"
-                             Text="本地工作区" />
-                </Border>
+                <u:Badge Header="本地工作区" />
               </StackPanel>
               <TextBlock Classes="SubtleText"
                          Text="参考 Apifox 的项目列表工作台风格：首页保持轻量，重点放在筛选、进入和浏览项目卡片。"
@@ -108,14 +105,8 @@
                               VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal"
                                 Spacing="{StaticResource Space.2}">
-                      <Border Classes="HomeBodyEmptyBadge">
-                        <TextBlock Classes="CaptionText"
-                                   Text="项目列表" />
-                      </Border>
-                      <Border Classes="HomeBodyEmptyBadge HomeBodyEmptyBadgeMuted">
-                        <TextBlock Classes="CaptionText"
-                                   Text="0 个项目" />
-                      </Border>
+                      <u:Badge Header="项目列表" />
+                      <u:Badge Header="0 个项目" Classes="Light Secondary" />
                     </StackPanel>
                     <TextBlock Classes="PageTitle"
                                Text="还没有项目" />
@@ -139,10 +130,7 @@
                       ColumnSpacing="{StaticResource Space.6}">
                   <StackPanel Spacing="{StaticResource Space.2}"
                               VerticalAlignment="Center">
-                    <Border Classes="HomeBodyEmptyBadge">
-                      <TextBlock Classes="CaptionText"
-                                 Text="搜索结果" />
-                    </Border>
+                    <u:Badge Header="搜索结果" />
                     <TextBlock Classes="PageTitle"
                                Text="没有找到匹配项目" />
                     <TextBlock Classes="CaptionText HomeBodyEmptyDescription"
@@ -193,12 +181,9 @@
                                        TextWrapping="Wrap"
                                        MaxLines="2" />
                           </StackPanel>
-                          <Border Grid.Column="2"
-                                  Classes="HomeProjectTileDefaultBadge"
-                                  IsVisible="{Binding IsDefault}">
-                            <TextBlock Classes="CaptionText"
-                                       Text="默认" />
-                          </Border>
+                          <u:Badge Grid.Column="2"
+                                   Header="默认"
+                                   IsVisible="{Binding IsDefault}" />
                         </Grid>
 
                         <TextBlock Grid.Row="1"

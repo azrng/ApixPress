@@ -2,37 +2,21 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
              xmlns:views="using:ApixPress.App.Views.Controls"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.ProjectWorkspaceView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
   <Border Background="Transparent">
-    <Grid Margin="12,4,12,12"
-          RowDefinitions="*">
+    <u:LoadingContainer IsLoading="{Binding IsWorkspaceLoading}"
+                        LoadingMessage="{Binding WorkspaceLoadingText}"
+                        Margin="12,4,12,12">
       <Grid ColumnDefinitions="84,*"
             ColumnSpacing="{StaticResource Space.3}">
         <views:ProjectWorkspaceNavigationRailView Grid.Column="0" />
         <views:ProjectWorkspaceContentHostView Grid.Column="1" />
       </Grid>
-
-      <Border Classes="ProjectWorkspaceLoadingOverlay"
-              IsVisible="{Binding IsWorkspaceLoading}">
-        <Border Classes="ProjectWorkspaceLoadingCard">
-          <StackPanel Spacing="{StaticResource Space.3}">
-            <ProgressBar Classes="ProjectWorkspaceLoadingProgress"
-                         IsIndeterminate="True" />
-            <StackPanel Spacing="{StaticResource Space.1}">
-              <TextBlock Classes="SectionTitle"
-                         HorizontalAlignment="Center"
-                         Text="正在进入项目工作区" />
-              <TextBlock Classes="CaptionText"
-                         HorizontalAlignment="Center"
-                         Text="{Binding WorkspaceLoadingText}" />
-            </StackPanel>
-          </StackPanel>
-        </Border>
-      </Border>
-    </Grid>
+    </u:LoadingContainer>
   </Border>
 </UserControl>

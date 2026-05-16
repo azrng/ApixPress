@@ -10,23 +10,10 @@
              mc:Ignorable="d">
   <Border Classes="PanelCard ProjectWorkspaceCanvas"
           IsVisible="{Binding Shell.IsRequestHistorySection}">
-    <Grid RowDefinitions="Auto,*"
-          RowSpacing="{StaticResource Space.3}">
-      <Border Grid.RowSpan="2"
-              Classes="RequestHistoryLoadingOverlay"
-              IsVisible="{Binding HistoryPanel.IsHistoryLoading}">
-        <Border Classes="ProjectWorkspaceLoadingCard">
-          <StackPanel Spacing="{StaticResource Space.3}">
-            <ProgressBar Classes="ProjectWorkspaceLoadingProgress"
-                         IsIndeterminate="True" />
-            <StackPanel Spacing="{StaticResource Space.1}">
-              <TextBlock Classes="SectionTitle"
-                         HorizontalAlignment="Center"
-                         Text="正在加载请求历史" />
-            </StackPanel>
-          </StackPanel>
-        </Border>
-      </Border>
+    <u:LoadingContainer IsLoading="{Binding HistoryPanel.IsHistoryLoading}"
+                        LoadingMessage="正在加载请求历史">
+      <Grid RowDefinitions="Auto,*"
+            RowSpacing="{StaticResource Space.3}">
       <Grid ColumnDefinitions="*,Auto"
             ColumnSpacing="{StaticResource Space.2}">
         <StackPanel Spacing="2">
@@ -106,6 +93,7 @@
           </Grid>
         </DockPanel>
       </Border>
-    </Grid>
+      </Grid>
+    </u:LoadingContainer>
   </Border>
 </UserControl>

@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.HttpDocumentWorkspaceView"
              x:DataType="vm:ProjectTabViewModel"
@@ -21,12 +22,8 @@
                       Spacing="{StaticResource Space.3}">
             <StackPanel Orientation="Horizontal"
                         Spacing="{StaticResource Space.2}">
-              <Border Classes="HttpDocumentMethodBadge">
-                <TextBlock Text="{Binding Editor.SelectedMethod}" />
-              </Border>
-              <Border Classes="HttpDocumentStatusBadge">
-                <TextBlock Text="{Binding Editor.CurrentResponseValidationResultText}" />
-              </Border>
+              <u:Badge Header="{Binding Editor.SelectedMethod}" />
+              <u:Badge Header="{Binding Editor.CurrentResponseValidationResultText}" />
             </StackPanel>
 
             <StackPanel Spacing="4">

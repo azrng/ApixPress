@@ -80,9 +80,8 @@
                           IsVisible="{Binding EnvironmentPanel.HasSelectedEnvironment}">
                 <Border Classes="EnvironmentDetailCard EnvironmentDetailHeroCard">
                   <StackPanel Spacing="{StaticResource Space.2}">
-                    <TextBlock Classes="CaptionText"
-                               Text="环境名称" />
-                    <TextBox Classes="SectionInput EnvironmentHeroNameInput"
+                    <TextBox u:FormItem.Label="环境名称"
+                             Classes="SectionInput EnvironmentHeroNameInput"
                              PlaceholderText="例如 开发 / 测试 / 生产"
                              Text="{Binding EnvironmentPanel.SelectedEnvironment.Name}" />
                   </StackPanel>

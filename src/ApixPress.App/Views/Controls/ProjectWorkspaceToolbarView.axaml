@@ -145,10 +145,10 @@
                 x:Name="EnvironmentManagerButton"
                 Classes="SecondaryButton ProjectWorkspaceToolbarIconButton"
                 VerticalAlignment="Center"
-                FontFamily="Segoe UI Symbol, Segoe UI, Microsoft YaHei UI"
-                Content="☰"
                 ToolTip.Tip="环境设置"
-                Click="OnEnvironmentManagerButtonClick" />
+                Click="OnEnvironmentManagerButtonClick">
+          <PathIcon Data="{StaticResource SemiIconSettingStroked}" />
+        </Button>
       </Grid>
     </Grid>
   </Border>

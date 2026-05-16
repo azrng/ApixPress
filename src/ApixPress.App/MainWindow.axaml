@@ -16,7 +16,7 @@
         MinWidth="1280"
         MinHeight="800"
         WindowState="Maximized"
-        SystemDecorations="None"
+        WindowDecorations="None"
         ExtendClientAreaToDecorationsHint="True"
         Icon="/Assets/AppIcon.ico"
         Title="ApixPress">
