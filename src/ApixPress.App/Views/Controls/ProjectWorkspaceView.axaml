@@ -11,9 +11,15 @@
   <Border Background="Transparent">
     <u:LoadingContainer IsLoading="{Binding IsWorkspaceLoading}"
                         LoadingMessage="{Binding WorkspaceLoadingText}"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
                         Margin="12,4,12,12">
       <Grid ColumnDefinitions="84,*"
-            ColumnSpacing="{StaticResource Space.3}">
+            ColumnSpacing="{StaticResource Space.3}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            MinWidth="0"
+            MinHeight="0">
         <views:ProjectWorkspaceNavigationRailView Grid.Column="0" />
         <views:ProjectWorkspaceContentHostView Grid.Column="1" />
       </Grid>

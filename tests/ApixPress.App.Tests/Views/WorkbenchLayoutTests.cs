@@ -59,6 +59,23 @@ public sealed class WorkbenchLayoutTests
                 && HasClass(element, "InterfaceRootAllPanel"));
     }
 
+    [Fact]
+    public void ProjectWorkspace_ShouldStretchLoadingHostAndMainGrid()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "ProjectWorkspaceView.axaml"));
+        var loadingContainer = document.Descendants()
+            .Single(element => element.Name.LocalName == "LoadingContainer");
+        var mainGrid = loadingContainer.Elements()
+            .Single(element => element.Name.LocalName == "Grid");
+
+        Assert.Equal("Stretch", loadingContainer.Attribute("HorizontalAlignment")?.Value);
+        Assert.Equal("Stretch", loadingContainer.Attribute("VerticalAlignment")?.Value);
+        Assert.Equal("Stretch", mainGrid.Attribute("HorizontalAlignment")?.Value);
+        Assert.Equal("Stretch", mainGrid.Attribute("VerticalAlignment")?.Value);
+        Assert.Equal("0", mainGrid.Attribute("MinWidth")?.Value);
+        Assert.Equal("0", mainGrid.Attribute("MinHeight")?.Value);
+    }
+
     private static bool HasClass(XElement element, string className)
     {
         return (element.Attribute("Classes")?.Value ?? string.Empty)
