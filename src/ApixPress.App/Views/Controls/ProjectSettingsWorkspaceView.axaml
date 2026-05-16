@@ -375,5 +375,24 @@
         </Border>
       </Grid>
     </Border>
+
+    <Border Grid.ColumnSpan="2"
+            Classes="ProjectSettingsDangerOperationOverlay"
+            IsVisible="{Binding Settings.IsProjectDangerOperationBusy}">
+      <Border Classes="ProjectWorkspaceLoadingCard">
+        <StackPanel Spacing="{StaticResource Space.3}">
+          <ProgressBar Classes="ProjectWorkspaceLoadingProgress"
+                       IsIndeterminate="True" />
+          <StackPanel Spacing="{StaticResource Space.1}">
+            <TextBlock Classes="SectionTitle"
+                       HorizontalAlignment="Center"
+                       Text="正在处理" />
+            <TextBlock Classes="CaptionText"
+                       HorizontalAlignment="Center"
+                       Text="{Binding Settings.ProjectDangerOperationStatus}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </Border>
   </Grid>
 </UserControl>

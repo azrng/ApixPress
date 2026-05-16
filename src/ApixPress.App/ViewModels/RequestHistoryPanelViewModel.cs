@@ -20,6 +20,9 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     [ObservableProperty]
     private string searchText = string.Empty;
 
+    [ObservableProperty]
+    private bool isHistoryLoading;
+
     public RequestHistoryPanelViewModel(IRequestHistoryService requestHistoryService)
     {
         _requestHistoryService = requestHistoryService;
@@ -61,6 +64,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         }
 
         var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadHistoryCancellationTokenSource).Token;
+        IsHistoryLoading = true;
         try
         {
             HistoryItems.Clear();
@@ -75,6 +79,10 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+        }
+        finally
+        {
+            IsHistoryLoading = false;
         }
     }
 

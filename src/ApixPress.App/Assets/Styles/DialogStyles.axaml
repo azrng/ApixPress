@@ -493,4 +493,10 @@
   <Style Selector="TextBox.EnvironmentTableInput">
     <Setter Property="MinHeight" Value="36" />
   </Style>
+
+  <Style Selector="Border.ProjectSettingsDangerOperationOverlay">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Overlay}" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+  </Style>
 </Styles>

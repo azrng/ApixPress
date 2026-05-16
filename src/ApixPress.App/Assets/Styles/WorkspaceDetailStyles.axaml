@@ -192,4 +192,10 @@
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
     <Setter Property="CornerRadius" Value="12,12,0,0" />
   </Style>
+
+  <Style Selector="Border.RequestHistoryLoadingOverlay">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Overlay}" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
+  </Style>
 </Styles>
