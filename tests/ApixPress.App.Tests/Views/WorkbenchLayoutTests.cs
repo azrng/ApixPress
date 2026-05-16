@@ -4,6 +4,34 @@ namespace ApixPress.App.Tests.Views;
 
 public sealed class WorkbenchLayoutTests
 {
+    [Fact]
+    public void MainWindow_ProjectWorkspaceHost_ShouldStretchGeneratedContainers()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "MainWindow.axaml"));
+        var host = document.Descendants()
+            .Single(element => element.Name.LocalName == "ItemsControl"
+                && HasClass(element, "ProjectWorkspaceHost"));
+
+        Assert.Equal("Stretch", host.Attribute("HorizontalAlignment")?.Value);
+        Assert.Equal("Stretch", host.Attribute("VerticalAlignment")?.Value);
+
+        var presenterStyle = host.Descendants()
+            .SingleOrDefault(element => element.Name.LocalName == "Style"
+                && element.Attribute("Selector")?.Value == "ItemsControl.ProjectWorkspaceHost ContentPresenter");
+
+        Assert.NotNull(presenterStyle);
+        Assert.Contains(
+            presenterStyle!.Elements(),
+            element => element.Name.LocalName == "Setter"
+                && element.Attribute("Property")?.Value == "HorizontalAlignment"
+                && element.Attribute("Value")?.Value == "Stretch");
+        Assert.Contains(
+            presenterStyle.Elements(),
+            element => element.Name.LocalName == "Setter"
+                && element.Attribute("Property")?.Value == "VerticalAlignment"
+                && element.Attribute("Value")?.Value == "Stretch");
+    }
+
     [Theory]
     [InlineData("HttpInterfaceWorkbenchView.axaml")]
     [InlineData("QuickRequestWorkbenchView.axaml")]
@@ -70,6 +98,8 @@ public sealed class WorkbenchLayoutTests
 
         Assert.Equal("Stretch", loadingContainer.Attribute("HorizontalAlignment")?.Value);
         Assert.Equal("Stretch", loadingContainer.Attribute("VerticalAlignment")?.Value);
+        Assert.Equal("Stretch", loadingContainer.Attribute("HorizontalContentAlignment")?.Value);
+        Assert.Equal("Stretch", loadingContainer.Attribute("VerticalContentAlignment")?.Value);
         Assert.Equal("Stretch", mainGrid.Attribute("HorizontalAlignment")?.Value);
         Assert.Equal("Stretch", mainGrid.Attribute("VerticalAlignment")?.Value);
         Assert.Equal("0", mainGrid.Attribute("MinWidth")?.Value);
