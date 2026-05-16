@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using ApixPress.App.Data.Context;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
 using ApixPress.App.Views.Controls;
@@ -13,6 +14,7 @@ public partial class MainWindow : Window
 {
     private readonly MainWindowViewModel _viewModel;
     private readonly IWindowHostService _windowHostService;
+    private readonly DatabaseInitializer _databaseInitializer;
     private bool _isCreateProjectDrawerOpen;
     private bool _isEnvironmentDrawerOpen;
     private bool _isUseCasesDrawerOpen;
@@ -26,13 +28,15 @@ public partial class MainWindow : Window
 
         _viewModel = null!;
         _windowHostService = null!;
+        _databaseInitializer = null!;
         InitializeComponent();
     }
 
-    public MainWindow(MainWindowViewModel viewModel, IWindowHostService windowHostService)
+    public MainWindow(MainWindowViewModel viewModel, IWindowHostService windowHostService, DatabaseInitializer databaseInitializer)
     {
         _viewModel = viewModel;
         _windowHostService = windowHostService;
+        _databaseInitializer = databaseInitializer;
         InitializeComponent();
         DataContext = _viewModel;
         Opened += OnOpened;
@@ -46,6 +50,7 @@ public partial class MainWindow : Window
         {
             _windowHostService.MainWindow = this;
             _viewModel.UpdateWindowState(WindowState);
+            await _databaseInitializer.InitializeAsync();
             await _viewModel.InitializeAsync();
         });
     }

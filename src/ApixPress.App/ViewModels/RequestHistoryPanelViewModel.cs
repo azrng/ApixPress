@@ -15,7 +15,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     private string _currentProjectId = string.Empty;
     private bool _hasLoadedHistory;
 
-    public ObservableCollection<RequestHistoryItemViewModel> HistoryItems { get; } = [];
+    public BatchObservableCollection<RequestHistoryItemViewModel> HistoryItems { get; } = [];
 
     [ObservableProperty]
     private string searchText = string.Empty;

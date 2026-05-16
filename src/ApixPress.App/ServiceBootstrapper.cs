@@ -30,7 +30,6 @@ public static class ServiceBootstrapper
         services.AddSingleton<IWindowHostService, Services.Implementations.WindowHostService>();
 
         var serviceProvider = services.BuildServiceProvider();
-        serviceProvider.GetRequiredService<DatabaseInitializer>().Initialize();
         return serviceProvider;
     }
 }

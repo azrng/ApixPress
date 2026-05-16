@@ -21,7 +21,7 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         _requestCaseService = requestCaseService;
     }
 
-    public ObservableCollection<RequestCaseItemViewModel> RequestCases { get; } = [];
+    public BatchObservableCollection<RequestCaseItemViewModel> RequestCases { get; } = [];
 
     [ObservableProperty]
     private string caseName = string.Empty;

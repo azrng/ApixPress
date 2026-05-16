@@ -12,6 +12,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
 {
     private readonly IProjectWorkspaceService _projectWorkspaceService;
     private CancellationTokenSource? _loadProjectsCancellationTokenSource;
+    private CancellationTokenSource? _searchDebounceCancellationTokenSource;
     private bool _isUpdatingSelection;
     private List<ProjectWorkspaceItemViewModel> _allProjects = [];
 
@@ -24,8 +25,8 @@ public partial class ProjectPanelViewModel : ViewModelBase
         Creation = new ProjectCreationViewModel(BuildNextProjectName, CreateProjectAsync);
     }
 
-    public ObservableCollection<ProjectWorkspaceItemViewModel> Projects { get; } = [];
-    public ObservableCollection<ProjectWorkspaceItemViewModel> FilteredProjects { get; } = [];
+    public BatchObservableCollection<ProjectWorkspaceItemViewModel> Projects { get; } = [];
+    public BatchObservableCollection<ProjectWorkspaceItemViewModel> FilteredProjects { get; } = [];
     public ProjectCreationViewModel Creation { get; }
 
     [ObservableProperty]
@@ -41,6 +42,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
     protected override void DisposeManaged()
     {
         CancellationTokenSourceHelper.CancelAndDispose(ref _loadProjectsCancellationTokenSource);
+        CancellationTokenSourceHelper.CancelAndDispose(ref _searchDebounceCancellationTokenSource);
         SelectedProjectChanged = null;
         ProjectCreated = null;
     }
@@ -241,6 +243,21 @@ public partial class ProjectPanelViewModel : ViewModelBase
 
     partial void OnSearchTextChanged(string value)
     {
+        _ = DebounceSearchAsync();
+    }
+
+    private async Task DebounceSearchAsync()
+    {
+        var cts = CancellationTokenSourceHelper.Refresh(ref _searchDebounceCancellationTokenSource);
+        try
+        {
+            await Task.Delay(300, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
         RefreshFilteredProjects();
         OnPropertyChanged(nameof(HasProjects));
         OnPropertyChanged(nameof(HasAnyProjects));

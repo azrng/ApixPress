@@ -340,51 +340,50 @@
           </u:PopConfirm>
         </Grid>
 
-        <ScrollViewer Grid.Row="1">
-          <StackPanel Spacing="{StaticResource Space.2}">
-            <TextBlock Classes="CaptionText"
-                       Text="还没有发送记录"
-                       IsVisible="{Binding Summary.ShowHistoryEmptyState}" />
-            <ItemsControl ItemsSource="{Binding RequestHistory}"
-                          IsVisible="{Binding Summary.HasHistory}">
-              <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="vm:RequestHistoryItemViewModel">
-                  <Border Classes="SidebarListCard">
-                    <StackPanel Spacing="{StaticResource Space.2}">
-                      <Grid ColumnDefinitions="Auto,*"
-                            ColumnSpacing="{StaticResource Space.2}">
-                        <u:Badge Grid.Column="0"
-                                 Header="{Binding Method}"
-                                 iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding Url}"
-                                   TextTrimming="CharacterEllipsis" />
-                      </Grid>
-                      <Grid ColumnDefinitions="Auto,*,Auto,Auto"
-                            ColumnSpacing="{StaticResource Space.2}">
-                        <TextBlock Classes="CaptionText"
-                                   Text="{Binding StatusText}" />
-                        <TextBlock Grid.Column="1"
-                                   Classes="CaptionText"
-                                   Text="{Binding TimestampText}" />
-                        <Button Grid.Column="2"
-                                Classes="TextButton"
-                                Content="载入"
-                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadHistoryItemCommand}"
-                                CommandParameter="{Binding}" />
-                        <Button Grid.Column="3"
-                                Classes="TextButton"
-                                Content="转存"
-                                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveHistoryAsCaseCommand}"
-                                CommandParameter="{Binding}" />
-                      </Grid>
-                    </StackPanel>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </StackPanel>
-        </ScrollViewer>
+        <Grid Grid.Row="1">
+          <TextBlock Classes="CaptionText"
+                     Text="还没有发送记录"
+                     IsVisible="{Binding Summary.ShowHistoryEmptyState}" />
+          <ListBox ItemsSource="{Binding RequestHistory}"
+                   IsVisible="{Binding Summary.HasHistory}"
+                   Classes="FlatListBox">
+            <ListBox.ItemTemplate>
+              <DataTemplate x:DataType="vm:RequestHistoryItemViewModel">
+                <Border Classes="SidebarListCard">
+                  <StackPanel Spacing="{StaticResource Space.2}">
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="{StaticResource Space.2}">
+                      <u:Badge Grid.Column="0"
+                               Header="{Binding Method}"
+                               iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
+                      <TextBlock Grid.Column="1"
+                                 Text="{Binding Url}"
+                                 TextTrimming="CharacterEllipsis" />
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                          ColumnSpacing="{StaticResource Space.2}">
+                      <TextBlock Classes="CaptionText"
+                                 Text="{Binding StatusText}" />
+                      <TextBlock Grid.Column="1"
+                                 Classes="CaptionText"
+                                 Text="{Binding TimestampText}" />
+                      <Button Grid.Column="2"
+                              Classes="TextButton"
+                              Content="载入"
+                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadHistoryItemCommand}"
+                              CommandParameter="{Binding}" />
+                      <Button Grid.Column="3"
+                              Classes="TextButton"
+                              Content="转存"
+                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveHistoryAsCaseCommand}"
+                              CommandParameter="{Binding}" />
+                    </Grid>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
+        </Grid>
       </Grid>
     </Grid>
   </Border>

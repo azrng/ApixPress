@@ -32,6 +32,11 @@ public sealed class DatabaseInitializer : ISingletonDependency
         }
     }
 
+    public Task InitializeAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.Run(Initialize, cancellationToken);
+    }
+
     private static void RunMigrations(IDbConnection connection, bool hasExistingWorkspace)
     {
         if (hasExistingWorkspace)

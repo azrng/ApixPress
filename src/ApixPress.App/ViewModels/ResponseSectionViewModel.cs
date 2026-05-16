@@ -6,12 +6,14 @@ using Azrng.Core.Results;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Xml.Linq;
+using Avalonia.Threading;
 
 namespace ApixPress.App.ViewModels;
 
 public partial class ResponseSectionViewModel : ViewModelBase
 {
     private const int MaxSynchronousFormattedBodyLength = 256 * 1024;
+    private const int MaxSynchronousFormatThreshold = 64 * 1024;
     private const int MaxSearchableBodyLength = 1024 * 1024;
 
     private static readonly JsonSerializerOptions PrettyJsonOptions = new()
@@ -118,9 +120,23 @@ public partial class ResponseSectionViewModel : ViewModelBase
         StatusText = r.StatusCode is { } code ? $"HTTP {code}" : "请求完成";
         DurationText = $"{r.DurationMs} ms";
         SizeText = FormatResponseSizeText(r);
-        BodyText = BuildDisplayBody(r);
         HeadersText = string.Join(Environment.NewLine, r.Headers.Select(h => $"{h.Name}: {h.Value}"));
         ApplyStatusNotice(r.StatusCode);
+
+        if (r.Content is { Length: > MaxSynchronousFormatThreshold })
+        {
+            _ = FormatBodyInBackgroundAsync(r);
+        }
+        else
+        {
+            BodyText = BuildDisplayBody(r);
+        }
+    }
+
+    private async Task FormatBodyInBackgroundAsync(ResponseSnapshotDto response)
+    {
+        var body = await Task.Run(() => BuildDisplayBody(response));
+        Dispatcher.UIThread.Post(() => BodyText = body);
     }
 
     public void Reset()

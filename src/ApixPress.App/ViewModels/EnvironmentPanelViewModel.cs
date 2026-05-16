@@ -23,9 +23,9 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
         _environmentVariableService = environmentVariableService;
     }
 
-    public ObservableCollection<ProjectEnvironmentItemViewModel> Environments { get; } = [];
+    public BatchObservableCollection<ProjectEnvironmentItemViewModel> Environments { get; } = [];
 
-    public ObservableCollection<EnvironmentVariableItemViewModel> EnvironmentVariables { get; } = [];
+    public BatchObservableCollection<EnvironmentVariableItemViewModel> EnvironmentVariables { get; } = [];
 
     [ObservableProperty]
     private ProjectEnvironmentItemViewModel? selectedEnvironment;
