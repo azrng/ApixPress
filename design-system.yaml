@@ -20,8 +20,8 @@ meta:
     dependency_injection: "Microsoft.Extensions.DependencyInjection"
   usage:
     read_order:
-      - "进行任何 UI 改动前先阅读本文件"
-      - "然后阅读 AGENTS.md 中的 Avalonia 视图层规则"
+      - "先阅读 AGENTS.md，按根规则命中 UI 子规则"
+      - "命中 ui-AGENTS.md 后再阅读本文件"
       - "然后查看现有 Views、ViewModels、Styles 与 Controls 实现"
     principles:
       - "优先复用，而不是重新创建"
