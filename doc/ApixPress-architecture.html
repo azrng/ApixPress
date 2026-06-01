@@ -1,0 +1,922 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ApixPress 整体架构</title>
+  <style>
+    :root {
+      --page-bg: #eef2f7;
+      --ink: #172033;
+      --muted: #64748b;
+      --line: #d8e0eb;
+      --panel: #ffffff;
+      --blue: #2563eb;
+      --blue-soft: #dbeafe;
+      --green: #16a34a;
+      --green-soft: #dcfce7;
+      --amber: #d97706;
+      --amber-soft: #fef3c7;
+      --purple: #7c3aed;
+      --purple-soft: #ede9fe;
+      --cyan: #0891b2;
+      --cyan-soft: #cffafe;
+      --red: #dc2626;
+      --red-soft: #fee2e2;
+      --shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background: var(--page-bg);
+    }
+
+    body {
+      margin: 0;
+      min-width: 1120px;
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+      line-height: 1.45;
+      background:
+        linear-gradient(90deg, rgba(37, 99, 235, 0.05) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(37, 99, 235, 0.045) 1px, transparent 1px),
+        var(--page-bg);
+      background-size: 28px 28px;
+    }
+
+    .poster {
+      width: 1460px;
+      margin: 28px auto;
+      padding: 28px;
+      border: 1px solid #cfd8e6;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #f8fafc 0%, #eef4fb 100%);
+      box-shadow: 0 28px 80px rgba(15, 23, 42, 0.16);
+    }
+
+    .header {
+      display: grid;
+      grid-template-columns: 1fr 430px;
+      gap: 20px;
+      align-items: stretch;
+      margin-bottom: 20px;
+    }
+
+    .hero,
+    .fact-panel,
+    .panel,
+    .module-card,
+    .flow-card,
+    .dep-card,
+    .output-card,
+    .legend-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 24px 26px;
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 22px;
+      align-items: center;
+      border-top: 5px solid var(--blue);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0;
+      margin-bottom: 10px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 0 4px currentColor;
+      opacity: 0.18;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 40px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin: 0;
+      max-width: 760px;
+      color: #475569;
+      font-size: 16px;
+    }
+
+    .tech-strip {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .tech-item {
+      border: 1px solid #d9e4f2;
+      border-radius: 7px;
+      padding: 10px 12px;
+      background: #f8fbff;
+    }
+
+    .tech-item strong {
+      display: block;
+      font-size: 13px;
+      color: #0f172a;
+    }
+
+    .tech-item span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .fact-panel {
+      padding: 18px;
+      border-top: 5px solid var(--cyan);
+    }
+
+    .fact-panel h2,
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .fact-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 9px;
+    }
+
+    .fact {
+      display: grid;
+      grid-template-columns: 82px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 9px 10px;
+      border-radius: 7px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-size: 12px;
+    }
+
+    .fact b {
+      color: #334155;
+      white-space: nowrap;
+    }
+
+    .fact span {
+      color: #566579;
+    }
+
+    .entry-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .entry {
+      padding: 14px 15px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+      min-height: 112px;
+    }
+
+    .entry.blue { border-top: 4px solid var(--blue); }
+    .entry.amber { border-top: 4px solid var(--amber); }
+    .entry.cyan { border-top: 4px solid var(--cyan); }
+
+    .entry h3,
+    .module-card h3,
+    .dep-card h3,
+    .output-card h3,
+    .legend-card h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .entry p,
+    .module-card p,
+    .dep-card p,
+    .output-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .architecture-grid {
+      display: grid;
+      grid-template-columns: 1fr 316px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .pipeline-panel {
+      border-top: 5px solid var(--blue);
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px 24px;
+      position: relative;
+    }
+
+    .step {
+      position: relative;
+      min-height: 150px;
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid #cfdbed;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+    }
+
+    .step:not(:nth-child(4)):not(:nth-child(8))::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -18px;
+      width: 14px;
+      height: 2px;
+      background: var(--blue);
+    }
+
+    .step:not(:nth-child(4)):not(:nth-child(8))::before {
+      content: "";
+      position: absolute;
+      top: calc(50% - 4px);
+      right: -21px;
+      width: 8px;
+      height: 8px;
+      border-top: 2px solid var(--blue);
+      border-right: 2px solid var(--blue);
+      transform: rotate(45deg);
+    }
+
+    .step .num {
+      display: inline-flex;
+      width: 26px;
+      height: 26px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .step h3 {
+      margin: 0 0 6px;
+      font-size: 15px;
+    }
+
+    .component {
+      display: block;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 7px;
+      word-break: break-word;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .step.cache { border-top: 4px solid var(--cyan); }
+    .step.risk { border-top: 4px solid var(--amber); }
+    .step.success { border-top: 4px solid var(--green); }
+    .step.error { border-top: 4px solid var(--red); }
+
+    .side-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .side-panel .panel {
+      padding: 16px;
+    }
+
+    .deps {
+      display: grid;
+      gap: 9px;
+    }
+
+    .dep-card {
+      padding: 12px;
+      box-shadow: none;
+    }
+
+    .dep-card.purple { border-left: 4px solid var(--purple); background: #fbfaff; }
+    .dep-card.amber { border-left: 4px solid var(--amber); background: #fffaf0; }
+    .dep-card.cyan { border-left: 4px solid var(--cyan); background: #f0fdff; }
+    .dep-card.green { border-left: 4px solid var(--green); background: #f5fff7; }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .wide {
+      grid-column: 1 / -1;
+    }
+
+    .modules {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .module-card {
+      padding: 14px;
+      min-height: 156px;
+      box-shadow: none;
+    }
+
+    .module-card.blue { border-top: 4px solid var(--blue); }
+    .module-card.green { border-top: 4px solid var(--green); }
+    .module-card.amber { border-top: 4px solid var(--amber); }
+    .module-card.purple { border-top: 4px solid var(--purple); }
+    .module-card.cyan { border-top: 4px solid var(--cyan); }
+
+    ul {
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    li {
+      position: relative;
+      padding-left: 14px;
+      margin: 5px 0;
+      color: #526173;
+      font-size: 12px;
+    }
+
+    li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 8px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #94a3b8;
+    }
+
+    .model-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .model {
+      padding: 10px 12px;
+      border: 1px solid #dbe4f0;
+      border-radius: 7px;
+      background: #fbfdff;
+    }
+
+    .model b {
+      display: block;
+      font-size: 12px;
+      color: #0f172a;
+      margin-bottom: 3px;
+    }
+
+    .model span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .dataflow {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 11px;
+      align-items: stretch;
+    }
+
+    .flow-card {
+      position: relative;
+      padding: 12px 10px;
+      min-height: 118px;
+      box-shadow: none;
+      border-top: 4px solid var(--blue);
+    }
+
+    .flow-card:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -10px;
+      width: 10px;
+      height: 2px;
+      background: #64748b;
+    }
+
+    .flow-card:not(:last-child)::before {
+      content: "";
+      position: absolute;
+      top: calc(50% - 4px);
+      right: -13px;
+      width: 8px;
+      height: 8px;
+      border-top: 2px solid #64748b;
+      border-right: 2px solid #64748b;
+      transform: rotate(45deg);
+    }
+
+    .flow-card h3 {
+      margin: 0 0 6px;
+      font-size: 13px;
+    }
+
+    .flow-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .flow-card.cyan { border-top-color: var(--cyan); }
+    .flow-card.amber { border-top-color: var(--amber); }
+    .flow-card.green { border-top-color: var(--green); }
+
+    .outputs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .output-card {
+      padding: 13px;
+      min-height: 116px;
+      box-shadow: none;
+    }
+
+    .output-card.green { border-top: 4px solid var(--green); }
+    .output-card.cyan { border-top: 4px solid var(--cyan); }
+    .output-card.blue { border-top: 4px solid var(--blue); }
+    .output-card.amber { border-top: 4px solid var(--amber); }
+
+    .cross-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .capability {
+      padding: 11px 12px;
+      border-radius: 7px;
+      border: 1px solid #dbe4f0;
+      background: #fbfdff;
+      min-height: 100px;
+    }
+
+    .capability b {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 5px;
+      color: #0f172a;
+    }
+
+    .capability span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .legend-card {
+      padding: 11px 12px;
+      box-shadow: none;
+    }
+
+    .line-sample {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      height: 18px;
+    }
+
+    .sample-line {
+      position: relative;
+      flex: 1;
+      height: 2px;
+      background: var(--blue);
+    }
+
+    .sample-line::after {
+      content: "";
+      position: absolute;
+      right: -2px;
+      top: -4px;
+      width: 8px;
+      height: 8px;
+      border-top: 2px solid currentColor;
+      border-right: 2px solid currentColor;
+      transform: rotate(45deg);
+      color: inherit;
+    }
+
+    .sample-line.retry {
+      background: repeating-linear-gradient(90deg, var(--amber) 0 7px, transparent 7px 11px);
+    }
+
+    .sample-line.rw {
+      background: var(--cyan);
+    }
+
+    .legend-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      vertical-align: middle;
+      border: 1px solid transparent;
+    }
+
+    .badge.blue { color: #1d4ed8; background: var(--blue-soft); border-color: #bfdbfe; }
+    .badge.green { color: #15803d; background: var(--green-soft); border-color: #bbf7d0; }
+    .badge.amber { color: #b45309; background: var(--amber-soft); border-color: #fde68a; }
+    .badge.purple { color: #6d28d9; background: var(--purple-soft); border-color: #ddd6fe; }
+    .badge.cyan { color: #0e7490; background: var(--cyan-soft); border-color: #a5f3fc; }
+    .badge.red { color: #b91c1c; background: var(--red-soft); border-color: #fecaca; }
+
+    .note {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      border: 1px dashed #cbd5e1;
+      color: #64748b;
+      background: #f8fafc;
+      font-size: 12px;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .poster {
+        margin: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="poster">
+    <section class="header">
+      <div class="hero">
+        <div>
+          <div class="eyebrow"><span class="dot"></span> 对外说明 + 工程概览</div>
+          <h1>ApixPress 整体架构</h1>
+          <p class="lead">
+            ApixPress 是一个本地桌面端 API 协作与调试工具，围绕项目工作区、OpenAPI/Swagger 导入、HTTP 请求调试、用例管理、环境变量、请求历史和本地 SQLite 持久化构建。当前代码未接入 AI Agent 或模型 Runtime，本图以真实桌面应用架构和外部集成为主。
+          </p>
+        </div>
+        <div class="tech-strip">
+          <div class="tech-item"><strong>.NET 10 / WinExe</strong><span>Windows x64 自包含单文件发布</span></div>
+          <div class="tech-item"><strong>Avalonia 12</strong><span>桌面 UI、Fluent、Semi.Avalonia、Ursa</span></div>
+          <div class="tech-item"><strong>CommunityToolkit.Mvvm</strong><span>ViewModel、RelayCommand、状态通知</span></div>
+          <div class="tech-item"><strong>Dapper + Microsoft.Data.Sqlite</strong><span>本地数据仓储和迁移初始化</span></div>
+        </div>
+      </div>
+
+      <aside class="fact-panel">
+        <h2>工程事实</h2>
+        <div class="fact-grid">
+          <div class="fact"><b>主入口</b><span><code>Program.Main</code> 启动 Avalonia；更新模式由 <code>AppUpdateRunner</code> 接管。</span></div>
+          <div class="fact"><b>依赖注入</b><span><code>ServiceBootstrapper</code> 加载内嵌与外部 <code>appsettings.json</code>，并注册业务服务。</span></div>
+          <div class="fact"><b>持久化</b><span>默认数据库为 <code>data/ApixPress.db</code>，用户设置可指定存储目录。</span></div>
+          <div class="fact"><b>测试</b><span><code>ApixPress.App.Tests</code> 使用 xUnit，覆盖服务、仓储、ViewModel 和布局约束。</span></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="entry-grid">
+      <article class="entry blue">
+        <h3>用户入口</h3>
+        <p>用户从 <code>MainWindow</code> 进入首页、项目标签、接口工作区、快捷请求、设置中心、环境变量抽屉和用例管理抽屉。</p>
+      </article>
+      <article class="entry amber">
+        <h3>外部渠道入口</h3>
+        <p>支持从本地 JSON 文件或 URL 导入 Swagger/OpenAPI 文档；HTTP 请求通过 <code>RequestExecutionService</code> 访问目标 API 服务。</p>
+      </article>
+      <article class="entry cyan">
+        <h3>恢复 / 配置入口</h3>
+        <p><code>DatabaseInitializer</code> 执行迁移和旧数据归并；<code>AppShellSettingsService</code> 管理超时、SSL、重定向、日志、存储目录和更新提醒配置。</p>
+      </article>
+    </section>
+
+    <section class="architecture-grid">
+      <div class="panel pipeline-panel">
+        <h2>主业务 Pipeline</h2>
+        <div class="pipeline">
+          <article class="step">
+            <span class="num">1</span>
+            <h3>启动与初始化</h3>
+            <span class="component">Program / App / ServiceBootstrapper</span>
+            <p>加载配置、构建 DI 容器、创建主窗口，启动时先完成数据库初始化和 Shell 状态加载。</p>
+          </article>
+          <article class="step cache">
+            <span class="num">2</span>
+            <h3>打开项目工作区</h3>
+            <span class="component">MainWindowViewModel / ProjectTabViewModel</span>
+            <p>项目列表进入多标签工作区，项目标签常驻实例复用，降低切换和重新挂载成本。</p>
+          </article>
+          <article class="step risk">
+            <span class="num">3</span>
+            <h3>导入预检查</h3>
+            <span class="component">ApiWorkspaceService / OpenApiImportPreviewBuilder</span>
+            <p>读取 URL 或文件，解析 OpenAPI JSON，识别新增、覆盖和冲突接口，触发覆盖确认流程。</p>
+          </article>
+          <article class="step cache">
+            <span class="num">4</span>
+            <h3>预处理缓存</h3>
+            <span class="component">OpenApiPreparedImportCache</span>
+            <p>预览后的解析图短期缓存，导入确认时复用；支持过期淘汰、容量上限和确认后取出。</p>
+          </article>
+          <article class="step">
+            <span class="num">5</span>
+            <h3>接口与用例编排</h3>
+            <span class="component">ProjectRequestWorkflowViewModel / RequestCaseService</span>
+            <p>接口树、根目录工作区、快捷请求和保存用例协同，维护标签、脏状态、固定标签和关闭保护。</p>
+          </article>
+          <article class="step">
+            <span class="num">6</span>
+            <h3>请求构建与发送</h3>
+            <span class="component">RequestExecutionService</span>
+            <p>替换 <code>{{variables}}</code>、拼接 BaseUrl、处理路径与查询参数、构造 Body 和 Header 后通过 HttpClient 发送。</p>
+          </article>
+          <article class="step error">
+            <span class="num">7</span>
+            <h3>异常与大响应保护</h3>
+            <span class="component">ResultModel / ResponsePreviewByteLimit</span>
+            <p>区分取消、超时、HTTP 失败和通用异常；响应正文预览限制为 1 MB，并标记截断状态。</p>
+          </article>
+          <article class="step success">
+            <span class="num">8</span>
+            <h3>保存与输出</h3>
+            <span class="component">Repository / ProjectDataExportService</span>
+            <p>接口、参数、用例、历史、环境与项目认证写入 SQLite；项目数据包可导出为可复用 JSON 文件。</p>
+          </article>
+        </div>
+      </div>
+
+      <aside class="side-panel">
+        <div class="panel">
+          <h2>外部依赖与集成</h2>
+          <div class="deps">
+            <article class="dep-card purple">
+              <h3>桌面 Runtime</h3>
+              <p>Avalonia Desktop、Fluent、Semi.Avalonia、Ursa 提供窗口、主题、抽屉、弹窗和控件能力。</p>
+            </article>
+            <article class="dep-card amber">
+              <h3>OpenAPI 来源</h3>
+              <p>本地 JSON 文件与远程 URL 是当前导入入口；远程 URL 失败会返回超时或 HTTP 错误说明。</p>
+            </article>
+            <article class="dep-card cyan">
+              <h3>目标 API 服务</h3>
+              <p>请求调试通过 <code>HttpClient</code> 访问用户配置的 API 服务，支持 SSL 校验、重定向、超时和 no-cache Header 配置。</p>
+            </article>
+            <article class="dep-card green">
+              <h3>GitHub Releases</h3>
+              <p>更新检查读取 <code>versions.json</code> 清单；当前为可配置通道，不等同于强制自动更新。</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>当前不包含</h2>
+          <div class="note">
+            代码中未发现 AI 模型服务、Agent Runtime、消息队列、远程多租户后端、云数据库或用户权限系统。相关能力不在本架构图中虚构展示。
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section-grid">
+      <div class="panel wide">
+        <h2>核心模块</h2>
+        <div class="modules">
+          <article class="module-card blue">
+            <h3>View / UI</h3>
+            <p>Avalonia XAML 控件负责桌面交互与工作区布局。</p>
+            <ul>
+              <li><code>MainWindowHomeView</code>、<code>MainWindowTitleBarView</code></li>
+              <li><code>ProjectWorkspaceView</code>、<code>ProjectWorkspaceSidebarView</code></li>
+              <li><code>HttpInterfaceWorkbenchView</code>、<code>QuickRequestWorkbenchView</code></li>
+              <li><code>SettingsDialogView</code>、<code>NotificationCenterOverlayView</code></li>
+            </ul>
+          </article>
+          <article class="module-card green">
+            <h3>ViewModel / Application</h3>
+            <p>承载用户命令、工作区状态、标签生命周期和 UI 数据。</p>
+            <ul>
+              <li><code>MainWindowViewModel</code> 与 Shell 状态同步</li>
+              <li><code>ProjectTabViewModel</code> 与 <code>ProjectTabComposition</code></li>
+              <li><code>ProjectRequestEditorViewModel</code>、<code>RequestWorkspaceTabViewModel</code></li>
+              <li><code>ProjectImportViewModel</code>、<code>MainWindowSettingsViewModel</code></li>
+            </ul>
+          </article>
+          <article class="module-card amber">
+            <h3>Service</h3>
+            <p>封装导入、请求、用例、环境、设置、更新和系统数据操作。</p>
+            <ul>
+              <li><code>ApiWorkspaceService</code>、<code>RequestExecutionService</code></li>
+              <li><code>ProjectWorkspaceService</code>、<code>RequestCaseService</code></li>
+              <li><code>EnvironmentVariableService</code>、<code>ProjectHttpSettingsService</code></li>
+              <li><code>ApplicationUpdateService</code>、<code>SystemDataService</code></li>
+            </ul>
+          </article>
+          <article class="module-card purple">
+            <h3>Tool / Parser</h3>
+            <p>当前没有 AI 工具链；这里展示工程内解析与辅助工具。</p>
+            <ul>
+              <li><code>OpenApiJsonParser</code> 解析 OpenAPI JSON</li>
+              <li><code>OpenApiImportSourceReader</code> 读取文件或 URL</li>
+              <li><code>OpenApiPreparedImportCache</code> 缓存预处理结果</li>
+              <li><code>ProjectHttpDocumentFormatter</code> 生成文档预览</li>
+            </ul>
+          </article>
+          <article class="module-card cyan">
+            <h3>Repository / Storage</h3>
+            <p>Dapper 仓储围绕 SQLite 表结构读写项目、接口和请求数据。</p>
+            <ul>
+              <li><code>ProjectWorkspaceRepository</code>、<code>ApiDocumentRepository</code></li>
+              <li><code>RequestCaseRepository</code>、<code>RequestHistoryRepository</code></li>
+              <li><code>ProjectEnvironmentRepository</code>、<code>EnvironmentVariableRepository</code></li>
+              <li><code>DatabaseInitializer</code> 与 <code>schema_migrations</code></li>
+            </ul>
+          </article>
+          <article class="module-card blue">
+            <h3>Channel / Integration</h3>
+            <p>集成点集中在本地文件、远程 URL、目标 API、更新包和系统进程。</p>
+            <ul>
+              <li><code>FilePickerService</code> 选择导入、导出与存储路径</li>
+              <li><code>RequestExecutionService</code> 连接目标 HTTP API</li>
+              <li><code>ApplicationUpdateService</code> 读取更新清单并启动隐藏更新模式</li>
+              <li><code>ApplicationRestartService</code> 支持清空数据后的重启动作</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>核心数据模型</h2>
+        <div class="model-grid">
+          <div class="model"><b>ProjectWorkspaceDto / Entity</b><span>项目工作区基础信息，包含名称、描述、默认项目和更新时间。</span></div>
+          <div class="model"><b>ProjectEnvironmentDto / Entity</b><span>项目环境与 BaseUrl，配合激活环境和变量替换使用。</span></div>
+          <div class="model"><b>EnvironmentVariableDto / Entity</b><span>环境变量键值与启用状态，用于 <code>{{key}}</code> 替换。</span></div>
+          <div class="model"><b>ApiDocumentDto / Entity</b><span>导入的 OpenAPI 文档元数据、来源、BaseUrl 和原始 JSON。</span></div>
+          <div class="model"><b>ApiEndpointDto / Entity</b><span>接口分组、方法、路径、描述、Body 模式与请求体模板。</span></div>
+          <div class="model"><b>RequestParameterDto / Entity</b><span>接口参数，覆盖 query、path、header 等参数类型。</span></div>
+          <div class="model"><b>RequestSnapshotDto</b><span>一次请求的完整快照，包括 URL、方法、参数、Header 和 Body。</span></div>
+          <div class="model"><b>ResponseSnapshotDto</b><span>响应状态码、耗时、大小、Header、正文预览与截断标记。</span></div>
+          <div class="model"><b>RequestCaseDto / Entity</b><span>保存用例、分组、目录、标签和请求快照。</span></div>
+          <div class="model"><b>RequestHistoryEntity</b><span>保存请求历史的请求快照和响应快照。</span></div>
+          <div class="model"><b>ProjectHttpAuthSettingsDto</b><span>项目级认证配置，当前支持 none、Bearer Token 和 Basic Auth。</span></div>
+          <div class="model"><b>ProjectDataExportPackageDto</b><span>项目数据导出包，承载可复用的项目、接口和用例数据。</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>横切能力</h2>
+        <div class="cross-grid">
+          <div class="capability"><b>配置管理</b><span>内嵌 <code>appsettings.json</code> 与发布目录外部配置叠加；Shell 设置保存到用户数据目录。</span></div>
+          <div class="capability"><b>迁移与恢复</b><span><code>DatabaseInitializer</code> 维护 <code>schema_migrations</code>，处理旧版单项目数据迁移。</span></div>
+          <div class="capability"><b>缓存控制</b><span>导入预览缓存有过期和容量限制；HttpClient 共享缓存限制为 16 个配置组合。</span></div>
+          <div class="capability"><b>异常处理</b><span>服务层返回 <code>IResultModel</code>，区分取消、超时、HTTP、解析和通用失败。</span></div>
+          <div class="capability"><b>性能保护</b><span>响应正文预览上限 1 MB，部分视图采用懒挂载、常驻实例和批量集合更新。</span></div>
+          <div class="capability"><b>通知与状态</b><span><code>AppNotificationService</code>、通知中心、状态栏和 loading overlay 展示运行反馈。</span></div>
+          <div class="capability"><b>测试体系</b><span>xUnit 覆盖数据库初始化、服务、仓储、ViewModel 生命周期和工作台布局。</span></div>
+          <div class="capability"><b>发布部署</b><span>Release 配置启用 win-x64、自包含、单文件、ReadyToRun 和单文件压缩。</span></div>
+        </div>
+      </div>
+
+      <div class="panel wide">
+        <h2>数据流向</h2>
+        <div class="dataflow">
+          <article class="flow-card">
+            <h3>用户输入 / 外部请求</h3>
+            <p>项目创建、OpenAPI URL/文件、接口点击、快捷请求、环境变量和设置项。</p>
+          </article>
+          <article class="flow-card">
+            <h3>应用编排</h3>
+            <p>ViewModel 接收命令，更新工作区标签、状态、抽屉和弹窗。</p>
+          </article>
+          <article class="flow-card amber">
+            <h3>规则与上下文</h3>
+            <p>导入冲突预览、覆盖确认、环境选择、变量替换、项目级认证注入。</p>
+          </article>
+          <article class="flow-card">
+            <h3>业务服务</h3>
+            <p>Service 层处理导入、请求发送、用例保存、历史记录和数据导出。</p>
+          </article>
+          <article class="flow-card cyan">
+            <h3>工具 / 外部调用</h3>
+            <p>OpenAPI 读取与解析、HttpClient 访问目标 API、更新清单读取。</p>
+          </article>
+          <article class="flow-card cyan">
+            <h3>持久化</h3>
+            <p>Dapper Repository 写入 SQLite 表：projects、api_documents、request_cases、request_history 等。</p>
+          </article>
+          <article class="flow-card green">
+            <h3>结果输出</h3>
+            <p>回填 UI 响应区、接口树、用例列表、通知中心、导出文件或更新流程。</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="panel wide">
+        <h2>输出与应用</h2>
+        <div class="outputs">
+          <article class="output-card green">
+            <h3>接口工作区</h3>
+            <p>导入后的接口树、根目录工作区、Auth 配置和接口详情编辑。</p>
+          </article>
+          <article class="output-card blue">
+            <h3>请求调试结果</h3>
+            <p>状态码、耗时、大小、Header、响应正文预览、格式化和搜索提示。</p>
+          </article>
+          <article class="output-card cyan">
+            <h3>本地数据资产</h3>
+            <p>SQLite 中的项目、环境、接口、参数、用例、历史和认证配置。</p>
+          </article>
+          <article class="output-card amber">
+            <h3>文件与更新</h3>
+            <p>项目数据包导出、外部配置覆盖、发布包更新检查和隐藏更新启动请求。</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="panel wide">
+        <h2>图例</h2>
+        <div class="legend">
+          <article class="legend-card">
+            <div class="line-sample"><span class="badge blue">主流程</span><span class="sample-line"></span></div>
+            <p>用户操作或业务数据从入口进入应用编排、服务、外部调用和输出。</p>
+          </article>
+          <article class="legend-card">
+            <div class="line-sample"><span class="badge amber">重试 / 恢复</span><span class="sample-line retry"></span></div>
+            <p>导入预览缓存、旧数据迁移、更新启动和错误恢复等非主干控制流。</p>
+          </article>
+          <article class="legend-card">
+            <div class="line-sample"><span class="badge cyan">读写交互</span><span class="sample-line rw"></span></div>
+            <p>Repository、SQLite、文件系统、配置和导出包之间的读写关系。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
