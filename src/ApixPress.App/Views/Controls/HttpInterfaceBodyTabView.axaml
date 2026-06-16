@@ -73,13 +73,13 @@
                           <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
                           <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" PlaceholderText="字段名" />
                           <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" PlaceholderText="字段值" />
-                          <TextBlock Grid.Column="3" Classes="CaptionText" Text="String" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="3" Classes="CaptionText" Text="{Binding ParameterType}" VerticalAlignment="Center" />
                           <TextBox Grid.Column="4" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" PlaceholderText="说明" />
                           <u:IconButton Grid.Column="5"
                                         Classes="Danger"
                                         Theme="{DynamicResource BorderlessIconButton}"
                                         Icon="{StaticResource SemiIconDelete}"
-                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
+                                        Command="{Binding $parent[UserControl].((vm:ProjectTabViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
                                         CommandParameter="{Binding}" />
                         </Grid>
                       </Border>
