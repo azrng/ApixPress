@@ -194,7 +194,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     {
         FormFields.Add(new RequestParameterItemViewModel
         {
-            ParameterType = RequestParameterKind.Query,
+            ParameterType = RequestParameterKind.FormField,
             Name = string.Empty,
             Value = string.Empty
         });
@@ -204,10 +204,21 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     private void RemoveParameter(RequestParameterItemViewModel? item)
     {
         if (item is null) return;
-        QueryParameters.Remove(item);
-        Headers.Remove(item);
-        PathParameters.Remove(item);
-        FormFields.Remove(item);
+        switch (item.ParameterType)
+        {
+            case RequestParameterKind.Query:
+                QueryParameters.Remove(item);
+                break;
+            case RequestParameterKind.Path:
+                PathParameters.Remove(item);
+                break;
+            case RequestParameterKind.Header:
+                Headers.Remove(item);
+                break;
+            case RequestParameterKind.FormField:
+                FormFields.Remove(item);
+                break;
+        }
     }
 
 
@@ -377,7 +388,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
 
             yield return new RequestParameterItemViewModel
             {
-                ParameterType = RequestParameterKind.Query,
+                ParameterType = RequestParameterKind.FormField,
                 Name = name,
                 Value = parts.Length > 1 ? Uri.UnescapeDataString(parts[1]) : string.Empty,
                 IsEnabled = true

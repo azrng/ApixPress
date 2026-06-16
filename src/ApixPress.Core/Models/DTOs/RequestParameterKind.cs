@@ -4,5 +4,6 @@ public enum RequestParameterKind
 {
     Query,
     Path,
-    Header
+    Header,
+    FormField
 }
