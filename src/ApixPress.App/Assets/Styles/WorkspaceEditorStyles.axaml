@@ -565,12 +565,6 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
   </Style>
 
-  <Style Selector="Border.InterfaceRootAuthPanel">
-    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
-    <Setter Property="MaxWidth" Value="760" />
-    <Setter Property="HorizontalAlignment" Value="Left" />
-  </Style>
-
   <Style Selector="Border.InterfaceRootWorkbenchSurface">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
@@ -579,6 +573,10 @@
     <Setter Property="ClipToBounds" Value="True" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="VerticalAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootAuthWorkbench">
+    <Setter Property="MinHeight" Value="260" />
   </Style>
 
   <Style Selector="Grid.InterfaceRootWorkbenchHeader">
@@ -593,6 +591,80 @@
 
   <Style Selector="Grid.InterfaceRootWorkbenchHeader > TextBox">
     <Setter Property="Margin" Value="0,14,16,12" />
+  </Style>
+
+  <Style Selector="Grid.InterfaceRootWorkbenchHeader > Border.InterfaceRootAuthStatusPill">
+    <Setter Property="Margin" Value="0,14,16,12" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootAuthStatusPill">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="10,5" />
+    <Setter Property="MaxWidth" Value="360" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootAuthStatusPill TextBlock">
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootAuthBody">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,1" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootAuthFormPanel">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootAuthModeNotice">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="10,8" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootAuthModeNotice TextBlock">
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootAuthRulePanel">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootAuthRuleItem">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="10,8" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootAuthRuleItem TextBlock">
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <Style Selector="Border.InterfaceRootAuthActionBar">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+    <Setter Property="Padding" Value="16,12" />
   </Style>
 
   <Style Selector="Border.InterfaceRootFilterBar">

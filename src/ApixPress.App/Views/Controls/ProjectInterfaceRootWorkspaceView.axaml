@@ -44,69 +44,118 @@
 
         <Grid Grid.Row="1"
               Margin="0,12,0,0">
-          <Border Classes="ProjectWorkspaceSettingsCard InterfaceRootAuthPanel"
+          <Border Classes="InterfaceRootWorkbenchSurface InterfaceRootAuthWorkbench"
                   IsVisible="{Binding InterfaceRoot.IsAuthSelected}">
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
-                  RowSpacing="{StaticResource Space.4}">
-              <StackPanel Spacing="{StaticResource Space.1}">
-                <TextBlock Classes="SectionTitle"
-                           Text="HTTP 接口全局 Auth" />
-                <TextBlock Classes="CaptionText"
-                           Text="只对 HTTP 接口发送生效；具体接口已有 Authorization Header 时会优先使用具体接口配置。" />
-              </StackPanel>
-
-              <Grid Grid.Row="1"
-                    RowDefinitions="Auto,Auto"
-                    RowSpacing="{StaticResource Space.2}">
-                <TextBlock Classes="CaptionText"
-                           Text="鉴权方式" />
-                <ComboBox Grid.Row="1"
-                          Classes="SectionInput"
-                          ItemsSource="{Binding InterfaceRoot.AuthModes}"
-                          SelectedIndex="{Binding InterfaceRoot.SelectedAuthModeIndex}" />
+            <Grid RowDefinitions="Auto,*,Auto">
+              <Grid Classes="InterfaceRootWorkbenchHeader"
+                    ColumnDefinitions="*,Auto"
+                    ColumnSpacing="{StaticResource Space.3}">
+                <StackPanel Spacing="{StaticResource Space.1}">
+                  <TextBlock Classes="SectionTitle"
+                             Text="HTTP 接口全局 Auth" />
+                  <TextBlock Classes="CaptionText"
+                             Text="配置根目录级默认鉴权；具体接口已有 Authorization Header 时优先使用接口配置。" />
+                </StackPanel>
+                <Border Grid.Column="1"
+                        Classes="InterfaceRootAuthStatusPill">
+                  <TextBlock Classes="CaptionText"
+                             Text="{Binding InterfaceRoot.StatusText}" />
+                </Border>
               </Grid>
 
-              <Grid Grid.Row="2"
-                    RowDefinitions="Auto,Auto"
-                    RowSpacing="{StaticResource Space.2}"
-                    IsVisible="{Binding InterfaceRoot.IsBearerMode}">
-                <TextBlock Classes="CaptionText"
-                           Text="Bearer Token" />
-                <TextBox Grid.Row="1"
-                         Classes="SectionInput"
-                         PlaceholderText="例如 {{apiKey}}"
-                         Text="{Binding InterfaceRoot.BearerToken}" />
-              </Grid>
+              <Border Grid.Row="1"
+                      Classes="InterfaceRootAuthBody">
+                <Grid ColumnDefinitions="560,*"
+                      ColumnSpacing="{StaticResource Space.5}">
+                  <Border Classes="InterfaceRootAuthFormPanel">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+                          RowSpacing="{StaticResource Space.4}">
+                      <Grid RowDefinitions="Auto,Auto"
+                            RowSpacing="{StaticResource Space.2}">
+                        <TextBlock Classes="CaptionText"
+                                   Text="鉴权方式" />
+                        <ComboBox Grid.Row="1"
+                                  Classes="SectionInput"
+                                  ItemsSource="{Binding InterfaceRoot.AuthModes}"
+                                  SelectedIndex="{Binding InterfaceRoot.SelectedAuthModeIndex}" />
+                      </Grid>
 
-              <Grid Grid.Row="3"
-                    RowDefinitions="Auto,Auto,Auto,Auto"
-                    RowSpacing="{StaticResource Space.2}"
-                    IsVisible="{Binding InterfaceRoot.IsBasicMode}">
-                <TextBlock Classes="CaptionText"
-                           Text="用户名" />
-                <TextBox Grid.Row="1"
-                         Classes="SectionInput"
-                         PlaceholderText="Username"
-                         Text="{Binding InterfaceRoot.BasicUsername}" />
-                <TextBlock Grid.Row="2"
-                           Classes="CaptionText"
-                           Text="密码" />
-                <TextBox Grid.Row="3"
-                         Classes="SectionInput"
-                         PlaceholderText="Password"
-                         Text="{Binding InterfaceRoot.BasicPassword}" />
-              </Grid>
+                      <Border Grid.Row="1"
+                              Classes="InterfaceRootAuthModeNotice"
+                              IsVisible="{Binding InterfaceRoot.IsNoAuthMode}">
+                        <TextBlock Classes="CaptionText"
+                                   Text="当前不会为请求自动追加 Authorization Header。" />
+                      </Border>
 
-              <Grid Grid.Row="4"
-                    ColumnDefinitions="*,Auto">
-                <TextBlock Classes="CaptionText"
-                           VerticalAlignment="Center"
-                           Text="保存后，新发送的 HTTP 接口会自动应用该 Auth。" />
-                <Button Grid.Column="1"
-                        Classes="PrimaryButton"
-                        Content="保存 Auth"
-                        Command="{Binding InterfaceRoot.SaveAuthCommand}" />
-              </Grid>
+                      <Grid Grid.Row="2"
+                            RowDefinitions="Auto,Auto"
+                            RowSpacing="{StaticResource Space.2}"
+                            IsVisible="{Binding InterfaceRoot.IsBearerMode}">
+                        <TextBlock Classes="CaptionText"
+                                   Text="Bearer Token" />
+                        <TextBox Grid.Row="1"
+                                 Classes="SectionInput"
+                                 PlaceholderText="例如 {{apiKey}}"
+                                 Text="{Binding InterfaceRoot.BearerToken}" />
+                      </Grid>
+
+                      <Grid Grid.Row="3"
+                            RowDefinitions="Auto,Auto,Auto,Auto"
+                            RowSpacing="{StaticResource Space.2}"
+                            IsVisible="{Binding InterfaceRoot.IsBasicMode}">
+                        <TextBlock Classes="CaptionText"
+                                   Text="用户名" />
+                        <TextBox Grid.Row="1"
+                                 Classes="SectionInput"
+                                 PlaceholderText="Username"
+                                 Text="{Binding InterfaceRoot.BasicUsername}" />
+                        <TextBlock Grid.Row="2"
+                                   Classes="CaptionText"
+                                   Text="密码" />
+                        <TextBox Grid.Row="3"
+                                 Classes="SectionInput"
+                                 PlaceholderText="Password"
+                                 Text="{Binding InterfaceRoot.BasicPassword}" />
+                      </Grid>
+                    </Grid>
+                  </Border>
+
+                  <Border Grid.Column="1"
+                          Classes="InterfaceRootAuthRulePanel">
+                    <StackPanel Spacing="{StaticResource Space.3}">
+                      <TextBlock Classes="SectionTitle"
+                                 Text="生效规则" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="只影响 HTTP 接口发送，不影响快捷请求、项目环境或历史记录。" />
+                      <Border Classes="InterfaceRootAuthRuleItem">
+                        <TextBlock Classes="CaptionText"
+                                   Text="接口已启用 Authorization Header 时，优先使用接口自身配置。" />
+                      </Border>
+                      <Border Classes="InterfaceRootAuthRuleItem">
+                        <TextBlock Classes="CaptionText"
+                                   Text="Bearer Token 支持 {{变量}}，发送时按当前环境解析。" />
+                      </Border>
+                      <Border Classes="InterfaceRootAuthRuleItem">
+                        <TextBlock Classes="CaptionText"
+                                   Text="Basic Auth 保存用户名和密码，发送时生成 Basic Authorization 值。" />
+                      </Border>
+                    </StackPanel>
+                  </Border>
+                </Grid>
+              </Border>
+
+              <Border Grid.Row="2"
+                      Classes="InterfaceRootAuthActionBar">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Classes="CaptionText"
+                             VerticalAlignment="Center"
+                             Text="保存后，新发送的 HTTP 接口会自动应用该 Auth。" />
+                  <Button Grid.Column="1"
+                          Classes="PrimaryButton"
+                          Content="保存 Auth"
+                          Command="{Binding InterfaceRoot.SaveAuthCommand}" />
+                </Grid>
+              </Border>
             </Grid>
           </Border>
 

@@ -81,10 +81,30 @@ public sealed class WorkbenchLayoutTests
             document.Descendants(),
             element => element.Name.LocalName == "Border"
                 && HasClass(element, "InterfaceRootWorkbenchSurface"));
+        Assert.Contains(
+            document.Descendants(),
+            element => element.Name.LocalName == "Border"
+                && HasClass(element, "InterfaceRootAuthWorkbench"));
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => element.Name.LocalName == "Border"
+                && HasClass(element, "ProjectWorkspaceSettingsCard")
+                && HasClass(element, "InterfaceRootAuthPanel"));
         Assert.DoesNotContain(
             document.Descendants(),
             element => element.Name.LocalName == "Border"
                 && HasClass(element, "InterfaceRootAllPanel"));
+
+        var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceEditorStyles.axaml"));
+        var authPanelStyle = styles.Descendants()
+            .SingleOrDefault(element => element.Name.LocalName == "Style"
+                && element.Attribute("Selector")?.Value == "Border.InterfaceRootAuthPanel");
+
+        Assert.Null(authPanelStyle);
+        Assert.Contains(
+            styles.Descendants(),
+            element => element.Name.LocalName == "Style"
+                && element.Attribute("Selector")?.Value == "Border.InterfaceRootAuthWorkbench");
     }
 
     [Fact]
