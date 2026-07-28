@@ -115,15 +115,12 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            _hostContext.Messenger.Send(new StatusMessageRequest("已取消当前请求。"));
+            // 取消文案统一在 finally 中发送一次，避免与 CancelRequest / finally 重复。
         }
         finally
         {
             workspaceTab.ResponseSection.EndLoading();
-            if (cancellationToken.IsCancellationRequested)
-            {
-                _hostContext.Messenger.Send(new StatusMessageRequest("已取消当前请求。"));
-            }
+            var wasCancelled = cancellationToken.IsCancellationRequested;
 
             if (ReferenceEquals(_sendRequestCancellationTokenSource, cancellationTokenSource))
             {
@@ -132,6 +129,11 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             }
 
             _hostContext.Messenger.Send(new BusyStateChangedMessage(false));
+            if (wasCancelled)
+            {
+                _hostContext.Messenger.Send(new StatusMessageRequest("已取消当前请求。"));
+            }
+
             _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
         }
     }
@@ -143,9 +145,8 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             return;
         }
 
+        // 仅触发取消；状态文案由 SendRequestAsync 的 finally 统一发出。
         _sendRequestCancellationTokenSource.Cancel();
-        _hostContext.Messenger.Send(new StatusMessageRequest("已取消当前请求。"));
-        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     public async Task SaveCurrentEditorAsync()

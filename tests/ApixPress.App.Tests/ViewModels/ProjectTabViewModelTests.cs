@@ -821,6 +821,10 @@ public sealed partial class ProjectTabViewModelTests
 
         Assert.Equal(1, requestHistoryService.GetDetailCallCount);
         Assert.NotNull(historyItem.ResponseSnapshot);
+        Assert.True(viewModel.Shell.IsInterfaceManagementSection);
+        Assert.Equal(ProjectWorkspaceContentMode.RequestEditor, viewModel.Shell.CurrentContentMode);
+        Assert.True(viewModel.ActiveWorkspaceTab?.IsQuickRequestTab);
+        Assert.Equal("https://demo.local/orders", viewModel.Editor.RequestUrl);
         Assert.True(viewModel.ResponseSection.HasResponse);
         Assert.Contains("\"items\":[]", viewModel.ResponseSection.BodyText);
     }

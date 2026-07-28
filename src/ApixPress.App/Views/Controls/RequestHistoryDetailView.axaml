@@ -19,7 +19,7 @@
           <TextBlock Classes="SectionTitle"
                      Text="请求历史详情" />
           <TextBlock Classes="CaptionText"
-                     Text="从左侧选择历史记录后，可在这里查看响应并一键回到快捷请求。" />
+                     Text="从左侧选择历史记录后可预览响应；点击「载入」会打开快捷请求编辑器。" />
         </StackPanel>
         <Button Grid.Column="1"
                 Classes="SecondaryButton"
