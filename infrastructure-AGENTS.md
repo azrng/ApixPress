@@ -1,7 +1,7 @@
 ---
 rule_id: infrastructure-agents
-version: 1.3.1
-last_updated: 2026-05-19
+version: 1.4.0
+last_updated: 2026-07-26
 dependencies: [agents-root]
 ---
 
@@ -151,5 +151,3 @@ src/AppName/
 - 若本次改动同时影响应用访问链路，应至少补一次核心链路检查
 
 ---
-
-文件结束。
