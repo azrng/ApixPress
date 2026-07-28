@@ -427,7 +427,7 @@
     <Setter Property="Width" Value="36" />
     <Setter Property="Height" Value="36" />
     <Setter Property="Padding" Value="0" />
-    <Setter Property="Background" Value="#8B6AE6" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Accent.Violet}" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />

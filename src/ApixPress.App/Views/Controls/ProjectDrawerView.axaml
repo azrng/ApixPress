@@ -79,7 +79,7 @@
             <ListBox.ItemTemplate>
               <DataTemplate x:DataType="vm:ProjectWorkspaceItemViewModel">
                 <Border Classes="PanelCard"
-                        Margin="0,0,0,12"
+                        Margin="{StaticResource Pad.Bottom3}"
                         Padding="{StaticResource Pad.3}">
                   <Grid RowDefinitions="Auto,Auto,*"
                         RowSpacing="{StaticResource Space.2}">

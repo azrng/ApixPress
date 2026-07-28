@@ -7,7 +7,7 @@
              x:Class="ApixPress.App.Views.Controls.HttpInterfaceParamsTabView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <DockPanel Margin="8,4,8,8"
+  <DockPanel Margin="{StaticResource Pad.TabSheet}"
              HorizontalAlignment="Stretch"
              MinHeight="0">
     <Border DockPanel.Dock="Top"
@@ -28,7 +28,7 @@
     <Button DockPanel.Dock="Bottom"
             Classes="AddButton"
             HorizontalAlignment="Left"
-            Margin="0,6,0,0"
+            Margin="{StaticResource Pad.Top2}"
             Content="添加参数"
             Command="{Binding ConfigTab.AddQueryParameterCommand}" />
     <ScrollViewer HorizontalScrollBarVisibility="Disabled"

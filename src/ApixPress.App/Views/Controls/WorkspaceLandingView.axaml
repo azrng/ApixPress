@@ -17,33 +17,70 @@
         <StackPanel Classes="WorkspaceLandingCenterStage"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
+          <StackPanel Classes="WorkspaceLandingHeader">
+            <TextBlock Classes="WorkspaceLandingTitle"
+                       Text="开始构建接口" />
+            <TextBlock Classes="WorkspaceLandingSubtitle"
+                       Text="新建 HTTP 接口、发送快捷请求，或从项目设置导入 OpenAPI / Swagger 文档。" />
+          </StackPanel>
+
           <StackPanel Classes="WorkspaceLandingChoicePanel"
                       Orientation="Horizontal"
                       HorizontalAlignment="Center">
             <Button Classes="WorkspaceLandingChoiceButton"
                     Command="{Binding Workspace.OpenHttpInterfaceWorkspaceCommand}">
-              <Grid RowDefinitions="*,Auto">
+              <Grid RowDefinitions="*,Auto,Auto">
                 <TextBlock Classes="WorkspaceLandingChoiceIcon"
                            FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                            Text="&#xE8C8;" />
                 <TextBlock Grid.Row="1"
                            Classes="WorkspaceLandingChoiceTitle"
                            Text="新建 HTTP 接口" />
+                <TextBlock Grid.Row="2"
+                           Classes="WorkspaceLandingChoiceDescription"
+                           Text="定义路径、参数与文档" />
               </Grid>
             </Button>
 
             <Button Classes="WorkspaceLandingChoiceButton"
                     Command="{Binding Workspace.OpenQuickRequestWorkspaceCommand}">
-              <Grid RowDefinitions="*,Auto">
+              <Grid RowDefinitions="*,Auto,Auto">
                 <TextBlock Classes="WorkspaceLandingChoiceIcon WorkspaceLandingChoiceQuickIcon"
                            FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                            Text="&#xE945;" />
                 <TextBlock Grid.Row="1"
                            Classes="WorkspaceLandingChoiceTitle"
                            Text="快捷请求" />
+                <TextBlock Grid.Row="2"
+                           Classes="WorkspaceLandingChoiceDescription"
+                           Text="立即调试，无需先建接口" />
+              </Grid>
+            </Button>
+
+            <Button Classes="WorkspaceLandingChoiceButton"
+                    Command="{Binding Settings.ShowImportDataCommand}">
+              <Grid RowDefinitions="*,Auto,Auto">
+                <TextBlock Classes="WorkspaceLandingChoiceIcon WorkspaceLandingChoiceImportIcon"
+                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                           Text="&#xE8B5;" />
+                <TextBlock Grid.Row="1"
+                           Classes="WorkspaceLandingChoiceTitle"
+                           Text="导入文档" />
+                <TextBlock Grid.Row="2"
+                           Classes="WorkspaceLandingChoiceDescription"
+                           Text="OpenAPI / Swagger 一键同步" />
               </Grid>
             </Button>
           </StackPanel>
+
+          <Border Classes="WorkspaceLandingAsideCard">
+            <StackPanel Spacing="{StaticResource Space.2}">
+              <TextBlock Classes="WorkspaceLandingHintTitle"
+                         Text="小提示" />
+              <TextBlock Classes="WorkspaceLandingHintText"
+                         Text="左侧目录可搜索并打开已保存的接口；环境变量可在顶部环境面板中管理；请求历史可在左侧导航切换查看。" />
+            </StackPanel>
+          </Border>
         </StackPanel>
       </Grid>
     </Grid>

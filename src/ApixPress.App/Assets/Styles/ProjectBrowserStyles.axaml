@@ -279,62 +279,62 @@
 
   <!-- Method badges -->
   <Style Selector="Border.MethodBadge_GET">
-    <Setter Property="Background" Value="#6C757D" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Method.Get}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="Padding" Value="4,2" />
   </Style>
 
   <Style Selector="Border.MethodBadge_POST">
-    <Setter Property="Background" Value="#0D6EFD" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Method.Post}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="Padding" Value="4,2" />
   </Style>
 
   <Style Selector="Border.MethodBadge_PUT">
-    <Setter Property="Background" Value="#FD7E14" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Method.Put}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="Padding" Value="4,2" />
   </Style>
 
   <Style Selector="Border.MethodBadge_DELETE">
-    <Setter Property="Background" Value="#DC3545" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Method.Delete}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="Padding" Value="4,2" />
   </Style>
 
   <Style Selector="Border.MethodBadge_PATCH">
-    <Setter Property="Background" Value="#20C997" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Method.Patch}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="Padding" Value="4,2" />
   </Style>
 
   <!-- Status badges -->
   <Style Selector="Border.StatusBadge_2xx">
-    <Setter Property="Background" Value="{DynamicResource Brush.Status.Success.Background}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.StatusCode.2xx}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="Padding" Value="4,2" />
   </Style>
 
   <Style Selector="Border.StatusBadge_3xx">
-    <Setter Property="Background" Value="#6C757D" />
+    <Setter Property="Background" Value="{DynamicResource Brush.StatusCode.3xx}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="Padding" Value="4,2" />
   </Style>
 
   <Style Selector="Border.StatusBadge_4xx">
-    <Setter Property="Background" Value="#FD7E14" />
+    <Setter Property="Background" Value="{DynamicResource Brush.StatusCode.4xx}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="Padding" Value="4,2" />
   </Style>
 
   <Style Selector="Border.StatusBadge_5xx">
-    <Setter Property="Background" Value="#DC3545" />
+    <Setter Property="Background" Value="{DynamicResource Brush.StatusCode.5xx}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="Padding" Value="4,2" />
   </Style>
 
   <Style Selector="Border.StatusBadge_Error">
-    <Setter Property="Background" Value="#6C757D" />
+    <Setter Property="Background" Value="{DynamicResource Brush.StatusCode.Error}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="Padding" Value="4,2" />
   </Style>
@@ -384,8 +384,8 @@
   </Style>
 
   <Style Selector="Button.DeleteButton:pointerover">
-    <Setter Property="Background" Value="#DC3545" />
-    <Setter Property="Foreground" Value="White" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Method.Delete}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
   </Style>
 
   <!-- Method Selector (ComboBox) -->
