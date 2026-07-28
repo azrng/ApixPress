@@ -296,7 +296,7 @@
       </Grid>
 
       <Grid IsVisible="{Binding Shell.IsRequestHistorySection}"
-            RowDefinitions="Auto,*"
+            RowDefinitions="Auto,Auto,*"
             RowSpacing="{StaticResource Space.3}">
         <Grid ColumnDefinitions="*,Auto"
               ColumnSpacing="{StaticResource Space.2}">
@@ -315,12 +315,18 @@
           </u:PopConfirm>
         </Grid>
 
-        <Grid Grid.Row="1">
+        <TextBox Grid.Row="1"
+                 Classes="ProjectSidebarSearchBox"
+                 PlaceholderText="搜索方法、URL 或状态码"
+                 Text="{Binding HistoryPanel.SearchText, Mode=TwoWay}"
+                 IsVisible="{Binding HistoryPanel.HasHistory}" />
+
+        <Grid Grid.Row="2">
           <TextBlock Classes="CaptionText"
-                     Text="还没有发送记录"
-                     IsVisible="{Binding Summary.ShowHistoryEmptyState}" />
+                     Text="{Binding HistoryPanel.HistoryEmptyStateText}"
+                     IsVisible="{Binding !HistoryPanel.HasVisibleHistory}" />
           <ListBox ItemsSource="{Binding RequestHistory}"
-                   IsVisible="{Binding Summary.HasHistory}"
+                   IsVisible="{Binding HistoryPanel.HasVisibleHistory}"
                    Classes="FlatListBox">
             <ListBox.ItemTemplate>
               <DataTemplate x:DataType="vm:RequestHistoryItemViewModel">

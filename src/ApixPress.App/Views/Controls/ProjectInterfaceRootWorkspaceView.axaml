@@ -8,8 +8,7 @@
              x:Class="ApixPress.App.Views.Controls.ProjectInterfaceRootWorkspaceView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <Grid IsVisible="{Binding Shell.ShowInterfaceRootWorkspace}"
-        RowDefinitions="Auto,*"
+  <Grid RowDefinitions="Auto,*"
         RowSpacing="{StaticResource Space.1}"
         MinHeight="0"
         ClipToBounds="True">

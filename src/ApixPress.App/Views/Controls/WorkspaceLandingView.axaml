@@ -7,8 +7,7 @@
              x:Class="ApixPress.App.Views.Controls.WorkspaceLandingView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <Border Classes="PanelCard ProjectWorkspaceCanvas"
-          IsVisible="{Binding Shell.ShowInterfaceManagementLanding}">
+  <Border Classes="PanelCard ProjectWorkspaceCanvas">
     <Grid RowDefinitions="Auto,*"
           RowSpacing="{StaticResource Space.4}">
       <views:ProjectWorkspaceToolbarView />

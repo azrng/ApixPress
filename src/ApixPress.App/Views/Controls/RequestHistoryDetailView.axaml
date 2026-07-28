@@ -8,8 +8,7 @@
              x:Class="ApixPress.App.Views.Controls.RequestHistoryDetailView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <Border Classes="PanelCard ProjectWorkspaceCanvas"
-          IsVisible="{Binding Shell.IsRequestHistorySection}">
+  <Border Classes="PanelCard ProjectWorkspaceCanvas">
     <u:LoadingContainer IsLoading="{Binding HistoryPanel.IsHistoryLoading}"
                         LoadingMessage="正在加载请求历史">
       <Grid RowDefinitions="Auto,*"

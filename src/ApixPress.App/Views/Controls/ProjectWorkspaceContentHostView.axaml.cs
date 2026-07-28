@@ -86,12 +86,6 @@ public partial class ProjectWorkspaceContentHostView : UserControl
         }
 
         var mode = _viewModel.Shell.CurrentContentMode;
-        if (IsRequestWorkspaceMode(_currentMode) && IsRequestWorkspaceMode(mode) && HostGrid.Children.Count > 0)
-        {
-            _currentMode = mode;
-            return;
-        }
-
         if (_currentMode == mode && HostGrid.Children.Count > 0)
         {
             return;
@@ -113,27 +107,10 @@ public partial class ProjectWorkspaceContentHostView : UserControl
         Grid.SetColumn(sidebarView, 1);
         HostGrid.Children.Add(sidebarView);
 
-        if (IsInterfaceManagementMode(mode))
-        {
-            if (mode == ProjectWorkspaceContentMode.InterfaceRoot)
-            {
-                var interfaceRootView = EnsureInterfaceRootView();
-                Grid.SetColumn(interfaceRootView, 2);
-                HostGrid.Children.Add(interfaceRootView);
-                return;
-            }
-
-            var landingView = EnsureLandingView();
-            Grid.SetColumn(landingView, 2);
-            HostGrid.Children.Add(landingView);
-            var editorView = EnsureRequestEditorView();
-            Grid.SetColumn(editorView, 2);
-            HostGrid.Children.Add(editorView);
-            return;
-        }
-
         Control contentView = mode switch
         {
+            ProjectWorkspaceContentMode.InterfaceRoot => EnsureInterfaceRootView(),
+            ProjectWorkspaceContentMode.RequestEditor => EnsureRequestEditorView(),
             ProjectWorkspaceContentMode.RequestHistory => EnsureRequestHistoryView(),
             _ => EnsureLandingView()
         };
@@ -241,16 +218,4 @@ public partial class ProjectWorkspaceContentHostView : UserControl
         return _projectSettingsView;
     }
 
-    private static bool IsInterfaceManagementMode(ProjectWorkspaceContentMode? mode)
-    {
-        return mode is ProjectWorkspaceContentMode.Landing
-            or ProjectWorkspaceContentMode.InterfaceRoot
-            or ProjectWorkspaceContentMode.RequestEditor;
-    }
-
-    private static bool IsRequestWorkspaceMode(ProjectWorkspaceContentMode? mode)
-    {
-        return mode is ProjectWorkspaceContentMode.Landing
-            or ProjectWorkspaceContentMode.RequestEditor;
-    }
 }

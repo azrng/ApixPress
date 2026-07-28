@@ -109,7 +109,7 @@ public partial class ProjectTabViewModel : ViewModelBase,
     public ObservableCollection<RequestWorkspaceTabViewModel> WorkspaceTabs => Workspace.WorkspaceTabs;
     public ReadOnlyObservableCollection<RequestWorkspaceTabViewModel> VisibleWorkspaceTabs => Workspace.VisibleWorkspaceTabs;
     public ObservableCollection<RequestCaseItemViewModel> SavedRequests => UseCasesPanel.RequestCases;
-    public ObservableCollection<RequestHistoryItemViewModel> RequestHistory => HistoryPanel.HistoryItems;
+    public ObservableCollection<RequestHistoryItemViewModel> RequestHistory => HistoryPanel.VisibleHistoryItems;
     public RequestWorkspaceTabViewModel? ActiveWorkspaceTab
     {
         get => Workspace.ActiveWorkspaceTab;
