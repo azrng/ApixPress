@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using ApixPress.App.Helpers;
 using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
@@ -14,6 +15,7 @@ namespace ApixPress.App.ViewModels;
 public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 {
     private const string ImportedEndpointKeyPrefix = "swagger-import:";
+    private const int InterfaceSearchDebounceMilliseconds = 250;
 
     private readonly string _projectId;
     private readonly IRequestCaseService _requestCaseService;
@@ -24,6 +26,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     private readonly Action _showInterfaceManagementSection;
     private readonly IMessenger _messenger;
     private readonly Func<Task> _reloadImportedDocumentsAsync;
+    private CancellationTokenSource? _interfaceSearchDebounceCancellationTokenSource;
     private int _navigationRebuildSuspendCount;
     private bool _interfaceNavigationRebuildPending;
     private bool _quickRequestNavigationRebuildPending;
@@ -111,6 +114,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 
     protected override void DisposeManaged()
     {
+        CancellationTokenSourceHelper.CancelAndDispose(ref _interfaceSearchDebounceCancellationTokenSource);
         _useCasesPanel.RequestCases.CollectionChanged -= OnSavedRequestsCollectionChanged;
         DisposeExplorerItems(InterfaceTreeItems);
         DisposeExplorerItems(QuickRequestTreeItems);
@@ -291,10 +295,33 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 
     partial void OnInterfaceSearchTextChanged(string value)
     {
-        RequestWorkspaceNavigationRebuild(rebuildQuickRequestNavigation: false);
         OnPropertyChanged(nameof(HasInterfaceSearchText));
         OnPropertyChanged(nameof(InterfaceEmptyStateText));
         OnPropertyChanged(nameof(ShowInterfaceEntriesEmptyState));
+        _ = DebounceInterfaceSearchRebuildAsync();
+    }
+
+    private async Task DebounceInterfaceSearchRebuildAsync()
+    {
+        var cancellationToken = CancellationTokenSourceHelper
+            .Refresh(ref _interfaceSearchDebounceCancellationTokenSource)
+            .Token;
+
+        try
+        {
+            await Task.Delay(InterfaceSearchDebounceMilliseconds, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        RequestWorkspaceNavigationRebuild(rebuildQuickRequestNavigation: false);
     }
 
     private void OnSavedRequestsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

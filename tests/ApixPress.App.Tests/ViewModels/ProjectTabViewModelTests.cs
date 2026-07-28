@@ -82,6 +82,7 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
 
         viewModel.Catalog.InterfaceSearchText = "用户详情";
+        await Task.Delay(300);
         var nameMatchTitles = FlattenExplorerTitles(viewModel.Catalog.InterfaceCatalogItems).ToList();
 
         Assert.Contains("用户 (1)", nameMatchTitles);
@@ -89,6 +90,7 @@ public sealed partial class ProjectTabViewModelTests
         Assert.DoesNotContain("查询订单列表", nameMatchTitles);
 
         viewModel.Catalog.InterfaceSearchText = "/orders";
+        await Task.Delay(300);
         var pathMatchTitles = FlattenExplorerTitles(viewModel.Catalog.InterfaceCatalogItems).ToList();
 
         Assert.Contains("订单 (1)", pathMatchTitles);

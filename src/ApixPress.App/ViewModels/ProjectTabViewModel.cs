@@ -19,6 +19,8 @@ public partial class ProjectTabViewModel : ViewModelBase,
     private readonly ProjectTabComposition _composition;
     private readonly ProjectTabLifecycleCoordinator _lifecycle;
     private readonly IMessenger _messenger;
+    private WorkspaceStateChangeFlags _pendingWorkspaceChanges;
+    private bool _isApplyingWorkspaceChanges;
 
     public event Action<ProjectTabViewModel>? ShellStateChanged;
 
@@ -242,18 +244,66 @@ public partial class ProjectTabViewModel : ViewModelBase,
 
     public void Receive(WorkspaceStateChangedMessage message)
     {
-        if (IsDisposed)
+        if (IsDisposed || message.Changes == WorkspaceStateChangeFlags.None)
         {
             return;
         }
 
-        if (message.Changes.HasFlag(WorkspaceStateChangeFlags.ShellState))
+        QueueWorkspaceChanges(message.Changes);
+    }
+
+    protected override void DisposeManaged()
+    {
+        _messenger.UnregisterAll(this);
+        _pendingWorkspaceChanges = WorkspaceStateChangeFlags.None;
+        _composition.Dispose();
+        _fallbackWorkspaceTab.Dispose();
+        ShellStateChanged = null;
+    }
+
+    private void NotifyShellState()
+    {
+        QueueWorkspaceChanges(WorkspaceStateChangeFlags.ShellState);
+    }
+
+    private void QueueWorkspaceChanges(WorkspaceStateChangeFlags changes)
+    {
+        if (IsDisposed || changes == WorkspaceStateChangeFlags.None)
+        {
+            return;
+        }
+
+        _pendingWorkspaceChanges |= changes;
+        if (_isApplyingWorkspaceChanges)
+        {
+            return;
+        }
+
+        _isApplyingWorkspaceChanges = true;
+        try
+        {
+            while (_pendingWorkspaceChanges != WorkspaceStateChangeFlags.None && !IsDisposed)
+            {
+                var batch = _pendingWorkspaceChanges;
+                _pendingWorkspaceChanges = WorkspaceStateChangeFlags.None;
+                ApplyWorkspaceChanges(batch);
+            }
+        }
+        finally
+        {
+            _isApplyingWorkspaceChanges = false;
+        }
+    }
+
+    private void ApplyWorkspaceChanges(WorkspaceStateChangeFlags changes)
+    {
+        if (changes.HasFlag(WorkspaceStateChangeFlags.ShellState))
         {
             Summary.NotifyStateChanged();
             ShellStateChanged?.Invoke(this);
         }
 
-        if (message.Changes.HasFlag(WorkspaceStateChangeFlags.EditorState))
+        if (changes.HasFlag(WorkspaceStateChangeFlags.EditorState))
         {
             SyncInterfaceRootWorkspaceStateWithActiveTab();
             OnPropertyChanged(nameof(ConfigTab));
@@ -262,41 +312,22 @@ public partial class ProjectTabViewModel : ViewModelBase,
             Editor.NotifyStateChanged();
         }
 
-        if (message.Changes.HasFlag(WorkspaceStateChangeFlags.BindingsChanged))
+        if (changes.HasFlag(WorkspaceStateChangeFlags.BindingsChanged))
         {
             OnPropertyChanged(nameof(ConfigTab));
             OnPropertyChanged(nameof(ResponseSection));
         }
 
-        if (message.Changes.HasFlag(WorkspaceStateChangeFlags.ActiveTabChanged))
+        if (changes.HasFlag(WorkspaceStateChangeFlags.ActiveTabChanged))
         {
             SyncInterfaceRootWorkspaceStateWithActiveTab();
             OnPropertyChanged(nameof(ActiveWorkspaceTab));
         }
 
-        if (message.Changes.HasFlag(WorkspaceStateChangeFlags.TabMenuChanged))
+        if (changes.HasFlag(WorkspaceStateChangeFlags.TabMenuChanged))
         {
             OnPropertyChanged(nameof(IsWorkspaceTabMenuOpen));
         }
-    }
-
-    protected override void DisposeManaged()
-    {
-        _messenger.UnregisterAll(this);
-        _composition.Dispose();
-        _fallbackWorkspaceTab.Dispose();
-        ShellStateChanged = null;
-    }
-
-    private void NotifyShellState()
-    {
-        if (IsDisposed)
-        {
-            return;
-        }
-
-        Summary.NotifyStateChanged();
-        ShellStateChanged?.Invoke(this);
     }
 
     partial void OnIsInterfaceRootWorkspaceActiveChanged(bool value)

@@ -24,17 +24,8 @@
                 <u:Badge Header="本地工作区" />
               </StackPanel>
               <TextBlock Classes="SubtleText"
-                         Text="参考 Apifox 的项目列表工作台风格：首页保持轻量，重点放在筛选、进入和浏览项目卡片。"
+                         Text="本地 API 工作区：筛选、浏览项目卡片，并以标签页打开工作台。"
                          TextWrapping="Wrap" />
-              <StackPanel Orientation="Horizontal"
-                          Spacing="{StaticResource Space.5}">
-                <TextBlock Classes="HomeContentTabText HomeContentTabTextActive"
-                           Text="项目列表" />
-                <TextBlock Classes="HomeContentTabText"
-                           Text="快速打开" />
-                <TextBlock Classes="HomeContentTabText"
-                           Text="本地空间" />
-              </StackPanel>
             </StackPanel>
 
             <StackPanel Grid.Column="1"
