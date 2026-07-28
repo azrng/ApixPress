@@ -34,7 +34,7 @@ public partial class ExplorerItemViewModel : ViewModelBase
     private bool canLoad;
 
     [ObservableProperty]
-    private bool isExpanded = true;
+    private bool isExpanded;
 
     public ObservableCollection<ExplorerItemViewModel> Children { get; } = [];
 

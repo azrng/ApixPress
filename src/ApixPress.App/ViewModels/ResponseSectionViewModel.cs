@@ -15,12 +15,17 @@ public partial class ResponseSectionViewModel : ViewModelBase
     private const int MaxSynchronousFormattedBodyLength = 256 * 1024;
     private const int MaxSynchronousFormatThreshold = 64 * 1024;
     private const int MaxSearchableBodyLength = 1024 * 1024;
+    private const int MaxDisplayBodyCharacters = 256 * 1024;
+    private const string FormattingBodyPlaceholder = "正在格式化响应正文...";
 
     private static readonly JsonSerializerOptions PrettyJsonOptions = new()
     {
         WriteIndented = true,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
+
+    private CancellationTokenSource? _formatBodyCancellationTokenSource;
+    private int _formatBodyGeneration;
 
     [ObservableProperty]
     private bool hasResponse;
@@ -101,6 +106,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     public void ApplyResult(IResultModel<ResponseSnapshotDto> result, RequestSnapshotDto request)
     {
+        CancelPendingBodyFormat();
         IsLoading = false;
         HasResponse = true;
         ShowPlaceholder = false;
@@ -125,7 +131,8 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
         if (r.Content is { Length: > MaxSynchronousFormatThreshold })
         {
-            _ = FormatBodyInBackgroundAsync(r);
+            BodyText = FormattingBodyPlaceholder;
+            _ = FormatBodyInBackgroundAsync(r, ++_formatBodyGeneration);
         }
         else
         {
@@ -133,14 +140,61 @@ public partial class ResponseSectionViewModel : ViewModelBase
         }
     }
 
-    private async Task FormatBodyInBackgroundAsync(ResponseSnapshotDto response)
+    public async Task WaitForPendingBodyFormatAsync(TimeSpan? timeout = null)
     {
-        var body = await Task.Run(() => BuildDisplayBody(response));
-        Dispatcher.UIThread.Post(() => BodyText = body);
+        var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(5));
+        while (DateTime.UtcNow < deadline)
+        {
+            if (!string.Equals(BodyText, FormattingBodyPlaceholder, StringComparison.Ordinal)
+                || _formatBodyCancellationTokenSource is null)
+            {
+                return;
+            }
+
+            await Task.Delay(20);
+        }
+    }
+
+    private async Task FormatBodyInBackgroundAsync(ResponseSnapshotDto response, int generation)
+    {
+        var cancellationToken = CancellationTokenSourceHelper
+            .Refresh(ref _formatBodyCancellationTokenSource)
+            .Token;
+
+        try
+        {
+            var body = await Task.Run(() => BuildDisplayBody(response), cancellationToken);
+            if (cancellationToken.IsCancellationRequested || generation != _formatBodyGeneration || IsDisposed)
+            {
+                return;
+            }
+
+            void ApplyBody()
+            {
+                if (IsDisposed || generation != _formatBodyGeneration)
+                {
+                    return;
+                }
+
+                BodyText = body;
+            }
+
+            if (Avalonia.Application.Current is null)
+            {
+                ApplyBody();
+                return;
+            }
+
+            await Dispatcher.UIThread.InvokeAsync(ApplyBody);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
     }
 
     public void Reset()
     {
+        CancelPendingBodyFormat();
         IsLoading = false;
         HasResponse = false;
         ShowPlaceholder = true;
@@ -156,6 +210,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     public void BeginLoading(string? loadingText = null)
     {
+        CancelPendingBodyFormat();
         LoadingText = string.IsNullOrWhiteSpace(loadingText)
             ? "正在发送请求..."
             : loadingText.Trim();
@@ -175,6 +230,17 @@ public partial class ResponseSectionViewModel : ViewModelBase
         {
             ShowPlaceholder = true;
         }
+    }
+
+    protected override void DisposeManaged()
+    {
+        CancelPendingBodyFormat();
+    }
+
+    private void CancelPendingBodyFormat()
+    {
+        _formatBodyGeneration++;
+        CancellationTokenSourceHelper.CancelAndDispose(ref _formatBodyCancellationTokenSource);
     }
 
     partial void OnStatusTextChanged(string value)
@@ -259,7 +325,8 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     private void UpdateBodySearchResult()
     {
-        if (string.IsNullOrWhiteSpace(BodySearchText) || string.IsNullOrEmpty(BodyText))
+        if (string.IsNullOrWhiteSpace(BodySearchText) || string.IsNullOrEmpty(BodyText)
+            || string.Equals(BodyText, FormattingBodyPlaceholder, StringComparison.Ordinal))
         {
             BodySearchResultText = string.Empty;
             return;
@@ -298,15 +365,26 @@ public partial class ResponseSectionViewModel : ViewModelBase
         var formattedBody = FormatResponseBody(response);
         if (!response.IsContentTruncated)
         {
-            return formattedBody;
+            return LimitDisplayBody(formattedBody);
         }
 
         var notice = response.SizeBytes > response.CapturedSizeBytes
             ? $"[响应体过大，当前仅展示前 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}，完整响应约 {UiFormatHelper.FormatBytes(response.SizeBytes)}。]"
             : $"[响应体过大，当前仅展示前 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}，完整大小未知。]";
-        return string.IsNullOrWhiteSpace(formattedBody)
+        var bodyWithNotice = string.IsNullOrWhiteSpace(formattedBody)
             ? notice
             : $"{formattedBody}{Environment.NewLine}{Environment.NewLine}{notice}";
+        return LimitDisplayBody(bodyWithNotice);
+    }
+
+    private static string LimitDisplayBody(string body)
+    {
+        if (string.IsNullOrEmpty(body) || body.Length <= MaxDisplayBodyCharacters)
+        {
+            return body;
+        }
+
+        return $"{body[..MaxDisplayBodyCharacters]}{Environment.NewLine}{Environment.NewLine}[界面仅展示前 {UiFormatHelper.FormatBytes(MaxDisplayBodyCharacters)}，避免大文本导致卡顿。]";
     }
 
     private static string FormatResponseSizeText(ResponseSnapshotDto response)

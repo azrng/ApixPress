@@ -159,9 +159,10 @@ internal sealed class ProjectTabLifecycleCoordinator
     {
         _useCasesPanel.SetProjectContext(_projectId);
         _historyPanel.SetProjectContext(_projectId);
-        await _environmentPanel.LoadProjectAsync(_projectId, preferredEnvironmentId);
-        await _useCasesPanel.LoadCasesAsync();
-        await _interfaceRoot.InitializeAsync();
+        await Task.WhenAll(
+            _environmentPanel.LoadProjectAsync(_projectId, preferredEnvironmentId),
+            _useCasesPanel.LoadCasesAsync(),
+            _interfaceRoot.InitializeAsync());
         _workspace.EnsureLandingWorkspaceTab();
         _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
