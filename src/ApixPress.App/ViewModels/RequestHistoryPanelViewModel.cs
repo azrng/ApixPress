@@ -6,6 +6,7 @@ using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
+using Azrng.Core.Results;
 
 namespace ApixPress.App.ViewModels;
 
@@ -28,12 +29,18 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     public bool ShowHistoryEmptyState => !HasHistory;
     public bool ShowHistorySearchEmptyState => HasHistory && HasSearchText && !HasVisibleHistory;
     public string HistoryEmptyStateText => HasSearchText ? "没有匹配的请求历史" : "还没有发送记录";
+    public bool HasSelectedHistory => SelectedHistoryItem is not null;
+
+    public ResponseSectionViewModel SelectedResponseSection { get; } = new();
 
     [ObservableProperty]
     private string searchText = string.Empty;
 
     [ObservableProperty]
     private bool isHistoryLoading;
+
+    [ObservableProperty]
+    private RequestHistoryItemViewModel? selectedHistoryItem;
 
     public RequestHistoryPanelViewModel(IRequestHistoryService requestHistoryService)
     {
@@ -46,6 +53,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         HistoryItems.CollectionChanged -= OnHistoryItemsCollectionChanged;
         CancellationTokenSourceHelper.CancelAndDispose(ref _loadHistoryCancellationTokenSource);
         CancellationTokenSourceHelper.CancelAndDispose(ref _searchDebounceCancellationTokenSource);
+        SelectedResponseSection.Dispose();
     }
 
     public void SetProjectContext(string projectId)
@@ -53,6 +61,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         _currentProjectId = projectId;
         _hasLoadedHistory = false;
         SearchText = string.Empty;
+        SelectedHistoryItem = null;
     }
 
     public void ClearProjectContext()
@@ -60,6 +69,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         _currentProjectId = string.Empty;
         _hasLoadedHistory = false;
         SearchText = string.Empty;
+        SelectedHistoryItem = null;
         HistoryItems.Clear();
         VisibleHistoryItems.Clear();
         NotifyHistoryVisibilityChanged();
@@ -168,7 +178,32 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         await _requestHistoryService.ClearAsync(_currentProjectId, CancellationToken.None);
         _hasLoadedHistory = true;
         SearchText = string.Empty;
+        SelectedHistoryItem = null;
         HistoryItems.Clear();
+    }
+
+    partial void OnSelectedHistoryItemChanged(RequestHistoryItemViewModel? value)
+    {
+        OnPropertyChanged(nameof(HasSelectedHistory));
+        SelectedResponseSection.Reset();
+
+        if (value is not null)
+        {
+            _ = LoadSelectedHistoryDetailAsync(value);
+        }
+    }
+
+    private async Task LoadSelectedHistoryDetailAsync(RequestHistoryItemViewModel item)
+    {
+        var detail = await EnsureHistoryDetailLoadedAsync(item);
+        if (IsDisposed || !ReferenceEquals(SelectedHistoryItem, item) || detail?.ResponseSnapshot is null)
+        {
+            return;
+        }
+
+        SelectedResponseSection.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(detail.ResponseSnapshot),
+            detail.RequestSnapshot);
     }
 
     partial void OnSearchTextChanged(string value)

@@ -99,7 +99,20 @@ public sealed class ProjectEnvironmentRepository : IProjectEnvironmentRepository
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken));
+        connection.Open();
+        using var transaction = connection.BeginTransaction();
+
+        if (entity.IsActive)
+        {
+            await connection.ExecuteAsync(new CommandDefinition(
+                "update project_environments set is_active = 0 where project_id = @ProjectId and id <> @EnvironmentId and is_active = 1",
+                new { entity.ProjectId, EnvironmentId = entity.Id },
+                transaction,
+                cancellationToken: cancellationToken));
+        }
+
+        await connection.ExecuteAsync(new CommandDefinition(sql, entity, transaction, cancellationToken: cancellationToken));
+        transaction.Commit();
     }
 
     public async Task SetActiveAsync(string projectId, string environmentId, CancellationToken cancellationToken)

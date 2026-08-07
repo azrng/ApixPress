@@ -147,7 +147,7 @@
                   </Border>
 
                   <ToggleButton x:Name="DataModelCatalogToggle"
-                                Classes="ProjectSidebarCatalogToggleButton"
+                                Classes="ProjectSidebarCatalogToggleButton ProjectSidebarSecondaryCatalogButton"
                                 IsChecked="{Binding Catalog.IsDataModelCatalogExpanded, Mode=TwoWay}">
                     <Grid ColumnDefinitions="Auto,*,Auto"
                           ColumnSpacing="{StaticResource Space.2}">
@@ -172,7 +172,7 @@
                   </ToggleButton>
 
                   <ToggleButton x:Name="ComponentCatalogToggle"
-                                Classes="ProjectSidebarCatalogToggleButton"
+                                Classes="ProjectSidebarCatalogToggleButton ProjectSidebarSecondaryCatalogButton"
                                 IsChecked="{Binding Catalog.IsComponentLibraryCatalogExpanded, Mode=TwoWay}">
                     <Grid ColumnDefinitions="Auto,*,Auto"
                           ColumnSpacing="{StaticResource Space.2}">
@@ -199,7 +199,7 @@
               </StackPanel>
             </Border>
 
-            <Border Classes="ProjectSidebarSectionCard">
+            <Border Classes="ProjectSidebarSectionCard ProjectSidebarQuickSectionCard">
               <StackPanel Classes="ProjectSidebarTopLevelSection">
                 <ToggleButton x:Name="QuickRequestCatalogToggle"
                               Classes="ProjectSidebarCatalogToggleButton ProjectSidebarCatalogFlatButton"
@@ -304,7 +304,7 @@
             <TextBlock Classes="SectionTitle"
                        Text="请求历史" />
             <TextBlock Classes="CaptionText"
-                       Text="可直接载入历史请求，或转存为接口草稿。" />
+                       Text="选择记录查看请求详情，并可继续发送。" />
           </StackPanel>
           <u:PopConfirm Grid.Column="1"
                         PopupHeader="确认清空当前项目的请求历史？"
@@ -326,11 +326,12 @@
                      Text="{Binding HistoryPanel.HistoryEmptyStateText}"
                      IsVisible="{Binding !HistoryPanel.HasVisibleHistory}" />
           <ListBox ItemsSource="{Binding RequestHistory}"
+                   SelectedItem="{Binding HistoryPanel.SelectedHistoryItem, Mode=TwoWay}"
                    IsVisible="{Binding HistoryPanel.HasVisibleHistory}"
-                   Classes="FlatListBox">
+                   Classes="HistoryListBox">
             <ListBox.ItemTemplate>
               <DataTemplate x:DataType="vm:RequestHistoryItemViewModel">
-                <Border Classes="SidebarListCard">
+                <Border Classes="SidebarListCard HistoryListCard">
                   <StackPanel Spacing="{StaticResource Space.2}">
                     <Grid ColumnDefinitions="Auto,*"
                           ColumnSpacing="{StaticResource Space.2}">
@@ -341,23 +342,16 @@
                                  Text="{Binding Url}"
                                  TextTrimming="CharacterEllipsis" />
                     </Grid>
-                    <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                    <Grid ColumnDefinitions="Auto,*,Auto"
                           ColumnSpacing="{StaticResource Space.2}">
                       <TextBlock Classes="CaptionText"
                                  Text="{Binding StatusText}" />
                       <TextBlock Grid.Column="1"
                                  Classes="CaptionText"
                                  Text="{Binding TimestampText}" />
-                      <Button Grid.Column="2"
-                              Classes="TextButton"
-                              Content="载入"
-                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadHistoryItemCommand}"
-                              CommandParameter="{Binding}" />
-                      <Button Grid.Column="3"
-                              Classes="TextButton"
-                              Content="转存"
-                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveHistoryAsCaseCommand}"
-                              CommandParameter="{Binding}" />
+                      <TextBlock Grid.Column="2"
+                                 Classes="CaptionText"
+                                 Text="{Binding DurationText}" />
                     </Grid>
                   </StackPanel>
                 </Border>

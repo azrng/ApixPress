@@ -46,6 +46,37 @@ public sealed partial class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task EnvironmentVariableService_ShouldSwitchActiveEnvironmentBeforeSavingAnotherActiveEnvironment()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var environmentService = new EnvironmentVariableService(new EnvironmentVariableRepository(factory), environmentRepository);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "环境切换项目"
+        }, CancellationToken.None)).Data!;
+
+        var saveResult = await environmentService.SaveEnvironmentAsync(new ProjectEnvironmentDto
+        {
+            ProjectId = project.Id,
+            Name = "测试",
+            BaseUrl = "https://test.example.com",
+            IsActive = true,
+            SortOrder = 2
+        }, CancellationToken.None);
+
+        Assert.True(saveResult.IsSuccess);
+        var environments = await environmentService.GetEnvironmentsAsync(project.Id, CancellationToken.None);
+        Assert.Equal(2, environments.Count);
+        var active = Assert.Single(environments, item => item.IsActive);
+        Assert.Equal("测试", active.Name);
+    }
+
+    [Fact]
     public async Task RequestCaseService_ShouldPersistAndLoadCaseWithinProject()
     {
         using var factory = new TestSqliteConnectionFactory();

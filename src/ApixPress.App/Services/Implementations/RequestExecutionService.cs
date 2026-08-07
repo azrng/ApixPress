@@ -82,7 +82,7 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
 
             message.Content = BuildHttpContent(request, activeVariables);
 
-            foreach (var header in request.Headers.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
+            foreach (var header in request.Headers.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
             {
                 var value = ReplaceVariables(header.Value, activeVariables);
                 if (!message.Headers.TryAddWithoutValidation(header.Name, value))

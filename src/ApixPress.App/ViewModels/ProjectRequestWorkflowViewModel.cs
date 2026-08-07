@@ -182,37 +182,6 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
-    public async Task SaveHistoryAsQuickRequestAsync(RequestHistoryItemViewModel item)
-    {
-        var snapshot = item.RequestSnapshot;
-        var result = await _requestCaseService.SaveAsync(new RequestCaseDto
-        {
-            ProjectId = _projectId,
-            EntryType = ProjectTabRequestEntryTypes.QuickRequest,
-            Name = $"{snapshot.Method} {snapshot.Url}",
-            GroupName = "快捷请求",
-            Description = $"从 {item.Timestamp.ToLocalTime():yyyy-MM-dd HH:mm} 的历史记录创建",
-            RequestSnapshot = snapshot,
-            UpdatedAt = DateTime.UtcNow
-        }, CancellationToken.None);
-
-        if (result.IsSuccess)
-        {
-            if (result.Data is not null)
-            {
-                _catalog.UpsertCaseItem(result.Data);
-            }
-
-            _hostContext.Messenger.Send(new StatusMessageRequest("已从历史记录生成快捷请求。"));
-        }
-        else
-        {
-            _hostContext.Messenger.Send(new StatusMessageRequest(result.Message));
-        }
-
-        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
-    }
-
     public async Task<bool> SaveQuickRequestAsync(RequestWorkspaceTabViewModel workspaceTab, string? requestNameOverride = null)
     {
         if (!HasAbsoluteHttpUrl(workspaceTab.RequestUrl))

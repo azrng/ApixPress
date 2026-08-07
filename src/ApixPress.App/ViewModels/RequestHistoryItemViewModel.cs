@@ -53,6 +53,12 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
 
     public string TimestampText => Timestamp.ToLocalTime().ToString("MM-dd HH:mm");
 
+    public bool HasQueryParameters => RequestSnapshot.QueryParameters.Count > 0;
+    public bool HasPathParameters => RequestSnapshot.PathParameters.Count > 0;
+    public bool HasRequestParameters => HasQueryParameters || HasPathParameters;
+    public bool HasRequestHeaders => RequestSnapshot.Headers.Count > 0;
+    public bool HasRequestBody => !string.IsNullOrWhiteSpace(RequestSnapshot.BodyContent);
+
     partial void OnHasResponseChanged(bool value)
     {
         OnPropertyChanged(nameof(StatusBadgeClass));

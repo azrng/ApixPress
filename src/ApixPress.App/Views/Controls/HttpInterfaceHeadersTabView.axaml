@@ -7,50 +7,65 @@
              x:Class="ApixPress.App.Views.Controls.HttpInterfaceHeadersTabView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <DockPanel Margin="{StaticResource Pad.TabSheet}"
-             HorizontalAlignment="Stretch"
-             MinHeight="0">
-    <Border DockPanel.Dock="Top"
-            Classes="HttpRequestTableHeader">
-      <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,48"
-            ColumnSpacing="{StaticResource Space.3}">
-        <TextBlock Grid.Column="0" Classes="CaptionText" Text="Header 名" />
-        <TextBlock Grid.Column="1" Classes="CaptionText" Text="Header 值" />
-        <TextBlock Grid.Column="2" Classes="CaptionText" Text="类型" />
-        <TextBlock Grid.Column="3" Classes="CaptionText" Text="说明" />
+  <Grid Margin="{StaticResource Pad.TabSheet}"
+        RowDefinitions="Auto,*"
+        RowSpacing="{StaticResource Space.2}">
+    <Border Grid.Row="0" Classes="HttpConfigSectionBar">
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.3}">
+        <StackPanel Spacing="{StaticResource Space.1}">
+          <TextBlock Classes="HttpConfigSectionLabel" Text="请求头" />
+          <TextBlock Classes="CaptionText" Text="常用示例：Authorization、Content-Type、Accept。" />
+        </StackPanel>
+        <Button Grid.Column="1"
+                Classes="AddButton HttpConfigAddButton"
+                Content="添加 Header"
+                Command="{Binding ConfigTab.AddHeaderCommand}" />
       </Grid>
     </Border>
-    <Button DockPanel.Dock="Bottom"
-            Classes="AddButton"
-            HorizontalAlignment="Left"
-            Margin="{StaticResource Pad.Top2}"
-            Content="添加 Header"
-            Command="{Binding ConfigTab.AddHeaderCommand}" />
-    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                  VerticalScrollBarVisibility="Auto">
-      <ItemsControl ItemsSource="{Binding ConfigTab.Headers}"
-                    HorizontalAlignment="Stretch">
-        <ItemsControl.ItemTemplate>
-          <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
-            <Border Classes="ParameterRow HttpRequestParameterRow"
-                    HorizontalAlignment="Stretch">
-              <Grid ColumnDefinitions="2.4*,2.4*,1.2*,2.2*,48"
-                    ColumnSpacing="{StaticResource Space.3}">
-                <TextBox Grid.Column="0" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" PlaceholderText="Header 名" />
-                <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" PlaceholderText="Header 值" />
-                <TextBlock Grid.Column="2" Classes="CaptionText" Text="{Binding ParameterType}" VerticalAlignment="Center" />
-                <TextBox Grid.Column="3" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" PlaceholderText="说明" />
-                <u:IconButton Grid.Column="4"
-                              Classes="Danger"
-                              Theme="{DynamicResource BorderlessIconButton}"
-                              Icon="{StaticResource SemiIconDelete}"
-                              Command="{Binding $parent[UserControl].((vm:ProjectTabViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
-                              CommandParameter="{Binding}" />
-              </Grid>
-            </Border>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-    </ScrollViewer>
-  </DockPanel>
+
+    <Border Grid.Row="1" Classes="HttpConfigTableSurface">
+      <Grid RowDefinitions="Auto,*">
+        <Border Grid.Row="0" Classes="HttpConfigTableHeader">
+          <Grid ColumnDefinitions="48,2.4*,2.8*,2.2*,44" ColumnSpacing="{StaticResource Space.3}">
+            <TextBlock Grid.Column="0" Classes="CaptionText" Text="发送" />
+            <TextBlock Grid.Column="1" Classes="CaptionText" Text="Header 名" />
+            <TextBlock Grid.Column="2" Classes="CaptionText" Text="Header 值" />
+            <TextBlock Grid.Column="3" Classes="CaptionText" Text="说明（可选）" />
+          </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                        VerticalScrollBarVisibility="Auto"
+                        IsVisible="{Binding ConfigTab.HasHeaders}">
+            <ItemsControl ItemsSource="{Binding ConfigTab.Headers}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
+                  <Border Classes="ParameterRow HttpConfigTableRow">
+                    <Grid ColumnDefinitions="48,2.4*,2.8*,2.2*,44" ColumnSpacing="{StaticResource Space.3}">
+                      <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
+                      <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" PlaceholderText="例如：Authorization" />
+                      <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" PlaceholderText="例如：Bearer {{token}}" />
+                      <TextBox Grid.Column="3" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" PlaceholderText="说明" />
+                      <u:IconButton Grid.Column="4"
+                                    Classes="Danger"
+                                    Theme="{DynamicResource BorderlessIconButton}"
+                                    Icon="{StaticResource SemiIconDelete}"
+                                    Command="{Binding $parent[UserControl].((vm:ProjectTabViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
+                                    CommandParameter="{Binding}" />
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+
+          <Border Classes="HttpConfigEmptyState"
+                  IsVisible="{Binding ConfigTab.ShowHeadersEmptyState}">
+            <TextBlock Classes="CaptionText" Text="尚未添加请求头" />
+          </Border>
+        </Grid>
+      </Grid>
+    </Border>
+  </Grid>
 </UserControl>

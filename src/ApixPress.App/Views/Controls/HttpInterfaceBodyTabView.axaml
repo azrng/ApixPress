@@ -8,10 +8,11 @@
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
   <Grid Margin="{StaticResource Pad.3}"
-        RowDefinitions="Auto,*"
+        RowDefinitions="Auto,Auto,*"
         RowSpacing="{StaticResource Space.3}"
         HorizontalAlignment="Stretch">
     <u:SelectionList Grid.Row="0"
+                     Classes="HttpBodyModeSelector"
                      ItemsSource="{Binding ConfigTab.BodyModeOptions}"
                      SelectedItem="{Binding ConfigTab.SelectedBodyModeOption}">
       <u:SelectionList.ItemsPanel>
@@ -21,14 +22,22 @@
       </u:SelectionList.ItemsPanel>
       <u:SelectionList.ItemTemplate>
         <DataTemplate x:DataType="vm:BodyModeOptionViewModel">
-          <Border Padding="{StaticResource Pad.2}">
+          <Border Classes="HttpBodyModeOption">
             <TextBlock Text="{Binding DisplayName}" />
           </Border>
         </DataTemplate>
       </u:SelectionList.ItemTemplate>
     </u:SelectionList>
 
-    <Grid Grid.Row="1"
+    <Border Grid.Row="1" Classes="HttpBodyModeHint">
+      <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource Space.2}">
+        <TextBlock Classes="HttpConfigSectionLabel" VerticalAlignment="Center" Text="内容类型" />
+        <TextBlock Grid.Column="1" Classes="CaptionText" VerticalAlignment="Center" Text="{Binding ConfigTab.BodyModeHint}" />
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="2"
+          Classes="HttpBodyContentHost"
           HorizontalAlignment="Stretch"
           VerticalAlignment="Stretch">
       <Grid IsVisible="{Binding ConfigTab.IsBodyModeFormData}"
@@ -36,23 +45,29 @@
             RowSpacing="{StaticResource Space.2}"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch">
-        <Button Grid.Row="0"
-                Classes="AddButton FormDataAddButton"
-                HorizontalAlignment="Right"
-                Content="添加字段"
-                Command="{Binding ConfigTab.AddFormFieldCommand}" />
+        <Border Grid.Row="0" Classes="HttpConfigSectionBar">
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.3}">
+            <TextBlock Classes="CaptionText"
+                       VerticalAlignment="Center"
+                       Text="字段按当前类型编码，取消勾选的字段不会参与请求。" />
+            <Button Grid.Column="1"
+                    Classes="AddButton HttpConfigAddButton"
+                    Content="添加字段"
+                    Command="{Binding ConfigTab.AddFormFieldCommand}" />
+          </Grid>
+        </Border>
 
         <Border Grid.Row="1"
-                Classes="FormDataTableSurface">
+                Classes="HttpConfigTableSurface">
           <Grid RowDefinitions="Auto,*">
             <Border Grid.Row="0"
-                    Classes="HttpRequestTableHeader FormDataTableHeader">
-              <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
+                    Classes="HttpConfigTableHeader">
+              <Grid ColumnDefinitions="48,2.4*,2.8*,2.2*,44"
                     ColumnSpacing="{StaticResource Space.3}">
+                <TextBlock Grid.Column="0" Classes="CaptionText" Text="发送" />
                 <TextBlock Grid.Column="1" Classes="CaptionText" Text="字段名" />
                 <TextBlock Grid.Column="2" Classes="CaptionText" Text="字段值" />
-                <TextBlock Grid.Column="3" Classes="CaptionText" Text="类型" />
-                <TextBlock Grid.Column="4" Classes="CaptionText" Text="说明" />
+                <TextBlock Grid.Column="3" Classes="CaptionText" Text="说明（可选）" />
               </Grid>
             </Border>
 
@@ -66,16 +81,15 @@
                               HorizontalAlignment="Stretch">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
-                      <Border Classes="ParameterRow HttpRequestParameterRow"
+                      <Border Classes="ParameterRow HttpConfigTableRow"
                               HorizontalAlignment="Stretch">
-                        <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
+                        <Grid ColumnDefinitions="48,2.4*,2.8*,2.2*,44"
                               ColumnSpacing="{StaticResource Space.3}">
                           <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
                           <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" PlaceholderText="字段名" />
                           <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" PlaceholderText="字段值" />
-                          <TextBlock Grid.Column="3" Classes="CaptionText" Text="{Binding ParameterType}" VerticalAlignment="Center" />
-                          <TextBox Grid.Column="4" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" PlaceholderText="说明" />
-                          <u:IconButton Grid.Column="5"
+                          <TextBox Grid.Column="3" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" PlaceholderText="说明" />
+                          <u:IconButton Grid.Column="4"
                                         Classes="Danger"
                                         Theme="{DynamicResource BorderlessIconButton}"
                                         Icon="{StaticResource SemiIconDelete}"
@@ -88,10 +102,10 @@
                 </ItemsControl>
               </ScrollViewer>
 
-              <Border Classes="FormDataEmptyState"
+              <Border Classes="HttpConfigEmptyState"
                       IsVisible="{Binding ConfigTab.ShowFormDataEmptyState}">
                 <TextBlock Classes="CaptionText"
-                           Text="暂无字段" />
+                           Text="尚未添加字段" />
               </Border>
             </Grid>
           </Grid>
@@ -108,6 +122,14 @@
                  PlaceholderText="{Binding ConfigTab.RequestBodyWatermark}"
                  Text="{Binding ConfigTab.RequestBody}"
                  FontFamily="{StaticResource Font.Monospace}" />
+      </Border>
+
+      <Border IsVisible="{Binding ConfigTab.ShowBodyModeEmptyState}"
+              Classes="HttpConfigEmptyState HttpBodyEmptyState">
+        <StackPanel Spacing="{StaticResource Space.1}">
+          <TextBlock Classes="HttpConfigSectionLabel" Text="当前请求不包含 Body" />
+          <TextBlock Classes="CaptionText" Text="选择 JSON、XML、Text 或表单类型后，在这里填写请求体。" />
+        </StackPanel>
       </Border>
     </Grid>
   </Grid>

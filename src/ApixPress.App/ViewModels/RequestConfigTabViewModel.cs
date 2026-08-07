@@ -87,6 +87,16 @@ public partial class RequestConfigTabViewModel : ViewModelBase
 
     public bool ShowFormDataEmptyState => IsBodyModeFormData && !HasFormFields;
 
+    public bool HasQueryParameters => QueryParameters.Count > 0;
+
+    public bool ShowQueryParametersEmptyState => !HasQueryParameters;
+
+    public bool HasHeaders => Headers.Count > 0;
+
+    public bool ShowHeadersEmptyState => !HasHeaders;
+
+    public bool ShowBodyModeEmptyState => SelectedBodyMode == BodyModes.None;
+
     public bool HasRawBodyEditor =>
         SelectedBodyMode is BodyModes.RawJson or BodyModes.RawXml or BodyModes.RawText;
 
@@ -132,6 +142,16 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         _ => "请求体内容"
     };
 
+    public string BodyModeHint => SelectedBodyMode switch
+    {
+        BodyModes.FormData => "按字段组合为 multipart/form-data 请求体。",
+        BodyModes.FormUrlEncoded => "按字段进行 URL 编码，适合传统表单接口。",
+        BodyModes.RawJson => "以 application/json 发送原始 JSON 内容。",
+        BodyModes.RawXml => "以 application/xml 发送原始 XML 内容。",
+        BodyModes.RawText => "以 text/plain 发送纯文本内容。",
+        _ => "不发送请求体；可在上方选择一种内容类型。"
+    };
+
     partial void OnSelectedTabIndexChanged(int value)
     {
         OnPropertyChanged(nameof(ConfigPanelMaxHeight));
@@ -149,7 +169,9 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowFormDataEmptyState));
         OnPropertyChanged(nameof(HasRawBodyEditor));
         OnPropertyChanged(nameof(HasBodyContent));
+        OnPropertyChanged(nameof(ShowBodyModeEmptyState));
         OnPropertyChanged(nameof(RequestBodyWatermark));
+        OnPropertyChanged(nameof(BodyModeHint));
         OnPropertyChanged(nameof(ConfigPanelMaxHeight));
 
         // Sync the option selection if changed programmatically
@@ -400,11 +422,15 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     {
         SyncQueryParameterSubscriptions();
         UpdateQueryParametersSelectionState();
+        OnPropertyChanged(nameof(HasQueryParameters));
+        OnPropertyChanged(nameof(ShowQueryParametersEmptyState));
         OnPropertyChanged(nameof(ConfigPanelMaxHeight));
     }
 
     private void OnHeadersCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
+        OnPropertyChanged(nameof(HasHeaders));
+        OnPropertyChanged(nameof(ShowHeadersEmptyState));
         OnPropertyChanged(nameof(ConfigPanelMaxHeight));
     }
 

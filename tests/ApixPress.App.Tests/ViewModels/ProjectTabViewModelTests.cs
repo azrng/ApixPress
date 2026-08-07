@@ -830,6 +830,49 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task SelectingHistoryItem_ShouldLoadItsRequestDetailsForPreview()
+    {
+        var requestHistoryService = new FakeRequestHistoryService();
+        requestHistoryService.Items.Add(new RequestHistoryItemDto
+        {
+            Id = "history-1",
+            Timestamp = new DateTime(2026, 4, 24, 10, 0, 0, DateTimeKind.Utc),
+            HasResponse = true,
+            StatusCode = 200,
+            DurationMs = 18,
+            SizeBytes = 256,
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "https://demo.local/orders",
+                QueryParameters = [new RequestKeyValueDto { Name = "page", Value = "2" }],
+                Headers = [new RequestKeyValueDto { Name = "X-Trace", Value = "history" }]
+            },
+            ResponseSnapshot = new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 18,
+                SizeBytes = 256,
+                Content = "{\"items\":[] }"
+            }
+        });
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestHistoryService: requestHistoryService);
+        await viewModel.InitializeAsync();
+        await viewModel.Shell.ShowRequestHistoryCommand.ExecuteAsync(null);
+
+        var historyItem = Assert.Single(viewModel.RequestHistory);
+        viewModel.HistoryPanel.SelectedHistoryItem = historyItem;
+
+        await WaitUntilAsync(() => requestHistoryService.GetDetailCallCount == 1);
+
+        Assert.Same(historyItem, viewModel.HistoryPanel.SelectedHistoryItem);
+        Assert.True(historyItem.HasQueryParameters);
+        Assert.True(historyItem.HasRequestHeaders);
+        Assert.True(viewModel.HistoryPanel.SelectedResponseSection.HasResponse);
+        Assert.Equal("HTTP 200", viewModel.HistoryPanel.SelectedResponseSection.StatusText);
+    }
+
+    [Fact]
     public void RequestEditor_ShouldExposeCurrentContentModeWhenSwitchingEditorModes()
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());

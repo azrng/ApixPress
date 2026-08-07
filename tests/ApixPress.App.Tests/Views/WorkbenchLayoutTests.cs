@@ -123,6 +123,132 @@ public sealed class WorkbenchLayoutTests
         Assert.Equal("0", mainGrid.Attribute("MinHeight")?.Value);
     }
 
+    [Fact]
+    public void QuickRequestWorkbench_ShouldReuseSharedRequestConfigurationTabs()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "QuickRequestWorkbenchView.axaml"));
+
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "HttpInterfaceParamsTabView");
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "HttpInterfaceBodyTabView");
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "HttpInterfaceHeadersTabView");
+        Assert.DoesNotContain(document.Descendants(), element => element.Name.LocalName == "Border" && HasClass(element, "HttpRequestTableHeader"));
+    }
+
+    [Fact]
+    public void HttpInterfaceBodyTab_ShouldReserveSpaceForTheActiveEditor()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "HttpInterfaceBodyTabView.axaml"));
+        var contentHost = document.Descendants()
+            .Single(element => element.Name.LocalName == "Grid" && HasClass(element, "HttpBodyContentHost"));
+
+        Assert.Equal("2", contentHost.Attribute("Grid.Row")?.Value);
+
+        var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceEditorStyles.axaml"));
+        Assert.Contains(styles.Descendants(), element => element.Name.LocalName == "Style"
+            && element.Attribute("Selector")?.Value == "Grid.HttpBodyContentHost");
+    }
+
+    [Fact]
+    public void RequestHistoryDetail_ShouldStretchLoadingHostAndContentGrid()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "RequestHistoryDetailView.axaml"));
+        var loadingContainer = document.Descendants()
+            .Single(element => element.Name.LocalName == "LoadingContainer");
+        var contentGrid = loadingContainer.Elements()
+            .Single(element => element.Name.LocalName == "Grid");
+
+        Assert.Equal("Stretch", loadingContainer.Attribute("HorizontalAlignment")?.Value);
+        Assert.Equal("Stretch", loadingContainer.Attribute("VerticalAlignment")?.Value);
+        Assert.Equal("Stretch", loadingContainer.Attribute("HorizontalContentAlignment")?.Value);
+        Assert.Equal("Stretch", loadingContainer.Attribute("VerticalContentAlignment")?.Value);
+        Assert.Equal("Stretch", contentGrid.Attribute("HorizontalAlignment")?.Value);
+        Assert.Equal("Stretch", contentGrid.Attribute("VerticalAlignment")?.Value);
+        Assert.Equal("0", contentGrid.Attribute("MinWidth")?.Value);
+        Assert.Equal("0", contentGrid.Attribute("MinHeight")?.Value);
+    }
+
+    [Fact]
+    public void RequestEditor_ShouldSeparateInterfaceContextFromRequestExecution()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "RequestEditorWorkspaceView.axaml"));
+        var contextBar = document.Descendants()
+            .Single(element => element.Name.LocalName == "Border" && HasClass(element, "HttpEditorContextBar"));
+        var contextGrid = contextBar.Elements()
+            .Single(element => element.Name.LocalName == "Grid");
+
+        Assert.Equal("Auto,*,Auto", contextGrid.Attribute("ColumnDefinitions")?.Value);
+        Assert.Contains(
+            contextGrid.Descendants(),
+            element => element.Name.LocalName == "TextBox"
+                && element.Attribute("Grid.Column")?.Value == "1"
+                && HasClass(element, "HttpEditorTitleInput"));
+        Assert.Contains(
+            contextGrid.Descendants(),
+            element => element.Name.LocalName == "Border" && HasClass(element, "HttpEditorModeBar"));
+        Assert.Contains(
+            contextGrid.Descendants(),
+            element => element.Name.LocalName == "Button"
+                && HasClass(element, "HttpCodeIconButton"));
+    }
+
+    [Fact]
+    public void RequestHistoryViews_ShouldUseSelectionDrivenPreviewAndContinueAction()
+    {
+        var sidebar = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "ProjectWorkspaceSidebarView.axaml"));
+        var historyList = sidebar.Descendants()
+            .Single(element => element.Name.LocalName == "ListBox" && HasClass(element, "HistoryListBox"));
+
+        Assert.Equal("{Binding HistoryPanel.SelectedHistoryItem, Mode=TwoWay}", historyList.Attribute("SelectedItem")?.Value);
+        Assert.DoesNotContain(
+            sidebar.Descendants(),
+            element => element.Name.LocalName == "Button" && element.Attribute("Content")?.Value == "转存");
+
+        var detail = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "RequestHistoryDetailView.axaml"));
+        Assert.Contains(
+            detail.Descendants(),
+            element => element.Name.LocalName == "Border" && HasClass(element, "HistoryRequestDetailCard"));
+        Assert.Contains(
+            detail.Descendants(),
+            element => element.Name.LocalName == "Button"
+                && element.Attribute("Content")?.Value == "继续请求"
+                && element.Attribute("CommandParameter")?.Value == "{Binding HistoryPanel.SelectedHistoryItem}");
+    }
+
+    [Fact]
+    public void ProjectWorkspaceSidebar_ShouldUseACompactTwoLevelCatalogHierarchy()
+    {
+        var sidebar = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "ProjectWorkspaceSidebarView.axaml"));
+
+        Assert.Contains(sidebar.Descendants(), element => element.Name.LocalName == "Border"
+            && HasClass(element, "ProjectSidebarQuickSectionCard"));
+        Assert.Equal(2, sidebar.Descendants()
+            .Count(element => element.Name.LocalName == "ToggleButton"
+                && HasClass(element, "ProjectSidebarSecondaryCatalogButton")));
+
+        var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceSidebarStyles.axaml"));
+        Assert.Contains(styles.Descendants(), element => element.Name.LocalName == "Style"
+            && element.Attribute("Selector")?.Value == "Border.ProjectSidebarQuickSectionCard");
+        Assert.Contains(styles.Descendants(), element => element.Name.LocalName == "Style"
+            && element.Attribute("Selector")?.Value == "ToggleButton.ProjectSidebarSecondaryCatalogButton");
+    }
+
+    [Fact]
+    public void EnvironmentManager_ShouldUseACompactFormAndVariablesEmptyState()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "EnvironmentManagerDialogView.axaml"));
+
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Border"
+            && HasClass(element, "EnvironmentIdentityBar"));
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Border"
+            && HasClass(element, "EnvironmentVariablesEmptyState"));
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Border"
+            && HasClass(element, "EnvironmentDialogFooter"));
+
+        var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "DialogStyles.axaml"));
+        Assert.Contains(styles.Descendants(), element => element.Name.LocalName == "Style"
+            && element.Attribute("Selector")?.Value == "Border.EnvironmentVariablesEmptyState");
+    }
+
     private static bool HasClass(XElement element, string className)
     {
         return (element.Attribute("Classes")?.Value ?? string.Empty)

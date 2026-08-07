@@ -21,6 +21,7 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     public EnvironmentPanelViewModel(IEnvironmentVariableService environmentVariableService)
     {
         _environmentVariableService = environmentVariableService;
+        EnvironmentVariables.CollectionChanged += OnEnvironmentVariablesCollectionChanged;
     }
 
     public BatchObservableCollection<ProjectEnvironmentItemViewModel> Environments { get; } = [];
@@ -32,10 +33,15 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
 
     public bool HasSelectedEnvironment => SelectedEnvironment is not null && !string.IsNullOrWhiteSpace(SelectedEnvironment.Id);
 
+    public bool HasEnvironmentVariables => EnvironmentVariables.Count > 0;
+
+    public bool ShowEnvironmentVariablesEmptyState => !HasEnvironmentVariables;
+
     public string ActiveEnvironmentName => SelectedEnvironment?.Name ?? string.Empty;
 
     protected override void DisposeManaged()
     {
+        EnvironmentVariables.CollectionChanged -= OnEnvironmentVariablesCollectionChanged;
         CancellationTokenSourceHelper.CancelAndDispose(ref _loadProjectCancellationTokenSource);
         CancellationTokenSourceHelper.CancelAndDispose(ref _activateEnvironmentCancellationTokenSource);
         SelectedEnvironmentChanged = null;
@@ -314,6 +320,12 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(HasSelectedEnvironment));
         OnPropertyChanged(nameof(ActiveEnvironmentName));
+    }
+
+    private void OnEnvironmentVariablesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(HasEnvironmentVariables));
+        OnPropertyChanged(nameof(ShowEnvironmentVariablesEmptyState));
     }
 
     private void ApplySavedEnvironment(ProjectEnvironmentDto environment)

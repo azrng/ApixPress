@@ -145,6 +145,65 @@
     <Setter Property="Margin" Value="0,0,0,8" />
   </Style>
 
+  <Style Selector="ListBox.HistoryListBox">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="ListBox.HistoryListBox ListBoxItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+  </Style>
+
+  <Style Selector="Border.HistoryListCard">
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
+  <Style Selector="ListBox.HistoryListBox ListBoxItem:pointerover Border.HistoryListCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+  </Style>
+
+  <Style Selector="ListBox.HistoryListBox ListBoxItem:selected">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="ListBox.HistoryListBox ListBoxItem:selected Border.HistoryListCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <Style Selector="Border.HistoryRequestDetailCard">
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="TabControl.HistoryRequestDetailTabs">
+    <Setter Property="MinHeight" Value="148" />
+    <Setter Property="MaxHeight" Value="180" />
+  </Style>
+
+  <Style Selector="TabControl.HistoryRequestDetailTabs TabItem">
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+    <Setter Property="Margin" Value="0,0,8,0" />
+  </Style>
+
+  <Style Selector="Border.HistoryRequestKeyValueRow">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+  </Style>
+
+  <Style Selector="TextBox.HistoryRequestBodyPreview">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="MinHeight" Value="148" />
+    <Setter Property="MaxHeight" Value="180" />
+  </Style>
+
   <Style Selector="Border.QuickRequestHintCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />

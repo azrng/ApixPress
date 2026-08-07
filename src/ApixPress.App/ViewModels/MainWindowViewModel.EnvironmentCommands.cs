@@ -35,8 +35,17 @@ public partial class MainWindowViewModel
             return;
         }
 
-        await ActiveProjectTab.SaveCurrentEnvironmentAsync();
-        StatusMessage = ActiveProjectTab.StatusMessage;
+        try
+        {
+            await ActiveProjectTab.SaveCurrentEnvironmentAsync();
+            StatusMessage = ActiveProjectTab.StatusMessage;
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(exception);
+            StatusMessage = "保存环境失败，请检查环境名称和变量配置后重试。";
+        }
+
         NotifyShellState();
     }
 

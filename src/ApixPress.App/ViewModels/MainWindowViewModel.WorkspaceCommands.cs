@@ -97,19 +97,6 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    private async Task SaveHistoryAsCaseAsync(RequestHistoryItemViewModel? item)
-    {
-        if (ActiveProjectTab is null || item is null)
-        {
-            return;
-        }
-
-        await ActiveProjectTab.Workflow.SaveHistoryAsQuickRequestAsync(item);
-        StatusMessage = ActiveProjectTab.StatusMessage;
-        NotifyShellState();
-    }
-
-    [RelayCommand]
     private async Task ClearHistoryAsync()
     {
         if (ActiveProjectTab is null)

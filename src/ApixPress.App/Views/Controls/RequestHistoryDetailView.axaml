@@ -10,64 +10,178 @@
              mc:Ignorable="d">
   <Border Classes="PanelCard ProjectWorkspaceCanvas">
     <u:LoadingContainer IsLoading="{Binding HistoryPanel.IsHistoryLoading}"
-                        LoadingMessage="正在加载请求历史">
-      <Grid RowDefinitions="Auto,*"
-            RowSpacing="{StaticResource Space.3}">
+                        LoadingMessage="正在加载请求历史"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"
+                        VerticalContentAlignment="Stretch">
+      <Grid RowDefinitions="Auto,Auto,*"
+            RowSpacing="{StaticResource Space.3}"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            MinWidth="0"
+            MinHeight="0">
       <Grid ColumnDefinitions="*,Auto"
             ColumnSpacing="{StaticResource Space.2}">
         <StackPanel Spacing="2">
           <TextBlock Classes="SectionTitle"
                      Text="请求历史详情" />
           <TextBlock Classes="CaptionText"
-                     Text="从左侧选择历史记录后可预览响应；点击「载入」会打开快捷请求编辑器。" />
+                     Text="选择左侧历史记录可查看请求参数和响应；继续请求会打开可编辑的快捷请求。" />
         </StackPanel>
         <Button Grid.Column="1"
                 Classes="SecondaryButton"
-                Content="打开快捷请求"
-                Command="{Binding Workspace.OpenQuickRequestWorkspaceCommand}" />
+                Content="继续请求"
+                IsEnabled="{Binding HistoryPanel.HasSelectedHistory}"
+                Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadHistoryItemCommand}"
+                CommandParameter="{Binding HistoryPanel.SelectedHistoryItem}" />
       </Grid>
 
       <Border Grid.Row="1"
+              Classes="PanelCard HistoryRequestDetailCard"
+              IsVisible="{Binding HistoryPanel.HasSelectedHistory}">
+        <Grid RowDefinitions="Auto,Auto,*"
+              RowSpacing="{StaticResource Space.2}">
+          <Grid ColumnDefinitions="Auto,*,Auto"
+                ColumnSpacing="{StaticResource Space.2}">
+            <u:Badge Grid.Column="0"
+                     Header="{Binding HistoryPanel.SelectedHistoryItem.Method}"
+                     iri:ClassHelper.Classes="{Binding HistoryPanel.SelectedHistoryItem.MethodBadgeClass}" />
+            <TextBlock Grid.Column="1"
+                       Text="{Binding HistoryPanel.SelectedHistoryItem.Url}"
+                       TextTrimming="CharacterEllipsis"
+                       VerticalAlignment="Center" />
+            <TextBlock Grid.Column="2"
+                       Classes="CaptionText"
+                       Text="{Binding HistoryPanel.SelectedHistoryItem.TimestampText}"
+                       VerticalAlignment="Center" />
+          </Grid>
+
+          <TabControl Grid.Row="1"
+                      Classes="HistoryRequestDetailTabs">
+            <TabItem Header="参数">
+              <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="{StaticResource Space.2}">
+                  <TextBlock Classes="CaptionText"
+                             Text="查询参数"
+                             IsVisible="{Binding HistoryPanel.SelectedHistoryItem.HasQueryParameters}" />
+                  <ItemsControl ItemsSource="{Binding HistoryPanel.SelectedHistoryItem.RequestSnapshot.QueryParameters}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Classes="HistoryRequestKeyValueRow">
+                          <Grid ColumnDefinitions="*,*"
+                                ColumnSpacing="{StaticResource Space.2}">
+                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Value}"
+                                       TextTrimming="CharacterEllipsis" />
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Classes="CaptionText"
+                             Text="路径参数"
+                             IsVisible="{Binding HistoryPanel.SelectedHistoryItem.HasPathParameters}" />
+                  <ItemsControl ItemsSource="{Binding HistoryPanel.SelectedHistoryItem.RequestSnapshot.PathParameters}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Classes="HistoryRequestKeyValueRow">
+                          <Grid ColumnDefinitions="*,*"
+                                ColumnSpacing="{StaticResource Space.2}">
+                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Value}"
+                                       TextTrimming="CharacterEllipsis" />
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Classes="CaptionText"
+                             Text="此请求没有查询或路径参数。"
+                             IsVisible="{Binding !HistoryPanel.SelectedHistoryItem.HasRequestParameters}" />
+                </StackPanel>
+              </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Headers">
+              <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="{StaticResource Space.2}">
+                  <ItemsControl ItemsSource="{Binding HistoryPanel.SelectedHistoryItem.RequestSnapshot.Headers}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Classes="HistoryRequestKeyValueRow">
+                          <Grid ColumnDefinitions="*,*"
+                                ColumnSpacing="{StaticResource Space.2}">
+                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Value}"
+                                       TextTrimming="CharacterEllipsis" />
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Classes="CaptionText"
+                             Text="此请求没有 Headers。"
+                             IsVisible="{Binding !HistoryPanel.SelectedHistoryItem.HasRequestHeaders}" />
+                </StackPanel>
+              </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Body">
+              <TextBox Classes="HistoryRequestBodyPreview"
+                       AcceptsReturn="True"
+                       IsReadOnly="True"
+                       Text="{Binding HistoryPanel.SelectedHistoryItem.RequestSnapshot.BodyContent}"
+                       PlaceholderText="此请求没有 Body"
+                       TextWrapping="Wrap"
+                       VerticalContentAlignment="Top" />
+            </TabItem>
+          </TabControl>
+        </Grid>
+      </Border>
+
+      <Border Grid.Row="2"
               Classes="PanelCard ResponsePanelCard">
         <DockPanel>
           <Grid DockPanel.Dock="Top"
                 ColumnDefinitions="*,Auto"
                 Margin="{StaticResource Pad.Bottom3}">
             <TextBlock Classes="SectionTitle"
-                       Text="最近一次载入的响应" />
+                       Text="所选请求的响应" />
             <TextBlock Grid.Column="1"
                        Classes="CaptionText"
                        Text="{Binding Summary.CurrentEnvironmentLabel}"
                        VerticalAlignment="Center" />
           </Grid>
 
-          <StackPanel IsVisible="{Binding ResponseSection.ShowPlaceholder}"
+          <StackPanel IsVisible="{Binding HistoryPanel.SelectedResponseSection.ShowPlaceholder}"
                       HorizontalAlignment="Center"
                       VerticalAlignment="Center"
                       Spacing="{StaticResource Space.2}">
             <TextBlock Classes="SubtleText"
-                       Text="选择左侧历史记录后，可在这里查看最近一次载入的响应内容。" />
+                       Text="选择左侧历史记录后，可在这里查看响应内容。" />
           </StackPanel>
 
-          <Grid IsVisible="{Binding ResponseSection.HasResponse}"
+          <Grid IsVisible="{Binding HistoryPanel.SelectedResponseSection.HasResponse}"
                 RowDefinitions="Auto,*"
                 RowSpacing="{StaticResource Space.2}">
             <Grid ColumnDefinitions="Auto,Auto,Auto,*"
                   ColumnSpacing="{StaticResource Space.3}">
               <u:Badge Grid.Column="0"
-                       Header="{Binding ResponseSection.StatusText}"
-                       iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
+                       Header="{Binding HistoryPanel.SelectedResponseSection.StatusText}"
+                       iri:ClassHelper.Classes="{Binding HistoryPanel.SelectedResponseSection.StatusBadgeClass}" />
               <TextBlock Grid.Column="1"
                          Classes="CaptionText"
-                         Text="{Binding ResponseSection.DurationText}" />
+                         Text="{Binding HistoryPanel.SelectedResponseSection.DurationText}" />
               <TextBlock Grid.Column="2"
                          Classes="CaptionText"
-                         Text="{Binding ResponseSection.SizeText}" />
+                         Text="{Binding HistoryPanel.SelectedResponseSection.SizeText}" />
             </Grid>
 
             <TabControl Grid.Row="1"
                         Classes="ResponseTabs"
-                        SelectedIndex="{Binding ResponseSection.SelectedResponseTab}">
+                        SelectedIndex="{Binding HistoryPanel.SelectedResponseSection.SelectedResponseTab}">
               <TabItem Header="Body">
                 <TextBox AcceptsReturn="True"
                          BorderThickness="0"
@@ -75,7 +189,7 @@
                          IsReadOnly="True"
                          TextWrapping="Wrap"
                          VerticalContentAlignment="Top"
-                         Text="{Binding ResponseSection.BodyText}"
+                         Text="{Binding HistoryPanel.SelectedResponseSection.BodyText}"
                          FontFamily="{StaticResource Font.Monospace}" />
               </TabItem>
               <TabItem Header="Headers">
@@ -85,7 +199,7 @@
                          IsReadOnly="True"
                          TextWrapping="Wrap"
                          VerticalContentAlignment="Top"
-                         Text="{Binding ResponseSection.HeadersText}"
+                         Text="{Binding HistoryPanel.SelectedResponseSection.HeadersText}"
                          FontFamily="{StaticResource Font.Monospace}" />
               </TabItem>
             </TabControl>

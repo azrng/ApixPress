@@ -99,6 +99,39 @@ public sealed class RequestConfigTabViewModelTests
     }
 
     [Fact]
+    public void ConfigurationEmptyStates_ShouldTrackParameterCollections()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        Assert.True(viewModel.ShowQueryParametersEmptyState);
+        Assert.True(viewModel.ShowHeadersEmptyState);
+
+        viewModel.AddQueryParameterCommand.Execute(null);
+        viewModel.AddHeaderCommand.Execute(null);
+
+        Assert.True(viewModel.HasQueryParameters);
+        Assert.True(viewModel.HasHeaders);
+        Assert.False(viewModel.ShowQueryParametersEmptyState);
+        Assert.False(viewModel.ShowHeadersEmptyState);
+    }
+
+    [Theory]
+    [InlineData(BodyModes.None, true, "不发送请求体")]
+    [InlineData(BodyModes.FormData, false, "multipart/form-data")]
+    [InlineData(BodyModes.FormUrlEncoded, false, "URL 编码")]
+    [InlineData(BodyModes.RawJson, false, "application/json")]
+    public void BodyModeHint_ShouldDescribeSelectedMode(string mode, bool showEmptyState, string hintFragment)
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = mode
+        };
+
+        Assert.Equal(showEmptyState, viewModel.ShowBodyModeEmptyState);
+        Assert.Contains(hintFragment, viewModel.BodyModeHint);
+    }
+
+    [Fact]
     public void ApplySnapshot_ShouldRestoreParameterEnabledState()
     {
         var viewModel = new RequestConfigTabViewModel();

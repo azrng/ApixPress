@@ -1,5 +1,8 @@
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Implementations;
+using ApixPress.App.Services.Interfaces;
+using ApixPress.App.Tests.ViewModels;
+using Azrng.Core.Results;
 using System.Net.Http.Headers;
 
 namespace ApixPress.App.Tests.Services;
@@ -76,6 +79,36 @@ public sealed class RequestExecutionServiceTests
     }
 
     [Fact]
+    public async Task SendAsync_ShouldSkipDisabledHeaders()
+    {
+        var handler = new CapturingHttpMessageHandler();
+        using var client = new HttpClient(handler);
+        var service = new RequestExecutionService(
+            new ViewModelSharedTestDoubles.FakeEnvironmentVariableService(),
+            new FakeAppShellSettingsService(),
+            serializer: null!,
+            (_, _, _) => client);
+
+        var result = await service.SendAsync(
+            new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "https://api.example.com/users",
+                Headers =
+                [
+                    new RequestKeyValueDto { Name = "X-Enabled", Value = "yes", IsEnabled = true },
+                    new RequestKeyValueDto { Name = "X-Disabled", Value = "no", IsEnabled = false }
+                ]
+            },
+            new ProjectEnvironmentDto { Id = "env-1" },
+            CancellationToken.None);
+
+        Assert.NotNull(result.Data);
+        Assert.Contains("X-Enabled", handler.HeaderNames);
+        Assert.DoesNotContain("X-Disabled", handler.HeaderNames);
+    }
+
+    [Fact]
     public async Task ReadResponseContentPreviewAsync_ShouldCapLargeResponseBody()
     {
         var oversizedBody = new string('a', RequestExecutionService.ResponsePreviewByteLimit + 8192);
@@ -139,5 +172,28 @@ public sealed class RequestExecutionServiceTests
         Assert.Equal(0, preview.CapturedSizeBytes);
         Assert.Equal(RequestExecutionService.ResponsePreviewByteLimit * 2, preview.SizeBytes);
         Assert.False(preview.IsTruncated);
+    }
+
+    private sealed class FakeAppShellSettingsService : IAppShellSettingsService
+    {
+        public Task<IResultModel<AppShellSettingsDto>> LoadAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<IResultModel<AppShellSettingsDto>>(ResultModel<AppShellSettingsDto>.Success(new AppShellSettingsDto()));
+
+        public Task<IResultModel<AppShellSettingsDto>> SaveAsync(AppShellSettingsDto settings, CancellationToken cancellationToken) =>
+            Task.FromResult<IResultModel<AppShellSettingsDto>>(ResultModel<AppShellSettingsDto>.Success(settings));
+    }
+
+    private sealed class CapturingHttpMessageHandler : HttpMessageHandler
+    {
+        public IReadOnlyList<string> HeaderNames { get; private set; } = [];
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            HeaderNames = request.Headers.Select(header => header.Key).ToArray();
+            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new StringContent("{}")
+            });
+        }
     }
 }
