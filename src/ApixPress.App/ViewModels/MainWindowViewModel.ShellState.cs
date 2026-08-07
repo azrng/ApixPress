@@ -5,6 +5,10 @@ namespace ApixPress.App.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private bool _isNotifyingShellState;
+    private bool _shellStateNotifyPending;
+    private bool _activeProjectShellStateNotifyPending;
+
     partial void OnActiveProjectTabChanged(ProjectTabViewModel? oldValue, ProjectTabViewModel? newValue)
     {
         if (IsDisposed)
@@ -88,16 +92,37 @@ public partial class MainWindowViewModel
             return;
         }
 
-        OnPropertyChanged(nameof(IsHomeTabActive));
-        OnPropertyChanged(nameof(HasActiveProjectTab));
-        OnPropertyChanged(nameof(HasProjectTabs));
-        OnPropertyChanged(nameof(IsProjectBrowserMode));
-        OnPropertyChanged(nameof(IsWorkspaceMode));
-        OnPropertyChanged(nameof(ShowProjectListEmptyState));
-        OnPropertyChanged(nameof(ShowProjectSearchEmptyState));
-        NotifyActiveProjectShellState();
-        OnPropertyChanged(nameof(BrowserStatusText));
-        OnPropertyChanged(nameof(WindowMaximizeGlyph));
+        if (_isNotifyingShellState)
+        {
+            _shellStateNotifyPending = true;
+            return;
+        }
+
+        _isNotifyingShellState = true;
+        try
+        {
+            do
+            {
+                _shellStateNotifyPending = false;
+                _activeProjectShellStateNotifyPending = false;
+
+                OnPropertyChanged(nameof(IsHomeTabActive));
+                OnPropertyChanged(nameof(HasActiveProjectTab));
+                OnPropertyChanged(nameof(HasProjectTabs));
+                OnPropertyChanged(nameof(IsProjectBrowserMode));
+                OnPropertyChanged(nameof(IsWorkspaceMode));
+                OnPropertyChanged(nameof(ShowProjectListEmptyState));
+                OnPropertyChanged(nameof(ShowProjectSearchEmptyState));
+                RaiseActiveProjectShellState();
+                OnPropertyChanged(nameof(BrowserStatusText));
+                OnPropertyChanged(nameof(WindowMaximizeGlyph));
+            }
+            while ((_shellStateNotifyPending || _activeProjectShellStateNotifyPending) && !IsDisposed);
+        }
+        finally
+        {
+            _isNotifyingShellState = false;
+        }
     }
 
     private void NotifyActiveProjectShellState()
@@ -107,6 +132,17 @@ public partial class MainWindowViewModel
             return;
         }
 
+        if (_isNotifyingShellState)
+        {
+            _activeProjectShellStateNotifyPending = true;
+            return;
+        }
+
+        RaiseActiveProjectShellState();
+    }
+
+    private void RaiseActiveProjectShellState()
+    {
         OnPropertyChanged(nameof(HasEnvironmentContext));
         OnPropertyChanged(nameof(ShowQuickRequestSaveDialog));
         OnPropertyChanged(nameof(ShowRequestCodeDialog));

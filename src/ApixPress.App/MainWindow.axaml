@@ -25,28 +25,17 @@
 
     <Grid Grid.Row="1">
       <views:MainWindowHomeView IsVisible="{Binding IsHomeTabActive}" />
-      <ItemsControl Classes="ProjectWorkspaceHost"
-                    IsVisible="{Binding HasActiveProjectTab}"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"
-                    ItemsSource="{Binding ProjectTabs}">
-        <ItemsControl.Styles>
-          <Style Selector="ItemsControl.ProjectWorkspaceHost ContentPresenter">
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="VerticalAlignment" Value="Stretch" />
-          </Style>
-        </ItemsControl.Styles>
-        <ItemsControl.ItemsPanel>
-          <ItemsPanelTemplate>
-            <Grid />
-          </ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate>
+      <ContentControl Classes="ProjectWorkspaceHost"
+                      IsVisible="{Binding HasActiveProjectTab}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch"
+                      Content="{Binding ActiveProjectTab}">
+        <ContentControl.ContentTemplate>
           <DataTemplate x:DataType="vm:ProjectTabViewModel">
-            <views:ProjectWorkspaceView IsVisible="{Binding IsActive}" />
+            <views:ProjectWorkspaceView />
           </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
+        </ContentControl.ContentTemplate>
+      </ContentControl>
       <views:MainWindowOverlaysView />
       <u:OverlayDialogHost />
     </Grid>

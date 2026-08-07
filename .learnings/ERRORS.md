@@ -39,3 +39,67 @@
 - **Cause**: Parallel .NET commands shared the same build intermediate output path.
 - **Correction**: Re-run build and test sequentially for this repository.
 - **Prevention**: Do not parallelize `dotnet build` and `dotnet test` on the same solution/project unless each command uses isolated output/intermediate paths.
+
+## 2026-08-07 - PowerShell wildcard path passed directly to rg
+
+- **Context**: Reviewed Avalonia command bindings and attempted to search `*.axaml` paths with `rg` in PowerShell.
+- **Error**: `rg` reported the wildcard-containing path as an invalid Windows file name.
+- **Cause**: PowerShell did not expand the wildcard before it reached `rg`.
+- **Correction**: Enumerate repository files with `rg --files` first, then filter the resulting paths or pass literal directories to `rg`.
+- **Prevention**: Do not pass a Windows path containing `*` directly as an `rg` path argument in PowerShell.
+
+## 2026-08-07 - No-match rg result interrupted parallel review batch
+
+- **Context**: Included an optional search of the local Avalonia source directory in a parallel review batch.
+- **Error**: The source search had no matches and `rg` exited with code 1, which caused the batch to fail.
+- **Cause**: `rg` uses exit code 1 for a normal no-match result, but the orchestration treated every non-zero exit as an error.
+- **Correction**: Treat optional no-match searches as an empty result, or run them separately from required reads.
+- **Prevention**: Add an explicit no-match guard when an `rg` search is exploratory rather than an assertion.
+
+## 2026-08-07 - Full test run exceeded review command timeout
+
+- **Context**: Ran `dotnet test ApixPress.slnx --no-restore` as a read-only baseline for the HTTP invocation review.
+- **Error**: The command produced no final result before the 64-second execution timeout and was terminated.
+- **Cause**: Not yet determined; the full solution run did not provide sufficient diagnostic output within the command limit.
+- **Correction**: Use the focused request-module test filter for the remaining baseline and report the full-suite run as unverified.
+- **Prevention**: Run a focused test filter first during a read-only review, then broaden only when its execution time is established.
+
+## 2026-08-07 - Optional documentation path did not exist
+
+- **Context**: Searched for API-history credential documentation under an optional `docs` directory.
+- **Error**: The directory did not exist, and `rg` returned a non-zero status that interrupted the batch.
+- **Cause**: The optional search scope was not checked before adding it to a required evidence batch.
+- **Correction**: Treat absent optional directories as an empty documentation result.
+- **Prevention**: Check optional search roots with `Test-Path` before invoking `rg` in a parallel batch.
+
+## 2026-08-07 - Brainstorm visual companion did not start from PowerShell
+
+- **Context**: Started the bundled `start-server.sh` through PowerShell for a local UI prototype.
+- **Error**: The command returned exit code 0 but produced no session directory or `.server-info` file.
+- **Cause**: The shell-script entry point did not start a visible companion session in this PowerShell invocation.
+- **Correction**: Inspect the script's supported invocation and use the compatible shell entry point before creating prototype files.
+- **Prevention**: Verify `.server-info` immediately after starting a visual companion server rather than relying on the process exit code.
+
+## 2026-08-07 - Visual companion script inspection was unavailable
+
+- **Context**: Tried to inspect the bundled visual companion launch script after no session directory was created.
+- **Error**: The inspection batch returned no script content and a non-zero result, while the available Bash executable was the Windows subsystem launcher.
+- **Cause**: The companion shell workflow is not operational in the current PowerShell environment.
+- **Correction**: Do not rely on the companion server for this task; validate the Avalonia implementation through its existing UI test and runtime paths.
+- **Prevention**: Treat unavailable optional visualization tooling as non-blocking and return to the project-native verification workflow.
+
+## 2026-08-07 - In-app browser runtime initialization conflicted with Node globals
+
+- **Context**: Opened the HTTP upload interaction preview using the mandated in-app browser runtime.
+- **Error**: Browser initialization failed with `Cannot redefine property: process`.
+- **Cause**: The persistent Node REPL already exposed a non-configurable `process` global incompatible with the browser-client initialization path.
+- **Correction**: Reset the Node REPL and retry the guarded browser bootstrap; the same error persisted, so use a local static server and the system browser for this preview.
+- **Prevention**: Verify browser runtime initialization before claiming a local browser preview has opened.
+
+## 2026-08-07 - External browser launch was blocked by execution policy
+
+- **Context**: After the in-app browser failed, attempted to launch a local static preview and open it in the system browser at the user's request.
+- **Error**: The shell command was rejected by execution policy before it ran.
+- **Cause**: This session cannot create the external process required to open a browser window.
+- **Correction**: Report the preview limitation instead of claiming the page was opened.
+- **Prevention**: Do not promise an externally opened browser preview until the launch command is accepted.

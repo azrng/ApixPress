@@ -97,7 +97,7 @@
                             VerticalAlignment="Center"
                             HorizontalAlignment="Center">
                   <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                             FontSize="28"
+                             FontSize="{StaticResource Font.Size.IconLarge}"
                              HorizontalAlignment="Center"
                              Text="&#xE898;" />
                   <TextBlock Text="{Binding ActiveProjectTab.Import.SelectedImportFileName}"

@@ -120,10 +120,12 @@ internal sealed class ProjectTabLifecycleCoordinator
             targetTab.ResponseSection.ApplyResult(Azrng.Core.Results.ResultModel<ResponseSnapshotDto>.Success(detail.ResponseSnapshot), detail.RequestSnapshot);
         }
 
+        // ActivateWorkspaceTab 会切回接口管理分区；载入后直接进入可编辑的快捷请求工作区。
         _workspace.ActivateWorkspaceTab(targetTab);
-        _shell.SelectRequestHistorySection();
+        _shell.SelectInterfaceManagementSection();
         _hostContext.Messenger.Send(new StatusMessageRequest($"已加载历史请求：{item.Method} {item.Url}"));
-        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(
+            WorkspaceStateChangeFlags.EditorState | WorkspaceStateChangeFlags.ShellState));
     }
 
     public void OnSelectedEnvironmentChanged(ProjectEnvironmentItemViewModel? environment)
@@ -159,9 +161,10 @@ internal sealed class ProjectTabLifecycleCoordinator
     {
         _useCasesPanel.SetProjectContext(_projectId);
         _historyPanel.SetProjectContext(_projectId);
-        await _environmentPanel.LoadProjectAsync(_projectId, preferredEnvironmentId);
-        await _useCasesPanel.LoadCasesAsync();
-        await _interfaceRoot.InitializeAsync();
+        await Task.WhenAll(
+            _environmentPanel.LoadProjectAsync(_projectId, preferredEnvironmentId),
+            _useCasesPanel.LoadCasesAsync(),
+            _interfaceRoot.InitializeAsync());
         _workspace.EnsureLandingWorkspaceTab();
         _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }

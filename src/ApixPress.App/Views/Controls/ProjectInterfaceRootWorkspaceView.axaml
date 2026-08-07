@@ -8,8 +8,7 @@
              x:Class="ApixPress.App.Views.Controls.ProjectInterfaceRootWorkspaceView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <Grid IsVisible="{Binding Shell.ShowInterfaceRootWorkspace}"
-        RowDefinitions="Auto,*"
+  <Grid RowDefinitions="Auto,*"
         RowSpacing="{StaticResource Space.1}"
         MinHeight="0"
         ClipToBounds="True">
@@ -17,7 +16,7 @@
 
     <Grid Grid.Row="1"
           RowDefinitions="Auto,*"
-          Margin="20,12,20,18">
+          Margin="{StaticResource Pad.InterfaceRootContent}">
         <Grid ColumnDefinitions="Auto,Auto,*"
               ColumnSpacing="{StaticResource Space.3}">
           <Button Grid.Column="0"
@@ -43,7 +42,7 @@
         </Grid>
 
         <Grid Grid.Row="1"
-              Margin="0,12,0,0">
+              Margin="{StaticResource Pad.Top3}">
           <Border Classes="InterfaceRootWorkbenchSurface InterfaceRootAuthWorkbench"
                   IsVisible="{Binding InterfaceRoot.IsAuthSelected}">
             <Grid RowDefinitions="Auto,*,Auto">

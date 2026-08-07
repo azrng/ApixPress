@@ -19,7 +19,7 @@
                         VerticalAlignment="Stretch"
                         HorizontalContentAlignment="Stretch"
                         VerticalContentAlignment="Stretch"
-                        Margin="12,4,12,12">
+                        Margin="{StaticResource Pad.WorkspaceHost}">
       <Grid ColumnDefinitions="84,*"
             ColumnSpacing="{StaticResource Space.3}"
             HorizontalAlignment="Stretch"

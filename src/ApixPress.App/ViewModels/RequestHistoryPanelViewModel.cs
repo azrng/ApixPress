@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Helpers;
@@ -10,12 +11,23 @@ namespace ApixPress.App.ViewModels;
 
 public partial class RequestHistoryPanelViewModel : ViewModelBase
 {
+    private const int SearchDebounceMilliseconds = 250;
+
     private readonly IRequestHistoryService _requestHistoryService;
     private CancellationTokenSource? _loadHistoryCancellationTokenSource;
+    private CancellationTokenSource? _searchDebounceCancellationTokenSource;
     private string _currentProjectId = string.Empty;
     private bool _hasLoadedHistory;
 
     public BatchObservableCollection<RequestHistoryItemViewModel> HistoryItems { get; } = [];
+    public BatchObservableCollection<RequestHistoryItemViewModel> VisibleHistoryItems { get; } = [];
+
+    public bool HasHistory => HistoryItems.Count > 0;
+    public bool HasVisibleHistory => VisibleHistoryItems.Count > 0;
+    public bool HasSearchText => !string.IsNullOrWhiteSpace(SearchText);
+    public bool ShowHistoryEmptyState => !HasHistory;
+    public bool ShowHistorySearchEmptyState => HasHistory && HasSearchText && !HasVisibleHistory;
+    public string HistoryEmptyStateText => HasSearchText ? "没有匹配的请求历史" : "还没有发送记录";
 
     [ObservableProperty]
     private string searchText = string.Empty;
@@ -26,24 +38,31 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     public RequestHistoryPanelViewModel(IRequestHistoryService requestHistoryService)
     {
         _requestHistoryService = requestHistoryService;
+        HistoryItems.CollectionChanged += OnHistoryItemsCollectionChanged;
     }
 
     protected override void DisposeManaged()
     {
+        HistoryItems.CollectionChanged -= OnHistoryItemsCollectionChanged;
         CancellationTokenSourceHelper.CancelAndDispose(ref _loadHistoryCancellationTokenSource);
+        CancellationTokenSourceHelper.CancelAndDispose(ref _searchDebounceCancellationTokenSource);
     }
 
     public void SetProjectContext(string projectId)
     {
         _currentProjectId = projectId;
         _hasLoadedHistory = false;
+        SearchText = string.Empty;
     }
 
     public void ClearProjectContext()
     {
         _currentProjectId = string.Empty;
         _hasLoadedHistory = false;
+        SearchText = string.Empty;
         HistoryItems.Clear();
+        VisibleHistoryItems.Clear();
+        NotifyHistoryVisibilityChanged();
     }
 
     public async Task EnsureHistoryLoadedAsync()
@@ -70,6 +89,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
             HistoryItems.Clear();
             if (string.IsNullOrWhiteSpace(_currentProjectId))
             {
+                RefreshVisibleHistoryItems();
                 return;
             }
 
@@ -147,12 +167,86 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
 
         await _requestHistoryService.ClearAsync(_currentProjectId, CancellationToken.None);
         _hasLoadedHistory = true;
+        SearchText = string.Empty;
         HistoryItems.Clear();
     }
 
     partial void OnSearchTextChanged(string value)
     {
-        // Trigger re-filter if needed
+        OnPropertyChanged(nameof(HasSearchText));
+        OnPropertyChanged(nameof(HistoryEmptyStateText));
+        _ = DebounceSearchAsync();
+    }
+
+    private async Task DebounceSearchAsync()
+    {
+        var cancellationToken = CancellationTokenSourceHelper
+            .Refresh(ref _searchDebounceCancellationTokenSource)
+            .Token;
+
+        try
+        {
+            await Task.Delay(SearchDebounceMilliseconds, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        RefreshVisibleHistoryItems();
+    }
+
+    private void OnHistoryItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        RefreshVisibleHistoryItems();
+    }
+
+    private void RefreshVisibleHistoryItems()
+    {
+        var keyword = SearchText.Trim();
+        if (string.IsNullOrWhiteSpace(keyword))
+        {
+            VisibleHistoryItems.ReplaceWith(HistoryItems);
+        }
+        else
+        {
+            VisibleHistoryItems.ReplaceWith(HistoryItems.Where(item => MatchesSearch(item, keyword)));
+        }
+
+        NotifyHistoryVisibilityChanged();
+    }
+
+    private void NotifyHistoryVisibilityChanged()
+    {
+        OnPropertyChanged(nameof(HasHistory));
+        OnPropertyChanged(nameof(HasVisibleHistory));
+        OnPropertyChanged(nameof(ShowHistoryEmptyState));
+        OnPropertyChanged(nameof(ShowHistorySearchEmptyState));
+        OnPropertyChanged(nameof(HistoryEmptyStateText));
+    }
+
+    private static bool MatchesSearch(RequestHistoryItemViewModel item, string keyword)
+    {
+        return Contains(item.Method, keyword)
+            || Contains(item.Url, keyword)
+            || Contains(item.StatusText, keyword)
+            || Contains(item.TimestampText, keyword);
+    }
+
+    private static bool Contains(string value, string keyword)
+    {
+        return !string.IsNullOrWhiteSpace(value)
+            && value.Contains(keyword, StringComparison.OrdinalIgnoreCase);
     }
 
     private static RequestHistoryItemViewModel CreateHistoryItem(RequestHistoryItemDto item)

@@ -8,86 +8,6 @@
              x:Class="ApixPress.App.Views.Controls.ProjectWorkspaceSidebarView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <UserControl.Resources>
-    <DataTemplate x:Key="ProjectSidebarExplorerItemTemplate"
-                  x:DataType="vm:ExplorerItemViewModel">
-      <StackPanel Spacing="0">
-        <StackPanel Orientation="Horizontal"
-                    Spacing="1">
-          <ToggleButton x:Name="ExplorerExpandToggle"
-                        Classes="ProjectSidebarTreeExpanderToggle"
-                        IsChecked="{Binding IsExpanded, Mode=TwoWay}"
-                        IsVisible="{Binding HasChildren}">
-            <Grid>
-              <TextBlock Classes="ProjectSidebarCatalogChevron"
-                         FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                         IsVisible="{Binding !#ExplorerExpandToggle.IsChecked}"
-                         Text="&#xE76C;" />
-              <TextBlock Classes="ProjectSidebarCatalogChevron"
-                         FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                         IsVisible="{Binding #ExplorerExpandToggle.IsChecked}"
-                         Text="&#xE70D;" />
-            </Grid>
-          </ToggleButton>
-          <Border Classes="ProjectSidebarTreeExpanderSpacer"
-                  IsVisible="{Binding !HasChildren}" />
-
-          <Button Classes="WorkspaceTreeNodeButton"
-                  IsHitTestVisible="{Binding IsClickable}"
-                  Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
-                  CommandParameter="{Binding}">
-            <Button.ContextMenu>
-              <ContextMenu DataContext="{Binding}">
-                <MenuItem Header="删除"
-                          IsEnabled="{Binding CanDelete}"
-                          Command="{Binding DeleteCommand}"
-                          CommandParameter="{Binding}" />
-              </ContextMenu>
-            </Button.ContextMenu>
-            <StackPanel Spacing="1">
-              <Grid ColumnDefinitions="Auto,Auto,*,Auto"
-                    ColumnSpacing="2">
-                <TextBlock Grid.Column="0"
-                           Classes="WorkspaceTreeNodeGlyph"
-                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                           Text="{Binding NodeGlyph}"
-                           IsVisible="{Binding ShowLeadingGlyph}" />
-                <TextBlock Grid.Column="0"
-                           Classes="WorkspaceTreeNodeGlyph WorkspaceTreeCaseGlyph"
-                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                           Text="{Binding NodeGlyph}"
-                           IsVisible="{Binding IsHttpCaseNode}" />
-                <u:Badge Grid.Column="1"
-                         Margin="0,0,2,0"
-                         Header="{Binding MethodBadgeText}"
-                         IsVisible="{Binding ShowMethodBadge}"
-                         iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
-                <TextBlock Grid.Column="2"
-                           Text="{Binding DisplayTitle}"
-                           VerticalAlignment="Center"
-                           TextWrapping="Wrap" />
-                <Border Grid.Column="3"
-                        Classes="WorkspaceTreeStatusDot"
-                        IsVisible="{Binding ShowTrailingDot}" />
-              </Grid>
-              <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
-                         Text="{Binding Subtitle}"
-                         IsVisible="{Binding HasSubtitle}" />
-            </StackPanel>
-          </Button>
-        </StackPanel>
-
-        <ItemsControl Classes="ProjectSidebarInlineTreeChildren"
-                      ItemsSource="{Binding Children}"
-                      IsVisible="{Binding IsExpanded}">
-          <ItemsControl.ItemTemplate>
-            <StaticResource ResourceKey="ProjectSidebarExplorerItemTemplate" />
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </StackPanel>
-    </DataTemplate>
-  </UserControl.Resources>
-
   <Border Classes="PanelCard ProjectWorkspaceSidebarCard">
     <Grid>
       <Grid IsVisible="{Binding Shell.IsInterfaceManagementSection}"
@@ -167,12 +87,62 @@
                       <TextBlock Classes="CaptionText ProjectSidebarEmptyHint"
                                  Text="{Binding Catalog.InterfaceEmptyStateText}"
                                  IsVisible="{Binding Catalog.ShowInterfaceEntriesEmptyState}" />
-                      <ItemsControl Classes="ProjectSidebarInlineTree"
-                                    ItemsSource="{Binding Catalog.InterfaceCatalogItems}">
-                        <ItemsControl.ItemTemplate>
-                          <StaticResource ResourceKey="ProjectSidebarExplorerItemTemplate" />
-                        </ItemsControl.ItemTemplate>
-                      </ItemsControl>
+                      <TreeView Classes="WorkspaceTreeView ProjectSidebarTree InterfaceSidebarTree"
+                                ItemsSource="{Binding Catalog.InterfaceCatalogItems}">
+                        <TreeView.ItemTemplate>
+                          <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
+                                            ItemsSource="{Binding Children}">
+                            <Button Classes="WorkspaceTreeNodeButton"
+                                    IsHitTestVisible="{Binding IsClickable}"
+                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
+                                    CommandParameter="{Binding}">
+                              <Button.ContextMenu>
+                                <ContextMenu DataContext="{Binding}">
+                                  <MenuItem Header="删除"
+                                            IsEnabled="{Binding CanDelete}"
+                                            Command="{Binding DeleteCommand}"
+                                            CommandParameter="{Binding}" />
+                                </ContextMenu>
+                              </Button.ContextMenu>
+                              <StackPanel Spacing="1">
+                                <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+                                      ColumnSpacing="2">
+                                  <TextBlock Grid.Column="0"
+                                             Classes="WorkspaceTreeNodeGlyph"
+                                             FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                             Text="{Binding NodeGlyph}"
+                                             IsVisible="{Binding ShowLeadingGlyph}" />
+                                  <TextBlock Grid.Column="0"
+                                             Classes="WorkspaceTreeNodeGlyph WorkspaceTreeCaseGlyph"
+                                             FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                             Text="{Binding NodeGlyph}"
+                                             IsVisible="{Binding IsHttpCaseNode}" />
+                                  <u:Badge Grid.Column="1"
+                                           Margin="{StaticResource Pad.RightHalf}"
+                                           Header="{Binding MethodBadgeText}"
+                                           IsVisible="{Binding ShowMethodBadge}"
+                                           iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
+                                  <TextBlock Grid.Column="2"
+                                             Text="{Binding DisplayTitle}"
+                                             VerticalAlignment="Center"
+                                             TextTrimming="CharacterEllipsis"
+                                             TextWrapping="NoWrap"
+                                             ToolTip.Tip="{Binding DisplayTitle}" />
+                                  <Border Grid.Column="3"
+                                          Classes="WorkspaceTreeStatusDot"
+                                          IsVisible="{Binding ShowTrailingDot}" />
+                                </Grid>
+                                <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
+                                           Text="{Binding Subtitle}"
+                                           IsVisible="{Binding HasSubtitle}"
+                                           TextTrimming="CharacterEllipsis"
+                                           TextWrapping="NoWrap"
+                                           ToolTip.Tip="{Binding Subtitle}" />
+                              </StackPanel>
+                            </Button>
+                          </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                      </TreeView>
                     </StackPanel>
                   </Border>
 
@@ -289,21 +259,26 @@
                                            Text="{Binding NodeGlyph}"
                                            IsVisible="{Binding IsHttpCaseNode}" />
                                 <u:Badge Grid.Column="1"
-                                         Margin="0,0,4,0"
+                                         Margin="{StaticResource Pad.Right1}"
                                          Header="{Binding MethodBadgeText}"
                                          IsVisible="{Binding ShowMethodBadge}"
                                          iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
                                 <TextBlock Grid.Column="2"
                                            Text="{Binding DisplayTitle}"
                                            VerticalAlignment="Center"
-                                           TextWrapping="Wrap" />
+                                           TextTrimming="CharacterEllipsis"
+                                           TextWrapping="NoWrap"
+                                           ToolTip.Tip="{Binding DisplayTitle}" />
                                 <Border Grid.Column="3"
                                         Classes="WorkspaceTreeStatusDot"
                                         IsVisible="{Binding ShowTrailingDot}" />
                               </Grid>
                               <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
                                          Text="{Binding Subtitle}"
-                                         IsVisible="{Binding HasSubtitle}" />
+                                         IsVisible="{Binding HasSubtitle}"
+                                         TextTrimming="CharacterEllipsis"
+                                         TextWrapping="NoWrap"
+                                         ToolTip.Tip="{Binding Subtitle}" />
                             </StackPanel>
                           </Button>
                         </TreeDataTemplate>
@@ -321,7 +296,7 @@
       </Grid>
 
       <Grid IsVisible="{Binding Shell.IsRequestHistorySection}"
-            RowDefinitions="Auto,*"
+            RowDefinitions="Auto,Auto,*"
             RowSpacing="{StaticResource Space.3}">
         <Grid ColumnDefinitions="*,Auto"
               ColumnSpacing="{StaticResource Space.2}">
@@ -340,12 +315,18 @@
           </u:PopConfirm>
         </Grid>
 
-        <Grid Grid.Row="1">
+        <TextBox Grid.Row="1"
+                 Classes="ProjectSidebarSearchBox"
+                 PlaceholderText="搜索方法、URL 或状态码"
+                 Text="{Binding HistoryPanel.SearchText, Mode=TwoWay}"
+                 IsVisible="{Binding HistoryPanel.HasHistory}" />
+
+        <Grid Grid.Row="2">
           <TextBlock Classes="CaptionText"
-                     Text="还没有发送记录"
-                     IsVisible="{Binding Summary.ShowHistoryEmptyState}" />
+                     Text="{Binding HistoryPanel.HistoryEmptyStateText}"
+                     IsVisible="{Binding !HistoryPanel.HasVisibleHistory}" />
           <ListBox ItemsSource="{Binding RequestHistory}"
-                   IsVisible="{Binding Summary.HasHistory}"
+                   IsVisible="{Binding HistoryPanel.HasVisibleHistory}"
                    Classes="FlatListBox">
             <ListBox.ItemTemplate>
               <DataTemplate x:DataType="vm:RequestHistoryItemViewModel">

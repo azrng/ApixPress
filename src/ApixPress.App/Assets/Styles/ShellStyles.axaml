@@ -259,7 +259,7 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
-    <Setter Property="BoxShadow" Value="0 10 26 0 #0F172A0D" />
+    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Panel}" />
   </Style>
 
   <Style Selector="Border.InfoPill">
@@ -296,7 +296,7 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
-    <Setter Property="BoxShadow" Value="0 18 36 0 #0F172A18" />
+    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Surface.Raised}" />
   </Style>
 
   <Style Selector="Border.NotificationItemCard">
@@ -324,7 +324,7 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="BoxShadow" Value="0 28 60 0 #0F172A20" />
+    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Dialog}" />
   </Style>
 
   <Style Selector="Border.SettingsSidebar">
@@ -426,7 +426,7 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="{StaticResource Pad.6}" />
     <Setter Property="Width" Value="540" />
-    <Setter Property="BoxShadow" Value="0 24 60 0 #0F172A20" />
+    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Dialog}" />
   </Style>
 
   <Style Selector="TextBlock.DialogTitle">
@@ -554,7 +554,7 @@
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="{StaticResource Pad.6}" />
-    <Setter Property="BoxShadow" Value="0 28 60 0 #0F172A20" />
+    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Dialog}" />
   </Style>
 
   <Style Selector="Button.ProjectCardButton">
@@ -573,7 +573,7 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="{StaticResource Pad.5}" />
     <Setter Property="MinHeight" Value="286" />
-    <Setter Property="BoxShadow" Value="0 14 30 0 #0F172A0D" />
+    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Card.Raised}" />
   </Style>
 
   <Style Selector="Border.ProjectCardGlow">
@@ -588,7 +588,7 @@
   <Style Selector="Button.ProjectCardButton:pointerover Border.ProjectCard">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BoxShadow" Value="0 18 36 0 #4C84F022" />
+    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Brand}" />
   </Style>
 
   <Style Selector="Border.ProjectCardIcon">
@@ -596,7 +596,7 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="BoxShadow" Value="0 8 18 0 #4C84F020" />
+    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Brand.Tight}" />
   </Style>
 
   <Style Selector="TextBlock.ProjectAvatarText">

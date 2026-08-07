@@ -133,7 +133,7 @@ public sealed class ResponseSectionViewModelTests
     }
 
     [Fact]
-    public void ApplyResult_ShouldKeepLargeJsonBodyUnformatted()
+    public async Task ApplyResult_ShouldKeepLargeJsonBodyUnformattedAndLimitDisplay()
     {
         var viewModel = new ResponseSectionViewModel();
         var rawContent = "{\"data\":\"" + new string('a', 256 * 1024 + 1) + "\"}";
@@ -156,7 +156,59 @@ public sealed class ResponseSectionViewModelTests
             }),
             new RequestSnapshotDto());
 
-        Assert.Equal(rawContent, viewModel.BodyText);
+        await viewModel.WaitForPendingBodyFormatAsync();
+
+        Assert.StartsWith(rawContent[..(256 * 1024)], viewModel.BodyText);
+        Assert.Contains("界面仅展示前", viewModel.BodyText);
+        Assert.DoesNotContain(rawContent[^32..], viewModel.BodyText);
+    }
+
+    [Fact]
+    public async Task ApplyResult_ShouldCancelStaleBackgroundFormat_WhenNewResultArrives()
+    {
+        var viewModel = new ResponseSectionViewModel();
+        var largeContent = "{\"data\":\"" + new string('x', 80 * 1024) + "\"}";
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 10,
+                SizeBytes = largeContent.Length,
+                Content = largeContent,
+                Headers =
+                [
+                    new ResponseHeaderDto
+                    {
+                        Name = "Content-Type",
+                        Value = "application/json"
+                    }
+                ]
+            }),
+            new RequestSnapshotDto());
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 201,
+                DurationMs = 5,
+                SizeBytes = 2,
+                Content = "{}",
+                Headers =
+                [
+                    new ResponseHeaderDto
+                    {
+                        Name = "Content-Type",
+                        Value = "application/json"
+                    }
+                ]
+            }),
+            new RequestSnapshotDto());
+
+        await viewModel.WaitForPendingBodyFormatAsync(TimeSpan.FromSeconds(2));
+
+        Assert.Equal("HTTP 201", viewModel.StatusText);
+        Assert.Equal("{}", viewModel.BodyText);
     }
 
     [Fact]

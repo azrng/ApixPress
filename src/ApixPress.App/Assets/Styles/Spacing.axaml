@@ -14,6 +14,14 @@
   <Thickness x:Key="Pad.5">20</Thickness>
   <Thickness x:Key="Pad.6">24</Thickness>
   <Thickness x:Key="Pad.7">32</Thickness>
+  <Thickness x:Key="Pad.Top2">0,8,0,0</Thickness>
+  <Thickness x:Key="Pad.Top3">0,12,0,0</Thickness>
+  <Thickness x:Key="Pad.Bottom3">0,0,0,12</Thickness>
+  <Thickness x:Key="Pad.Right1">0,0,4,0</Thickness>
+  <Thickness x:Key="Pad.RightHalf">0,0,2,0</Thickness>
+  <Thickness x:Key="Pad.TabSheet">8,4,8,8</Thickness>
+  <Thickness x:Key="Pad.WorkspaceHost">12,4,12,12</Thickness>
+  <Thickness x:Key="Pad.InterfaceRootContent">20,12,20,18</Thickness>
   <CornerRadius x:Key="Radius.Sm">4</CornerRadius>
   <CornerRadius x:Key="Radius.Md">8</CornerRadius>
   <CornerRadius x:Key="Radius.Lg">12</CornerRadius>
