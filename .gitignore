@@ -366,3 +366,7 @@ NUL
 
 # 本地工具生成的 NuGet 配置目录
 src/ApixPress.App/.appdata/
+# AI rule 生成器产物（use-ai-rule 生成：配方记录与生成器本体，勿提交）
+.ai-rule-profile.json
+use-ai-rule.exe
+use-ai-rule
