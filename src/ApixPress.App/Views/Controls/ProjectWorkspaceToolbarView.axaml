@@ -62,7 +62,7 @@
                       <TextBlock Grid.Column="1"
                                  Classes="ProjectWorkspaceUnsavedGlyph"
                                  IsVisible="{Binding ShowUnsavedChanges}"
-                                 Text="{Binding UnsavedChangesMarker}" />
+                                 Text="●" />
                       <TextBlock Grid.Column="2"
                                  Classes="ProjectWorkspacePinnedGlyph"
                                  IsVisible="{Binding IsPinned}"
@@ -136,7 +136,15 @@
                   SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}">
           <ComboBox.ItemTemplate>
             <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
-              <TextBlock Text="{Binding CompactDisplayName}" />
+              <StackPanel Orientation="Horizontal"
+                          Spacing="6">
+                <!-- 环境色点：呼应 Apifox 环境选择器的绿色圆点 -->
+                <Ellipse Width="7"
+                         Height="7"
+                         VerticalAlignment="Center"
+                         Fill="{DynamicResource Brush.Status.Success.Text}" />
+                <TextBlock Text="{Binding CompactDisplayName}" />
+              </StackPanel>
             </DataTemplate>
           </ComboBox.ItemTemplate>
         </ComboBox>

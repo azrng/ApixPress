@@ -3,7 +3,7 @@
              xmlns:semi="https://irihi.tech/semi"
              xmlns:u-semi="https://irihi.tech/ursa/themes/semi"
              x:Class="ApixPress.App.App"
-             RequestedThemeVariant="Light">
+             RequestedThemeVariant="Dark">
 
     <Application.Resources>
         <ResourceDictionary>

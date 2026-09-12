@@ -481,25 +481,26 @@
     <Setter Property="MinHeight" Value="30" />
   </Style>
 
+  <!-- 发送是主操作：主色填充、加宽加高，与次级“保存”拉开层级 -->
   <Style Selector="Button.HttpSendButton">
     <Setter Property="Background" Value="{DynamicResource Brush.Brand.Primary}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
-    <Setter Property="Padding" Value="14,6" />
+    <Setter Property="Padding" Value="18,7" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="MinWidth" Value="88" />
-    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="MinWidth" Value="104" />
+    <Setter Property="MinHeight" Value="34" />
   </Style>
 
   <Style Selector="Button.HttpSaveButton">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="Padding" Value="14,6" />
+    <Setter Property="Padding" Value="14,7" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="MinWidth" Value="78" />
-    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="MinHeight" Value="34" />
   </Style>
 
   <Style Selector="TabControl.HttpRequestTabs">
@@ -573,12 +574,11 @@
     <Setter Property="Padding" Value="6,4" />
   </Style>
 
+  <!-- 扁平化：标题栏不再独立成框，与下方表格卡片构成一个视觉整体（间距由父级 RowSpacing 提供） -->
   <Style Selector="Border.HttpConfigSectionBar">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
-    <Setter Property="BorderThickness" Value="0,0,0,1" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
   </Style>
 
   <Style Selector="TextBlock.HttpConfigSectionLabel">

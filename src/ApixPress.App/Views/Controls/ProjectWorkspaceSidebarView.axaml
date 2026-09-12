@@ -146,55 +146,6 @@
                     </StackPanel>
                   </Border>
 
-                  <ToggleButton x:Name="DataModelCatalogToggle"
-                                Classes="ProjectSidebarCatalogToggleButton ProjectSidebarSecondaryCatalogButton"
-                                IsChecked="{Binding Catalog.IsDataModelCatalogExpanded, Mode=TwoWay}">
-                    <Grid ColumnDefinitions="Auto,*,Auto"
-                          ColumnSpacing="{StaticResource Space.2}">
-                      <TextBlock Grid.Column="0"
-                                 Classes="WorkspaceTreeNodeGlyph"
-                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                 Text="&#xEC1A;" />
-                      <TextBlock Grid.Column="1"
-                                 Classes="ProjectSidebarSectionTitle"
-                                 Text="数据模型" />
-                      <TextBlock Grid.Column="2"
-                                 Classes="ProjectSidebarCatalogChevron"
-                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                 IsVisible="{Binding !#DataModelCatalogToggle.IsChecked}"
-                                 Text="&#xE76C;" />
-                      <TextBlock Grid.Column="2"
-                                 Classes="ProjectSidebarCatalogChevron"
-                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                 IsVisible="{Binding #DataModelCatalogToggle.IsChecked}"
-                                 Text="&#xE70D;" />
-                    </Grid>
-                  </ToggleButton>
-
-                  <ToggleButton x:Name="ComponentCatalogToggle"
-                                Classes="ProjectSidebarCatalogToggleButton ProjectSidebarSecondaryCatalogButton"
-                                IsChecked="{Binding Catalog.IsComponentLibraryCatalogExpanded, Mode=TwoWay}">
-                    <Grid ColumnDefinitions="Auto,*,Auto"
-                          ColumnSpacing="{StaticResource Space.2}">
-                      <TextBlock Grid.Column="0"
-                                 Classes="WorkspaceTreeNodeGlyph"
-                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                 Text="&#xE8FD;" />
-                      <TextBlock Grid.Column="1"
-                                 Classes="ProjectSidebarSectionTitle"
-                                 Text="组件库" />
-                      <TextBlock Grid.Column="2"
-                                 Classes="ProjectSidebarCatalogChevron"
-                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                 IsVisible="{Binding !#ComponentCatalogToggle.IsChecked}"
-                                 Text="&#xE76C;" />
-                      <TextBlock Grid.Column="2"
-                                 Classes="ProjectSidebarCatalogChevron"
-                                 FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                 IsVisible="{Binding #ComponentCatalogToggle.IsChecked}"
-                                 Text="&#xE70D;" />
-                    </Grid>
-                  </ToggleButton>
                 </StackPanel>
               </StackPanel>
             </Border>
@@ -344,8 +295,8 @@
                     </Grid>
                     <Grid ColumnDefinitions="Auto,*,Auto"
                           ColumnSpacing="{StaticResource Space.2}">
-                      <TextBlock Classes="CaptionText"
-                                 Text="{Binding StatusText}" />
+                      <u:Badge Header="{Binding StatusText}"
+                               iri:ClassHelper.Classes="{Binding StatusBadgeClass}" />
                       <TextBlock Grid.Column="1"
                                  Classes="CaptionText"
                                  Text="{Binding TimestampText}" />

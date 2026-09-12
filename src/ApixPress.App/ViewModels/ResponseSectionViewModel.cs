@@ -26,6 +26,12 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     private CancellationTokenSource? _formatBodyCancellationTokenSource;
     private int _formatBodyGeneration;
+    // 当前提示的严重度：info / warning / danger，用于横幅左侧色条与标题着色
+    private string _noticeSeverity = "info";
+
+    public bool IsNoticeDanger => ShowResponseNotice && _noticeSeverity == "danger";
+
+    public bool IsNoticeWarning => ShowResponseNotice && _noticeSeverity == "warning";
 
     [ObservableProperty]
     private bool hasResponse;
@@ -266,6 +272,9 @@ public partial class ResponseSectionViewModel : ViewModelBase
     private void ApplyFailureNotice(string? code, string message)
     {
         ShowResponseNotice = true;
+        _noticeSeverity = "danger";
+        OnPropertyChanged(nameof(IsNoticeDanger));
+        OnPropertyChanged(nameof(IsNoticeWarning));
         ResponseNoticeTitle = code switch
         {
             "request_cancelled" => "请求已取消",
@@ -288,6 +297,15 @@ public partial class ResponseSectionViewModel : ViewModelBase
         }
 
         ShowResponseNotice = true;
+        _noticeSeverity = statusCode switch
+        {
+            >= 300 and < 400 => "warning",
+            >= 400 and < 500 => "warning",
+            >= 500 => "danger",
+            _ => "info"
+        };
+        OnPropertyChanged(nameof(IsNoticeDanger));
+        OnPropertyChanged(nameof(IsNoticeWarning));
         ResponseNoticeTitle = statusCode switch
         {
             >= 300 and < 400 => $"重定向响应 HTTP {statusCode}",
@@ -307,6 +325,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
     private void ClearResponseNotice()
     {
         ShowResponseNotice = false;
+        _noticeSeverity = "info";
         ResponseNoticeTitle = string.Empty;
         ResponseNoticeText = string.Empty;
     }

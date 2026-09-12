@@ -1,56 +1,57 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!-- 深色主题（对标 Apifox 桌面端深色风格），键名与 design-system.yaml semantic 映射保持一致 -->
   <!-- Background -->
-  <SolidColorBrush x:Key="Brush.Background.App" Color="#F8FAFC" />
-  <SolidColorBrush x:Key="Brush.Background.Surface" Color="#FFFFFF" />
-  <SolidColorBrush x:Key="Brush.Background.Subtle" Color="#F1F5F9" />
-  <SolidColorBrush x:Key="Brush.Background.Elevated" Color="#FFFFFF" />
-  <SolidColorBrush x:Key="Brush.Background.Selected" Color="#E8F0FF" />
-  <SolidColorBrush x:Key="Brush.Background.Disabled" Color="#E9EEF5" />
-  <SolidColorBrush x:Key="Brush.Background.Overlay" Color="#480F172A" />
+  <SolidColorBrush x:Key="Brush.Background.App" Color="#17171A" />
+  <SolidColorBrush x:Key="Brush.Background.Surface" Color="#202024" />
+  <SolidColorBrush x:Key="Brush.Background.Subtle" Color="#26262B" />
+  <SolidColorBrush x:Key="Brush.Background.Elevated" Color="#2B2B32" />
+  <SolidColorBrush x:Key="Brush.Background.Selected" Color="#322D4E" />
+  <SolidColorBrush x:Key="Brush.Background.Disabled" Color="#232327" />
+  <SolidColorBrush x:Key="Brush.Background.Overlay" Color="#88000000" />
 
   <!-- Border -->
-  <SolidColorBrush x:Key="Brush.Border.Default" Color="#DCE3EC" />
-  <SolidColorBrush x:Key="Brush.Border.Subtle" Color="#E9EEF5" />
-  <SolidColorBrush x:Key="Brush.Border.Strong" Color="#C2CDD9" />
-  <SolidColorBrush x:Key="Brush.Border.Focus" Color="#4C84F0" />
-  <SolidColorBrush x:Key="Brush.Border.Danger" Color="#DC2626" />
+  <SolidColorBrush x:Key="Brush.Border.Default" Color="#36363D" />
+  <SolidColorBrush x:Key="Brush.Border.Subtle" Color="#2A2A30" />
+  <SolidColorBrush x:Key="Brush.Border.Strong" Color="#45454E" />
+  <SolidColorBrush x:Key="Brush.Border.Focus" Color="#7C6CF0" />
+  <SolidColorBrush x:Key="Brush.Border.Danger" Color="#E5484D" />
 
   <!-- Text -->
-  <SolidColorBrush x:Key="Brush.Text.Primary" Color="#1F2937" />
-  <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#64748B" />
-  <SolidColorBrush x:Key="Brush.Text.Tertiary" Color="#94A3B8" />
+  <SolidColorBrush x:Key="Brush.Text.Primary" Color="#E8E8EC" />
+  <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#A3A3AD" />
+  <SolidColorBrush x:Key="Brush.Text.Tertiary" Color="#70707A" />
   <SolidColorBrush x:Key="Brush.Text.Inverse" Color="#FFFFFF" />
-  <SolidColorBrush x:Key="Brush.Text.Link" Color="#3568D4" />
-  <SolidColorBrush x:Key="Brush.Text.Danger" Color="#DC2626" />
+  <SolidColorBrush x:Key="Brush.Text.Link" Color="#9D8BFF" />
+  <SolidColorBrush x:Key="Brush.Text.Danger" Color="#FF7A7D" />
 
   <!-- Status -->
-  <SolidColorBrush x:Key="Brush.Status.Info.Background" Color="#EFF6FF" />
-  <SolidColorBrush x:Key="Brush.Status.Info.Text" Color="#1D4ED8" />
-  <SolidColorBrush x:Key="Brush.Status.Success.Background" Color="#F0FDF4" />
-  <SolidColorBrush x:Key="Brush.Status.Success.Text" Color="#15803D" />
-  <SolidColorBrush x:Key="Brush.Status.Warning.Background" Color="#FFF7ED" />
-  <SolidColorBrush x:Key="Brush.Status.Warning.Text" Color="#B45309" />
-  <SolidColorBrush x:Key="Brush.Status.Error.Background" Color="#FEF2F2" />
-  <SolidColorBrush x:Key="Brush.Status.Error.Text" Color="#B91C1C" />
+  <SolidColorBrush x:Key="Brush.Status.Info.Background" Color="#1F2A45" />
+  <SolidColorBrush x:Key="Brush.Status.Info.Text" Color="#82ABFF" />
+  <SolidColorBrush x:Key="Brush.Status.Success.Background" Color="#1B2F26" />
+  <SolidColorBrush x:Key="Brush.Status.Success.Text" Color="#4ADE80" />
+  <SolidColorBrush x:Key="Brush.Status.Warning.Background" Color="#362A14" />
+  <SolidColorBrush x:Key="Brush.Status.Warning.Text" Color="#FBBF24" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Background" Color="#3A1D20" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Text" Color="#F87171" />
 
   <!-- Brand / accent -->
-  <SolidColorBrush x:Key="Brush.Brand.Primary" Color="#4C84F0" />
-  <SolidColorBrush x:Key="Brush.Brand.Primary.Strong" Color="#3568D4" />
-  <SolidColorBrush x:Key="Brush.Accent.Violet" Color="#7C6CF0" />
+  <SolidColorBrush x:Key="Brush.Brand.Primary" Color="#7C6CF0" />
+  <SolidColorBrush x:Key="Brush.Brand.Primary.Strong" Color="#6A59E0" />
+  <SolidColorBrush x:Key="Brush.Accent.Violet" Color="#9D8BFF" />
 
-  <!-- HTTP method badges (aligned with design-system semantic palette) -->
-  <SolidColorBrush x:Key="Brush.Method.Get" Color="#64748B" />
-  <SolidColorBrush x:Key="Brush.Method.Post" Color="#4C84F0" />
-  <SolidColorBrush x:Key="Brush.Method.Put" Color="#F59E0B" />
-  <SolidColorBrush x:Key="Brush.Method.Delete" Color="#EF4444" />
-  <SolidColorBrush x:Key="Brush.Method.Patch" Color="#22C55E" />
-  <SolidColorBrush x:Key="Brush.Method.Default" Color="#64748B" />
+  <!-- HTTP method badges（Apifox 惯例：GET 绿 / POST 橙 / PUT 蓝 / DELETE 红 / PATCH 青） -->
+  <SolidColorBrush x:Key="Brush.Method.Get" Color="#4ADE80" />
+  <SolidColorBrush x:Key="Brush.Method.Post" Color="#F59E0B" />
+  <SolidColorBrush x:Key="Brush.Method.Put" Color="#4C9AF0" />
+  <SolidColorBrush x:Key="Brush.Method.Delete" Color="#F87171" />
+  <SolidColorBrush x:Key="Brush.Method.Patch" Color="#2DD4BF" />
+  <SolidColorBrush x:Key="Brush.Method.Default" Color="#A3A3AD" />
 
   <!-- HTTP status badges (solid for compact chips) -->
-  <SolidColorBrush x:Key="Brush.StatusCode.2xx" Color="#16A34A" />
-  <SolidColorBrush x:Key="Brush.StatusCode.3xx" Color="#64748B" />
-  <SolidColorBrush x:Key="Brush.StatusCode.4xx" Color="#D97706" />
-  <SolidColorBrush x:Key="Brush.StatusCode.5xx" Color="#DC2626" />
-  <SolidColorBrush x:Key="Brush.StatusCode.Error" Color="#64748B" />
+  <SolidColorBrush x:Key="Brush.StatusCode.2xx" Color="#4ADE80" />
+  <SolidColorBrush x:Key="Brush.StatusCode.3xx" Color="#A3A3AD" />
+  <SolidColorBrush x:Key="Brush.StatusCode.4xx" Color="#FBBF24" />
+  <SolidColorBrush x:Key="Brush.StatusCode.5xx" Color="#F87171" />
+  <SolidColorBrush x:Key="Brush.StatusCode.Error" Color="#A3A3AD" />
 </ResourceDictionary>

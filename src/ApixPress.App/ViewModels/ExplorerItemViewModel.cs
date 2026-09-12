@@ -80,8 +80,8 @@ public partial class ExplorerItemViewModel : ViewModelBase
     public string MethodBadgeClass => MethodBadgeText switch
     {
         "GET" => "Light Success",
-        "POST" => "Light Primary",
-        "PUT" => "Light Warning",
+        "POST" => "Light Warning",
+        "PUT" => "Light Primary",
         "DELETE" => "Light Danger",
         "PATCH" => "Light Secondary",
         _ => "Light Secondary"

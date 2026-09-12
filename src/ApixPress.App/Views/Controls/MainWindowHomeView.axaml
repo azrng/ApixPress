@@ -14,7 +14,7 @@
           RowDefinitions="Auto,Auto,*"
           RowSpacing="{StaticResource Space.4}">
         <Border Classes="HomeContentHeaderCard">
-          <Grid ColumnDefinitions="*,Auto"
+          <Grid ColumnDefinitions="*"
                 ColumnSpacing="{StaticResource Space.4}">
             <StackPanel Spacing="{StaticResource Space.2}">
               <StackPanel Orientation="Horizontal"
@@ -26,36 +26,26 @@
               <TextBlock Classes="SubtleText"
                          Text="本地 API 工作区：筛选、浏览项目卡片，并以标签页打开工作台。"
                          TextWrapping="Wrap" />
-            </StackPanel>
-
-            <StackPanel Grid.Column="1"
-                        Orientation="Horizontal"
-                        Spacing="{StaticResource Space.2}"
-                        VerticalAlignment="Top">
-              <Border Classes="HomeTopMetricPill">
-                <StackPanel Spacing="2">
-                  <TextBlock Classes="CaptionText"
-                             Text="项目总数" />
-                  <TextBlock Classes="SectionTitle"
-                             Text="{Binding ProjectPanel.Projects.Count}" />
-                </StackPanel>
-              </Border>
-              <Border Classes="HomeTopMetricPill">
-                <StackPanel Spacing="2">
-                  <TextBlock Classes="CaptionText"
-                             Text="当前可见" />
-                  <TextBlock Classes="SectionTitle"
-                             Text="{Binding ProjectPanel.FilteredProjects.Count}" />
-                </StackPanel>
-              </Border>
-              <Border Classes="HomeTopMetricPill">
-                <StackPanel Spacing="2">
-                  <TextBlock Classes="CaptionText"
-                             Text="已打开标签" />
-                  <TextBlock Classes="SectionTitle"
-                             Text="{Binding ProjectTabs.Count}" />
-                </StackPanel>
-              </Border>
+              <!-- 统计信息弱化为一行小字，突出搜索与新建主操作 -->
+              <StackPanel Orientation="Horizontal"
+                          Spacing="{StaticResource Space.2}">
+                <TextBlock Classes="CaptionText"
+                           Text="项目" />
+                <TextBlock Classes="CaptionText HomeMetricValue"
+                           Text="{Binding ProjectPanel.Projects.Count}" />
+                <TextBlock Classes="CaptionText"
+                           Text="·" />
+                <TextBlock Classes="CaptionText"
+                           Text="当前可见" />
+                <TextBlock Classes="CaptionText HomeMetricValue"
+                           Text="{Binding ProjectPanel.FilteredProjects.Count}" />
+                <TextBlock Classes="CaptionText"
+                           Text="·" />
+                <TextBlock Classes="CaptionText"
+                           Text="已打开标签" />
+                <TextBlock Classes="CaptionText HomeMetricValue"
+                           Text="{Binding ProjectTabs.Count}" />
+              </StackPanel>
             </StackPanel>
           </Grid>
         </Border>
@@ -156,7 +146,8 @@
                             RowSpacing="{StaticResource Space.3}">
                         <Grid ColumnDefinitions="Auto,*,Auto"
                               ColumnSpacing="{StaticResource Space.3}">
-                          <Border Classes="HomeProjectTileIcon">
+                          <Border Classes="HomeProjectTileIcon"
+                                  Background="{Binding AvatarBrush}">
                             <TextBlock Classes="ProjectAvatarText"
                                        Text="{Binding AvatarText}" />
                           </Border>

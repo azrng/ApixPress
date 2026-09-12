@@ -164,8 +164,9 @@
   <Style Selector="Border.HomeProjectTileIcon">
     <Setter Property="Width" Value="42" />
     <Setter Property="Height" Value="42" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
   </Style>
 
   <Style Selector="TextBlock.HomeProjectTileTitle">

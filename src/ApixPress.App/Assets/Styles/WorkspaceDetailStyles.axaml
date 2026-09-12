@@ -48,9 +48,42 @@
     <Setter Property="VerticalAlignment" Value="Stretch" />
   </Style>
 
+  <!-- 空状态卡片：下沉底色收拢视觉，避免大片虚空感 -->
+  <Style Selector="Border.HttpResponsePlaceholderCard">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="48,36" />
+    <Setter Property="MaxWidth" Value="560" />
+  </Style>
+
   <Style Selector="StackPanel.HttpResponsePlaceholderContent">
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <!-- 图标圆形底衬，用品牌色弱强调 -->
+  <Style Selector="Border.HttpResponsePlaceholderIcon">
+    <Setter Property="Width" Value="56" />
+    <Setter Property="Height" Value="56" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Border.HttpResponsePlaceholderIcon PathIcon">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpResponsePlaceholderTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextAlignment" Value="Center" />
   </Style>
 
   <Style Selector="TextBlock.HttpResponsePlaceholderText">
@@ -91,19 +124,34 @@
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
 
-  <Style Selector="Border.HttpResponseNoticeInlineCard">
-    <Setter Property="Padding" Value="8,5" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="MinHeight" Value="0" />
+  <Style Selector="Border.HttpResponseNoticeBanner">
+    <Setter Property="BorderThickness" Value="3,1,1,1" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="VerticalAlignment" Value="Top" />
   </Style>
 
-  <Style Selector="Border.HttpResponseNoticeInlineCard TextBlock.SectionTitle">
+  <Style Selector="Border.HttpResponseNoticeBanner.HttpResponseNoticeDanger">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.Background}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Error.Text}" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseNoticeBanner.HttpResponseNoticeDanger TextBlock.HttpResponseNoticeTitle">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Error.Text}" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseNoticeBanner.HttpResponseNoticeWarning">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Warning.Background}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Warning.Text}" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseNoticeBanner.HttpResponseNoticeWarning TextBlock.HttpResponseNoticeTitle">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Warning.Text}" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpResponseNoticeTitle">
     <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
     <Setter Property="FontWeight" Value="SemiBold" />
-  </Style>
-
-  <Style Selector="Border.HttpResponseNoticeInlineCard TextBlock.CaptionText">
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
   <Style Selector="TextBox.HttpResponseSearchInput">

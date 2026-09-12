@@ -100,7 +100,6 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     public bool CanCloseFromTab => !IsPinned;
     public bool HasUnsavedChanges => _hasUnsavedChanges;
     public bool ShowUnsavedChanges => HasUnsavedChanges;
-    public string UnsavedChangesMarker => HasUnsavedChanges ? "*" : string.Empty;
     public bool CanReuseForWorkspaceNavigation => !IsPinned && !IsLandingTab && !IsInterfaceRootTab && !HasUnsavedChanges;
     public string PinMenuHeader => IsPinned ? "取消固定标签页" : "固定标签页";
     public string EditorTitle => IsHttpInterfaceTab ? "HTTP 接口" : IsQuickRequestTab ? "快捷请求" : IsInterfaceRootTab ? "根目录" : "新建...";
@@ -317,7 +316,6 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         _hasUnsavedChanges = hasUnsavedChanges;
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(ShowUnsavedChanges));
-        OnPropertyChanged(nameof(UnsavedChangesMarker));
         OnPropertyChanged(nameof(CanReuseForWorkspaceNavigation));
     }
 

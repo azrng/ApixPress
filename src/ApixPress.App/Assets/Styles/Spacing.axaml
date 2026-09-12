@@ -26,4 +26,5 @@
   <CornerRadius x:Key="Radius.Md">8</CornerRadius>
   <CornerRadius x:Key="Radius.Lg">12</CornerRadius>
   <CornerRadius x:Key="Radius.Xl">16</CornerRadius>
+  <CornerRadius x:Key="Radius.Pill">999</CornerRadius>
 </ResourceDictionary>

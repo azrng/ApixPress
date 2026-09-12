@@ -370,3 +370,6 @@ src/ApixPress.App/.appdata/
 .ai-rule-profile.json
 use-ai-rule.exe
 use-ai-rule
+
+# NativeAOT 打包产物（package-aot.bat 输出）
+dist/

@@ -26,7 +26,7 @@
     <Border Grid.Row="1" Classes="HttpConfigTableSurface">
       <Grid RowDefinitions="Auto,*">
         <Border Grid.Row="0" Classes="HttpConfigTableHeader">
-          <Grid ColumnDefinitions="48,2.4*,2.8*,2.2*,44" ColumnSpacing="{StaticResource Space.3}">
+          <Grid ColumnDefinitions="56,2.4*,2.8*,2.2*,44" ColumnSpacing="{StaticResource Space.3}">
             <CheckBox Grid.Column="0"
                       Content="启用"
                       IsThreeState="True"
@@ -46,7 +46,7 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
                   <Border Classes="ParameterRow HttpConfigTableRow">
-                    <Grid ColumnDefinitions="48,2.4*,2.8*,2.2*,44" ColumnSpacing="{StaticResource Space.3}">
+                      <Grid ColumnDefinitions="56,2.4*,2.8*,2.2*,44" ColumnSpacing="{StaticResource Space.3}">
                       <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
                       <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" PlaceholderText="例如：page" />
                       <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" PlaceholderText="例如：1 或 {{variable}}" />

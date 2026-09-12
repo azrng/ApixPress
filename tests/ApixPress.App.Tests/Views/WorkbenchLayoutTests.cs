@@ -221,15 +221,16 @@ public sealed class WorkbenchLayoutTests
 
         Assert.Contains(sidebar.Descendants(), element => element.Name.LocalName == "Border"
             && HasClass(element, "ProjectSidebarQuickSectionCard"));
-        Assert.Equal(2, sidebar.Descendants()
-            .Count(element => element.Name.LocalName == "ToggleButton"
-                && HasClass(element, "ProjectSidebarSecondaryCatalogButton")));
+
+        // 数据模型 / 组件库为无内容的占位目录，已按产品决策移除，不允许回归
+        Assert.DoesNotContain(sidebar.Descendants(), element => element.Name.LocalName == "ToggleButton"
+            && HasClass(element, "ProjectSidebarSecondaryCatalogButton"));
+        Assert.DoesNotContain(sidebar.DescendantNodes().OfType<System.Xml.Linq.XText>(),
+            element => element.Value.Contains("数据模型") || element.Value.Contains("组件库"));
 
         var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceSidebarStyles.axaml"));
         Assert.Contains(styles.Descendants(), element => element.Name.LocalName == "Style"
             && element.Attribute("Selector")?.Value == "Border.ProjectSidebarQuickSectionCard");
-        Assert.Contains(styles.Descendants(), element => element.Name.LocalName == "Style"
-            && element.Attribute("Selector")?.Value == "ToggleButton.ProjectSidebarSecondaryCatalogButton");
     }
 
     [Fact]

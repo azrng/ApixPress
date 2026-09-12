@@ -95,12 +95,6 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     private bool isInterfaceCatalogExpanded;
 
     [ObservableProperty]
-    private bool isDataModelCatalogExpanded;
-
-    [ObservableProperty]
-    private bool isComponentLibraryCatalogExpanded;
-
-    [ObservableProperty]
     private bool isQuickRequestCatalogExpanded = true;
 
     [ObservableProperty]

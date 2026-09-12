@@ -16,8 +16,8 @@
   </Style>
 
   <Style Selector="Button.ProjectWorkspaceNavButton">
-    <Setter Property="Width" Value="68" />
-    <Setter Property="MinHeight" Value="60" />
+    <Setter Property="Width" Value="72" />
+    <Setter Property="MinHeight" Value="64" />
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="8,8,8,10" />
@@ -31,6 +31,12 @@
 
   <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+  </Style>
+
+  <!-- 选中项文字用品牌紫强调，呼应 Apifox 风格 -->
+  <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected TextBlock.ProjectWorkspaceNavText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
   <Style Selector="u|NavMenu.ProjectWorkspaceNavMenu u|NavMenuItem">
@@ -71,8 +77,8 @@
   </Style>
 
   <Style Selector="Border.ProjectWorkspaceNavIcon">
-    <Setter Property="Width" Value="34" />
-    <Setter Property="Height" Value="34" />
+    <Setter Property="Width" Value="36" />
+    <Setter Property="Height" Value="36" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="HorizontalAlignment" Value="Center" />
@@ -85,5 +91,9 @@
 
   <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected Border.ProjectWorkspaceNavIcon">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+  </Style>
+
+  <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected Border.ProjectWorkspaceNavIcon Path">
+    <Setter Property="Fill" Value="{DynamicResource Brush.Accent.Violet}" />
   </Style>
 </Styles>

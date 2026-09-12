@@ -48,21 +48,33 @@ product:
 
 design_principles:
   - "Fluent Design 为主，保持简洁、克制、可依赖"
-  - "统一使用浅色主题作为默认主题，深色主题仅在项目明确要求时扩展"
+  - "统一使用深色主题作为默认主题（对标 Apifox 桌面端深色风格），浅色主题仅在项目明确要求时维护"
   - "主流程优先，次级信息弱化，危险操作显著区分"
   - "所有用户可见状态必须可解释：成功、失败、为空、加载中"
 
 tokens:
   colors:
+    dark_neutral:
+      app: "#17171A"
+      surface: "#202024"
+      subtle: "#26262B"
+      elevated: "#2B2B32"
+      selected: "#322D4E"
+      border_default: "#36363D"
+      border_subtle: "#2A2A30"
+      border_strong: "#45454E"
+      text_primary: "#E8E8EC"
+      text_secondary: "#A3A3AD"
+      text_tertiary: "#70707A"
     brand:
       50: "#F4F8FF"
       100: "#E8F0FF"
       200: "#C9DDFF"
-      300: "#A7C7FF"
-      400: "#7AA7F8"
-      500: "#4C84F0"
-      600: "#3568D4"
-      700: "#264FB0"
+      300: "#B7A9FF"
+      400: "#9D8BFF"
+      500: "#7C6CF0"
+      600: "#6A59E0"
+      700: "#5947C7"
       800: "#1A387F"
       900: "#122554"
     neutral:

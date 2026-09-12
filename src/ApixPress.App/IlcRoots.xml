@@ -1,0 +1,9 @@
+<linker>
+  <!-- AOT 发布时保留应用与核心程序集的全部类型：
+       依赖注入、Avalonia 绑定和 JSON 序列化在运行期依赖反射访问这些类型的构造函数与成员，
+       裁剪器静态分析看不到这些引用，必须显式保留（框架类库仍正常裁剪）。
+       注意 fullname 是程序集名（AssemblyName），不是命名空间：
+       主程序集在 csproj 中被重命名为 ApixPress，不是 ApixPress.App -->
+  <assembly fullname="ApixPress" preserve="all" />
+  <assembly fullname="ApixPress.Core" preserve="all" />
+</linker>

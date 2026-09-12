@@ -53,30 +53,14 @@
 
     <Border Grid.Row="2"
             Classes="PanelCard HttpResponseCard">
-      <Grid RowDefinitions="Auto,*"
-            RowSpacing="{StaticResource Space.3}">
+      <Grid RowDefinitions="Auto,Auto,*"
+            RowSpacing="{StaticResource Space.2}">
         <Grid Grid.Row="0"
               ColumnDefinitions="Auto,*,Auto"
               ColumnSpacing="{StaticResource Space.3}">
           <TextBlock Grid.Column="0"
                      Classes="SectionTitle"
                      Text="返回响应" />
-          <Border Grid.Column="1"
-                  Classes="HttpResponseNoticeCard HttpResponseNoticeInlineCard"
-                  IsVisible="{Binding ResponseSection.ShowResponseNotice}">
-            <Grid ColumnDefinitions="Auto,*"
-                  ColumnSpacing="{StaticResource Space.2}">
-              <TextBlock Grid.Column="0"
-                         Classes="SectionTitle"
-                         VerticalAlignment="Center"
-                         Text="{Binding ResponseSection.ResponseNoticeTitle}" />
-              <TextBlock Grid.Column="1"
-                         Classes="CaptionText"
-                         VerticalAlignment="Center"
-                         Text="{Binding ResponseSection.ResponseNoticeText}"
-                         TextTrimming="CharacterEllipsis" />
-            </Grid>
-          </Border>
           <Grid Grid.Column="2"
                 ColumnDefinitions="Auto,Auto,Auto,Auto,Auto"
                 ColumnSpacing="{StaticResource Space.2}"
@@ -104,20 +88,43 @@
           </Grid>
         </Grid>
 
+        <!-- 响应状态提示横幅：独占一行，按严重度着色左侧色条 -->
         <Border Grid.Row="1"
-                Classes="HttpResponsePlaceholderHost"
-                IsVisible="{Binding ResponseSection.ShowPlaceholder}">
-          <StackPanel Classes="HttpResponsePlaceholderContent"
+                Classes="HttpResponseNoticeCard HttpResponseNoticeBanner"
+                Classes.HttpResponseNoticeDanger="{Binding ResponseSection.IsNoticeDanger}"
+                Classes.HttpResponseNoticeWarning="{Binding ResponseSection.IsNoticeWarning}"
+                IsVisible="{Binding ResponseSection.ShowResponseNotice}">
+          <StackPanel Orientation="Horizontal"
                       Spacing="{StaticResource Space.2}">
-            <PathIcon Data="{StaticResource SemiIconCloudStroked}"
-                      Width="48"
-                      Height="48" />
-            <TextBlock Classes="SubtleText HttpResponsePlaceholderText"
-                       Text="点击“发送”按钮获取返回结果" />
+            <TextBlock Classes="HttpResponseNoticeTitle"
+                       Text="{Binding ResponseSection.ResponseNoticeTitle}" />
+            <TextBlock Classes="CaptionText"
+                       VerticalAlignment="Center"
+                       Text="{Binding ResponseSection.ResponseNoticeText}"
+                       TextTrimming="CharacterEllipsis" />
           </StackPanel>
         </Border>
 
-        <Grid Grid.Row="1"
+        <Border Grid.Row="2"
+                Classes="HttpResponsePlaceholderHost"
+                IsVisible="{Binding ResponseSection.ShowPlaceholder}">
+          <Border Classes="HttpResponsePlaceholderCard">
+            <StackPanel Classes="HttpResponsePlaceholderContent"
+                        Spacing="{StaticResource Space.3}">
+              <Border Classes="HttpResponsePlaceholderIcon">
+                <PathIcon Data="{StaticResource SemiIconCloudStroked}"
+                          Width="26"
+                          Height="26" />
+              </Border>
+              <TextBlock Classes="HttpResponsePlaceholderTitle"
+                         Text="点击“发送”按钮获取返回结果" />
+              <TextBlock Classes="SubtleText HttpResponsePlaceholderText"
+                         Text="支持查看 Body 与 Headers、搜索响应内容、自动格式化 JSON" />
+            </StackPanel>
+          </Border>
+        </Border>
+
+        <Grid Grid.Row="2"
               IsVisible="{Binding ResponseSection.HasResponse}"
               RowDefinitions="*">
           <TabControl Grid.Row="0"
@@ -152,7 +159,7 @@
           </TabControl>
         </Grid>
 
-        <Border Grid.Row="1"
+        <Border Grid.Row="2"
                 Classes="HttpResponseLoadingOverlay"
                 IsVisible="{Binding ResponseSection.IsLoading}">
           <StackPanel Classes="HttpResponseLoadingContent"

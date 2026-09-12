@@ -205,10 +205,10 @@ public sealed class RequestConfigTabViewModelTests
         var viewModel = new RequestConfigTabViewModel();
 
         viewModel.SelectedTabIndex = 0;
-        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(240, viewModel.ConfigPanelMaxHeight);
 
         viewModel.SelectedTabIndex = 2;
-        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(240, viewModel.ConfigPanelMaxHeight);
     }
 
     [Fact]
@@ -217,7 +217,7 @@ public sealed class RequestConfigTabViewModelTests
         var viewModel = new RequestConfigTabViewModel();
 
         viewModel.SelectedTabIndex = 1;
-        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(240, viewModel.ConfigPanelMaxHeight);
 
         viewModel.SelectedBodyMode = BodyModes.RawJson;
         Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
@@ -227,7 +227,7 @@ public sealed class RequestConfigTabViewModelTests
         Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
 
         viewModel.SelectedTabIndex = 2;
-        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(240, viewModel.ConfigPanelMaxHeight);
 
         viewModel.Headers.Add(new RequestParameterItemViewModel());
         Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
@@ -242,7 +242,7 @@ public sealed class RequestConfigTabViewModelTests
             SelectedBodyMode = BodyModes.FormData
         };
 
-        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(240, viewModel.ConfigPanelMaxHeight);
 
         viewModel.FormFields.Add(new RequestParameterItemViewModel());
 

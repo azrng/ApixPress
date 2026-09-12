@@ -15,7 +15,8 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     private readonly List<RequestParameterItemViewModel> _subscribedQueryParameterItems = [];
     private bool _isUpdatingQueryParametersSelectionState;
     private bool? _queryParametersSelectionState;
-    private const double CompactConfigPanelMaxHeight = 180;
+    // 空状态时也要完整容纳“区域标题 + 表头 + 空提示”，过小会触发 Avalonia Grid 按比例压缩内容，导致副标题被裁剪
+    private const double CompactConfigPanelMaxHeight = 240;
     private const double ExpandedConfigPanelMaxHeight = 420;
 
     public BatchObservableCollection<RequestParameterItemViewModel> QueryParameters { get; } = [];

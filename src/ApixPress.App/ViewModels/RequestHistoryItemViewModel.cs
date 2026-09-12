@@ -33,9 +33,9 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
 
     public string MethodBadgeClass => Method switch
     {
-        "GET" => "Light Tertiary",
-        "POST" => "Light Primary",
-        "PUT" => "Light Warning",
+        "GET" => "Light Success",
+        "POST" => "Light Warning",
+        "PUT" => "Light Primary",
         "DELETE" => "Light Danger",
         "PATCH" => "Light Success",
         _ => "Light Secondary"

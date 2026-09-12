@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress UI 高保真原型 · 深色主题 v1</title>
+<!--
+  ApixPress 高保真 UI 原型（对标 Apifox 深色风格）
+  设计 token 与 src/ApixPress.App/Assets/Styles/Colors.axaml 保持一致：
+    背景  App #17171A / Surface #202024 / Subtle #26262B / Elevated #2B2B32 / Selected #322D4E
+    边框  Default #36363D / Subtle #2A2A30 / Strong #45454E / Focus #7C6CF0
+    文本  Primary #E8E8EC / Secondary #A3A3AD / Tertiary #70707A
+    品牌  Primary #7C6CF0 / Strong #6A59E0 / Accent #9D8BFF
+    方法  GET #4ADE80 / POST #F59E0B / PUT #4C9AF0 / DELETE #F87171 / PATCH #2DD4BF
+    圆角  Sm 4 / Md 8 / Lg 12 / Xl 16 / Pill 999；间距 4px 基数
+-->
+<style>
+  :root {
+    --bg-app: #17171A; --bg-surface: #202024; --bg-subtle: #26262B;
+    --bg-elevated: #2B2B32; --bg-selected: #322D4E;
+    --border-default: #36363D; --border-subtle: #2A2A30; --border-strong: #45454E;
+    --border-focus: #7C6CF0;
+    --text-primary: #E8E8EC; --text-secondary: #A3A3AD; --text-tertiary: #70707A;
+    --brand: #7C6CF0; --brand-strong: #6A59E0; --accent: #9D8BFF;
+    --ok: #4ADE80; --warn: #FBBF24; --err: #F87171;
+    --m-get: #4ADE80; --m-post: #F59E0B; --m-put: #4C9AF0; --m-del: #F87171; --m-patch: #2DD4BF;
+    --r-sm: 4px; --r-md: 8px; --r-lg: 12px; --r-xl: 16px; --r-pill: 999px;
+    --font: "Segoe UI", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+    --mono: "Cascadia Mono", Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0D0D0F; color: var(--text-primary);
+    font-family: var(--font); font-size: 14px;
+    padding: 24px 16px 48px;
+  }
+
+  /* ===== 原型切换器（非应用 UI） ===== */
+  .proto-bar { width: 1440px; max-width: 100%; margin: 0 auto 16px; display: flex; gap: 8px; align-items: center; }
+  .proto-bar .label { color: var(--text-tertiary); font-size: 12px; margin-right: 8px; letter-spacing: .5px; }
+  .proto-btn {
+    padding: 7px 16px; border-radius: var(--r-md); cursor: pointer;
+    background: var(--bg-surface); border: 1px solid var(--border-default);
+    color: var(--text-secondary); font-size: 13px; font-family: var(--font);
+  }
+  .proto-btn:hover { color: var(--text-primary); border-color: var(--border-strong); }
+  .proto-btn.active { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+  .proto-note { margin-left: auto; color: var(--text-tertiary); font-size: 12px; }
+
+  /* ===== 应用窗口框 ===== */
+  .window {
+    width: 1440px; max-width: 100%; height: 900px; margin: 0 auto;
+    background: var(--bg-app); border: 1px solid var(--border-subtle);
+    border-radius: var(--r-xl); overflow: hidden;
+    display: none; flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0,0,0,.55);
+  }
+  .window.active { display: flex; }
+
+  /* ===== 标题栏 ===== */
+  .titlebar {
+    height: 44px; flex: none; display: flex; align-items: center;
+    padding: 0 12px 0 16px; gap: 8px;
+  }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+  .logo-mark {
+    width: 22px; height: 22px; border-radius: 6px; flex: none;
+    background: linear-gradient(135deg, #7C6CF0, #5B8DEF);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; font-weight: 800;
+  }
+  .tb-tab {
+    height: 30px; padding: 0 14px; border-radius: var(--r-pill);
+    display: flex; align-items: center; gap: 6px; font-size: 13px;
+    color: var(--text-secondary); border: 1px solid transparent; cursor: pointer;
+  }
+  .tb-tab:hover { background: var(--bg-subtle); }
+  .tb-tab.active { background: var(--bg-subtle); border-color: var(--border-default); color: var(--text-primary); }
+  .tb-tab .n {
+    background: var(--brand); color: #fff; border-radius: var(--r-pill);
+    font-size: 11px; min-width: 17px; height: 17px; padding: 0 5px;
+    display: inline-flex; align-items: center; justify-content: center; font-weight: 600;
+  }
+  .tb-tab .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .tb-tab .close { color: var(--text-tertiary); font-size: 12px; margin-left: 2px; }
+  .tb-spacer { flex: 1; }
+  .tb-icon {
+    width: 30px; height: 30px; border-radius: var(--r-md); border: none; cursor: pointer;
+    background: transparent; color: var(--text-secondary); font-size: 14px;
+    display: inline-flex; align-items: center; justify-content: center; font-family: var(--font);
+  }
+  .tb-icon:hover { background: var(--bg-subtle); color: var(--text-primary); }
+  .tb-sep { width: 1px; height: 18px; background: var(--border-default); margin: 0 4px; }
+
+  /* ===== 环境选择器 ===== */
+  .env-chip {
+    height: 30px; padding: 0 12px; border-radius: var(--r-md);
+    background: var(--bg-subtle); border: 1px solid var(--border-default);
+    display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-primary);
+    cursor: pointer;
+  }
+  .env-chip .env-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+  .env-chip .caret { color: var(--text-tertiary); font-size: 10px; }
+
+  /* ===== 三栏骨架 ===== */
+  .shell { flex: 1; display: flex; gap: 10px; padding: 0 10px 10px; min-height: 0; }
+
+  /* 左导航 rail */
+  .rail {
+    width: 76px; flex: none; background: var(--bg-surface);
+    border: 1px solid var(--border-subtle); border-radius: var(--r-xl);
+    display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 6px;
+  }
+  .nav-item {
+    width: 64px; padding: 8px 0 9px; border-radius: var(--r-lg); border: none;
+    background: transparent; cursor: pointer; text-align: center; font-family: var(--font);
+  }
+  .nav-item:hover { background: var(--bg-subtle); }
+  .nav-item .icon-box {
+    width: 36px; height: 36px; margin: 0 auto 5px; border-radius: var(--r-lg);
+    background: var(--bg-subtle); display: flex; align-items: center; justify-content: center;
+  }
+  .nav-item .icon-box svg { width: 18px; height: 18px; stroke: var(--text-secondary); fill: none; stroke-width: 1.8; }
+  .nav-item .t { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+  .nav-item.selected { background: var(--bg-selected); }
+  .nav-item.selected .icon-box { background: var(--bg-surface); }
+  .nav-item.selected .icon-box svg { stroke: var(--accent); }
+  .nav-item.selected .t { color: var(--accent); font-weight: 600; }
+
+  /* 侧栏 */
+  .sidebar {
+    width: 280px; flex: none; background: var(--bg-surface);
+    border: 1px solid var(--border-subtle); border-radius: var(--r-xl);
+    padding: 14px; display: flex; flex-direction: column; gap: 10px; overflow: hidden;
+  }
+  .side-head { display: flex; align-items: center; justify-content: space-between; }
+  .side-title { font-size: 15px; font-weight: 700; }
+  .icon-btn-violet {
+    width: 30px; height: 30px; border-radius: var(--r-md); border: none; cursor: pointer;
+    background: var(--brand); color: #fff; font-size: 16px; font-weight: 600;
+  }
+  .search-box {
+    height: 32px; border-radius: var(--r-md); background: var(--bg-app);
+    border: 1px solid var(--border-default); display: flex; align-items: center;
+    padding: 0 10px; gap: 7px; color: var(--text-tertiary); font-size: 13px;
+  }
+  .search-box input {
+    background: transparent; border: none; outline: none; color: var(--text-primary);
+    font-size: 13px; width: 100%; font-family: var(--font);
+  }
+  .search-box input::placeholder { color: var(--text-tertiary); }
+
+  .tree { display: flex; flex-direction: column; font-size: 13px; }
+  .tree-group {
+    display: flex; align-items: center; gap: 7px; padding: 7px 8px;
+    color: var(--text-primary); cursor: pointer; border-radius: var(--r-md); font-weight: 500;
+  }
+  .tree-group:hover { background: var(--bg-subtle); }
+  .tree-group .caret { color: var(--text-tertiary); font-size: 9px; width: 10px; }
+  .tree-group .cnt { color: var(--text-tertiary); font-size: 12px; }
+  .tree-leaf {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 30px;
+    color: var(--text-secondary); cursor: pointer; border-radius: var(--r-md);
+  }
+  .tree-leaf:hover { background: var(--bg-subtle); }
+  .tree-leaf.selected { background: var(--bg-selected); color: var(--text-primary); }
+  .badge {
+    font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: var(--r-pill);
+    letter-spacing: .3px; flex: none;
+  }
+  .badge.get { background: rgba(74,222,128,.14); color: var(--m-get); }
+  .badge.post { background: rgba(245,158,11,.14); color: var(--m-post); }
+  .badge.put { background: rgba(76,154,240,.14); color: var(--m-put); }
+  .badge.del { background: rgba(248,113,113,.14); color: var(--m-del); }
+  .badge.gray { background: var(--bg-subtle); color: var(--text-secondary); }
+
+  .side-section { margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--border-subtle); }
+  .side-cap { display: flex; align-items: center; gap: 7px; padding: 6px 8px; color: var(--text-primary); font-weight: 500; cursor: pointer; border-radius: var(--r-md); }
+  .side-cap:hover { background: var(--bg-subtle); }
+  .side-cap .caret { color: var(--text-tertiary); font-size: 9px; }
+
+  /* ===== 主内容 ===== */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+  .card {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: var(--r-xl);
+  }
+
+  /* --- 模式切换 + 名称行 --- */
+  .ctx-bar { display: flex; align-items: center; gap: 12px; padding: 10px 12px; }
+  .mode-bar {
+    background: var(--bg-subtle); border: 1px solid var(--border-default);
+    border-radius: var(--r-lg); display: flex; padding: 2px; gap: 2px; flex: none;
+  }
+  .mode-btn {
+    padding: 5px 12px; border-radius: var(--r-md); border: 1px solid transparent;
+    background: transparent; color: var(--text-secondary); font-size: 13px;
+    cursor: pointer; font-family: var(--font);
+  }
+  .mode-btn:hover { color: var(--text-primary); }
+  .mode-btn.checked { background: var(--bg-app); border-color: var(--border-focus); color: var(--text-primary); font-weight: 600; }
+  .name-input {
+    flex: 1; height: 32px; background: var(--bg-app); border: 1px solid var(--border-default);
+    border-radius: var(--r-md); color: var(--text-primary); padding: 0 10px; font-size: 13px;
+    font-family: var(--font);
+  }
+  .code-btn {
+    width: 32px; height: 32px; flex: none; border-radius: var(--r-md); cursor: pointer;
+    background: transparent; border: 1px solid var(--border-default);
+    color: var(--text-secondary); font-size: 12px; font-family: var(--mono);
+  }
+  .code-btn:hover { color: var(--text-primary); border-color: var(--border-strong); }
+
+  /* --- URL 行 --- */
+  .url-row { display: flex; gap: 8px; padding: 0 12px 12px; align-items: center; }
+  .url-shell {
+    flex: 1; height: 36px; background: var(--bg-app); border: 1px solid var(--border-default);
+    border-radius: var(--r-md); display: flex; align-items: center; padding: 0 4px 0 0; gap: 4px; min-width: 0;
+  }
+  .method-select {
+    height: 30px; margin-left: 3px; padding: 0 10px; border-radius: var(--r-sm);
+    background: var(--bg-subtle); border: none; color: var(--text-primary);
+    font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 5px; cursor: pointer;
+  }
+  .method-select.get { color: var(--m-get); }
+  .method-select.post { color: var(--m-post); }
+  .method-select .caret { font-size: 9px; color: var(--text-tertiary); }
+  .base-chip {
+    height: 26px; padding: 0 9px; border-radius: var(--r-sm); background: var(--bg-subtle);
+    color: var(--text-secondary); font-size: 12px; display: flex; align-items: center; flex: none;
+    font-family: var(--mono);
+  }
+  .path-input {
+    flex: 1; background: transparent; border: none; outline: none; height: 100%;
+    color: var(--text-primary); font-size: 13px; padding: 0 8px; min-width: 0;
+    font-family: var(--mono);
+  }
+  .path-input::placeholder { color: var(--text-tertiary); }
+  .btn {
+    height: 34px; padding: 0 16px; border-radius: var(--r-md); border: none; cursor: pointer;
+    font-size: 13px; font-family: var(--font); flex: none;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .btn-primary { background: var(--brand); color: #fff; font-weight: 600; min-width: 96px; }
+  .btn-primary:hover { background: var(--brand-strong); }
+  .btn-ghost {
+    background: transparent; border: 1px solid var(--border-default);
+    color: var(--text-secondary); min-width: 70px;
+  }
+  .btn-ghost:hover { background: var(--bg-subtle); color: var(--text-primary); }
+  .v-sep { width: 1px; height: 22px; background: var(--border-default); flex: none; }
+  .case-input {
+    width: 140px; height: 34px; background: var(--bg-app); border: 1px solid var(--border-default);
+    border-radius: var(--r-md); color: var(--text-primary); padding: 0 10px; font-size: 13px;
+    font-family: var(--font);
+  }
+
+  /* --- 请求配置卡片 --- */
+  .config-card { padding-bottom: 12px; }
+  .sub-tabs { display: flex; gap: 18px; padding: 2px 14px 0; border-bottom: 1px solid var(--border-subtle); }
+  .sub-tab {
+    padding: 9px 2px 8px; font-size: 13px; color: var(--text-secondary);
+    border-bottom: 2px solid transparent; cursor: pointer;
+  }
+  .sub-tab:hover { color: var(--text-primary); }
+  .sub-tab.active { color: var(--text-primary); font-weight: 600; border-bottom-color: var(--border-focus); }
+  .section-head { display: flex; align-items: flex-start; justify-content: space-between; padding: 12px 14px 8px; }
+  .section-title { font-size: 14px; font-weight: 700; }
+  .section-hint { font-size: 12px; color: var(--text-tertiary); margin-top: 3px; }
+  .btn-add {
+    height: 30px; padding: 0 13px; border-radius: var(--r-md); cursor: pointer;
+    background: transparent; border: 1px solid var(--border-focus);
+    color: var(--accent); font-size: 12px; font-family: var(--font); font-weight: 600;
+  }
+  .btn-add:hover { background: var(--bg-selected); }
+
+  .table { margin: 0 14px; border: 1px solid var(--border-subtle); border-radius: var(--r-md); overflow: hidden; }
+  .table-row {
+    display: grid; grid-template-columns: 56px 2.4fr 2.8fr 2.2fr 44px;
+    gap: 12px; align-items: center; padding: 7px 10px;
+  }
+  .table-row.header { background: var(--bg-subtle); font-size: 12px; color: var(--text-secondary); padding: 8px 10px; }
+  .table-row + .table-row { border-top: 1px solid var(--border-subtle); }
+  .cell-input {
+    height: 28px; background: var(--bg-app); border: 1px solid var(--border-default);
+    border-radius: var(--r-sm); color: var(--text-primary); padding: 0 8px; font-size: 13px;
+    width: 100%; font-family: var(--font);
+  }
+  .cell-empty { text-align: center; color: var(--text-tertiary); font-size: 12px; padding: 22px 0 26px; }
+  .checkbox {
+    width: 15px; height: 15px; border-radius: var(--r-sm); border: 1px solid var(--border-strong);
+    background: var(--bg-app); display: inline-block; position: relative; cursor: pointer;
+  }
+  .checkbox.on { background: var(--brand); border-color: var(--brand); }
+  .checkbox.on::after {
+    content: ""; position: absolute; left: 4.5px; top: 1.5px;
+    width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(42deg);
+  }
+  .th-check { display: flex; align-items: center; gap: 6px; }
+  .del-btn { color: var(--text-tertiary); cursor: pointer; text-align: center; font-size: 13px; }
+  .del-btn:hover { color: var(--err); }
+
+  /* --- 响应区 --- */
+  .resp-card { flex: 1; display: flex; flex-direction: column; padding: 12px 14px; min-height: 0; }
+  .resp-head { display: flex; align-items: center; gap: 10px; }
+  .resp-title { font-size: 14px; font-weight: 700; }
+  .resp-spacer { flex: 1; }
+  .resp-search {
+    width: 132px; height: 28px; background: var(--bg-app); border: 1px solid var(--border-default);
+    border-radius: var(--r-md); color: var(--text-primary); padding: 0 9px; font-size: 12px;
+    font-family: var(--font);
+  }
+  .resp-search::placeholder { color: var(--text-tertiary); }
+  .status-badge {
+    font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: var(--r-pill);
+  }
+  .status-badge.ok { background: rgba(74,222,128,.13); color: var(--ok); }
+  .status-badge.warn { background: rgba(251,191,36,.13); color: var(--warn); }
+  .metric { font-size: 12px; color: var(--text-secondary); }
+
+  /* 响应状态横幅（独占一行 + 左侧严重度色条） */
+  .notice {
+    margin-top: 10px; display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: var(--r-md);
+    border: 1px solid var(--border-subtle); border-left-width: 3px;
+    background: var(--bg-subtle);
+  }
+  .notice.danger { background: #3A1D20; border-color: var(--err); border-left-color: var(--err); }
+  .notice.warning { background: #362A14; border-color: var(--warn); border-left-color: var(--warn); }
+  .notice .n-title { font-size: 13px; font-weight: 600; }
+  .notice.danger .n-title { color: var(--err); }
+  .notice.warning .n-title { color: var(--warn); }
+  .notice .n-text { font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .resp-tabs { display: flex; gap: 16px; margin-top: 10px; border-bottom: 1px solid var(--border-subtle); }
+  .resp-body {
+    flex: 1; margin-top: 10px; background: var(--bg-app); border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md); padding: 12px 14px; overflow: auto;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.65; color: #C9CDD6;
+    white-space: pre;
+  }
+  .j-key { color: #9D8BFF; } .j-str { color: #7EC699; } .j-num { color: #E5B567; } .j-punc { color: var(--text-tertiary); }
+
+  /* 空状态卡片 */
+  .placeholder-wrap { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .placeholder-card {
+    background: var(--bg-app); border: 1px solid var(--border-subtle); border-radius: var(--r-xl);
+    padding: 40px 52px; text-align: center; max-width: 560px;
+  }
+  .placeholder-icon {
+    width: 56px; height: 56px; margin: 0 auto 14px; border-radius: var(--r-pill);
+    background: var(--bg-selected); display: flex; align-items: center; justify-content: center;
+  }
+  .placeholder-icon svg { width: 26px; height: 26px; stroke: var(--accent); fill: none; stroke-width: 1.7; }
+  .placeholder-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .placeholder-hint { font-size: 12px; color: var(--text-tertiary); }
+
+  /* ===== 首页 ===== */
+  .page { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 16px; overflow: auto; min-height: 0; }
+  .home-header { padding: 16px 18px; }
+  .page-title-row { display: flex; align-items: center; gap: 10px; }
+  .page-title { font-size: 20px; font-weight: 700; }
+  .chip {
+    font-size: 11px; color: var(--accent); background: var(--bg-selected);
+    border: 1px solid rgba(124,108,240,.4); padding: 2px 9px; border-radius: var(--r-pill); font-weight: 600;
+  }
+  .page-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 7px; }
+  .metric-line { display: flex; gap: 8px; margin-top: 9px; font-size: 12px; color: var(--text-secondary); align-items: center; }
+  .metric-line b { color: var(--text-primary); font-weight: 600; }
+  .toolbar { display: flex; align-items: center; gap: 12px; padding: 11px 16px; }
+  .toolbar .cap {
+    font-size: 12px; color: var(--text-secondary); background: var(--bg-subtle);
+    border: 1px solid var(--border-default); padding: 3px 10px; border-radius: var(--r-pill); flex: none;
+  }
+  .toolbar .hint { font-size: 12px; color: var(--text-tertiary); flex: 1; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, 334px); gap: 14px; padding: 2px; }
+  .tile {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--r-xl);
+    padding: 16px; height: 190px; display: flex; flex-direction: column; cursor: pointer;
+  }
+  .tile:hover { border-color: var(--border-focus); }
+  .tile-head { display: flex; gap: 12px; align-items: flex-start; }
+  .tile-icon {
+    width: 42px; height: 42px; border-radius: var(--r-lg); flex: none;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 17px; font-weight: 700;
+  }
+  .g0 { background: linear-gradient(135deg, #7C6CF0, #5B8DEF); }
+  .g1 { background: linear-gradient(135deg, #2DD4BF, #22A06B); }
+  .g2 { background: linear-gradient(135deg, #F472B6, #C2418C); }
+  .g3 { background: linear-gradient(135deg, #F59E0B, #D97706); }
+  .g4 { background: linear-gradient(135deg, #38BDF8, #0284C7); }
+  .g5 { background: linear-gradient(135deg, #F87171, #B91C1C); }
+  .tile-name { font-size: 16px; font-weight: 600; }
+  .tile-hint { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .tile-summary { font-size: 13px; color: var(--text-secondary); flex: 1; margin-top: 12px; line-height: 1.55; }
+  .tile-foot { display: flex; align-items: center; justify-content: space-between; }
+  .tile-foot .name { font-size: 12px; color: var(--text-secondary); }
+  .tile-open {
+    font-size: 12px; color: var(--text-secondary); background: var(--bg-subtle);
+    border: 1px solid var(--border-default); padding: 5px 12px; border-radius: var(--r-pill);
+  }
+  .tile:hover .tile-open { color: var(--accent); border-color: var(--border-focus); }
+  .default-badge { font-size: 11px; color: var(--accent); background: var(--bg-selected); padding: 2px 8px; border-radius: var(--r-pill); font-weight: 600; }
+
+  /* ===== 请求历史 ===== */
+  .history-list { display: flex; flex-direction: column; gap: 6px; overflow: auto; }
+  .h-item {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--r-lg);
+    padding: 9px 11px; cursor: pointer; display: flex; flex-direction: column; gap: 6px;
+  }
+  .h-item:hover { border-color: var(--border-default); }
+  .h-item.selected { border-color: var(--border-focus); background: var(--bg-selected); }
+  .h-line1 { display: flex; align-items: center; gap: 8px; }
+  .h-url { font-size: 13px; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .h-line2 { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+  .status-mini { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: var(--r-pill); }
+  .status-mini.ok { background: rgba(74,222,128,.13); color: var(--ok); }
+  .status-mini.warn { background: rgba(251,191,36,.13); color: var(--warn); }
+  .kv-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 7px 10px;
+    background: var(--bg-subtle); border-radius: var(--r-sm); font-size: 13px;
+  }
+
+  /* ===== 项目设置 ===== */
+  .settings-layout { flex: 1; display: flex; gap: 12px; min-height: 0; }
+  .settings-nav {
+    width: 220px; flex: none; background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    border-radius: var(--r-xl); padding: 14px;
+  }
+  .sn-item {
+    padding: 9px 12px; border-radius: var(--r-md); font-size: 13px; color: var(--text-secondary);
+    cursor: pointer; border: 1px solid transparent;
+  }
+  .sn-item:hover { background: var(--bg-subtle); }
+  .sn-item.active { border-color: var(--border-focus); color: var(--text-primary); font-weight: 600; }
+  .info-row {
+    display: flex; align-items: center; padding: 13px 14px; gap: 14px;
+  }
+  .info-row + .info-row { border-top: 1px solid var(--border-subtle); }
+  .info-label { width: 90px; flex: none; font-size: 13px; color: var(--text-secondary); }
+  .info-value { flex: 1; font-size: 13px; color: var(--text-primary); }
+  .link-btn {
+    border: none; background: transparent; color: var(--accent); font-size: 13px; cursor: pointer;
+    font-family: var(--font); font-weight: 600;
+  }
+  .danger-zone {
+    border: 1px solid rgba(229,72,77,.4); background: rgba(248,113,113,.05);
+    border-radius: var(--r-xl); overflow: hidden;
+  }
+  .dz-head { padding: 13px 16px; }
+  .dz-title { font-size: 14px; font-weight: 700; color: var(--err); }
+  .dz-hint { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .dz-row { display: flex; align-items: center; gap: 16px; padding: 14px 16px; background: var(--bg-surface); border-top: 1px solid var(--border-subtle); }
+  .dz-body { flex: 1; }
+  .dz-name { font-size: 13px; font-weight: 600; }
+  .dz-desc { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .btn-danger { background: #E5484D; color: #fff; font-weight: 600; }
+  .btn-danger:hover { background: #D9383D; }
+  .dz-foot { padding: 10px 16px; border-top: 1px solid rgba(229,72,77,.25); font-size: 12px; color: var(--text-secondary); }
+</style>
+</head>
+<body>
+
+<!-- 原型切换器 -->
+<div class="proto-bar">
+  <span class="label">APIXPRESS · UI 高保真原型</span>
+  <button class="proto-btn active" data-win="w-home">项目首页</button>
+  <button class="proto-btn" data-win="w-debug">接口调试</button>
+  <button class="proto-btn" data-win="w-history">请求历史</button>
+  <button class="proto-btn" data-win="w-settings">项目设置</button>
+  <span class="proto-note">深色主题 v1 · token 与 Colors.axaml 同步 · 2026-09-12</span>
+</div>
+
+<!-- ═══════════════ 窗口 1：项目首页 ═══════════════ -->
+<div class="window active" id="w-home">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab active">首页 <span class="n">3</span></div>
+    <div class="tb-spacer"></div>
+    <button class="tb-icon">⟳</button><button class="tb-icon">⚙</button><button class="tb-icon">🔔</button>
+    <div class="tb-sep"></div>
+    <button class="tb-icon">—</button><button class="tb-icon">▢</button><button class="tb-icon">✕</button>
+  </div>
+  <div class="page">
+    <div class="card home-header">
+      <div class="page-title-row">
+        <span class="page-title">项目首页</span>
+        <span class="chip">本地工作区</span>
+      </div>
+      <div class="page-sub">本地 API 工作区：筛选、浏览项目卡片，并以标签页打开工作台。</div>
+      <div class="metric-line">
+        项目 <b>3</b> <span>·</span> 当前可见 <b>3</b> <span>·</span> 已打开标签 <b>0</b>
+      </div>
+    </div>
+
+    <div class="card toolbar">
+      <span class="cap">项目列表</span>
+      <span class="hint">搜索项目名称或备注，点击卡片后在顶部以新标签页进入工作区。</span>
+      <div class="search-box" style="width:240px;flex:none;"><span>🔍</span><input placeholder="搜索"></div>
+      <button class="btn btn-primary" style="min-width:auto;padding:0 18px;">＋ 新建项目</button>
+    </div>
+
+    <div class="tiles">
+      <div class="tile">
+        <div class="tile-head">
+          <div class="tile-icon g2">E</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tile-name">example</div>
+            <div class="tile-hint">点击后在顶部打开独立工作标签</div>
+          </div>
+          <span class="default-badge">默认</span>
+        </div>
+        <div class="tile-summary">暂无备注信息，可进入项目详情继续完善说明。</div>
+        <div class="tile-foot">
+          <span class="name">example（默认）</span>
+          <span class="tile-open">打开项目 →</span>
+        </div>
+      </div>
+      <div class="tile">
+        <div class="tile-head">
+          <div class="tile-icon g3">A</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tile-name">apifox</div>
+            <div class="tile-hint">点击后在顶部打开独立工作标签</div>
+          </div>
+        </div>
+        <div class="tile-summary">暂无备注信息，可进入项目详情继续完善说明。</div>
+        <div class="tile-foot">
+          <span class="name">apifox</span>
+          <span class="tile-open">打开项目 →</span>
+        </div>
+      </div>
+      <div class="tile">
+        <div class="tile-head">
+          <div class="tile-icon g4">B</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tile-name">bbb</div>
+            <div class="tile-hint">点击后在顶部打开独立工作标签</div>
+          </div>
+        </div>
+        <div class="tile-summary">暂无备注信息，可进入项目详情继续完善说明。</div>
+        <div class="tile-foot">
+          <span class="name">bbb</span>
+          <span class="tile-open">打开项目 →</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 窗口 2：接口调试（核心界面） ═══════════════ -->
+<div class="window" id="w-debug">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab">首页 <span class="n">3</span></div>
+    <div class="tb-tab active">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-tab">获取班级信息 <span class="close">✕</span></div>
+    <div class="tb-spacer"></div>
+    <div class="env-chip"><span class="env-dot"></span>开发<span class="caret">▼</span></div>
+    <button class="tb-icon">⚙</button>
+  </div>
+
+  <div class="shell">
+    <!-- 左导航 -->
+    <div class="rail">
+      <button class="nav-item selected">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <span class="t">接口管理</span>
+      </button>
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="t">请求历史</span>
+      </button>
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span>
+        <span class="t">项目设置</span>
+      </button>
+    </div>
+
+    <!-- 接口树侧栏 -->
+    <div class="sidebar">
+      <div class="side-head">
+        <span class="side-title">接口管理</span>
+        <button class="icon-btn-violet">＋</button>
+      </div>
+      <div class="search-box"><span>🔍</span><input placeholder="搜索"></div>
+      <div class="tree">
+        <div class="tree-group"><span class="caret">▾</span>📁 默认模块</div>
+        <div class="tree-group" style="padding-left:24px;"><span class="caret">▾</span>🔗 接口</div>
+        <div class="tree-leaf" style="padding-left:52px;"><span class="caret" style="width:auto;">▸</span>📁 EfCoreSample <span class="cnt">(7)</span></div>
+        <div class="tree-leaf" style="padding-left:52px;"><span class="caret" style="width:auto;">▾</span>📁 Group <span class="cnt">(1)</span></div>
+        <div class="tree-leaf selected" style="padding-left:74px;"><span class="badge get">GET</span>获取班级信息</div>
+        <div class="tree-leaf" style="padding-left:52px;"><span class="caret" style="width:auto;">▸</span>📁 Home <span class="cnt">(1)</span></div>
+        <div class="tree-leaf" style="padding-left:52px;"><span class="caret" style="width:auto;">▸</span>📁 HttpSample <span class="cnt">(8)</span></div>
+        <div class="tree-leaf" style="padding-left:52px;"><span class="caret" style="width:auto;">▸</span>📁 LoadTest <span class="cnt">(1)</span></div>
+        <div class="tree-leaf" style="padding-left:52px;"><span class="caret" style="width:auto;">▸</span>📁 Test <span class="cnt">(1)</span></div>
+        <div class="tree-leaf" style="padding-left:52px;"><span class="caret" style="width:auto;">▸</span>📁 User <span class="cnt">(6)</span></div>
+      </div>
+      <div class="side-section">
+        <div class="side-cap"><span class="caret">▾</span>▦ 数据模型 <span class="cnt" style="color:var(--text-tertiary);font-size:12px;margin-left:auto;">▸</span></div>
+        <div class="side-cap"><span class="caret">▸</span>≡ 组件库</div>
+      </div>
+      <div class="side-section">
+        <div class="side-cap"><span class="caret">▾</span>⚡ 快捷请求</div>
+        <div class="tree-leaf" style="padding-left:24px;"><span class="badge post">POST</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">https://echo.apifox.com/</span></div>
+        <div class="side-cap" style="justify-content:center;color:var(--text-secondary);font-size:12px;margin-top:6px;border:1px solid var(--border-subtle);">＋ 新建</div>
+      </div>
+    </div>
+
+    <!-- 主工作区 -->
+    <div class="main">
+      <!-- 视图切换 + 接口名 -->
+      <div class="card ctx-bar">
+        <div class="mode-bar">
+          <button class="mode-btn checked">调试</button>
+          <button class="mode-btn">设计</button>
+          <button class="mode-btn">文档预览</button>
+        </div>
+        <input class="name-input" value="获取班级信息">
+        <button class="code-btn">&lt;/&gt;</button>
+      </div>
+
+      <!-- URL 行：请求动作 | 分隔 | 用例动作 -->
+      <div class="card" style="padding:2px 12px 12px; margin-top:-10px;">
+        <div class="url-row" style="padding:12px 0 0;">
+          <div class="url-shell">
+            <span class="method-select get">GET <span class="caret">▼</span></span>
+            <span class="base-chip">http://localhost:5050</span>
+            <input class="path-input" value="/api/Group/GetGroupList">
+          </div>
+          <button class="btn btn-primary">发送</button>
+          <button class="btn btn-ghost">保存</button>
+          <span class="v-sep"></span>
+          <input class="case-input" value="成功">
+          <button class="btn btn-ghost">保存测试用例</button>
+        </div>
+
+        <!-- 请求配置：Params -->
+        <div class="sub-tabs" style="margin-top:10px;">
+          <span class="sub-tab active">Params</span>
+          <span class="sub-tab">Body</span>
+          <span class="sub-tab">Headers</span>
+        </div>
+        <div class="section-head">
+          <div>
+            <div class="section-title">Query 参数</div>
+            <div class="section-hint">追加到 URL；取消勾选的参数不会参与请求。</div>
+          </div>
+          <button class="btn-add">添加参数</button>
+        </div>
+        <div class="table">
+          <div class="table-row header">
+            <span class="th-check"><span class="checkbox on"></span>启用</span>
+            <span>参数名</span><span>参数值</span><span>说明（可选）</span><span></span>
+          </div>
+          <div class="table-row">
+            <span><span class="checkbox on"></span></span>
+            <span><input class="cell-input" value="groupId"></span>
+            <span><input class="cell-input" value="1"></span>
+            <span><input class="cell-input" placeholder="说明"></span>
+            <span class="del-btn">🗑</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 返回响应 -->
+      <div class="card resp-card">
+        <div class="resp-head">
+          <span class="resp-title">返回响应</span>
+          <span class="resp-spacer"></span>
+          <input class="resp-search" placeholder="搜索响应">
+          <span class="status-badge ok">HTTP 200</span>
+          <span class="metric">126 ms</span>
+          <span class="metric">1.2 KB</span>
+        </div>
+        <div class="resp-tabs">
+          <span class="sub-tab active">Body</span>
+          <span class="sub-tab">Headers</span>
+        </div>
+        <div class="resp-body"><span class="j-punc">{</span>
+  <span class="j-punc">"</span><span class="j-key">success</span><span class="j-punc">":</span> <span class="j-num">true</span><span class="j-punc">,</span>
+  <span class="j-punc">"</span><span class="j-key">code</span><span class="j-punc">":</span> <span class="j-num">200</span><span class="j-punc">,</span>
+  <span class="j-punc">"</span><span class="j-key">data</span><span class="j-punc">":</span> <span class="j-punc">{</span>
+    <span class="j-punc">"</span><span class="j-key">id</span><span class="j-punc">":</span> <span class="j-num">1</span><span class="j-punc">,</span>
+    <span class="j-punc">"</span><span class="j-key">name</span><span class="j-punc">":</span> <span class="j-str">"一年级一班"</span><span class="j-punc">,</span>
+    <span class="j-punc">"</span><span class="j-key">teacher</span><span class="j-punc">":</span> <span class="j-str">"张老师"</span><span class="j-punc">,</span>
+    <span class="j-punc">"</span><span class="j-key">studentCount</span><span class="j-punc">":</span> <span class="j-num">42</span>
+  <span class="j-punc">},</span>
+  <span class="j-punc">"</span><span class="j-key">message</span><span class="j-punc">":</span> <span class="j-str">"操作成功"</span>
+<span class="j-punc">}</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 窗口 3：请求历史 ═══════════════ -->
+<div class="window" id="w-history">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab">首页 <span class="n">3</span></div>
+    <div class="tb-tab active">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-spacer"></div>
+    <div class="env-chip"><span class="env-dot"></span>开发<span class="caret">▼</span></div>
+    <button class="tb-icon">⚙</button>
+  </div>
+
+  <div class="shell">
+    <div class="rail">
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <span class="t">接口管理</span>
+      </button>
+      <button class="nav-item selected">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="t">请求历史</span>
+      </button>
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span>
+        <span class="t">项目设置</span>
+      </button>
+    </div>
+
+    <div class="sidebar">
+      <div class="side-head">
+        <span class="side-title">请求历史</span>
+        <button class="btn btn-ghost" style="height:28px;min-width:auto;padding:0 12px;font-size:12px;">清空</button>
+      </div>
+      <div class="search-box"><span>🔍</span><input placeholder="搜索方法、URL 或状态码"></div>
+      <div class="history-list">
+        <div class="h-item selected">
+          <div class="h-line1"><span class="badge post">POST</span><span class="h-url">https://echo.apifox.com/status/404</span></div>
+          <div class="h-line2"><span class="status-mini warn">404</span><span>09-12 11:48</span><span style="margin-left:auto;">88 ms</span></div>
+        </div>
+        <div class="h-item">
+          <div class="h-line1"><span class="badge get">GET</span><span class="h-url">https://echo.apifox.com/get</span></div>
+          <div class="h-line2"><span class="status-mini ok">200</span><span>09-12 10:56</span><span style="margin-left:auto;">144 ms</span></div>
+        </div>
+        <div class="h-item">
+          <div class="h-line1"><span class="badge post">POST</span><span class="h-url">https://echo.apifox.com/post</span></div>
+          <div class="h-line2"><span class="status-mini ok">200</span><span>09-12 10:36</span><span style="margin-left:auto;">110 ms</span></div>
+        </div>
+        <div class="h-item">
+          <div class="h-line1"><span class="badge get">GET</span><span class="h-url">https://echo.apifox.com/</span></div>
+          <div class="h-line2"><span class="status-mini ok">200</span><span>09-12 10:34</span><span style="margin-left:auto;">189 ms</span></div>
+        </div>
+        <div class="h-item">
+          <div class="h-line1"><span class="badge get">GET</span><span class="h-url">/api/Group/GetGroupList</span></div>
+          <div class="h-line2"><span class="status-mini ok">200</span><span>05-14 22:17</span><span style="margin-left:auto;">351 ms</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="card" style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
+        <div style="flex:1;">
+          <div class="section-title">请求历史详情</div>
+          <div class="section-hint" style="margin-top:3px;">选择左侧历史记录可查看请求参数和响应；继续请求会打开可编辑的快捷请求。</div>
+        </div>
+        <button class="btn btn-ghost">继续请求</button>
+      </div>
+
+      <div class="card" style="padding:12px 16px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="badge post">POST</span>
+          <span style="font-size:13px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">https://echo.apifox.com/status/404</span>
+          <span style="font-size:12px; color:var(--text-tertiary);">09-12 10:36</span>
+        </div>
+        <div class="sub-tabs" style="margin-top:10px;">
+          <span class="sub-tab active">参数</span>
+          <span class="sub-tab">Headers</span>
+          <span class="sub-tab">Body</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; margin-top:10px;">
+          <div class="kv-row"><span style="color:var(--text-secondary);">page</span><span>2</span></div>
+          <div class="kv-row"><span style="color:var(--text-secondary);">name</span><span>ApixPress</span></div>
+        </div>
+      </div>
+
+      <div class="card resp-card">
+        <div class="resp-head">
+          <span class="resp-title">所选请求的响应</span>
+          <span class="resp-spacer"></span>
+          <span style="font-size:12px;color:var(--text-tertiary);">开发</span>
+        </div>
+        <!-- 404 响应横幅：独占一行 + 琥珀色左侧色条 -->
+        <div class="notice warning" style="margin-top:10px;">
+          <span class="n-title">客户端错误 HTTP 404</span>
+          <span class="n-text">请求已发送但服务器拒绝处理，请检查地址、参数、鉴权 Header 或请求体。</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+          <span class="status-badge warn">HTTP 404</span>
+          <span class="metric">88 ms</span>
+          <span class="metric">0 B</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ 窗口 4：项目设置 ═══════════════ -->
+<div class="window" id="w-settings">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab">首页 <span class="n">3</span></div>
+    <div class="tb-tab active">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-spacer"></div>
+    <div class="env-chip"><span class="env-dot"></span>开发<span class="caret">▼</span></div>
+    <button class="tb-icon">⚙</button>
+  </div>
+
+  <div class="shell">
+    <div class="rail">
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <span class="t">接口管理</span>
+      </button>
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="t">请求历史</span>
+      </button>
+      <button class="nav-item selected">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span>
+        <span class="t">项目设置</span>
+      </button>
+    </div>
+
+    <div class="settings-layout">
+      <div class="settings-nav">
+        <div class="side-title" style="margin-bottom:12px;">项目设置</div>
+        <div class="sn-item active">基本设置</div>
+        <div class="sn-item">数据管理</div>
+        <div class="sn-item">导入数据</div>
+        <div class="sn-item">导出数据</div>
+        <div style="margin-top:18px; padding:12px; background:var(--bg-subtle); border-radius:var(--r-md); font-size:12px; color:var(--text-secondary); line-height:1.8;">
+          <b style="color:var(--text-primary);">example（默认）</b><br>
+          当前环境：开发<br>
+          已导入：1 份文档
+        </div>
+      </div>
+
+      <div class="page" style="padding:0;">
+        <div class="card" style="padding:16px 18px;">
+          <div class="section-title">基本信息</div>
+          <div class="section-hint" style="margin:4px 0 8px;">在这里维护当前项目名称、项目 ID 和项目简介。</div>
+          <div class="info-row">
+            <span class="info-label">项目名称</span><span class="info-value">example</span>
+            <button class="link-btn">编辑</button>
+          </div>
+          <div class="info-row">
+            <span class="info-label">项目 ID</span><span class="info-value" style="font-family:var(--mono); font-size:12px;">9494334d7a8f48b4ac617c40e65f9180</span>
+            <button class="link-btn" style="color:var(--text-secondary);">复制</button>
+          </div>
+          <div class="info-row">
+            <span class="info-label">简介</span><span class="info-value">当前项目还没有补充备注，可在这里继续维护环境与工作区说明。</span>
+            <button class="link-btn">编辑</button>
+          </div>
+        </div>
+
+        <div class="danger-zone">
+          <div class="dz-head">
+            <div class="dz-title">危险操作</div>
+            <div class="dz-hint">这些操作会直接影响当前项目数据，请确认已导出或备份后再继续。</div>
+          </div>
+          <div class="dz-row">
+            <div class="dz-body">
+              <div class="dz-name">清空项目数据</div>
+              <div class="dz-desc">删除当前项目的接口、用例、导入文档、环境变量和请求历史，保留项目名称与简介，并重建一个空的开发环境。</div>
+            </div>
+            <button class="btn btn-danger">清空项目数据</button>
+          </div>
+          <div class="dz-row">
+            <div class="dz-body">
+              <div class="dz-name">删除项目</div>
+              <div class="dz-desc">删除当前项目及其全部接口、用例、导入文档、环境配置和请求历史；删除后会关闭该项目标签。</div>
+            </div>
+            <button class="btn btn-danger">删除项目</button>
+          </div>
+          <div class="dz-foot">危险操作需要二次确认后才会执行。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 原型页面切换
+  document.querySelectorAll('.proto-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.proto-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      document.querySelectorAll('.window').forEach(function (w) { w.classList.remove('active'); });
+      document.getElementById(btn.dataset.win).classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

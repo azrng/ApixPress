@@ -45,6 +45,14 @@
     <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.0.0" />
   </ItemGroup>
 
+  <!-- 仅 NativeAOT 发布生效：保留依赖注入所需的类型成员，并允许 JSON 反射序列化兜底 -->
+  <ItemGroup Condition="'$(PublishAot)' == 'true'">
+    <TrimmerRootDescriptor Include="IlcRoots.xml" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(PublishAot)' == 'true'">
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\ApixPress.Core\ApixPress.Core.csproj" />
   </ItemGroup>
