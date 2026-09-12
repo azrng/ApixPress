@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress 原型 · 12 新建 HTTP 接口</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<!-- ═══════════════ 新建 HTTP 接口（空编辑器，可交互） ═══════════════ -->
+<div class="window">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab" data-href="01-home.html">首页 <span class="n">3</span></div>
+    <div class="tb-tab" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-tab active"><span class="badge get">GET</span> 新建 HTTP 接口 <span class="close" data-href="02-debug-params.html">✕</span></div>
+    <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
+    <div class="tb-spacer"></div>
+    <div class="env-switch">
+      <div class="env-chip"><span class="env-dot"></span><span class="env-chip-name">开发</span><span class="caret">▼</span></div>
+      <div class="env-menu">
+        <div class="env-item active" data-name="开发"><span class="check">✓</span><span class="t">开发</span><span class="chip">激活</span></div>
+        <div class="env-item" data-name="测试"><span class="check">✓</span><span class="t">测试</span><span class="chip">激活</span></div>
+        <div class="env-item" data-name="生产"><span class="check">✓</span><span class="t">生产</span><span class="chip">激活</span></div>
+        <div class="env-menu-foot" data-href="07-environments.html">管理环境…</div>
+      </div>
+    </div>
+    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）"><i class="ri-settings-line"></i></button>
+  </div>
+
+  <div class="shell">
+    <div class="rail">
+      <button class="nav-item selected" data-href="02-debug-params.html">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <span class="t">接口管理</span>
+      </button>
+      <button class="nav-item" data-href="05-history.html">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="t">请求历史</span>
+      </button>
+      <button class="nav-item" data-href="06-project-settings.html">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span>
+        <span class="t">项目设置</span>
+      </button>
+    </div>
+
+    <div class="sidebar">
+      <div class="side-head">
+        <span class="side-title">接口管理</span>
+        <button class="icon-btn-violet" data-toast="新建 HTTP 接口（演示）">＋</button>
+      </div>
+      <div class="search-box"><span><i class="ri-search-line"></i></span><input placeholder="搜索"></div>
+      <div class="tree">
+        <div class="tree-node">
+          <div class="tree-row" data-toggle style="padding-left:6px;">
+            <span class="caret open">▸</span><span><i class="ri-link"></i></span><span class="t">接口</span>
+            <button class="row-more" data-toast="目录操作：新建目录 / 新建 HTTP 接口（演示）">⋯</button>
+          </div>
+          <div class="tree-children open">
+            <div class="tree-node">
+              <div class="tree-row" data-toggle style="padding-left:24px;">
+                <span class="caret open">▸</span><span><i class="ri-folder-line"></i></span><span class="t">Group</span><span class="cnt">(1)</span>
+              </div>
+              <div class="tree-children open">
+                <div class="tree-row" style="padding-left:48px;">
+                  <span class="badge get">GET</span><span class="t">获取班级信息</span>
+                </div>
+              </div>
+            </div>
+            <div class="tree-node">
+              <div class="tree-row" data-toggle style="padding-left:24px;">
+                <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">HttpSample</span><span class="cnt">(8)</span>
+              </div>
+            </div>
+            <div class="tree-node">
+              <div class="tree-row" data-toggle style="padding-left:24px;">
+                <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">User</span><span class="cnt">(6)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="side-section">
+        <div class="tree-node">
+          <div class="tree-row" data-toggle style="padding-left:6px; font-weight:500;">
+            <span class="caret open">▸</span><span><i class="ri-earth-line"></i></span><span class="t">快捷请求</span>
+          </div>
+          <div class="tree-children open">
+            <div class="tree-row" style="padding-left:30px;">
+              <span><i class="ri-send-plane-line"></i></span><span class="t">Echo 探活</span>
+            </div>
+          </div>
+        </div>
+        <div class="side-cap" data-toast="新建快捷请求（演示）" style="justify-content:center;color:var(--text-secondary);font-size:12px;margin-top:6px;border:1px solid var(--border-subtle);">＋ 新建</div>
+      </div>
+    </div>
+
+    <!-- 主工作区：未命名接口 -->
+    <div class="main">
+      <div class="card ctx-bar">
+        <input class="name-input" placeholder="未命名接口">
+        <button class="code-btn" data-toast="生成请求代码（演示）">&lt;/&gt;</button>
+      </div>
+
+      <div class="card" style="padding:2px 12px 12px; margin-top:-10px;">
+        <div class="url-row" style="padding:12px 0 0;">
+          <div class="url-shell">
+            <span class="method-select get" data-toast="切换请求方法（演示）">GET <span class="caret">▼</span></span>
+            <span class="base-chip" style="color:var(--text-tertiary);">{{BaseUrl}}</span>
+            <input class="path-input" id="pathInput" placeholder="接口路径，以 / 起始">
+          </div>
+          <button class="btn btn-primary" id="sendBtn">发送</button>
+          <button class="btn btn-ghost" data-toast="接口已保存至默认目录（演示）">保存</button>
+        </div>
+
+        <div class="sub-tabs" data-tabs="cfg" style="margin-top:10px;">
+          <span class="sub-tab active" data-v="Params">Params</span>
+          <span class="sub-tab" data-v="Body">Body</span>
+          <span class="sub-tab" data-v="Headers">Headers</span>
+        </div>
+
+        <!-- Params 面板 -->
+        <div data-tabs-panel="cfg" data-v="Params" class="on">
+          <div class="section-head">
+            <div class="section-title">Query 参数</div>
+          </div>
+          <div class="table" id="paramTable">
+            <div class="table-row pn header">
+              <span>参数名</span><span>参数值</span><span>类型</span><span>说明</span><span></span>
+            </div>
+            <div class="table-row add-row" id="addParam"><span>＋ 添加参数</span></div>
+          </div>
+        </div>
+
+        <!-- Body 面板 -->
+        <div data-tabs-panel="cfg" data-v="Body">
+          <div class="body-modes" data-tabs="bd">
+            <button class="body-mode on" data-v="none">none</button>
+            <button class="body-mode" data-v="form-data">form-data</button>
+            <button class="body-mode" data-v="json">JSON</button>
+            <button class="body-mode" data-v="raw">RAW</button>
+          </div>
+          <div data-tabs-panel="bd" data-v="none" class="on"><div class="cell-empty">当前请求不发送 Body。</div></div>
+          <div data-tabs-panel="bd" data-v="form-data"><div class="cell-empty">form-data 编辑见 <a href="03-debug-body-upload.html" style="color:var(--accent);">03 Body 与多文件上传</a>。</div></div>
+          <div data-tabs-panel="bd" data-v="json">
+            <div class="resp-body" style="margin:0 14px 12px; flex:none;" contenteditable="true" spellcheck="false">{ }</div>
+          </div>
+          <div data-tabs-panel="bd" data-v="raw"><div class="cell-empty">原始文本编辑器。</div></div>
+        </div>
+
+        <!-- Headers 面板 -->
+        <div data-tabs-panel="cfg" data-v="Headers">
+          <div class="cell-empty">暂无自定义 Header。</div>
+        </div>
+      </div>
+
+      <!-- 返回响应：空占位 -->
+      <div class="card resp-card">
+        <div class="resp-head">
+          <span class="resp-title">返回响应</span>
+          <span class="resp-spacer"></span>
+        </div>
+        <div class="resp-tabs" data-tabs="resp">
+          <span class="sub-tab active" data-v="Body">Body</span>
+          <span class="sub-tab" data-v="Headers">Headers</span>
+        </div>
+        <div class="rp on" data-tabs-panel="resp" data-v="Body">
+          <div class="resp-placeholder" id="respEmpty">
+            <span class="picon"><i class="ri-rocket-line"></i></span>
+            <span class="ptext">点击"发送"按钮获取返回结果</span>
+          </div>
+        </div>
+        <div class="rp" data-tabs-panel="resp" data-v="Headers">
+          <div class="cell-empty" style="margin-top:10px;">尚无响应 Headers。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  // 发送：路径为空给校验提示；有路径则模拟请求
+  var sendBtn = document.getElementById("sendBtn");
+  var sendHTML = sendBtn.innerHTML;
+  sendBtn.addEventListener("click", function () {
+    if (sendBtn.classList.contains("loading")) return;
+    var path = document.getElementById("pathInput").value.trim();
+    if (!path) { protoToast("请先填写接口路径（以 / 起始）"); return; }
+    sendBtn.classList.add("loading");
+    sendBtn.innerHTML = '<span class="spinner"></span>发送中…';
+    setTimeout(function () {
+      sendBtn.classList.remove("loading");
+      sendBtn.innerHTML = sendHTML;
+      var empty = document.getElementById("respEmpty");
+      empty.innerHTML = '<div class="resp-body" style="flex:1; margin-top:0;"><span class="j-punc">{</span> <span class="j-punc">"success":</span> <span class="j-num">true</span><span class="j-punc">,</span> <span class="j-punc">"message":</span> <span class="j-str">"操作成功"</span> <span class="j-punc">}</span></div>';
+      protoToast("HTTP 200 · 42 ms（演示响应）");
+    }, 900);
+  });
+
+  // 添加参数行 / 删除行
+  var table = document.getElementById("paramTable");
+  document.getElementById("addParam").addEventListener("click", function () {
+    var row = document.createElement("div");
+    row.className = "table-row pn";
+    row.innerHTML =
+      '<span><input class="cell-input" placeholder="参数名"></span>' +
+      '<span><input class="cell-input" placeholder="参数值"></span>' +
+      '<span><span class="type-chip" data-type="string">string ▾</span></span>' +
+      '<span><input class="cell-input" placeholder="说明"></span>' +
+      '<span class="del-btn"><i class="ri-delete-bin-line"></i></span>';
+    table.insertBefore(row, this);
+    row.querySelector("input").focus();
+  });
+  table.addEventListener("click", function (e) {
+    var del = e.target.closest(".del-btn");
+    if (del) del.closest(".table-row").remove();
+  });
+</script>
+</body>
+</html>

@@ -15,6 +15,7 @@
     <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
     <div class="tb-tab" data-href="01-home.html">首页 <span class="n">3</span></div>
     <div class="tb-tab active" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
     <div class="tb-spacer"></div>
     <div class="env-switch">
       <div class="env-chip"><span class="env-dot"></span><span class="env-chip-name">开发</span><span class="caret">▼</span></div>
@@ -25,7 +26,7 @@
         <div class="env-menu-foot" data-href="07-environments.html">管理环境…</div>
       </div>
     </div>
-    <button class="tb-icon">⚙</button>
+    <button class="tb-icon"><i class="ri-settings-line"></i></button>
   </div>
 
   <div class="shell">
@@ -49,25 +50,32 @@
         <span class="side-title">请求历史</span>
         <button class="btn btn-ghost" id="clearHistory" style="height:28px;min-width:auto;padding:0 12px;font-size:12px;">清空</button>
       </div>
-      <div class="search-box"><span>🔍</span><input placeholder="搜索方法、URL 或状态码"></div>
+      <div class="search-box"><span><i class="ri-search-line"></i></span><input placeholder="搜索方法、URL 或状态码"></div>
       <div class="history-list" id="historyList">
+        <div class="h-group-cap"><span>今天</span><span>4</span></div>
         <div class="h-item selected">
+          <div class="h-actions"><button class="resend" title="重新发送">↻</button><button class="del" title="删除">🗑</button></div>
           <div class="h-line1"><span class="badge post">POST</span><span class="h-url">https://echo.apifox.com/status/404</span></div>
           <div class="h-line2"><span class="status-mini warn">404</span><span>09-12 11:48</span><span style="margin-left:auto;">88 ms</span></div>
         </div>
         <div class="h-item">
+          <div class="h-actions"><button class="resend" title="重新发送">↻</button><button class="del" title="删除">🗑</button></div>
           <div class="h-line1"><span class="badge get">GET</span><span class="h-url">https://echo.apifox.com/get</span></div>
           <div class="h-line2"><span class="status-mini ok">200</span><span>09-12 10:56</span><span style="margin-left:auto;">144 ms</span></div>
         </div>
         <div class="h-item">
+          <div class="h-actions"><button class="resend" title="重新发送">↻</button><button class="del" title="删除">🗑</button></div>
           <div class="h-line1"><span class="badge post">POST</span><span class="h-url">https://echo.apifox.com/post</span></div>
           <div class="h-line2"><span class="status-mini ok">200</span><span>09-12 10:36</span><span style="margin-left:auto;">110 ms</span></div>
         </div>
         <div class="h-item">
+          <div class="h-actions"><button class="resend" title="重新发送">↻</button><button class="del" title="删除">🗑</button></div>
           <div class="h-line1"><span class="badge get">GET</span><span class="h-url">https://echo.apifox.com/</span></div>
           <div class="h-line2"><span class="status-mini ok">200</span><span>09-12 10:34</span><span style="margin-left:auto;">189 ms</span></div>
         </div>
+        <div class="h-group-cap"><span>昨天</span><span>1</span></div>
         <div class="h-item">
+          <div class="h-actions"><button class="resend" title="重新发送">↻</button><button class="del" title="删除">🗑</button></div>
           <div class="h-line1"><span class="badge get">GET</span><span class="h-url">/api/Group/GetGroupList</span></div>
           <div class="h-line2"><span class="status-mini err">超时</span><span>09-11 22:17</span><span style="margin-left:auto;">30 000 ms</span></div>
         </div>
@@ -106,15 +114,44 @@
           <span class="resp-spacer"></span>
           <span style="font-size:12px;color:var(--text-tertiary);">开发</span>
         </div>
-        <!-- 404 响应横幅：独占一行 + 琥珀色左侧色条 -->
-        <div class="notice warning" style="margin-top:10px;">
-          <span class="n-title">客户端错误 HTTP 404</span>
-          <span class="n-text">请求已发送但服务器拒绝处理，请检查地址、参数、鉴权 Header 或请求体。</span>
+        <div class="resp-tabs" data-tabs="resp">
+          <span class="sub-tab active" data-v="Body">Body</span>
+          <span class="sub-tab" data-v="Headers">Headers</span>
+          <span class="sub-tab" data-v="实际请求">实际请求</span>
         </div>
-        <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
-          <span class="status-badge warn">HTTP 404</span>
-          <span class="metric">88 ms</span>
-          <span class="metric">0 B</span>
+        <!-- Body 面板：404 响应横幅（琥珀色左侧色条） -->
+        <div class="rp on" data-tabs-panel="resp" data-v="Body">
+          <div class="notice warning" style="margin-top:10px;">
+            <span class="n-title">客户端错误 HTTP 404</span>
+            <span class="n-text">请求已发送但服务器拒绝处理，请检查地址、参数、鉴权 Header 或请求体。</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+            <span class="status-badge warn">HTTP 404</span>
+            <span class="metric">88 ms</span>
+            <span class="metric">0 B</span>
+          </div>
+        </div>
+        <!-- Headers 面板 -->
+        <div class="rp" data-tabs-panel="resp" data-v="Headers">
+          <div class="kv-grid" style="margin:10px 0 0; flex:none;">
+            <div class="kv"><span class="k">content-type</span><span class="v">application/json</span></div>
+            <div class="kv"><span class="k">date</span><span class="v">Fri, 12 Sep 2026 11:48:02 GMT</span></div>
+            <div class="kv"><span class="k">server</span><span class="v">echo-server</span></div>
+          </div>
+        </div>
+        <!-- 实际请求面板：环境变量替换与参数拼接后真正发出的请求 -->
+        <div class="rp" data-tabs-panel="resp" data-v="实际请求">
+          <div class="notice" style="margin-top:10px;">
+            <span class="n-title">实际发送</span>
+            <span class="n-text">以下为环境变量替换、参数拼接后真正发出的请求，用于核对执行保真。</span>
+          </div>
+          <div class="kv-grid" style="margin:10px 0 0; flex:none;">
+            <div class="kv"><span class="k">method</span><span class="v">POST</span></div>
+            <div class="kv"><span class="k">url</span><span class="v">https://echo.apifox.com/status/404</span></div>
+            <div class="kv"><span class="k">content-type</span><span class="v">application/json</span></div>
+            <div class="kv"><span class="k">user-agent</span><span class="v">ApixPress/1.0</span></div>
+            <div class="kv"><span class="k">body</span><span class="v">{"page":2,"name":"ApixPress"}</span></div>
+          </div>
         </div>
       </div>
     </div>
@@ -123,6 +160,17 @@
 
 <script src="shared.js"></script>
 <script>
+  // 历史行悬停操作：重发 / 删除
+  document.getElementById("historyList").addEventListener("click", function (e) {
+    var resend = e.target.closest(".h-actions .resend");
+    if (resend) { protoToast("已重新发送该请求（演示）"); return; }
+    var del = e.target.closest(".h-actions .del");
+    if (del) {
+      del.closest(".h-item").remove();
+      protoToast("已删除该条历史（演示）");
+    }
+  });
+
   // 清空历史：两段确认（第一次点击变为确认态）
   var clearBtn = document.getElementById("clearHistory");
   var clearArmed = false;

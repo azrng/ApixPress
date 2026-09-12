@@ -51,9 +51,9 @@
   document.addEventListener("click", function (e) {
     var t = e.target;
 
-    /* 点击环境下拉以外区域时收起下拉 */
-    if (!t.closest(".env-switch")) {
-      document.querySelectorAll(".env-switch.open").forEach(function (el) {
+    /* 点击下拉以外区域时收起环境下拉 / 分裂按钮菜单 */
+    if (!t.closest(".env-switch, .btn-split")) {
+      document.querySelectorAll(".env-switch.open, .btn-split.open").forEach(function (el) {
         el.classList.remove("open");
       });
     }
@@ -78,6 +78,15 @@
       toast("已切换到环境「" + envItem.getAttribute("data-name") + "」（演示）");
       return;
     }
+
+    /* 分裂按钮：▾ 展开菜单；菜单项收起菜单后按 data-open 继续 */
+    var caretBtn = t.closest(".split-caret");
+    if (caretBtn) {
+      caretBtn.closest(".btn-split").classList.toggle("open");
+      return;
+    }
+    var splitItem = t.closest(".split-item");
+    if (splitItem) splitItem.closest(".btn-split").classList.remove("open");
 
     /* 勾选框开关 */
     var cb = t.closest(".checkbox");
@@ -158,6 +167,49 @@
       return;
     }
   });
+
+  /* 保存用例后：把用例节点挂到树中选中的接口节点下（纯叶子行升级为可展开节点） */
+  window.protoAttachCaseToSelectedTree = function (name) {
+    var row = document.querySelector(".tree .tree-row.selected");
+    if (!row) return;
+    var titleEl = row.querySelector(".t");
+    if (!titleEl) return;
+    var text = titleEl.textContent;
+    var m = text.match(/^(.*?)\s*\((\d+)\)$/);
+    if (m) titleEl.textContent = m[1] + " (" + (parseInt(m[2], 10) + 1) + ")";
+    else titleEl.textContent = text + " (1)";
+
+    var node = row.closest(".tree-node");
+    var children = node ? node.querySelector(":scope > .tree-children") : null;
+    if (!children) {
+      row.setAttribute("data-toggle", "");
+      var caret = document.createElement("span");
+      caret.className = "caret open";
+      caret.textContent = "▸";
+      row.insertBefore(caret, row.firstChild);
+      children = document.createElement("div");
+      children.className = "tree-children open";
+      node.appendChild(children);
+    }
+    if (!row.querySelector(".status-dot")) {
+      var dot = document.createElement("span");
+      dot.className = "status-dot";
+      dot.title = "该接口有用例";
+      row.appendChild(dot);
+    }
+    var caseRow = document.createElement("div");
+    caseRow.className = "tree-row case-node";
+    caseRow.style.paddingLeft = (parseInt(row.style.paddingLeft, 10) + 24) + "px";
+    var glyph = document.createElement("span");
+    glyph.className = "case-glyph";
+    glyph.textContent = "⎿";
+    var t = document.createElement("span");
+    t.className = "t";
+    t.textContent = name;
+    caseRow.appendChild(glyph);
+    caseRow.appendChild(t);
+    children.appendChild(caseRow);
+  };
 
   window.protoToast = toast;
 })();

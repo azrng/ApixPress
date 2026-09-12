@@ -16,9 +16,10 @@
     <div class="tb-tab" data-href="01-home.html">首页 <span class="n">3</span></div>
     <div class="tb-tab active" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
     <div class="tb-tab">获取班级信息 <span class="close">✕</span></div>
+    <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
     <div class="tb-spacer"></div>
     <div class="env-chip highlight" data-open="#envDrawer"><span class="env-dot"></span><span id="envChipName">开发</span><span class="caret">▼</span></div>
-    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）">⚙</button>
+    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）"><i class="ri-settings-line"></i></button>
   </div>
 
   <div class="shell">
@@ -42,48 +43,36 @@
         <span class="side-title">接口管理</span>
         <button class="icon-btn-violet" data-toast="新建接口（演示）">＋</button>
       </div>
-      <div class="search-box"><span>🔍</span><input placeholder="搜索"></div>
+      <div class="search-box"><span><i class="ri-search-line"></i></span><input placeholder="搜索"></div>
       <div class="tree">
-        <div class="tree-node">
-          <div class="tree-row" data-toggle style="padding-left:6px;">
-            <span class="caret open">▸</span><span>📁</span><span class="t">默认模块</span>
-          </div>
-          <div class="tree-children open">
             <div class="tree-node">
-              <div class="tree-row" data-toggle style="padding-left:24px;">
-                <span class="caret open">▸</span><span>🔗</span><span class="t">接口</span>
+              <div class="tree-row" data-toggle style="padding-left:6px;">
+                <span class="caret open">▸</span><span><i class="ri-link"></i></span><span class="t">接口</span>
                 <button class="row-more" data-toast="目录操作：新建目录 / 新建 HTTP 接口（演示）">⋯</button>
               </div>
               <div class="tree-children open">
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret open">▸</span><span>📁</span><span class="t">Group</span><span class="cnt">(1)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret open">▸</span><span><i class="ri-folder-line"></i></span><span class="t">Group</span><span class="cnt">(1)</span>
                   </div>
                   <div class="tree-children open">
-                    <div class="tree-row selected" style="padding-left:66px;">
+                    <div class="tree-row selected" style="padding-left:48px;">
                       <span class="badge get">GET</span><span class="t">获取班级信息</span>
                     </div>
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">HttpSample</span><span class="cnt">(8)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">HttpSample</span><span class="cnt">(8)</span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
       </div>
     </div>
 
     <div class="main">
       <div class="card ctx-bar">
-        <div class="mode-bar" data-tabs="mode">
-          <button class="mode-btn checked" data-v="调试">调试</button>
-          <button class="mode-btn" data-v="设计">设计</button>
-          <button class="mode-btn" data-v="文档预览">文档预览</button>
-        </div>
         <input class="name-input" value="获取班级信息">
         <button class="code-btn" data-toast="生成请求代码见 02 页（演示）">&lt;/&gt;</button>
       </div>
@@ -134,17 +123,17 @@
             <div class="env-var-row">
               <input class="cell-input mono" value="BaseUrl">
               <input class="cell-input mono" value="http://localhost:5050">
-              <span class="del-btn">🗑</span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
             <div class="env-var-row">
               <input class="cell-input mono" value="token">
               <input class="cell-input mono" value="eyJhbGciOiJIUzI1NiIs...">
-              <span class="del-btn">🗑</span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
             <div class="env-var-row">
               <input class="cell-input mono" value="groupId">
               <input class="cell-input mono" value="1">
-              <span class="del-btn">🗑</span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
           </div>
           <div class="env-cap"><span class="varCount">3 个变量 · 发送时自动替换 {{变量名}}</span><button class="btn-add addVar" style="height:24px;padding:0 10px;">＋ 新增变量</button></div>
@@ -162,7 +151,7 @@
             <div class="env-var-row">
               <input class="cell-input mono" value="BaseUrl">
               <input class="cell-input mono" value="https://test.example.com">
-              <span class="del-btn">🗑</span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
           </div>
           <div class="env-cap"><span class="varCount">1 个变量</span><button class="btn-add addVar" style="height:24px;padding:0 10px;">＋ 新增变量</button></div>
@@ -180,12 +169,12 @@
             <div class="env-var-row">
               <input class="cell-input mono" value="BaseUrl">
               <input class="cell-input mono" value="https://api.example.com">
-              <span class="del-btn">🗑</span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
             <div class="env-var-row">
               <input class="cell-input mono" value="token">
               <input class="cell-input mono" value="••••••••（已隐藏）">
-              <span class="del-btn">🗑</span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
           </div>
           <div class="env-cap"><span class="varCount">2 个变量</span><button class="btn-add addVar" style="height:24px;padding:0 10px;">＋ 新增变量</button></div>
@@ -238,7 +227,7 @@
     if (e.target.closest(".addVar")) {
       var row = document.createElement("div");
       row.className = "env-var-row";
-      row.innerHTML = '<input class="cell-input mono" placeholder="变量名"><input class="cell-input mono" placeholder="变量值"><span class="del-btn">🗑</span>';
+      row.innerHTML = '<input class="cell-input mono" placeholder="变量名"><input class="cell-input mono" placeholder="变量值"><span class="del-btn"><i class="ri-delete-bin-line"></i></span>';
       card.querySelector(".env-vars").appendChild(row);
       row.querySelector("input").focus();
       refreshVarCount(card);
@@ -258,7 +247,7 @@
     card.className = "env-card";
     card.innerHTML =
       '<div class="env-card-head"><span class="checkbox on"></span><span class="ename"></span><span class="eurl">未配置 BaseUrl</span><span class="chip">激活</span></div>' +
-      '<div class="env-vars"><div class="env-var-row"><input class="cell-input mono" placeholder="变量名"><input class="cell-input mono" placeholder="变量值"><span class="del-btn">🗑</span></div></div>' +
+      '<div class="env-vars"><div class="env-var-row"><input class="cell-input mono" placeholder="变量名"><input class="cell-input mono" placeholder="变量值"><span class="del-btn"><i class="ri-delete-bin-line"></i></span></div></div>' +
       '<div class="env-cap"><span class="varCount">1 个变量</span><button class="btn-add addVar" style="height:24px;padding:0 10px;">＋ 新增变量</button></div>';
     card.querySelector(".ename").textContent = name;
     envList.appendChild(card);

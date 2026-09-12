@@ -15,6 +15,7 @@
     <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
     <div class="tb-tab" data-href="01-home.html">首页 <span class="n">3</span></div>
     <div class="tb-tab active" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
     <div class="tb-spacer"></div>
     <div class="env-switch">
       <div class="env-chip"><span class="env-dot"></span><span class="env-chip-name">开发</span><span class="caret">▼</span></div>
@@ -25,7 +26,7 @@
         <div class="env-menu-foot" data-href="07-environments.html">管理环境…</div>
       </div>
     </div>
-    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）">⚙</button>
+    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）"><i class="ri-settings-line"></i></button>
   </div>
 
   <div class="shell">
@@ -47,8 +48,9 @@
     <div class="settings-layout">
       <div class="settings-nav">
         <div class="side-title" style="margin-bottom:12px;">项目设置</div>
+        <div class="sn-cap">通用</div>
         <div class="sn-item" data-href="06-project-settings.html">基本设置</div>
-        <div class="sn-item" data-toast="数据管理（演示）">数据管理</div>
+        <div class="sn-cap">数据</div>
         <div class="sn-item active">导入数据</div>
         <div class="sn-item" data-toast="导出面板见下方「导出数据」卡片（演示）">导出数据</div>
         <div style="margin-top:18px; padding:12px; background:var(--bg-subtle); border-radius:var(--r-md); font-size:12px; color:var(--text-secondary); line-height:1.8;">
@@ -107,16 +109,49 @@
         <!-- 导出卡片 -->
         <div class="card" style="padding:16px 18px;">
           <div class="section-title">导出数据</div>
-          <div class="section-hint" style="margin:4px 0 10px;">将当前项目数据导出为 ApixPress 备份文件，可用于迁移或备份。</div>
-          <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:12px;">
-            <span class="th-check"><span class="checkbox on"></span>接口与目录</span>
-            <span class="th-check"><span class="checkbox on"></span>测试用例</span>
-            <span class="th-check"><span class="checkbox on"></span>环境变量</span>
-            <span class="th-check"><span class="checkbox"></span>请求历史</span>
+          <div class="section-hint" style="margin:4px 0 10px;">支持导出 ApixPress 备份用于迁移备份，或导出 HTML / Markdown 接口文档用于分享与归档。</div>
+
+          <!-- 导出格式切换 -->
+          <div class="body-modes" data-tabs="fmt" style="padding:0 0 12px;">
+            <button class="body-mode on" data-v="backup">ApixPress 备份</button>
+            <button class="body-mode" data-v="html">HTML</button>
+            <button class="body-mode" data-v="md">Markdown</button>
           </div>
-          <div style="display:flex; gap:8px; align-items:center;">
-            <span style="flex:1; font-size:12px; color:var(--text-tertiary);">导出位置：上次保存目录（导出时再次确认）</span>
-            <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-toast="已导出到 D:\Backup\apixpress-example.zip（演示）">导出项目数据</button>
+
+          <!-- 备份格式 -->
+          <div data-tabs-panel="fmt" data-v="backup" class="on">
+            <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:12px;">
+              <span class="th-check"><span class="checkbox on"></span>接口与目录</span>
+              <span class="th-check"><span class="checkbox on"></span>测试用例</span>
+              <span class="th-check"><span class="checkbox on"></span>环境变量</span>
+              <span class="th-check"><span class="checkbox"></span>请求历史</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span style="flex:1; font-size:12px; color:var(--text-tertiary);">导出位置：上次保存目录（导出时再次确认）</span>
+              <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-toast="已导出 ApixPress 备份文件（演示）">导出项目数据</button>
+            </div>
+          </div>
+
+          <!-- HTML 格式 -->
+          <div data-tabs-panel="fmt" data-v="html">
+            <div class="form-row">
+              <span class="form-label">导出内容</span>
+              <span class="form-hint" style="font-size:12px;">将接口目录与接口文档导出为单个静态 HTML 页面，适合浏览器浏览与分享。</span>
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+              <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-toast="已导出 HTML 文档（演示）">导出 HTML</button>
+            </div>
+          </div>
+
+          <!-- Markdown 格式 -->
+          <div data-tabs-panel="fmt" data-v="md">
+            <div class="form-row">
+              <span class="form-label">导出内容</span>
+              <span class="form-hint" style="font-size:12px;">将接口目录与接口文档导出为 Markdown 文件（每个目录一个 .md），适合放入 Git 仓库随代码维护。</span>
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+              <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-toast="已导出 Markdown 文档（演示）">导出 Markdown</button>
+            </div>
           </div>
         </div>
 

@@ -90,22 +90,37 @@
     <div class="modal" style="width:560px;">
       <div class="modal-head"><span class="modal-title">应用设置</span><button class="drawer-close">✕</button></div>
       <div class="modal-body">
+        <div class="form-section">请求</div>
+        <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px; flex-wrap:wrap;">
+          <span class="info-label">请求超时时间</span>
+          <span class="info-value" style="display:flex; align-items:center; gap:8px;">
+            <input class="form-input" value="0" style="width:90px; height:28px;">毫秒
+          </span>
+          <span class="form-hint" style="flex-basis:100%;">0 为不限制超时时间，默认 30000 毫秒。</span>
+        </div>
+        <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px; flex-wrap:wrap;">
+          <span class="info-label">SSL 证书验证</span>
+          <span class="info-value" style="display:flex; align-items:center; gap:8px;"><span class="checkbox on"></span>启用</span>
+          <span class="form-hint" style="flex-basis:100%;">关闭后不校验自签名证书，仅建议本地联调使用。</span>
+        </div>
+        <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px; flex-wrap:wrap;">
+          <span class="info-label">自动跟随重定向</span>
+          <span class="info-value" style="display:flex; align-items:center; gap:8px;"><span class="checkbox on"></span>启用</span>
+          <span class="form-hint" style="flex-basis:100%;">收到 3xx 响应时自动请求新地址，关闭后直接返回 3xx 响应。</span>
+        </div>
+        <div class="form-section">数据</div>
+        <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px;">
+          <span class="info-label">数据目录</span>
+          <span class="info-value" style="font-family:var(--mono); font-size:12px;">%LOCALAPPDATA%\ApixPress\data</span>
+          <button class="link-btn" style="color:var(--text-secondary);">选择目录</button>
+        </div>
+        <div class="form-section">关于</div>
         <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px;">
           <span class="info-label">软件名称</span><span class="info-value">ApixPress</span>
         </div>
         <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px;">
           <span class="info-label">版本号</span><span class="info-value">1.0.0（已是最新版本）</span>
           <button class="link-btn">检查更新</button>
-        </div>
-        <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px;">
-          <span class="info-label">数据目录</span>
-          <span class="info-value" style="font-family:var(--mono); font-size:12px;">%LOCALAPPDATA%\ApixPress\data</span>
-          <button class="link-btn" style="color:var(--text-secondary);">选择目录</button>
-        </div>
-        <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px;">
-          <span class="info-label">SSL 证书验证</span>
-          <span class="info-value" style="display:flex; align-items:center; gap:8px;"><span class="checkbox on"></span>启用（关闭后不校验自签名证书，仅建议本地联调使用）</span>
-          <button class="link-btn" style="color:var(--text-secondary);">恢复默认</button>
         </div>
       </div>
       <div class="modal-foot">

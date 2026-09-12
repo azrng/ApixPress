@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress 原型 · 11 新建标签</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<!-- ═══════════════ 标题栏「＋」新建标签：快捷创建卡片（可交互） ═══════════════ -->
+<div class="window">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab" data-href="01-home.html">首页 <span class="n">3</span></div>
+    <div class="tb-tab" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-tab active">新建… <span class="close" data-href="02-debug-params.html">✕</span></div>
+    <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
+    <div class="tb-spacer"></div>
+    <div class="env-switch">
+      <div class="env-chip"><span class="env-dot"></span><span class="env-chip-name">开发</span><span class="caret">▼</span></div>
+      <div class="env-menu">
+        <div class="env-item active" data-name="开发"><span class="check">✓</span><span class="t">开发</span><span class="chip">激活</span></div>
+        <div class="env-item" data-name="测试"><span class="check">✓</span><span class="t">测试</span><span class="chip">激活</span></div>
+        <div class="env-item" data-name="生产"><span class="check">✓</span><span class="t">生产</span><span class="chip">激活</span></div>
+        <div class="env-menu-foot" data-href="07-environments.html">管理环境…</div>
+      </div>
+    </div>
+    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）"><i class="ri-settings-line"></i></button>
+  </div>
+
+  <div class="shell">
+    <div class="rail">
+      <button class="nav-item selected" data-href="02-debug-params.html">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <span class="t">接口管理</span>
+      </button>
+      <button class="nav-item" data-href="05-history.html">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="t">请求历史</span>
+      </button>
+      <button class="nav-item" data-href="06-project-settings.html">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span>
+        <span class="t">项目设置</span>
+      </button>
+    </div>
+
+    <div class="sidebar">
+      <div class="side-head">
+        <span class="side-title">接口管理</span>
+        <button class="icon-btn-violet" data-toast="新建 HTTP 接口（演示）">＋</button>
+      </div>
+      <div class="search-box"><span><i class="ri-search-line"></i></span><input placeholder="搜索"></div>
+      <div class="tree">
+        <div class="tree-node">
+          <div class="tree-row" data-toggle style="padding-left:6px;">
+            <span class="caret open">▸</span><span><i class="ri-link"></i></span><span class="t">接口</span>
+            <button class="row-more" data-toast="目录操作：新建目录 / 新建 HTTP 接口（演示）">⋯</button>
+          </div>
+          <div class="tree-children open">
+            <div class="tree-node">
+              <div class="tree-row" data-toggle style="padding-left:24px;">
+                <span class="caret open">▸</span><span><i class="ri-folder-line"></i></span><span class="t">Group</span><span class="cnt">(1)</span>
+              </div>
+              <div class="tree-children open">
+                <div class="tree-row" style="padding-left:48px;">
+                  <span class="badge get">GET</span><span class="t">获取班级信息</span>
+                </div>
+              </div>
+            </div>
+            <div class="tree-node">
+              <div class="tree-row" data-toggle style="padding-left:24px;">
+                <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">HttpSample</span><span class="cnt">(8)</span>
+              </div>
+            </div>
+            <div class="tree-node">
+              <div class="tree-row" data-toggle style="padding-left:24px;">
+                <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">User</span><span class="cnt">(6)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="side-section">
+        <div class="tree-node">
+          <div class="tree-row" data-toggle style="padding-left:6px; font-weight:500;">
+            <span class="caret open">▸</span><span><i class="ri-earth-line"></i></span><span class="t">快捷请求</span>
+          </div>
+          <div class="tree-children open">
+            <div class="tree-row" style="padding-left:30px;">
+              <span><i class="ri-send-plane-line"></i></span><span class="t">Echo 探活</span>
+            </div>
+          </div>
+        </div>
+        <div class="side-cap" data-toast="新建快捷请求（演示）" style="justify-content:center;color:var(--text-secondary);font-size:12px;margin-top:6px;border:1px solid var(--border-subtle);">＋ 新建</div>
+      </div>
+    </div>
+
+    <!-- 快捷创建卡片 -->
+    <div class="main">
+      <div class="create-wrap">
+        <div class="create-cards">
+          <a class="create-card" href="12-new-interface.html">
+            <span class="cicon g0"><i class="ri-arrow-left-right-line"></i></span>
+            <span class="t">新建 HTTP 接口</span>
+          </a>
+          <a class="create-card" href="13-quick-request.html">
+            <span class="cicon g1"><i class="ri-flashlight-line"></i></span>
+            <span class="t">快捷请求</span>
+          </a>
+        </div>
+        <button class="create-more" data-toast="更多类型规划中（演示）">更多功能 ∨</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

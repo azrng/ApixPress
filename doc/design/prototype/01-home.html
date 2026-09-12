@@ -14,10 +14,11 @@
   <div class="titlebar">
     <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
     <div class="tb-tab active">首页 <span class="n">3</span></div>
+    <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
     <div class="tb-spacer"></div>
     <button class="tb-icon" data-toast="已刷新项目列表（演示）">⟳</button>
-    <button class="tb-icon" data-toast="应用设置见 10 弹窗合集（演示）">⚙</button>
-    <button class="tb-icon" data-open="#notifModal">🔔</button>
+    <button class="tb-icon" data-toast="应用设置见 10 弹窗合集（演示）"><i class="ri-settings-line"></i></button>
+    <button class="tb-icon" data-open="#notifModal"><i class="ri-notification-3-line"></i></button>
     <div class="tb-sep"></div>
     <button class="tb-icon">—</button><button class="tb-icon">▢</button><button class="tb-icon">✕</button>
   </div>
@@ -36,7 +37,8 @@
     <div class="card toolbar">
       <span class="cap">项目列表</span>
       <span class="hint">搜索项目名称或备注，点击卡片后在顶部以新标签页进入工作区。</span>
-      <div class="search-box" style="width:240px;flex:none;"><span>🔍</span><input id="homeSearch" placeholder="搜索项目…"></div>
+      <div class="search-box" style="width:240px;flex:none;"><span><i class="ri-search-line"></i></span><input id="homeSearch" placeholder="搜索项目…"></div>
+      <button class="btn btn-ghost" style="min-width:auto;" data-href="09-import-export.html">导入项目</button>
       <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-open="#newProjectModal">＋ 新建项目</button>
     </div>
 

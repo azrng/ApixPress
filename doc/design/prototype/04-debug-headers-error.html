@@ -16,6 +16,7 @@
     <div class="tb-tab" data-href="01-home.html">首页 <span class="n">3</span></div>
     <div class="tb-tab active" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
     <div class="tb-tab">获取用户详情 <span class="close">✕</span></div>
+    <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
     <div class="tb-spacer"></div>
     <div class="env-switch">
       <div class="env-chip"><span class="env-dot"></span><span class="env-chip-name">开发</span><span class="caret">▼</span></div>
@@ -26,7 +27,7 @@
         <div class="env-menu-foot" data-href="07-environments.html">管理环境…</div>
       </div>
     </div>
-    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）">⚙</button>
+    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）"><i class="ri-settings-line"></i></button>
   </div>
 
   <div class="shell">
@@ -52,61 +53,56 @@
         <span class="side-title">接口管理</span>
         <button class="icon-btn-violet" data-toast="新建 HTTP 接口（演示）">＋</button>
       </div>
-      <div class="search-box"><span>🔍</span><input placeholder="搜索"></div>
+      <div class="search-box"><span><i class="ri-search-line"></i></span><input placeholder="搜索"></div>
       <div class="tree">
-        <div class="tree-node">
-          <div class="tree-row" data-toggle style="padding-left:6px;">
-            <span class="caret open">▸</span><span>📁</span><span class="t">默认模块</span>
-          </div>
-          <div class="tree-children open">
             <div class="tree-node">
-              <div class="tree-row" data-toggle style="padding-left:24px;">
-                <span class="caret open">▸</span><span>🔗</span><span class="t">接口</span>
+              <div class="tree-row" data-toggle style="padding-left:6px;">
+                <span class="caret open">▸</span><span><i class="ri-link"></i></span><span class="t">接口</span>
                 <button class="row-more" data-toast="目录操作：新建目录 / 新建 HTTP 接口（演示）">⋯</button>
               </div>
               <div class="tree-children open">
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">EfCoreSample</span><span class="cnt">(7)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">EfCoreSample</span><span class="cnt">(7)</span>
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">Group</span><span class="cnt">(1)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">Group</span><span class="cnt">(1)</span>
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">Home</span><span class="cnt">(1)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">Home</span><span class="cnt">(1)</span>
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">HttpSample</span><span class="cnt">(8)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">HttpSample</span><span class="cnt">(8)</span>
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">LoadTest</span><span class="cnt">(1)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">LoadTest</span><span class="cnt">(1)</span>
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">Test</span><span class="cnt">(1)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">Test</span><span class="cnt">(1)</span>
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret open">▸</span><span>📁</span><span class="t">User</span><span class="cnt">(6)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret open">▸</span><span><i class="ri-folder-line"></i></span><span class="t">User</span><span class="cnt">(6)</span>
                   </div>
                   <div class="tree-children open">
                     <div class="tree-node">
-                      <div class="tree-row selected" data-toggle style="padding-left:66px;">
+                      <div class="tree-row selected" data-toggle style="padding-left:48px;">
                         <span class="caret open">▸</span><span class="badge get">GET</span><span class="t">获取用户详情 (1)</span>
                         <span class="status-dot" title="该接口有用例"></span>
                       </div>
                       <div class="tree-children open">
-                        <div class="tree-row case-node" style="padding-left:96px;">
+                        <div class="tree-row case-node" style="padding-left:78px;">
                           <span class="case-glyph">⎿</span><span class="t">异常 id</span>
                         </div>
                       </div>
@@ -115,17 +111,15 @@
                 </div>
               </div>
             </div>
-          </div>
-        </div>
       </div>
       <div class="side-section">
         <div class="tree-node">
           <div class="tree-row" data-toggle style="padding-left:6px; font-weight:500;">
-            <span class="caret open">▸</span><span>🌐</span><span class="t">快捷请求</span>
+            <span class="caret open">▸</span><span><i class="ri-earth-line"></i></span><span class="t">快捷请求</span>
           </div>
           <div class="tree-children open">
             <div class="tree-row" style="padding-left:30px;">
-              <span>➤</span><span class="t">Echo 探活</span>
+              <span><i class="ri-send-plane-line"></i></span><span class="t">Echo 探活</span>
             </div>
           </div>
         </div>
@@ -137,11 +131,6 @@
     <div class="main">
       <!-- 视图切换 + 接口名 -->
       <div class="card ctx-bar">
-        <div class="mode-bar" data-tabs="mode">
-          <button class="mode-btn checked" data-v="调试">调试</button>
-          <button class="mode-btn" data-v="设计">设计</button>
-          <button class="mode-btn" data-v="文档预览">文档预览</button>
-        </div>
         <input class="name-input" value="获取用户详情">
         <button class="code-btn" data-toast="生成请求代码见 02 页（演示）" title="生成请求代码">&lt;/&gt;</button>
       </div>
@@ -155,10 +144,13 @@
             <input class="path-input" value="/api/User/1">
           </div>
           <button class="btn btn-primary" id="sendBtn">发送</button>
-          <button class="btn btn-ghost" data-toast="已保存接口（演示）">保存</button>
-          <span class="v-sep"></span>
-          <input class="case-input" value="异常 id">
-          <button class="btn btn-ghost" data-toast="已保存为用例「异常 id」（演示）">保存测试用例</button>
+          <div class="btn-split">
+            <button class="btn btn-ghost" data-toast="已保存接口（演示）">保存</button>
+            <button class="btn btn-ghost split-caret" title="更多保存方式">▾</button>
+            <div class="split-menu">
+              <div class="split-item" data-open="#saveCaseModal">保存为用例</div>
+            </div>
+          </div>
         </div>
 
         <!-- 请求配置 Tabs -->
@@ -180,7 +172,7 @@
               <span><input class="cell-input" value="id"></span>
               <span><input class="cell-input" value="1"></span>
               <span><input class="cell-input" placeholder="说明"></span>
-              <span class="del-btn">🗑</span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
           </div>
         </div>
@@ -209,21 +201,21 @@
               <span><input class="cell-input mono" value="Authorization"></span>
               <span><input class="cell-input mono" value="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6..."></span>
               <span><input class="cell-input" value="登录令牌，引用 {{token}}"></span>
-              <span class="del-btn">🗑</span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
             <div class="table-row">
               <span><span class="checkbox on"></span></span>
               <span><input class="cell-input mono" value="Content-Type"></span>
               <span><input class="cell-input mono" value="application/json"></span>
               <span><input class="cell-input" placeholder="说明"></span>
-              <span class="del-btn">🗑</span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
             <div class="table-row">
               <span><span class="checkbox"></span></span>
               <span><input class="cell-input mono" value="X-Debug"></span>
               <span><input class="cell-input mono" value="true"></span>
               <span><input class="cell-input" value="调试用，默认关闭"></span>
-              <span class="del-btn">🗑</span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
           </div>
         </div>
@@ -268,6 +260,23 @@
     </div>
   </div>
 
+  <!-- 保存为用例弹窗 -->
+  <div class="modal-wrap" id="saveCaseModal">
+    <div class="modal" style="width:440px;">
+      <div class="modal-head"><span class="modal-title">保存为用例</span><button class="drawer-close" data-close>✕</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <span class="form-label">用例名称 <span style="color:var(--err);">*</span></span>
+          <input class="form-input" id="caseName" placeholder="例如：正常 id / 异常 id / 参数缺失">
+        </div>
+        <div class="form-hint">用例会挂在当前接口下，可在「接口用例」抽屉中加载或管理。</div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close>取消</button>
+        <button class="btn btn-primary" id="caseSaveBtn">保存用例</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="shared.js"></script>
@@ -302,6 +311,15 @@
     var rows = this.querySelectorAll(".table-row:not(.header)");
     if (rows.length > 1) del.closest(".table-row").remove();
     else protoToast("至少保留一行 Header");
+  });
+
+  // 保存为用例：校验名称 → 关闭弹窗 → 提示
+  document.getElementById("caseSaveBtn").addEventListener("click", function () {
+    var name = document.getElementById("caseName").value.trim();
+    if (!name) { protoToast("请先填写用例名称"); return; }
+    document.getElementById("saveCaseModal").classList.remove("open");
+    protoAttachCaseToSelectedTree(name);
+    protoToast("用例「" + name + "」已保存，可在接口用例抽屉中管理（演示）");
   });
 </script>
 </body>

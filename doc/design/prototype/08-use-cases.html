@@ -16,6 +16,7 @@
     <div class="tb-tab" data-href="01-home.html">首页 <span class="n">3</span></div>
     <div class="tb-tab active" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
     <div class="tb-tab">获取班级信息 <span class="close">✕</span></div>
+    <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
     <div class="tb-spacer"></div>
     <div class="env-switch">
       <div class="env-chip"><span class="env-dot"></span><span class="env-chip-name">开发</span><span class="caret">▼</span></div>
@@ -26,7 +27,7 @@
         <div class="env-menu-foot" data-href="07-environments.html">管理环境…</div>
       </div>
     </div>
-    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）">⚙</button>
+    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）"><i class="ri-settings-line"></i></button>
   </div>
 
   <div class="shell">
@@ -50,25 +51,20 @@
         <span class="side-title">接口管理</span>
         <button class="icon-btn-violet" data-toast="新建接口（演示）">＋</button>
       </div>
-      <div class="search-box"><span>🔍</span><input placeholder="搜索"></div>
+      <div class="search-box"><span><i class="ri-search-line"></i></span><input placeholder="搜索"></div>
       <div class="tree">
-        <div class="tree-node">
-          <div class="tree-row" data-toggle style="padding-left:6px;">
-            <span class="caret open">▸</span><span>📁</span><span class="t">默认模块</span>
-          </div>
-          <div class="tree-children open">
             <div class="tree-node">
-              <div class="tree-row" data-toggle style="padding-left:24px;">
-                <span class="caret open">▸</span><span>🔗</span><span class="t">接口</span>
+              <div class="tree-row" data-toggle style="padding-left:6px;">
+                <span class="caret open">▸</span><span><i class="ri-link"></i></span><span class="t">接口</span>
                 <button class="row-more" data-toast="目录操作：新建目录 / 新建 HTTP 接口（演示）">⋯</button>
               </div>
               <div class="tree-children open">
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret open">▸</span><span>📁</span><span class="t">Group</span><span class="cnt">(1)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret open">▸</span><span><i class="ri-folder-line"></i></span><span class="t">Group</span><span class="cnt">(1)</span>
                   </div>
                   <div class="tree-children open">
-                    <div class="tree-row selected" data-open="#caseDrawer" style="padding-left:66px;">
+                    <div class="tree-row selected" data-open="#caseDrawer" style="padding-left:48px;">
                       <span class="badge get">GET</span><span class="t">获取班级信息</span>
                       <span class="cnt">(3 个用例)</span>
                       <span class="status-dot" title="该接口有用例"></span>
@@ -76,25 +72,18 @@
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">HttpSample</span><span class="cnt">(8)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">HttpSample</span><span class="cnt">(8)</span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
       </div>
     </div>
 
     <div class="main">
       <!-- 调试区：已加载「成功」用例 -->
       <div class="card ctx-bar">
-        <div class="mode-bar" data-tabs="mode">
-          <button class="mode-btn checked" data-v="调试">调试</button>
-          <button class="mode-btn" data-v="设计">设计</button>
-          <button class="mode-btn" data-v="文档预览">文档预览</button>
-        </div>
         <input class="name-input" value="获取班级信息">
         <button class="code-btn" data-toast="生成请求代码见 02 页（演示）">&lt;/&gt;</button>
       </div>
@@ -127,7 +116,7 @@
               <span><input class="cell-input" value="groupId"></span>
               <span><input class="cell-input" value="1"></span>
               <span><input class="cell-input" placeholder="说明"></span>
-              <span class="del-btn">🗑</span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
           </div>
         </div>

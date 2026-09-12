@@ -16,6 +16,7 @@
     <div class="tb-tab" data-href="01-home.html">首页 <span class="n">3</span></div>
     <div class="tb-tab active" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
     <div class="tb-tab">上传附件 <span class="close">✕</span></div>
+    <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
     <div class="tb-spacer"></div>
     <div class="env-switch">
       <div class="env-chip"><span class="env-dot"></span><span class="env-chip-name">开发</span><span class="caret">▼</span></div>
@@ -26,7 +27,7 @@
         <div class="env-menu-foot" data-href="07-environments.html">管理环境…</div>
       </div>
     </div>
-    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）">⚙</button>
+    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）"><i class="ri-settings-line"></i></button>
   </div>
 
   <div class="shell">
@@ -52,45 +53,40 @@
         <span class="side-title">接口管理</span>
         <button class="icon-btn-violet" data-toast="新建 HTTP 接口（演示）">＋</button>
       </div>
-      <div class="search-box"><span>🔍</span><input placeholder="搜索"></div>
+      <div class="search-box"><span><i class="ri-search-line"></i></span><input placeholder="搜索"></div>
       <div class="tree">
-        <div class="tree-node">
-          <div class="tree-row" data-toggle style="padding-left:6px;">
-            <span class="caret open">▸</span><span>📁</span><span class="t">默认模块</span>
-          </div>
-          <div class="tree-children open">
             <div class="tree-node">
-              <div class="tree-row" data-toggle style="padding-left:24px;">
-                <span class="caret open">▸</span><span>🔗</span><span class="t">接口</span>
+              <div class="tree-row" data-toggle style="padding-left:6px;">
+                <span class="caret open">▸</span><span><i class="ri-link"></i></span><span class="t">接口</span>
                 <button class="row-more" data-toast="目录操作：新建目录 / 新建 HTTP 接口（演示）">⋯</button>
               </div>
               <div class="tree-children open">
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">EfCoreSample</span><span class="cnt">(7)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">EfCoreSample</span><span class="cnt">(7)</span>
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">Group</span><span class="cnt">(1)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">Group</span><span class="cnt">(1)</span>
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">Home</span><span class="cnt">(1)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">Home</span><span class="cnt">(1)</span>
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret open">▸</span><span>📁</span><span class="t">HttpSample</span><span class="cnt">(8)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret open">▸</span><span><i class="ri-folder-line"></i></span><span class="t">HttpSample</span><span class="cnt">(8)</span>
                   </div>
                   <div class="tree-children open">
                     <div class="tree-node">
-                      <div class="tree-row" data-toggle style="padding-left:60px;">
-                        <span class="caret open">▸</span><span>📁</span><span class="t">上传</span><span class="cnt">(1)</span>
+                      <div class="tree-row" data-toggle style="padding-left:42px;">
+                        <span class="caret open">▸</span><span><i class="ri-folder-line"></i></span><span class="t">上传</span><span class="cnt">(1)</span>
                       </div>
                       <div class="tree-children open">
-                        <div class="tree-row selected" style="padding-left:84px;">
+                        <div class="tree-row selected" style="padding-left:66px;">
                           <span class="badge post">POST</span><span class="t">上传附件</span>
                         </div>
                       </div>
@@ -98,33 +94,31 @@
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">LoadTest</span><span class="cnt">(1)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">LoadTest</span><span class="cnt">(1)</span>
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">Test</span><span class="cnt">(1)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">Test</span><span class="cnt">(1)</span>
                   </div>
                 </div>
                 <div class="tree-node">
-                  <div class="tree-row" data-toggle style="padding-left:42px;">
-                    <span class="caret">▸</span><span>📁</span><span class="t">User</span><span class="cnt">(6)</span>
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">User</span><span class="cnt">(6)</span>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
       </div>
       <div class="side-section">
         <div class="tree-node">
           <div class="tree-row" data-toggle style="padding-left:6px; font-weight:500;">
-            <span class="caret open">▸</span><span>🌐</span><span class="t">快捷请求</span>
+            <span class="caret open">▸</span><span><i class="ri-earth-line"></i></span><span class="t">快捷请求</span>
           </div>
           <div class="tree-children open">
             <div class="tree-row" style="padding-left:30px;">
-              <span>➤</span><span class="t">Echo 探活</span>
+              <span><i class="ri-send-plane-line"></i></span><span class="t">Echo 探活</span>
             </div>
           </div>
         </div>
@@ -136,11 +130,6 @@
     <div class="main">
       <!-- 视图切换 + 接口名 -->
       <div class="card ctx-bar">
-        <div class="mode-bar" data-tabs="mode">
-          <button class="mode-btn checked" data-v="调试">调试</button>
-          <button class="mode-btn" data-v="设计">设计</button>
-          <button class="mode-btn" data-v="文档预览">文档预览</button>
-        </div>
         <input class="name-input" value="上传附件（multipart 多文件）">
         <button class="code-btn" data-toast="生成请求代码见 02 页（演示）" title="生成请求代码">&lt;/&gt;</button>
       </div>
@@ -155,9 +144,13 @@
           </div>
           <button class="btn btn-primary" id="sendBtn">发送</button>
           <button class="btn btn-ghost" id="cancelBtn" style="display:none; color:var(--err); border-color:rgba(248,113,113,.4);">取消</button>
-          <span class="v-sep"></span>
-          <input class="case-input" value="多文件">
-          <button class="btn btn-ghost" data-toast="已保存为用例「多文件」（演示）">保存测试用例</button>
+          <div class="btn-split">
+            <button class="btn btn-ghost" data-toast="已保存接口（演示）">保存</button>
+            <button class="btn btn-ghost split-caret" title="更多保存方式">▾</button>
+            <div class="split-menu">
+              <div class="split-item" data-open="#saveCaseModal">保存为用例</div>
+            </div>
+          </div>
         </div>
 
         <!-- 请求配置 Tabs -->
@@ -214,13 +207,13 @@
                 <span><input class="cell-input" value="remark"></span>
                 <span><span class="type-chip" data-type="text">text ▾</span></span>
                 <span><input class="cell-input" value="上传附件"></span>
-                <span class="del-btn">🗑</span>
+                <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
               </div>
               <!-- 文件字段：多文件 -->
               <div class="table-row files">
                 <span><span class="checkbox on"></span></span>
                 <span><input class="cell-input" value="files[]"></span>
-                <span><span class="type-chip file" data-type="file">📎 file ▾</span></span>
+                <span><span class="type-chip file" data-type="file"><i class="ri-attachment-line"></i> file ▾</span></span>
                 <span>
                   <div class="file-chips">
                     <span class="file-chip"><span class="fname">需求说明书-v2.pdf</span><span class="fsize">1.8 MB</span><span class="x">✕</span></span>
@@ -228,15 +221,15 @@
                     <button class="file-add">＋ 添加文件</button>
                   </div>
                 </span>
-                <span class="del-btn">🗑</span>
+                <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
               </div>
               <!-- 未启用的文件字段 -->
               <div class="table-row files">
                 <span><span class="checkbox"></span></span>
                 <span><input class="cell-input" value="avatar"></span>
-                <span><span class="type-chip file" data-type="file">📎 file ▾</span></span>
+                <span><span class="type-chip file" data-type="file"><i class="ri-attachment-line"></i> file ▾</span></span>
                 <span><div class="file-chips"><span class="file-chip"><span class="fname">头像.png</span><span class="fsize">96 KB</span><span class="x">✕</span></span></div></span>
-                <span class="del-btn">🗑</span>
+                <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
               </div>
             </div>
           </div>
@@ -257,7 +250,7 @@
               <span><input class="cell-input mono" value="X-Trace-Id"></span>
               <span><input class="cell-input mono" value="{{traceId}}"></span>
               <span><input class="cell-input" value="链路追踪，引用环境变量"></span>
-              <span class="del-btn">🗑</span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
           </div>
         </div>
@@ -324,6 +317,23 @@
     </div>
   </div>
 
+  <!-- 保存为用例弹窗 -->
+  <div class="modal-wrap" id="saveCaseModal">
+    <div class="modal" style="width:440px;">
+      <div class="modal-head"><span class="modal-title">保存为用例</span><button class="drawer-close" data-close>✕</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <span class="form-label">用例名称 <span style="color:var(--err);">*</span></span>
+          <input class="form-input" id="caseName" placeholder="例如：多文件 / 单文件 / 空文件">
+        </div>
+        <div class="form-hint">用例会挂在当前接口下，可在「接口用例」抽屉中加载或管理。</div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close>取消</button>
+        <button class="btn btn-primary" id="caseSaveBtn">保存用例</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="shared.js"></script>
@@ -376,7 +386,7 @@
       var isFile = chip.getAttribute("data-type") === "file";
       chip.setAttribute("data-type", isFile ? "text" : "file");
       chip.classList.toggle("file", !isFile);
-      chip.textContent = isFile ? "text ▾" : "📎 file ▾";
+      chip.textContent = isFile ? "text ▾" : "<i class="ri-attachment-line"></i> file ▾";
       return;
     }
     // 文件 chip 删除
@@ -413,6 +423,15 @@
     var rows = this.querySelectorAll(".table-row:not(.header)");
     if (rows.length > 1) del.closest(".table-row").remove();
     else protoToast("至少保留一行参数");
+  });
+
+  // 保存为用例：校验名称 → 关闭弹窗 → 提示
+  document.getElementById("caseSaveBtn").addEventListener("click", function () {
+    var name = document.getElementById("caseName").value.trim();
+    if (!name) { protoToast("请先填写用例名称"); return; }
+    document.getElementById("saveCaseModal").classList.remove("open");
+    protoAttachCaseToSelectedTree(name);
+    protoToast("用例「" + name + "」已保存，可在接口用例抽屉中管理（演示）");
   });
 </script>
 </body>
