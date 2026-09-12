@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress 原型 · 07 环境变量</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<!-- 原型页导航 -->
+<div class="proto-nav">
+  <a href="index.html">原型总览</a>
+  <a href="01-home.html">01 项目首页</a>
+  <a href="02-debug-params.html">02 调试·Params</a>
+  <a href="03-debug-body-upload.html">03 调试·Body</a>
+  <a href="04-debug-headers-error.html">04 调试·Headers</a>
+  <a href="05-history.html">05 请求历史</a>
+  <a href="06-project-settings.html">06 项目设置</a>
+  <a class="current" href="07-environments.html">07 环境变量</a>
+  <a href="08-use-cases.html">08 接口用例</a>
+  <a href="09-import-export.html">09 导入导出</a>
+  <a href="10-dialogs.html">10 弹窗合集</a>
+  <span class="pos">07 / 10</span>
+</div>
+
+<!-- ═══════════════ 环境变量抽屉（工作台之上滑出） ═══════════════ -->
+<div class="window">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab">首页 <span class="n">3</span></div>
+    <div class="tb-tab active">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-tab">获取班级信息 <span class="close">✕</span></div>
+    <div class="tb-spacer"></div>
+    <div class="env-chip highlight"><span class="env-dot"></span>开发<span class="caret">▼</span></div>
+    <button class="tb-icon">⚙</button>
+  </div>
+
+  <div class="shell">
+    <div class="rail">
+      <button class="nav-item selected">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <span class="t">接口管理</span>
+      </button>
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="t">请求历史</span>
+      </button>
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span>
+        <span class="t">项目设置</span>
+      </button>
+    </div>
+
+    <div class="sidebar">
+      <div class="side-head">
+        <span class="side-title">接口管理</span>
+        <button class="icon-btn-violet">＋</button>
+      </div>
+      <div class="search-box"><span>🔍</span><input placeholder="搜索"></div>
+      <div class="tree">
+        <div class="tree-group"><span class="caret">▾</span>📁 默认模块</div>
+        <div class="tree-leaf selected" style="padding-left:30px;"><span class="badge get">GET</span>获取班级信息</div>
+        <div class="tree-leaf" style="padding-left:30px;"><span class="badge post">POST</span>上传附件</div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="card ctx-bar">
+        <div class="mode-bar">
+          <button class="mode-btn checked">调试</button>
+          <button class="mode-btn">设计</button>
+          <button class="mode-btn">文档预览</button>
+        </div>
+        <input class="name-input" value="获取班级信息">
+        <button class="code-btn">&lt;/&gt;</button>
+      </div>
+      <div class="card" style="padding:2px 12px 12px; margin-top:-10px;">
+        <div class="url-row" style="padding:12px 0 0;">
+          <div class="url-shell">
+            <span class="method-select get">GET <span class="caret">▼</span></span>
+            <span class="base-chip">{{BaseUrl}}</span>
+            <input class="path-input" value="/api/Group/GetGroupList">
+          </div>
+          <button class="btn btn-primary">发送</button>
+          <button class="btn btn-ghost">保存</button>
+        </div>
+      </div>
+      <div class="card resp-card">
+        <div class="resp-head">
+          <span class="resp-title">返回响应</span>
+          <span class="resp-spacer"></span>
+          <span class="status-badge ok">HTTP 200</span>
+          <span class="metric">126 ms</span>
+        </div>
+        <div class="resp-tabs"><span class="sub-tab active">Body</span><span class="sub-tab">Headers</span></div>
+        <div class="resp-loading" style="display:none;"></div>
+        <div class="resp-body" style="flex:1;"><span class="j-punc">{</span> <span class="j-punc">"…":</span> <span class="j-str">"调试区被环境抽屉暂时遮罩"</span> <span class="j-punc">}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遮罩 + 环境抽屉 -->
+  <div class="overlay-dim"></div>
+  <div class="drawer">
+    <div class="drawer-head">
+      <span class="drawer-title">环境变量</span>
+      <button class="btn-add">＋ 新增环境</button>
+      <button class="drawer-close">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- 激活环境 -->
+      <div class="env-card active">
+        <div class="env-card-head">
+          <span class="checkbox on"></span>
+          <span class="ename">开发</span>
+          <span class="eurl">http://localhost:5050</span>
+          <span class="chip">激活</span>
+        </div>
+        <div class="env-vars">
+          <div class="env-var-row">
+            <input class="cell-input mono" value="BaseUrl">
+            <input class="cell-input mono" value="http://localhost:5050">
+            <span class="del-btn">🗑</span>
+          </div>
+          <div class="env-var-row">
+            <input class="cell-input mono" value="token">
+            <input class="cell-input mono" value="eyJhbGciOiJIUzI1NiIs...">
+            <span class="del-btn">🗑</span>
+          </div>
+          <div class="env-var-row">
+            <input class="cell-input mono" value="groupId">
+            <input class="cell-input mono" value="1">
+            <span class="del-btn">🗑</span>
+          </div>
+        </div>
+        <div class="env-cap"><span>3 个变量 · 发送时自动替换 {{变量名}}</span><button class="btn-add" style="height:24px;padding:0 10px;">＋ 新增变量</button></div>
+      </div>
+
+      <!-- 测试环境 -->
+      <div class="env-card">
+        <div class="env-card-head">
+          <span class="checkbox on"></span>
+          <span class="ename">测试</span>
+          <span class="eurl">https://test.example.com</span>
+        </div>
+        <div class="env-vars">
+          <div class="env-var-row">
+            <input class="cell-input mono" value="BaseUrl">
+            <input class="cell-input mono" value="https://test.example.com">
+            <span class="del-btn">🗑</span>
+          </div>
+        </div>
+        <div class="env-cap"><span>1 个变量</span><button class="btn-add" style="height:24px;padding:0 10px;">＋ 新增变量</button></div>
+      </div>
+
+      <!-- 生产环境 -->
+      <div class="env-card">
+        <div class="env-card-head">
+          <span class="checkbox on"></span>
+          <span class="ename">生产</span>
+          <span class="eurl">https://api.example.com</span>
+        </div>
+        <div class="env-vars">
+          <div class="env-var-row">
+            <input class="cell-input mono" value="BaseUrl">
+            <input class="cell-input mono" value="https://api.example.com">
+            <span class="del-btn">🗑</span>
+          </div>
+          <div class="env-var-row">
+            <input class="cell-input mono" value="token">
+            <input class="cell-input mono" value="••••••••（已隐藏）">
+            <span class="del-btn">🗑</span>
+          </div>
+        </div>
+        <div class="env-cap"><span>2 个变量</span><button class="btn-add" style="height:24px;padding:0 10px;">＋ 新增变量</button></div>
+      </div>
+    </div>
+
+    <!-- 删除确认内联条 -->
+    <div style="margin:0 16px 10px; padding:9px 12px; border:1px solid rgba(248,113,113,.4); background:rgba(248,113,113,.06); border-radius:var(--r-md); display:flex; align-items:center; gap:10px;">
+      <span style="flex:1; font-size:12px; color:var(--text-secondary); line-height:1.5;">删除「生产」环境？若这是激活环境，系统会自动切换到其他环境。</span>
+      <button class="btn btn-danger" style="height:26px;min-width:auto;padding:0 12px;font-size:12px;">确认删除</button>
+      <button class="btn btn-ghost" style="height:26px;min-width:auto;padding:0 12px;font-size:12px;">取消</button>
+    </div>
+
+    <div class="drawer-foot">
+      <button class="btn btn-primary">保存环境</button>
+      <button class="btn btn-ghost danger">删除环境</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

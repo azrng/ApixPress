@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress 原型 · 03 接口调试 Body 与多文件上传</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<!-- 原型页导航 -->
+<div class="proto-nav">
+  <a href="index.html">原型总览</a>
+  <a href="01-home.html">01 项目首页</a>
+  <a href="02-debug-params.html">02 调试·Params</a>
+  <a class="current" href="03-debug-body-upload.html">03 调试·Body</a>
+  <a href="04-debug-headers-error.html">04 调试·Headers</a>
+  <a href="05-history.html">05 请求历史</a>
+  <a href="06-project-settings.html">06 项目设置</a>
+  <a href="07-environments.html">07 环境变量</a>
+  <a href="08-use-cases.html">08 接口用例</a>
+  <a href="09-import-export.html">09 导入导出</a>
+  <a href="10-dialogs.html">10 弹窗合集</a>
+  <span class="pos">03 / 10</span>
+</div>
+
+<!-- ═══════════════ 接口调试：Body 多模式 + multipart 多文件 + 发送中状态 ═══════════════ -->
+<div class="window">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab">首页 <span class="n">3</span></div>
+    <div class="tb-tab active">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-tab">上传附件 <span class="close">✕</span></div>
+    <div class="tb-spacer"></div>
+    <div class="env-chip"><span class="env-dot"></span>开发<span class="caret">▼</span></div>
+    <button class="tb-icon">⚙</button>
+  </div>
+
+  <div class="shell">
+    <!-- 左导航 -->
+    <div class="rail">
+      <button class="nav-item selected">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <span class="t">接口管理</span>
+      </button>
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="t">请求历史</span>
+      </button>
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span>
+        <span class="t">项目设置</span>
+      </button>
+    </div>
+
+    <!-- 接口树侧栏 -->
+    <div class="sidebar">
+      <div class="side-head">
+        <span class="side-title">接口管理</span>
+        <button class="icon-btn-violet">＋</button>
+      </div>
+      <div class="search-box"><span>🔍</span><input placeholder="搜索"></div>
+      <div class="tree">
+        <div class="tree-group"><span class="caret">▾</span>📁 默认模块</div>
+        <div class="tree-group" style="padding-left:24px;"><span class="caret">▾</span>🔗 接口</div>
+        <div class="tree-leaf" style="padding-left:52px;"><span class="caret" style="width:auto;">▸</span>📁 HttpSample <span class="cnt">(8)</span></div>
+        <div class="tree-leaf selected" style="padding-left:74px;"><span class="badge post">POST</span>上传附件</div>
+        <div class="tree-leaf" style="padding-left:52px;"><span class="caret" style="width:auto;">▸</span>📁 User <span class="cnt">(6)</span></div>
+      </div>
+      <div class="side-section">
+        <div class="side-cap"><span class="caret">▾</span>⚡ 快捷请求</div>
+        <div class="side-cap" style="justify-content:center;color:var(--text-secondary);font-size:12px;margin-top:6px;border:1px solid var(--border-subtle);">＋ 新建</div>
+      </div>
+    </div>
+
+    <!-- 主工作区 -->
+    <div class="main">
+      <!-- 视图切换 + 接口名 -->
+      <div class="card ctx-bar">
+        <div class="mode-bar">
+          <button class="mode-btn checked">调试</button>
+          <button class="mode-btn">设计</button>
+          <button class="mode-btn">文档预览</button>
+        </div>
+        <input class="name-input" value="上传附件（multipart 多文件）">
+        <button class="code-btn" title="生成请求代码">&lt;/&gt;</button>
+      </div>
+
+      <!-- URL 行：发送中状态 -->
+      <div class="card" style="padding:2px 12px 12px; margin-top:-10px;">
+        <div class="url-row" style="padding:12px 0 0;">
+          <div class="url-shell">
+            <span class="method-select post">POST <span class="caret">▼</span></span>
+            <span class="base-chip">http://localhost:5050</span>
+            <input class="path-input" value="/api/HttpSample/upload-multiple">
+          </div>
+          <button class="btn btn-primary loading"><span class="spinner"></span>发送中…</button>
+          <button class="btn btn-ghost" style="color:var(--err);border-color:rgba(248,113,113,.4);">取消</button>
+          <span class="v-sep"></span>
+          <input class="case-input" value="多文件">
+          <button class="btn btn-ghost">保存测试用例</button>
+        </div>
+
+        <!-- 请求配置：Body -->
+        <div class="sub-tabs" style="margin-top:10px;">
+          <span class="sub-tab">Params</span>
+          <span class="sub-tab active">Body <span class="cnt">2</span></span>
+          <span class="sub-tab">Headers <span class="cnt">1</span></span>
+        </div>
+
+        <!-- Body 模式切换 -->
+        <div class="body-modes">
+          <button class="body-mode">none</button>
+          <button class="body-mode on">form-data</button>
+          <button class="body-mode">x-www-form-urlencoded</button>
+          <button class="body-mode">JSON</button>
+          <button class="body-mode">XML</button>
+          <button class="body-mode">RAW</button>
+          <button class="body-mode">Binary</button>
+        </div>
+
+        <div class="section-head">
+          <div>
+            <div class="section-title">form-data 参数</div>
+            <div class="section-hint">文本与文件字段混排；同一文件字段可选择多个文件，随 multipart 一次性上传。</div>
+          </div>
+          <button class="btn-add">添加参数</button>
+        </div>
+        <div class="table">
+          <div class="table-row files header">
+            <span class="th-check"><span class="checkbox on"></span>启用</span>
+            <span>参数名</span><span>类型</span><span>参数值</span><span></span>
+          </div>
+          <!-- 文本字段 -->
+          <div class="table-row files">
+            <span><span class="checkbox on"></span></span>
+            <span><input class="cell-input" value="remark"></span>
+            <span><span class="type-chip">text ▾</span></span>
+            <span><input class="cell-input" value="上传附件"></span>
+            <span class="del-btn">🗑</span>
+          </div>
+          <!-- 文件字段：多文件 -->
+          <div class="table-row files">
+            <span><span class="checkbox on"></span></span>
+            <span><input class="cell-input" value="files[]"></span>
+            <span><span class="type-chip file">📎 file ▾</span></span>
+            <span>
+              <div class="file-chips">
+                <span class="file-chip"><span class="fname">需求说明书-v2.pdf</span><span class="fsize">1.8 MB</span><span class="x">✕</span></span>
+                <span class="file-chip"><span class="fname">界面设计稿.png</span><span class="fsize">486 KB</span><span class="x">✕</span></span>
+                <button class="file-add">＋ 添加文件</button>
+              </div>
+            </span>
+            <span class="del-btn">🗑</span>
+          </div>
+          <!-- 未启用的文件字段 -->
+          <div class="table-row files">
+            <span><span class="checkbox"></span></span>
+            <span><input class="cell-input" value="avatar"></span>
+            <span><span class="type-chip file">📎 file ▾</span></span>
+            <span><div class="file-chips"><span class="file-chip"><span class="fname">头像.png</span><span class="fsize">96 KB</span><span class="x">✕</span></span></div></span>
+            <span class="del-btn">🗑</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 返回响应：发送中 -->
+      <div class="card resp-card">
+        <div class="resp-head">
+          <span class="resp-title">返回响应</span>
+          <span class="resp-spacer"></span>
+          <span class="metric"><span class="spinner violet" style="display:inline-block;vertical-align:-2px;margin-right:6px;"></span>计时中…</span>
+        </div>
+        <div class="resp-tabs">
+          <span class="sub-tab active">Body</span>
+          <span class="sub-tab">Headers</span>
+        </div>
+        <div class="resp-loading">
+          <span class="spinner violet big-spinner"></span>
+          <div class="ld-title">请求发送中…</div>
+          <div class="ld-hint">POST http://localhost:5050/api/HttpSample/upload-multiple　·　正在上传 2 个文件（2.3 MB）</div>
+          <div class="ld-hint">等待服务器响应，可点击「取消」中止本次请求。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

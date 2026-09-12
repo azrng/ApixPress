@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress 原型 · 06 项目设置</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<!-- 原型页导航 -->
+<div class="proto-nav">
+  <a href="index.html">原型总览</a>
+  <a href="01-home.html">01 项目首页</a>
+  <a href="02-debug-params.html">02 调试·Params</a>
+  <a href="03-debug-body-upload.html">03 调试·Body</a>
+  <a href="04-debug-headers-error.html">04 调试·Headers</a>
+  <a href="05-history.html">05 请求历史</a>
+  <a class="current" href="06-project-settings.html">06 项目设置</a>
+  <a href="07-environments.html">07 环境变量</a>
+  <a href="08-use-cases.html">08 接口用例</a>
+  <a href="09-import-export.html">09 导入导出</a>
+  <a href="10-dialogs.html">10 弹窗合集</a>
+  <span class="pos">06 / 10</span>
+</div>
+
+<!-- ═══════════════ 项目设置 ═══════════════ -->
+<div class="window">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab">首页 <span class="n">3</span></div>
+    <div class="tb-tab active">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-spacer"></div>
+    <div class="env-chip"><span class="env-dot"></span>开发<span class="caret">▼</span></div>
+    <button class="tb-icon">⚙</button>
+  </div>
+
+  <div class="shell">
+    <div class="rail">
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <span class="t">接口管理</span>
+      </button>
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="t">请求历史</span>
+      </button>
+      <button class="nav-item selected">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span>
+        <span class="t">项目设置</span>
+      </button>
+    </div>
+
+    <div class="settings-layout">
+      <div class="settings-nav">
+        <div class="side-title" style="margin-bottom:12px;">项目设置</div>
+        <div class="sn-item active">基本设置</div>
+        <div class="sn-item">数据管理</div>
+        <div class="sn-item" onclick="location.href='09-import-export.html'">导入数据</div>
+        <div class="sn-item" onclick="location.href='09-import-export.html'">导出数据</div>
+        <div style="margin-top:18px; padding:12px; background:var(--bg-subtle); border-radius:var(--r-md); font-size:12px; color:var(--text-secondary); line-height:1.8;">
+          <b style="color:var(--text-primary);">example（默认）</b><br>
+          当前环境：开发<br>
+          已导入：1 份文档
+        </div>
+      </div>
+
+      <div class="page" style="padding:0;">
+        <div class="card" style="padding:16px 18px;">
+          <div class="section-title">基本信息</div>
+          <div class="section-hint" style="margin:4px 0 8px;">在这里维护当前项目名称、项目 ID 和项目简介。</div>
+          <div class="info-row">
+            <span class="info-label">项目名称</span><span class="info-value">example</span>
+            <button class="link-btn">编辑</button>
+          </div>
+          <div class="info-row">
+            <span class="info-label">项目 ID</span><span class="info-value" style="font-family:var(--mono); font-size:12px;">9494334d7a8f48b4ac617c40e65f9180</span>
+            <button class="link-btn" style="color:var(--text-secondary);">复制</button>
+          </div>
+          <div class="info-row">
+            <span class="info-label">简介</span><span class="info-value">当前项目还没有补充备注，可在这里继续维护环境与工作区说明。</span>
+            <button class="link-btn">编辑</button>
+          </div>
+        </div>
+
+        <div class="danger-zone">
+          <div class="dz-head">
+            <div class="dz-title">危险操作</div>
+            <div class="dz-hint">这些操作会直接影响当前项目数据，请确认已导出或备份后再继续。</div>
+          </div>
+          <div class="dz-row">
+            <div class="dz-body">
+              <div class="dz-name">清空项目数据</div>
+              <div class="dz-desc">删除当前项目的接口、用例、导入文档、环境变量和请求历史，保留项目名称与简介，并重建一个空的开发环境。</div>
+            </div>
+            <button class="btn btn-danger">清空项目数据</button>
+          </div>
+          <div class="dz-row">
+            <div class="dz-body">
+              <div class="dz-name">删除项目</div>
+              <div class="dz-desc">删除当前项目及其全部接口、用例、导入文档、环境配置和请求历史；删除后会关闭该项目标签。</div>
+            </div>
+            <button class="btn btn-danger">删除项目</button>
+          </div>
+          <div class="dz-foot">危险操作需要二次确认后才会执行。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress 原型 · 01 项目首页</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<!-- 原型页导航 -->
+<div class="proto-nav">
+  <a href="index.html">原型总览</a>
+  <a class="current" href="01-home.html">01 项目首页</a>
+  <a href="02-debug-params.html">02 调试·Params</a>
+  <a href="03-debug-body-upload.html">03 调试·Body</a>
+  <a href="04-debug-headers-error.html">04 调试·Headers</a>
+  <a href="05-history.html">05 请求历史</a>
+  <a href="06-project-settings.html">06 项目设置</a>
+  <a href="07-environments.html">07 环境变量</a>
+  <a href="08-use-cases.html">08 接口用例</a>
+  <a href="09-import-export.html">09 导入导出</a>
+  <a href="10-dialogs.html">10 弹窗合集</a>
+  <span class="pos">01 / 10</span>
+</div>
+
+<!-- ═══════════════ 项目首页 ═══════════════ -->
+<div class="window">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab active">首页 <span class="n">3</span></div>
+    <div class="tb-spacer"></div>
+    <button class="tb-icon">⟳</button><button class="tb-icon">⚙</button><button class="tb-icon">🔔</button>
+    <div class="tb-sep"></div>
+    <button class="tb-icon">—</button><button class="tb-icon">▢</button><button class="tb-icon">✕</button>
+  </div>
+  <div class="page">
+    <div class="card home-header">
+      <div class="page-title-row">
+        <span class="page-title">项目首页</span>
+        <span class="chip">本地工作区</span>
+      </div>
+      <div class="page-sub">本地 API 工作区：筛选、浏览项目卡片，并以标签页打开工作台。</div>
+      <div class="metric-line">
+        项目 <b>3</b> <span>·</span> 当前可见 <b>3</b> <span>·</span> 已打开标签 <b>0</b>
+      </div>
+    </div>
+
+    <div class="card toolbar">
+      <span class="cap">项目列表</span>
+      <span class="hint">搜索项目名称或备注，点击卡片后在顶部以新标签页进入工作区。</span>
+      <div class="search-box" style="width:240px;flex:none;"><span>🔍</span><input placeholder="搜索"></div>
+      <button class="btn btn-primary" style="min-width:auto;padding:0 18px;">＋ 新建项目</button>
+    </div>
+
+    <div class="tiles">
+      <div class="tile">
+        <div class="tile-head">
+          <div class="tile-icon g2">E</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tile-name">example</div>
+            <div class="tile-hint">点击后在顶部打开独立工作标签</div>
+          </div>
+          <span class="default-badge">默认</span>
+        </div>
+        <div class="tile-summary">暂无备注信息，可进入项目详情继续完善说明。</div>
+        <div class="tile-foot">
+          <span class="name">example（默认）</span>
+          <span class="tile-open">打开项目 →</span>
+        </div>
+      </div>
+      <div class="tile">
+        <div class="tile-head">
+          <div class="tile-icon g3">A</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tile-name">apifox</div>
+            <div class="tile-hint">点击后在顶部打开独立工作标签</div>
+          </div>
+        </div>
+        <div class="tile-summary">暂无备注信息，可进入项目详情继续完善说明。</div>
+        <div class="tile-foot">
+          <span class="name">apifox</span>
+          <span class="tile-open">打开项目 →</span>
+        </div>
+      </div>
+      <div class="tile">
+        <div class="tile-head">
+          <div class="tile-icon g4">B</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tile-name">bbb</div>
+            <div class="tile-hint">点击后在顶部打开独立工作标签</div>
+          </div>
+        </div>
+        <div class="tile-summary">暂无备注信息，可进入项目详情继续完善说明。</div>
+        <div class="tile-foot">
+          <span class="name">bbb</span>
+          <span class="tile-open">打开项目 →</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

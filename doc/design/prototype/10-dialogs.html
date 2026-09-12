@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress 原型 · 10 全局弹窗合集</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<!-- 原型页导航 -->
+<div class="proto-nav">
+  <a href="index.html">原型总览</a>
+  <a href="01-home.html">01 项目首页</a>
+  <a href="02-debug-params.html">02 调试·Params</a>
+  <a href="03-debug-body-upload.html">03 调试·Body</a>
+  <a href="04-debug-headers-error.html">04 调试·Headers</a>
+  <a href="05-history.html">05 请求历史</a>
+  <a href="06-project-settings.html">06 项目设置</a>
+  <a href="07-environments.html">07 环境变量</a>
+  <a href="08-use-cases.html">08 接口用例</a>
+  <a href="09-import-export.html">09 导入导出</a>
+  <a class="current" href="10-dialogs.html">10 弹窗合集</a>
+  <span class="pos">10 / 10</span>
+</div>
+
+<div class="dialog-stage">
+
+  <!-- 1 新建项目 -->
+  <div class="dialog-sample">
+    <div class="cap"><span class="sample-no">1</span><span class="sample-title">新建项目</span><span class="sample-desc">首页「＋ 新建项目」触发；名称必填，备注可选。</span></div>
+    <div class="modal" style="width:480px;">
+      <div class="modal-head"><span class="modal-title">新建项目</span><button class="drawer-close">✕</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <span class="form-label">项目名称 <span style="color:var(--err);">*</span></span>
+          <input class="form-input" placeholder="例如：订单中心" value="订单中心">
+        </div>
+        <div class="form-row">
+          <span class="form-label">备注（可选）</span>
+          <textarea class="form-textarea" placeholder="简单描述这个项目的用途">订单、支付相关接口的联调工作区。</textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost">取消</button>
+        <button class="btn btn-primary">创建项目</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2 生成请求代码 -->
+  <div class="dialog-sample">
+    <div class="cap"><span class="sample-no">2</span><span class="sample-title">生成请求代码</span><span class="sample-desc">调试区「&lt;/&gt;」按钮触发；按当前请求生成多语言调用代码，支持一键复制。</span></div>
+    <div class="modal wide">
+      <div class="modal-head">
+        <span class="modal-title">生成请求代码 · GET 获取班级信息</span>
+        <button class="drawer-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="code-tabs">
+          <span class="code-tab on">cURL</span>
+          <span class="code-tab">PowerShell</span>
+          <span class="code-tab">C#</span>
+          <span class="code-tab">Shell</span>
+          <span class="code-tab">wget</span>
+        </div>
+        <div class="code-block">curl -X GET "http://localhost:5050/api/Group/GetGroupList?groupId=1" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..." \
+  -H "Accept: application/json"</div>
+        <div class="form-hint">代码中的地址与 Header 按当前环境「开发」生成；切换环境后重新打开会自动更新。</div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost">关闭</button>
+        <button class="btn btn-primary">复制代码</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 保存快捷请求 -->
+  <div class="dialog-sample">
+    <div class="cap"><span class="sample-no">3</span><span class="sample-title">保存快捷请求</span><span class="sample-desc">快捷请求工作台「保存」触发；保存后出现在侧栏「快捷请求」分组。</span></div>
+    <div class="modal" style="width:460px;">
+      <div class="modal-head"><span class="modal-title">保存快捷请求</span><button class="drawer-close">✕</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <span class="form-label">请求名称</span>
+          <input class="form-input" value="Echo 探活">
+        </div>
+        <div class="form-row">
+          <span class="form-label">保存位置</span>
+          <input class="form-input" value="example · 快捷请求" readonly style="color:var(--text-secondary);">
+          <span class="form-hint">POST https://echo.apifox.com/ · 已带当前 Params 与 Headers。</span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost">取消</button>
+        <button class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 应用设置 -->
+  <div class="dialog-sample">
+    <div class="cap"><span class="sample-no">4</span><span class="sample-title">应用设置</span><span class="sample-desc">标题栏「⚙」触发；关于、存储与全局行为设置，属于应用级而非项目级。</span></div>
+    <div class="modal" style="width:560px;">
+      <div class="modal-head"><span class="modal-title">应用设置</span><button class="drawer-close">✕</button></div>
+      <div class="modal-body">
+        <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px;">
+          <span class="info-label">软件名称</span><span class="info-value">ApixPress</span>
+        </div>
+        <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px;">
+          <span class="info-label">版本号</span><span class="info-value">1.0.0（已是最新版本）</span>
+          <button class="link-btn">检查更新</button>
+        </div>
+        <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px;">
+          <span class="info-label">数据目录</span>
+          <span class="info-value" style="font-family:var(--mono); font-size:12px;">%LOCALAPPDATA%\ApixPress\data</span>
+          <button class="link-btn" style="color:var(--text-secondary);">选择目录</button>
+        </div>
+        <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px;">
+          <span class="info-label">SSL 证书验证</span>
+          <span class="info-value" style="display:flex; align-items:center; gap:8px;"><span class="checkbox on"></span>启用（关闭后不校验自签名证书，仅建议本地联调使用）</span>
+          <button class="link-btn" style="color:var(--text-secondary);">恢复默认</button>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost danger">清空系统数据</button>
+        <span style="flex:1;"></span>
+        <button class="btn btn-ghost">稍后重启</button>
+        <button class="btn btn-primary">重启应用</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 通知中心 -->
+  <div class="dialog-sample">
+    <div class="cap"><span class="sample-no">5</span><span class="sample-title">通知中心</span><span class="sample-desc">标题栏「🔔」触发；导入结果、版本更新、危险操作结果等应用通知。</span></div>
+    <div class="modal" style="width:520px;">
+      <div class="modal-head">
+        <span class="modal-title">通知中心</span>
+        <button class="btn-ghost" style="height:26px;min-width:auto;padding:0 10px;font-size:12px;">全部已读</button>
+        <button class="drawer-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="notif-item unread">
+          <span class="notif-dot"></span>
+          <div class="notif-body">
+            <div class="notif-title">导入完成</div>
+            <div class="notif-text">swagger.json 导入完成：新增 24 个接口，覆盖 2 个同名接口。</div>
+            <div class="notif-time">今天 14:22</div>
+          </div>
+        </div>
+        <div class="notif-item unread">
+          <span class="notif-dot"></span>
+          <div class="notif-body">
+            <div class="notif-title">发现新版本</div>
+            <div class="notif-text">ApixPress 1.1.0 已发布，包含 multipart 多文件上传优化，可在应用设置中检查更新。</div>
+            <div class="notif-time">昨天 18:05</div>
+          </div>
+        </div>
+        <div class="notif-item">
+          <span class="notif-dot read"></span>
+          <div class="notif-body">
+            <div class="notif-title">项目数据已导出</div>
+            <div class="notif-text">example 项目已导出到 D:\Backup\apixpress-example-0912.zip。</div>
+            <div class="notif-time">09-10 10:12</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 删除工作区确认 -->
+  <div class="dialog-sample">
+    <div class="cap"><span class="sample-no">6</span><span class="sample-title">删除工作区确认</span><span class="sample-desc">所有删除类危险操作（接口、快捷请求、项目等）共用该确认样式，需二次确认。</span></div>
+    <div class="modal" style="width:460px; border-color:rgba(229,72,77,.4);">
+      <div class="modal-head"><span class="modal-title" style="color:var(--err);">删除工作区</span><button class="drawer-close">✕</button></div>
+      <div class="modal-body">
+        <div style="font-size:13px; line-height:1.7; color:var(--text-primary);">
+          确认删除工作区 <b>「获取班级信息」</b> 吗？
+        </div>
+        <div class="notice danger" style="margin-top:0;">
+          <span class="n-title">该操作无法恢复</span>
+          <span class="n-text">将同时删除其下的测试用例与调试配置，删除后无法恢复。</span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost">取消</button>
+        <button class="btn btn-danger">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress UI 高保真原型 · 总览</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<div class="ov-wrap">
+  <!-- 顶部导航 -->
+  <div class="proto-nav">
+    <span class="label">APIXPRESS · UI 高保真原型 v1.1</span>
+    <a class="current" href="index.html">原型总览</a>
+    <span class="pos">深色主题 · token 与 Colors.axaml 同步 · 2026-09-12</span>
+  </div>
+
+  <!-- 简介卡片 -->
+  <div class="card ov-hero">
+    <div class="ov-title"><span class="logo-mark">A</span>ApixPress 界面高保真原型</div>
+    <div class="ov-sub">
+      对标 Apifox 深色风格的本地 API 工作区。原型按页面拆分为独立 HTML，可直接点击下方卡片打开对应界面；
+      所有页面共享 <span style="font-family:var(--mono);color:var(--accent);">shared.css</span> 中的设计 token，
+      与 <span style="font-family:var(--mono);color:var(--accent);">Colors.axaml</span> 保持一致，改一处即可全局生效。
+    </div>
+    <div class="ov-legend">
+      <span class="ov-tag keep">v1 迁移：来自原单文件原型，内容保持并微调</span>
+      <span class="ov-tag new">v1.1 新增：本次完善补齐的界面与状态</span>
+    </div>
+  </div>
+
+  <!-- 核心工作流 -->
+  <div class="ov-section">
+    <div class="ov-sec-title">核心工作流</div>
+    <div class="ov-grid">
+      <a class="ov-card" href="01-home.html">
+        <div class="ov-card-head"><span class="ov-no">01</span><span class="ov-name">项目首页</span><span class="ov-tag keep">v1 迁移</span></div>
+        <div class="ov-desc">本地工作区入口：项目卡片、搜索、新建项目，点击卡片以顶部标签页进入工作区。</div>
+        <div class="ov-states"><span class="ov-state">默认</span><span class="ov-state">搜索过滤</span><span class="ov-state">默认项目标识</span></div>
+      </a>
+      <a class="ov-card" href="02-debug-params.html">
+        <div class="ov-card-head"><span class="ov-no">02</span><span class="ov-name">接口调试 · Params</span><span class="ov-tag keep">v1 迁移</span></div>
+        <div class="ov-desc">接口树 + 三栏工作台主界面：调试/设计/文档模式切换，Query 参数编辑，成功响应 JSON。</div>
+        <div class="ov-states"><span class="ov-state">HTTP 200</span><span class="ov-state">JSON 高亮</span><span class="ov-state">参数启用勾选</span></div>
+      </a>
+      <a class="ov-card" href="03-debug-body-upload.html">
+        <div class="ov-card-head"><span class="ov-no">03</span><span class="ov-name">接口调试 · Body 与多文件上传</span><span class="ov-tag new">v1.1 新增</span></div>
+        <div class="ov-desc">Body 七种模式切换；form-data 文本 + 文件字段混排、单字段多文件 chip、文件大小展示；发送中加载态与取消。</div>
+        <div class="ov-states"><span class="ov-state">form-data</span><span class="ov-state">多文件 chip</span><span class="ov-state">发送中 loading</span><span class="ov-state">取消请求</span></div>
+      </a>
+      <a class="ov-card" href="04-debug-headers-error.html">
+        <div class="ov-card-head"><span class="ov-no">04</span><span class="ov-name">接口调试 · Headers 与异常响应</span><span class="ov-tag new">v1.1 新增</span></div>
+        <div class="ov-desc">请求 Headers 编辑（含鉴权 Token 脱敏）；404/500/超时异常横幅、错误响应体与响应 Headers 查看。</div>
+        <div class="ov-states"><span class="ov-state">HTTP 404</span><span class="ov-state">HTTP 500</span><span class="ov-state">超时</span><span class="ov-state">响应 Headers</span></div>
+      </a>
+      <a class="ov-card" href="05-history.html">
+        <div class="ov-card-head"><span class="ov-no">05</span><span class="ov-name">请求历史</span><span class="ov-tag keep">v1 迁移</span></div>
+        <div class="ov-desc">历史列表（方法、状态码、耗时）+ 详情（参数回放、响应横幅），支持继续请求转为可编辑快捷请求。</div>
+        <div class="ov-states"><span class="ov-state">200 / 404</span><span class="ov-state">搜索</span><span class="ov-state">清空</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- 项目数据与配置 -->
+  <div class="ov-section">
+    <div class="ov-sec-title">项目数据与配置</div>
+    <div class="ov-grid">
+      <a class="ov-card" href="06-project-settings.html">
+        <div class="ov-card-head"><span class="ov-no">06</span><span class="ov-name">项目设置</span><span class="ov-tag keep">v1 迁移</span></div>
+        <div class="ov-desc">基本信息维护、项目 ID 复制；危险操作区（清空项目数据、删除项目）二次确认。</div>
+        <div class="ov-states"><span class="ov-state">基本信息</span><span class="ov-state">危险操作</span></div>
+      </a>
+      <a class="ov-card" href="07-environments.html">
+        <div class="ov-card-head"><span class="ov-no">07</span><span class="ov-name">环境变量</span><span class="ov-tag new">v1.1 新增</span></div>
+        <div class="ov-desc">右侧抽屉管理多环境：激活环境标识、变量 Key/Value/启用编辑、删除环境的自动切换提示。</div>
+        <div class="ov-states"><span class="ov-state">多环境列表</span><span class="ov-state">变量编辑</span><span class="ov-state">激活切换</span></div>
+      </a>
+      <a class="ov-card" href="08-use-cases.html">
+        <div class="ov-card-head"><span class="ov-no">08</span><span class="ov-name">接口用例</span><span class="ov-tag new">v1.1 新增</span></div>
+        <div class="ov-desc">同一接口的多用例管理：保存当前请求为用例、用例加载/复制/删除，选中用例回填调试区。</div>
+        <div class="ov-states"><span class="ov-state">用例列表</span><span class="ov-state">保存当前请求</span><span class="ov-state">加载 / 复制 / 删除</span></div>
+      </a>
+      <a class="ov-card" href="09-import-export.html">
+        <div class="ov-card-head"><span class="ov-no">09</span><span class="ov-name">导入与导出数据</span><span class="ov-tag new">v1.1 新增</span></div>
+        <div class="ov-desc">OpenAPI / Swagger 通过 URL 或本地文件导入；同名接口覆盖确认弹窗；项目数据一键导出。</div>
+        <div class="ov-states"><span class="ov-state">URL 导入</span><span class="ov-state">文件导入</span><span class="ov-state">覆盖确认</span><span class="ov-state">导出</span></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- 全局组件 -->
+  <div class="ov-section">
+    <div class="ov-sec-title">全局组件</div>
+    <div class="ov-grid">
+      <a class="ov-card" href="10-dialogs.html">
+        <div class="ov-card-head"><span class="ov-no">10</span><span class="ov-name">弹窗合集</span><span class="ov-tag new">v1.1 新增</span></div>
+        <div class="ov-desc">新建项目、生成请求代码、保存快捷请求、应用设置、通知中心、删除工作区确认六个全局弹窗平铺展示。</div>
+        <div class="ov-states"><span class="ov-state">表单弹窗</span><span class="ov-state">代码生成</span><span class="ov-state">通知</span><span class="ov-state">危险确认</span></div>
+      </a>
+      <div class="ov-card" style="cursor:default;">
+        <div class="ov-card-head"><span class="ov-no">§</span><span class="ov-name">设计 token 速览</span></div>
+        <div class="token-grid" style="margin-top:4px;">
+          <div class="token-item"><span class="token-swatch" style="background:#17171A;"></span><span><span class="tn">App 背景</span><br><span class="tv">#17171A</span></span></div>
+          <div class="token-item"><span class="token-swatch" style="background:#202024;"></span><span><span class="tn">Surface</span><br><span class="tv">#202024</span></span></div>
+          <div class="token-item"><span class="token-swatch" style="background:#2B2B32;"></span><span><span class="tn">Elevated</span><br><span class="tv">#2B2B32</span></span></div>
+          <div class="token-item"><span class="token-swatch" style="background:#7C6CF0;"></span><span><span class="tn">品牌主色</span><br><span class="tv">#7C6CF0</span></span></div>
+          <div class="token-item"><span class="token-swatch" style="background:#4ADE80;"></span><span><span class="tn">GET / 成功</span><br><span class="tv">#4ADE80</span></span></div>
+          <div class="token-item"><span class="token-swatch" style="background:#F59E0B;"></span><span><span class="tn">POST</span><br><span class="tv">#F59E0B</span></span></div>
+          <div class="token-item"><span class="token-swatch" style="background:#4C9AF0;"></span><span><span class="tn">PUT</span><br><span class="tv">#4C9AF0</span></span></div>
+          <div class="token-item"><span class="token-swatch" style="background:#F87171;"></span><span><span class="tn">DELETE / 错误</span><br><span class="tv">#F87171</span></span></div>
+          <div class="token-item"><span class="token-swatch" style="background:#2DD4BF;"></span><span><span class="tn">PATCH</span><br><span class="tv">#2DD4BF</span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

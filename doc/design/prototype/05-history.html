@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress 原型 · 05 请求历史</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<!-- 原型页导航 -->
+<div class="proto-nav">
+  <a href="index.html">原型总览</a>
+  <a href="01-home.html">01 项目首页</a>
+  <a href="02-debug-params.html">02 调试·Params</a>
+  <a href="03-debug-body-upload.html">03 调试·Body</a>
+  <a href="04-debug-headers-error.html">04 调试·Headers</a>
+  <a class="current" href="05-history.html">05 请求历史</a>
+  <a href="06-project-settings.html">06 项目设置</a>
+  <a href="07-environments.html">07 环境变量</a>
+  <a href="08-use-cases.html">08 接口用例</a>
+  <a href="09-import-export.html">09 导入导出</a>
+  <a href="10-dialogs.html">10 弹窗合集</a>
+  <span class="pos">05 / 10</span>
+</div>
+
+<!-- ═══════════════ 请求历史 ═══════════════ -->
+<div class="window">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab">首页 <span class="n">3</span></div>
+    <div class="tb-tab active">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-spacer"></div>
+    <div class="env-chip"><span class="env-dot"></span>开发<span class="caret">▼</span></div>
+    <button class="tb-icon">⚙</button>
+  </div>
+
+  <div class="shell">
+    <div class="rail">
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <span class="t">接口管理</span>
+      </button>
+      <button class="nav-item selected">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="t">请求历史</span>
+      </button>
+      <button class="nav-item">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span>
+        <span class="t">项目设置</span>
+      </button>
+    </div>
+
+    <div class="sidebar">
+      <div class="side-head">
+        <span class="side-title">请求历史</span>
+        <button class="btn btn-ghost" style="height:28px;min-width:auto;padding:0 12px;font-size:12px;">清空</button>
+      </div>
+      <div class="search-box"><span>🔍</span><input placeholder="搜索方法、URL 或状态码"></div>
+      <div class="history-list">
+        <div class="h-item selected">
+          <div class="h-line1"><span class="badge post">POST</span><span class="h-url">https://echo.apifox.com/status/404</span></div>
+          <div class="h-line2"><span class="status-mini warn">404</span><span>09-12 11:48</span><span style="margin-left:auto;">88 ms</span></div>
+        </div>
+        <div class="h-item">
+          <div class="h-line1"><span class="badge get">GET</span><span class="h-url">https://echo.apifox.com/get</span></div>
+          <div class="h-line2"><span class="status-mini ok">200</span><span>09-12 10:56</span><span style="margin-left:auto;">144 ms</span></div>
+        </div>
+        <div class="h-item">
+          <div class="h-line1"><span class="badge post">POST</span><span class="h-url">https://echo.apifox.com/post</span></div>
+          <div class="h-line2"><span class="status-mini ok">200</span><span>09-12 10:36</span><span style="margin-left:auto;">110 ms</span></div>
+        </div>
+        <div class="h-item">
+          <div class="h-line1"><span class="badge get">GET</span><span class="h-url">https://echo.apifox.com/</span></div>
+          <div class="h-line2"><span class="status-mini ok">200</span><span>09-12 10:34</span><span style="margin-left:auto;">189 ms</span></div>
+        </div>
+        <div class="h-item">
+          <div class="h-line1"><span class="badge get">GET</span><span class="h-url">/api/Group/GetGroupList</span></div>
+          <div class="h-line2"><span class="status-mini err">超时</span><span>09-11 22:17</span><span style="margin-left:auto;">30 000 ms</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="card" style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
+        <div style="flex:1;">
+          <div class="section-title">请求历史详情</div>
+          <div class="section-hint" style="margin-top:3px;">选择左侧历史记录可查看请求参数和响应；继续请求会打开可编辑的快捷请求。</div>
+        </div>
+        <button class="btn btn-ghost">继续请求</button>
+      </div>
+
+      <div class="card" style="padding:12px 16px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="badge post">POST</span>
+          <span style="font-size:13px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">https://echo.apifox.com/status/404</span>
+          <span style="font-size:12px; color:var(--text-tertiary);">09-12 11:48</span>
+        </div>
+        <div class="sub-tabs" style="margin-top:10px;">
+          <span class="sub-tab active">参数</span>
+          <span class="sub-tab">Headers</span>
+          <span class="sub-tab">Body</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px; margin-top:10px;">
+          <div class="kv-row"><span style="color:var(--text-secondary);">page</span><span>2</span></div>
+          <div class="kv-row"><span style="color:var(--text-secondary);">name</span><span>ApixPress</span></div>
+        </div>
+      </div>
+
+      <div class="card resp-card">
+        <div class="resp-head">
+          <span class="resp-title">所选请求的响应</span>
+          <span class="resp-spacer"></span>
+          <span style="font-size:12px;color:var(--text-tertiary);">开发</span>
+        </div>
+        <!-- 404 响应横幅：独占一行 + 琥珀色左侧色条 -->
+        <div class="notice warning" style="margin-top:10px;">
+          <span class="n-title">客户端错误 HTTP 404</span>
+          <span class="n-text">请求已发送但服务器拒绝处理，请检查地址、参数、鉴权 Header 或请求体。</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+          <span class="status-badge warn">HTTP 404</span>
+          <span class="metric">88 ms</span>
+          <span class="metric">0 B</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
