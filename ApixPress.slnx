@@ -6,4 +6,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/ApixPress.App.Tests/ApixPress.App.Tests.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/ApixPress.TestApi/ApixPress.TestApi.csproj" />
+  </Folder>
 </Solution>
