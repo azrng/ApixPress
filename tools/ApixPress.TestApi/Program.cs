@@ -17,6 +17,7 @@ EchoEndpoints.Map(app);
 FormatEndpoints.Map(app);
 ControlEndpoints.Map(app);
 SessionEndpoints.Map(app);
+JwtEndpoints.Map(app);
 
 // 根路径返回全部端点目录，便于浏览与发现
 app.MapGet("/", () => Results.Json(new

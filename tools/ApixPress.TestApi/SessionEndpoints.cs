@@ -61,6 +61,33 @@ internal static class SessionEndpoints
             context.Response.Headers.WWWAuthenticate = "Bearer";
             return Results.Json(new { authenticated = false, message = "缺少 Bearer Token" }, statusCode: 401);
         });
+
+        app.MapMethods("/apikey", AnyMethods, (HttpContext context) =>
+        {
+            // 自定义请求头认证场景，约定测试密钥 apixpress-dev-key
+            var key = context.Request.Headers["X-Api-Key"].ToString();
+            if (string.IsNullOrEmpty(key))
+            {
+                return Results.Json(new
+                {
+                    authenticated = false,
+                    error = "missing_api_key",
+                    error_description = "请在请求头中携带 X-Api-Key"
+                }, statusCode: 401);
+            }
+
+            if (key != "apixpress-dev-key")
+            {
+                return Results.Json(new
+                {
+                    authenticated = false,
+                    error = "invalid_api_key",
+                    error_description = "X-Api-Key 不正确，测试密钥为 apixpress-dev-key"
+                }, statusCode: 401);
+            }
+
+            return Results.Json(new { authenticated = true, key_name = "default" });
+        });
     }
 
     private static IResult TryBasicAuth(HttpContext context, string user, string password, bool hidden)

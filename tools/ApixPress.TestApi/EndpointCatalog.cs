@@ -52,7 +52,16 @@ internal static class EndpointCatalog
         new("GET", "/cookies/delete?k=", "删除 Cookie 后跳回 /cookies"),
         new("ANY", "/basic-auth/{user}/{password}", "HTTP Basic 认证校验"),
         new("ANY", "/hidden-basic-auth/{user}/{password}", "Basic 认证失败时返回 404"),
-        new("ANY", "/bearer", "Bearer Token 认证校验"),
+        new("ANY", "/bearer", "Bearer Token 认证校验（仅校验头格式）"),
+        new("ANY", "/apikey", "X-Api-Key 请求头认证（测试密钥 apixpress-dev-key）"),
+
+        // JWT 认证
+        new("ANY", "/jwt/login", "登录发放 JWT（admin/admin123、user/123456，支持 JSON/表单/查询参数）"),
+        new("ANY", "/jwt/protected", "JWT 受保护端点：校验签名、有效期、签发者与受众"),
+        new("ANY", "/jwt/admin-only", "要求 role=admin，权限不足返回 403"),
+        new("ANY", "/jwt/refresh", "用 refresh_token 换取新的令牌对"),
+        new("GET", "/jwt/decode?token=", "无校验解码 JWT，便于联调时检查客户端发出的令牌"),
+        new("GET", "/jwt/mint?sub=&role=&expires_in=", "按需铸造测试令牌（可指定过期时间/角色/签发者/受众/密钥）"),
 
         // 文档
         new("GET", "/openapi/v1.json", "内置 OpenAPI 文档，供 Swagger URL 导入测试"),

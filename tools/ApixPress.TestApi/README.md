@@ -62,7 +62,27 @@ dotnet run --project tools/ApixPress.TestApi
 | `/cookies/delete?k=` | 删除 Cookie 后跳回 |
 | `/basic-auth/{user}/{password}` | Basic 认证，失败返回 401 + `WWW-Authenticate` |
 | `/hidden-basic-auth/{user}/{password}` | Basic 认证失败返回 404 |
-| `/bearer` | Bearer Token 校验 |
+| `/bearer` | Bearer Token 校验（仅校验头格式，任意令牌都通过） |
+| `/apikey` | 自定义请求头认证，要求 `X-Api-Key: apixpress-dev-key` |
+
+### JWT 认证
+HS256 签发与校验，固定参数：签发者 `apixpress-testapi`、受众 `apixpress-client`、
+密钥 `apixpress-test-secret-key-0123456789`。内置账号：`admin/admin123`（role=admin）、
+`user/123456`（role=user）。
+
+| 端点 | 说明 |
+| --- | --- |
+| `/jwt/login` | 登录发放令牌，返回 `access_token` / `refresh_token` / `expires_in`；凭据支持 JSON、表单或查询参数 |
+| `/jwt/protected` | 受保护资源：校验签名、有效期、签发者、受众；成功返回解码后的 claims |
+| `/jwt/admin-only` | 要求 `role=admin`，权限不足返回 403（区分认证与授权失败） |
+| `/jwt/refresh` | 用 `refresh_token` 换取新令牌对（支持旋转） |
+| `/jwt/decode?token=` | 无校验解码，返回头、负载、签名是否有效、是否过期 |
+| `/jwt/mint` | 按需铸造测试令牌，可指定 `sub` `name` `role` `expires_in`（负数=已过期）`issuer` `audience` `secret` `token_use` |
+
+401 响应统一携带 `WWW-Authenticate` 挑战头与机器可读错误码：
+`missing_token`（无令牌）、`malformed_token`（格式错误）、`unsupported_algorithm`、
+`invalid_signature`（令牌被篡改或密钥不对）、`token_expired`、`invalid_issuer`、
+`invalid_audience`、`wrong_token_type`。
 
 ### 文档
 | 端点 | 说明 |
@@ -79,9 +99,16 @@ dotnet run --project tools/ApixPress.TestApi
 5. 二进制上传：`/binary-echo` 比对字节
 6. 响应格式化：`/json` `/xml` `/html`；Cookie 自动携带：`/cookies/set` 后任意请求
 7. 重定向信息：`/redirect/3`；响应时间：`/delay/1.5`；下载文件：`/bytes/1048576` 或 `/image/png`
-8. 环境变量与认证头：`/bearer`、`/basic-auth/admin/admin`
+8. Basic 认证：`/basic-auth/admin/admin`；简单 Bearer：`/bearer`；API Key：`/apikey`
+9. JWT 完整流程：`POST /jwt/login`（JSON `{"username":"admin","password":"admin123"}`）→
+   复制 `access_token` → `GET /jwt/protected` 带 `Authorization: Bearer <token>` →
+   过期后用 `refresh_token` 调 `/jwt/refresh` 续期
+10. JWT 异常场景：`/jwt/mint?expires_in=-1` 造过期令牌、`/jwt/mint?secret=wrong` 造错签令牌、
+    `/jwt/mint?audience=other` 造错误受众、`user` 账号访问 `/jwt/admin-only` 验证 403
 
 ## 已知注意点
 
-- `.NET 10` 下 `MapMethods` 搭配 `async (...) => Results.Json(...)` 表达式体 lambda 会
-  出现 200 空响应体（已实测），本项目统一使用块体 lambda 规避。
+- `.NET 10` 下 Minimal API 的 async 处理器只有写成**内联块体 lambda**
+  （`async (ctx) => { return ...; }`）才正常返回；方法组（`MapGet("/", Handler)`）或
+  表达式体 lambda（`async (ctx) => Results.Json(...)`）会返回 200 空响应体（已实测，
+  疑为运行时 RequestDelegateFactory 回退路径问题）。本项目统一使用内联块体 lambda。
