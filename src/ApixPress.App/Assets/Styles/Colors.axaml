@@ -54,4 +54,11 @@
   <SolidColorBrush x:Key="Brush.StatusCode.4xx" Color="#FBBF24" />
   <SolidColorBrush x:Key="Brush.StatusCode.5xx" Color="#F87171" />
   <SolidColorBrush x:Key="Brush.StatusCode.Error" Color="#A3A3AD" />
+
+  <!-- 代码高亮（JSON 语法分色，与高保真原型一致） -->
+  <SolidColorBrush x:Key="Brush.Code.Plain" Color="#C9CDD6" />
+  <SolidColorBrush x:Key="Brush.Code.Key" Color="#9D8BFF" />
+  <SolidColorBrush x:Key="Brush.Code.String" Color="#7EC699" />
+  <SolidColorBrush x:Key="Brush.Code.Number" Color="#E5B567" />
+  <SolidColorBrush x:Key="Brush.Code.Punctuation" Color="#70707A" />
 </ResourceDictionary>

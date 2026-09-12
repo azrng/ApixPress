@@ -33,8 +33,8 @@ public sealed class ProjectEnvironmentRepository : IProjectEnvironmentRepository
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await connection.QueryAsync<ProjectEnvironmentEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken));
+        var items = await Task.Run(async () => await connection.QueryAsync<ProjectEnvironmentEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken)));
         return items.ToList();
     }
 
@@ -56,8 +56,8 @@ public sealed class ProjectEnvironmentRepository : IProjectEnvironmentRepository
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<ProjectEnvironmentEntity>(
-            new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken));
+        return await Task.Run(async () => await connection.QuerySingleOrDefaultAsync<ProjectEnvironmentEntity>(
+            new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken)));
     }
 
     public async Task<ProjectEnvironmentEntity?> GetByNameAsync(string projectId, string name, CancellationToken cancellationToken)
@@ -78,8 +78,8 @@ public sealed class ProjectEnvironmentRepository : IProjectEnvironmentRepository
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<ProjectEnvironmentEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId, Name = name }, cancellationToken: cancellationToken));
+        return await Task.Run(async () => await connection.QuerySingleOrDefaultAsync<ProjectEnvironmentEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId, Name = name }, cancellationToken: cancellationToken)));
     }
 
     public async Task UpsertAsync(ProjectEnvironmentEntity entity, CancellationToken cancellationToken)
@@ -104,14 +104,14 @@ public sealed class ProjectEnvironmentRepository : IProjectEnvironmentRepository
 
         if (entity.IsActive)
         {
-            await connection.ExecuteAsync(new CommandDefinition(
+            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
                 "update project_environments set is_active = 0 where project_id = @ProjectId and id <> @EnvironmentId and is_active = 1",
                 new { entity.ProjectId, EnvironmentId = entity.Id },
                 transaction,
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken)));
         }
 
-        await connection.ExecuteAsync(new CommandDefinition(sql, entity, transaction, cancellationToken: cancellationToken));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(sql, entity, transaction, cancellationToken: cancellationToken)));
         transaction.Commit();
     }
 
@@ -121,16 +121,16 @@ public sealed class ProjectEnvironmentRepository : IProjectEnvironmentRepository
         connection.Open();
         using var transaction = connection.BeginTransaction();
 
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "update project_environments set is_active = 0 where project_id = @ProjectId",
             new { ProjectId = projectId },
             transaction,
-            cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition(
+            cancellationToken: cancellationToken)));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "update project_environments set is_active = 1, updated_at = @UpdatedAt where project_id = @ProjectId and id = @EnvironmentId",
             new { ProjectId = projectId, EnvironmentId = environmentId, UpdatedAt = DateTime.UtcNow },
             transaction,
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
 
         transaction.Commit();
     }
@@ -138,9 +138,9 @@ public sealed class ProjectEnvironmentRepository : IProjectEnvironmentRepository
     public async Task DeleteAsync(string id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "delete from project_environments where id = @Id",
             new { Id = id },
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
     }
 }

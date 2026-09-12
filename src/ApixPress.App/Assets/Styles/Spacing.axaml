@@ -22,6 +22,7 @@
   <Thickness x:Key="Pad.TabSheet">8,4,8,8</Thickness>
   <Thickness x:Key="Pad.WorkspaceHost">12,4,12,12</Thickness>
   <Thickness x:Key="Pad.InterfaceRootContent">20,12,20,18</Thickness>
+  <Thickness x:Key="Pad.HttpUrlRow">12,10,12,6</Thickness>
   <CornerRadius x:Key="Radius.Sm">4</CornerRadius>
   <CornerRadius x:Key="Radius.Md">8</CornerRadius>
   <CornerRadius x:Key="Radius.Lg">12</CornerRadius>

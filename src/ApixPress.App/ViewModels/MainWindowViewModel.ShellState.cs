@@ -64,7 +64,8 @@ public partial class MainWindowViewModel
             StatusMessage = tab.StatusMessage;
         }
 
-        NotifyActiveProjectTabBindings();
+        // NotifyActiveProjectTabBindings 只在 ActiveProjectTab 切换时 raise（见 OnActiveProjectTabChanged），
+        // ShellState 高频路径（如每键输入）不再全量触发 6 个顶层引用属性重解析。
         NotifyActiveProjectShellState();
     }
 
@@ -149,6 +150,7 @@ public partial class MainWindowViewModel
         OnPropertyChanged(nameof(ShowProjectImportDialog));
         OnPropertyChanged(nameof(ShowProjectImportOverwriteConfirmDialog));
         OnPropertyChanged(nameof(ShowWorkspaceDeleteConfirmDialog));
+        OnPropertyChanged(nameof(ShowCreateFolderDialog));
         OnPropertyChanged(nameof(CurrentProjectName));
         OnPropertyChanged(nameof(CurrentProjectSummary));
         OnPropertyChanged(nameof(CurrentEnvironmentLabel));

@@ -11,6 +11,8 @@ public interface IEnvironmentVariableService
 
     Task<IResultModel<ProjectEnvironmentDto>> SetActiveEnvironmentAsync(string projectId, string environmentId, CancellationToken cancellationToken);
 
+    Task<ProjectEnvironmentDto?> ApplyImportedBaseUrlAsync(string projectId, string baseUrl, CancellationToken cancellationToken);
+
     Task<IResultModel<bool>> DeleteEnvironmentAsync(string projectId, string environmentId, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<EnvironmentVariableDto>> GetVariablesAsync(string environmentId, CancellationToken cancellationToken);

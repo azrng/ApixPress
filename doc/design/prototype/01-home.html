@@ -8,29 +8,16 @@
 </head>
 <body>
 
-<!-- 原型页导航 -->
-<div class="proto-nav">
-  <a href="index.html">原型总览</a>
-  <a class="current" href="01-home.html">01 项目首页</a>
-  <a href="02-debug-params.html">02 调试·Params</a>
-  <a href="03-debug-body-upload.html">03 调试·Body</a>
-  <a href="04-debug-headers-error.html">04 调试·Headers</a>
-  <a href="05-history.html">05 请求历史</a>
-  <a href="06-project-settings.html">06 项目设置</a>
-  <a href="07-environments.html">07 环境变量</a>
-  <a href="08-use-cases.html">08 接口用例</a>
-  <a href="09-import-export.html">09 导入导出</a>
-  <a href="10-dialogs.html">10 弹窗合集</a>
-  <span class="pos">01 / 10</span>
-</div>
 
-<!-- ═══════════════ 项目首页 ═══════════════ -->
+<!-- ═══════════════ 项目首页（可交互） ═══════════════ -->
 <div class="window">
   <div class="titlebar">
     <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
     <div class="tb-tab active">首页 <span class="n">3</span></div>
     <div class="tb-spacer"></div>
-    <button class="tb-icon">⟳</button><button class="tb-icon">⚙</button><button class="tb-icon">🔔</button>
+    <button class="tb-icon" data-toast="已刷新项目列表（演示）">⟳</button>
+    <button class="tb-icon" data-toast="应用设置见 10 弹窗合集（演示）">⚙</button>
+    <button class="tb-icon" data-open="#notifModal">🔔</button>
     <div class="tb-sep"></div>
     <button class="tb-icon">—</button><button class="tb-icon">▢</button><button class="tb-icon">✕</button>
   </div>
@@ -41,7 +28,7 @@
         <span class="chip">本地工作区</span>
       </div>
       <div class="page-sub">本地 API 工作区：筛选、浏览项目卡片，并以标签页打开工作台。</div>
-      <div class="metric-line">
+      <div class="metric-line" id="homeMetric">
         项目 <b>3</b> <span>·</span> 当前可见 <b>3</b> <span>·</span> 已打开标签 <b>0</b>
       </div>
     </div>
@@ -49,12 +36,12 @@
     <div class="card toolbar">
       <span class="cap">项目列表</span>
       <span class="hint">搜索项目名称或备注，点击卡片后在顶部以新标签页进入工作区。</span>
-      <div class="search-box" style="width:240px;flex:none;"><span>🔍</span><input placeholder="搜索"></div>
-      <button class="btn btn-primary" style="min-width:auto;padding:0 18px;">＋ 新建项目</button>
+      <div class="search-box" style="width:240px;flex:none;"><span>🔍</span><input id="homeSearch" placeholder="搜索项目…"></div>
+      <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-open="#newProjectModal">＋ 新建项目</button>
     </div>
 
-    <div class="tiles">
-      <div class="tile">
+    <div class="tiles" id="homeTiles">
+      <div class="tile" data-href="02-debug-params.html">
         <div class="tile-head">
           <div class="tile-icon g2">E</div>
           <div style="flex:1;min-width:0;">
@@ -69,7 +56,7 @@
           <span class="tile-open">打开项目 →</span>
         </div>
       </div>
-      <div class="tile">
+      <div class="tile" data-href="02-debug-params.html">
         <div class="tile-head">
           <div class="tile-icon g3">A</div>
           <div style="flex:1;min-width:0;">
@@ -83,7 +70,7 @@
           <span class="tile-open">打开项目 →</span>
         </div>
       </div>
-      <div class="tile">
+      <div class="tile" data-href="02-debug-params.html">
         <div class="tile-head">
           <div class="tile-icon g4">B</div>
           <div style="flex:1;min-width:0;">
@@ -99,7 +86,80 @@
       </div>
     </div>
   </div>
+
+  <!-- 新建项目弹窗 -->
+  <div class="modal-wrap" id="newProjectModal">
+    <div class="modal" style="width:480px;">
+      <div class="modal-head"><span class="modal-title">新建项目</span><button class="drawer-close" data-close>✕</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <span class="form-label">项目名称 <span style="color:var(--err);">*</span></span>
+          <input class="form-input" id="npName" placeholder="例如：订单中心">
+        </div>
+        <div class="form-row">
+          <span class="form-label">备注（可选）</span>
+          <textarea class="form-textarea" id="npRemark" placeholder="简单描述这个项目的用途"></textarea>
+        </div>
+        <div class="form-hint">创建后会自动生成一个空的「开发」环境，并打开项目工作台。</div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close>取消</button>
+        <button class="btn btn-primary" id="npCreate">创建项目</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通知中心弹窗（简化版，完整形态见 10） -->
+  <div class="modal-wrap" id="notifModal">
+    <div class="modal" style="width:520px;">
+      <div class="modal-head">
+        <span class="modal-title">通知中心</span>
+        <button class="drawer-close" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="notif-item unread">
+          <span class="notif-dot"></span>
+          <div class="notif-body">
+            <div class="notif-title">导入完成</div>
+            <div class="notif-text">swagger.json 导入完成：新增 24 个接口，覆盖 2 个同名接口。</div>
+            <div class="notif-time">今天 14:22</div>
+          </div>
+        </div>
+        <div class="notif-item">
+          <span class="notif-dot read"></span>
+          <div class="notif-body">
+            <div class="notif-title">项目数据已导出</div>
+            <div class="notif-text">example 项目已导出到 D:\Backup\apixpress-example-0912.zip。</div>
+            <div class="notif-time">09-10 10:12</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
+<script src="shared.js"></script>
+<script>
+  // 搜索过滤：按名称与备注匹配，实时更新可见计数
+  var searchInput = document.getElementById("homeSearch");
+  searchInput.addEventListener("input", function () {
+    var kw = this.value.trim().toLowerCase();
+    var visible = 0;
+    document.querySelectorAll("#homeTiles .tile").forEach(function (tile) {
+      var hit = tile.textContent.toLowerCase().indexOf(kw) !== -1;
+      tile.style.display = hit ? "" : "none";
+      if (hit) visible++;
+    });
+    document.querySelector("#homeMetric b:nth-of-type(2)").textContent = visible;
+  });
+
+  // 新建项目：校验名称 → 关闭弹窗 → 提示（原型不落数据）
+  document.getElementById("npCreate").addEventListener("click", function () {
+    var name = document.getElementById("npName").value.trim();
+    if (!name) { protoToast("请先填写项目名称"); return; }
+    document.getElementById("newProjectModal").classList.remove("open");
+    protoToast("项目「" + name + "」已创建（演示）");
+  });
+</script>
 </body>
 </html>

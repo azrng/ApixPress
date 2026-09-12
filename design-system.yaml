@@ -145,6 +145,12 @@ tokens:
       error_text: "Brush.Status.Error.Text"
       info_bg: "Brush.Status.Info.Background"
       info_text: "Brush.Status.Info.Text"
+    code:
+      plain: "Brush.Code.Plain"
+      key: "Brush.Code.Key"
+      string: "Brush.Code.String"
+      number: "Brush.Code.Number"
+      punctuation: "Brush.Code.Punctuation"
 
   typography:
     font_family:

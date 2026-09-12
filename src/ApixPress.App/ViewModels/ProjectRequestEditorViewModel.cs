@@ -1,3 +1,4 @@
+﻿using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Services.Implementations;
@@ -53,6 +54,17 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     public ResponseSectionViewModel ResponseSection => ResolveWorkspaceTabOrFallback().ResponseSection;
 
     public IReadOnlyList<string> HttpMethods { get; } = ["GET", "POST", "PUT", "DELETE", "PATCH"];
+
+    // 方法选择器按语义着色用的样式类名（GET 绿 / POST 橙 / PUT 蓝 / DELETE 红 / PATCH 青）
+    public string MethodColorClass => SelectedMethod?.ToUpperInvariant() switch
+    {
+        "GET" => "HttpMethodGet",
+        "POST" => "HttpMethodPost",
+        "PUT" => "HttpMethodPut",
+        "DELETE" => "HttpMethodDelete",
+        "PATCH" => "HttpMethodPatch",
+        _ => string.Empty
+    };
 
     public string CurrentEditorTitle => _currentEditorTitle;
     public string CurrentEditorDescription => _currentEditorDescription;
@@ -138,7 +150,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
 
     public string CurrentInterfaceFolderPath
     {
-        get => ActiveWorkspaceTab?.InterfaceFolderPath ?? "默认模块";
+        get => ActiveWorkspaceTab?.InterfaceFolderPath ?? "根目录";
         set
         {
             if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.InterfaceFolderPath == value)
@@ -277,6 +289,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
             ClearRequestCodeDialogContent();
         }
         OnPropertyChanged(nameof(SelectedMethod));
+        OnPropertyChanged(nameof(MethodColorClass));
         OnPropertyChanged(nameof(RequestUrl));
         OnPropertyChanged(nameof(CurrentInterfaceFolderPath));
         OnPropertyChanged(nameof(CurrentHttpCaseName));
@@ -348,8 +361,36 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         {
             OnPropertyChanged(nameof(CurrentHttpInterfaceName));
             OnPropertyChanged(nameof(CurrentQuickRequestName));
+            // 请求体/名称等每键触发的高频属性：合并 200ms 内的连续刷新，避免每键全量重算预览与 curl 片段
+            ScheduleComputedStateRefresh();
+        }
+        else if (e.PropertyName is not null)
+        {
             RefreshComputedState();
         }
+    }
+
+    private System.Timers.Timer? _computedStateDebounceTimer;
+
+    /// <summary>合并 200ms 内的连续属性变化，停顿后再执行重计算（URL 变量替换、curl 片段等）。</summary>
+    private void ScheduleComputedStateRefresh()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        if (_computedStateDebounceTimer is null)
+        {
+            // 用 System.Timers 而非 DispatcherTimer：不依赖/不隐式初始化 UI Dispatcher，
+            // 回调仅操作 VM 字段并 raise PropertyChanged（Avalonia 绑定可跨线程接收）
+            var timer = new System.Timers.Timer(200) { AutoReset = false };
+            timer.Elapsed += (_, _) => RefreshComputedState();
+            _computedStateDebounceTimer = timer;
+        }
+
+        _computedStateDebounceTimer.Stop();
+        _computedStateDebounceTimer.Start();
     }
 
     private void OnConfigCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -731,6 +772,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
 
     protected override void DisposeManaged()
     {
+        _computedStateDebounceTimer?.Stop();
+        _computedStateDebounceTimer = null;
         DetachWorkspaceSubscriptions(_subscribedWorkspaceTab);
         _subscribedWorkspaceTab = null;
     }

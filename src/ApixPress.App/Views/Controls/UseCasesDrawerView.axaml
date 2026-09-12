@@ -56,7 +56,7 @@
       </Grid>
 
       <ListBox Classes="FlatListBox"
-               ItemsSource="{Binding UseCasesPanel.RequestCases}"
+               ItemsSource="{Binding UseCasesPanel.SelectableCaseItems}"
                SelectedItem="{Binding UseCasesPanel.SelectedRequestCase}"
                Height="360">
         <ListBox.ItemTemplate>

@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using ApixPress.App.Models.DTOs;
@@ -12,6 +12,9 @@ namespace ApixPress.App.Services.Implementations;
 
 public sealed class ProjectDataExportService : IProjectDataExportService, ITransientDependency
 {
+    // 项目数据包大小上限，与 Swagger 导入的 20MB 保持一致
+    private const long MaxProjectPackageFileBytes = 20 * 1024 * 1024;
+
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         WriteIndented = true,
@@ -75,8 +78,12 @@ public sealed class ProjectDataExportService : IProjectDataExportService, ITrans
                 Directory.CreateDirectory(directoryPath);
             }
 
-            var json = JsonSerializer.Serialize(package, SerializerOptions);
-            await File.WriteAllTextAsync(request.OutputFilePath, json, new UTF8Encoding(true), cancellationToken);
+            // 直接序列化到文件流，避免大包在内存中先拼完整字符串再写盘；保留 UTF-8 BOM 与旧行为一致
+            await using var outputStream = new FileStream(
+                request.OutputFilePath, FileMode.Create, FileAccess.Write, FileShare.None, 64 * 1024, useAsync: true);
+            outputStream.Write(new byte[] { 0xEF, 0xBB, 0xBF });
+            outputStream.Flush();
+            await JsonSerializer.SerializeAsync(outputStream, package, SerializerOptions, cancellationToken);
             return ResultModel<ProjectDataExportResultDto>.Success(new ProjectDataExportResultDto
             {
                 FilePath = request.OutputFilePath,
@@ -393,7 +400,8 @@ public sealed class ProjectDataExportService : IProjectDataExportService, ITrans
             return source.GroupName.Trim();
         }
 
-        return "默认模块";
+        // 未分组接口不再兜底到"默认模块"，导入后直接落在接口树根目录
+        return string.Empty;
     }
 
     private static string NormalizeMethod(string method)
@@ -428,8 +436,17 @@ public sealed class ProjectDataExportService : IProjectDataExportService, ITrans
             return PackageLoadResult.Failure("请选择要导入的项目数据包文件。", "project_data_package_file_required");
         }
 
+        // 与 Swagger 导入一致，限制数据包大小，防止误选超大文件撑爆内存
+        var fileInfo = new FileInfo(filePath);
+        if (fileInfo.Exists && fileInfo.Length > MaxProjectPackageFileBytes)
+        {
+            return PackageLoadResult.Failure(
+                $"项目数据包文件过大（{fileInfo.Length / 1024.0 / 1024.0:F1} MB），上限为 {MaxProjectPackageFileBytes / 1024.0 / 1024.0:F0} MB。",
+                "project_data_package_too_large");
+        }
+
         var rawJson = await File.ReadAllTextAsync(filePath, cancellationToken);
-        var package = JsonSerializer.Deserialize<ProjectDataExportPackageDto>(rawJson, ImportSerializerOptions);
+        var package = await Task.Run(() => JsonSerializer.Deserialize<ProjectDataExportPackageDto>(rawJson, ImportSerializerOptions), cancellationToken);
         if (package is null)
         {
             return PackageLoadResult.Failure("项目数据包解析失败：文件内容为空或结构无效。", "project_data_package_invalid");

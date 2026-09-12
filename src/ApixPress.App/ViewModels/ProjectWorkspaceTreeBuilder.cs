@@ -3,18 +3,27 @@ using ApixPress.App.Models.DTOs;
 
 namespace ApixPress.App.ViewModels;
 
+/// <summary>接口树节点可触发的命令集合，由目录节点与接口节点按需绑定。</summary>
+public sealed record WorkspaceTreeItemCommands(
+    ICommand Delete,
+    ICommand CreateSubfolder,
+    ICommand CreateInterfaceInFolder);
+
 public static class ProjectWorkspaceTreeBuilder
 {
+    /// <summary>接口树最多展示两级目录，更深的导入路径会合并到第二级目录下。</summary>
+    public const int MaxFolderDepth = 2;
+
     public static (ExplorerItemViewModel InterfaceRoot, List<ExplorerItemViewModel> QuickRequests) Build(
         IEnumerable<RequestCaseItemViewModel> savedRequests,
-        ICommand deleteCommand)
+        WorkspaceTreeItemCommands commands)
     {
-        return (BuildInterfaceRoot(savedRequests, deleteCommand), BuildQuickRequests(savedRequests, deleteCommand));
+        return (BuildInterfaceRoot(savedRequests, commands), BuildQuickRequests(savedRequests, commands.Delete));
     }
 
     public static ExplorerItemViewModel BuildInterfaceRoot(
         IEnumerable<RequestCaseItemViewModel> savedRequests,
-        ICommand deleteCommand,
+        WorkspaceTreeItemCommands commands,
         bool expandAll = false)
     {
         var requestItems = savedRequests.ToList();
@@ -27,6 +36,9 @@ public static class ProjectWorkspaceTreeBuilder
             .Where(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpCase, StringComparison.OrdinalIgnoreCase))
             .GroupBy(item => item.SourceCase.ParentId)
             .ToDictionary(group => group.Key, group => group.OrderByDescending(item => item.UpdatedAt).ToList(), StringComparer.OrdinalIgnoreCase);
+        var folderRows = requestItems
+            .Where(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.Folder, StringComparison.OrdinalIgnoreCase))
+            .ToList();
         var folderCounts = BuildFolderDescendantCounts(httpInterfaces.Select(item => item.SourceCase.FolderPath));
 
         var interfaceRoot = new ExplorerItemViewModel
@@ -36,12 +48,21 @@ public static class ProjectWorkspaceTreeBuilder
             Subtitle = string.Empty,
             IsGroup = true,
             NodeType = "interface-root",
-            DeleteCommand = deleteCommand
+            DeleteCommand = commands.Delete
         };
 
+        // 目录节点先落位，空的用户目录也能展示；接口路径再合并进同一批目录规格
         var rootFolderSpecs = new Dictionary<string, FolderNodeSpec>(StringComparer.OrdinalIgnoreCase);
-        var rootInterfaces = new List<InterfaceNodeSpec>();
+        foreach (var folderRow in folderRows)
+        {
+            var parentPath = NormalizeFolderPath(folderRow.SourceCase.FolderPath);
+            var folderDepth = CountPathDepth(parentPath) + 1;
+            var fullPath = string.IsNullOrWhiteSpace(parentPath) ? folderRow.SourceCase.Name : $"{parentPath}/{folderRow.SourceCase.Name}";
+            var spec = EnsureFolderSpec(rootFolderSpecs, fullPath, folderDepth);
+            spec.SourceCase = folderRow.SourceCase;
+        }
 
+        var rootInterfaces = new List<InterfaceNodeSpec>();
         foreach (var item in httpInterfaces)
         {
             FolderNodeSpec? parentFolder = null;
@@ -49,23 +70,21 @@ public static class ProjectWorkspaceTreeBuilder
             if (!string.IsNullOrWhiteSpace(folderPath))
             {
                 var segments = folderPath.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                var currentPath = string.Empty;
-                foreach (var segment in segments)
+                // 超过两级的导入路径合并到第二级目录，避免树无限加深
+                foreach (var segment in segments.Take(MaxFolderDepth))
                 {
-                    currentPath = string.IsNullOrWhiteSpace(currentPath) ? segment : $"{currentPath}/{segment}";
+                    var currentPath = string.IsNullOrWhiteSpace(parentFolder?.Path)
+                        ? segment
+                        : $"{parentFolder.Path}/{segment}";
                     var collection = parentFolder is null
                         ? rootFolderSpecs
                         : parentFolder.Children;
 
-                    if (!collection.TryGetValue(currentPath, out var folderNode))
+                    parentFolder = EnsureFolderSpec(collection, currentPath, 0);
+                    if (parentFolder.Depth == 0)
                     {
-                        folderNode = new FolderNodeSpec(
-                            currentPath,
-                            BuildFolderTitle(segment, currentPath, folderCounts));
-                        collection[currentPath] = folderNode;
+                        parentFolder.Depth = CountPathDepth(currentPath);
                     }
-
-                    parentFolder = folderNode;
                 }
             }
 
@@ -82,14 +101,17 @@ public static class ProjectWorkspaceTreeBuilder
             }
         }
 
+        // 标题计数需在目录节点构建前就位，节点创建时会读取 spec.Title
+        ApplyFolderTitleCounts(rootFolderSpecs.Values, folderCounts);
+
         foreach (var folderSpec in rootFolderSpecs.Values.OrderBy(item => item.Path, StringComparer.OrdinalIgnoreCase))
         {
-            interfaceRoot.Children.Add(BuildFolderNode(folderSpec, deleteCommand, expandAll));
+            interfaceRoot.Children.Add(BuildFolderNode(folderSpec, commands, expandAll));
         }
 
         foreach (var interfaceSpec in rootInterfaces.OrderBy(item => item.Item.Name, StringComparer.OrdinalIgnoreCase))
         {
-            interfaceRoot.Children.Add(BuildInterfaceNode(interfaceSpec, deleteCommand, expandAll));
+            interfaceRoot.Children.Add(BuildInterfaceNode(interfaceSpec, commands.Delete, expandAll));
         }
 
         return interfaceRoot;
@@ -140,14 +162,55 @@ public static class ProjectWorkspaceTreeBuilder
     {
         return entryType switch
         {
-            ProjectTabRequestEntryTypes.HttpCase => 0,
-            ProjectTabRequestEntryTypes.QuickRequest => 1,
-            ProjectTabRequestEntryTypes.HttpInterface => 2,
-            _ => 3
+            ProjectTabRequestEntryTypes.Folder => 0,
+            ProjectTabRequestEntryTypes.HttpCase => 1,
+            ProjectTabRequestEntryTypes.QuickRequest => 2,
+            ProjectTabRequestEntryTypes.HttpInterface => 3,
+            _ => 4
         };
     }
 
-    private static ExplorerItemViewModel BuildFolderNode(FolderNodeSpec spec, ICommand deleteCommand, bool expandAll)
+    /// <summary>按二级截断后的路径，把目录内接口数量追加到目录标题（如 "WeatherForecast (6)"）。</summary>
+    private static void ApplyFolderTitleCounts(IEnumerable<FolderNodeSpec> specs, IReadOnlyDictionary<string, int> folderCounts)
+    {
+        foreach (var spec in specs)
+        {
+            spec.Title = folderCounts.TryGetValue(spec.Path, out var count) && count > 0
+                ? $"{ResolveFolderTitle(spec.Path)} ({count})"
+                : ResolveFolderTitle(spec.Path);
+            ApplyFolderTitleCounts(spec.Children.Values, folderCounts);
+        }
+    }
+
+    private static FolderNodeSpec EnsureFolderSpec(
+        Dictionary<string, FolderNodeSpec> collection,
+        string path,
+        int depth)
+    {
+        if (collection.TryGetValue(path, out var existing))
+        {
+            return existing;
+        }
+
+        var spec = new FolderNodeSpec(path, ResolveFolderTitle(path), depth);
+        collection[path] = spec;
+        return spec;
+    }
+
+    private static string ResolveFolderTitle(string path)
+    {
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        return segments.Length > 0 ? segments[^1] : path;
+    }
+
+    private static int CountPathDepth(string path)
+    {
+        return string.IsNullOrWhiteSpace(path)
+            ? 0
+            : path.Split('/', StringSplitOptions.RemoveEmptyEntries).Length;
+    }
+
+    private static ExplorerItemViewModel BuildFolderNode(FolderNodeSpec spec, WorkspaceTreeItemCommands commands, bool expandAll)
     {
         var node = new ExplorerItemViewModel
         {
@@ -157,35 +220,40 @@ public static class ProjectWorkspaceTreeBuilder
             IsGroup = true,
             NodeType = "folder",
             IsExpanded = expandAll,
-            DeleteCommand = deleteCommand
+            DeleteCommand = commands.Delete,
+            CreateSubfolderCommand = commands.CreateSubfolder,
+            CreateInterfaceInFolderCommand = commands.CreateInterfaceInFolder,
+            FolderFullPath = spec.Path,
+            FolderDepth = spec.Depth,
+            SourceCase = spec.SourceCase
         };
         if (spec.HasChildren)
         {
             if (expandAll)
             {
-                foreach (var child in BuildFolderChildren(spec, deleteCommand, expandAll))
+                foreach (var child in BuildFolderChildren(spec, commands, expandAll))
                 {
                     node.Children.Add(child);
                 }
             }
             else
             {
-                node.SetDeferredChildren(() => BuildFolderChildren(spec, deleteCommand, expandAll));
+                node.SetDeferredChildren(() => BuildFolderChildren(spec, commands, expandAll));
             }
         }
 
         return node;
     }
 
-    private static IReadOnlyList<ExplorerItemViewModel> BuildFolderChildren(FolderNodeSpec spec, ICommand deleteCommand, bool expandAll)
+    private static IReadOnlyList<ExplorerItemViewModel> BuildFolderChildren(FolderNodeSpec spec, WorkspaceTreeItemCommands commands, bool expandAll)
     {
         var children = new List<ExplorerItemViewModel>();
         children.AddRange(spec.Children.Values
             .OrderBy(item => item.Path, StringComparer.OrdinalIgnoreCase)
-            .Select(item => BuildFolderNode(item, deleteCommand, expandAll)));
+            .Select(item => BuildFolderNode(item, commands, expandAll)));
         children.AddRange(spec.Interfaces
             .OrderBy(item => item.Item.Name, StringComparer.OrdinalIgnoreCase)
-            .Select(item => BuildInterfaceNode(item, deleteCommand, expandAll)));
+            .Select(item => BuildInterfaceNode(item, commands.Delete, expandAll)));
         return children;
     }
 
@@ -256,9 +324,10 @@ public static class ProjectWorkspaceTreeBuilder
                 continue;
             }
 
+            // 与展示一致的二级截断：深层路径的计数归入第二级目录
             var segments = folderPath.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             var currentPath = string.Empty;
-            foreach (var segment in segments)
+            foreach (var segment in segments.Take(MaxFolderDepth))
             {
                 currentPath = string.IsNullOrWhiteSpace(currentPath) ? segment : $"{currentPath}/{segment}";
                 counts[currentPath] = counts.TryGetValue(currentPath, out var count) ? count + 1 : 1;
@@ -268,13 +337,6 @@ public static class ProjectWorkspaceTreeBuilder
         return counts;
     }
 
-    private static string BuildFolderTitle(string segment, string path, IReadOnlyDictionary<string, int> folderCounts)
-    {
-        return folderCounts.TryGetValue(path, out var count) && count > 0
-            ? $"{segment} ({count})"
-            : segment;
-    }
-
     private static string BuildInterfaceTitle(string name, int caseCount)
     {
         return caseCount > 0 ? $"{name} ({caseCount})" : name;
@@ -282,15 +344,22 @@ public static class ProjectWorkspaceTreeBuilder
 
     private sealed class FolderNodeSpec
     {
-        public FolderNodeSpec(string path, string title)
+        public FolderNodeSpec(string path, string title, int depth)
         {
             Path = path;
             Title = title;
+            Depth = depth;
         }
 
         public string Path { get; }
 
-        public string Title { get; }
+        public string Title { get; set; }
+
+        /// <summary>目录层级：1 为一级目录，2 为二级目录；0 表示尚未定级，由接口路径合并时补齐。</summary>
+        public int Depth { get; set; }
+
+        /// <summary>目录行对应的实体；虚拟目录（仅由接口路径推导）为 null。</summary>
+        public RequestCaseDto? SourceCase { get; set; }
 
         public Dictionary<string, FolderNodeSpec> Children { get; } = new(StringComparer.OrdinalIgnoreCase);
 

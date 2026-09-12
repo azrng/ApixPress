@@ -114,6 +114,7 @@ internal static class ImportTexts
     public const string SourceTypeFile = "文件上传";
     public const string SourceTypeProjectPackage = "项目数据包";
     public const string BaseUrlFallback = "未解析出 BaseUrl";
+    public const string BaseUrlSyncedSuffix = "；已将文档 BaseUrl 同步到当前环境";
     public const string UnselectedFileName = "尚未选择 Swagger 文件";
     public const string UnselectedFileSummary = "请选择本地 Swagger/OpenAPI JSON 文件后再执行导入。";
     public const string PreviewLocalBusyText = "正在校验本地 Swagger 文件...";

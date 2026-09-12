@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls.Notifications;
 using ApixPress.App;
@@ -984,7 +984,7 @@ public sealed partial class ProjectTabViewModelTests
 
         Assert.True(viewModel.Shell.ShowInterfaceRootWorkspace);
         Assert.NotNull(viewModel.ActiveWorkspaceTab);
-        Assert.Equal("根目录（默认模块）", viewModel.ActiveWorkspaceTab!.HeaderText);
+        Assert.Equal("根目录", viewModel.ActiveWorkspaceTab!.HeaderText);
         Assert.Contains(viewModel.ActiveWorkspaceTab, viewModel.VisibleWorkspaceTabs);
         Assert.True(viewModel.InterfaceRoot.IsAuthSelected);
         Assert.False(viewModel.InterfaceRoot.IsAllInterfacesSelected);
@@ -1431,13 +1431,23 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
-    public void OpenHttpInterfaceWorkspace_ShouldUseDefaultModuleFolder()
+    public void OpenHttpInterfaceWorkspace_ShouldPlaceNewInterfaceAtRootFolder()
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
 
         viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
 
-        Assert.Equal("默认模块", viewModel.Editor.CurrentInterfaceFolderPath);
+        Assert.Equal(string.Empty, viewModel.Editor.CurrentInterfaceFolderPath);
+    }
+
+    [Fact]
+    public void OpenHttpInterfaceWorkspace_ShouldAssignFolderPathFromParameter()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute("WeatherForecast/子目录");
+
+        Assert.Equal("WeatherForecast/子目录", viewModel.Editor.CurrentInterfaceFolderPath);
     }
 
     [Fact]

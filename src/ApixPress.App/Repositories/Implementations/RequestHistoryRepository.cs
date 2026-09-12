@@ -61,8 +61,8 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await connection.QueryAsync<RequestHistoryEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId, Limit = limit }, cancellationToken: cancellationToken));
+        var items = await Task.Run(async () => await connection.QueryAsync<RequestHistoryEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId, Limit = limit }, cancellationToken: cancellationToken)));
         return items.ToList();
     }
 
@@ -81,8 +81,8 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<RequestHistoryEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId, Id = id }, cancellationToken: cancellationToken));
+        return await Task.Run(async () => await connection.QueryFirstOrDefaultAsync<RequestHistoryEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId, Id = id }, cancellationToken: cancellationToken)));
     }
 
     public async Task UpsertAsync(RequestHistoryEntity entity, CancellationToken cancellationToken)
@@ -96,32 +96,32 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken)));
     }
 
     public async Task DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "delete from request_history where project_id = @ProjectId and id = @Id",
             new { ProjectId = projectId, Id = id },
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
     }
 
     public async Task ClearAsync(string projectId, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "delete from request_history where project_id = @ProjectId",
             new { ProjectId = projectId },
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
     }
 
     public async Task ClearAllAsync(CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "delete from request_history",
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
     }
 }

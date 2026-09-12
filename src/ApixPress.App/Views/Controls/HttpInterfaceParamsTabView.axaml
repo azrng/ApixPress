@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -39,10 +39,8 @@
         </Border>
 
         <Grid Grid.Row="1">
-          <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                        VerticalScrollBarVisibility="Auto"
-                        IsVisible="{Binding ConfigTab.HasQueryParameters}">
-            <ItemsControl ItemsSource="{Binding ConfigTab.QueryParameters}">
+          
+            <ListBox Classes="ParameterGridList" IsVisible="{Binding ConfigTab.HasQueryParameters}" ItemsSource="{Binding ConfigTab.QueryParameters}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
                   <Border Classes="ParameterRow HttpConfigTableRow">
@@ -61,8 +59,7 @@
                   </Border>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </ScrollViewer>
+            </ListBox>
 
           <Border Classes="HttpConfigEmptyState"
                   IsVisible="{Binding ConfigTab.ShowQueryParametersEmptyState}">

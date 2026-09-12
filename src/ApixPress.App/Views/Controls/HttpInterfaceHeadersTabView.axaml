@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -27,7 +27,7 @@
       <Grid RowDefinitions="Auto,*">
         <Border Grid.Row="0" Classes="HttpConfigTableHeader">
           <Grid ColumnDefinitions="56,2.4*,2.8*,2.2*,44" ColumnSpacing="{StaticResource Space.3}">
-            <TextBlock Grid.Column="0" Classes="CaptionText" Text="发送" />
+            <TextBlock Grid.Column="0" Classes="CaptionText" Text="启用" />
             <TextBlock Grid.Column="1" Classes="CaptionText" Text="Header 名" />
             <TextBlock Grid.Column="2" Classes="CaptionText" Text="Header 值" />
             <TextBlock Grid.Column="3" Classes="CaptionText" Text="说明（可选）" />
@@ -35,10 +35,8 @@
         </Border>
 
         <Grid Grid.Row="1">
-          <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                        VerticalScrollBarVisibility="Auto"
-                        IsVisible="{Binding ConfigTab.HasHeaders}">
-            <ItemsControl ItemsSource="{Binding ConfigTab.Headers}">
+          
+            <ListBox Classes="ParameterGridList" IsVisible="{Binding ConfigTab.HasHeaders}" ItemsSource="{Binding ConfigTab.Headers}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
                   <Border Classes="ParameterRow HttpConfigTableRow">
@@ -57,8 +55,7 @@
                   </Border>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </ScrollViewer>
+            </ListBox>
 
           <Border Classes="HttpConfigEmptyState"
                   IsVisible="{Binding ConfigTab.ShowHeadersEmptyState}">

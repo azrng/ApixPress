@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -8,14 +8,10 @@
              x:Class="ApixPress.App.Views.Controls.ProjectInterfaceRootWorkspaceView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <Grid RowDefinitions="Auto,*"
-        RowSpacing="{StaticResource Space.1}"
+  <Grid RowDefinitions="*"
         MinHeight="0"
         ClipToBounds="True">
-    <views:ProjectWorkspaceToolbarView />
-
-    <Grid Grid.Row="1"
-          RowDefinitions="Auto,*"
+    <Grid RowDefinitions="Auto,*"
           Margin="{StaticResource Pad.InterfaceRootContent}">
         <Grid ColumnDefinitions="Auto,Auto,*"
               ColumnSpacing="{StaticResource Space.3}">
@@ -64,7 +60,7 @@
 
               <Border Grid.Row="1"
                       Classes="InterfaceRootAuthBody">
-                <Grid ColumnDefinitions="560,*"
+                <Grid ColumnDefinitions="1.2*,*"
                       ColumnSpacing="{StaticResource Space.5}">
                   <Border Classes="InterfaceRootAuthFormPanel">
                     <Grid RowDefinitions="Auto,Auto,Auto,Auto"
@@ -190,11 +186,6 @@
                     <TextBlock Classes="CaptionText"
                                Text="HTTP 接口" />
                   </Border>
-                  <Border Grid.Column="2"
-                          Classes="InterfaceRootFilterChip">
-                    <TextBlock Classes="CaptionText"
-                               Text="已发布" />
-                  </Border>
                   <TextBlock Grid.Column="4"
                              Classes="CaptionText"
                              VerticalAlignment="Center"
@@ -230,8 +221,6 @@
                                     Command="{Binding OpenCommand}">
                               <Grid ColumnDefinitions="32,2.2*,82,2.4*,1.5*,90,110"
                                     ColumnSpacing="{StaticResource Space.3}">
-                                <CheckBox Grid.Column="0"
-                                          IsHitTestVisible="False" />
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding Name}"
                                            TextTrimming="CharacterEllipsis" />

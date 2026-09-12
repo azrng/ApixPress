@@ -373,3 +373,4 @@ use-ai-rule
 
 # NativeAOT 打包产物（package-aot.bat 输出）
 dist/
+.zcode

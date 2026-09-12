@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels.Base;

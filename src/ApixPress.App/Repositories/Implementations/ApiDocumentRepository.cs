@@ -34,8 +34,8 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await connection.QueryAsync<ApiDocumentEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken));
+        var items = await Task.Run(async () => await connection.QueryAsync<ApiDocumentEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken)));
         return items.ToList();
     }
 
@@ -57,8 +57,8 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<ApiDocumentEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId, DocumentId = documentId }, cancellationToken: cancellationToken));
+        return await Task.Run(async () => await connection.QuerySingleOrDefaultAsync<ApiDocumentEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId, DocumentId = documentId }, cancellationToken: cancellationToken)));
     }
 
     public async Task<IReadOnlyList<ApiEndpointEntity>> GetEndpointsByDocumentIdAsync(string documentId, CancellationToken cancellationToken)
@@ -80,8 +80,8 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await connection.QueryAsync<ApiEndpointEntity>(
-            new CommandDefinition(sql, new { DocumentId = documentId }, cancellationToken: cancellationToken));
+        var items = await Task.Run(async () => await connection.QueryAsync<ApiEndpointEntity>(
+            new CommandDefinition(sql, new { DocumentId = documentId }, cancellationToken: cancellationToken)));
         return items.ToList();
     }
 
@@ -104,8 +104,8 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await connection.QueryAsync<ApiProjectEndpointEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken));
+        var items = await Task.Run(async () => await connection.QueryAsync<ApiProjectEndpointEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken)));
         return items.ToList();
     }
 
@@ -129,8 +129,8 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await connection.QueryAsync<ApiEndpointEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken));
+        var items = await Task.Run(async () => await connection.QueryAsync<ApiEndpointEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken)));
         return items.ToList();
     }
 
@@ -157,8 +157,8 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await connection.QueryAsync<RequestParameterEntity>(
-            new CommandDefinition(sql, new { EndpointIds = ids }, cancellationToken: cancellationToken));
+        var items = await Task.Run(async () => await connection.QueryAsync<RequestParameterEntity>(
+            new CommandDefinition(sql, new { EndpointIds = ids }, cancellationToken: cancellationToken)));
         return items.ToList();
     }
 
@@ -187,16 +187,16 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
         connection.Open();
         using var transaction = connection.BeginTransaction();
 
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             deleteParametersSql,
             new { EndpointIds = ids },
             transaction,
-            cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition(
+            cancellationToken: cancellationToken)));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             deleteEndpointsSql,
             new { EndpointIds = ids },
             transaction,
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
 
         transaction.Commit();
     }
@@ -257,25 +257,25 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
         var conflictingEndpointIds = await LoadConflictingEndpointIdsAsync(connection, transaction, document.ProjectId, endpoints, cancellationToken);
         if (conflictingEndpointIds.Count > 0)
         {
-            await connection.ExecuteAsync(new CommandDefinition(
+            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
                 deleteEndpointParametersSql,
                 new { EndpointIds = conflictingEndpointIds },
                 transaction,
-                cancellationToken: cancellationToken));
-            await connection.ExecuteAsync(new CommandDefinition(
+                cancellationToken: cancellationToken)));
+            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
                 deleteEndpointsSql,
                 new { EndpointIds = conflictingEndpointIds },
                 transaction,
-                cancellationToken: cancellationToken));
-            await connection.ExecuteAsync(new CommandDefinition(
+                cancellationToken: cancellationToken)));
+            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
                 deleteEmptyDocumentsSql,
                 new { document.ProjectId },
                 transaction,
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken)));
         }
-        await connection.ExecuteAsync(new CommandDefinition(insertDocumentSql, document, transaction, cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition(insertEndpointSql, endpoints, transaction, cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition(insertParameterSql, parameters, transaction, cancellationToken: cancellationToken));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(insertDocumentSql, document, transaction, cancellationToken: cancellationToken)));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(insertEndpointSql, endpoints, transaction, cancellationToken: cancellationToken)));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(insertParameterSql, parameters, transaction, cancellationToken: cancellationToken)));
 
         transaction.Commit();
     }
@@ -315,11 +315,11 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
                      and ({string.Join(" or ", conditions)})
                    """;
 
-        var ids = await connection.QueryAsync<string>(new CommandDefinition(
+        var ids = await Task.Run(async () => await connection.QueryAsync<string>(new CommandDefinition(
             sql,
             parameters,
             transaction,
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
         return ids.ToList();
     }
 }

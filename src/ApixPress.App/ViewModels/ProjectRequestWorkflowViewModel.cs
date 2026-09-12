@@ -304,7 +304,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         var savedInterface = await EnsureHttpInterfaceSavedAsync(workspaceTab, reloadAfterSave: true);
         if (savedInterface is not null)
         {
-            _hostContext.Messenger.Send(new StatusMessageRequest("HTTP 接口已保存到默认模块。"));
+            _hostContext.Messenger.Send(new StatusMessageRequest("HTTP 接口已保存。"));
             _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
         }
     }

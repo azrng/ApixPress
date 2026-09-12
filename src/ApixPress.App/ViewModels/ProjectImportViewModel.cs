@@ -36,6 +36,7 @@ public partial class ProjectImportViewModel : ViewModelBase
     private readonly IProjectDataExportService _projectDataExportService;
     private readonly Func<ProjectWorkspaceItemViewModel> _getProject;
     private readonly Func<IReadOnlyList<ApiEndpointDto>, Task> _syncImportedInterfacesAsync;
+    private readonly Func<string, Task<bool>> _applyImportedBaseUrlAsync;
     private readonly IMessenger _messenger;
     private CancellationTokenSource? _importCancellationTokenSource;
     private PendingImportRequest? _pendingImportRequest;
@@ -63,6 +64,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         IProjectDataExportService projectDataExportService,
         Func<ProjectWorkspaceItemViewModel> getProject,
         Func<IReadOnlyList<ApiEndpointDto>, Task> syncImportedInterfacesAsync,
+        Func<string, Task<bool>> applyImportedBaseUrlAsync,
         IMessenger messenger)
     {
         _projectId = projectId;
@@ -72,6 +74,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         _projectDataExportService = projectDataExportService;
         _getProject = getProject;
         _syncImportedInterfacesAsync = syncImportedInterfacesAsync;
+        _applyImportedBaseUrlAsync = applyImportedBaseUrlAsync;
         _messenger = messenger;
 
         ImportedApiDocuments.CollectionChanged += OnImportedApiDocumentsCollectionChanged;
@@ -662,11 +665,36 @@ public partial class ProjectImportViewModel : ViewModelBase
         ImportDataBusyText = ImportTexts.BusyRefreshResult;
         await LoadImportedDocumentsAsync(manageBusyState: false);
         var successMessage = buildSuccessMessage(result.Data);
+        if (await TryApplyImportedBaseUrlAsync(result.Data))
+        {
+            successMessage += ImportTexts.BaseUrlSyncedSuffix;
+        }
+
         ClearPendingImportConfirmation();
         SetImportDataStatus(successMessage, ImportStatusStates.Success);
         IsDialogOpen = false;
         _messenger.Send(new StatusMessageRequest(successMessage));
         PublishGlobalNotification(operationTexts.SuccessNotificationTitle, successMessage, NotificationType.Success);
+    }
+
+    private async Task<bool> TryApplyImportedBaseUrlAsync(ApiDocumentDto document)
+    {
+        if (string.IsNullOrWhiteSpace(document.BaseUrl))
+        {
+            return false;
+        }
+
+        try
+        {
+            return await _applyImportedBaseUrlAsync(document.BaseUrl);
+        }
+        catch (Exception exception)
+        {
+            // BaseUrl 同步失败不影响导入结果，仅提示用户
+            var warningMessage = $"文档 BaseUrl 同步失败：{exception.Message}";
+            _messenger.Send(new StatusMessageRequest(warningMessage));
+            return false;
+        }
     }
 
     private void HandleUnexpectedImportFailure(Exception exception, ImportOperationTextBundle operationTexts)

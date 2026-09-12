@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -74,7 +74,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
 
         QueryParameters.CollectionChanged += OnQueryParametersCollectionChanged;
         Headers.CollectionChanged += OnHeadersCollectionChanged;
-        FormFields.CollectionChanged += (_, _) => OnFormFieldsChanged();
+        FormFields.CollectionChanged += OnFormFieldsCollectionChanged;
         SelectedBodyModeOption = BodyModeOptions[0];
         UpdateQueryParametersSelectionState();
     }
@@ -179,6 +179,11 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         var match = BodyModeOptions.FirstOrDefault(o => o.Mode == value);
         if (match is not null && SelectedBodyModeOption != match)
             SelectedBodyModeOption = match;
+    }
+
+    private void OnFormFieldsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        OnFormFieldsChanged();
     }
 
     private void OnFormFieldsChanged()
@@ -315,6 +320,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     {
         QueryParameters.CollectionChanged -= OnQueryParametersCollectionChanged;
         Headers.CollectionChanged -= OnHeadersCollectionChanged;
+        FormFields.CollectionChanged -= OnFormFieldsCollectionChanged;
 
         foreach (var item in _subscribedQueryParameterItems)
         {

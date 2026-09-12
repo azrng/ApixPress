@@ -1,4 +1,4 @@
-using ApixPress.App.Helpers;
+﻿using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 
 namespace ApixPress.App.Services.Implementations;
@@ -6,7 +6,8 @@ namespace ApixPress.App.Services.Implementations;
 internal sealed class OpenApiPreparedImportCache
 {
     private static readonly TimeSpan PreparedImportCacheLifetime = TimeSpan.FromMinutes(10);
-    private const int MaxCacheEntries = 32;
+    // 每条缓存含完整原始文档（最大 20MB），条目数需保持低位避免内存驻留数百 MB
+    private const int MaxCacheEntries = 6;
 
     private readonly Dictionary<string, PreparedImportPayload> _preparedImports = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock _preparedImportCacheLock = new();

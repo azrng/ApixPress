@@ -31,8 +31,8 @@ public sealed class ProjectHttpSettingsRepository : IProjectHttpSettingsReposito
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<ProjectHttpAuthSettingsEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken));
+        return await Task.Run(async () => await connection.QuerySingleOrDefaultAsync<ProjectHttpAuthSettingsEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken)));
     }
 
     public async Task UpsertAuthSettingsAsync(ProjectHttpAuthSettingsEntity entity, CancellationToken cancellationToken)
@@ -52,6 +52,6 @@ public sealed class ProjectHttpSettingsRepository : IProjectHttpSettingsReposito
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken)));
     }
 }

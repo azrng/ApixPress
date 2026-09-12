@@ -14,10 +14,12 @@
     <Setter Property="Padding" Value="0" />
   </Style>
 
-  <Style Selector="Border.HttpEditorContextBar">
+  <!-- 上下文栏对齐原型 ctx-bar：完整圆角卡片，接口编辑与快捷请求共用 -->
+  <Style Selector="Border.HttpEditorContextBar, Border.HttpQuickContextBar">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="{StaticResource Pad.2}" />
   </Style>
 
@@ -27,9 +29,9 @@
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
+  <!-- 接口名输入对齐原型 name-input：撑满模式切换与代码按钮之间的空间 -->
   <Style Selector="TextBox.HttpEditorTitleInput">
     <Setter Property="MinWidth" Value="196" />
-    <Setter Property="MaxWidth" Value="360" />
   </Style>
 
   <Style Selector="ToggleButton.HttpEditorModeButton">
@@ -46,7 +48,7 @@
   </Style>
 
   <Style Selector="ToggleButton.HttpEditorModeButton:checked">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
     <Setter Property="BorderThickness" Value="1" />
@@ -427,8 +429,13 @@
     <Setter Property="Margin" Value="4,0,0,0" />
   </Style>
 
+  <!-- URL 输入壳对齐原型：内嵌区域使用最深的应用底色，与外部卡片拉开层次 -->
+  <Style Selector="Grid.HttpRequestUrlRow">
+    <Setter Property="Margin" Value="{StaticResource Pad.HttpUrlRow}" />
+  </Style>
+
   <Style Selector="Border.HttpRequestUrlShell">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
@@ -438,14 +445,34 @@
 
   <Style Selector="ComboBox.HttpMethodSelector">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
     <Setter Property="Padding" Value="5,2" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
     <Setter Property="MinWidth" Value="56" />
     <Setter Property="MinHeight" Value="30" />
     <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- 方法名按语义着色：GET 绿 / POST 橙 / PUT 蓝 / DELETE 红 / PATCH 青 -->
+  <Style Selector="ComboBox.HttpMethodSelector.HttpMethodGet">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Get}" />
+  </Style>
+
+  <Style Selector="ComboBox.HttpMethodSelector.HttpMethodPost">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Post}" />
+  </Style>
+
+  <Style Selector="ComboBox.HttpMethodSelector.HttpMethodPut">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Put}" />
+  </Style>
+
+  <Style Selector="ComboBox.HttpMethodSelector.HttpMethodDelete">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Delete}" />
+  </Style>
+
+  <Style Selector="ComboBox.HttpMethodSelector.HttpMethodPatch">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Patch}" />
   </Style>
 
   <Style Selector="ComboBox.HttpMethodSelector /template/ ContentPresenter#PART_ContentPresenter">
@@ -469,6 +496,7 @@
   <Style Selector="Border.HttpBaseUrlPrefixCard">
     <Setter Property="Margin" Value="0" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="8,4" />
     <Setter Property="MinHeight" Value="30" />
   </Style>
@@ -503,21 +531,24 @@
     <Setter Property="MinHeight" Value="34" />
   </Style>
 
+  <!-- 子标签对齐原型 sub-tab：选中保持主文字色 + 紫色下划线，分隔线横贯卡片 -->
   <Style Selector="TabControl.HttpRequestTabs">
     <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="Margin" Value="12,0,12,0" />
     <Setter Property="MinHeight" Value="0" />
     <Setter Property="ClipToBounds" Value="True" />
   </Style>
 
   <Style Selector="TabControl.HttpRequestTabs TabItem">
-    <Setter Property="Padding" Value="8,8" />
-    <Setter Property="Margin" Value="0,0,8,0" />
+    <Setter Property="Padding" Value="2,9,2,8" />
+    <Setter Property="Margin" Value="0,0,18,0" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 
   <Style Selector="TabControl.HttpRequestTabs TabItem:selected">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
     <Setter Property="BorderThickness" Value="0,0,0,2" />
   </Style>
@@ -685,6 +716,24 @@
   <Style Selector="Border.HttpResponseCard">
     <Setter Property="MinHeight" Value="260" />
     <Setter Property="ClipToBounds" Value="True" />
+  </Style>
+
+  <!-- 响应体对齐原型 resp-body：卡片内嵌一块应用底色的代码框 -->
+  <Style Selector="Border.HttpResponseBodyCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="14,12" />
+    <Setter Property="ClipToBounds" Value="True" />
+  </Style>
+
+  <Style Selector="SelectableTextBlock.HttpResponseBodyViewer">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Code.Plain}" />
+    <Setter Property="LineHeight" Value="21" />
+    <Setter Property="TextWrapping" Value="NoWrap" />
   </Style>
 
   <Style Selector="Border.RequestResolvedPreviewCard">

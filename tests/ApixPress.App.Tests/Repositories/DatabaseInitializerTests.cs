@@ -24,7 +24,7 @@ public sealed class DatabaseInitializerTests
         var basicColumnCount = connection.ExecuteScalar<long>(
             "select count(1) from pragma_table_info('project_http_settings') where name in ('basic_username', 'basic_password')");
 
-        Assert.Equal(3, schemaVersion);
+        Assert.Equal(4, schemaVersion);
         Assert.Equal(0, projectCount);
         Assert.Equal(0, environmentCount);
         Assert.Equal(1, httpSettingsTableCount);
@@ -147,8 +147,48 @@ public sealed class DatabaseInitializerTests
         var basicColumnCount = verificationConnection.ExecuteScalar<long>(
             "select count(1) from pragma_table_info('project_http_settings') where name in ('basic_username', 'basic_password')");
 
-        Assert.Equal(3, schemaVersion);
+        Assert.Equal(4, schemaVersion);
         Assert.Equal(1, httpSettingsTableCount);
         Assert.Equal(2, basicColumnCount);
+    }
+
+    [Fact]
+    public void Initialize_ShouldFlattenLegacyDefaultModuleFolderPath()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        var initializer = new DatabaseInitializer(factory);
+        initializer.Initialize();
+
+        // 模拟版本 3 的历史数据：未分组接口被归入"默认模块"虚拟目录
+        using (var connection = factory.CreateConnection())
+        {
+            connection.Open();
+            connection.Execute(
+                """
+                insert into projects (id, name, description, is_default, created_at, updated_at)
+                values ('p-legacy', '历史项目', '', 0, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')
+                """);
+            connection.Execute(
+                """
+                insert into request_cases (
+                    id, project_id, entry_type, name, group_name, folder_path,
+                    parent_id, tags_json, description, request_snapshot_json, updated_at)
+                values ('c-legacy', 'p-legacy', 'http-interface', 'get接口', '接口', '默认模块',
+                        '', '[]', '', '{}', '2026-01-01T00:00:00Z')
+                """);
+            connection.Execute("delete from schema_migrations where version = 4");
+        }
+
+        initializer.Initialize();
+
+        using var verificationConnection = factory.CreateConnection();
+        verificationConnection.Open();
+        var folderPath = verificationConnection.ExecuteScalar<string>(
+            "select folder_path from request_cases where id = 'c-legacy'");
+        var schemaVersion = verificationConnection.ExecuteScalar<long>(
+            "select max(version) from schema_migrations");
+
+        Assert.Equal(string.Empty, folderPath);
+        Assert.Equal(4, schemaVersion);
     }
 }

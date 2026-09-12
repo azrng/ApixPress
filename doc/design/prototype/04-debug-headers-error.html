@@ -8,67 +8,128 @@
 </head>
 <body>
 
-<!-- 原型页导航 -->
-<div class="proto-nav">
-  <a href="index.html">原型总览</a>
-  <a href="01-home.html">01 项目首页</a>
-  <a href="02-debug-params.html">02 调试·Params</a>
-  <a href="03-debug-body-upload.html">03 调试·Body</a>
-  <a class="current" href="04-debug-headers-error.html">04 调试·Headers</a>
-  <a href="05-history.html">05 请求历史</a>
-  <a href="06-project-settings.html">06 项目设置</a>
-  <a href="07-environments.html">07 环境变量</a>
-  <a href="08-use-cases.html">08 接口用例</a>
-  <a href="09-import-export.html">09 导入导出</a>
-  <a href="10-dialogs.html">10 弹窗合集</a>
-  <span class="pos">04 / 10</span>
-</div>
 
-<!-- ═══════════════ 接口调试：Headers 编辑 + 异常响应 ═══════════════ -->
+<!-- ═══════════════ 接口调试：Headers 编辑 + 异常响应（可交互） ═══════════════ -->
 <div class="window">
   <div class="titlebar">
     <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
-    <div class="tb-tab">首页 <span class="n">3</span></div>
-    <div class="tb-tab active">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-tab" data-href="01-home.html">首页 <span class="n">3</span></div>
+    <div class="tb-tab active" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
     <div class="tb-tab">获取用户详情 <span class="close">✕</span></div>
     <div class="tb-spacer"></div>
-    <div class="env-chip"><span class="env-dot"></span>开发<span class="caret">▼</span></div>
-    <button class="tb-icon">⚙</button>
+    <div class="env-switch">
+      <div class="env-chip"><span class="env-dot"></span><span class="env-chip-name">开发</span><span class="caret">▼</span></div>
+      <div class="env-menu">
+        <div class="env-item active" data-name="开发"><span class="check">✓</span><span class="t">开发</span><span class="chip">激活</span></div>
+        <div class="env-item" data-name="测试"><span class="check">✓</span><span class="t">测试</span><span class="chip">激活</span></div>
+        <div class="env-item" data-name="生产"><span class="check">✓</span><span class="t">生产</span><span class="chip">激活</span></div>
+        <div class="env-menu-foot" data-href="07-environments.html">管理环境…</div>
+      </div>
+    </div>
+    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）">⚙</button>
   </div>
 
   <div class="shell">
     <!-- 左导航 -->
     <div class="rail">
-      <button class="nav-item selected">
+      <button class="nav-item selected" data-href="02-debug-params.html">
         <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
         <span class="t">接口管理</span>
       </button>
-      <button class="nav-item">
+      <button class="nav-item" data-href="05-history.html">
         <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
         <span class="t">请求历史</span>
       </button>
-      <button class="nav-item">
+      <button class="nav-item" data-href="06-project-settings.html">
         <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span>
         <span class="t">项目设置</span>
       </button>
     </div>
 
-    <!-- 接口树侧栏 -->
+    <!-- 接口树侧栏（对齐 ProjectWorkspaceTreeBuilder：两级目录 + 计数 + 用例子节点） -->
     <div class="sidebar">
       <div class="side-head">
         <span class="side-title">接口管理</span>
-        <button class="icon-btn-violet">＋</button>
+        <button class="icon-btn-violet" data-toast="新建 HTTP 接口（演示）">＋</button>
       </div>
       <div class="search-box"><span>🔍</span><input placeholder="搜索"></div>
       <div class="tree">
-        <div class="tree-group"><span class="caret">▾</span>📁 默认模块</div>
-        <div class="tree-group" style="padding-left:24px;"><span class="caret">▾</span>🔗 接口</div>
-        <div class="tree-leaf" style="padding-left:52px;"><span class="caret" style="width:auto;">▸</span>📁 User <span class="cnt">(6)</span></div>
-        <div class="tree-leaf selected" style="padding-left:74px;"><span class="badge get">GET</span>获取用户详情</div>
+        <div class="tree-node">
+          <div class="tree-row" data-toggle style="padding-left:6px;">
+            <span class="caret open">▸</span><span>📁</span><span class="t">默认模块</span>
+          </div>
+          <div class="tree-children open">
+            <div class="tree-node">
+              <div class="tree-row" data-toggle style="padding-left:24px;">
+                <span class="caret open">▸</span><span>🔗</span><span class="t">接口</span>
+                <button class="row-more" data-toast="目录操作：新建目录 / 新建 HTTP 接口（演示）">⋯</button>
+              </div>
+              <div class="tree-children open">
+                <div class="tree-node">
+                  <div class="tree-row" data-toggle style="padding-left:42px;">
+                    <span class="caret">▸</span><span>📁</span><span class="t">EfCoreSample</span><span class="cnt">(7)</span>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-row" data-toggle style="padding-left:42px;">
+                    <span class="caret">▸</span><span>📁</span><span class="t">Group</span><span class="cnt">(1)</span>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-row" data-toggle style="padding-left:42px;">
+                    <span class="caret">▸</span><span>📁</span><span class="t">Home</span><span class="cnt">(1)</span>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-row" data-toggle style="padding-left:42px;">
+                    <span class="caret">▸</span><span>📁</span><span class="t">HttpSample</span><span class="cnt">(8)</span>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-row" data-toggle style="padding-left:42px;">
+                    <span class="caret">▸</span><span>📁</span><span class="t">LoadTest</span><span class="cnt">(1)</span>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-row" data-toggle style="padding-left:42px;">
+                    <span class="caret">▸</span><span>📁</span><span class="t">Test</span><span class="cnt">(1)</span>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-row" data-toggle style="padding-left:42px;">
+                    <span class="caret open">▸</span><span>📁</span><span class="t">User</span><span class="cnt">(6)</span>
+                  </div>
+                  <div class="tree-children open">
+                    <div class="tree-node">
+                      <div class="tree-row selected" data-toggle style="padding-left:66px;">
+                        <span class="caret open">▸</span><span class="badge get">GET</span><span class="t">获取用户详情 (1)</span>
+                        <span class="status-dot" title="该接口有用例"></span>
+                      </div>
+                      <div class="tree-children open">
+                        <div class="tree-row case-node" style="padding-left:96px;">
+                          <span class="case-glyph">⎿</span><span class="t">异常 id</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="side-section">
-        <div class="side-cap"><span class="caret">▾</span>⚡ 快捷请求</div>
-        <div class="side-cap" style="justify-content:center;color:var(--text-secondary);font-size:12px;margin-top:6px;border:1px solid var(--border-subtle);">＋ 新建</div>
+        <div class="tree-node">
+          <div class="tree-row" data-toggle style="padding-left:6px; font-weight:500;">
+            <span class="caret open">▸</span><span>🌐</span><span class="t">快捷请求</span>
+          </div>
+          <div class="tree-children open">
+            <div class="tree-row" style="padding-left:30px;">
+              <span>➤</span><span class="t">Echo 探活</span>
+            </div>
+          </div>
+        </div>
+        <div class="side-cap" data-toast="新建快捷请求（演示）" style="justify-content:center;color:var(--text-secondary);font-size:12px;margin-top:6px;border:1px solid var(--border-subtle);">＋ 新建</div>
       </div>
     </div>
 
@@ -76,68 +137,94 @@
     <div class="main">
       <!-- 视图切换 + 接口名 -->
       <div class="card ctx-bar">
-        <div class="mode-bar">
-          <button class="mode-btn checked">调试</button>
-          <button class="mode-btn">设计</button>
-          <button class="mode-btn">文档预览</button>
+        <div class="mode-bar" data-tabs="mode">
+          <button class="mode-btn checked" data-v="调试">调试</button>
+          <button class="mode-btn" data-v="设计">设计</button>
+          <button class="mode-btn" data-v="文档预览">文档预览</button>
         </div>
         <input class="name-input" value="获取用户详情">
-        <button class="code-btn" title="生成请求代码">&lt;/&gt;</button>
+        <button class="code-btn" data-toast="生成请求代码见 02 页（演示）" title="生成请求代码">&lt;/&gt;</button>
       </div>
 
       <!-- URL 行 -->
       <div class="card" style="padding:2px 12px 12px; margin-top:-10px;">
         <div class="url-row" style="padding:12px 0 0;">
           <div class="url-shell">
-            <span class="method-select get">GET <span class="caret">▼</span></span>
+            <span class="method-select get" data-toast="切换请求方法（演示）">GET <span class="caret">▼</span></span>
             <span class="base-chip">{{BaseUrl}}</span>
             <input class="path-input" value="/api/User/1">
           </div>
-          <button class="btn btn-primary">发送</button>
-          <button class="btn btn-ghost">保存</button>
+          <button class="btn btn-primary" id="sendBtn">发送</button>
+          <button class="btn btn-ghost" data-toast="已保存接口（演示）">保存</button>
           <span class="v-sep"></span>
           <input class="case-input" value="异常 id">
-          <button class="btn btn-ghost">保存测试用例</button>
+          <button class="btn btn-ghost" data-toast="已保存为用例「异常 id」（演示）">保存测试用例</button>
         </div>
 
-        <!-- 请求配置：Headers -->
-        <div class="sub-tabs" style="margin-top:10px;">
-          <span class="sub-tab">Params</span>
-          <span class="sub-tab">Body</span>
-          <span class="sub-tab active">Headers <span class="cnt">3</span></span>
+        <!-- 请求配置 Tabs -->
+        <div class="sub-tabs" data-tabs="cfg" style="margin-top:10px;">
+          <span class="sub-tab" data-v="Params">Params</span>
+          <span class="sub-tab" data-v="Body">Body</span>
+          <span class="sub-tab active" data-v="Headers">Headers <span class="cnt">2</span></span>
         </div>
-        <div class="section-head">
-          <div>
-            <div class="section-title">请求 Headers</div>
-            <div class="section-hint">随请求发送的头部；取消勾选的 Header 不会参与请求，敏感值建议引用环境变量。</div>
+
+        <!-- Params 面板 -->
+        <div data-tabs-panel="cfg" data-v="Params">
+          <div class="table">
+            <div class="table-row header">
+              <span class="th-check"><span class="checkbox on"></span>启用</span>
+              <span>参数名</span><span>参数值</span><span>说明（可选）</span><span></span>
+            </div>
+            <div class="table-row">
+              <span><span class="checkbox on"></span></span>
+              <span><input class="cell-input" value="id"></span>
+              <span><input class="cell-input" value="1"></span>
+              <span><input class="cell-input" placeholder="说明"></span>
+              <span class="del-btn">🗑</span>
+            </div>
           </div>
-          <button class="btn-add">添加 Header</button>
         </div>
-        <div class="table">
-          <div class="table-row header">
-            <span class="th-check"><span class="checkbox on"></span>启用</span>
-            <span>Header 名</span><span>Header 值</span><span>说明（可选）</span><span></span>
+
+        <!-- Body 面板 -->
+        <div data-tabs-panel="cfg" data-v="Body">
+          <div class="cell-empty">GET 请求不发送 Body。</div>
+        </div>
+
+        <!-- Headers 面板 -->
+        <div data-tabs-panel="cfg" data-v="Headers" class="on">
+          <div class="section-head">
+            <div>
+              <div class="section-title">请求 Headers</div>
+              <div class="section-hint">随请求发送的头部；取消勾选的 Header 不会参与请求，敏感值建议引用环境变量。</div>
+            </div>
+            <button class="btn-add" id="addHeader">添加 Header</button>
           </div>
-          <div class="table-row">
-            <span><span class="checkbox on"></span></span>
-            <span><input class="cell-input mono" value="Authorization"></span>
-            <span><input class="cell-input mono" value="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6..."></span>
-            <span><input class="cell-input" value="登录令牌，引用 {{token}}"></span>
-            <span class="del-btn">🗑</span>
-          </div>
-          <div class="table-row">
-            <span><span class="checkbox on"></span></span>
-            <span><input class="cell-input mono" value="Content-Type"></span>
-            <span><input class="cell-input mono" value="application/json"></span>
-            <span><input class="cell-input" placeholder="说明"></span>
-            <span class="del-btn">🗑</span>
-          </div>
-          <div class="table-row">
-            <span><span class="checkbox"></span></span>
-            <span><input class="cell-input mono" value="X-Debug"></span>
-            <span><input class="cell-input mono" value="true"></span>
-            <span><input class="cell-input" value="调试用，默认关闭"></span>
-            <span class="del-btn">🗑</span>
+          <div class="table" id="headerTable">
+            <div class="table-row header">
+              <span class="th-check"><span class="checkbox on"></span>启用</span>
+              <span>Header 名</span><span>Header 值</span><span>说明（可选）</span><span></span>
+            </div>
+            <div class="table-row">
+              <span><span class="checkbox on"></span></span>
+              <span><input class="cell-input mono" value="Authorization"></span>
+              <span><input class="cell-input mono" value="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6..."></span>
+              <span><input class="cell-input" value="登录令牌，引用 {{token}}"></span>
+              <span class="del-btn">🗑</span>
+            </div>
+            <div class="table-row">
+              <span><span class="checkbox on"></span></span>
+              <span><input class="cell-input mono" value="Content-Type"></span>
+              <span><input class="cell-input mono" value="application/json"></span>
+              <span><input class="cell-input" placeholder="说明"></span>
+              <span class="del-btn">🗑</span>
+            </div>
+            <div class="table-row">
+              <span><span class="checkbox"></span></span>
+              <span><input class="cell-input mono" value="X-Debug"></span>
+              <span><input class="cell-input mono" value="true"></span>
+              <span><input class="cell-input" value="调试用，默认关闭"></span>
+              <span class="del-btn">🗑</span>
+            </div>
           </div>
         </div>
       </div>
@@ -157,40 +244,65 @@
           <span class="n-title">服务器错误 HTTP 500</span>
           <span class="n-text">服务器在处理请求时发生异常，可结合响应体中的 traceId 排查服务端日志。</span>
         </div>
-        <div class="resp-tabs">
-          <span class="sub-tab">Body</span>
-          <span class="sub-tab active">Headers</span>
+        <div class="resp-tabs" data-tabs="resp">
+          <span class="sub-tab" data-v="Body">Body</span>
+          <span class="sub-tab active" data-v="Headers">Headers</span>
         </div>
-        <div style="margin-top:10px;"></div>
-        <div class="kv-grid" style="margin:10px 0 0;">
-          <div class="kv"><span class="k">content-type</span><span class="v">application/json; charset=utf-8</span></div>
-          <div class="kv"><span class="k">date</span><span class="v">Fri, 12 Sep 2026 11:52:08 GMT</span></div>
-          <div class="kv"><span class="k">server</span><span class="v">Kestrel</span></div>
-          <div class="kv"><span class="k">traceid</span><span class="v">8f3c9d62-4a1b-4e57-9d3f-c0a80101</span></div>
+        <div class="rp" data-tabs-panel="resp" data-v="Body">
+          <div class="resp-body" style="flex:1;"><span class="j-punc">{</span>
+  <span class="j-punc">"</span><span class="j-key">success</span><span class="j-punc">":</span> <span class="j-num">false</span><span class="j-punc">,</span>
+  <span class="j-punc">"</span><span class="j-key">code</span><span class="j-punc">":</span> <span class="j-num">500</span><span class="j-punc">,</span>
+  <span class="j-punc">"</span><span class="j-key">message</span><span class="j-punc">":</span> <span class="j-str">"服务器内部错误：数据库连接超时"</span><span class="j-punc">,</span>
+  <span class="j-punc">"</span><span class="j-key">traceId</span><span class="j-punc">":</span> <span class="j-str">"8f3c9d62-4a1b-4e57-9d3f-c0a80101"</span>
+<span class="j-punc">}</span></div>
+        </div>
+        <div class="rp on" data-tabs-panel="resp" data-v="Headers">
+          <div class="kv-grid" style="margin:10px 0 0; flex:none;">
+            <div class="kv"><span class="k">content-type</span><span class="v">application/json; charset=utf-8</span></div>
+            <div class="kv"><span class="k">date</span><span class="v">Fri, 12 Sep 2026 11:52:08 GMT</span></div>
+            <div class="kv"><span class="k">server</span><span class="v">Kestrel</span></div>
+            <div class="kv"><span class="k">traceid</span><span class="v">8f3c9d62-4a1b-4e57-9d3f-c0a80101</span></div>
+          </div>
         </div>
       </div>
     </div>
   </div>
+
 </div>
 
-<!-- 异常横幅样式速览（原型参考，非窗口内容） -->
-<div class="proto-nav" style="margin-top:20px;">
-  <span class="label">异常状态横幅样式速览（对应 04 页说明的三种异常）</span>
-</div>
-<div class="card" style="width:1440px;max-width:100%;margin:0 auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
-  <div class="notice warning" style="margin-top:0;">
-    <span class="n-title">客户端错误 HTTP 404</span>
-    <span class="n-text">请求已发送但服务器拒绝处理，请检查地址、参数、鉴权 Header 或请求体。</span>
-  </div>
-  <div class="notice danger" style="margin-top:0;">
-    <span class="n-title">连接超时</span>
-    <span class="n-text">等待 30 000 ms 后仍未收到响应，已中止本次请求；可检查网络、代理或服务端是否存活。</span>
-  </div>
-  <div class="notice" style="margin-top:0;">
-    <span class="n-title">提示</span>
-    <span class="n-text">常规信息提示样式（无严重度），例如「已使用环境变量替换 2 处引用」。</span>
-  </div>
-</div>
+<script src="shared.js"></script>
+<script>
+  // 发送模拟：按钮进入发送中 → 900ms 后恢复并提示异常结果
+  var sendBtn = document.getElementById("sendBtn");
+  var sendHTML = sendBtn.innerHTML;
+  sendBtn.addEventListener("click", function () {
+    if (sendBtn.classList.contains("loading")) return;
+    sendBtn.classList.add("loading");
+    sendBtn.innerHTML = '<span class="spinner"></span>发送中…';
+    setTimeout(function () {
+      sendBtn.classList.remove("loading");
+      sendBtn.innerHTML = sendHTML;
+      protoToast("HTTP 500 · 3 042 ms · 214 B（演示异常响应）");
+    }, 900);
+  });
 
+  // 添加 Header 行
+  document.getElementById("addHeader").addEventListener("click", function () {
+    var table = document.getElementById("headerTable");
+    var rows = table.querySelectorAll(".table-row:not(.header)");
+    var row = rows[rows.length - 1].cloneNode(true);
+    row.querySelector(".checkbox").classList.add("on");
+    row.querySelectorAll("input").forEach(function (i) { i.value = ""; });
+    table.appendChild(row);
+  });
+  // 删除 Header 行
+  document.getElementById("headerTable").addEventListener("click", function (e) {
+    var del = e.target.closest(".del-btn");
+    if (!del) return;
+    var rows = this.querySelectorAll(".table-row:not(.header)");
+    if (rows.length > 1) del.closest(".table-row").remove();
+    else protoToast("至少保留一行 Header");
+  });
+</script>
 </body>
 </html>

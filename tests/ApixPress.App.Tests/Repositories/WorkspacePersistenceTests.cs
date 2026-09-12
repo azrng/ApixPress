@@ -77,6 +77,65 @@ public sealed partial class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task EnvironmentVariableService_ShouldFillEmptyActiveEnvironmentBaseUrlFromImport()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var environmentService = new EnvironmentVariableService(new EnvironmentVariableRepository(factory), environmentRepository);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "BaseUrl 填充项目"
+        }, CancellationToken.None)).Data!;
+
+        var applied = await environmentService.ApplyImportedBaseUrlAsync(project.Id, "http://localhost:5000", CancellationToken.None);
+
+        Assert.NotNull(applied);
+        Assert.Equal("http://localhost:5000", applied!.BaseUrl);
+        Assert.True(applied.IsActive);
+        var environments = await environmentService.GetEnvironmentsAsync(project.Id, CancellationToken.None);
+        Assert.Equal("http://localhost:5000", Assert.Single(environments).BaseUrl);
+    }
+
+    [Fact]
+    public async Task EnvironmentVariableService_ShouldNotOverwriteConfiguredBaseUrlOnImport()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var environmentService = new EnvironmentVariableService(new EnvironmentVariableRepository(factory), environmentRepository);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "BaseUrl 保留项目"
+        }, CancellationToken.None)).Data!;
+
+        Assert.Null(await environmentService.ApplyImportedBaseUrlAsync(project.Id, string.Empty, CancellationToken.None));
+        Assert.Null(await environmentService.ApplyImportedBaseUrlAsync(string.Empty, "http://localhost:5000", CancellationToken.None));
+
+        var saveResult = await environmentService.SaveEnvironmentAsync(new ProjectEnvironmentDto
+        {
+            ProjectId = project.Id,
+            Name = "预发",
+            BaseUrl = "https://user-configured.example.com",
+            IsActive = true,
+            SortOrder = 2
+        }, CancellationToken.None);
+        Assert.True(saveResult.IsSuccess);
+
+        Assert.Null(await environmentService.ApplyImportedBaseUrlAsync(project.Id, "http://localhost:5000", CancellationToken.None));
+        var environments = await environmentService.GetEnvironmentsAsync(project.Id, CancellationToken.None);
+        Assert.Equal(2, environments.Count);
+        Assert.Equal("https://user-configured.example.com", Assert.Single(environments, item => item.IsActive).BaseUrl);
+        Assert.Equal(string.Empty, Assert.Single(environments, item => !item.IsActive).BaseUrl);
+    }
+
+    [Fact]
     public async Task RequestCaseService_ShouldPersistAndLoadCaseWithinProject()
     {
         using var factory = new TestSqliteConnectionFactory();

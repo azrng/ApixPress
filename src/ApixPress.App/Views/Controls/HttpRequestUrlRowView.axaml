@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:iri="https://irihi.tech/shared"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.HttpRequestUrlRowView"
+             x:DataType="vm:ProjectTabViewModel"
+             mc:Ignorable="d">
+  <!-- 请求动作行：方法 + BaseUrl + 路径 + 发送/保存；接口编辑模式追加用例动作区 -->
+  <Grid Classes="HttpRequestUrlRow"
+        ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto"
+        ColumnSpacing="{StaticResource Space.2}">
+    <Border Grid.Column="0"
+            Classes="HttpRequestUrlShell">
+      <Grid ColumnDefinitions="Auto,Auto,*"
+            ColumnSpacing="{StaticResource Space.1}">
+        <ComboBox Grid.Column="0"
+                  Classes="HttpMethodSelector"
+                  iri:ClassHelper.Classes="{Binding Editor.MethodColorClass}"
+                  ItemsSource="{Binding Editor.HttpMethods}"
+                  SelectedItem="{Binding Editor.SelectedMethod}" />
+        <Border Grid.Column="1"
+                Classes="BaseUrlPrefixCard HttpBaseUrlPrefixCard">
+          <TextBlock Classes="HttpBaseUrlPrefixText"
+                     Text="{Binding Editor.CurrentEditorBaseUrlCaption}"
+                     VerticalAlignment="Center"
+                     TextTrimming="CharacterEllipsis" />
+        </Border>
+        <TextBox Grid.Column="2"
+                 Classes="HttpRequestPathInput"
+                 PlaceholderText="{Binding Editor.CurrentEditorUrlWatermark}"
+                 Text="{Binding Editor.RequestUrl}" />
+      </Grid>
+    </Border>
+    <Button Grid.Column="1"
+            Classes="HttpSendButton"
+            Content="发送"
+            Command="{Binding SendRequestCommand}" />
+    <Button Grid.Column="2"
+            Classes="HttpSaveButton"
+            Content="保存"
+            Command="{Binding SaveCaseCommand}" />
+    <!-- 用例动作与请求动作之间用分隔线区分归属 -->
+    <Border Grid.Column="3"
+            Width="1"
+            Height="22"
+            Background="{DynamicResource Brush.Border.Default}"
+            IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
+    <TextBox Grid.Column="4"
+             Classes="SectionInput HttpInterfaceNameInput HttpCaseNameInput"
+             Width="150"
+             VerticalAlignment="Center"
+             PlaceholderText="用例名称"
+             Text="{Binding Editor.CurrentHttpCaseName}"
+             IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
+    <Button Grid.Column="5"
+            Classes="HttpSaveButton"
+            Content="保存测试用例"
+            Command="{Binding SaveHttpCaseCommand}"
+            IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
+  </Grid>
+</UserControl>

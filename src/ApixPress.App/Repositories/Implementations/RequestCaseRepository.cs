@@ -51,8 +51,8 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await connection.QueryAsync<RequestCaseEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken));
+        var items = await Task.Run(async () => await connection.QueryAsync<RequestCaseEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken)));
         return items.ToList();
     }
 
@@ -77,8 +77,8 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<RequestCaseEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId, Id = id }, cancellationToken: cancellationToken));
+        return await Task.Run(async () => await connection.QuerySingleOrDefaultAsync<RequestCaseEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId, Id = id }, cancellationToken: cancellationToken)));
     }
 
     public async Task UpsertAsync(RequestCaseEntity entity, CancellationToken cancellationToken)
@@ -103,7 +103,7 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken)));
     }
 
     public async Task UpsertRangeAsync(IReadOnlyList<RequestCaseEntity> entities, CancellationToken cancellationToken)
@@ -135,21 +135,21 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();
         using var transaction = connection.BeginTransaction();
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             sql,
             entities,
             transaction,
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
         transaction.Commit();
     }
 
     public async Task DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "delete from request_cases where project_id = @ProjectId and id = @Id",
             new { ProjectId = projectId, Id = id },
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
     }
 
     public async Task DeleteRangeAsync(string projectId, IEnumerable<string> ids, CancellationToken cancellationToken)
@@ -164,9 +164,67 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
         }
 
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "delete from request_cases where project_id = @ProjectId and id in @Ids",
             new { ProjectId = projectId, Ids = targetIds },
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
+    }
+
+    public async Task SyncImportedRangeAsync(
+        string projectId,
+        IReadOnlyList<string> deletedIds,
+        IReadOnlyList<RequestCaseEntity> upserts,
+        CancellationToken cancellationToken)
+    {
+        var targetIds = deletedIds
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (targetIds.Length == 0 && upserts.Count == 0)
+        {
+            return;
+        }
+
+        const string upsertSql = """
+                                 insert into request_cases (
+                                     id, project_id, entry_type, name, group_name, folder_path, parent_id, tags_json, description, request_snapshot_json, updated_at
+                                 ) values (
+                                     @Id, @ProjectId, @EntryType, @Name, @GroupName, @FolderPath, @ParentId, @TagsJson, @Description, @RequestSnapshotJson, @UpdatedAt
+                                 )
+                                 on conflict(id) do update set
+                                     project_id = excluded.project_id,
+                                     entry_type = excluded.entry_type,
+                                     name = excluded.name,
+                                     group_name = excluded.group_name,
+                                     folder_path = excluded.folder_path,
+                                     parent_id = excluded.parent_id,
+                                     tags_json = excluded.tags_json,
+                                     description = excluded.description,
+                                     request_snapshot_json = excluded.request_snapshot_json,
+                                     updated_at = excluded.updated_at
+                                 """;
+
+        using var connection = _connectionFactory.CreateConnection();
+        connection.Open();
+        using var transaction = connection.BeginTransaction();
+        if (targetIds.Length > 0)
+        {
+            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
+                "delete from request_cases where project_id = @ProjectId and id in @Ids",
+                new { ProjectId = projectId, Ids = targetIds },
+                transaction,
+                cancellationToken: cancellationToken)));
+        }
+
+        if (upserts.Count > 0)
+        {
+            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
+                upsertSql,
+                upserts,
+                transaction,
+                cancellationToken: cancellationToken)));
+        }
+
+        transaction.Commit();
     }
 }

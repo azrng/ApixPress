@@ -8,11 +8,8 @@
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
   <Border Classes="PanelCard ProjectWorkspaceCanvas">
-    <Grid RowDefinitions="Auto,*"
-          RowSpacing="{StaticResource Space.4}">
-      <views:ProjectWorkspaceToolbarView />
-
-      <Grid Grid.Row="1">
+    <Grid RowDefinitions="*">
+      <Grid>
         <StackPanel Classes="WorkspaceLandingCenterStage"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">

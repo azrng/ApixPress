@@ -121,6 +121,29 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
         };
     }
 
+    public async Task<bool> ApplyImportedBaseUrlAsync(string baseUrl)
+    {
+        if (IsDisposed || string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(_currentProjectId))
+        {
+            return false;
+        }
+
+        var applied = await _environmentVariableService.ApplyImportedBaseUrlAsync(_currentProjectId, baseUrl, CancellationToken.None);
+        if (applied is null)
+        {
+            return false;
+        }
+
+        var existing = Environments.FirstOrDefault(item => string.Equals(item.Id, applied.Id, StringComparison.OrdinalIgnoreCase));
+        if (existing is null)
+        {
+            return false;
+        }
+
+        existing.BaseUrl = applied.BaseUrl;
+        return true;
+    }
+
     [RelayCommand]
     private async Task AddEnvironmentAsync()
     {

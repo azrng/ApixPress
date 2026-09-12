@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -32,7 +32,7 @@
     <Border Grid.Row="1" Classes="HttpBodyModeHint">
       <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource Space.2}">
         <TextBlock Classes="HttpConfigSectionLabel" VerticalAlignment="Center" Text="内容类型" />
-        <TextBlock Grid.Column="1" Classes="CaptionText" VerticalAlignment="Center" Text="{Binding ConfigTab.BodyModeHint}" />
+        <TextBlock Grid.Column="1" Classes="CaptionText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding ConfigTab.BodyModeHint}" />
       </Grid>
     </Border>
 
@@ -74,10 +74,8 @@
             <Grid Grid.Row="1"
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch">
-              <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                            VerticalScrollBarVisibility="Auto"
-                            IsVisible="{Binding ConfigTab.HasFormFields}">
-                <ItemsControl ItemsSource="{Binding ConfigTab.FormFields}"
+              
+                <ListBox Classes="ParameterGridList" IsVisible="{Binding ConfigTab.HasFormFields}" ItemsSource="{Binding ConfigTab.FormFields}"
                               HorizontalAlignment="Stretch">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
@@ -99,8 +97,7 @@
                       </Border>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
-                </ItemsControl>
-              </ScrollViewer>
+                </ListBox>
 
               <Border Classes="HttpConfigEmptyState"
                       IsVisible="{Binding ConfigTab.ShowFormDataEmptyState}">

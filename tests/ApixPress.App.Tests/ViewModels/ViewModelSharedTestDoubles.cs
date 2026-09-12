@@ -45,6 +45,31 @@ public static class ViewModelSharedTestDoubles
             }));
         }
 
+        // 默认模拟真实规则：环境已有 BaseUrl 时导入不同步；置为 true 可模拟空环境被填充
+        public bool ApplyImportedBaseUrlEnabled { get; set; }
+
+        public List<(string ProjectId, string BaseUrl)> AppliedImportedBaseUrls { get; } = [];
+
+        public Task<ProjectEnvironmentDto?> ApplyImportedBaseUrlAsync(string projectId, string baseUrl, CancellationToken cancellationToken)
+        {
+            AppliedImportedBaseUrls.Add((projectId, baseUrl));
+            if (!ApplyImportedBaseUrlEnabled)
+            {
+                return Task.FromResult<ProjectEnvironmentDto?>(null);
+            }
+
+            ProjectEnvironmentDto applied = new()
+            {
+                Id = "env-1",
+                ProjectId = projectId,
+                Name = "开发",
+                BaseUrl = baseUrl,
+                IsActive = true,
+                SortOrder = 1
+            };
+            return Task.FromResult<ProjectEnvironmentDto?>(applied);
+        }
+
         public Task<IResultModel<bool>> DeleteEnvironmentAsync(string projectId, string environmentId, CancellationToken cancellationToken)
         {
             return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
@@ -165,6 +190,25 @@ public static class ViewModelSharedTestDoubles
             Cases.RemoveAll(item => string.Equals(item.Id, saved.Id, StringComparison.OrdinalIgnoreCase));
             Cases.Add(saved);
             return Task.FromResult<IResultModel<RequestCaseDto>>(ResultModel<RequestCaseDto>.Success(saved));
+        }
+
+        public Task<IResultModel<RequestCaseDto>> CreateFolderAsync(string projectId, string parentFolderPath, string name, CancellationToken cancellationToken)
+        {
+            var folderName = name.Trim();
+            if (string.IsNullOrWhiteSpace(projectId) || string.IsNullOrWhiteSpace(folderName))
+            {
+                return Task.FromResult(ResultModel<RequestCaseDto>.Failure("目录名称不能为空。", "request_case_folder_name_required"));
+            }
+
+            return SaveAsync(new RequestCaseDto
+            {
+                ProjectId = projectId,
+                EntryType = "folder",
+                Name = folderName,
+                GroupName = "目录",
+                FolderPath = parentFolderPath,
+                UpdatedAt = DateTime.UtcNow
+            }, cancellationToken);
         }
 
         public async Task<IResultModel<int>> SaveRangeAsync(IEnumerable<RequestCaseDto> requestCases, CancellationToken cancellationToken)

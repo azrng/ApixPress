@@ -1,4 +1,4 @@
-using Azrng.Core.DependencyInjection;
+﻿using Azrng.Core.DependencyInjection;
 using Azrng.Core.Exceptions;
 using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
@@ -243,7 +243,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     {
         try
         {
-            var graph = _parseOpenApiDocument(json, sourceType, sourceValue);
+            var graph = await Task.Run(() => _parseOpenApiDocument(json, sourceType, sourceValue), cancellationToken);
             return await ImportPreparedGraphAsync(projectId, graph, cancellationToken);
         }
         catch (BaseException exception)
@@ -269,7 +269,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     {
         try
         {
-            var graph = _parseOpenApiDocument(json, sourceType, sourceValue);
+            var graph = await Task.Run(() => _parseOpenApiDocument(json, sourceType, sourceValue), cancellationToken);
             var existingEndpoints = await _apiDocumentRepository.GetEndpointsByProjectIdAsync(projectId, cancellationToken);
             var preview = OpenApiImportPreviewBuilder.Build(graph, existingEndpoints);
             _preparedImportCache.Cache(projectId, sourceType, sourceValue, graph, preview);

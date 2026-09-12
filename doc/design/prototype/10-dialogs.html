@@ -8,21 +8,6 @@
 </head>
 <body>
 
-<!-- 原型页导航 -->
-<div class="proto-nav">
-  <a href="index.html">原型总览</a>
-  <a href="01-home.html">01 项目首页</a>
-  <a href="02-debug-params.html">02 调试·Params</a>
-  <a href="03-debug-body-upload.html">03 调试·Body</a>
-  <a href="04-debug-headers-error.html">04 调试·Headers</a>
-  <a href="05-history.html">05 请求历史</a>
-  <a href="06-project-settings.html">06 项目设置</a>
-  <a href="07-environments.html">07 环境变量</a>
-  <a href="08-use-cases.html">08 接口用例</a>
-  <a href="09-import-export.html">09 导入导出</a>
-  <a class="current" href="10-dialogs.html">10 弹窗合集</a>
-  <span class="pos">10 / 10</span>
-</div>
 
 <div class="dialog-stage">
 
@@ -70,8 +55,8 @@
         <div class="form-hint">代码中的地址与 Header 按当前环境「开发」生成；切换环境后重新打开会自动更新。</div>
       </div>
       <div class="modal-foot">
-        <button class="btn btn-ghost">关闭</button>
-        <button class="btn btn-primary">复制代码</button>
+        <button class="btn btn-ghost" data-toast="已关闭（演示）">关闭</button>
+        <button class="btn btn-primary" id="copyCodeBtn">复制代码</button>
       </div>
     </div>
   </div>
@@ -193,5 +178,19 @@
 
 </div>
 
+<script src="shared.js"></script>
+<script>
+  // 复制代码：真实写入剪贴板
+  document.getElementById("copyCodeBtn").addEventListener("click", function () {
+    var code = document.querySelector(".dialog-sample .code-block").textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(code);
+    protoToast("代码已复制到剪贴板（演示）");
+  });
+  // 其余按钮统一给出演示反馈
+  document.querySelectorAll(".dialog-sample .btn").forEach(function (btn) {
+    if (btn.id === "copyCodeBtn" || btn.hasAttribute("data-toast")) return;
+    btn.setAttribute("data-toast", "演示动作：" + btn.textContent.trim());
+  });
+</script>
 </body>
 </html>

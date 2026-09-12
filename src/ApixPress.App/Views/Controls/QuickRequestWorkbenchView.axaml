@@ -17,18 +17,20 @@
         IsVisible="{Binding Summary.IsQuickRequestEditor}">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"
-                     MinHeight="118"
+                     MinHeight="170"
                      MaxHeight="{Binding ConfigTab.ConfigPanelMaxHeight}" />
       <RowDefinition Height="6" />
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
+    <!-- 对齐原型：URL 行、Params/Body/Headers 子标签与参数表格同属一张配置卡片 -->
     <Border Grid.Row="0"
             Classes="PanelCard ProjectWorkspaceSettingsCard HttpWorkbenchConfigCard"
             Padding="0"
-            MinHeight="118"
+            MinHeight="170"
             MaxHeight="{Binding ConfigTab.ConfigPanelMaxHeight}">
-      <Grid RowDefinitions="*">
-        <TabControl Grid.Row="0"
+      <Grid RowDefinitions="Auto,*">
+        <views:HttpRequestUrlRowView Grid.Row="0" />
+        <TabControl Grid.Row="1"
                     Classes="ConfigTabControl HttpRequestTabs"
                     SelectedIndex="{Binding ConfigTab.SelectedTabIndex}">
           <TabItem Header="Params">
@@ -131,30 +133,24 @@
                       Classes="ResponseTabs"
                       SelectedIndex="{Binding ResponseSection.SelectedResponseTab}">
             <TabItem Header="Body">
-              <TextBox Classes="HttpResponseBodyViewer"
-                       AcceptsReturn="True"
-                       BorderThickness="0"
-                       Background="Transparent"
-                       IsReadOnly="True"
-                       TextWrapping="NoWrap"
-                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                       ScrollViewer.VerticalScrollBarVisibility="Auto"
-                       VerticalContentAlignment="Top"
-                       Text="{Binding ResponseSection.BodyText}"
-                       FontFamily="{StaticResource Font.Monospace}" />
+              <Border Classes="HttpResponseBodyCard"
+                      Margin="{StaticResource Pad.Top2}">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto">
+                  <SelectableTextBlock Classes="HttpResponseBodyViewer"
+                             views:JsonSyntaxHighlight.Text="{Binding ResponseSection.BodyText}" />
+                </ScrollViewer>
+              </Border>
             </TabItem>
             <TabItem Header="Headers">
-              <TextBox Classes="HttpResponseBodyViewer"
-                       AcceptsReturn="True"
-                       BorderThickness="0"
-                       Background="Transparent"
-                       IsReadOnly="True"
-                       TextWrapping="NoWrap"
-                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
-                       ScrollViewer.VerticalScrollBarVisibility="Auto"
-                       VerticalContentAlignment="Top"
-                       Text="{Binding ResponseSection.HeadersText}"
-                       FontFamily="{StaticResource Font.Monospace}" />
+              <Border Classes="HttpResponseBodyCard"
+                      Margin="{StaticResource Pad.Top2}">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto">
+                  <SelectableTextBlock Classes="HttpResponseBodyViewer"
+                             Text="{Binding ResponseSection.HeadersText}" />
+                </ScrollViewer>
+              </Border>
             </TabItem>
           </TabControl>
         </Grid>

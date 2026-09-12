@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
@@ -231,12 +231,13 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         StateChanged?.Invoke();
     }
 
+    /// <summary>打开新建 HTTP 接口标签；传入目录路径时新接口归属该目录，空值落在根目录。</summary>
     [RelayCommand]
-    private void OpenHttpInterfaceWorkspace()
+    private void OpenHttpInterfaceWorkspace(string? folderPath)
     {
         _selectInterfaceManagementSection();
         var tab = ReuseActiveLandingOrCreateWorkspace();
-        tab.ConfigureAsHttpInterface();
+        tab.ConfigureAsHttpInterface(folderPath);
         IsWorkspaceTabMenuOpen = false;
         ActivateWorkspaceTab(tab);
         _messenger.Send(new StatusMessageRequest("HTTP 接口标签已打开。"));
@@ -366,6 +367,9 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         var removedIndex = WorkspaceTabs.IndexOf(tab);
         DetachWorkspaceTab(tab);
         WorkspaceTabs.Remove(tab);
+        // 关闭是终态操作：立即同步可见列表，不等待挂起批次
+        // （批量加载等挂起窗口内关闭标签时，标签条会停留陈旧状态）
+        SyncVisibleWorkspaceTabs();
 
         if (WorkspaceTabs.Count == 0)
         {
@@ -472,7 +476,16 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         }
 
         tab.IsCloseDiscardPending = false;
-        tab.NotifyDirtyStateChanged();
+        if (IsUserEditableConfigProperty(e.PropertyName))
+        {
+            tab.MarkDirtyFromUserEdit();
+        }
+        else
+        {
+            // 非编辑性写回（联动赋值、状态复位等）不置脏
+            tab.NotifyDirtyStateChanged();
+        }
+
         RequestNotifications(stateChanged: true, editorStateChanged: true);
     }
 
@@ -486,9 +499,17 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         }
 
         tab.IsCloseDiscardPending = false;
-        tab.NotifyDirtyStateChanged();
+        tab.MarkDirtyFromUserEdit();
         RequestNotifications(stateChanged: true, editorStateChanged: true);
     }
+
+    // 与旧签名覆盖的字段清单保持一致：只有这些属性的变化代表用户编辑
+    private static bool IsUserEditableConfigProperty(string? propertyName) =>
+        propertyName is nameof(RequestConfigTabViewModel.RequestName)
+            or nameof(RequestConfigTabViewModel.RequestDescription)
+            or nameof(RequestConfigTabViewModel.RequestBody)
+            or nameof(RequestConfigTabViewModel.SelectedBodyMode)
+            or nameof(RequestConfigTabViewModel.IgnoreSslErrors);
 
     private void SyncVisibleWorkspaceTabs()
     {

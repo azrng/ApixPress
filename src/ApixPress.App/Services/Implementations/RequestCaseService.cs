@@ -1,8 +1,9 @@
-using Azrng.Core.Json;
+﻿using Azrng.Core.Json;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Models.Entities;
 using ApixPress.App.Repositories.Interfaces;
 using ApixPress.App.Services.Interfaces;
+using ApixPress.App.ViewModels;
 using Azrng.Core;
 using Azrng.Core.DependencyInjection;
 using Azrng.Core.Results;
@@ -73,12 +74,45 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         }
         catch (SqliteException exception) when (exception.SqliteErrorCode == 19)
         {
-            return ResultModel<RequestCaseDto>.Failure("保存失败：当前目录下已存在同名接口或用例，请调整名称后重试。", "request_case_unique_conflict");
+            return ResultModel<RequestCaseDto>.Failure("保存失败：当前目录下已存在同名接口、用例或目录，请调整名称后重试。", "request_case_unique_conflict");
         }
         catch (Exception exception)
         {
             return ResultModel<RequestCaseDto>.Failure($"保存失败：{exception.Message}", "request_case_save_failed");
         }
+    }
+
+    /// <summary>在指定父路径下新建目录；父路径为空表示根目录，目录层级最多两级。</summary>
+    public async Task<IResultModel<RequestCaseDto>> CreateFolderAsync(string projectId, string parentFolderPath, string name, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(projectId))
+        {
+            return ResultModel<RequestCaseDto>.Failure("请先选择项目后再新建目录。", "request_case_project_required");
+        }
+
+        var folderName = name.Trim();
+        if (string.IsNullOrWhiteSpace(folderName))
+        {
+            return ResultModel<RequestCaseDto>.Failure("请输入目录名称。", "request_case_folder_name_required");
+        }
+
+        var parentPath = NormalizeFolderPath(parentFolderPath);
+        if (parentPath.Split('/', StringSplitOptions.RemoveEmptyEntries).Length >= ProjectWorkspaceTreeBuilder.MaxFolderDepth)
+        {
+            return ResultModel<RequestCaseDto>.Failure("目录最多支持两级，请在一级目录下新建子目录。", "request_case_folder_depth_exceeded");
+        }
+
+        return await SaveAsync(new RequestCaseDto
+        {
+            ProjectId = projectId,
+            EntryType = ProjectTabRequestEntryTypes.Folder,
+            Name = folderName,
+            GroupName = "目录",
+            FolderPath = parentPath,
+            ParentId = string.Empty,
+            RequestSnapshot = new RequestSnapshotDto(),
+            UpdatedAt = DateTime.UtcNow
+        }, cancellationToken);
     }
 
     public async Task<IResultModel<int>> SaveRangeAsync(IEnumerable<RequestCaseDto> requestCases, CancellationToken cancellationToken)
@@ -191,25 +225,18 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             deletedInterfaceIds.Add(removedInterface.Id);
         }
 
+        foreach (var endpoint in normalizedEndpoints)
+        {
+            var endpointKey = BuildImportedEndpointKey(endpoint);
+            importedInterfaces.TryGetValue(endpointKey, out var existingInterface);
+
+            entitiesToUpsert.Add(BuildImportedInterfaceEntity(projectId, endpoint, endpointKey, existingInterface?.Id));
+        }
+
         try
         {
-            if (deletedInterfaceIds.Count > 0)
-            {
-                await _requestCaseRepository.DeleteRangeAsync(projectId, deletedInterfaceIds, cancellationToken);
-            }
-
-            foreach (var endpoint in normalizedEndpoints)
-            {
-                var endpointKey = BuildImportedEndpointKey(endpoint);
-                importedInterfaces.TryGetValue(endpointKey, out var existingInterface);
-
-                entitiesToUpsert.Add(BuildImportedInterfaceEntity(projectId, endpoint, endpointKey, existingInterface?.Id));
-            }
-
-            if (entitiesToUpsert.Count > 0)
-            {
-                await _requestCaseRepository.UpsertRangeAsync(entitiesToUpsert, cancellationToken);
-            }
+            // 删除与写入在单一事务内完成，中途失败不会留下"删了旧的、新的没写入"的半同步状态
+            await _requestCaseRepository.SyncImportedRangeAsync(projectId, deletedInterfaceIds, entitiesToUpsert, cancellationToken);
 
             return new ImportedHttpInterfaceSyncResultDto
             {
@@ -391,9 +418,10 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
 
     private static string NormalizeFolderPath(string folderPath)
     {
+        // 未分组接口直接落在接口树根目录，不再生成"默认模块"虚拟目录
         if (string.IsNullOrWhiteSpace(folderPath))
         {
-            return "默认模块";
+            return string.Empty;
         }
 
         return string.Join('/',

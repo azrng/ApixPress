@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Input;
 using ApixPress.App.Data.Context;
 using ApixPress.App.Services.Interfaces;
@@ -19,6 +19,8 @@ public partial class MainWindow : Window
     private bool _isEnvironmentDrawerOpen;
     private bool _isUseCasesDrawerOpen;
 
+    private readonly IAppNotificationService _appNotificationService;
+
     public MainWindow()
     {
         if (!Avalonia.Controls.Design.IsDesignMode)
@@ -29,14 +31,20 @@ public partial class MainWindow : Window
         _viewModel = null!;
         _windowHostService = null!;
         _databaseInitializer = null!;
+        _appNotificationService = null!;
         InitializeComponent();
     }
 
-    public MainWindow(MainWindowViewModel viewModel, IWindowHostService windowHostService, DatabaseInitializer databaseInitializer)
+    public MainWindow(
+        MainWindowViewModel viewModel,
+        IWindowHostService windowHostService,
+        DatabaseInitializer databaseInitializer,
+        IAppNotificationService appNotificationService)
     {
         _viewModel = viewModel;
         _windowHostService = windowHostService;
         _databaseInitializer = databaseInitializer;
+        _appNotificationService = appNotificationService;
         InitializeComponent();
         DataContext = _viewModel;
         Opened += OnOpened;
@@ -191,6 +199,8 @@ public partial class MainWindow : Window
         catch (Exception exception)
         {
             System.Diagnostics.Debug.WriteLine(exception);
+            // 初始化/保存等后台动作失败时给用户可见反馈，不再静默吞掉
+            _appNotificationService.ShowError("操作失败", exception.Message);
         }
     }
 }

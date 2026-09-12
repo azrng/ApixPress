@@ -30,8 +30,8 @@ public sealed class ProjectWorkspaceRepository : IProjectWorkspaceRepository, IT
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await connection.QueryAsync<ProjectWorkspaceEntity>(
-            new CommandDefinition(sql, cancellationToken: cancellationToken));
+        var items = await Task.Run(async () => await connection.QueryAsync<ProjectWorkspaceEntity>(
+            new CommandDefinition(sql, cancellationToken: cancellationToken)));
         return items.ToList();
     }
 
@@ -51,8 +51,8 @@ public sealed class ProjectWorkspaceRepository : IProjectWorkspaceRepository, IT
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<ProjectWorkspaceEntity>(
-            new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken));
+        return await Task.Run(async () => await connection.QuerySingleOrDefaultAsync<ProjectWorkspaceEntity>(
+            new CommandDefinition(sql, new { Id = id }, cancellationToken: cancellationToken)));
     }
 
     public async Task<ProjectWorkspaceEntity?> GetByNameAsync(string name, CancellationToken cancellationToken)
@@ -71,8 +71,8 @@ public sealed class ProjectWorkspaceRepository : IProjectWorkspaceRepository, IT
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<ProjectWorkspaceEntity>(
-            new CommandDefinition(sql, new { Name = name }, cancellationToken: cancellationToken));
+        return await Task.Run(async () => await connection.QuerySingleOrDefaultAsync<ProjectWorkspaceEntity>(
+            new CommandDefinition(sql, new { Name = name }, cancellationToken: cancellationToken)));
     }
 
     public async Task UpsertAsync(ProjectWorkspaceEntity entity, CancellationToken cancellationToken)
@@ -91,7 +91,7 @@ public sealed class ProjectWorkspaceRepository : IProjectWorkspaceRepository, IT
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken)));
     }
 
     public async Task SetDefaultAsync(string id, CancellationToken cancellationToken)
@@ -100,15 +100,15 @@ public sealed class ProjectWorkspaceRepository : IProjectWorkspaceRepository, IT
         connection.Open();
         using var transaction = connection.BeginTransaction();
 
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "update projects set is_default = 0 where is_default = 1",
             transaction: transaction,
-            cancellationToken: cancellationToken));
-        await connection.ExecuteAsync(new CommandDefinition(
+            cancellationToken: cancellationToken)));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "update projects set is_default = 1, updated_at = @UpdatedAt where id = @Id",
             new { Id = id, UpdatedAt = DateTime.UtcNow },
             transaction,
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
 
         transaction.Commit();
     }
@@ -116,9 +116,9 @@ public sealed class ProjectWorkspaceRepository : IProjectWorkspaceRepository, IT
     public async Task DeleteAsync(string id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "delete from projects where id = @Id",
             new { Id = id },
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
     }
 }

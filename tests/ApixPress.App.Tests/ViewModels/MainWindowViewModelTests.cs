@@ -623,6 +623,11 @@ public sealed partial class MainWindowViewModelTests
             }));
         }
 
+        public Task<ProjectEnvironmentDto?> ApplyImportedBaseUrlAsync(string projectId, string baseUrl, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<ProjectEnvironmentDto?>(null);
+        }
+
         public Task<IResultModel<bool>> DeleteEnvironmentAsync(string projectId, string environmentId, CancellationToken cancellationToken)
         {
             return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));

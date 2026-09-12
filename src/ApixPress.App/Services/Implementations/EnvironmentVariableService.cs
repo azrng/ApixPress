@@ -91,6 +91,27 @@ public sealed class EnvironmentVariableService : IEnvironmentVariableService, IT
         return ResultModel<ProjectEnvironmentDto>.Success(ToEnvironmentDto(environment));
     }
 
+    public async Task<ProjectEnvironmentDto?> ApplyImportedBaseUrlAsync(string projectId, string baseUrl, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(projectId) || string.IsNullOrWhiteSpace(baseUrl))
+        {
+            return null;
+        }
+
+        var environments = await _projectEnvironmentRepository.GetByProjectAsync(projectId, cancellationToken);
+        var target = environments.FirstOrDefault(item => item.IsActive) ?? environments.FirstOrDefault();
+        // 仅在环境尚未配置 BaseUrl 时填充，避免覆盖用户手动维护的地址
+        if (target is null || !string.IsNullOrWhiteSpace(target.BaseUrl))
+        {
+            return null;
+        }
+
+        target.BaseUrl = NormalizeBaseUrl(baseUrl);
+        target.UpdatedAt = DateTime.UtcNow;
+        await _projectEnvironmentRepository.UpsertAsync(target, cancellationToken);
+        return ToEnvironmentDto(target);
+    }
+
     public async Task<IResultModel<bool>> DeleteEnvironmentAsync(string projectId, string environmentId, CancellationToken cancellationToken)
     {
         var environments = await _projectEnvironmentRepository.GetByProjectAsync(projectId, cancellationToken);

@@ -3,19 +3,20 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ApixPress.App.ViewModels"
-             xmlns:views="using:ApixPress.App.Views.Controls"
              x:Class="ApixPress.App.Views.Controls.MainWindowOverlaysView"
              x:DataType="vm:MainWindowViewModel"
              mc:Ignorable="d">
   <Grid>
-    <views:NotificationCenterOverlayView />
-    <views:EnvironmentManagerDialogView />
-    <views:QuickRequestSaveDialogView />
-    <views:RequestCodeDialogView />
-    <views:WorkspaceDeleteConfirmDialogView />
-    <views:ProjectImportDialogView />
-    <views:ImportOverwriteConfirmDialogView />
-    <views:SettingsDialogView />
-    <views:CreateProjectDialogView />
+    <!-- 弹层内容全部惰性实例化：宿主仅承载可见性绑定，首次可见时由代码后台创建内容 -->
+    <ContentControl x:Name="NotificationCenterHost" IsVisible="{Binding ShellPanels.IsNotificationCenterOpen}" />
+    <ContentControl x:Name="EnvironmentManagerHost" IsVisible="{Binding IsEnvironmentManagerOpen}" />
+    <ContentControl x:Name="QuickRequestSaveHost" IsVisible="{Binding ShowQuickRequestSaveDialog}" />
+    <ContentControl x:Name="RequestCodeHost" IsVisible="{Binding ShowRequestCodeDialog}" />
+    <ContentControl x:Name="WorkspaceDeleteConfirmHost" IsVisible="{Binding ShowWorkspaceDeleteConfirmDialog}" />
+    <ContentControl x:Name="WorkspaceCreateFolderHost" IsVisible="{Binding ShowCreateFolderDialog}" />
+    <ContentControl x:Name="ProjectImportHost" IsVisible="{Binding ShowProjectImportDialog}" />
+    <ContentControl x:Name="ImportOverwriteConfirmHost" IsVisible="{Binding ShowProjectImportOverwriteConfirmDialog}" />
+    <ContentControl x:Name="SettingsDialogHost" IsVisible="{Binding ShellPanels.IsSettingsDialogOpen}" />
+    <ContentControl x:Name="CreateProjectDialogHost" IsVisible="{Binding IsCreateProjectDialogOpen}" />
   </Grid>
 </UserControl>

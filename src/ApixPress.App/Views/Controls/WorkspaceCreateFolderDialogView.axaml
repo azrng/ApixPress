@@ -1,0 +1,45 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.WorkspaceCreateFolderDialogView"
+             x:DataType="vm:MainWindowViewModel"
+             mc:Ignorable="d">
+  <Border Classes="CreateProjectDialogBackdrop"
+          IsVisible="{Binding ShowCreateFolderDialog}">
+    <Grid HorizontalAlignment="Center"
+          VerticalAlignment="Center">
+      <Border Classes="QuickRequestSaveDialogCard">
+        <Grid RowDefinitions="Auto,Auto,Auto"
+              RowSpacing="{StaticResource Space.3}">
+          <StackPanel Spacing="2">
+            <TextBlock Classes="DialogTitle"
+                       Text="新建目录" />
+            <TextBlock Classes="CaptionText"
+                       Text="{Binding ActiveProjectTab.Catalog.PendingCreateFolderParentDisplay, StringFormat='将在：{0} 下创建目录'}" />
+          </StackPanel>
+
+          <Border Grid.Row="1"
+                  Classes="CreateProjectFormShell">
+            <TextBox Classes="SectionInput"
+                     PlaceholderText="请输入目录名称"
+                     Text="{Binding ActiveProjectTab.Catalog.FolderNameInput, Mode=TwoWay}" />
+          </Border>
+
+          <StackPanel Grid.Row="2"
+                      Orientation="Horizontal"
+                      HorizontalAlignment="Right"
+                      Spacing="{StaticResource Space.2}">
+            <Button Classes="DialogSecondaryButton"
+                    Content="取消"
+                    Command="{Binding ActiveProjectTab.Catalog.CancelCreateFolderCommand}" />
+            <Button Classes="DialogPrimaryButton"
+                    Content="创建"
+                    Command="{Binding ActiveProjectTab.Catalog.ConfirmCreateFolderCommand}" />
+          </StackPanel>
+        </Grid>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

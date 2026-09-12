@@ -51,13 +51,100 @@ public sealed class WorkbenchLayoutTests
 
         Assert.Equal(3, rowDefinitions.Length);
         Assert.Equal("Auto", rowDefinitions[0].Attribute("Height")?.Value);
-        Assert.Equal("118", rowDefinitions[0].Attribute("MinHeight")?.Value);
+        Assert.Equal("170", rowDefinitions[0].Attribute("MinHeight")?.Value);
         Assert.Equal("{Binding ConfigTab.ConfigPanelMaxHeight}", rowDefinitions[0].Attribute("MaxHeight")?.Value);
         Assert.Equal("6", rowDefinitions[1].Attribute("Height")?.Value);
         Assert.Equal("*", rowDefinitions[2].Attribute("Height")?.Value);
         Assert.DoesNotContain(
             splitterHost.Descendants(),
             element => HasClass(element, "HttpDesignMetaCard"));
+    }
+
+    [Theory]
+    [InlineData("HttpInterfaceWorkbenchView.axaml")]
+    [InlineData("QuickRequestWorkbenchView.axaml")]
+    public void WorkbenchConfigCard_ShouldMergeUrlRowWithConfigTabs(string fileName)
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
+        var configCard = document.Descendants()
+            .Single(element => element.Name.LocalName == "Border" && HasClass(element, "HttpWorkbenchConfigCard"));
+
+        Assert.Contains(
+            configCard.Descendants(),
+            element => element.Name.LocalName == "HttpRequestUrlRowView");
+        Assert.Contains(
+            configCard.Descendants(),
+            element => element.Name.LocalName == "TabControl" && HasClass(element, "HttpRequestTabs"));
+    }
+
+    [Theory]
+    [InlineData("HttpInterfaceWorkbenchView.axaml")]
+    [InlineData("QuickRequestWorkbenchView.axaml")]
+    public void ResponseBody_ShouldRenderInsideCodeCardWithJsonHighlight(string fileName)
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
+        var bodyViewers = document.Descendants()
+            .Where(element => element.Name.LocalName == "SelectableTextBlock" && HasClass(element, "HttpResponseBodyViewer"))
+            .ToArray();
+
+        Assert.Equal(2, bodyViewers.Length);
+
+        var bodyViewer = bodyViewers.Single(viewer =>
+            viewer.Attributes().Any(attribute => attribute.Name.LocalName == "JsonSyntaxHighlight.Text"));
+        Assert.Contains(
+            "{Binding ResponseSection.BodyText}",
+            bodyViewer.Attributes().Select(attribute => attribute.Value.ToString()));
+
+        var bodyCard = bodyViewer.Ancestors().First(element => HasClass(element, "HttpResponseBodyCard"));
+        Assert.NotNull(bodyCard);
+    }
+
+    [Fact]
+    public void MainWindowTitleBar_ShouldHostWorkspaceToolbarInTitleBar()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "MainWindowTitleBarView.axaml"));
+        var toolbarHost = document.Descendants()
+            .Single(element => element.Name.LocalName == "Border"
+                && element.Elements().Any(child => child.Name.LocalName == "ProjectWorkspaceToolbarView"));
+
+        Assert.Equal("{Binding HasActiveProjectTab}", toolbarHost.Attribute("IsVisible")?.Value);
+        Assert.Equal(
+            "{Binding ActiveProjectTab}",
+            toolbarHost.Elements().Single(element => element.Name.LocalName == "ProjectWorkspaceToolbarView")
+                .Attribute("DataContext")?.Value);
+    }
+
+    [Fact]
+    public void Workspaces_ShouldNotEmbedStandaloneWorkspaceToolbar()
+    {
+        foreach (var fileName in new[]
+                 {
+                     "RequestEditorWorkspaceView.axaml",
+                     "ProjectInterfaceRootWorkspaceView.axaml",
+                     "WorkspaceLandingView.axaml"
+                 })
+        {
+            var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
+            Assert.DoesNotContain(
+                document.Descendants(),
+                element => element.Name.LocalName == "ProjectWorkspaceToolbarView");
+        }
+    }
+
+    [Fact]
+    public void RequestTabs_ShouldKeepPrimaryForegroundWhenSelected()
+    {
+        var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceEditorStyles.axaml"));
+        var selectedTabStyle = styles.Descendants()
+            .Single(element => element.Name.LocalName == "Style"
+                && element.Attribute("Selector")?.Value == "TabControl.HttpRequestTabs TabItem:selected");
+
+        var foreground = selectedTabStyle.Elements()
+            .Single(element => element.Name.LocalName == "Setter"
+                && element.Attribute("Property")?.Value == "Foreground")
+            .Attribute("Value")?.Value;
+
+        Assert.Equal("{DynamicResource Brush.Text.Primary}", foreground);
     }
 
     [Fact]
@@ -68,8 +155,9 @@ public sealed class WorkbenchLayoutTests
         var rootLayout = document.Root?.Elements().SingleOrDefault();
         Assert.NotNull(rootLayout);
         Assert.Equal("Grid", rootLayout!.Name.LocalName);
-        Assert.Equal("Auto,*", rootLayout.Attribute("RowDefinitions")?.Value);
-        Assert.Equal("{StaticResource Space.1}", rootLayout.Attribute("RowSpacing")?.Value);
+        // 工具栏并入标题栏后，根目录工作区不再需要工具栏行
+        Assert.Equal("*", rootLayout.Attribute("RowDefinitions")?.Value);
+        Assert.Null(rootLayout.Attribute("RowSpacing"));
         Assert.DoesNotContain(
             (rootLayout.Attribute("Classes")?.Value ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries),
             className => className is "PanelCard" or "ProjectWorkspaceCanvas");

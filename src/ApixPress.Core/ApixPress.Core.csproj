@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azrng.Core" Version="1.16.0" />
+    <PackageReference Include="Azrng.Core" Version="1.20.0" />
   </ItemGroup>
 
 </Project>

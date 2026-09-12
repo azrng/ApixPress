@@ -63,6 +63,13 @@ public partial class ExplorerItemViewModel : ViewModelBase
             _ => "未命名项"
         };
 
+    // 目录节点在标题后追加子项计数（对标原型的 "EfCoreSample (7)" 展示）
+    public bool HasChildrenCount => HasChildren && AreChildrenLoaded && Children.Count > 0;
+
+    public string ChildrenCountSuffix => HasChildrenCount ? $" ({Children.Count})" : string.Empty;
+
+    public string SidebarDisplayText => DisplayTitle + ChildrenCountSuffix;
+
     public bool ShowMethodBadge => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase);
 
     public bool ShowLeadingGlyph => !ShowMethodBadge && !IsHttpCaseNode;
@@ -100,6 +107,23 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public ICommand? DeleteCommand { get; set; }
 
+    /// <summary>在当前目录下新建子目录的命令；仅一级目录节点会携带并展示。</summary>
+    public ICommand? CreateSubfolderCommand { get; set; }
+
+    /// <summary>在当前目录下新建 HTTP 接口的命令，新建的接口会归属该目录。</summary>
+    public ICommand? CreateInterfaceInFolderCommand { get; set; }
+
+    /// <summary>目录节点的完整路径（如 "a/b"），根级目录为单段名称。</summary>
+    public string FolderFullPath { get; set; } = string.Empty;
+
+    /// <summary>目录层级：1 为一级目录，2 为二级目录；非目录节点为 0。</summary>
+    public int FolderDepth { get; set; }
+
+    public bool IsFolderNode => string.Equals(NodeType, "folder", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>接口树最多两级目录，仅一级目录允许继续新建子目录。</summary>
+    public bool CanCreateSubfolder => IsFolderNode && FolderDepth < ProjectWorkspaceTreeBuilder.MaxFolderDepth;
+
     public RequestCaseDto? SourceCase { get; set; }
 
     public ApiEndpointDto? Endpoint { get; set; }
@@ -125,6 +149,10 @@ public partial class ExplorerItemViewModel : ViewModelBase
         NodeType = source.NodeType;
         CanLoad = source.CanLoad;
         DeleteCommand = source.DeleteCommand;
+        CreateSubfolderCommand = source.CreateSubfolderCommand;
+        CreateInterfaceInFolderCommand = source.CreateInterfaceInFolderCommand;
+        FolderFullPath = source.FolderFullPath;
+        FolderDepth = source.FolderDepth;
         SourceCase = source.SourceCase;
         Endpoint = source.Endpoint;
         _childLoader = source._childLoader;
@@ -144,6 +172,9 @@ public partial class ExplorerItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanDelete));
         OnPropertyChanged(nameof(MethodBadgeText));
         OnPropertyChanged(nameof(MethodBadgeClass));
+        OnPropertyChanged(nameof(HasChildrenCount));
+        OnPropertyChanged(nameof(ChildrenCountSuffix));
+        OnPropertyChanged(nameof(SidebarDisplayText));
     }
 
     public void SetDeferredChildren(Func<IReadOnlyList<ExplorerItemViewModel>> childLoader)
@@ -155,6 +186,9 @@ public partial class ExplorerItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(AreChildrenLoaded));
         OnPropertyChanged(nameof(IsClickable));
         OnPropertyChanged(nameof(CanDelete));
+        OnPropertyChanged(nameof(HasChildrenCount));
+        OnPropertyChanged(nameof(ChildrenCountSuffix));
+        OnPropertyChanged(nameof(SidebarDisplayText));
     }
 
     public void EnsureChildrenLoaded()
@@ -171,6 +205,9 @@ public partial class ExplorerItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(AreChildrenLoaded));
         OnPropertyChanged(nameof(IsClickable));
         OnPropertyChanged(nameof(CanDelete));
+        OnPropertyChanged(nameof(HasChildrenCount));
+        OnPropertyChanged(nameof(ChildrenCountSuffix));
+        OnPropertyChanged(nameof(SidebarDisplayText));
     }
 
     private void OnChildrenCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -184,6 +221,9 @@ public partial class ExplorerItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsClickable));
         OnPropertyChanged(nameof(CanDelete));
         OnPropertyChanged(nameof(ShowTrailingDot));
+        OnPropertyChanged(nameof(HasChildrenCount));
+        OnPropertyChanged(nameof(ChildrenCountSuffix));
+        OnPropertyChanged(nameof(SidebarDisplayText));
     }
 
     partial void OnCanLoadChanged(bool value)
@@ -202,6 +242,7 @@ public partial class ExplorerItemViewModel : ViewModelBase
     partial void OnTitleChanged(string value)
     {
         OnPropertyChanged(nameof(DisplayTitle));
+        OnPropertyChanged(nameof(SidebarDisplayText));
     }
 
     partial void OnNodeTypeChanged(string value)
@@ -210,9 +251,12 @@ public partial class ExplorerItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowLeadingGlyph));
         OnPropertyChanged(nameof(IsHttpCaseNode));
         OnPropertyChanged(nameof(IsQuickRequestNode));
+        OnPropertyChanged(nameof(IsFolderNode));
+        OnPropertyChanged(nameof(CanCreateSubfolder));
         OnPropertyChanged(nameof(ShowTrailingDot));
         OnPropertyChanged(nameof(NodeGlyph));
         OnPropertyChanged(nameof(DisplayTitle));
+        OnPropertyChanged(nameof(SidebarDisplayText));
     }
 
     private void ReplaceChildren(IReadOnlyList<ExplorerItemViewModel> items)

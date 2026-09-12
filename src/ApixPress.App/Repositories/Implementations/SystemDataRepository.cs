@@ -22,11 +22,11 @@ public sealed class SystemDataRepository : ISystemDataRepository, ITransientDepe
 
         try
         {
-            var exists = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
+            var exists = await Task.Run(async () => await connection.ExecuteScalarAsync<long>(new CommandDefinition(
                 "select count(1) from projects where id = @ProjectId",
                 new { ProjectId = projectId },
                 transaction,
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken)));
             if (exists == 0)
             {
                 transaction.Rollback();
@@ -69,14 +69,14 @@ public sealed class SystemDataRepository : ISystemDataRepository, ITransientDepe
                                      where project_id = @ProjectId;
                                      """;
 
-            await connection.ExecuteAsync(new CommandDefinition(
+            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
                 deleteSql,
                 new { ProjectId = projectId },
                 transaction,
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken)));
 
             var now = DateTime.UtcNow;
-            await connection.ExecuteAsync(new CommandDefinition(
+            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
                 """
                 insert into project_environments (
                     id, project_id, name, base_url, is_active, sort_order, created_at, updated_at
@@ -98,7 +98,7 @@ public sealed class SystemDataRepository : ISystemDataRepository, ITransientDepe
                     UpdatedAt = now
                 },
                 transaction,
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken)));
 
             transaction.Commit();
             return true;
@@ -129,10 +129,10 @@ public sealed class SystemDataRepository : ISystemDataRepository, ITransientDepe
 
         try
         {
-            await connection.ExecuteAsync(new CommandDefinition(
+            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
                 sql,
                 transaction: transaction,
-                cancellationToken: cancellationToken));
+                cancellationToken: cancellationToken)));
             transaction.Commit();
         }
         catch

@@ -66,10 +66,13 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     public string InterfaceEmptyStateText => HasInterfaceSearchText ? "没有匹配的 HTTP 接口" : "当前还没有保存的 HTTP 接口";
     public bool ShowQuickRequestEntriesEmptyState => !HasQuickRequestEntries;
     public bool ShowSavedRequestsEmptyState => !HasQuickRequestEntries && !HasInterfaceEntries;
-    public string InterfaceSectionHint => HasInterfaceEntries ? "默认模块 / 接口" : "默认模块下还没有保存的 HTTP 接口";
+    public string InterfaceSectionHint => HasInterfaceEntries ? "接口 / 目录" : "还没有保存的 HTTP 接口";
     public string QuickRequestSectionHint => HasQuickRequestEntries ? "保存到左侧快捷请求目录" : "左侧快捷请求目录还是空的";
     public bool HasPendingDeleteTarget => PendingDeleteWorkspaceItem is not null;
     public string PendingDeleteTitle => PendingDeleteWorkspaceItem?.Title ?? string.Empty;
+    public string PendingCreateFolderParentDisplay => string.IsNullOrWhiteSpace(PendingCreateFolderParentPath)
+        ? "根目录"
+        : PendingCreateFolderParentPath;
     public string PendingDeleteDescription
     {
         get
@@ -101,6 +104,15 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     private bool isDeleteConfirmDialogOpen;
 
     [ObservableProperty]
+    private bool isCreateFolderDialogOpen;
+
+    [ObservableProperty]
+    private string folderNameInput = string.Empty;
+
+    [ObservableProperty]
+    private string pendingCreateFolderParentPath = string.Empty;
+
+    [ObservableProperty]
     private string interfaceSearchText = string.Empty;
 
     [ObservableProperty]
@@ -126,6 +138,14 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         if (string.Equals(item.NodeType, "interface-root", StringComparison.OrdinalIgnoreCase))
         {
             await _openInterfaceRootWorkspaceAsync();
+            return;
+        }
+
+        // 目录节点只承载结构，点击不打开编辑标签（展开/收起由树自身处理）
+        if (item.IsFolderNode
+            || (item.SourceCase is not null
+                && string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.Folder, StringComparison.OrdinalIgnoreCase)))
+        {
             return;
         }
 
@@ -241,6 +261,45 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         await _openInterfaceRootWorkspaceAsync();
     }
 
+    /// <summary>打开“新建目录”弹窗；parentFolderPath 为空表示在根目录创建。</summary>
+    [RelayCommand]
+    private void RequestCreateFolderDialog(string? parentFolderPath)
+    {
+        PendingCreateFolderParentPath = ProjectWorkspaceTreeBuilder.NormalizeFolderPath(parentFolderPath ?? string.Empty);
+        FolderNameInput = string.Empty;
+        IsCreateFolderDialogOpen = true;
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+    }
+
+    [RelayCommand]
+    private void CancelCreateFolder()
+    {
+        FolderNameInput = string.Empty;
+        PendingCreateFolderParentPath = string.Empty;
+        IsCreateFolderDialogOpen = false;
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+    }
+
+    [RelayCommand]
+    private async Task ConfirmCreateFolderAsync()
+    {
+        var parentPath = PendingCreateFolderParentPath;
+        var result = await _requestCaseService.CreateFolderAsync(_projectId, parentPath, FolderNameInput, CancellationToken.None);
+        if (!result.IsSuccess || result.Data is null)
+        {
+            _messenger.Send(new StatusMessageRequest(result.Message));
+            return;
+        }
+
+        // 目录行进入用例集合后，树会自动重建并展示空目录
+        UpsertCaseItem(result.Data);
+        FolderNameInput = string.Empty;
+        PendingCreateFolderParentPath = string.Empty;
+        IsCreateFolderDialogOpen = false;
+        _messenger.Send(new StatusMessageRequest($"已创建目录：{result.Data.Name}"));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+    }
+
     [RelayCommand]
     private void RequestDeleteWorkspaceTreeItem(ExplorerItemViewModel? item)
     {
@@ -341,11 +400,15 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 
     private void RebuildInterfaceNavigation()
     {
+        var treeCommands = new WorkspaceTreeItemCommands(
+            RequestDeleteWorkspaceTreeItemCommand,
+            RequestCreateFolderDialogCommand,
+            _workspace.OpenHttpInterfaceWorkspaceCommand);
         SynchronizeExplorerItems(
             InterfaceTreeItems,
             [ProjectWorkspaceTreeBuilder.BuildInterfaceRoot(
                 ResolveInterfaceNavigationItems(),
-                RequestDeleteWorkspaceTreeItemCommand,
+                treeCommands,
                 HasInterfaceSearchText)]);
         OnPropertyChanged(nameof(InterfaceCatalogItems));
         OnPropertyChanged(nameof(ShowInterfaceEntriesEmptyState));

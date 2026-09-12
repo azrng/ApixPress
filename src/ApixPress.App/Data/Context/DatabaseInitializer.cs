@@ -8,7 +8,7 @@ namespace ApixPress.App.Data.Context;
 
 public sealed class DatabaseInitializer : ISingletonDependency
 {
-    private const int CurrentSchemaVersion = 3;
+    private const int CurrentSchemaVersion = 4;
     private const string SchemaMigrationsTable = "schema_migrations";
 
     private readonly IDbConnectionFactory _connectionFactory;
@@ -22,6 +22,9 @@ public sealed class DatabaseInitializer : ISingletonDependency
     {
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();
+
+        // WAL 允许读写并发，避免"发请求写历史"与导入批量写互相阻塞；模式持久化，设置一次即可
+        connection.Execute("pragma journal_mode=WAL;");
 
         var hasExistingWorkspace = HasExistingWorkspace(connection);
         EnsureMigrationsTable(connection);

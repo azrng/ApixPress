@@ -8,40 +8,33 @@
 </head>
 <body>
 
-<!-- 原型页导航 -->
-<div class="proto-nav">
-  <a href="index.html">原型总览</a>
-  <a href="01-home.html">01 项目首页</a>
-  <a href="02-debug-params.html">02 调试·Params</a>
-  <a href="03-debug-body-upload.html">03 调试·Body</a>
-  <a href="04-debug-headers-error.html">04 调试·Headers</a>
-  <a href="05-history.html">05 请求历史</a>
-  <a href="06-project-settings.html">06 项目设置</a>
-  <a href="07-environments.html">07 环境变量</a>
-  <a href="08-use-cases.html">08 接口用例</a>
-  <a class="current" href="09-import-export.html">09 导入导出</a>
-  <a href="10-dialogs.html">10 弹窗合集</a>
-  <span class="pos">09 / 10</span>
-</div>
 
-<!-- ═══════════════ 项目设置：导入与导出 ═══════════════ -->
+<!-- ═══════════════ 项目设置：导入与导出（可交互） ═══════════════ -->
 <div class="window">
   <div class="titlebar">
     <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
-    <div class="tb-tab">首页 <span class="n">3</span></div>
-    <div class="tb-tab active">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-tab" data-href="01-home.html">首页 <span class="n">3</span></div>
+    <div class="tb-tab active" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
     <div class="tb-spacer"></div>
-    <div class="env-chip"><span class="env-dot"></span>开发<span class="caret">▼</span></div>
-    <button class="tb-icon">⚙</button>
+    <div class="env-switch">
+      <div class="env-chip"><span class="env-dot"></span><span class="env-chip-name">开发</span><span class="caret">▼</span></div>
+      <div class="env-menu">
+        <div class="env-item active" data-name="开发"><span class="check">✓</span><span class="t">开发</span><span class="chip">激活</span></div>
+        <div class="env-item" data-name="测试"><span class="check">✓</span><span class="t">测试</span><span class="chip">激活</span></div>
+        <div class="env-item" data-name="生产"><span class="check">✓</span><span class="t">生产</span><span class="chip">激活</span></div>
+        <div class="env-menu-foot" data-href="07-environments.html">管理环境…</div>
+      </div>
+    </div>
+    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）">⚙</button>
   </div>
 
   <div class="shell">
     <div class="rail">
-      <button class="nav-item">
+      <button class="nav-item" data-href="02-debug-params.html">
         <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
         <span class="t">接口管理</span>
       </button>
-      <button class="nav-item">
+      <button class="nav-item" data-href="05-history.html">
         <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
         <span class="t">请求历史</span>
       </button>
@@ -54,10 +47,10 @@
     <div class="settings-layout">
       <div class="settings-nav">
         <div class="side-title" style="margin-bottom:12px;">项目设置</div>
-        <div class="sn-item">基本设置</div>
-        <div class="sn-item">数据管理</div>
+        <div class="sn-item" data-href="06-project-settings.html">基本设置</div>
+        <div class="sn-item" data-toast="数据管理（演示）">数据管理</div>
         <div class="sn-item active">导入数据</div>
-        <div class="sn-item">导出数据</div>
+        <div class="sn-item" data-toast="导出面板见下方「导出数据」卡片（演示）">导出数据</div>
         <div style="margin-top:18px; padding:12px; background:var(--bg-subtle); border-radius:var(--r-md); font-size:12px; color:var(--text-secondary); line-height:1.8;">
           <b style="color:var(--text-primary);">example（默认）</b><br>
           当前环境：开发<br>
@@ -71,25 +64,43 @@
           <div class="section-title">导入数据</div>
           <div class="section-hint" style="margin:4px 0 10px;">支持 OpenAPI 3.0 / Swagger 2.0 文档；导入后可在接口树中查看，同名接口会先进行覆盖确认。</div>
 
-          <div class="sub-tabs" style="padding:0; margin-bottom:12px;">
-            <span class="sub-tab active">URL 导入</span>
-            <span class="sub-tab">本地文件导入</span>
+          <div class="sub-tabs" data-tabs="src" style="padding:0; margin-bottom:12px;">
+            <span class="sub-tab active" data-v="url">URL 导入</span>
+            <span class="sub-tab" data-v="file">本地文件导入</span>
           </div>
 
-          <div class="form-row">
-            <span class="form-label">文档 URL</span>
-            <div style="display:flex; gap:8px;">
-              <input class="form-input" style="flex:1;" placeholder="https://example.com/swagger/v1/swagger.json" value="http://localhost:5050/swagger/v1/swagger.json">
-              <button class="btn btn-primary" style="min-width:auto;padding:0 18px;">拉取并导入</button>
+          <!-- URL 模式 -->
+          <div data-tabs-panel="src" data-v="url" class="on">
+            <div class="form-row">
+              <span class="form-label">文档 URL</span>
+              <div style="display:flex; gap:8px;">
+                <input class="form-input" style="flex:1;" placeholder="https://example.com/swagger/v1/swagger.json" value="http://localhost:5050/swagger/v1/swagger.json">
+                <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-open="#overwriteModal">拉取并导入</button>
+              </div>
+              <span class="form-hint">从运行中的服务直接拉取 Swagger / OpenAPI 文档，适合联调阶段快速同步接口。</span>
             </div>
-            <span class="form-hint">从运行中的服务直接拉取 Swagger / OpenAPI 文档，适合联调阶段快速同步接口。</span>
+          </div>
+
+          <!-- 文件模式 -->
+          <div data-tabs-panel="src" data-v="file">
+            <div class="form-row">
+              <span class="form-label">本地文件</span>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button class="btn btn-ghost" data-toast="已选择 swagger.json（24.6 KB）（演示）">选择文件</button>
+                <span style="font-size:12px; color:var(--text-secondary); font-family:var(--mono);">swagger.json · 24.6 KB</span>
+              </div>
+              <span class="form-hint">支持 .json / .yaml / .yml 格式的 OpenAPI 或 Swagger 文档。</span>
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+              <button class="btn btn-primary" data-open="#overwriteModal">开始导入</button>
+            </div>
           </div>
 
           <div style="display:flex; gap:8px; align-items:center; margin-top:10px;">
             <span class="chip">OpenAPI 3.0</span>
             <span class="chip" style="color:var(--text-secondary);background:var(--bg-subtle);border-color:var(--border-default);">Swagger 2.0</span>
             <span style="flex:1;"></span>
-            <button class="btn btn-ghost" style="height:28px;min-width:auto;padding:0 12px;font-size:12px;">取消导入</button>
+            <button class="btn btn-ghost" style="height:28px;min-width:auto;padding:0 12px;font-size:12px;" data-toast="已取消导入（演示）">取消导入</button>
           </div>
         </div>
 
@@ -105,7 +116,7 @@
           </div>
           <div style="display:flex; gap:8px; align-items:center;">
             <span style="flex:1; font-size:12px; color:var(--text-tertiary);">导出位置：上次保存目录（导出时再次确认）</span>
-            <button class="btn btn-primary" style="min-width:auto;padding:0 18px;">导出项目数据</button>
+            <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-toast="已导出到 D:\Backup\apixpress-example.zip（演示）">导出项目数据</button>
           </div>
         </div>
 
@@ -121,12 +132,12 @@
     </div>
   </div>
 
-  <!-- 覆盖确认弹窗 -->
-  <div class="modal-wrap">
+  <!-- 覆盖确认弹窗（点击导入后出现，可关闭） -->
+  <div class="modal-wrap" id="overwriteModal">
     <div class="modal">
       <div class="modal-head">
         <span class="modal-title">检测到同名接口</span>
-        <button class="drawer-close">✕</button>
+        <button class="drawer-close" data-close>✕</button>
       </div>
       <div class="modal-body">
         <div style="font-size:13px; color:var(--text-secondary); line-height:1.6;">
@@ -147,12 +158,13 @@
         </div>
       </div>
       <div class="modal-foot">
-        <button class="btn btn-ghost">取消导入</button>
-        <button class="btn btn-primary">覆盖并继续导入</button>
+        <button class="btn btn-ghost" data-close-toast="已取消导入（演示）">取消导入</button>
+        <button class="btn btn-primary" data-close-toast="导入完成：新增 24 个接口，覆盖 2 个同名接口（演示）">覆盖并继续导入</button>
       </div>
     </div>
   </div>
 </div>
 
+<script src="shared.js"></script>
 </body>
 </html>

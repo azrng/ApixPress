@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:iri="https://irihi.tech/shared"
@@ -183,11 +183,12 @@
                         Classes="ResponseTabs"
                         SelectedIndex="{Binding HistoryPanel.SelectedResponseSection.SelectedResponseTab}">
               <TabItem Header="Body">
+                <!-- 大响应体不换行（改由横向滚动查看），避免 MB 级文本 Wrap 全文排版卡顿 -->
                 <TextBox AcceptsReturn="True"
                          BorderThickness="0"
                          Background="Transparent"
                          IsReadOnly="True"
-                         TextWrapping="Wrap"
+                         TextWrapping="NoWrap"
                          VerticalContentAlignment="Top"
                          Text="{Binding HistoryPanel.SelectedResponseSection.BodyText}"
                          FontFamily="{StaticResource Font.Monospace}" />

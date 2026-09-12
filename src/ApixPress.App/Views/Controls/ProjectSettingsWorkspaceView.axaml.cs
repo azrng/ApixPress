@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using ApixPress.App.ViewModels;
 using Ursa.Common;
 using Ursa.Controls;
@@ -32,7 +32,9 @@ public partial class ProjectSettingsWorkspaceView : UserControl
                 string.Equals(item.Id, activeProjectId, StringComparison.OrdinalIgnoreCase));
         }
 
-        _ = OpenProjectDrawerAsync(HostViewModel);
+        _ = OpenProjectDrawerAsync(HostViewModel).ContinueWith(
+            static task => System.Diagnostics.Debug.WriteLine(task.Exception),
+            TaskContinuationOptions.OnlyOnFaulted);
     }
 
     private async Task OpenProjectDrawerAsync(MainWindowViewModel viewModel)

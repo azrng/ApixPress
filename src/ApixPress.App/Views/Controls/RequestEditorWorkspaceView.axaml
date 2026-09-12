@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -7,20 +7,16 @@
              x:Class="ApixPress.App.Views.Controls.RequestEditorWorkspaceView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <Grid RowDefinitions="Auto,Auto,*"
-        RowSpacing="{StaticResource Space.1}"
+  <!-- 对齐原型：上下文栏与工作区卡片紧贴（无行距），URL 行并入工作区配置卡片 -->
+  <Grid RowDefinitions="Auto,*"
+        RowSpacing="0"
         MinHeight="0"
         ClipToBounds="True">
-    <views:ProjectWorkspaceToolbarView />
-
-    <Grid Grid.Row="1"
-          RowDefinitions="Auto,Auto"
-          RowSpacing="{StaticResource Space.1}"
-          MinHeight="0"
-          ClipToBounds="True"
-          IsVisible="{Binding Editor.IsQuickRequestEditor}">
-      <Grid Grid.Row="0"
-            ColumnDefinitions="Auto,Auto,*"
+    <!-- 快捷请求：名称 + 生成代码 -->
+    <Border Grid.Row="0"
+            Classes="HttpQuickContextBar"
+            IsVisible="{Binding Editor.IsQuickRequestEditor}">
+      <Grid ColumnDefinitions="*,Auto"
             ColumnSpacing="{StaticResource Space.2}">
         <TextBox Grid.Column="0"
                  Classes="SectionInput HttpInterfaceNameInput HttpToolbarNameInput"
@@ -35,146 +31,57 @@
                      Text="&lt;/&gt;" />
         </Button>
       </Grid>
+    </Border>
 
-      <Grid Grid.Row="1"
-            ColumnDefinitions="*,Auto,Auto"
-            ColumnSpacing="{StaticResource Space.2}">
+    <!-- HTTP 接口：模式切换 + 接口名 + 生成代码 -->
+    <Border Grid.Row="0"
+            Classes="HttpEditorContextBar"
+            IsVisible="{Binding Editor.IsHttpInterfaceEditor}">
+      <Grid ColumnDefinitions="Auto,*,Auto"
+            ColumnSpacing="{StaticResource Space.3}">
+        <!-- 视图切换是导航，放左侧与内容对齐（对标 Apifox 调试/设计/文档预览位置） -->
         <Border Grid.Column="0"
-                Classes="HttpRequestUrlShell">
-          <Grid ColumnDefinitions="Auto,Auto,*"
-                ColumnSpacing="{StaticResource Space.1}">
-            <ComboBox Grid.Column="0"
-                      Classes="HttpMethodSelector"
-                      ItemsSource="{Binding Editor.HttpMethods}"
-                      SelectedItem="{Binding Editor.SelectedMethod}" />
-            <Border Grid.Column="1"
-                    Classes="BaseUrlPrefixCard HttpBaseUrlPrefixCard">
-              <TextBlock Classes="HttpBaseUrlPrefixText"
-                         Text="{Binding Editor.CurrentEditorBaseUrlCaption}"
-                         VerticalAlignment="Center"
-                         TextTrimming="CharacterEllipsis" />
-            </Border>
-            <TextBox Grid.Column="2"
-                     Classes="HttpRequestPathInput"
-                     PlaceholderText="{Binding Editor.CurrentEditorUrlWatermark}"
-                     Text="{Binding Editor.RequestUrl}" />
-          </Grid>
+                Classes="HttpEditorModeBar">
+          <StackPanel Orientation="Horizontal"
+                      Spacing="{StaticResource Space.1}">
+            <ToggleButton Classes="HttpEditorModeButton"
+                          Command="{Binding Editor.ShowHttpDebugEditorModeCommand}"
+                          Content="调试"
+                          IsChecked="{Binding Editor.IsHttpDebugEditorMode, Mode=OneWay}" />
+            <ToggleButton Classes="HttpEditorModeButton"
+                          Command="{Binding Editor.ShowHttpDesignEditorModeCommand}"
+                          Content="设计"
+                          IsChecked="{Binding Editor.IsHttpDesignEditorMode, Mode=OneWay}" />
+            <ToggleButton Classes="HttpEditorModeButton"
+                          Command="{Binding Editor.ShowHttpDocumentPreviewModeCommand}"
+                          Content="文档预览"
+                          IsChecked="{Binding Editor.IsHttpDocumentPreviewMode, Mode=OneWay}" />
+          </StackPanel>
         </Border>
-        <Button Grid.Column="1"
-                Classes="HttpSendButton"
-                Content="发送"
-                Command="{Binding SendRequestCommand}" />
+        <TextBox Grid.Column="1"
+                 Classes="SectionInput HttpInterfaceNameInput HttpEditorTitleInput"
+                 HorizontalAlignment="Stretch"
+                 VerticalAlignment="Center"
+                 PlaceholderText="未命名接口"
+                 Text="{Binding Editor.CurrentHttpInterfaceName}" />
         <Button Grid.Column="2"
-                Classes="HttpSaveButton"
-                Content="保存"
-                Command="{Binding SaveCaseCommand}" />
+                Classes="IconButton HttpCodeIconButton"
+                VerticalAlignment="Center"
+                Command="{Binding Editor.OpenRequestCodeDialogCommand}"
+                ToolTip.Tip="生成代码">
+          <TextBlock Classes="HttpCodeIconGlyph"
+                     Text="&lt;/&gt;" />
+        </Button>
       </Grid>
-    </Grid>
+    </Border>
 
     <Grid Grid.Row="1"
-          RowDefinitions="Auto,Auto"
-          RowSpacing="{StaticResource Space.1}"
-          MinHeight="0"
-          ClipToBounds="True"
-          IsVisible="{Binding Editor.IsHttpInterfaceEditor}">
-      <Border Classes="HttpEditorContextBar">
-        <Grid ColumnDefinitions="Auto,*,Auto"
-              ColumnSpacing="{StaticResource Space.3}">
-          <!-- 视图切换是导航，放左侧与内容对齐（对标 Apifox 调试/设计/文档预览位置） -->
-          <Border Grid.Column="0"
-                  Classes="HttpEditorModeBar">
-            <StackPanel Orientation="Horizontal"
-                        Spacing="{StaticResource Space.1}">
-              <ToggleButton Classes="HttpEditorModeButton"
-                            Command="{Binding Editor.ShowHttpDebugEditorModeCommand}"
-                            Content="调试"
-                            IsChecked="{Binding Editor.IsHttpDebugEditorMode, Mode=OneWay}" />
-              <ToggleButton Classes="HttpEditorModeButton"
-                            Command="{Binding Editor.ShowHttpDesignEditorModeCommand}"
-                            Content="设计"
-                            IsChecked="{Binding Editor.IsHttpDesignEditorMode, Mode=OneWay}" />
-              <ToggleButton Classes="HttpEditorModeButton"
-                            Command="{Binding Editor.ShowHttpDocumentPreviewModeCommand}"
-                            Content="文档预览"
-                            IsChecked="{Binding Editor.IsHttpDocumentPreviewMode, Mode=OneWay}" />
-            </StackPanel>
-          </Border>
-          <TextBox Grid.Column="1"
-                   Classes="SectionInput HttpInterfaceNameInput HttpEditorTitleInput"
-                   HorizontalAlignment="Stretch"
-                   VerticalAlignment="Center"
-                   PlaceholderText="未命名接口"
-                   Text="{Binding Editor.CurrentHttpInterfaceName}" />
-          <Button Grid.Column="2"
-                  Classes="IconButton HttpCodeIconButton"
-                  VerticalAlignment="Center"
-                  Command="{Binding Editor.OpenRequestCodeDialogCommand}"
-                  ToolTip.Tip="生成代码">
-            <TextBlock Classes="HttpCodeIconGlyph"
-                       Text="&lt;/&gt;" />
-          </Button>
-        </Grid>
-      </Border>
-
-      <Grid Grid.Row="1"
-            ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto"
-            ColumnSpacing="{StaticResource Space.2}">
-        <Border Grid.Column="0"
-                Classes="HttpRequestUrlShell">
-          <Grid ColumnDefinitions="Auto,Auto,*"
-                ColumnSpacing="{StaticResource Space.1}">
-            <ComboBox Grid.Column="0"
-                      Classes="HttpMethodSelector"
-                      ItemsSource="{Binding Editor.HttpMethods}"
-                      SelectedItem="{Binding Editor.SelectedMethod}" />
-            <Border Grid.Column="1"
-                    Classes="BaseUrlPrefixCard HttpBaseUrlPrefixCard">
-              <TextBlock Classes="HttpBaseUrlPrefixText"
-                         Text="{Binding Editor.CurrentEditorBaseUrlCaption}"
-                         VerticalAlignment="Center"
-                         TextTrimming="CharacterEllipsis" />
-            </Border>
-            <TextBox Grid.Column="2"
-                     Classes="HttpRequestPathInput"
-                     PlaceholderText="{Binding Editor.CurrentEditorUrlWatermark}"
-                     Text="{Binding Editor.RequestUrl}" />
-          </Grid>
-        </Border>
-        <Button Grid.Column="1"
-                Classes="HttpSendButton"
-                Content="发送"
-                Command="{Binding SendRequestCommand}" />
-        <Button Grid.Column="2"
-                Classes="HttpSaveButton"
-                Content="保存"
-                Command="{Binding SaveCaseCommand}" />
-        <!-- 用例动作与请求动作之间用分隔线区分归属 -->
-        <Border Grid.Column="3"
-                Width="1"
-                Height="22"
-                Background="{DynamicResource Brush.Border.Default}"
-                IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
-        <TextBox Grid.Column="4"
-                 Classes="SectionInput HttpInterfaceNameInput HttpCaseNameInput"
-                 Width="150"
-                 VerticalAlignment="Center"
-                 PlaceholderText="用例名称"
-                 Text="{Binding Editor.CurrentHttpCaseName}"
-                 IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
-        <Button Grid.Column="5"
-                Classes="HttpSaveButton"
-                Content="保存测试用例"
-                Command="{Binding SaveHttpCaseCommand}"
-                IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
-      </Grid>
-    </Grid>
-
-    <Grid Grid.Row="2"
           MinHeight="0"
           ClipToBounds="True">
-      <views:QuickRequestWorkbenchView IsVisible="{Binding Editor.IsQuickRequestEditor}" />
-      <views:HttpInterfaceWorkbenchView IsVisible="{Binding Editor.ShowHttpWorkbenchContent}" />
-      <views:HttpDocumentWorkspaceView IsVisible="{Binding Editor.ShowHttpDocumentPreviewContent}" />
+      <!-- 工作台惰性实例化：首次显示才创建，纯快捷请求会话不再构造重量级 HTTP 工作台 -->
+      <ContentControl x:Name="QuickRequestWorkbenchHost" IsVisible="{Binding Editor.IsQuickRequestEditor}" />
+      <ContentControl x:Name="HttpWorkbenchHost" IsVisible="{Binding Editor.ShowHttpWorkbenchContent}" />
+      <ContentControl x:Name="HttpDocumentHost" IsVisible="{Binding Editor.ShowHttpDocumentPreviewContent}" />
     </Grid>
 
   </Grid>

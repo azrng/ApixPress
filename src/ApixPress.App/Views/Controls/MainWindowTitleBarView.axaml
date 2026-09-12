@@ -4,6 +4,7 @@
              xmlns:iri="https://irihi.tech/shared"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:views="using:ApixPress.App.Views.Controls"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.MainWindowTitleBarView"
              x:DataType="vm:MainWindowViewModel"
@@ -82,6 +83,14 @@
               </ItemsControl>
             </StackPanel>
           </ScrollViewer>
+        </Border>
+
+        <!-- 对齐原型：工作区请求标签与环境选择器并入标题栏，替代独立工具栏行 -->
+        <Border Grid.Column="2"
+                MinWidth="0"
+                ClipToBounds="True"
+                IsVisible="{Binding HasActiveProjectTab}">
+          <views:ProjectWorkspaceToolbarView DataContext="{Binding ActiveProjectTab}" />
         </Border>
 
         <StackPanel Grid.Column="3"

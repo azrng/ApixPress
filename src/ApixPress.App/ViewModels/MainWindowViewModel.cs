@@ -204,6 +204,7 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool ShowProjectImportDialog => ActiveProjectTab?.Import.IsDialogOpen ?? false;
     public bool ShowProjectImportOverwriteConfirmDialog => ActiveProjectTab?.Import.IsOverwriteConfirmDialogOpen ?? false;
     public bool ShowWorkspaceDeleteConfirmDialog => ActiveProjectTab?.Catalog.IsDeleteConfirmDialogOpen ?? false;
+    public bool ShowCreateFolderDialog => ActiveProjectTab?.Catalog.IsCreateFolderDialogOpen ?? false;
 
     public string AppDisplayName { get; } = "ApixPress";
     public string CurrentProjectName => ActiveProjectTab?.Project.Name ?? "项目列表";

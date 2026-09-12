@@ -1,4 +1,4 @@
-using ApixPress.App.Models.DTOs;
+﻿using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using Azrng.Core;
 using Azrng.Core.DependencyInjection;
@@ -179,6 +179,42 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         }
     }
 
+    /// <summary>
+    /// 替换 ":name" 形式的路径参数。仅当令牌后跟串尾或路径/查询边界符时才替换，
+    /// 避免 ":id" 误伤 ":identity" 这类前缀相同的参数名。
+    /// </summary>
+    private static string ReplaceColonPathParameter(string url, string name, string value)
+    {
+        var token = $":{name}";
+        var builder = new System.Text.StringBuilder(url.Length + value.Length);
+        var searchIndex = 0;
+        while (true)
+        {
+            var found = url.IndexOf(token, searchIndex, StringComparison.OrdinalIgnoreCase);
+            if (found < 0)
+            {
+                builder.Append(url, searchIndex, url.Length - searchIndex);
+                break;
+            }
+
+            var nextIndex = found + token.Length;
+            var isBoundary = nextIndex >= url.Length || url[nextIndex] is '/' or '?' or '&' or '#';
+            builder.Append(url, searchIndex, found - searchIndex);
+            if (isBoundary)
+            {
+                builder.Append(value);
+            }
+            else
+            {
+                builder.Append(url, found, nextIndex - found);
+            }
+
+            searchIndex = nextIndex;
+        }
+
+        return builder.ToString();
+    }
+
     public static string BuildUrl(RequestSnapshotDto request, string baseUrl, IReadOnlyDictionary<string, string> variables)
     {
         var effectiveVariables = new Dictionary<string, string>(variables, StringComparer.OrdinalIgnoreCase);
@@ -193,7 +229,7 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         {
             var value = Uri.EscapeDataString(ReplaceVariables(pathParameter.Value, effectiveVariables));
             url = url.Replace($"{{{pathParameter.Name}}}", value, StringComparison.OrdinalIgnoreCase);
-            url = url.Replace($":{pathParameter.Name}", value, StringComparison.OrdinalIgnoreCase);
+            url = ReplaceColonPathParameter(url, pathParameter.Name, value);
         }
 
         if (!Uri.TryCreate(url, UriKind.Absolute, out _))
@@ -392,9 +428,10 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             .ToList();
         foreach (var key in keysToRemove)
         {
-            if (SharedHttpClients.TryRemove(key, out var entry))
+            // 只从字典移除，不主动 Dispose：进行中的请求可能仍持有该 client，
+            // 直接 Dispose 会导致请求中途 ObjectDisposedException；未引用后交给 GC 终结回收。
+            if (SharedHttpClients.TryRemove(key, out _))
             {
-                entry.Client.Dispose();
             }
         }
     }
@@ -406,19 +443,22 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         var options = new RequestClientOptions(ignoreSslErrors, allowAutoRedirect, timeoutMilliseconds);
         var entry = SharedHttpClients.GetOrAdd(options, static key =>
         {
-            var handler = new HttpClientHandler
+            var handler = new SocketsHttpHandler
             {
-                AllowAutoRedirect = key.AllowAutoRedirect
+                AllowAutoRedirect = key.AllowAutoRedirect,
+                // 定期回收连接池，让 DNS 变更生效；同一 client 长期复用不再缓存过期连接
+                PooledConnectionLifetime = TimeSpan.FromMinutes(5)
             };
             if (key.IgnoreSslErrors)
             {
-                handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
+                handler.SslOptions.RemoteCertificateValidationCallback = (_, _, _, _) => true;
             }
 
             var client = new HttpClient(handler, disposeHandler: true);
+            // 未配置或非法超时兜底为 120 秒，避免请求无限挂起；显式超时上限 10 分钟
             client.Timeout = key.TimeoutMilliseconds <= 0
-                ? Timeout.InfiniteTimeSpan
-                : TimeSpan.FromMilliseconds(key.TimeoutMilliseconds);
+                ? TimeSpan.FromSeconds(120)
+                : TimeSpan.FromMilliseconds(Math.Min(key.TimeoutMilliseconds, 600_000));
             return new SharedHttpClientEntry(client);
         });
 

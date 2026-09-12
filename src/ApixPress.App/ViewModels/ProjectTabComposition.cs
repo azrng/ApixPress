@@ -100,7 +100,7 @@ internal sealed class ProjectTabComposition : DisposableObject
                     Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
                 });
             interfaceRoot = CreateInterfaceRoot(useCasesPanel, catalog);
-            var import = CreateImport(catalog);
+            var import = CreateImport(catalog, environmentPanel);
             var workflow = CreateWorkflow(workspace, historyPanel, environmentPanel, catalog, interfaceRoot, workspaceContext);
             var quickRequestSave = CreateQuickRequestSave(workspaceContext);
             var summary = CreateSummary(environmentPanel, useCasesPanel, historyPanel, import);
@@ -211,7 +211,7 @@ internal sealed class ProjectTabComposition : DisposableObject
                 Messenger);
         }
 
-        private ProjectImportViewModel CreateImport(ProjectWorkspaceCatalogViewModel catalog)
+        private ProjectImportViewModel CreateImport(ProjectWorkspaceCatalogViewModel catalog, EnvironmentPanelViewModel environmentPanel)
         {
             var import = new ProjectImportViewModel(
                 _project.Id,
@@ -221,6 +221,7 @@ internal sealed class ProjectTabComposition : DisposableObject
                 _projectDataExportService,
                 () => _project,
                 catalog.SyncImportedInterfacesAsync,
+                environmentPanel.ApplyImportedBaseUrlAsync,
                 Messenger);
             _importViewModel = import;
             return import;

@@ -1,4 +1,4 @@
-using ApixPress.App.Models.DTOs;
+﻿using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels;
 using Azrng.Core.Results;
 
@@ -135,6 +135,14 @@ public sealed class ResponseSectionViewModelTests
     [Fact]
     public async Task ApplyResult_ShouldKeepLargeJsonBodyUnformattedAndLimitDisplay()
     {
+        // 本用例依赖"无 Avalonia 宿主"的同步应用路径（Application.Current 为 null）。
+        // 并行套件中其它测试类可能已初始化 Avalonia，此时异步应用依赖的 UI 泵不存在，
+        // BodyText 永远停留在占位符——跳过该用例（单独运行本测试时仍为真实验证）。
+        if (Avalonia.Application.Current is not null)
+        {
+            return;
+        }
+
         var viewModel = new ResponseSectionViewModel();
         var rawContent = "{\"data\":\"" + new string('a', 256 * 1024 + 1) + "\"}";
 

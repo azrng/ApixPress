@@ -21,9 +21,9 @@ public sealed partial class ProjectHttpInterfaceOverviewItemViewModel : ViewMode
     public string Name => string.IsNullOrWhiteSpace(Source.Name) ? "未命名接口" : Source.Name;
     public string Method => string.IsNullOrWhiteSpace(Source.RequestSnapshot.Method) ? "GET" : Source.RequestSnapshot.Method.ToUpperInvariant();
     public string Path => string.IsNullOrWhiteSpace(Source.RequestSnapshot.Url) ? "/" : Source.RequestSnapshot.Url;
-    public string GroupPath => $"根目录/{(string.IsNullOrWhiteSpace(Source.FolderPath) ? "默认模块" : Source.FolderPath)}";
+    public string GroupPath => string.IsNullOrWhiteSpace(Source.FolderPath) ? "根目录" : $"根目录/{Source.FolderPath}";
     public string StatusText => "已发布";
-    public string TagText => string.IsNullOrWhiteSpace(Source.FolderPath) ? "默认模块" : Source.FolderPath.Split('/')[^1];
+    public string TagText => string.IsNullOrWhiteSpace(Source.FolderPath) ? "根目录" : Source.FolderPath.Split('/')[^1];
     public bool IsGetMethod => Method == "GET";
     public bool IsPostMethod => Method == "POST";
     public bool IsPutMethod => Method == "PUT";

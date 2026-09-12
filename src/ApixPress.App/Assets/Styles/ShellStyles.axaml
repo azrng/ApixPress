@@ -1,4 +1,4 @@
-<Styles xmlns="https://github.com/avaloniaui"
+﻿<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:u="https://irihi.tech/ursa">  <Style Selector="Window">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
@@ -27,7 +27,7 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
@@ -186,10 +186,25 @@
     <Setter Property="BorderThickness" Value="1" />
   </Style>
 
+  <!-- 响应子标签对齐原型 resp-tabs：透明底 + 底部分隔线，选中保持主文字色 -->
   <Style Selector="TabControl.ResponseTabs">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
     <Setter Property="MinHeight" Value="0" />
     <Setter Property="ClipToBounds" Value="True" />
+  </Style>
+
+  <Style Selector="TabControl.ResponseTabs TabItem">
+    <Setter Property="Padding" Value="2,8,2,8" />
+    <Setter Property="Margin" Value="0,0,16,0" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="TabControl.ResponseTabs TabItem:selected">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderThickness" Value="0,0,0,2" />
   </Style>
 
   <Style Selector="Border.StatusInfo">
@@ -291,12 +306,40 @@
 
   <Style Selector="Border.NotificationFlyoutCard">
     <Setter Property="Width" Value="360" />
+    <Setter Property="MaxHeight" Value="480" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
     <Setter Property="BoxShadow" Value="{StaticResource Shadow.Surface.Raised}" />
+  </Style>
+
+  <!-- 通知列表：虚拟化 + 去除 ListBox 默认视觉；高度受限避免溢出屏幕 -->
+  <Style Selector="ListBox.NotificationItemList">
+    <Setter Property="MaxHeight" Value="420" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+  </Style>
+  <Style Selector="ListBox.NotificationItemList ListBoxItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
+
+  <!-- 参数网格：虚拟化列表的统一视觉（去 ListBox 默认边框/背景/行内边距） -->
+  <Style Selector="ListBox.ParameterGridList">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+  </Style>
+  <Style Selector="ListBox.ParameterGridList ListBoxItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
   </Style>
 
   <Style Selector="Border.NotificationItemCard">

@@ -19,9 +19,16 @@ public partial class UseCasesPanelViewModel : ViewModelBase
     public UseCasesPanelViewModel(IRequestCaseService requestCaseService)
     {
         _requestCaseService = requestCaseService;
+        SelectableCaseItems = new ReadOnlyObservableCollection<RequestCaseItemViewModel>(_selectableCaseItems);
+        RequestCases.CollectionChanged += (_, _) => RefreshSelectableCaseItems();
     }
 
     public BatchObservableCollection<RequestCaseItemViewModel> RequestCases { get; } = [];
+
+    /// <summary>可加载/复制的用例列表：目录节点只承载树结构，不出现在用例管理抽屉中。</summary>
+    public ReadOnlyObservableCollection<RequestCaseItemViewModel> SelectableCaseItems { get; }
+
+    private readonly ObservableCollection<RequestCaseItemViewModel> _selectableCaseItems = [];
 
     [ObservableProperty]
     private string caseName = string.Empty;
@@ -195,6 +202,18 @@ public partial class UseCasesPanelViewModel : ViewModelBase
             if (targetIds.Contains(RequestCases[index].Id))
             {
                 RequestCases.RemoveAt(index);
+            }
+        }
+    }
+
+    private void RefreshSelectableCaseItems()
+    {
+        _selectableCaseItems.Clear();
+        foreach (var item in RequestCases)
+        {
+            if (!string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.Folder, StringComparison.OrdinalIgnoreCase))
+            {
+                _selectableCaseItems.Add(item);
             }
         }
     }
