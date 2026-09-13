@@ -142,7 +142,7 @@
         <!-- 测试环境 -->
         <div class="env-card">
           <div class="env-card-head">
-            <span class="checkbox on"></span>
+            <span class="checkbox"></span>
             <span class="ename">测试</span>
             <span class="eurl">https://test.example.com</span>
             <span class="chip">激活</span>
@@ -160,7 +160,7 @@
         <!-- 生产环境 -->
         <div class="env-card">
           <div class="env-card-head">
-            <span class="checkbox on"></span>
+            <span class="checkbox"></span>
             <span class="ename">生产</span>
             <span class="eurl">https://api.example.com</span>
             <span class="chip">激活</span>
@@ -206,10 +206,33 @@
     if (e.target.closest(".cell-input, .del-btn, .btn-add, .checkbox")) return;
     var card = e.target.closest(".env-card");
     if (!card) return;
-    envList.querySelectorAll(".env-card").forEach(function (c) { c.classList.remove("active"); });
+    envList.querySelectorAll(".env-card").forEach(function (c) {
+      c.classList.remove("active");
+      c.querySelector(".checkbox").classList.remove("on");
+    });
     card.classList.add("active");
+    card.querySelector(".checkbox").classList.add("on");
     document.getElementById("envChipName").textContent = card.querySelector(".ename").textContent;
+    var baseUrlInput = null;
+    card.querySelectorAll(".env-var-row").forEach(function (row) {
+      var inputs = row.querySelectorAll("input");
+      if (inputs[0] && inputs[0].value.trim() === "BaseUrl") baseUrlInput = inputs[1];
+    });
+    window.protoSetEnvironment(card.querySelector(".ename").textContent, baseUrlInput ? baseUrlInput.value.trim() : "");
     protoToast("已切换激活环境「" + card.querySelector(".ename").textContent + "」（演示）");
+  });
+
+  // 修改 BaseUrl 时同步卡片摘要，保存后其他调试页面也会读取该值。
+  envList.addEventListener("input", function (e) {
+    if (!e.target.classList.contains("cell-input")) return;
+    var row = e.target.closest(".env-var-row");
+    var card = e.target.closest(".env-card");
+    if (!row || !card || row.querySelector("input").value.trim() !== "BaseUrl") return;
+    var valueInput = row.querySelectorAll("input")[1];
+    card.querySelector(".eurl").textContent = valueInput.value.trim() || "未配置 BaseUrl";
+    if (card.classList.contains("active")) {
+      window.protoSetEnvironment(card.querySelector(".ename").textContent, valueInput.value.trim());
+    }
   });
 
   // 变量行删除 / 新增（事件委托，作用于所有环境卡）
@@ -246,7 +269,7 @@
     var card = document.createElement("div");
     card.className = "env-card";
     card.innerHTML =
-      '<div class="env-card-head"><span class="checkbox on"></span><span class="ename"></span><span class="eurl">未配置 BaseUrl</span><span class="chip">激活</span></div>' +
+      '<div class="env-card-head"><span class="checkbox"></span><span class="ename"></span><span class="eurl">未配置 BaseUrl</span><span class="chip">激活</span></div>' +
       '<div class="env-vars"><div class="env-var-row"><input class="cell-input mono" placeholder="变量名"><input class="cell-input mono" placeholder="变量值"><span class="del-btn"><i class="ri-delete-bin-line"></i></span></div></div>' +
       '<div class="env-cap"><span class="varCount">1 个变量</span><button class="btn-add addVar" style="height:24px;padding:0 10px;">＋ 新增变量</button></div>';
     card.querySelector(".ename").textContent = name;

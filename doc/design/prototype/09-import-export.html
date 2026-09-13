@@ -183,23 +183,69 @@
           <div class="kv"><span class="k"><span class="badge get">GET</span></span><span class="v">/api/User/{id} · 获取用户详情</span></div>
           <div class="kv"><span class="k"><span class="badge post">POST</span></span><span class="v">/api/User · 创建用户</span></div>
         </div>
-        <div class="form-row">
-          <span class="th-check"><span class="checkbox on"></span>覆盖现有接口（参数与说明以导入文档为准）</span>
-          <span class="th-check"><span class="checkbox"></span>跳过同名接口，仅导入新接口</span>
+        <div class="import-resolution" data-choice-group="import-resolution">
+          <div class="import-choice selected" data-import-choice="overwrite" tabindex="0">
+            <span class="radio on"></span>
+            <span class="import-choice-copy">
+              <b>覆盖现有接口</b>
+              <small>参数与说明以导入文档为准</small>
+            </span>
+          </div>
+          <div class="import-choice" data-import-choice="skip" tabindex="0">
+            <span class="radio"></span>
+            <span class="import-choice-copy">
+              <b>跳过同名接口</b>
+              <small>仅导入新接口，不改动现有接口</small>
+            </span>
+          </div>
         </div>
-        <div class="notice warning" style="margin-top:0;">
+        <div class="notice warning" id="overwriteWarning" style="margin-top:0;">
           <span class="n-title">覆盖后无法自动恢复</span>
           <span class="n-text">被覆盖接口的本地修改（参数说明、用例关联）将丢失，建议先导出备份。</span>
         </div>
       </div>
       <div class="modal-foot">
         <button class="btn btn-ghost" data-close-toast="已取消导入（演示）">取消导入</button>
-        <button class="btn btn-primary" data-close-toast="导入完成：新增 24 个接口，覆盖 2 个同名接口（演示）">覆盖并继续导入</button>
+        <button class="btn btn-primary" id="importConfirmBtn" data-close-toast="导入完成：新增 24 个接口，覆盖 2 个同名接口（演示）">覆盖并继续导入</button>
       </div>
     </div>
   </div>
 </div>
 
 <script src="shared.js"></script>
+<script>
+  var importChoices = document.querySelectorAll("[data-import-choice]");
+  var importConfirmBtn = document.getElementById("importConfirmBtn");
+  var overwriteWarning = document.getElementById("overwriteWarning");
+
+  function setImportResolution(choice) {
+    importChoices.forEach(function (item) {
+      var selected = item.getAttribute("data-import-choice") === choice;
+      item.classList.toggle("selected", selected);
+      item.querySelector(".radio").classList.toggle("on", selected);
+    });
+    var isOverwrite = choice === "overwrite";
+    importConfirmBtn.textContent = isOverwrite ? "覆盖并继续导入" : "跳过冲突并导入";
+    importConfirmBtn.setAttribute(
+      "data-close-toast",
+      isOverwrite
+        ? "导入完成：新增 24 个接口，覆盖 2 个同名接口（演示）"
+        : "导入完成：新增 22 个接口，跳过 2 个同名接口（演示）"
+    );
+    overwriteWarning.style.display = isOverwrite ? "flex" : "none";
+  }
+
+  importChoices.forEach(function (item) {
+    item.addEventListener("click", function () {
+      setImportResolution(item.getAttribute("data-import-choice"));
+    });
+    item.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        setImportResolution(item.getAttribute("data-import-choice"));
+      }
+    });
+  });
+</script>
 </body>
 </html>

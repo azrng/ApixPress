@@ -14,7 +14,7 @@
   <div class="titlebar">
     <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
     <div class="tb-tab" data-href="01-home.html">首页 <span class="n">3</span></div>
-    <div class="tb-tab active" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-tab active" id="projectTab" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
     <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
     <div class="tb-spacer"></div>
     <div class="env-switch">
@@ -54,7 +54,7 @@
         <div class="sn-item" onclick="location.href='09-import-export.html'">导入数据</div>
         <div class="sn-item" onclick="location.href='09-import-export.html'">导出数据</div>
         <div style="margin-top:18px; padding:12px; background:var(--bg-subtle); border-radius:var(--r-md); font-size:12px; color:var(--text-secondary); line-height:1.8;">
-          <b style="color:var(--text-primary);">example（默认）</b><br>
+          <b id="settingsProjectName" style="color:var(--text-primary);">example（默认）</b><br>
           当前环境：开发<br>
           已导入：1 份文档
         </div>
@@ -65,16 +65,16 @@
           <div class="section-title">基本信息</div>
           <div class="section-hint" style="margin:4px 0 8px;">在这里维护当前项目名称、项目 ID 和项目简介。</div>
           <div class="info-row">
-            <span class="info-label">项目名称</span><span class="info-value">example</span>
-            <button class="link-btn">编辑</button>
+            <span class="info-label">项目名称</span><span class="info-value" id="projectNameValue">example</span>
+            <button class="link-btn" data-edit="name">编辑</button>
           </div>
           <div class="info-row">
             <span class="info-label">项目 ID</span><span class="info-value" style="font-family:var(--mono); font-size:12px;">9494334d7a8f48b4ac617c40e65f9180</span>
             <button class="link-btn" style="color:var(--text-secondary);">复制</button>
           </div>
           <div class="info-row">
-            <span class="info-label">简介</span><span class="info-value">当前项目还没有补充备注，可在这里继续维护环境与工作区说明。</span>
-            <button class="link-btn">编辑</button>
+            <span class="info-label">简介</span><span class="info-value" id="projectRemarkValue">当前项目还没有补充备注，可在这里继续维护环境与工作区说明。</span>
+            <button class="link-btn" data-edit="remark">编辑</button>
           </div>
         </div>
 
@@ -129,8 +129,74 @@
       </div>
     </div>
   </div>
+
+  <!-- 项目信息编辑弹窗：原型演示名称/简介修改后的同步状态 -->
+  <div class="modal-wrap" id="editProjectModal">
+    <div class="modal" style="width:460px;">
+      <div class="modal-head">
+        <span class="modal-title" id="editProjectTitle">编辑项目名称</span>
+        <button class="drawer-close" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row" id="editNameField">
+          <span class="form-label">项目名称</span>
+          <input class="form-input" id="editProjectName" maxlength="80">
+        </div>
+        <div class="form-row" id="editRemarkField" style="display:none;">
+          <span class="form-label">项目简介</span>
+          <textarea class="form-textarea" id="editProjectRemark" maxlength="300"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close>取消</button>
+        <button class="btn btn-primary" id="saveProjectEdit">保存</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="shared.js"></script>
+<script>
+  var editField = "name";
+  var editModal = document.getElementById("editProjectModal");
+  var editTitle = document.getElementById("editProjectTitle");
+  var editNameField = document.getElementById("editNameField");
+  var editRemarkField = document.getElementById("editRemarkField");
+  var editName = document.getElementById("editProjectName");
+  var editRemark = document.getElementById("editProjectRemark");
+
+  document.querySelectorAll("[data-edit]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      editField = button.getAttribute("data-edit");
+      var isName = editField === "name";
+      editTitle.textContent = isName ? "编辑项目名称" : "编辑项目简介";
+      editNameField.style.display = isName ? "flex" : "none";
+      editRemarkField.style.display = isName ? "none" : "flex";
+      editName.value = document.getElementById("projectNameValue").textContent.trim();
+      editRemark.value = document.getElementById("projectRemarkValue").textContent.trim();
+      editModal.classList.add("open");
+      (isName ? editName : editRemark).focus();
+    });
+  });
+
+  document.getElementById("saveProjectEdit").addEventListener("click", function () {
+    var nameValue = editName.value.trim();
+    var remarkValue = editRemark.value.trim();
+    if (editField === "name") {
+      if (!nameValue) { protoToast("项目名称不能为空"); return; }
+      document.getElementById("projectNameValue").textContent = nameValue;
+      document.getElementById("settingsProjectName").textContent = nameValue + "（默认）";
+      var projectTab = document.getElementById("projectTab");
+      projectTab.childNodes[0].nodeValue = nameValue + " ";
+      try {
+        sessionStorage.setItem("apixpress-prototype-project", JSON.stringify({ name: nameValue, remark: remarkValue }));
+      } catch (ignore) { }
+    } else {
+      document.getElementById("projectRemarkValue").textContent = remarkValue || "当前项目还没有补充备注，可在这里继续维护环境与工作区说明。";
+    }
+    editModal.classList.remove("open");
+    protoToast("项目设置已保存（演示）");
+  });
+</script>
 </body>
 </html>

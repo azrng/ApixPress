@@ -80,6 +80,7 @@
           <div class="h-line2"><span class="status-mini err">超时</span><span>09-11 22:17</span><span style="margin-left:auto;">30 000 ms</span></div>
         </div>
       </div>
+      <div class="cell-empty" id="historyEmpty" style="display:none;">还没有发送记录</div>
     </div>
 
     <div class="main">
@@ -160,13 +161,23 @@
 
 <script src="shared.js"></script>
 <script>
+  function syncHistoryEmpty() {
+    var hasItems = document.querySelectorAll("#historyList .h-item").length > 0;
+    document.getElementById("historyEmpty").style.display = hasItems ? "none" : "block";
+    document.getElementById("clearHistory").disabled = !hasItems;
+  }
+
   // 历史行悬停操作：重发 / 删除
   document.getElementById("historyList").addEventListener("click", function (e) {
     var resend = e.target.closest(".h-actions .resend");
     if (resend) { protoToast("已重新发送该请求（演示）"); return; }
     var del = e.target.closest(".h-actions .del");
     if (del) {
-      del.closest(".h-item").remove();
+      var item = del.closest(".h-item");
+      item.remove();
+      var group = item.previousElementSibling;
+      if (group && group.classList.contains("h-group-cap") && !group.nextElementSibling?.classList.contains("h-item")) group.remove();
+      syncHistoryEmpty();
       protoToast("已删除该条历史（演示）");
     }
   });
@@ -185,9 +196,8 @@
       return;
     }
     resetClear();
-    document.querySelectorAll("#historyList .h-item").forEach(function (item) {
-      item.classList.remove("selected");
-    });
+    document.querySelectorAll("#historyList .h-item, #historyList .h-group-cap").forEach(function (item) { item.remove(); });
+    syncHistoryEmpty();
     protoToast("请求历史已清空（演示）");
   });
   function resetClear() {
@@ -197,6 +207,7 @@
     clearBtn.style.color = "";
     clearBtn.style.borderColor = "";
   }
+  syncHistoryEmpty();
 </script>
 </body>
 </html>

@@ -155,12 +155,15 @@
     document.querySelector("#homeMetric b:nth-of-type(2)").textContent = visible;
   });
 
-  // 新建项目：校验名称 → 关闭弹窗 → 提示（原型不落数据）
+  // 新建项目：校验名称 → 关闭弹窗 → 进入新项目工作台（原型不落数据）
   document.getElementById("npCreate").addEventListener("click", function () {
     var name = document.getElementById("npName").value.trim();
     if (!name) { protoToast("请先填写项目名称"); return; }
     document.getElementById("newProjectModal").classList.remove("open");
-    protoToast("项目「" + name + "」已创建（演示）");
+    try {
+      sessionStorage.setItem("apixpress-prototype-project", JSON.stringify({ name: name, remark: document.getElementById("npRemark").value.trim() }));
+    } catch (ignore) { }
+    location.href = "02-debug-params.html?project=" + encodeURIComponent(name);
   });
 </script>
 </body>

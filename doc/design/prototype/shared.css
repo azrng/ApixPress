@@ -437,6 +437,23 @@ body {
   width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(42deg);
 }
 .th-check { display: flex; align-items: center; gap: 6px; }
+.radio {
+  width: 15px; height: 15px; border-radius: 50%; border: 1px solid var(--border-strong);
+  background: var(--bg-app); display: inline-flex; align-items: center; justify-content: center; flex: none;
+}
+.radio.on { border-color: var(--brand); }
+.radio.on::after { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--brand); }
+.import-resolution { display: flex; flex-direction: column; gap: 7px; }
+.import-choice {
+  display: flex; align-items: flex-start; gap: 9px; padding: 9px 10px; border: 1px solid var(--border-default);
+  border-radius: var(--r-md); background: var(--bg-app); cursor: pointer;
+}
+.import-choice:hover { border-color: var(--border-strong); }
+.import-choice.selected { border-color: var(--border-focus); background: var(--bg-selected); }
+.import-choice:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.import-choice-copy { display: flex; flex-direction: column; gap: 3px; line-height: 1.35; }
+.import-choice-copy b { font-size: 12px; color: var(--text-primary); }
+.import-choice-copy small { font-size: 11px; color: var(--text-secondary); }
 .del-btn { color: var(--text-tertiary); cursor: pointer; text-align: center; font-size: 13px; }
 .del-btn:hover { color: var(--err); }
 .type-chip {
