@@ -104,7 +104,8 @@ body {
 /* ===== 标题栏 ===== */
 .titlebar {
   height: 44px; flex: none; display: flex; align-items: center;
-  padding: 0 12px 0 16px; gap: 8px;
+  padding: 0 12px 0 16px; gap: 8px; border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-app);
 }
 .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
 .logo-mark {
@@ -135,7 +136,7 @@ body {
 }
 .tb-icon:hover { background: var(--bg-subtle); color: var(--text-primary); }
 .tb-sep { width: 1px; height: 18px; background: var(--border-default); margin: 0 4px; }
-/* 标题栏「＋ 新建标签」按钮 */
+/* 标签栏「＋ 新建标签」按钮 */
 .tb-plus {
   width: 28px; height: 28px; border-radius: var(--r-md); border: none; cursor: pointer;
   background: transparent; color: var(--text-secondary); font-size: 15px;
@@ -143,6 +144,25 @@ body {
   transition: background-color .16s ease, color .16s ease;
 }
 .tb-plus:hover { background: var(--bg-subtle); color: var(--text-primary); }
+
+/* 项目内接口标签独立于顶部项目标签，挂在整个项目工作区上方。 */
+.inner-tabbar {
+  height: 44px; flex: none; display: flex; align-items: flex-end; gap: 4px;
+  padding: 0 14px; border-bottom: 1px solid var(--border-default); background: var(--bg-app);
+  overflow-x: auto; overflow-y: hidden;
+}
+.inner-tabbar .inner-tab {
+  height: 36px; min-width: 132px; max-width: 240px; padding: 0 12px;
+  border-radius: var(--r-md) var(--r-md) 0 0; border: 1px solid transparent;
+  border-bottom: 2px solid transparent; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; font-size: 12px; justify-content: flex-start;
+}
+.inner-tabbar .inner-tab:hover { background: var(--bg-subtle); }
+.inner-tabbar .inner-tab.active {
+  background: var(--bg-surface); border-color: var(--border-default);
+  border-bottom-color: var(--brand); color: var(--text-primary);
+}
+.inner-tabbar .tb-plus { margin: 0 0 4px 2px; }
 
 /* ===== 环境选择器 ===== */
 .env-chip {

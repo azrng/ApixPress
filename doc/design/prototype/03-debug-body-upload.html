@@ -13,9 +13,9 @@
 <div class="window">
   <div class="titlebar">
     <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
-    <div class="tb-tab" data-href="01-home.html">首页 <span class="n">3</span></div>
-    <div class="tb-tab active" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
-    <div class="tb-tab">上传附件 <span class="close">✕</span></div>
+    <div class="tb-tab" data-tab-scope="directory" data-href="01-home.html">首页 <span class="n">3</span></div>
+    <div class="tb-tab active" data-tab-scope="directory" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-tab" data-tab-scope="workspace">上传附件 <span class="close">✕</span></div>
     <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
     <div class="tb-spacer"></div>
     <div class="env-switch">
@@ -386,7 +386,8 @@
       var isFile = chip.getAttribute("data-type") === "file";
       chip.setAttribute("data-type", isFile ? "text" : "file");
       chip.classList.toggle("file", !isFile);
-      chip.textContent = isFile ? "text ▾" : "<i class="ri-attachment-line"></i> file ▾";
+      if (isFile) chip.textContent = "text ▾";
+      else chip.innerHTML = '<i class="ri-attachment-line"></i> file ▾';
       return;
     }
     // 文件 chip 删除

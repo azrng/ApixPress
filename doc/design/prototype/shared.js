@@ -48,6 +48,119 @@
 
   function closeLayer(el) { if (el) el.classList.remove("open"); }
 
+  /* 环境状态在各个原型页面之间保持一致，模拟工作区级环境上下文。 */
+  var defaultEnvBaseUrls = {
+    "开发": "http://localhost:5050",
+    "测试": "https://test.example.com",
+    "生产": "https://api.example.com"
+  };
+
+  function saveEnvironmentState(name, baseUrl) {
+    try {
+      sessionStorage.setItem("apixpress-prototype-env", JSON.stringify({ name: name, baseUrl: baseUrl || defaultEnvBaseUrls[name] || "" }));
+    } catch (ignore) { }
+  }
+
+  function applyEnvironmentState(name, baseUrl) {
+    document.querySelectorAll(".env-switch").forEach(function (envSwitch) {
+      var item = envSwitch.querySelector('.env-item[data-name="' + name + '"]');
+      if (!item) return;
+      envSwitch.querySelectorAll(".env-item").forEach(function (el) { el.classList.remove("active"); });
+      item.classList.add("active");
+      var chipName = envSwitch.querySelector(".env-chip-name");
+      if (chipName) chipName.textContent = name;
+    });
+
+    document.querySelectorAll(".env-chip-name").forEach(function (el) { el.textContent = name; });
+    var legacyChipName = document.getElementById("envChipName");
+    if (legacyChipName) legacyChipName.textContent = name;
+    if (baseUrl) {
+      document.querySelectorAll(".base-chip").forEach(function (el) { el.textContent = baseUrl; });
+    }
+  }
+
+  function restoreEnvironmentState() {
+    try {
+      var saved = JSON.parse(sessionStorage.getItem("apixpress-prototype-env") || "null");
+      if (saved && saved.name) applyEnvironmentState(saved.name, saved.baseUrl);
+    } catch (ignore) { }
+  }
+
+  function restoreProjectState() {
+    try {
+      var queryProject = new URLSearchParams(location.search).get("project");
+      var saved = JSON.parse(sessionStorage.getItem("apixpress-prototype-project") || "null");
+      var projectName = queryProject || (saved && saved.name);
+      if (!projectName) return;
+      if (queryProject) {
+        sessionStorage.setItem("apixpress-prototype-project", JSON.stringify({
+          name: projectName,
+          remark: saved && saved.remark ? saved.remark : ""
+        }));
+      }
+      document.querySelectorAll(".tb-tab.active").forEach(function (tab) {
+        if (tab.querySelector(".default-badge")) tab.childNodes[0].nodeValue = projectName + " ";
+      });
+    } catch (ignore) { }
+  }
+
+  /* 将项目级标签与项目内接口标签拆成两个层级。原型页面仍复用同一份静态标题栏数据。 */
+  function splitWorkspaceTabs() {
+    var titlebar = document.querySelector(".titlebar");
+    var shell = document.querySelector(".shell");
+    if (!titlebar || !shell) return;
+
+    var tabs = Array.prototype.slice.call(titlebar.querySelectorAll(":scope > .tb-tab"));
+    var innerTabs = tabs.filter(function (tab) {
+      var scope = tab.getAttribute("data-tab-scope");
+      var href = tab.getAttribute("data-href") || "";
+      var text = tab.textContent.trim();
+      return scope === "workspace"
+        || (!scope && !tab.querySelector(".default-badge") && href !== "01-home.html" && text.indexOf("首页") !== 0);
+    });
+
+    tabs.forEach(function (tab) {
+      if (tab.getAttribute("data-tab-scope") === "directory" && tab.querySelector(".default-badge")) {
+        tab.classList.add("project-tab");
+      }
+    });
+
+    var innerTabbar = document.createElement("div");
+    innerTabbar.className = "inner-tabbar";
+    innerTabbar.setAttribute("aria-label", "项目内标签");
+
+    if (innerTabs.length === 0) {
+      var defaultTab = document.createElement("div");
+      defaultTab.className = "tb-tab inner-tab active";
+      defaultTab.setAttribute("data-href", "02-debug-params.html");
+      defaultTab.innerHTML = '<span class="badge get">GET</span> 获取班级信息 <span class="close">✕</span>';
+      innerTabs.push(defaultTab);
+    }
+
+    if (!innerTabs.some(function (tab) { return tab.classList.contains("active"); })) {
+      innerTabs[innerTabs.length - 1].classList.add("active");
+    }
+
+    innerTabs.forEach(function (tab) {
+      tab.classList.add("inner-tab");
+      innerTabbar.appendChild(tab);
+    });
+
+    var plus = titlebar.querySelector(":scope > .tb-plus");
+    if (plus) innerTabbar.appendChild(plus);
+    shell.parentElement.insertBefore(innerTabbar, shell);
+  }
+
+  window.protoSetEnvironment = function (name, baseUrl) {
+    var resolvedBaseUrl = baseUrl || defaultEnvBaseUrls[name] || "";
+    saveEnvironmentState(name, resolvedBaseUrl);
+    applyEnvironmentState(name, resolvedBaseUrl);
+  };
+
+  restoreEnvironmentState();
+  restoreProjectState();
+  splitWorkspaceTabs();
+
   document.addEventListener("click", function (e) {
     var t = e.target;
 
@@ -75,6 +188,7 @@
       var chipName = envSwitch.querySelector(".env-chip-name");
       if (chipName) chipName.textContent = envItem.getAttribute("data-name");
       envSwitch.classList.remove("open");
+      window.protoSetEnvironment(envItem.getAttribute("data-name"));
       toast("已切换到环境「" + envItem.getAttribute("data-name") + "」（演示）");
       return;
     }
@@ -87,6 +201,15 @@
     }
     var splitItem = t.closest(".split-item");
     if (splitItem) splitItem.closest(".btn-split").classList.remove("open");
+
+    /* 单选项：导入冲突策略等互斥选项 */
+    var radio = t.closest("[data-choice-group] .radio");
+    if (radio) {
+      var choiceGroup = radio.closest("[data-choice-group]");
+      choiceGroup.querySelectorAll(".radio").forEach(function (el) { el.classList.remove("on"); });
+      radio.classList.add("on");
+      return;
+    }
 
     /* 勾选框开关 */
     var cb = t.closest(".checkbox");
