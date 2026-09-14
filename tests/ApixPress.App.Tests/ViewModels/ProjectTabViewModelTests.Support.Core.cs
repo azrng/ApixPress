@@ -29,7 +29,8 @@ public sealed partial class ProjectTabViewModelTests
         FakeSystemDataService? systemDataService = null,
         FakeProjectWorkspaceService? projectWorkspaceService = null,
         FakeProjectHttpSettingsService? projectHttpSettingsService = null,
-        Func<string, Task>? handleProjectDeletedAsync = null)
+        Func<string, Task>? handleProjectDeletedAsync = null,
+        ViewModelSharedTestDoubles.FakeDialogService? dialogService = null)
     {
         return new ProjectTabViewModel(
             new ProjectWorkspaceItemViewModel
@@ -49,6 +50,8 @@ public sealed partial class ProjectTabViewModelTests
             appNotificationService ?? new FakeAppNotificationService(),
             projectDataExportService ?? new FakeProjectDataExportService(),
             projectHttpSettingsService ?? new FakeProjectHttpSettingsService(),
+            new ViewModelSharedTestDoubles.FakeClipboardService(),
+            dialogService ?? new ViewModelSharedTestDoubles.FakeDialogService(),
             handleProjectDeletedAsync ?? (_ => Task.CompletedTask));
     }
 

@@ -135,11 +135,8 @@
             <TabItem Header="Body">
               <Border Classes="HttpResponseBodyCard"
                       Margin="{StaticResource Pad.Top2}">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                              VerticalScrollBarVisibility="Auto">
-                  <SelectableTextBlock Classes="HttpResponseBodyViewer"
-                             views:JsonSyntaxHighlight.Text="{Binding ResponseSection.BodyText}" />
-                </ScrollViewer>
+                <!-- AvaloniaEdit 只读查看器：大响应仅排版可视区，替代整页 Run 构建的 SelectableTextBlock -->
+                <views:ResponseBodyEditor Text="{Binding ResponseSection.BodyText}" />
               </Border>
             </TabItem>
             <TabItem Header="Headers">

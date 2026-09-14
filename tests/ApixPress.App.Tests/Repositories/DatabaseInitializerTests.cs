@@ -24,7 +24,7 @@ public sealed class DatabaseInitializerTests
         var basicColumnCount = connection.ExecuteScalar<long>(
             "select count(1) from pragma_table_info('project_http_settings') where name in ('basic_username', 'basic_password')");
 
-        Assert.Equal(4, schemaVersion);
+        Assert.Equal(5, schemaVersion);
         Assert.Equal(0, projectCount);
         Assert.Equal(0, environmentCount);
         Assert.Equal(1, httpSettingsTableCount);
@@ -147,7 +147,7 @@ public sealed class DatabaseInitializerTests
         var basicColumnCount = verificationConnection.ExecuteScalar<long>(
             "select count(1) from pragma_table_info('project_http_settings') where name in ('basic_username', 'basic_password')");
 
-        Assert.Equal(4, schemaVersion);
+        Assert.Equal(5, schemaVersion);
         Assert.Equal(1, httpSettingsTableCount);
         Assert.Equal(2, basicColumnCount);
     }
@@ -176,7 +176,8 @@ public sealed class DatabaseInitializerTests
                 values ('c-legacy', 'p-legacy', 'http-interface', 'get接口', '接口', '默认模块',
                         '', '[]', '', '{}', '2026-01-01T00:00:00Z')
                 """);
-            connection.Execute("delete from schema_migrations where version = 4");
+            // 删除全部已应用的新版本记录，把版本回退到 3，强制最新迁移重跑（模拟从版本 3 升级）
+            connection.Execute("delete from schema_migrations where version >= 4");
         }
 
         initializer.Initialize();
@@ -189,6 +190,6 @@ public sealed class DatabaseInitializerTests
             "select max(version) from schema_migrations");
 
         Assert.Equal(string.Empty, folderPath);
-        Assert.Equal(4, schemaVersion);
+        Assert.Equal(5, schemaVersion);
     }
 }

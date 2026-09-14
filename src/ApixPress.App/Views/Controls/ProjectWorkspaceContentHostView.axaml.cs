@@ -8,6 +8,7 @@ public partial class ProjectWorkspaceContentHostView : UserControl
 {
     private ProjectTabViewModel? _viewModel;
     private ProjectWorkspaceSidebarView? _sidebarView;
+    private ProjectInnerTabBarView? _innerTabBarView;
     private WorkspaceLandingView? _landingView;
     private ProjectInterfaceRootWorkspaceView? _interfaceRootView;
     private RequestEditorWorkspaceView? _requestEditorView;
@@ -97,13 +98,16 @@ public partial class ProjectWorkspaceContentHostView : UserControl
 
         if (mode == ProjectWorkspaceContentMode.ProjectSettings)
         {
-            HostGrid.Children.Add(EnsureProjectSettingsView());
+            var settingsView = EnsureProjectSettingsView();
+            DetachFromParent(settingsView);
+            HostGrid.Children.Add(settingsView);
             return;
         }
 
-        HostGrid.ColumnDefinitions = new ColumnDefinitions("0,286,*");
+        HostGrid.ColumnDefinitions = new ColumnDefinitions("0,280,*");
 
         var sidebarView = EnsureSidebarView();
+        DetachFromParent(sidebarView);
         Grid.SetColumn(sidebarView, 1);
         HostGrid.Children.Add(sidebarView);
 
@@ -114,8 +118,31 @@ public partial class ProjectWorkspaceContentHostView : UserControl
             ProjectWorkspaceContentMode.RequestHistory => EnsureRequestHistoryView(),
             _ => EnsureLandingView()
         };
-        Grid.SetColumn(contentView, 2);
-        HostGrid.Children.Add(contentView);
+
+        // 项目内请求标签栏只在内容列顶部（对齐 Apifox：侧栏不被标签条压住）
+        var contentColumn = new Grid();
+        contentColumn.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        contentColumn.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+        var tabBar = EnsureInnerTabBarView();
+        DetachFromParent(tabBar);
+        DetachFromParent(contentView);
+        Grid.SetRow(tabBar, 0);
+        Grid.SetRow(contentView, 1);
+        contentColumn.Children.Add(tabBar);
+        contentColumn.Children.Add(contentView);
+
+        Grid.SetColumn(contentColumn, 2);
+        HostGrid.Children.Add(contentColumn);
+    }
+
+    // 缓存视图复用时可能仍挂在上一次构建的旧 contentColumn 上（HostGrid.Clear 只解除 HostGrid 一层，
+    // 旧中间容器对子控件的父级关系还在），不先解除会在 Children.Add 时抛“already has a visual parent”导致闪退
+    private static void DetachFromParent(Control control)
+    {
+        if (control.Parent is Panel panel)
+        {
+            panel.Children.Remove(control);
+        }
     }
 
     private void ClearCachedViews()
@@ -124,6 +151,7 @@ public partial class ProjectWorkspaceContentHostView : UserControl
         HostGrid.ColumnDefinitions.Clear();
         _currentMode = null;
         _sidebarView = null;
+        _innerTabBarView = null;
         _landingView = null;
         _interfaceRootView = null;
         _requestEditorView = null;
@@ -136,6 +164,11 @@ public partial class ProjectWorkspaceContentHostView : UserControl
         if (_sidebarView is not null)
         {
             _sidebarView.DataContext = _viewModel;
+        }
+
+        if (_innerTabBarView is not null)
+        {
+            _innerTabBarView.DataContext = _viewModel;
         }
 
         if (_landingView is not null)
@@ -171,6 +204,15 @@ public partial class ProjectWorkspaceContentHostView : UserControl
             DataContext = _viewModel
         };
         return _sidebarView;
+    }
+
+    private ProjectInnerTabBarView EnsureInnerTabBarView()
+    {
+        _innerTabBarView ??= new ProjectInnerTabBarView
+        {
+            DataContext = _viewModel
+        };
+        return _innerTabBarView;
     }
 
     private WorkspaceLandingView EnsureLandingView()

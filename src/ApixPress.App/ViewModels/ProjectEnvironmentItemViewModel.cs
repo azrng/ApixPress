@@ -23,6 +23,10 @@ public partial class ProjectEnvironmentItemViewModel : ViewModelBase
     [ObservableProperty]
     private int sortOrder;
 
+    // 环境抽屉内当前展开编辑的卡片
+    [ObservableProperty]
+    private bool isSelected;
+
     public string DisplayName => IsActive ? $"{Name}（当前）" : Name;
     public string CompactDisplayName => Name;
     public string DisplayBaseUrl => string.IsNullOrWhiteSpace(BaseUrl) ? "未配置前置 URL" : BaseUrl;

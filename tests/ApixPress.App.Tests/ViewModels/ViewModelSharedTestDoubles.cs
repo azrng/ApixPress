@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using Azrng.Core.Results;
+using Ursa.Controls;
 
 namespace ApixPress.App.Tests.ViewModels;
 
@@ -586,6 +588,19 @@ public static class ViewModelSharedTestDoubles
         }
     }
 
+    public sealed class FakeClipboardService : IClipboardService
+    {
+        public List<string> CopiedTexts { get; } = [];
+
+        public bool ShouldSucceed { get; set; } = true;
+
+        public Task<bool> CopyTextAsync(string text, CancellationToken cancellationToken = default)
+        {
+            CopiedTexts.Add(text);
+            return Task.FromResult(ShouldSucceed);
+        }
+    }
+
     public sealed class FakeProjectDataExportService : IProjectDataExportService
     {
         public ProjectDataExportRequestDto? LastRequest { get; private set; }
@@ -695,5 +710,34 @@ public static class ViewModelSharedTestDoubles
         {
             Show(title, content, NotificationType.Error, expiration);
         }
+    }
+
+    /// <summary>
+    /// 可编程弹层替身：记录弹窗请求（视图类型 / DataContext / 标题），并按脚本返回结果，
+    /// 默认返回 OK 以模拟用户点击确认。
+    /// </summary>
+    public sealed class FakeDialogService : IDialogService
+    {
+        public DialogResult NextResult { get; set; } = DialogResult.OK;
+
+        /// <summary>弹窗展示时刻的检查钩子（此时弹窗内容仍处于打开态，可断言中间状态）。</summary>
+        public Action<DialogRequest>? OnShow { get; set; }
+
+        public List<DialogRequest> Requests { get; } = [];
+
+        public Task<DialogResult> ShowDialogAsync<TView>(
+            object dataContext,
+            string? title = null,
+            bool canResize = false,
+            bool showCloseButton = true)
+            where TView : Control, new()
+        {
+            var request = new DialogRequest(typeof(TView), dataContext, title);
+            Requests.Add(request);
+            OnShow?.Invoke(request);
+            return Task.FromResult(NextResult);
+        }
+
+        public sealed record DialogRequest(Type ViewType, object DataContext, string? Title);
     }
 }

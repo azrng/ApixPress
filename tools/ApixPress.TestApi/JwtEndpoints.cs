@@ -18,27 +18,39 @@ internal static class JwtEndpoints
         app.MapMethods("/jwt/login", AnyMethods, async (HttpContext context) =>
         {
             return await LoginAsync(context);
-        });
+        }).WithTags("JWT 认证")
+            .WithSummary("登录发放 JWT")
+            .WithDescription("凭据支持 JSON/表单/查询参数，内置账号 admin/admin123（role=admin）、user/123456（role=user）");
         app.MapMethods("/jwt/protected", AnyMethods, async (HttpContext context) =>
         {
             return await ProtectedAsync(context);
-        });
+        }).WithTags("JWT 认证")
+            .WithSummary("JWT 受保护资源")
+            .WithDescription("校验签名、有效期、签发者与受众，成功返回解码后的 claims");
         app.MapMethods("/jwt/admin-only", AnyMethods, async (HttpContext context) =>
         {
             return await AdminOnlyAsync(context);
-        });
+        }).WithTags("JWT 认证")
+            .WithSummary("管理员专属资源")
+            .WithDescription("要求 role=admin，认证通过但权限不足返回 403");
         app.MapMethods("/jwt/refresh", AnyMethods, async (HttpContext context) =>
         {
             return await RefreshAsync(context);
-        });
+        }).WithTags("JWT 认证")
+            .WithSummary("刷新令牌")
+            .WithDescription("用 refresh_token（JSON/表单/查询参数）换取新的令牌对");
         app.MapGet("/jwt/decode", async (HttpContext context) =>
         {
             return await DecodeAsync(context);
-        });
+        }).WithTags("JWT 认证")
+            .WithSummary("无校验解码 JWT")
+            .WithDescription("查询参数 token；返回头、负载、签名是否有效与是否过期，便于检查客户端发出的令牌");
         app.MapGet("/jwt/mint", (HttpContext context) =>
         {
             return MintAsync(context);
-        });
+        }).WithTags("JWT 认证")
+            .WithSummary("按需铸造测试令牌")
+            .WithDescription("查询参数 sub/name/role/expires_in（负数为已过期）/issuer/audience/secret/token_use，可生成各类校验失败令牌");
     }
 
     private static async Task<IResult> LoginAsync(HttpContext context)

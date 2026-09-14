@@ -19,6 +19,8 @@ public partial class MainWindowViewModel
             _appNotificationService,
             _projectDataExportService,
             _projectHttpSettingsService,
+            _clipboardService,
+            _dialogService,
             HandleProjectDeletedFromSettingsAsync);
         tab.ShellStateChanged += OnProjectTabShellStateChanged;
         return tab;
@@ -38,7 +40,6 @@ public partial class MainWindowViewModel
         }
 
         ActiveProjectTab = tab;
-        IsEnvironmentManagerOpen = false;
     }
 
     private void OnProjectsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -77,7 +78,6 @@ public partial class MainWindowViewModel
             ActiveProjectTab = ProjectTabs.FirstOrDefault();
             if (ActiveProjectTab is null)
             {
-                IsEnvironmentManagerOpen = false;
                 StatusMessage = BrowserStatusText;
             }
         }
@@ -123,7 +123,6 @@ public partial class MainWindowViewModel
 
         if (ActiveProjectTab is null)
         {
-            IsEnvironmentManagerOpen = false;
             StatusMessage = "项目已删除，已返回项目列表。";
         }
         else

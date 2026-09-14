@@ -15,6 +15,8 @@ internal static class ProjectSettingsTexts
     public const string DangerCardTitle = "危险操作";
     public const string DangerCardDescription = "这些操作会直接影响当前项目数据，请确认已导出或备份后再继续。";
     public const string DangerOperationStatus = "危险操作需要二次确认后才会执行。";
+    public const string ProjectIdCopiedStatus = "项目 ID 已复制到剪贴板。";
+    public const string ProjectIdCopyFailureStatus = "复制项目 ID 失败，请手动选择复制。";
     public const string ClearProjectDataTitle = "清空项目数据";
     public const string ClearProjectDataDescription = "删除当前项目的接口、用例、导入文档、环境变量和请求历史，保留项目名称与简介，并重建一个空的开发环境。";
     public const string ClearProjectDataAction = "清空项目数据";

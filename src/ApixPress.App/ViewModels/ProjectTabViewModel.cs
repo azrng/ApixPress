@@ -37,6 +37,8 @@ public partial class ProjectTabViewModel : ViewModelBase,
         IAppNotificationService appNotificationService,
         IProjectDataExportService projectDataExportService,
         IProjectHttpSettingsService projectHttpSettingsService,
+        IClipboardService clipboardService,
+        IDialogService dialogService,
         Func<string, Task> handleProjectDeletedAsync)
     {
         Project = new ProjectWorkspaceItemViewModel
@@ -56,7 +58,8 @@ public partial class ProjectTabViewModel : ViewModelBase,
         {
             GetActiveWorkspaceTab = () => ActiveWorkspaceTab,
             IsInterfaceRootWorkspaceActive = () => IsInterfaceRootWorkspaceActive,
-            Messenger = _messenger
+            Messenger = _messenger,
+            DialogService = dialogService
         };
         _composition = ProjectTabComposition.Create(
             Project,
@@ -72,6 +75,7 @@ public partial class ProjectTabViewModel : ViewModelBase,
             appNotificationService,
             projectDataExportService,
             projectHttpSettingsService,
+            clipboardService,
             handleProjectDeletedAsync,
             hostContext);
         EnvironmentPanel = _composition.EnvironmentPanel;
@@ -86,6 +90,7 @@ public partial class ProjectTabViewModel : ViewModelBase,
         Import = _composition.Import;
         Workflow = _composition.Workflow;
         QuickRequestSave = _composition.QuickRequestSave;
+        HttpCaseSave = _composition.HttpCaseSave;
         Summary = _composition.Summary;
         _lifecycle = _composition.Lifecycle;
         _composition.Attach();
@@ -104,6 +109,7 @@ public partial class ProjectTabViewModel : ViewModelBase,
     public ProjectRequestWorkflowViewModel Workflow { get; }
     public ProjectImportViewModel Import { get; }
     public ProjectQuickRequestSaveViewModel QuickRequestSave { get; }
+    public ProjectHttpCaseSaveViewModel HttpCaseSave { get; }
     public ProjectTabSummaryViewModel Summary { get; }
 
     public ObservableCollection<RequestWorkspaceTabViewModel> WorkspaceTabs => Workspace.WorkspaceTabs;
@@ -202,15 +208,38 @@ public partial class ProjectTabViewModel : ViewModelBase,
     }
 
     [RelayCommand]
-    private async Task SaveHttpCaseAsync()
+    private Task SaveHttpCaseAsync()
     {
-        await Workflow.SaveHttpCaseAsync();
-        NotifyShellState();
+        OpenHttpCaseSaveDialog();
+        return Task.CompletedTask;
+    }
+
+    public void OpenHttpCaseSaveDialog()
+    {
+        if (ActiveWorkspaceTab is not null && ActiveWorkspaceTab.IsHttpInterfaceTab)
+        {
+            HttpCaseSave.OpenDialogFor(ActiveWorkspaceTab);
+            NotifyShellState();
+        }
     }
 
     public Task LoadHistoryRequestAsync(RequestHistoryItemViewModel? item)
     {
         return _lifecycle.LoadHistoryRequestAsync(item);
+    }
+
+    [RelayCommand]
+    private async Task ResendHistoryRequestAsync(RequestHistoryItemViewModel? item)
+    {
+        // 对齐原型行内「重发」：载入历史请求为可编辑快捷请求后立即发送
+        if (item is null)
+        {
+            return;
+        }
+
+        await LoadHistoryRequestAsync(item);
+        await Workflow.SendRequestAsync();
+        NotifyShellState();
     }
 
     public void Receive(StatusMessageRequest message)
@@ -309,7 +338,12 @@ public partial class ProjectTabViewModel : ViewModelBase,
             OnPropertyChanged(nameof(ConfigTab));
             OnPropertyChanged(nameof(ResponseSection));
             Shell.NotifyWorkspaceStateChanged();
-            Editor.NotifyStateChanged();
+            if (!changes.HasFlag(WorkspaceStateChangeFlags.ActiveTabChanged))
+            {
+                // 每键编辑路径：setter 已即时刷新过，这里只做轻量通知+防抖重算，避免重复全量重算
+                Editor.NotifyWorkspaceEditorChanged();
+            }
+            // 与 ActiveTabChanged 同时到达（切标签批次）时，编辑器刷新由下方 ActiveTabChanged 分支立即执行
         }
 
         if (changes.HasFlag(WorkspaceStateChangeFlags.BindingsChanged))
@@ -322,6 +356,8 @@ public partial class ProjectTabViewModel : ViewModelBase,
         {
             SyncInterfaceRootWorkspaceStateWithActiveTab();
             OnPropertyChanged(nameof(ActiveWorkspaceTab));
+            // 切换标签属于结构变化：编辑器必须立即换内容，不依赖后续 EditorState 的防抖刷新
+            Editor.NotifyStateChanged();
         }
 
         if (changes.HasFlag(WorkspaceStateChangeFlags.TabMenuChanged))

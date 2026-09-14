@@ -50,9 +50,8 @@
             <StackPanel Spacing="{StaticResource Space.2}">
               <TextBlock Classes="CaptionText"
                          Text="测试用例" />
-              <TextBox Classes="SectionInput HttpInterfaceNameInput HttpCaseNameInput"
-                       PlaceholderText="用例名称"
-                       Text="{Binding Editor.CurrentHttpCaseName}" />
+              <TextBlock Text="{Binding Editor.CurrentHttpCaseName}"
+                         TextTrimming="CharacterEllipsis" />
               <Button Classes="HttpSaveButton"
                       Content="保存测试用例"
                       Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveHttpCaseCommand}" />

@@ -4,168 +4,154 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.ProjectImportDialogView"
-             x:DataType="vm:MainWindowViewModel"
+             x:DataType="vm:ProjectImportViewModel"
              mc:Ignorable="d">
-  <Border Classes="SettingsDialogBackdrop"
-          IsVisible="{Binding ShowProjectImportDialog}">
-    <Grid HorizontalAlignment="Center"
-          VerticalAlignment="Center">
-      <Border Classes="ProjectImportDialogCard">
-          <Grid>
-            <Grid RowDefinitions="Auto,Auto,Auto,*"
-                  RowSpacing="{StaticResource Space.3}"
-                IsEnabled="{Binding ActiveProjectTab.Import.CanEditImportData}">
-            <Grid ColumnDefinitions="*,Auto">
-              <TextBlock Classes="DialogTitle"
-                         Text="{Binding ActiveProjectTab.Import.DialogTitle}" />
-              <Button Grid.Column="1"
-                      Classes="DialogIconButton"
-                      Content="×"
-                      Command="{Binding ActiveProjectTab.Import.CloseDialogCommand}" />
-            </Grid>
-
-            <Border Grid.Row="1"
-                    Classes="ProjectImportDialogHeaderCard">
-              <Grid ColumnDefinitions="Auto,*"
-                    ColumnSpacing="{StaticResource Space.3}">
-                <Border Width="44"
-                        Height="44"
-                        Classes="ProjectImportFormatIcon">
-                  <TextBlock HorizontalAlignment="Center"
-                             VerticalAlignment="Center"
-                             FontSize="{StaticResource Font.Size.BodyLarge}"
-                             FontWeight="Bold"
-                             Text="S" />
-                </Border>
-                <StackPanel Grid.Column="1"
-                            Spacing="2"
-                            VerticalAlignment="Center">
-                  <TextBlock Classes="CaptionText"
-                             Text="{Binding ActiveProjectTab.Import.DialogFormatLabel}" />
-                  <TextBlock Text="{Binding ActiveProjectTab.Import.DialogFormatName}"
-                             FontSize="{StaticResource Font.Size.BodyLarge}"
-                             FontWeight="SemiBold" />
-                </StackPanel>
-              </Grid>
+  <!-- 弹窗 chrome 由 Ursa StandardDialogControl 提供；DataContext 为导入 VM -->
+  <Border Classes="ProjectImportDialogCard">
+    <Grid>
+      <Grid RowDefinitions="Auto,Auto,Auto,*"
+            RowSpacing="{StaticResource Space.3}"
+            IsEnabled="{Binding CanEditImportData}">
+        <Border Grid.Row="0"
+                Classes="ProjectImportDialogHeaderCard">
+          <Grid ColumnDefinitions="Auto,*"
+                ColumnSpacing="{StaticResource Space.3}">
+            <Border Width="44"
+                    Height="44"
+                    Classes="ProjectImportFormatIcon">
+              <TextBlock HorizontalAlignment="Center"
+                         VerticalAlignment="Center"
+                         FontSize="{StaticResource Font.Size.BodyLarge}"
+                         FontWeight="Bold"
+                         Text="S" />
             </Border>
-
-            <Border Grid.Row="2"
-                    Classes="ProjectImportDialogNoticeCard">
-              <TextBlock Text="{Binding ActiveProjectTab.Import.DialogNoticeText}"
-                         TextWrapping="Wrap"
-                         TextAlignment="Center" />
-            </Border>
-
-            <StackPanel Grid.Row="3"
-                        Spacing="{StaticResource Space.3}">
-              <Border Classes="ProjectImportTabStrip">
-                <Grid ColumnDefinitions="*,*">
-                  <ToggleButton Grid.Column="0"
-                                Classes="ProjectImportModeTab"
-                                Command="{Binding ActiveProjectTab.Import.ShowImportFileModeCommand}"
-                                IsChecked="{Binding ActiveProjectTab.Import.IsImportFileMode, Mode=OneWay}">
-                    <TextBlock Text="{Binding ActiveProjectTab.Import.FileModeTitle}" />
-                  </ToggleButton>
-                  <ToggleButton Grid.Column="1"
-                                Classes="ProjectImportModeTab"
-                                Command="{Binding ActiveProjectTab.Import.ShowImportUrlModeCommand}"
-                                IsChecked="{Binding ActiveProjectTab.Import.IsImportUrlMode, Mode=OneWay}">
-                    <TextBlock Text="{Binding ActiveProjectTab.Import.UrlModeTitle}" />
-                  </ToggleButton>
-                </Grid>
-              </Border>
-
-              <Border Classes="StatusInfo"
-                      IsVisible="{Binding ActiveProjectTab.Import.ShowImportStatusInfo}">
-                <TextBlock Text="{Binding ActiveProjectTab.Import.ImportDataStatusText}"
-                           TextWrapping="Wrap" />
-              </Border>
-              <Border Classes="StatusSuccess"
-                      IsVisible="{Binding ActiveProjectTab.Import.ShowImportStatusSuccess}">
-                <TextBlock Text="{Binding ActiveProjectTab.Import.ImportDataStatusText}"
-                           TextWrapping="Wrap" />
-              </Border>
-              <Border Classes="StatusError"
-                      IsVisible="{Binding ActiveProjectTab.Import.ShowImportStatusError}">
-                <TextBlock Text="{Binding ActiveProjectTab.Import.ImportDataStatusText}"
-                           TextWrapping="Wrap" />
-              </Border>
-
-              <Border Classes="ProjectImportDropZoneCard"
-                      IsVisible="{Binding ActiveProjectTab.Import.IsImportFileMode}">
-                <StackPanel Spacing="{StaticResource Space.3}"
-                            VerticalAlignment="Center"
-                            HorizontalAlignment="Center">
-                  <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                             FontSize="{StaticResource Font.Size.IconLarge}"
-                             HorizontalAlignment="Center"
-                             Text="&#xE898;" />
-                  <TextBlock Text="{Binding ActiveProjectTab.Import.SelectedImportFileName}"
-                             FontWeight="SemiBold"
-                             TextAlignment="Center" />
-                  <TextBlock Classes="CaptionText"
-                             Text="{Binding ActiveProjectTab.Import.SelectedImportFileSummary}"
-                             TextWrapping="Wrap"
-                             TextAlignment="Center" />
-                  <StackPanel Orientation="Horizontal"
-                              HorizontalAlignment="Center"
-                              Spacing="{StaticResource Space.2}">
-                    <Button Classes="DialogSecondaryButton"
-                            Content="{Binding ActiveProjectTab.Import.PickFileButtonText}"
-                            Command="{Binding ActiveProjectTab.Import.PickSwaggerImportFileCommand}" />
-                    <Button Classes="DialogPrimaryButton"
-                            Content="{Binding ActiveProjectTab.Import.StartImportButtonText}"
-                            Command="{Binding ActiveProjectTab.Import.ImportSwaggerFileCommand}" />
-                  </StackPanel>
-                </StackPanel>
-              </Border>
-
-              <Border Classes="ProjectImportUrlCard"
-                      IsVisible="{Binding ActiveProjectTab.Import.IsImportUrlMode}">
-                <StackPanel Spacing="{StaticResource Space.3}">
-                  <TextBlock Classes="SectionTitle"
-                             Text="{Binding ActiveProjectTab.Import.UrlModeTitle}" />
-                  <TextBlock Classes="CaptionText"
-                             Text="{Binding ActiveProjectTab.Import.UrlDescription}" />
-                  <TextBox Classes="SectionInput DialogInput"
-                           PlaceholderText="{Binding ActiveProjectTab.Import.UrlWatermark}"
-                           Text="{Binding ActiveProjectTab.Import.ImportUrl}" />
-                  <StackPanel Orientation="Horizontal"
-                              HorizontalAlignment="Right"
-                              Spacing="{StaticResource Space.2}">
-                    <Button Classes="DialogPrimaryButton"
-                            Content="{Binding ActiveProjectTab.Import.ImportUrlButtonText}"
-                            Command="{Binding ActiveProjectTab.Import.ImportSwaggerUrlCommand}" />
-                  </StackPanel>
-                </StackPanel>
-              </Border>
+            <StackPanel Grid.Column="1"
+                        Spacing="2"
+                        VerticalAlignment="Center">
+              <TextBlock Classes="CaptionText"
+                         Text="{Binding DialogFormatLabel}" />
+              <TextBlock Text="{Binding DialogFormatName}"
+                         FontSize="{StaticResource Font.Size.BodyLarge}"
+                         FontWeight="SemiBold" />
             </StackPanel>
           </Grid>
+        </Border>
 
-          <Border Classes="ProjectImportBusyOverlay"
-                  IsVisible="{Binding ActiveProjectTab.Import.IsImportDataBusy}">
-            <Border Classes="ProjectImportBusyCard"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
-              <StackPanel Spacing="{StaticResource Space.3}">
-                <TextBlock Text="{Binding ActiveProjectTab.Import.ImportDataBusyText}"
-                           FontSize="{StaticResource Font.Size.BodyLarge}"
-                           FontWeight="SemiBold"
-                           TextAlignment="Center" />
-                <ProgressBar Classes="ProjectImportBusyProgress"
-                             IsIndeterminate="True" />
-                <TextBlock Classes="CaptionText"
-                           Text="{Binding ActiveProjectTab.Import.BusyOverlayDescription}"
-                           TextWrapping="Wrap"
-                           TextAlignment="Center" />
-                <Button Classes="DialogSecondaryButton"
-                        HorizontalAlignment="Center"
-                        Content="取消导入"
-                        Command="{Binding ActiveProjectTab.Import.CancelImportDataCommand}" />
-              </StackPanel>
-            </Border>
+        <Border Grid.Row="1"
+                Classes="ProjectImportDialogNoticeCard">
+          <TextBlock Text="{Binding DialogNoticeText}"
+                     TextWrapping="Wrap"
+                     TextAlignment="Center" />
+        </Border>
+
+        <StackPanel Grid.Row="2"
+                    Spacing="{StaticResource Space.3}">
+          <Border Classes="ProjectImportTabStrip">
+            <Grid ColumnDefinitions="*,*">
+              <ToggleButton Grid.Column="0"
+                            Classes="ProjectImportModeTab"
+                            Command="{Binding ShowImportFileModeCommand}"
+                            IsChecked="{Binding IsImportFileMode, Mode=OneWay}">
+                <TextBlock Text="{Binding FileModeTitle}" />
+              </ToggleButton>
+              <ToggleButton Grid.Column="1"
+                            Classes="ProjectImportModeTab"
+                            Command="{Binding ShowImportUrlModeCommand}"
+                            IsChecked="{Binding IsImportUrlMode, Mode=OneWay}">
+                <TextBlock Text="{Binding UrlModeTitle}" />
+              </ToggleButton>
+            </Grid>
           </Border>
-        </Grid>
+
+          <Border Classes="StatusInfo"
+                  IsVisible="{Binding ShowImportStatusInfo}">
+            <TextBlock Text="{Binding ImportDataStatusText}"
+                       TextWrapping="Wrap" />
+          </Border>
+          <Border Classes="StatusSuccess"
+                  IsVisible="{Binding ShowImportStatusSuccess}">
+            <TextBlock Text="{Binding ImportDataStatusText}"
+                       TextWrapping="Wrap" />
+          </Border>
+          <Border Classes="StatusError"
+                  IsVisible="{Binding ShowImportStatusError}">
+            <TextBlock Text="{Binding ImportDataStatusText}"
+                       TextWrapping="Wrap" />
+          </Border>
+
+          <Border Classes="ProjectImportDropZoneCard"
+                  IsVisible="{Binding IsImportFileMode}">
+            <StackPanel Spacing="{StaticResource Space.3}"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Center">
+              <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                         FontSize="{StaticResource Font.Size.IconLarge}"
+                         HorizontalAlignment="Center"
+                         Text="&#xE898;" />
+              <TextBlock Text="{Binding SelectedImportFileName}"
+                         FontWeight="SemiBold"
+                         TextAlignment="Center" />
+              <TextBlock Classes="CaptionText"
+                         Text="{Binding SelectedImportFileSummary}"
+                         TextWrapping="Wrap"
+                         TextAlignment="Center" />
+              <StackPanel Orientation="Horizontal"
+                          HorizontalAlignment="Center"
+                          Spacing="{StaticResource Space.2}">
+                <Button Classes="DialogSecondaryButton"
+                        Content="{Binding PickFileButtonText}"
+                        Command="{Binding PickSwaggerImportFileCommand}" />
+                <Button Classes="DialogPrimaryButton"
+                        Content="{Binding StartImportButtonText}"
+                        Command="{Binding ImportSwaggerFileCommand}" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <Border Classes="ProjectImportUrlCard"
+                  IsVisible="{Binding IsImportUrlMode}">
+            <StackPanel Spacing="{StaticResource Space.3}">
+              <TextBlock Classes="SectionTitle"
+                         Text="{Binding UrlModeTitle}" />
+              <TextBlock Classes="CaptionText"
+                         Text="{Binding UrlDescription}" />
+              <TextBox Classes="SectionInput DialogInput"
+                       PlaceholderText="{Binding UrlWatermark}"
+                       Text="{Binding ImportUrl}" />
+              <StackPanel Orientation="Horizontal"
+                          HorizontalAlignment="Right"
+                          Spacing="{StaticResource Space.2}">
+                <Button Classes="DialogPrimaryButton"
+                        Content="{Binding ImportUrlButtonText}"
+                        Command="{Binding ImportSwaggerUrlCommand}" />
+              </StackPanel>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </Grid>
+
+      <Border Classes="ProjectImportBusyOverlay"
+              IsVisible="{Binding IsImportDataBusy}">
+        <Border Classes="ProjectImportBusyCard"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+          <StackPanel Spacing="{StaticResource Space.3}">
+            <TextBlock Text="{Binding ImportDataBusyText}"
+                       FontSize="{StaticResource Font.Size.BodyLarge}"
+                       FontWeight="SemiBold"
+                       TextAlignment="Center" />
+            <ProgressBar Classes="ProjectImportBusyProgress"
+                         IsIndeterminate="True" />
+            <TextBlock Classes="CaptionText"
+                       Text="{Binding BusyOverlayDescription}"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center" />
+            <Button Classes="DialogSecondaryButton"
+                    HorizontalAlignment="Center"
+                    Content="取消导入"
+                    Command="{Binding CancelImportDataCommand}" />
+          </StackPanel>
+        </Border>
       </Border>
     </Grid>
   </Border>

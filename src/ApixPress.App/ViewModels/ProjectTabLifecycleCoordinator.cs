@@ -15,6 +15,7 @@ internal sealed class ProjectTabLifecycleCoordinator
     private readonly ProjectImportViewModel _import;
     private readonly ProjectWorkspaceTabsViewModel _workspace;
     private readonly ProjectQuickRequestSaveViewModel _quickRequestSave;
+    private readonly ProjectHttpCaseSaveViewModel _httpCaseSave;
     private readonly ProjectWorkspaceShellViewModel _shell;
     private readonly ProjectRequestEditorViewModel _editor;
     private readonly ProjectInterfaceRootWorkspaceViewModel _interfaceRoot;
@@ -30,6 +31,7 @@ internal sealed class ProjectTabLifecycleCoordinator
         ProjectImportViewModel import,
         ProjectWorkspaceTabsViewModel workspace,
         ProjectQuickRequestSaveViewModel quickRequestSave,
+        ProjectHttpCaseSaveViewModel httpCaseSave,
         ProjectWorkspaceShellViewModel shell,
         ProjectRequestEditorViewModel editor,
         ProjectInterfaceRootWorkspaceViewModel interfaceRoot,
@@ -43,6 +45,7 @@ internal sealed class ProjectTabLifecycleCoordinator
         _import = import;
         _workspace = workspace;
         _quickRequestSave = quickRequestSave;
+        _httpCaseSave = httpCaseSave;
         _shell = shell;
         _editor = editor;
         _interfaceRoot = interfaceRoot;
@@ -70,6 +73,7 @@ internal sealed class ProjectTabLifecycleCoordinator
     public async Task ReloadAfterProjectDataClearedAsync()
     {
         _quickRequestSave.Dismiss();
+        _httpCaseSave.Dismiss();
         _import.DismissDialog();
         _import.ResetImportedDocuments();
         _workspace.ResetToLanding();
@@ -141,6 +145,11 @@ internal sealed class ProjectTabLifecycleCoordinator
         if (newValue is null || !newValue.IsQuickRequestTab)
         {
             _quickRequestSave.Dismiss();
+        }
+
+        if (newValue is null || !newValue.IsHttpInterfaceTab)
+        {
+            _httpCaseSave.Dismiss();
         }
     }
 

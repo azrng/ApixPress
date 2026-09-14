@@ -132,15 +132,19 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                                updated_at = excluded.updated_at
                            """;
 
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-            sql,
-            entities,
-            transaction,
-            cancellationToken: cancellationToken)));
-        transaction.Commit();
+        // 连接打开、事务与提交整体放入线程池：批量写入时 Commit 不阻塞 UI 线程
+        await Task.Run(async () =>
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            await connection.ExecuteAsync(new CommandDefinition(
+                sql,
+                entities,
+                transaction,
+                cancellationToken: cancellationToken));
+            transaction.Commit();
+        });
     }
 
     public async Task DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
@@ -204,27 +208,31 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                                      updated_at = excluded.updated_at
                                  """;
 
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-        if (targetIds.Length > 0)
+        // 删除与写入保持同一事务，整体放入线程池：导入同步的 Commit 不阻塞 UI 线程
+        await Task.Run(async () =>
         {
-            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-                "delete from request_cases where project_id = @ProjectId and id in @Ids",
-                new { ProjectId = projectId, Ids = targetIds },
-                transaction,
-                cancellationToken: cancellationToken)));
-        }
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            if (targetIds.Length > 0)
+            {
+                await connection.ExecuteAsync(new CommandDefinition(
+                    "delete from request_cases where project_id = @ProjectId and id in @Ids",
+                    new { ProjectId = projectId, Ids = targetIds },
+                    transaction,
+                    cancellationToken: cancellationToken));
+            }
 
-        if (upserts.Count > 0)
-        {
-            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-                upsertSql,
-                upserts,
-                transaction,
-                cancellationToken: cancellationToken)));
-        }
+            if (upserts.Count > 0)
+            {
+                await connection.ExecuteAsync(new CommandDefinition(
+                    upsertSql,
+                    upserts,
+                    transaction,
+                    cancellationToken: cancellationToken));
+            }
 
-        transaction.Commit();
+            transaction.Commit();
+        });
     }
 }

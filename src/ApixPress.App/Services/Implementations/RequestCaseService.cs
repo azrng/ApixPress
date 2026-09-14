@@ -188,50 +188,54 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         }
 
         var existingCases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
-        var importedInterfaces = existingCases
-            .Where(item => string.Equals(item.EntryType, "http-interface", StringComparison.OrdinalIgnoreCase))
-            .Select(item => new ImportedInterfaceRecord(item, DeserializeRequestSnapshot(item.RequestSnapshotJson)))
-            .Where(item => IsImportedInterface(item.Snapshot))
-            .ToDictionary(item => item.Snapshot.EndpointId, StringComparer.OrdinalIgnoreCase);
-        var importedInterfaceIds = importedInterfaces.Values
-            .Select(item => item.Id)
-            .Where(item => !string.IsNullOrWhiteSpace(item))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var importedCases = existingCases
-            .Where(item => string.Equals(item.EntryType, "http-case", StringComparison.OrdinalIgnoreCase))
-            .Where(item => importedInterfaceIds.Contains(item.ParentId))
-            .ToList();
-        var importedCasesByInterfaceId = importedCases
-            .GroupBy(item => item.ParentId, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.OrdinalIgnoreCase);
-        var normalizedEndpoints = endpoints
-            .GroupBy(BuildImportedEndpointKey, StringComparer.OrdinalIgnoreCase)
-            .Select(group => group.Last())
-            .ToList();
-        var targetKeys = normalizedEndpoints
-            .Select(BuildImportedEndpointKey)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var deletedInterfaceIds = new List<string>();
-        var entitiesToUpsert = new List<RequestCaseEntity>();
-
-        foreach (var removedInterface in importedInterfaces.Values.Where(item => !targetKeys.Contains(item.Snapshot.EndpointId)))
+        // 全量分组与逐条快照反序列化是 CPU 密集操作：大文档导入时移出 UI 线程执行
+        var (deletedInterfaceIds, entitiesToUpsert) = await Task.Run(() =>
         {
-            if (importedCasesByInterfaceId.ContainsKey(removedInterface.Id))
+            var deletedIds = new List<string>();
+            var upserts = new List<RequestCaseEntity>();
+            var importedInterfaces = existingCases
+                .Where(item => string.Equals(item.EntryType, "http-interface", StringComparison.OrdinalIgnoreCase))
+                .Select(item => new ImportedInterfaceRecord(item, DeserializeRequestSnapshot(item.RequestSnapshotJson)))
+                .Where(item => IsImportedInterface(item.Snapshot))
+                .ToDictionary(item => item.Snapshot.EndpointId, StringComparer.OrdinalIgnoreCase);
+            var importedInterfaceIds = importedInterfaces.Values
+                .Select(item => item.Id)
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var importedCasesByInterfaceId = existingCases
+                .Where(item => string.Equals(item.EntryType, "http-case", StringComparison.OrdinalIgnoreCase))
+                .Where(item => importedInterfaceIds.Contains(item.ParentId))
+                .GroupBy(item => item.ParentId, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.OrdinalIgnoreCase);
+            var normalizedEndpoints = endpoints
+                .GroupBy(BuildImportedEndpointKey, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.Last())
+                .ToList();
+            var targetKeys = normalizedEndpoints
+                .Select(BuildImportedEndpointKey)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var removedInterface in importedInterfaces.Values.Where(item => !targetKeys.Contains(item.Snapshot.EndpointId)))
             {
-                entitiesToUpsert.Add(BuildPreservedImportedInterfaceEntity(removedInterface));
-                continue;
+                if (importedCasesByInterfaceId.ContainsKey(removedInterface.Id))
+                {
+                    upserts.Add(BuildPreservedImportedInterfaceEntity(removedInterface));
+                    continue;
+                }
+
+                deletedIds.Add(removedInterface.Id);
             }
 
-            deletedInterfaceIds.Add(removedInterface.Id);
-        }
+            foreach (var endpoint in normalizedEndpoints)
+            {
+                var endpointKey = BuildImportedEndpointKey(endpoint);
+                importedInterfaces.TryGetValue(endpointKey, out var existingInterface);
 
-        foreach (var endpoint in normalizedEndpoints)
-        {
-            var endpointKey = BuildImportedEndpointKey(endpoint);
-            importedInterfaces.TryGetValue(endpointKey, out var existingInterface);
+                upserts.Add(BuildImportedInterfaceEntity(projectId, endpoint, endpointKey, existingInterface?.Id));
+            }
 
-            entitiesToUpsert.Add(BuildImportedInterfaceEntity(projectId, endpoint, endpointKey, existingInterface?.Id));
-        }
+            return (deletedIds, upserts);
+        });
 
         try
         {

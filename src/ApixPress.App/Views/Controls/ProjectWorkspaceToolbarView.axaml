@@ -6,158 +6,69 @@
              x:Class="ApixPress.App.Views.Controls.ProjectWorkspaceToolbarView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
+  <!-- 项目内请求标签已迁移到标题栏下方的 ProjectInnerTabBarView；标题栏只保留环境芯片 -->
   <Border Classes="ProjectWorkspaceTopActionBar">
-    <Grid ColumnDefinitions="*,Auto"
-          ColumnSpacing="{StaticResource Space.2}">
-      <Grid Grid.Column="0"
-            ColumnDefinitions="*,Auto"
-            ColumnSpacing="{StaticResource Space.1}">
-        <Border Grid.Column="0"
-                Classes="ProjectWorkspaceTabViewport">
-          <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                        VerticalScrollBarVisibility="Disabled">
-            <TabStrip Classes="ProjectWorkspaceEditorTabs"
-                      ItemsSource="{Binding Workspace.VisibleWorkspaceTabs}"
-                      SelectedItem="{Binding Workspace.ActiveWorkspaceTab, Mode=TwoWay}">
-              <TabStrip.ItemTemplate>
-                <DataTemplate x:DataType="vm:RequestWorkspaceTabViewModel">
-                  <Border Classes="ProjectWorkspaceInnerTabCapsule">
-                    <Border.ContextMenu>
-                      <ContextMenu Classes="WorkspaceTabContextMenu"
-                                   DataContext="{Binding}">
-                        <MenuItem Classes="WorkspaceTabContextMenuItem"
-                                  Header="{Binding PinMenuHeader}"
-                                  Command="{Binding TogglePinCommand}">
-                          <MenuItem.Icon>
-                            <TextBlock Classes="WorkspaceTabContextMenuIcon"
-                                       Text="&#xE718;" />
-                          </MenuItem.Icon>
-                        </MenuItem>
-                        <Separator />
-                        <MenuItem Classes="WorkspaceTabContextMenuItem"
-                                  Header="关闭当前标签页"
-                                  IsEnabled="{Binding CanCloseFromTab}"
-                                  Command="{Binding CloseCurrentFromTabMenuCommand}">
-                          <MenuItem.Icon>
-                            <TextBlock Classes="WorkspaceTabContextMenuIcon"
-                                       Text="&#xE711;" />
-                          </MenuItem.Icon>
-                          <MenuItem.InputGesture>Ctrl+W</MenuItem.InputGesture>
-                        </MenuItem>
-                        <MenuItem Classes="WorkspaceTabContextMenuItem"
-                                  Header="关闭其它标签页"
-                                  Command="{Binding CloseOtherFromTabMenuCommand}" />
-                        <MenuItem Classes="WorkspaceTabContextMenuItem"
-                                  Header="关闭全部标签页"
-                                  Command="{Binding CloseAllFromTabMenuCommand}" />
-                      </ContextMenu>
-                    </Border.ContextMenu>
-                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto"
-                          ColumnSpacing="{StaticResource Space.1}">
-                      <TextBlock Grid.Column="0"
-                                 MaxWidth="180"
-                                 VerticalAlignment="Center"
-                                 Text="{Binding HeaderText}"
-                                 TextTrimming="CharacterEllipsis" />
-                      <TextBlock Grid.Column="1"
-                                 Classes="ProjectWorkspaceUnsavedGlyph"
-                                 IsVisible="{Binding ShowUnsavedChanges}"
-                                 Text="●" />
-                      <TextBlock Grid.Column="2"
-                                 Classes="ProjectWorkspacePinnedGlyph"
-                                 IsVisible="{Binding IsPinned}"
-                                 Text="&#xE718;" />
-                      <Button Grid.Column="3"
-                              Classes="ProjectWorkspaceInnerTabCloseButton"
-                              IsVisible="{Binding CanCloseFromTab}"
-                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActiveProjectTab.Workspace.CloseWorkspaceTabCommand}"
-                              CommandParameter="{Binding}"
-                              Content="×" />
-                    </Grid>
-                  </Border>
-                </DataTemplate>
-              </TabStrip.ItemTemplate>
-            </TabStrip>
-          </ScrollViewer>
-        </Border>
-
-        <Grid Grid.Column="1"
-              Width="60"
-              Height="22"
-              HorizontalAlignment="Left"
-              VerticalAlignment="Center">
-          <StackPanel Orientation="Horizontal"
-                      Spacing="{StaticResource Space.1}">
-            <Button Classes="ProjectWorkspaceInnerTabAddButton"
-                    Content="+"
-                    Command="{Binding Workspace.CreateWorkspaceTabCommand}" />
-            <Button x:Name="WorkspaceTabMenuButton"
-                    Classes="ProjectWorkspaceInnerTabMoreButton"
-                    Content="..."
-                    Click="OnWorkspaceTabMenuButtonClick">
-              <Button.ContextMenu>
-                <ContextMenu x:Name="WorkspaceTabMoreContextMenu"
-                             Classes="WorkspaceTabContextMenu"
-                             DataContext="{Binding}"
-                             Opened="OnWorkspaceTabMoreContextMenuOpened"
-                             Closed="OnWorkspaceTabMoreContextMenuClosed">
-                  <MenuItem Classes="WorkspaceTabContextMenuItem"
-                            Header="关闭当前标签页"
-                            IsEnabled="{Binding ActiveWorkspaceTab.CanCloseFromTab}"
-                            Command="{Binding Workspace.CloseCurrentWorkspaceFromMenuCommand}">
-                    <MenuItem.Icon>
-                      <TextBlock Classes="WorkspaceTabContextMenuIcon"
-                                 Text="&#xE711;" />
-                    </MenuItem.Icon>
-                    <MenuItem.InputGesture>Ctrl+W</MenuItem.InputGesture>
-                  </MenuItem>
-                  <MenuItem Classes="WorkspaceTabContextMenuItem"
-                            Header="关闭其它标签页"
-                            Command="{Binding Workspace.CloseOtherWorkspaceTabsCommand}" />
-                  <MenuItem Classes="WorkspaceTabContextMenuItem"
-                            Header="关闭全部标签页"
-                            Command="{Binding Workspace.CloseAllWorkspaceTabsCommand}" />
-                </ContextMenu>
-              </Button.ContextMenu>
-            </Button>
-          </StackPanel>
-        </Grid>
-      </Grid>
-
-      <Grid Grid.Column="1"
-            ColumnDefinitions="Auto,Auto"
-            ColumnSpacing="{StaticResource Space.2}"
-            VerticalAlignment="Center">
-        <ComboBox Grid.Column="0"
-                  Width="164"
-                  Classes="SectionInput ProjectWorkspaceToolbarComboBox"
-                  VerticalAlignment="Center"
-                  ItemsSource="{Binding EnvironmentPanel.Environments}"
-                  SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}">
-          <ComboBox.ItemTemplate>
-            <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
-              <StackPanel Orientation="Horizontal"
-                          Spacing="6">
-                <!-- 环境色点：呼应 Apifox 环境选择器的绿色圆点 -->
-                <Ellipse Width="7"
-                         Height="7"
-                         VerticalAlignment="Center"
-                         Fill="{DynamicResource Brush.Status.Success.Text}" />
-                <TextBlock Text="{Binding CompactDisplayName}" />
-              </StackPanel>
-            </DataTemplate>
-          </ComboBox.ItemTemplate>
-        </ComboBox>
-
-        <Button Grid.Column="1"
-                x:Name="EnvironmentManagerButton"
-                Classes="SecondaryButton ProjectWorkspaceToolbarIconButton"
-                VerticalAlignment="Center"
-                ToolTip.Tip="环境设置"
-                Click="OnEnvironmentManagerButtonClick">
-          <PathIcon Data="{StaticResource SemiIconSettingStroked}" />
-        </Button>
-      </Grid>
-    </Grid>
+    <Button x:Name="EnvironmentChipButton"
+            Classes="EnvChipButton"
+            VerticalAlignment="Center"
+            ToolTip.Tip="切换环境">
+      <StackPanel Orientation="Horizontal"
+                  Spacing="7">
+        <Ellipse Width="7"
+                 Height="7"
+                 VerticalAlignment="Center"
+                 Fill="{DynamicResource Brush.Status.Success.Text}" />
+        <TextBlock VerticalAlignment="Center"
+                   Text="{Binding EnvironmentPanel.EnvironmentChipText}" />
+        <TextBlock Classes="EnvChipCaret"
+                   VerticalAlignment="Center"
+                   Text="&#xE70D;" />
+      </StackPanel>
+      <Button.Flyout>
+        <Flyout Placement="BottomEdgeAlignedRight"
+                ShowMode="Transient">
+          <Border Classes="EnvMenuCard">
+            <StackPanel>
+              <ItemsControl ItemsSource="{Binding EnvironmentPanel.Environments}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
+                    <Button Classes="EnvMenuItem"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Stretch"
+                            Click="OnEnvironmentMenuItemClick"
+                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActiveProjectTab.EnvironmentPanel.SelectEnvironmentCommand}"
+                            CommandParameter="{Binding}">
+                      <Grid ColumnDefinitions="Auto,*,Auto"
+                            ColumnSpacing="8">
+                        <TextBlock Classes="EnvMenuCheck"
+                                   VerticalAlignment="Center"
+                                   IsVisible="{Binding IsActive}"
+                                   Text="&#x2713;" />
+                        <TextBlock Grid.Column="1"
+                                   VerticalAlignment="Center"
+                                   Text="{Binding Name}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <Border Grid.Column="2"
+                                Classes="EnvMenuActiveChip"
+                                IsVisible="{Binding IsActive}">
+                          <TextBlock Classes="EnvMenuActiveChipText"
+                                     Text="激活" />
+                        </Border>
+                      </Grid>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Separator Classes="EnvMenuSeparator" Margin="0,4,0,0" />
+              <Button Classes="EnvMenuFootButton"
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Left"
+                      Click="OnEnvironmentManagerFromChipClick"
+                      Content="管理环境…" />
+            </StackPanel>
+          </Border>
+        </Flyout>
+      </Button.Flyout>
+    </Button>
   </Border>
 </UserControl>

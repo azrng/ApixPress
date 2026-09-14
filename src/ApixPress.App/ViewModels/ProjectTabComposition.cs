@@ -25,11 +25,13 @@ internal sealed class ProjectTabComposition : DisposableObject
         private readonly IAppNotificationService _appNotificationService;
         private readonly IProjectDataExportService _projectDataExportService;
         private readonly IProjectHttpSettingsService _projectHttpSettingsService;
+        private readonly IClipboardService _clipboardService;
         private readonly Func<string, Task> _handleProjectDeletedAsync;
         private readonly ProjectTabHostContext _hostContext;
 
         private ProjectImportViewModel? _importViewModel;
         private ProjectQuickRequestSaveViewModel? _quickRequestSaveViewModel;
+        private ProjectHttpCaseSaveViewModel? _httpCaseSaveViewModel;
         private ProjectRequestWorkflowViewModel? _workflowViewModel;
         private ProjectWorkspaceShellViewModel? _shellViewModel;
         private Func<Task> _ensureRequestHistoryLoadedAsync = static () => Task.CompletedTask;
@@ -50,6 +52,7 @@ internal sealed class ProjectTabComposition : DisposableObject
             IAppNotificationService appNotificationService,
             IProjectDataExportService projectDataExportService,
             IProjectHttpSettingsService projectHttpSettingsService,
+            IClipboardService clipboardService,
             Func<string, Task> handleProjectDeletedAsync,
             ProjectTabHostContext hostContext)
         {
@@ -66,6 +69,7 @@ internal sealed class ProjectTabComposition : DisposableObject
             _appNotificationService = appNotificationService;
             _projectDataExportService = projectDataExportService;
             _projectHttpSettingsService = projectHttpSettingsService;
+            _clipboardService = clipboardService;
             _handleProjectDeletedAsync = handleProjectDeletedAsync;
             _hostContext = hostContext;
         }
@@ -73,13 +77,13 @@ internal sealed class ProjectTabComposition : DisposableObject
         public ProjectTabComposition Build()
         {
             var environmentPanel = new EnvironmentPanelViewModel(_environmentVariableService);
-            var useCasesPanel = new UseCasesPanelViewModel(_requestCaseService);
             var historyPanel = new RequestHistoryPanelViewModel(_requestHistoryService);
             _ensureRequestHistoryLoadedAsync = historyPanel.EnsureHistoryLoadedAsync;
             var workspace = CreateWorkspace();
+            var useCasesPanel = new UseCasesPanelViewModel(_requestCaseService, workspace);
             var workspaceContext = CreateWorkspaceContext(workspace, environmentPanel, historyPanel);
             var shell = CreateShell(workspaceContext);
-            var editor = new ProjectRequestEditorViewModel(workspaceContext);
+            var editor = new ProjectRequestEditorViewModel(workspaceContext, _hostContext.DialogService);
             ProjectInterfaceRootWorkspaceViewModel? interfaceRoot = null;
             var catalog = CreateCatalog(
                 useCasesPanel,
@@ -99,12 +103,14 @@ internal sealed class ProjectTabComposition : DisposableObject
                     Messenger.Send(new StatusMessageRequest("接口根配置已打开。"));
                     Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
                 });
+            useCasesPanel.SetRequestCaseLoader(catalog.LoadSavedRequestAsync);
             interfaceRoot = CreateInterfaceRoot(useCasesPanel, catalog);
             var import = CreateImport(catalog, environmentPanel);
             var workflow = CreateWorkflow(workspace, historyPanel, environmentPanel, catalog, interfaceRoot, workspaceContext);
             var quickRequestSave = CreateQuickRequestSave(workspaceContext);
+            var httpCaseSave = CreateHttpCaseSave(workspaceContext);
             var summary = CreateSummary(environmentPanel, useCasesPanel, historyPanel, import);
-            var lifecycle = CreateLifecycle(useCasesPanel, environmentPanel, historyPanel, import, workspace, quickRequestSave, shell, editor, interfaceRoot);
+            var lifecycle = CreateLifecycle(useCasesPanel, environmentPanel, historyPanel, import, workspace, quickRequestSave, httpCaseSave, shell, editor, interfaceRoot);
             var settings = CreateSettings(lifecycle.ReloadAfterProjectDataClearedAsync);
 
             return new ProjectTabComposition(
@@ -121,6 +127,7 @@ internal sealed class ProjectTabComposition : DisposableObject
                 import,
                 workflow,
                 quickRequestSave,
+                httpCaseSave,
                 summary,
                 lifecycle,
                 _hostContext);
@@ -179,6 +186,7 @@ internal sealed class ProjectTabComposition : DisposableObject
                 _handleProjectDeletedAsync,
                 _systemDataService,
                 _projectWorkspaceService,
+                _clipboardService,
                 Messenger);
         }
 
@@ -196,7 +204,8 @@ internal sealed class ProjectTabComposition : DisposableObject
                 openInterfaceRootWorkspaceAsync,
                 () => _shellViewModel?.SelectInterfaceManagementSection(),
                 Messenger,
-                () => _importViewModel?.LoadImportedDocumentsAsync(manageBusyState: false) ?? Task.CompletedTask);
+                () => _importViewModel?.LoadImportedDocumentsAsync(manageBusyState: false) ?? Task.CompletedTask,
+                _hostContext.DialogService);
         }
 
         private ProjectInterfaceRootWorkspaceViewModel CreateInterfaceRoot(
@@ -222,7 +231,8 @@ internal sealed class ProjectTabComposition : DisposableObject
                 () => _project,
                 catalog.SyncImportedInterfacesAsync,
                 environmentPanel.ApplyImportedBaseUrlAsync,
-                Messenger);
+                Messenger,
+                _hostContext.DialogService);
             _importViewModel = import;
             return import;
         }
@@ -265,6 +275,16 @@ internal sealed class ProjectTabComposition : DisposableObject
             return quickRequestSave;
         }
 
+        private ProjectHttpCaseSaveViewModel CreateHttpCaseSave(ProjectTabWorkspaceContext workspaceContext)
+        {
+            var httpCaseSave = new ProjectHttpCaseSaveViewModel(
+                workspaceContext,
+                (workspaceTab, caseName) => _workflowViewModel?.SaveHttpCaseNamedAsync(workspaceTab, caseName) ?? Task.FromResult(false),
+                _hostContext);
+            _httpCaseSaveViewModel = httpCaseSave;
+            return httpCaseSave;
+        }
+
         private ProjectTabSummaryViewModel CreateSummary(
             EnvironmentPanelViewModel environmentPanel,
             UseCasesPanelViewModel useCasesPanel,
@@ -288,6 +308,7 @@ internal sealed class ProjectTabComposition : DisposableObject
             ProjectImportViewModel import,
             ProjectWorkspaceTabsViewModel workspace,
             ProjectQuickRequestSaveViewModel quickRequestSave,
+            ProjectHttpCaseSaveViewModel httpCaseSave,
             ProjectWorkspaceShellViewModel shell,
             ProjectRequestEditorViewModel editor,
             ProjectInterfaceRootWorkspaceViewModel interfaceRoot)
@@ -301,6 +322,7 @@ internal sealed class ProjectTabComposition : DisposableObject
                 import,
                 workspace,
                 quickRequestSave,
+                httpCaseSave,
                 shell,
                 editor,
                 interfaceRoot,
@@ -328,6 +350,7 @@ internal sealed class ProjectTabComposition : DisposableObject
         ProjectImportViewModel import,
         ProjectRequestWorkflowViewModel workflow,
         ProjectQuickRequestSaveViewModel quickRequestSave,
+        ProjectHttpCaseSaveViewModel httpCaseSave,
         ProjectTabSummaryViewModel summary,
         ProjectTabLifecycleCoordinator lifecycle,
         ProjectTabHostContext hostContext)
@@ -345,6 +368,7 @@ internal sealed class ProjectTabComposition : DisposableObject
         Import = import;
         Workflow = workflow;
         QuickRequestSave = quickRequestSave;
+        HttpCaseSave = httpCaseSave;
         Summary = summary;
         Lifecycle = lifecycle;
         _hostContext = hostContext;
@@ -362,6 +386,7 @@ internal sealed class ProjectTabComposition : DisposableObject
     public ProjectImportViewModel Import { get; }
     public ProjectRequestWorkflowViewModel Workflow { get; }
     public ProjectQuickRequestSaveViewModel QuickRequestSave { get; }
+    public ProjectHttpCaseSaveViewModel HttpCaseSave { get; }
     public ProjectTabSummaryViewModel Summary { get; }
     public ProjectTabLifecycleCoordinator Lifecycle { get; }
 
@@ -379,6 +404,7 @@ internal sealed class ProjectTabComposition : DisposableObject
         IAppNotificationService appNotificationService,
         IProjectDataExportService projectDataExportService,
         IProjectHttpSettingsService projectHttpSettingsService,
+        IClipboardService clipboardService,
         Func<string, Task> handleProjectDeletedAsync,
         ProjectTabHostContext hostContext)
     {
@@ -396,6 +422,7 @@ internal sealed class ProjectTabComposition : DisposableObject
             appNotificationService,
             projectDataExportService,
             projectHttpSettingsService,
+            clipboardService,
             handleProjectDeletedAsync,
             hostContext)
             .Build();
@@ -422,11 +449,11 @@ internal sealed class ProjectTabComposition : DisposableObject
         Workspace.EditorStateChanged += _onEditorStateChanged;
         Workspace.ActiveWorkspaceTabChanged += Lifecycle.OnWorkspaceActiveWorkspaceTabChanged;
         Shell.PropertyChanged += OnShellPropertyChanged;
-        Editor.PropertyChanged += OnEditorPropertyChanged;
         Settings.PropertyChanged += OnChildPropertyChanged;
         Import.PropertyChanged += OnChildPropertyChanged;
         InterfaceRoot.PropertyChanged += OnChildPropertyChanged;
         QuickRequestSave.PropertyChanged += OnChildPropertyChanged;
+        HttpCaseSave.PropertyChanged += OnChildPropertyChanged;
         Shell.AddProjectSettingsNavigation(Settings.OpenWorkspaceCommand);
         Workspace.EnsureLandingWorkspaceTab();
         _isAttached = true;
@@ -449,11 +476,11 @@ internal sealed class ProjectTabComposition : DisposableObject
         Workspace.EditorStateChanged -= _onEditorStateChanged;
         Workspace.ActiveWorkspaceTabChanged -= Lifecycle.OnWorkspaceActiveWorkspaceTabChanged;
         Shell.PropertyChanged -= OnShellPropertyChanged;
-        Editor.PropertyChanged -= OnEditorPropertyChanged;
         Settings.PropertyChanged -= OnChildPropertyChanged;
         Import.PropertyChanged -= OnChildPropertyChanged;
         InterfaceRoot.PropertyChanged -= OnChildPropertyChanged;
         QuickRequestSave.PropertyChanged -= OnChildPropertyChanged;
+        HttpCaseSave.PropertyChanged -= OnChildPropertyChanged;
         _isAttached = false;
     }
 
@@ -500,14 +527,6 @@ internal sealed class ProjectTabComposition : DisposableObject
     private void OnChildPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
-    }
-
-    private void OnEditorPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName is nameof(ProjectRequestEditorViewModel.IsRequestCodeDialogOpen))
-        {
-            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
-        }
     }
 
     private void OnShellPropertyChanged(object? sender, PropertyChangedEventArgs e)

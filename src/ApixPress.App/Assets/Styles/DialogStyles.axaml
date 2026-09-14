@@ -1,28 +1,12 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:u="https://irihi.tech/ursa">  <Style Selector="Border.QuickRequestSaveDialogCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
     <Setter Property="Width" Value="480" />
-    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Dialog}" />
   </Style>
 
   <Style Selector="Border.RequestCodeDialogCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
     <Setter Property="Width" Value="960" />
     <Setter Property="MaxHeight" Value="640" />
-    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Dialog}" />
-  </Style>
-
-  <Style Selector="TextBlock.RequestCodeDialogTitle">
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.Title}" />
   </Style>
 
   <Style Selector="TextBlock.RequestCodeDialogSectionTitle">
@@ -305,12 +289,6 @@
 
   <Style Selector="Border.ProjectImportDialogCard">
     <Setter Property="Width" Value="760" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
-    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Dialog}" />
   </Style>
 
   <Style Selector="Border.ProjectImportDialogHeaderCard">
@@ -391,158 +369,243 @@
     <Setter Property="MinHeight" Value="38" />
   </Style>
 
-  <Style Selector="Grid.EnvironmentDialogHeader">
-    <Setter Property="MinHeight" Value="44" />
-  </Style>
-
-  <Style Selector="Border.EnvironmentIdentityBar">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
-  </Style>
-
-  <Style Selector="Border.EnvironmentDetailCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
-  </Style>
-
-  <Style Selector="Border.EnvironmentDetailHeroCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
-  </Style>
-
-  <Style Selector="Border.EnvironmentUrlCard">
-    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
-  </Style>
-
-  <Style Selector="TextBox.EnvironmentHeroNameInput">
-    <Setter Property="MinWidth" Value="260" />
-    <Setter Property="MinHeight" Value="38" />
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
-  </Style>
-
-  <Style Selector="Border.EnvironmentListItem">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderBrush" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
-    <Setter Property="MinHeight" Value="64" />
-  </Style>
-
-  <Style Selector="TextBlock.EnvironmentListItemTitle">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-  </Style>
-
-  <Style Selector="TextBlock.EnvironmentListItemSubtitle">
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
-  </Style>
-
-  <Style Selector="Border.EnvironmentVariableHeader">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
-  </Style>
-
-  <Style Selector="Border.EnvironmentVariableRow">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
-    <Setter Property="Margin" Value="0,0,0,8" />
-  </Style>
-
-  <Style Selector="ListBox.EnvironmentListBox ListBoxItem">
-    <Setter Property="Padding" Value="0" />
-    <Setter Property="Margin" Value="0,0,0,8" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-  </Style>
-
-  <Style Selector="ListBox.EnvironmentListBox ListBoxItem:pointerover Border.EnvironmentListItem">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-  </Style>
-
-  <Style Selector="ListBox.EnvironmentListBox ListBoxItem:selected">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-  </Style>
-
-  <Style Selector="ListBox.EnvironmentListBox ListBoxItem:selected Border.EnvironmentListItem">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="BorderThickness" Value="1" />
-  </Style>
-
-  <Style Selector="ListBox.EnvironmentListBox ListBoxItem:selected TextBlock.EnvironmentListItemTitle">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-  </Style>
-
-  <Style Selector="ListBox.EnvironmentListBox ListBoxItem:selected TextBlock.EnvironmentListItemSubtitle">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
-  </Style>
-
-  <Style Selector="Border.EnvironmentSectionHeader">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
-  </Style>
-
-  <Style Selector="Border.EnvironmentSectionRow">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
-  </Style>
-
-  <Style Selector="TextBlock.EnvironmentTableHeaderText">
-    <Setter Property="FontWeight" Value="SemiBold" />
-  </Style>
-
-  <Style Selector="TextBlock.EnvironmentTableCellLabel">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-    <Setter Property="FontWeight" Value="Medium" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-  </Style>
-
-  <Style Selector="TextBox.EnvironmentTableInput">
-    <Setter Property="MinHeight" Value="36" />
-  </Style>
-
-  <Style Selector="Border.EnvironmentVariablesEmptyState">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
-    <Setter Property="MinHeight" Value="92" />
-  </Style>
-
-  <Style Selector="TextBlock.EnvironmentEmptyStateTitle">
-    <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-  </Style>
-
-  <Style Selector="Border.EnvironmentDialogFooter">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
-    <Setter Property="BorderThickness" Value="1,0,0,0" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-  </Style>
-
   <Style Selector="Border.ProjectSettingsDangerOperationOverlay">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Overlay}" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="VerticalAlignment" Value="Stretch" />
+  </Style>
+
+  <!-- 环境管理右侧抽屉（对齐原型 07 drawer 形态） -->
+  <Style Selector="Border.EnvDrawerPanel">
+    <Setter Property="Width" Value="420" />
+  </Style>
+
+  <Style Selector="Border.EnvDrawerHead">
+    <Setter Property="Padding" Value="16,14" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+
+  <Style Selector="TextBlock.EnvDrawerTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Button.EnvAddButton">
+    <Setter Property="Background" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="12,6" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.EnvAddButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Brand.Primary.Strong}" />
+  </Style>
+
+  <!-- 环境卡片（对齐原型 env-card） -->
+  <Style Selector="Border.EnvCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="12,10" />
+  </Style>
+
+  <Style Selector="Border.EnvCard:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Strong}" />
+  </Style>
+
+  <Style Selector="Border.EnvCard.EnvCardActive">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <Style Selector="TextBlock.EnvCardName">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <!-- 环境卡片头按钮：透明铺满，承载点击切换 -->
+  <Style Selector="Button.EnvCardHeadButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="TextBlock.EnvCardUrl">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+  </Style>
+
+  <Style Selector="Border.EnvCardActiveChip">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="#667C6CF0" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="Padding" Value="7,1" />
+  </Style>
+
+  <Style Selector="TextBlock.EnvCardActiveChipText">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+  </Style>
+
+  <Style Selector="TextBox.EnvCellInput">
+    <Setter Property="MinHeight" Value="28" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+  </Style>
+
+  <Style Selector="TextBox.EnvMonoInput">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+  </Style>
+
+  <Style Selector="Button.EnvVarDeleteButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.EnvVarDeleteButton:pointerover">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Danger}" />
+  </Style>
+
+  <!-- 内联删除确认条（对齐原型删除确认 strip） -->
+  <Style Selector="Border.EnvDeleteStrip">
+    <Setter Property="Background" Value="#0FF87171" />
+    <Setter Property="BorderBrush" Value="#66F87171" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="12,9" />
+  </Style>
+
+  <Style Selector="Button.EnvDeleteStripConfirm">
+    <Setter Property="Background" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="12,5" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="Button.EnvDeleteStripCancel">
+    <Setter Property="Padding" Value="12,5" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="MinWidth" Value="0" />
+  </Style>
+
+  <Style Selector="Button.EnvDrawerDeleteButton">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+  </Style>
+
+  <!-- 用例卡片（对齐原型 case-card） -->
+  <Style Selector="Border.CaseCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="12,10" />
+  </Style>
+
+  <Style Selector="Border.CaseCard:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Strong}" />
+  </Style>
+
+  <Style Selector="Border.CaseCard.CaseCardSelected">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+  </Style>
+
+  <Style Selector="TextBlock.CaseCardName">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Border.CaseCardLoadedChip">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="#667C6CF0" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="Padding" Value="7,1" />
+  </Style>
+
+  <Style Selector="TextBlock.CaseCardLoadedChipText">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+  </Style>
+
+  <Style Selector="Button.CaseCardOp">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="9,3" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="Button.CaseCardOp:pointerover">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Strong}" />
+  </Style>
+
+  <!-- 两段式删除：待确认态红底白字（对齐原型 case-op armed） -->
+  <Style Selector="Button.CaseCardOp.CaseCardOpArmed">
+    <Setter Property="Background" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- 覆盖确认：同名接口清单（对齐原型 overwrite modal） -->
+  <Style Selector="Border.ImportConflictListCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+  </Style>
+
+  <Style Selector="Border.ImportConflictRow">
+    <Setter Property="Padding" Value="10,7" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+
+  <Style Selector="TextBlock.ImportConflictMethod">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Warning.Text}" />
+  </Style>
+
+  <Style Selector="TextBlock.ImportConflictPath">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="TextBlock.ImportConflictExisting">
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
+
+  <Style Selector="TextBlock.ImportConflictWarning">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Warning.Text}" />
   </Style>
 </Styles>

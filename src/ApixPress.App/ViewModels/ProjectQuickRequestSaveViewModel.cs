@@ -3,10 +3,12 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using ApixPress.App.Messages;
 using ApixPress.App.ViewModels.Base;
+using Irihi.Avalonia.Shared.Contracts;
+using Ursa.Controls;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class ProjectQuickRequestSaveViewModel : ViewModelBase
+public partial class ProjectQuickRequestSaveViewModel : ViewModelBase, IDialogContext
 {
     private readonly ProjectTabWorkspaceContext _workspaceContext;
     private readonly Func<RequestWorkspaceTabViewModel, string?, Task<bool>> _saveQuickRequestAsync;
@@ -23,14 +25,20 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase
     }
 
     [ObservableProperty]
-    private bool isDialogOpen;
-
-    [ObservableProperty]
     private string draftName = string.Empty;
 
     [ObservableProperty]
     private string draftDescription = string.Empty;
 
+    /// <summary>弹窗异步关闭通道：取消/保存成功都会经此关闭 Ursa 弹窗。</summary>
+    public event EventHandler<object?>? RequestClose;
+
+    public void Close() => RequestClose?.Invoke(this, null);
+
+    /// <summary>标签切换 / 数据清理时的防御性收口：弹窗未打开时无订阅者，为空操作。</summary>
+    public void Dismiss() => RequestClose?.Invoke(this, DialogResult.None);
+
+    /// <summary>预填草稿并打开「保存快捷请求」弹窗；调用方为同步上下文，弹窗生命周期异步等待。</summary>
     public void OpenDialogFor(RequestWorkspaceTabViewModel workspaceTab)
     {
         var fallbackName = string.IsNullOrWhiteSpace(workspaceTab.ConfigTab.RequestName)
@@ -38,19 +46,19 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase
             : workspaceTab.ConfigTab.RequestName.Trim();
         DraftName = fallbackName;
         DraftDescription = workspaceTab.ConfigTab.RequestDescription;
-        IsDialogOpen = true;
         _hostContext.Messenger.Send(new StatusMessageRequest("请输入快捷请求名称后再保存。"));
+        _ = ShowDialogAsync();
     }
 
-    public void Dismiss()
+    private async Task ShowDialogAsync()
     {
-        IsDialogOpen = false;
+        await _hostContext.DialogService.ShowDialogAsync<Views.Controls.QuickRequestSaveDialogView>(this, "保存快捷请求");
     }
 
     [RelayCommand]
     private void CloseDialog()
     {
-        Dismiss();
+        RequestClose?.Invoke(this, DialogResult.None);
         _hostContext.Messenger.Send(new StatusMessageRequest("已取消保存快捷请求。"));
     }
 
@@ -60,7 +68,7 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase
         var workspaceTab = _workspaceContext.GetActiveWorkspaceTab();
         if (workspaceTab is null || !workspaceTab.IsQuickRequestTab)
         {
-            Dismiss();
+            RequestClose?.Invoke(this, DialogResult.None);
             return;
         }
 
@@ -75,7 +83,7 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase
         var isSaved = await _saveQuickRequestAsync(workspaceTab, workspaceTab.ConfigTab.RequestName);
         if (isSaved)
         {
-            Dismiss();
+            RequestClose?.Invoke(this, DialogResult.OK);
         }
     }
 }

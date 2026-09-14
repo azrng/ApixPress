@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows.Input;
+using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels.Base;
@@ -68,7 +69,10 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public string ChildrenCountSuffix => HasChildrenCount ? $" ({Children.Count})" : string.Empty;
 
-    public string SidebarDisplayText => DisplayTitle + ChildrenCountSuffix;
+    // 目录/接口标题由树构建器统一附带 "(n)" 计数；接口名称若已带方法前缀，侧栏只保留一份
+    public string SidebarDisplayText => ShowMethodBadge
+        ? RemoveMethodPrefix(DisplayTitle, MethodBadgeText)
+        : DisplayTitle;
 
     public bool ShowMethodBadge => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase);
 
@@ -93,6 +97,19 @@ public partial class ExplorerItemViewModel : ViewModelBase
         "PATCH" => "Light Secondary",
         _ => "Light Secondary"
     };
+
+    private static string RemoveMethodPrefix(string title, string method)
+    {
+        if (string.IsNullOrWhiteSpace(method))
+        {
+            return title;
+        }
+
+        var prefix = $"{method} ";
+        return title.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            ? title[prefix.Length..]
+            : title;
+    }
 
     public string NodeGlyph => NodeType switch
     {
@@ -119,6 +136,12 @@ public partial class ExplorerItemViewModel : ViewModelBase
     /// <summary>目录层级：1 为一级目录，2 为二级目录；非目录节点为 0。</summary>
     public int FolderDepth { get; set; }
 
+    /// <summary>扁平列表展示层级：根级为 0，子级递增；由扁平化逻辑在行入列时写入。</summary>
+    public int DisplayDepth { get; set; }
+
+    /// <summary>扁平列表行缩进（接口列表用 ListBox+VirtualizingStackPanel 替代 TreeView 后的层级视觉）。</summary>
+    public Thickness RowIndentMargin => new(DisplayDepth * 14, 0, 0, 0);
+
     public bool IsFolderNode => string.Equals(NodeType, "folder", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>接口树最多两级目录，仅一级目录允许继续新建子目录。</summary>
@@ -141,6 +164,9 @@ public partial class ExplorerItemViewModel : ViewModelBase
     public void SyncFrom(ExplorerItemViewModel source)
     {
         var wasChildrenLoaded = _childrenLoaded;
+        var previousChildLoader = _childLoader;
+        var previousSourceCase = SourceCase;
+        var previousEndpoint = Endpoint;
 
         NodeKey = source.NodeKey;
         Title = source.Title;
@@ -163,6 +189,18 @@ public partial class ExplorerItemViewModel : ViewModelBase
         else if (!wasChildrenLoaded)
         {
             _childrenLoaded = false;
+        }
+
+        // 树重建时匹配节点多数数据未变：无实质变化直接返回。
+        // 侧栏树行全部实例化后，无条件通知会让每次重建都对所有行重估绑定，是卡顿放大器；
+        // Title/NodeType/CanLoad 等可观察属性自身相等时不发通知，这里只兜底普通属性派生的聚合通知。
+        var hasMeaningfulChange = !ReferenceEquals(previousChildLoader, _childLoader)
+            || wasChildrenLoaded != _childrenLoaded
+            || !ReferenceEquals(previousSourceCase, SourceCase)
+            || !ReferenceEquals(previousEndpoint, Endpoint);
+        if (!hasMeaningfulChange)
+        {
+            return;
         }
 
         OnPropertyChanged(nameof(HasChildren));

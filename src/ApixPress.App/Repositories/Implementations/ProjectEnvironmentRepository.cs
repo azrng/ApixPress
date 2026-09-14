@@ -98,41 +98,49 @@ public sealed class ProjectEnvironmentRepository : IProjectEnvironmentRepository
                                updated_at = excluded.updated_at
                            """;
 
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-
-        if (entity.IsActive)
+        // 连接打开、事务与提交整体放入线程池：Commit 不阻塞 UI 线程
+        await Task.Run(async () =>
         {
-            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-                "update project_environments set is_active = 0 where project_id = @ProjectId and id <> @EnvironmentId and is_active = 1",
-                new { entity.ProjectId, EnvironmentId = entity.Id },
-                transaction,
-                cancellationToken: cancellationToken)));
-        }
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
 
-        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(sql, entity, transaction, cancellationToken: cancellationToken)));
-        transaction.Commit();
+            if (entity.IsActive)
+            {
+                await connection.ExecuteAsync(new CommandDefinition(
+                    "update project_environments set is_active = 0 where project_id = @ProjectId and id <> @EnvironmentId and is_active = 1",
+                    new { entity.ProjectId, EnvironmentId = entity.Id },
+                    transaction,
+                    cancellationToken: cancellationToken));
+            }
+
+            await connection.ExecuteAsync(new CommandDefinition(sql, entity, transaction, cancellationToken: cancellationToken));
+            transaction.Commit();
+        });
     }
 
     public async Task SetActiveAsync(string projectId, string environmentId, CancellationToken cancellationToken)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+        // 连接打开、事务与提交整体放入线程池：Commit 不阻塞 UI 线程
+        await Task.Run(async () =>
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
 
-        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-            "update project_environments set is_active = 0 where project_id = @ProjectId",
-            new { ProjectId = projectId },
-            transaction,
-            cancellationToken: cancellationToken)));
-        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-            "update project_environments set is_active = 1, updated_at = @UpdatedAt where project_id = @ProjectId and id = @EnvironmentId",
-            new { ProjectId = projectId, EnvironmentId = environmentId, UpdatedAt = DateTime.UtcNow },
-            transaction,
-            cancellationToken: cancellationToken)));
+            await connection.ExecuteAsync(new CommandDefinition(
+                "update project_environments set is_active = 0 where project_id = @ProjectId",
+                new { ProjectId = projectId },
+                transaction,
+                cancellationToken: cancellationToken));
+            await connection.ExecuteAsync(new CommandDefinition(
+                "update project_environments set is_active = 1, updated_at = @UpdatedAt where project_id = @ProjectId and id = @EnvironmentId",
+                new { ProjectId = projectId, EnvironmentId = environmentId, UpdatedAt = DateTime.UtcNow },
+                transaction,
+                cancellationToken: cancellationToken));
 
-        transaction.Commit();
+            transaction.Commit();
+        });
     }
 
     public async Task DeleteAsync(string id, CancellationToken cancellationToken)

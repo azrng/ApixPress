@@ -110,6 +110,11 @@
     var shell = document.querySelector(".shell");
     if (!titlebar || !shell) return;
 
+    /* 项目内标签行只嵌入内容列顶部（对齐 Apifox：侧栏不被标签条压住）；
+       首页 / 项目设置 / 导入导出等无 .main 的页面不展示该行 */
+    var mainColumn = shell.querySelector(":scope > .main");
+    if (!mainColumn) return;
+
     var tabs = Array.prototype.slice.call(titlebar.querySelectorAll(":scope > .tb-tab"));
     var innerTabs = tabs.filter(function (tab) {
       var scope = tab.getAttribute("data-tab-scope");
@@ -125,17 +130,11 @@
       }
     });
 
+    if (innerTabs.length === 0) return;
+
     var innerTabbar = document.createElement("div");
     innerTabbar.className = "inner-tabbar";
     innerTabbar.setAttribute("aria-label", "项目内标签");
-
-    if (innerTabs.length === 0) {
-      var defaultTab = document.createElement("div");
-      defaultTab.className = "tb-tab inner-tab active";
-      defaultTab.setAttribute("data-href", "02-debug-params.html");
-      defaultTab.innerHTML = '<span class="badge get">GET</span> 获取班级信息 <span class="close">✕</span>';
-      innerTabs.push(defaultTab);
-    }
 
     if (!innerTabs.some(function (tab) { return tab.classList.contains("active"); })) {
       innerTabs[innerTabs.length - 1].classList.add("active");
@@ -148,7 +147,7 @@
 
     var plus = titlebar.querySelector(":scope > .tb-plus");
     if (plus) innerTabbar.appendChild(plus);
-    shell.parentElement.insertBefore(innerTabbar, shell);
+    mainColumn.insertBefore(innerTabbar, mainColumn.firstChild);
   }
 
   window.protoSetEnvironment = function (name, baseUrl) {

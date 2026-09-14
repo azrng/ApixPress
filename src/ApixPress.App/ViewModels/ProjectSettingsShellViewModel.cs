@@ -27,6 +27,7 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
     private readonly Func<string, Task> _handleProjectDeletedAsync;
     private readonly ISystemDataService _systemDataService;
     private readonly IProjectWorkspaceService _projectWorkspaceService;
+    private readonly IClipboardService _clipboardService;
     private readonly IMessenger _messenger;
 
     public ProjectSettingsShellViewModel(
@@ -41,6 +42,7 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         Func<string, Task> handleProjectDeletedAsync,
         ISystemDataService systemDataService,
         IProjectWorkspaceService projectWorkspaceService,
+        IClipboardService clipboardService,
         IMessenger messenger)
     {
         _showProjectSettingsWorkspace = showProjectSettingsWorkspace;
@@ -54,6 +56,7 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         _handleProjectDeletedAsync = handleProjectDeletedAsync;
         _systemDataService = systemDataService;
         _projectWorkspaceService = projectWorkspaceService;
+        _clipboardService = clipboardService;
         _messenger = messenger;
     }
 
@@ -96,6 +99,14 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
 
     [ObservableProperty]
     private string projectDangerOperationStatus = ProjectSettingsTexts.DangerOperationStatus;
+
+    [RelayCommand]
+    private async Task CopyProjectIdAsync()
+    {
+        var copied = await _clipboardService.CopyTextAsync(_projectId);
+        var message = copied ? ProjectSettingsTexts.ProjectIdCopiedStatus : ProjectSettingsTexts.ProjectIdCopyFailureStatus;
+        _messenger.Send(new StatusMessageRequest(message));
+    }
 
     [RelayCommand]
     private void OpenWorkspace()

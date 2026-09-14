@@ -254,6 +254,24 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
   </Style>
 
+  <!-- 「更多功能 ∨」轻量切换（对齐原型 create-more） -->
+  <Style Selector="ToggleButton.WorkspaceLandingMoreToggle">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="8,4" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="ToggleButton.WorkspaceLandingMoreToggle:pointerover">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="ToggleButton.WorkspaceLandingMoreToggle:checked">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
   <Style Selector="Button.WorkspaceLandingChoiceButton:pointerover">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
@@ -303,8 +321,89 @@
     <Setter Property="Margin" Value="0,2,0,0" />
   </Style>
 
+  <!-- 接口扁平列表：虚拟化由 VirtualizingStackPanel 提供，ListBoxItem 容器完全透明，行视觉交给 WorkspaceTreeNodeButton -->
+  <Style Selector="ListBox.InterfaceFlatTree">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style Selector="ListBox.InterfaceFlatTree ListBoxItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Margin" Value="0,0,4,1" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="CornerRadius" Value="0" />
+  </Style>
+
+  <Style Selector="ListBox.InterfaceFlatTree ListBoxItem:pointerover">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="ListBox.InterfaceFlatTree ListBoxItem:pressed">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="ListBox.InterfaceFlatTree ListBoxItem:selected">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="ListBox.InterfaceFlatTree ListBoxItem:selected:pointerover">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
+  <Style Selector="ListBox.InterfaceFlatTree Button.WorkspaceTreeNodeButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="Padding" Value="6,4" />
+    <Setter Property="MinHeight" Value="28" />
+  </Style>
+
+  <Style Selector="ListBox.InterfaceFlatTree Button.WorkspaceTreeNodeButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+  </Style>
+
+  <Style Selector="ListBox.InterfaceFlatTree ListBoxItem:selected Button.WorkspaceTreeNodeButton">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Grid.WorkspaceTreeRow">
+    <Setter Property="MinHeight" Value="28" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="ToggleButton.WorkspaceTreeChevron">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Width" Value="18" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+  </Style>
+
+  <Style Selector="ToggleButton.WorkspaceTreeChevron:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+
+  <Style Selector="TextBlock.WorkspaceTreeChevronGlyph">
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
   <Style Selector="TreeView.QuickRequestSidebarTree">
     <Setter Property="Margin" Value="0" />
+    <!-- 快捷请求区固定可视上限：条目多时走树内部滚动，避免无界高度全量实例化并撑破侧栏 -->
+    <Setter Property="MaxHeight" Value="220" />
   </Style>
 
   <Style Selector="TreeView.WorkspaceTreeView TreeViewItem">
@@ -382,10 +481,10 @@
   </Style>
 
   <Style Selector="TextBlock.WorkspaceTreeNodeGlyph">
-    <Setter Property="FontSize" Value="13" />
+    <Setter Property="FontSize" Value="12" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="Margin" Value="0,0,1,0" />
+    <Setter Property="Margin" Value="0,0,4,0" />
   </Style>
 
   <Style Selector="TextBlock.WorkspaceTreeCaseGlyph">
@@ -518,6 +617,92 @@
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="MinWidth" Value="104" />
     <Setter Property="MinHeight" Value="34" />
+  </Style>
+
+  <!-- 发送中取消：ghost 危险样式（对齐原型取消按钮） -->
+  <Style Selector="Button.HttpCancelButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Danger}" />
+    <Setter Property="BorderBrush" Value="#66F87171" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="14,7" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="MinHeight" Value="34" />
+  </Style>
+
+  <Style Selector="Button.HttpCancelButton:pointerover">
+    <Setter Property="Background" Value="#14F87171" />
+  </Style>
+
+  <!-- 保存分裂按钮：主操作 + caret 下拉（对齐原型 btn-split） -->
+  <Style Selector="Grid.HttpSaveSplit">
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.HttpSaveSplitMain">
+    <Setter Property="CornerRadius" Value="8,0,0,8" />
+    <Setter Property="MinWidth" Value="70" />
+  </Style>
+
+  <Style Selector="Button.HttpSaveSplitCaret">
+    <Setter Property="CornerRadius" Value="0,8,8,0" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="Padding" Value="9,7" />
+    <Setter Property="BorderThickness" Value="1,1,1,1" />
+    <Setter Property="Margin" Value="-1,0,0,0" />
+  </Style>
+
+  <Style Selector="Border.HttpSplitMenuCard">
+    <Setter Property="MinWidth" Value="150" />
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Elevated}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+  </Style>
+
+  <Style Selector="Button.HttpSplitMenuItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="10,7" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Button.HttpSplitMenuItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+
+  <!-- 旋转 spinner：270° 圆弧 + RotateTransform.Angle 关键帧（对齐 Ursa Loading；Angle 为 double 可自动推断 Animator） -->
+  <Style Selector="Path.HttpSpinner">
+    <Setter Property="Data" Value="M 7,1 A 6,6 0 1 1 1,7" />
+    <Setter Property="Stretch" Value="None" />
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="StrokeThickness" Value="2" />
+    <Setter Property="RenderTransform">
+      <RotateTransform />
+    </Setter>
+    <Style.Animations>
+      <Animation IterationCount="Infinite" Duration="0:0:0.8">
+        <KeyFrame Cue="0%">
+          <Setter Property="RotateTransform.Angle" Value="0" />
+        </KeyFrame>
+        <KeyFrame Cue="100%">
+          <Setter Property="RotateTransform.Angle" Value="360" />
+        </KeyFrame>
+      </Animation>
+    </Style.Animations>
+  </Style>
+
+  <Style Selector="Path.HttpSpinnerViolet">
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="StrokeThickness" Value="3" />
+  </Style>
+
+  <Style Selector="Path.HttpSpinnerLarge">
+    <Setter Property="Stretch" Value="Uniform" />
+    <Setter Property="StrokeThickness" Value="2.6" />
   </Style>
 
   <Style Selector="Button.HttpSaveButton">
@@ -918,12 +1103,25 @@
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
   </Style>
 
-  <Style Selector="ItemsControl.InterfaceRootTableRows">
+  <!-- 全部接口表格：虚拟化 ListBox 的统一视觉（去默认边框/背景/选中与悬停高亮，行内 Button 自带 hover） -->
+  <Style Selector="ListBox.InterfaceRootTableRows">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="0" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
   </Style>
-
-  <Style Selector="ItemsControl.InterfaceRootTableRows ContentPresenter">
-    <Setter Property="HorizontalAlignment" Value="Stretch" />
+  <Style Selector="ListBox.InterfaceRootTableRows ListBoxItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+  </Style>
+  <Style Selector="ListBox.InterfaceRootTableRows ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+  <Style Selector="ListBox.InterfaceRootTableRows ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
   </Style>
 
   <Style Selector="Button.InterfaceRootTableRowButton:pointerover">

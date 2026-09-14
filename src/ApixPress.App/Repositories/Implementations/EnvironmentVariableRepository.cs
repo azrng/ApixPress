@@ -75,15 +75,19 @@ public sealed class EnvironmentVariableRepository : IEnvironmentVariableReposito
                                is_enabled = excluded.is_enabled
                            """;
 
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-            sql,
-            entities,
-            transaction,
-            cancellationToken: cancellationToken)));
-        transaction.Commit();
+        // 连接打开、事务与提交整体放入线程池：Commit 不阻塞 UI 线程
+        await Task.Run(async () =>
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            await connection.ExecuteAsync(new CommandDefinition(
+                sql,
+                entities,
+                transaction,
+                cancellationToken: cancellationToken));
+            transaction.Commit();
+        });
     }
 
     public async Task<IReadOnlyDictionary<string, string>> GetEnabledDictionaryAsync(string environmentId, CancellationToken cancellationToken)

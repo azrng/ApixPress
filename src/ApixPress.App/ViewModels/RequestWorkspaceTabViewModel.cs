@@ -65,6 +65,10 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     [ObservableProperty]
     private string editingCaseId = string.Empty;
 
+    /// <summary>当前绑定的快捷请求上次保存时的名称；改名后再保存应存为新用例而非静默覆盖。</summary>
+    [ObservableProperty]
+    private string? savedQuickRequestName;
+
     [ObservableProperty]
     private int httpEditorViewIndex;
 
@@ -208,6 +212,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
                     EditingInterfaceId = source.Id;
                     EditingCaseId = string.Empty;
                     EditingQuickRequestId = string.Empty;
+                    SavedQuickRequestName = null;
                     InterfaceFolderPath = string.IsNullOrWhiteSpace(source.FolderPath) ? DefaultInterfaceFolderPath : source.FolderPath;
                     HttpCaseName = "成功";
                     SourceEndpointId = source.RequestSnapshot.EndpointId;
@@ -216,6 +221,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
                     EntryType = WorkspaceEntryTypes.HttpInterface;
                     EditingCaseId = source.Id;
                     EditingQuickRequestId = string.Empty;
+                    SavedQuickRequestName = null;
                     EditingInterfaceId = parentInterface?.Id ?? source.ParentId;
                     InterfaceFolderPath = !string.IsNullOrWhiteSpace(parentInterface?.FolderPath)
                         ? parentInterface.FolderPath
@@ -230,6 +236,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
                 default:
                     EntryType = WorkspaceEntryTypes.QuickRequest;
                     EditingQuickRequestId = source.Id;
+                    SavedQuickRequestName = source.Name;
                     EditingInterfaceId = string.Empty;
                     EditingCaseId = string.Empty;
                     InterfaceFolderPath = DefaultInterfaceFolderPath;

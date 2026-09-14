@@ -16,7 +16,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 {
     private readonly Action _selectInterfaceManagementSection;
     private readonly IMessenger _messenger;
-    private readonly ObservableCollection<RequestWorkspaceTabViewModel> _visibleWorkspaceTabs = [];
+    private readonly BatchObservableCollection<RequestWorkspaceTabViewModel> _visibleWorkspaceTabs = [];
     private readonly Dictionary<RequestConfigTabViewModel, RequestWorkspaceTabViewModel> _tabByConfig = [];
     private readonly Dictionary<INotifyCollectionChanged, RequestWorkspaceTabViewModel> _tabByConfigCollection = [];
     private int _notificationSuspendCount;
@@ -365,21 +365,29 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
         IsWorkspaceTabMenuOpen = false;
         var removedIndex = WorkspaceTabs.IndexOf(tab);
-        DetachWorkspaceTab(tab);
-        WorkspaceTabs.Remove(tab);
-        // 关闭是终态操作：立即同步可见列表，不等待挂起批次
-        // （批量加载等挂起窗口内关闭标签时，标签条会停留陈旧状态）
-        SyncVisibleWorkspaceTabs();
+        // 挂起通知把 Remove 级联（同步可见列表 + StateChanged）合并为收尾的一次，
+        // 中间的每一步不再触发 TabStrip 全量重建与工作台级联刷新
+        RunWithNotificationsSuspended(() =>
+        {
+            DetachWorkspaceTab(tab);
+            WorkspaceTabs.Remove(tab);
 
-        if (WorkspaceTabs.Count == 0)
-        {
-            EnsureLandingWorkspaceTab();
-        }
-        else if (ReferenceEquals(ActiveWorkspaceTab, tab))
-        {
-            var nextIndex = Math.Clamp(removedIndex - 1, 0, WorkspaceTabs.Count - 1);
-            ActivateWorkspaceTab(WorkspaceTabs[nextIndex]);
-        }
+            if (WorkspaceTabs.Count == 0)
+            {
+                EnsureLandingWorkspaceTab();
+                SyncVisibleWorkspaceTabs();
+            }
+            else
+            {
+                if (ReferenceEquals(ActiveWorkspaceTab, tab))
+                {
+                    var nextIndex = Math.Clamp(removedIndex - 1, 0, WorkspaceTabs.Count - 1);
+                    ActivateWorkspaceTab(WorkspaceTabs[nextIndex]);
+                }
+
+                SyncVisibleWorkspaceTabs();
+            }
+        });
 
         _messenger.Send(new StatusMessageRequest("工作标签已关闭。"));
         StateChanged?.Invoke();
@@ -513,7 +521,35 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
     private void SyncVisibleWorkspaceTabs()
     {
-        _visibleWorkspaceTabs.ReplaceWith(WorkspaceTabs.Where(item => !item.IsLandingTab || item.ShowInTabStrip));
+        // 差量同步：Clear+Add 全量重建会触发 TabStrip Reset 级联（选定值回写 → ActiveWorkspaceTab churn
+        // → 工作台视图整体重建），单次代价 300ms+，直接表现为关闭标签卡顿；逐项 Remove/Insert 只产生增量变更
+        var nextVisible = WorkspaceTabs.Where(item => !item.IsLandingTab || item.ShowInTabStrip).ToList();
+        for (var index = _visibleWorkspaceTabs.Count - 1; index >= 0; index--)
+        {
+            if (!nextVisible.Contains(_visibleWorkspaceTabs[index]))
+            {
+                _visibleWorkspaceTabs.RemoveAt(index);
+            }
+        }
+
+        foreach (var item in nextVisible)
+        {
+            var currentIndex = _visibleWorkspaceTabs.IndexOf(item);
+            var targetIndex = nextVisible.IndexOf(item);
+            if (currentIndex == targetIndex)
+            {
+                continue;
+            }
+
+            if (currentIndex < 0)
+            {
+                _visibleWorkspaceTabs.Insert(Math.Min(targetIndex, _visibleWorkspaceTabs.Count), item);
+            }
+            else
+            {
+                _visibleWorkspaceTabs.Move(currentIndex, targetIndex);
+            }
+        }
     }
 
     private void CloseOtherWorkspaceTabs(RequestWorkspaceTabViewModel? keepTab)

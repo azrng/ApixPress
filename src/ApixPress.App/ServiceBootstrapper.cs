@@ -28,6 +28,7 @@ public static class ServiceBootstrapper
         services.AddSingleton<DatabaseInitializer>();
         services.AddTransient<MainWindow>();
         services.AddSingleton<IWindowHostService, Services.Implementations.WindowHostService>();
+        services.AddSingleton<IDialogService, Services.Implementations.DialogService>();
 
         var serviceProvider = services.BuildServiceProvider();
         return serviceProvider;

@@ -5,24 +5,21 @@ namespace ApixPress.App.Tests.Views;
 public sealed class WorkbenchLayoutTests
 {
     [Fact]
-    public void MainWindow_ProjectWorkspaceHost_ShouldRenderOnlyActiveProjectTab()
+    public void MainWindow_ProjectWorkspaceHost_ShouldCacheWorkspaceViewPerTab()
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "MainWindow.axaml"));
         var host = document.Descendants()
-            .Single(element => element.Name.LocalName == "ContentControl"
+            .Single(element => element.Name.LocalName == "ProjectTabHostView"
                 && HasClass(element, "ProjectWorkspaceHost"));
 
         Assert.Equal("Stretch", host.Attribute("HorizontalAlignment")?.Value);
         Assert.Equal("Stretch", host.Attribute("VerticalAlignment")?.Value);
-        Assert.Equal("{Binding ActiveProjectTab}", host.Attribute("Content")?.Value);
         Assert.Equal("{Binding HasActiveProjectTab}", host.Attribute("IsVisible")?.Value);
 
-        var contentTemplate = host.Descendants()
-            .Single(element => element.Name.LocalName == "ContentControl.ContentTemplate");
-        var workspaceView = contentTemplate.Descendants()
-            .Single(element => element.Name.LocalName == "ProjectWorkspaceView");
-
-        Assert.Null(workspaceView.Attribute("IsVisible"));
+        // 视图由 ProjectTabHostView 代码按 ActiveProjectTab 缓存复用，XAML 不允许回到 ContentTemplate 整树重建
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => element.Name.LocalName == "ContentControl.ContentTemplate");
         Assert.DoesNotContain(
             document.Descendants(),
             element => element.Name.LocalName == "ItemsControl"
@@ -77,26 +74,47 @@ public sealed class WorkbenchLayoutTests
             element => element.Name.LocalName == "TabControl" && HasClass(element, "HttpRequestTabs"));
     }
 
+    [Fact]
+    public void HttpCaseSave_ShouldUseNamingDialogInsteadOfInlineNameInput()
+    {
+        var requestRow = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "HttpRequestUrlRowView.axaml"));
+        Assert.DoesNotContain(
+            requestRow.Descendants(),
+            element => element.Name.LocalName == "TextBox" && HasClass(element, "HttpCaseNameInput"));
+
+        var dialog = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "HttpCaseSaveDialogView.axaml"));
+        // 弹窗内容视图的 DataContext 即用例保存 VM，弹窗 chrome（遮罩/标题/关闭）由 Ursa StandardDialogControl 提供
+        Assert.Contains(
+            dialog.Descendants(),
+            element => element.Name.LocalName == "TextBox"
+                && (element.Attribute("Text")?.Value ?? string.Empty)
+                    .Contains("{Binding DraftName}", StringComparison.Ordinal));
+        Assert.Contains(
+            dialog.Descendants(),
+            element => element.Name.LocalName == "Button"
+                && (element.Attribute("Command")?.Value ?? string.Empty)
+                    .Contains("{Binding ConfirmSaveCommand}", StringComparison.Ordinal));
+    }
+
     [Theory]
     [InlineData("HttpInterfaceWorkbenchView.axaml")]
     [InlineData("QuickRequestWorkbenchView.axaml")]
-    public void ResponseBody_ShouldRenderInsideCodeCardWithJsonHighlight(string fileName)
+    public void ResponseBody_ShouldRenderInsideCodeCardWithVirtualizedEditor(string fileName)
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
-        var bodyViewers = document.Descendants()
-            .Where(element => element.Name.LocalName == "SelectableTextBlock" && HasClass(element, "HttpResponseBodyViewer"))
-            .ToArray();
+        var bodyEditor = document.Descendants()
+            .Single(element => element.Name.LocalName == "ResponseBodyEditor"
+                && (element.Attribute("Text")?.Value ?? string.Empty).Contains("{Binding ResponseSection.BodyText}"));
 
-        Assert.Equal(2, bodyViewers.Length);
-
-        var bodyViewer = bodyViewers.Single(viewer =>
-            viewer.Attributes().Any(attribute => attribute.Name.LocalName == "JsonSyntaxHighlight.Text"));
-        Assert.Contains(
-            "{Binding ResponseSection.BodyText}",
-            bodyViewer.Attributes().Select(attribute => attribute.Value.ToString()));
-
-        var bodyCard = bodyViewer.Ancestors().First(element => HasClass(element, "HttpResponseBodyCard"));
+        var bodyCard = bodyEditor.Ancestors().First(element => HasClass(element, "HttpResponseBodyCard"));
         Assert.NotNull(bodyCard);
+
+        // 回归守卫：Body 查看器必须保持 AvaloniaEdit 可视区排版，不得回到 SelectableTextBlock 整页构建
+        Assert.DoesNotContain(
+            bodyCard.Descendants(),
+            element => HasClass(element, "HttpResponseBodyViewer"));
     }
 
     [Fact]
@@ -322,20 +340,25 @@ public sealed class WorkbenchLayoutTests
     }
 
     [Fact]
-    public void EnvironmentManager_ShouldUseACompactFormAndVariablesEmptyState()
+    public void EnvironmentManager_ShouldUseDrawerWithEnvCardsAndInlineDeleteStrip()
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "EnvironmentManagerDialogView.axaml"));
 
+        // 对齐原型 07：右侧抽屉 + 环境卡片列表 + 内联删除确认条
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Border"
-            && HasClass(element, "EnvironmentIdentityBar"));
+            && HasClass(element, "EnvDrawerPanel"));
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Border"
-            && HasClass(element, "EnvironmentVariablesEmptyState"));
+            && HasClass(element, "EnvDrawerHead"));
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Border"
-            && HasClass(element, "EnvironmentDialogFooter"));
+            && HasClass(element, "EnvCard"));
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Border"
+            && HasClass(element, "EnvDeleteStrip"));
 
         var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "DialogStyles.axaml"));
         Assert.Contains(styles.Descendants(), element => element.Name.LocalName == "Style"
-            && element.Attribute("Selector")?.Value == "Border.EnvironmentVariablesEmptyState");
+            && element.Attribute("Selector")?.Value == "Border.EnvDrawerPanel");
+        Assert.Contains(styles.Descendants(), element => element.Name.LocalName == "Style"
+            && element.Attribute("Selector")?.Value == "Border.EnvDeleteStrip");
     }
 
     private static bool HasClass(XElement element, string className)

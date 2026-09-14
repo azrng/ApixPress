@@ -1,11 +1,13 @@
 using CommunityToolkit.Mvvm.Input;
+using Ursa.Controls;
 
 namespace ApixPress.App.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    /// <summary>打开环境管理弹窗；关闭由弹窗内容命令或 chrome 关闭钮经 RequestClose 完成。</summary>
     [RelayCommand]
-    private void OpenEnvironmentManager()
+    private async Task OpenEnvironmentManagerAsync()
     {
         if (ActiveProjectTab is null)
         {
@@ -13,17 +15,17 @@ public partial class MainWindowViewModel
             return;
         }
 
-        IsEnvironmentManagerOpen = true;
         StatusMessage = $"正在管理项目 {ActiveProjectTab.Project.Name} 的环境。";
+        NotifyShellState();
+        await _dialogService.ShowDialogAsync<Views.Controls.EnvironmentManagerDialogView>(this, "环境变量");
+        StatusMessage = ActiveProjectTab?.StatusMessage ?? BrowserStatusText;
         NotifyShellState();
     }
 
     [RelayCommand]
     private void CloseEnvironmentManager()
     {
-        IsEnvironmentManagerOpen = false;
-        StatusMessage = ActiveProjectTab?.StatusMessage ?? BrowserStatusText;
-        NotifyShellState();
+        RequestClose?.Invoke(this, DialogResult.None);
     }
 
     [RelayCommand]

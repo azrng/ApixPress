@@ -128,13 +128,52 @@
                 </StackPanel>
               </ScrollViewer>
             </TabItem>
+            <TabItem Header="实际请求">
+              <!-- 实际发出的请求快照（对齐原型「实际请求」tab） -->
+              <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="{StaticResource Space.2}">
+                  <Border Classes="HistoryRequestKeyValueRow">
+                    <Grid ColumnDefinitions="120,*"
+                          ColumnSpacing="{StaticResource Space.2}">
+                      <TextBlock Text="请求行" />
+                      <StackPanel Grid.Column="1"
+                                  Orientation="Horizontal"
+                                  Spacing="{StaticResource Space.1}">
+                        <TextBlock Classes="HistoryRequestKvValue"
+                                   Text="{Binding HistoryPanel.SelectedHistoryItem.Method}" />
+                        <TextBlock Classes="HistoryRequestKvValue"
+                                   Text="{Binding HistoryPanel.SelectedHistoryItem.Url}"
+                                   TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                  <Border Classes="HistoryRequestKeyValueRow">
+                    <Grid ColumnDefinitions="120,*"
+                          ColumnSpacing="{StaticResource Space.2}">
+                      <TextBlock Text="Body" />
+                      <TextBlock Grid.Column="1"
+                                 Classes="HistoryRequestKvValue"
+                                 Text="{Binding HistoryPanel.SelectedHistoryItem.RequestSnapshot.BodyContent}"
+                                 TextTrimming="CharacterEllipsis"
+                                 MaxLines="3"
+                                 IsVisible="{Binding HistoryPanel.SelectedHistoryItem.HasRequestBody}" />
+                      <TextBlock Grid.Column="1"
+                                 Classes="CaptionText"
+                                 Text="-"
+                                 IsVisible="{Binding !HistoryPanel.SelectedHistoryItem.HasRequestBody}" />
+                    </Grid>
+                  </Border>
+                </StackPanel>
+              </ScrollViewer>
+            </TabItem>
             <TabItem Header="Body">
+              <!-- 大请求体不换行（改由横向滚动查看）且展示截断预览，避免 MB 级快照 Wrap 全文排版卡顿 -->
               <TextBox Classes="HistoryRequestBodyPreview"
                        AcceptsReturn="True"
                        IsReadOnly="True"
-                       Text="{Binding HistoryPanel.SelectedHistoryItem.RequestSnapshot.BodyContent}"
+                       Text="{Binding HistoryPanel.SelectedHistoryItem.RequestBodyDisplayText}"
                        PlaceholderText="此请求没有 Body"
-                       TextWrapping="Wrap"
+                       TextWrapping="NoWrap"
                        VerticalContentAlignment="Top" />
             </TabItem>
           </TabControl>
@@ -164,7 +203,7 @@
           </StackPanel>
 
           <Grid IsVisible="{Binding HistoryPanel.SelectedResponseSection.HasResponse}"
-                RowDefinitions="Auto,*"
+                RowDefinitions="Auto,Auto,Auto,*"
                 RowSpacing="{StaticResource Space.2}">
             <Grid ColumnDefinitions="Auto,Auto,Auto,*"
                   ColumnSpacing="{StaticResource Space.3}">
@@ -179,7 +218,24 @@
                          Text="{Binding HistoryPanel.SelectedResponseSection.SizeText}" />
             </Grid>
 
-            <TabControl Grid.Row="1"
+            <!-- 异常响应横幅：404/5xx/超时 等（与调试页一致） -->
+            <Border Grid.Row="1"
+                    Classes="HttpResponseNoticeCard HttpResponseNoticeBanner"
+                    Classes.HttpResponseNoticeDanger="{Binding HistoryPanel.SelectedResponseSection.IsNoticeDanger}"
+                    Classes.HttpResponseNoticeWarning="{Binding HistoryPanel.SelectedResponseSection.IsNoticeWarning}"
+                    IsVisible="{Binding HistoryPanel.SelectedResponseSection.ShowResponseNotice}">
+              <StackPanel Orientation="Horizontal"
+                          Spacing="{StaticResource Space.2}">
+                <TextBlock Classes="HttpResponseNoticeTitle"
+                           Text="{Binding HistoryPanel.SelectedResponseSection.ResponseNoticeTitle}" />
+                <TextBlock Classes="CaptionText"
+                           VerticalAlignment="Center"
+                           Text="{Binding HistoryPanel.SelectedResponseSection.ResponseNoticeText}"
+                           TextTrimming="CharacterEllipsis" />
+              </StackPanel>
+            </Border>
+
+            <TabControl Grid.Row="3"
                         Classes="ResponseTabs"
                         SelectedIndex="{Binding HistoryPanel.SelectedResponseSection.SelectedResponseTab}">
               <TabItem Header="Body">
@@ -194,14 +250,30 @@
                          FontFamily="{StaticResource Font.Monospace}" />
               </TabItem>
               <TabItem Header="Headers">
-                <TextBox AcceptsReturn="True"
-                         BorderThickness="0"
-                         Background="Transparent"
-                         IsReadOnly="True"
-                         TextWrapping="Wrap"
-                         VerticalContentAlignment="Top"
-                         Text="{Binding HistoryPanel.SelectedResponseSection.HeadersText}"
-                         FontFamily="{StaticResource Font.Monospace}" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                  <Border Classes="HttpResponseKvGrid"
+                          IsVisible="{Binding HistoryPanel.SelectedResponseSection.HasHeaderRows}">
+                    <ItemsControl ItemsSource="{Binding HistoryPanel.SelectedResponseSection.HeaderRows}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ResponseHeaderRowViewModel">
+                          <Border Classes="HttpResponseKvRow">
+                            <Grid ColumnDefinitions="220,*"
+                                  ColumnSpacing="{StaticResource Space.4}">
+                              <TextBlock Classes="HttpResponseKvKey"
+                                         Text="{Binding Name}"
+                                         TextTrimming="CharacterEllipsis" />
+                              <TextBlock Grid.Column="1"
+                                         Classes="HttpResponseKvValue"
+                                         Text="{Binding Value}"
+                                         TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </Border>
+                </ScrollViewer>
               </TabItem>
             </TabControl>
           </Grid>

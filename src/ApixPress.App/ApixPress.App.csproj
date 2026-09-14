@@ -26,6 +26,7 @@
     <PackageReference Include="Avalonia" Version="12.1.2" />
     <PackageReference Include="Avalonia.Desktop" Version="12.1.2" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.2" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.2" />
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
@@ -58,6 +59,7 @@
   <ItemGroup>
     <EmbeddedResource Include="appsettings.json" />
     <EmbeddedResource Include="Data\Migrations\*.sql" />
+    <EmbeddedResource Include="Assets\Highlighting\Json.xshd" />
     <AvaloniaResource Include="Assets\AppIcon.ico" />
     <AvaloniaResource Include="Assets\AppLogo.png" />
   </ItemGroup>

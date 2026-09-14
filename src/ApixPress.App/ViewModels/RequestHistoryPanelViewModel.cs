@@ -23,6 +23,9 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     public BatchObservableCollection<RequestHistoryItemViewModel> HistoryItems { get; } = [];
     public BatchObservableCollection<RequestHistoryItemViewModel> VisibleHistoryItems { get; } = [];
 
+    /// <summary>扁平化显示集合：日期分组行与记录行交替（对齐原型 h-group-cap 分组）</summary>
+    public BatchObservableCollection<object> HistoryDisplayItems { get; } = [];
+
     public bool HasHistory => HistoryItems.Count > 0;
     public bool HasVisibleHistory => VisibleHistoryItems.Count > 0;
     public bool HasSearchText => !string.IsNullOrWhiteSpace(SearchText);
@@ -41,6 +44,9 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
 
     [ObservableProperty]
     private RequestHistoryItemViewModel? selectedHistoryItem;
+
+    [ObservableProperty]
+    private bool isClearHistoryArmed;
 
     public RequestHistoryPanelViewModel(IRequestHistoryService requestHistoryService)
     {
@@ -258,7 +264,95 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
             VisibleHistoryItems.ReplaceWith(HistoryItems.Where(item => MatchesSearch(item, keyword)));
         }
 
+        RebuildHistoryDisplayItems();
         NotifyHistoryVisibilityChanged();
+    }
+
+    /// <summary>
+    /// 按本地日期把可见记录切分为 今天 / 昨天 / 更早日期 的分组行 + 记录行，整体替换避免逐项动画
+    /// </summary>
+    private void RebuildHistoryDisplayItems()
+    {
+        var displayItems = new List<object>(VisibleHistoryItems.Count + 4);
+        var today = DateTime.Today;
+        var index = 0;
+        while (index < VisibleHistoryItems.Count)
+        {
+            var localDate = VisibleHistoryItems[index].Timestamp.ToLocalTime().Date;
+            var groupStart = index;
+            while (index < VisibleHistoryItems.Count && VisibleHistoryItems[index].Timestamp.ToLocalTime().Date == localDate)
+            {
+                index++;
+            }
+
+            displayItems.Add(new HistoryDateGroupHeaderViewModel(ResolveDateGroupTitle(localDate, today), index - groupStart));
+            for (var itemIndex = groupStart; itemIndex < index; itemIndex++)
+            {
+                displayItems.Add(VisibleHistoryItems[itemIndex]);
+            }
+        }
+
+        HistoryDisplayItems.ReplaceWith(displayItems);
+    }
+
+    private static string ResolveDateGroupTitle(DateTime date, DateTime today)
+    {
+        if (date == today)
+        {
+            return "今天";
+        }
+
+        if (date == today.AddDays(-1))
+        {
+            return "昨天";
+        }
+
+        return date.ToString("yyyy-MM-dd");
+    }
+
+    [RelayCommand]
+    private async Task ArmClearHistoryAsync()
+    {
+        // 两段式确认：第一次点击进入待确认态，3 秒未确认自动还原
+        if (IsClearHistoryArmed)
+        {
+            return;
+        }
+
+        IsClearHistoryArmed = true;
+        try
+        {
+            await Task.Delay(3000);
+        }
+        finally
+        {
+            if (!IsDisposed)
+            {
+                IsClearHistoryArmed = false;
+            }
+        }
+    }
+
+    [RelayCommand]
+    public async Task DeleteHistoryItemAsync(RequestHistoryItemViewModel? item)
+    {
+        if (item is null || string.IsNullOrWhiteSpace(_currentProjectId))
+        {
+            return;
+        }
+
+        var result = await _requestHistoryService.DeleteAsync(_currentProjectId, item.Id, CancellationToken.None);
+        if (!result.IsSuccess)
+        {
+            return;
+        }
+
+        if (ReferenceEquals(SelectedHistoryItem, item))
+        {
+            SelectedHistoryItem = null;
+        }
+
+        HistoryItems.Remove(item);
     }
 
     private void NotifyHistoryVisibilityChanged()

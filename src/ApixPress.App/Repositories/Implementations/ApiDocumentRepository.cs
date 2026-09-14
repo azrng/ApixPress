@@ -19,6 +19,7 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
     public async Task<IReadOnlyList<ApiDocumentEntity>> GetDocumentsAsync(string projectId, CancellationToken cancellationToken)
     {
         const string sql = """
+                           -- 列表场景不取 raw_json（导入原文可达 MB 级，DTO 不使用），详情走 GetByIdAsync
                            select
                                id Id,
                                project_id ProjectId,
@@ -26,7 +27,6 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
                                source_type SourceType,
                                source_value SourceValue,
                                base_url BaseUrl,
-                               raw_json RawJson,
                                imported_at ImportedAt
                            from api_documents
                            where project_id = @ProjectId
@@ -183,22 +183,26 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
                                          where id in @EndpointIds
                                          """;
 
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+        // 连接打开、事务与提交整体放入线程池：Commit（WAL 下含 fsync）不再阻塞 UI 线程
+        await Task.Run(async () =>
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
 
-        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-            deleteParametersSql,
-            new { EndpointIds = ids },
-            transaction,
-            cancellationToken: cancellationToken)));
-        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-            deleteEndpointsSql,
-            new { EndpointIds = ids },
-            transaction,
-            cancellationToken: cancellationToken)));
+            await connection.ExecuteAsync(new CommandDefinition(
+                deleteParametersSql,
+                new { EndpointIds = ids },
+                transaction,
+                cancellationToken: cancellationToken));
+            await connection.ExecuteAsync(new CommandDefinition(
+                deleteEndpointsSql,
+                new { EndpointIds = ids },
+                transaction,
+                cancellationToken: cancellationToken));
 
-        transaction.Commit();
+            transaction.Commit();
+        });
     }
 
     public async Task SaveDocumentGraphAsync(
@@ -250,34 +254,38 @@ public sealed class ApiDocumentRepository : IApiDocumentRepository, ITransientDe
                                           )
                                           """;
 
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-
-        var conflictingEndpointIds = await LoadConflictingEndpointIdsAsync(connection, transaction, document.ProjectId, endpoints, cancellationToken);
-        if (conflictingEndpointIds.Count > 0)
+        // 连接打开、冲突清理、写入与提交整体放入线程池：大批量导入时 Commit 不阻塞 UI 线程
+        await Task.Run(async () =>
         {
-            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-                deleteEndpointParametersSql,
-                new { EndpointIds = conflictingEndpointIds },
-                transaction,
-                cancellationToken: cancellationToken)));
-            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-                deleteEndpointsSql,
-                new { EndpointIds = conflictingEndpointIds },
-                transaction,
-                cancellationToken: cancellationToken)));
-            await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-                deleteEmptyDocumentsSql,
-                new { document.ProjectId },
-                transaction,
-                cancellationToken: cancellationToken)));
-        }
-        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(insertDocumentSql, document, transaction, cancellationToken: cancellationToken)));
-        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(insertEndpointSql, endpoints, transaction, cancellationToken: cancellationToken)));
-        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(insertParameterSql, parameters, transaction, cancellationToken: cancellationToken)));
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
 
-        transaction.Commit();
+            var conflictingEndpointIds = await LoadConflictingEndpointIdsAsync(connection, transaction, document.ProjectId, endpoints, cancellationToken);
+            if (conflictingEndpointIds.Count > 0)
+            {
+                await connection.ExecuteAsync(new CommandDefinition(
+                    deleteEndpointParametersSql,
+                    new { EndpointIds = conflictingEndpointIds },
+                    transaction,
+                    cancellationToken: cancellationToken));
+                await connection.ExecuteAsync(new CommandDefinition(
+                    deleteEndpointsSql,
+                    new { EndpointIds = conflictingEndpointIds },
+                    transaction,
+                    cancellationToken: cancellationToken));
+                await connection.ExecuteAsync(new CommandDefinition(
+                    deleteEmptyDocumentsSql,
+                    new { document.ProjectId },
+                    transaction,
+                    cancellationToken: cancellationToken));
+            }
+            await connection.ExecuteAsync(new CommandDefinition(insertDocumentSql, document, transaction, cancellationToken: cancellationToken));
+            await connection.ExecuteAsync(new CommandDefinition(insertEndpointSql, endpoints, transaction, cancellationToken: cancellationToken));
+            await connection.ExecuteAsync(new CommandDefinition(insertParameterSql, parameters, transaction, cancellationToken: cancellationToken));
+
+            transaction.Commit();
+        });
     }
 
     private static async Task<List<string>> LoadConflictingEndpointIdsAsync(

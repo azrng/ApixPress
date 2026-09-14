@@ -11,10 +11,12 @@ using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
 using Avalonia.Controls.Notifications;
 using Azrng.Core.Results;
+using Irihi.Avalonia.Shared.Contracts;
+using Ursa.Controls;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class ProjectImportViewModel : ViewModelBase
+public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
 {
     private static class ImportDataModes
     {
@@ -38,6 +40,7 @@ public partial class ProjectImportViewModel : ViewModelBase
     private readonly Func<IReadOnlyList<ApiEndpointDto>, Task> _syncImportedInterfacesAsync;
     private readonly Func<string, Task<bool>> _applyImportedBaseUrlAsync;
     private readonly IMessenger _messenger;
+    private readonly IDialogService _dialogService;
     private CancellationTokenSource? _importCancellationTokenSource;
     private PendingImportRequest? _pendingImportRequest;
     private bool _hasLoadedImportedDocuments;
@@ -65,7 +68,8 @@ public partial class ProjectImportViewModel : ViewModelBase
         Func<ProjectWorkspaceItemViewModel> getProject,
         Func<IReadOnlyList<ApiEndpointDto>, Task> syncImportedInterfacesAsync,
         Func<string, Task<bool>> applyImportedBaseUrlAsync,
-        IMessenger messenger)
+        IMessenger messenger,
+        IDialogService dialogService)
     {
         _projectId = projectId;
         _apiWorkspaceService = apiWorkspaceService;
@@ -76,11 +80,12 @@ public partial class ProjectImportViewModel : ViewModelBase
         _syncImportedInterfacesAsync = syncImportedInterfacesAsync;
         _applyImportedBaseUrlAsync = applyImportedBaseUrlAsync;
         _messenger = messenger;
+        _dialogService = dialogService;
 
         ImportedApiDocuments.CollectionChanged += OnImportedApiDocumentsCollectionChanged;
     }
 
-    public ObservableCollection<ProjectImportedDocumentItemViewModel> ImportedApiDocuments { get; } = [];
+    public BatchObservableCollection<ProjectImportedDocumentItemViewModel> ImportedApiDocuments { get; } = [];
 
     public bool IsImportFileMode => SelectedImportDataMode == ImportDataModes.File;
     public bool IsImportUrlMode => SelectedImportDataMode == ImportDataModes.Url;
@@ -99,6 +104,9 @@ public partial class ProjectImportViewModel : ViewModelBase
     public string ImportedApiDocumentCountText => ImportedApiDocuments.Count.ToString();
     public bool HasPendingImportPreview => PendingImportPreview is not null;
     public string PendingImportOverwriteTitle => PendingImportPreview?.DocumentName ?? string.Empty;
+    public bool HasImportConflicts => PendingImportPreview is { ConflictItems.Count: > 0 };
+    public IReadOnlyList<ApiImportConflictDto> PendingImportConflicts =>
+        PendingImportPreview?.ConflictItems ?? [];
     public string PendingImportOverwriteSummary
     {
         get
@@ -175,11 +183,11 @@ public partial class ProjectImportViewModel : ViewModelBase
     [ObservableProperty]
     private string importDataStatusState = ImportStatusStates.Info;
 
-    [ObservableProperty]
-    private bool isDialogOpen;
+    /// <summary>导入主弹窗异步关闭通道（覆盖确认弹窗使用独立上下文，见 ImportOverwriteConfirmDialogViewModel）。</summary>
+    public event EventHandler<object?>? RequestClose;
 
-    [ObservableProperty]
-    private bool isOverwriteConfirmDialogOpen;
+    public void Close() => RequestClose?.Invoke(this, null);
+
 
     [ObservableProperty]
     private ApiImportPreviewDto? pendingImportPreview;
@@ -192,12 +200,13 @@ public partial class ProjectImportViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void OpenDialog()
+    private async Task OpenDialogAsync()
     {
         SelectedImportDataMode = ImportDataModes.File;
         ClearPendingImportConfirmation();
-        IsDialogOpen = true;
         _messenger.Send(new StatusMessageRequest(ImportTexts.OpenDialogStatus));
+        // 标题随导入格式动态变化，打开时取当前值
+        await _dialogService.ShowDialogAsync<Views.Controls.ProjectImportDialogView>(this, DialogTitle);
     }
 
     [RelayCommand]
@@ -207,9 +216,10 @@ public partial class ProjectImportViewModel : ViewModelBase
         _messenger.Send(new StatusMessageRequest(ImportTexts.CloseDialogStatus));
     }
 
+    /// <summary>关闭导入主弹窗；弹窗未打开时无订阅者，RequestClose 为空操作。</summary>
     public void DismissDialog()
     {
-        IsDialogOpen = false;
+        RequestClose?.Invoke(this, DialogResult.None);
         ClearPendingImportConfirmation();
     }
 
@@ -342,18 +352,29 @@ public partial class ProjectImportViewModel : ViewModelBase
             : ImportTexts.EmptyRefreshStatus));
     }
 
-    [RelayCommand]
-    private void CancelImportOverwriteConfirm()
+    /// <summary>
+    /// 等待覆盖确认弹窗结果：确认后执行待导入请求；取消或 chrome 关闭则清空待确认状态。
+    /// 独立于预览流程等待，保证执行导入时 IsImportDataBusy 已由预览 finally 释放。
+    /// </summary>
+    private async Task AwaitOverwriteConfirmAndImportAsync()
     {
-        ClearPendingImportConfirmation();
-        SetImportDataStatus(ImportTexts.OverwriteCancelled, ImportStatusStates.Info);
-        _messenger.Send(new StatusMessageRequest(ImportTexts.OverwriteCancelled));
+        var confirmResult = await _dialogService.ShowDialogAsync<Views.Controls.ImportOverwriteConfirmDialogView>(
+            new ImportOverwriteConfirmDialogViewModel(this));
+        if (confirmResult != DialogResult.OK)
+        {
+            ClearPendingImportConfirmation();
+            SetImportDataStatus(ImportTexts.OverwriteCancelled, ImportStatusStates.Info);
+            _messenger.Send(new StatusMessageRequest(ImportTexts.OverwriteCancelled));
+            return;
+        }
+
+        await ConfirmImportOverwriteCoreAsync();
     }
 
-    [RelayCommand]
-    private async Task ConfirmImportOverwriteAsync()
+    /// <summary>执行待导入请求（仅由覆盖确认编排调用）。</summary>
+    private async Task ConfirmImportOverwriteCoreAsync()
     {
-        if (_pendingImportRequest is null || IsImportDataBusy)
+        if (_pendingImportRequest is null)
         {
             return;
         }
@@ -560,6 +581,8 @@ public partial class ProjectImportViewModel : ViewModelBase
         OnPropertyChanged(nameof(PendingImportOverwriteTitle));
         OnPropertyChanged(nameof(PendingImportOverwriteSummary));
         OnPropertyChanged(nameof(PendingImportOverwriteDetailText));
+        OnPropertyChanged(nameof(HasImportConflicts));
+        OnPropertyChanged(nameof(PendingImportConflicts));
     }
 
     private void OnImportedApiDocumentsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -610,11 +633,13 @@ public partial class ProjectImportViewModel : ViewModelBase
             {
                 _pendingImportRequest = new PendingImportRequest(importAction, buildSuccessMessage, importBusyText, operationTexts);
                 PendingImportPreview = previewResult.Data;
-                IsOverwriteConfirmDialogOpen = true;
                 SetImportDataStatus(
                     ImportTexts.FormatOverwriteDetectedStatus(previewResult.Data.ConflictCount),
                     ImportStatusStates.Info);
                 _messenger.Send(new StatusMessageRequest(operationTexts.OverwritePendingShellStatus));
+
+                // 预览流程先结束（finally 释放 busy），确认弹窗单独等待用户决定后执行导入
+                _ = AwaitOverwriteConfirmAndImportAsync();
                 return;
             }
 
@@ -672,7 +697,7 @@ public partial class ProjectImportViewModel : ViewModelBase
 
         ClearPendingImportConfirmation();
         SetImportDataStatus(successMessage, ImportStatusStates.Success);
-        IsDialogOpen = false;
+        RequestClose?.Invoke(this, DialogResult.None);
         _messenger.Send(new StatusMessageRequest(successMessage));
         PublishGlobalNotification(operationTexts.SuccessNotificationTitle, successMessage, NotificationType.Success);
     }
@@ -750,7 +775,6 @@ public partial class ProjectImportViewModel : ViewModelBase
     {
         _pendingImportRequest = null;
         PendingImportPreview = null;
-        IsOverwriteConfirmDialogOpen = false;
     }
 
     private static bool IsCancelledImportResult(string? code)

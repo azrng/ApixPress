@@ -121,6 +121,105 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
   </Style>
 
+  <!-- 标题栏「＋ 新建标签」（对齐原型 tb-plus：28x28 轻量按钮） -->
+  <Style Selector="Button.TitleBarPlusButton">
+    <Setter Property="Width" Value="28" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Body}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.TitleBarPlusButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <!-- 环境芯片（对齐原型 env-chip：subtle 底 + 描边 + 绿点 + 下拉） -->
+  <Style Selector="Button.EnvChipButton">
+    <Setter Property="Height" Value="30" />
+    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+  </Style>
+
+  <Style Selector="Button.EnvChipButton:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Strong}" />
+  </Style>
+
+  <Style Selector="TextBlock.EnvChipCaret">
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+  </Style>
+
+  <!-- 环境下拉菜单卡片（对齐原型 env-menu） -->
+  <Style Selector="Border.EnvMenuCard">
+    <Setter Property="Width" Value="224" />
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Elevated}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+  </Style>
+
+  <Style Selector="Button.EnvMenuItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="10,7" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Button.EnvMenuItem:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+
+  <Style Selector="TextBlock.EnvMenuCheck">
+    <Setter Property="Width" Value="14" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="FontWeight" Value="Bold" />
+  </Style>
+
+  <Style Selector="Border.EnvMenuActiveChip">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="Padding" Value="7,1" />
+  </Style>
+
+  <Style Selector="TextBlock.EnvMenuActiveChipText">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+  </Style>
+
+  <Style Selector="Separator.EnvMenuSeparator">
+    <Setter Property="Background" Value="{DynamicResource Brush.Border.Subtle}" />
+  </Style>
+
+  <Style Selector="Button.EnvMenuFootButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="10,7" />
+    <Setter Property="Margin" Value="0,4,0,0" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+  </Style>
+
+  <Style Selector="Button.EnvMenuFootButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
   <Style Selector="Border.NotificationDot">
     <Setter Property="Background" Value="{DynamicResource Brush.Status.Warning.Text}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
@@ -300,6 +399,7 @@
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
 
+  
   <Style Selector="Border.CreateProjectDialogBackdrop">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Overlay}" />
   </Style>
@@ -363,11 +463,6 @@
   <Style Selector="Border.SettingsDialogCard">
     <Setter Property="Width" Value="980" />
     <Setter Property="Height" Value="640" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Dialog}" />
   </Style>
 
   <Style Selector="Border.SettingsSidebar">
@@ -463,18 +558,21 @@
   </Style>
 
   <Style Selector="Border.CreateProjectDialogCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.6}" />
-    <Setter Property="Width" Value="540" />
-    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Dialog}" />
+    <Setter Property="Width" Value="480" />
   </Style>
 
   <Style Selector="TextBlock.DialogTitle">
     <Setter Property="FontSize" Value="{StaticResource Font.Size.Title}" />
     <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <!-- 危险确认弹窗：红描边卡片与红色标题（对齐原型 danger modal） -->
+  <Style Selector="Border.DialogDangerCard">
+    <Setter Property="Width" Value="480" />
+  </Style>
+
+  <Style Selector="TextBlock.DialogDangerText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Danger}" />
   </Style>
 
   <Style Selector="Border.CreateProjectDialogHeader">

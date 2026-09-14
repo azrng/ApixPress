@@ -18,12 +18,13 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
     public async Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryAsync(string projectId, int limit, CancellationToken cancellationToken)
     {
         const string sql = """
+                           -- 列表是摘要投影：不取 response_snapshot_json 原文（单条可达 MB 级），
+                           -- 只用 JSON 函数算出 HasResponse/StatusCode/DurationMs/SizeBytes；详情走单条查询
                            select
                                id Id,
                                project_id ProjectId,
                                timestamp Timestamp,
                                request_snapshot_json RequestSnapshotJson,
-                               response_snapshot_json ResponseSnapshotJson,
                                case
                                    when trim(coalesce(response_snapshot_json, '')) = '' then 0
                                    when json_valid(response_snapshot_json) = 0 then 1

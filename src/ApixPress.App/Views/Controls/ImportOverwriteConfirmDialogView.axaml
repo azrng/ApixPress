@@ -2,50 +2,72 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:models="using:ApixPress.App.Models.DTOs"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.ImportOverwriteConfirmDialogView"
-             x:DataType="vm:MainWindowViewModel"
+             x:DataType="vm:ImportOverwriteConfirmDialogViewModel"
              mc:Ignorable="d">
-  <Border Classes="CreateProjectDialogBackdrop"
-          IsVisible="{Binding ShowProjectImportOverwriteConfirmDialog}">
-    <Grid HorizontalAlignment="Center"
-          VerticalAlignment="Center">
-      <Border Classes="QuickRequestSaveDialogCard">
-        <Grid RowDefinitions="Auto,Auto,Auto"
-              RowSpacing="{StaticResource Space.3}">
-          <StackPanel Spacing="2">
-            <TextBlock Classes="DialogTitle"
-                       Text="确认更新接口" />
-            <TextBlock Classes="CaptionText"
-                       Text="{Binding ActiveProjectTab.Import.PendingImportOverwriteTitle, StringFormat='导入文档：{0}'}"
-                       IsVisible="{Binding ActiveProjectTab.Import.HasPendingImportPreview}" />
-          </StackPanel>
+  <!-- 弹窗 chrome 由 Ursa StandardDialogControl 提供；DataContext 为覆盖确认独立上下文，经 Import 访问导入数据 -->
+  <Border Classes="QuickRequestSaveDialogCard">
+    <Grid RowDefinitions="Auto,Auto,Auto"
+          RowSpacing="{StaticResource Space.3}">
+      <StackPanel Spacing="2">
+        <TextBlock Classes="CaptionText"
+                   Text="{Binding Import.PendingImportOverwriteTitle, StringFormat='导入文档：{0}'}"
+                   IsVisible="{Binding Import.HasPendingImportPreview}" />
+        <TextBlock Classes="CaptionText ImportConflictWarning"
+                   Text="覆盖后无法自动恢复，请确认同名接口可以更新。"
+                   TextWrapping="Wrap" />
+      </StackPanel>
 
-          <StackPanel Grid.Row="1"
-                      Spacing="{StaticResource Space.2}">
-            <Border Classes="CreateProjectFormShell">
-              <TextBlock Text="{Binding ActiveProjectTab.Import.PendingImportOverwriteSummary}"
-                         TextWrapping="Wrap" />
-            </Border>
-            <Border Classes="CreateProjectFormShell">
-              <TextBlock Text="{Binding ActiveProjectTab.Import.PendingImportOverwriteDetailText}"
-                         TextWrapping="Wrap" />
-            </Border>
-          </StackPanel>
+      <StackPanel Grid.Row="1"
+                  Spacing="{StaticResource Space.2}">
+        <TextBlock Classes="CaptionText"
+                   Text="{Binding Import.PendingImportOverwriteSummary}"
+                   TextWrapping="Wrap" />
 
-          <StackPanel Grid.Row="2"
-                      Orientation="Horizontal"
-                      HorizontalAlignment="Right"
-                      Spacing="{StaticResource Space.2}">
-            <Button Classes="DialogSecondaryButton"
-                    Content="取消"
-                    Command="{Binding ActiveProjectTab.Import.CancelImportOverwriteConfirmCommand}" />
-            <Button Classes="DialogPrimaryButton"
-                    Content="确认更新"
-                    Command="{Binding ActiveProjectTab.Import.ConfirmImportOverwriteCommand}" />
-          </StackPanel>
-        </Grid>
-      </Border>
+        <!-- 同名接口清单（对齐原型覆盖确认：method + 路径逐行列出） -->
+        <Border Classes="ImportConflictListCard"
+                IsVisible="{Binding Import.HasImportConflicts}">
+          <ScrollViewer MaxHeight="220"
+                        HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding Import.PendingImportConflicts}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="models:ApiImportConflictDto">
+                  <Border Classes="ImportConflictRow">
+                    <Grid ColumnDefinitions="56,*"
+                          ColumnSpacing="{StaticResource Space.3}">
+                      <TextBlock Classes="ImportConflictMethod"
+                                 Text="{Binding Method}" />
+                      <StackPanel Grid.Column="1"
+                                  Spacing="1">
+                        <TextBlock Classes="ImportConflictPath"
+                                   Text="{Binding Path}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Classes="CaptionText ImportConflictExisting"
+                                   Text="{Binding ExistingDocumentName, StringFormat='现有：{0}'}"
+                                   TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+        </Border>
+      </StackPanel>
+
+      <StackPanel Grid.Row="2"
+                  Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  Spacing="{StaticResource Space.2}">
+        <Button Classes="DialogSecondaryButton"
+                Content="取消"
+                Command="{Binding CancelCommand}" />
+        <Button Classes="DialogPrimaryButton"
+                Content="确认更新"
+                Command="{Binding ConfirmCommand}" />
+      </StackPanel>
     </Grid>
   </Border>
 </UserControl>

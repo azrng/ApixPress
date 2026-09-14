@@ -131,9 +131,10 @@
                           IsVisible="{Binding ProjectPanel.HasProjects}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
+                  <!-- 单元格 = 卡片 334 + 右/下间距 10，对齐原型 tiles 自适应换行 -->
                   <WrapPanel Orientation="Horizontal"
-                             ItemWidth="350"
-                             ItemHeight="230" />
+                             ItemWidth="344"
+                             ItemHeight="224" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>

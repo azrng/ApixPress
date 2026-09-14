@@ -31,6 +31,9 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     [ObservableProperty]
     private ProjectEnvironmentItemViewModel? selectedEnvironment;
 
+    [ObservableProperty]
+    private bool isRemoveEnvironmentConfirmOpen;
+
     public bool HasSelectedEnvironment => SelectedEnvironment is not null && !string.IsNullOrWhiteSpace(SelectedEnvironment.Id);
 
     public bool HasEnvironmentVariables => EnvironmentVariables.Count > 0;
@@ -38,6 +41,8 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     public bool ShowEnvironmentVariablesEmptyState => !HasEnvironmentVariables;
 
     public string ActiveEnvironmentName => SelectedEnvironment?.Name ?? string.Empty;
+
+    public string EnvironmentChipText => string.IsNullOrWhiteSpace(ActiveEnvironmentName) ? "环境" : ActiveEnvironmentName;
 
     protected override void DisposeManaged()
     {
@@ -145,6 +150,18 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void SelectEnvironment(ProjectEnvironmentItemViewModel? item)
+    {
+        if (item is null || ReferenceEquals(item, SelectedEnvironment))
+        {
+            return;
+        }
+
+        // 与 ComboBox 双向绑定路径一致：由 OnSelectedEnvironmentChanged 触发激活与变量加载
+        SelectedEnvironment = item;
+    }
+
+    [RelayCommand]
     private async Task AddEnvironmentAsync()
     {
         if (string.IsNullOrWhiteSpace(_currentProjectId))
@@ -219,6 +236,23 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void RequestRemoveEnvironment()
+    {
+        if (SelectedEnvironment is null)
+        {
+            return;
+        }
+
+        IsRemoveEnvironmentConfirmOpen = true;
+    }
+
+    [RelayCommand]
+    private void CancelRemoveEnvironment()
+    {
+        IsRemoveEnvironmentConfirmOpen = false;
+    }
+
+    [RelayCommand]
     private async Task RemoveEnvironmentAsync()
     {
         if (SelectedEnvironment is null || string.IsNullOrWhiteSpace(_currentProjectId))
@@ -226,6 +260,7 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
             return;
         }
 
+        IsRemoveEnvironmentConfirmOpen = false;
         var deletedEnvironmentId = SelectedEnvironment.Id;
         var result = await _environmentVariableService.DeleteEnvironmentAsync(_currentProjectId, deletedEnvironmentId, CancellationToken.None);
         if (result.IsSuccess)
@@ -343,6 +378,7 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(HasSelectedEnvironment));
         OnPropertyChanged(nameof(ActiveEnvironmentName));
+        OnPropertyChanged(nameof(EnvironmentChipText));
     }
 
     private void OnEnvironmentVariablesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -412,6 +448,7 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
             return;
         }
 
+        UpdateSelectionFlags(value);
         NotifySelectionState();
         if (_isUpdatingSelection)
         {
@@ -420,6 +457,14 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
 
         var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _activateEnvironmentCancellationTokenSource).Token;
         _ = ActivateEnvironmentSelectionAsync(value, cancellationToken);
+    }
+
+    private void UpdateSelectionFlags(ProjectEnvironmentItemViewModel? selected)
+    {
+        foreach (var environment in Environments)
+        {
+            environment.IsSelected = ReferenceEquals(environment, selected);
+        }
     }
 
     private async Task ActivateEnvironmentSelectionAsync(ProjectEnvironmentItemViewModel? value, CancellationToken cancellationToken)

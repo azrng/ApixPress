@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using Ursa.Controls;
 
 namespace ApixPress.App.ViewModels;
 
@@ -42,9 +43,10 @@ public partial class MainWindowViewModel
             return;
         }
 
-        IsCreateProjectDialogOpen = false;
         StatusMessage = "项目已创建，可在首页卡片中继续打开为新标签页。";
         NotifyShellState();
+        // 项目创建成功后收起新建项目弹窗（无弹窗打开时无订阅者，调用为空操作）
+        RequestClose?.Invoke(this, DialogResult.OK);
     }
 
     private void OnProjectTabShellStateChanged(ProjectTabViewModel tab)
@@ -145,12 +147,6 @@ public partial class MainWindowViewModel
     private void RaiseActiveProjectShellState()
     {
         OnPropertyChanged(nameof(HasEnvironmentContext));
-        OnPropertyChanged(nameof(ShowQuickRequestSaveDialog));
-        OnPropertyChanged(nameof(ShowRequestCodeDialog));
-        OnPropertyChanged(nameof(ShowProjectImportDialog));
-        OnPropertyChanged(nameof(ShowProjectImportOverwriteConfirmDialog));
-        OnPropertyChanged(nameof(ShowWorkspaceDeleteConfirmDialog));
-        OnPropertyChanged(nameof(ShowCreateFolderDialog));
         OnPropertyChanged(nameof(CurrentProjectName));
         OnPropertyChanged(nameof(CurrentProjectSummary));
         OnPropertyChanged(nameof(CurrentEnvironmentLabel));

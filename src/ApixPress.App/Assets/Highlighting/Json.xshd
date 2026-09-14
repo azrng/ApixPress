@@ -1,0 +1,20 @@
+<SyntaxDefinition name="Json" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+  <!--
+    JSON 语法高亮定义（响应 Body 查看器用）。
+    Color 只声明名称不带值：实际颜色由 ResponseBodyEditor 运行时从 Colors.axaml 的 Brush.Code.* token 映射，保持设计 token 管线。
+  -->
+  <Color name="JsonKey" />
+  <Color name="JsonString" />
+  <Color name="JsonNumber" />
+  <Color name="JsonPunctuation" />
+  <RuleSet>
+    <!--
+      键名：后跟冒号的字符串，必须排在通用字符串规则之前才能优先生效。
+      注意正则不能出现 "<!" 序列（XML 保留），如需 lookbehind 要写成 &lt；这里刻意用无 lookbehind 的等价写法。
+    -->
+    <Rule color="JsonKey">"(?:[^"\\\r\n]|\\.)*"(?=\s*:)</Rule>
+    <Rule color="JsonString">"(?:[^"\\\r\n]|\\.)*"</Rule>
+    <Rule color="JsonNumber">-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?</Rule>
+    <Rule color="JsonPunctuation">[{}\[\]:,]</Rule>
+  </RuleSet>
+</SyntaxDefinition>

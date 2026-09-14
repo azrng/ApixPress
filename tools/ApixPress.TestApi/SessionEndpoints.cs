@@ -12,7 +12,9 @@ internal static class SessionEndpoints
         app.MapGet("/cookies", (HttpContext context) => Results.Json(new
         {
             cookies = context.Request.Cookies.ToDictionary(kv => kv.Key, kv => kv.Value)
-        }));
+        })).WithTags("Cookie 与认证")
+            .WithSummary("查看当前 Cookie")
+            .WithDescription("以键值对返回请求携带的全部 Cookie");
 
         app.MapGet("/cookies/set", (HttpContext context) =>
         {
@@ -27,7 +29,9 @@ internal static class SessionEndpoints
             }
 
             return Redirect(context, "/cookies");
-        });
+        }).WithTags("Cookie 与认证")
+            .WithSummary("写入 Cookie")
+            .WithDescription("每个查询参数写入一个 Cookie 后 302 跳回 /cookies");
 
         app.MapGet("/cookies/delete", (HttpContext context) =>
         {
@@ -37,13 +41,19 @@ internal static class SessionEndpoints
             }
 
             return Redirect(context, "/cookies");
-        });
+        }).WithTags("Cookie 与认证")
+            .WithSummary("删除 Cookie")
+            .WithDescription("按查询参数中的键删除 Cookie 后 302 跳回 /cookies");
 
         app.MapMethods("/basic-auth/{user}/{password}", AnyMethods, (string user, string password, HttpContext context)
-            => TryBasicAuth(context, user, password, hidden: false));
+            => TryBasicAuth(context, user, password, hidden: false)).WithTags("Cookie 与认证")
+            .WithSummary("Basic 认证校验")
+            .WithDescription("路径参数 user/password 与 Authorization: Basic 头解码结果一致时返回 200，否则 401");
 
         app.MapMethods("/hidden-basic-auth/{user}/{password}", AnyMethods, (string user, string password, HttpContext context)
-            => TryBasicAuth(context, user, password, hidden: true));
+            => TryBasicAuth(context, user, password, hidden: true)).WithTags("Cookie 与认证")
+            .WithSummary("隐藏式 Basic 认证")
+            .WithDescription("认证失败时返回 404 而非 401，避免暴露端点存在");
 
         app.MapMethods("/bearer", AnyMethods, (HttpContext context) =>
         {
@@ -60,7 +70,9 @@ internal static class SessionEndpoints
 
             context.Response.Headers.WWWAuthenticate = "Bearer";
             return Results.Json(new { authenticated = false, message = "缺少 Bearer Token" }, statusCode: 401);
-        });
+        }).WithTags("Cookie 与认证")
+            .WithSummary("Bearer Token 认证校验")
+            .WithDescription("仅校验 Authorization: Bearer 头格式（不校验令牌内容），缺失返回 401");
 
         app.MapMethods("/apikey", AnyMethods, (HttpContext context) =>
         {
@@ -87,7 +99,9 @@ internal static class SessionEndpoints
             }
 
             return Results.Json(new { authenticated = true, key_name = "default" });
-        });
+        }).WithTags("Cookie 与认证")
+            .WithSummary("API Key 请求头认证")
+            .WithDescription("要求请求头 X-Api-Key: apixpress-dev-key，缺失或不匹配返回 401");
     }
 
     private static IResult TryBasicAuth(HttpContext context, string user, string password, bool hidden)

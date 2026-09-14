@@ -26,6 +26,9 @@ app.MapGet("/", () => Results.Json(new
     description = "本地全格式 HTTP 测试服务器，用于 ApixPress 真实请求联调",
     openapi = "/openapi/v1.json",
     endpoints = EndpointCatalog.Items.Select(item => new { item.Method, item.Path, item.Description })
-}));
+}))
+    .WithTags("文档")
+    .WithSummary("全部端点目录")
+    .WithDescription("返回本服务全部端点的方法、路径与说明，便于浏览与发现");
 
 app.Run();

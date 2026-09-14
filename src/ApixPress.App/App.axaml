@@ -19,6 +19,8 @@
     <Application.Styles>
         <semi:SemiTheme Locale="zh-CN" />
         <semi:UrsaSemiTheme Locale="zh-CN" />
+        <!-- AvaloniaEdit 必需的控制主题，缺失时 TextEditor 无模板不渲染 -->
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
         <StyleInclude Source="/Assets/Styles/Global.axaml" />
     </Application.Styles>
 </Application>

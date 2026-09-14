@@ -1,229 +1,155 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:iri="https://irihi.tech/shared"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.EnvironmentManagerDialogView"
              x:DataType="vm:MainWindowViewModel"
              mc:Ignorable="d">
-  <Border Classes="SettingsDialogBackdrop"
-          IsVisible="{Binding IsEnvironmentManagerOpen}">
-    <Grid HorizontalAlignment="Center"
-          VerticalAlignment="Center">
-      <Border Classes="EnvironmentManagerDialogCard">
-        <Grid ColumnDefinitions="248,*"
-              RowDefinitions="Auto,*,Auto">
-          <Border Grid.RowSpan="3"
-                  Classes="EnvironmentManagerSidebar">
-            <Grid RowDefinitions="Auto,Auto,*"
-                  RowSpacing="{StaticResource Space.3}">
-              <StackPanel Spacing="{StaticResource Space.2}">
-                <TextBlock Classes="SectionTitle"
-                           Text="环境设置" />
-                <TextBlock Classes="CaptionText"
-                           Text="项目级环境会影响右侧快捷请求的 BaseUrl 与变量解析。" />
-              </StackPanel>
-              <Button Grid.Row="1"
-                      Classes="PrimaryButton EnvironmentCreateButton"
-                      Content="新增环境"
-                      Command="{Binding EnvironmentPanel.AddEnvironmentCommand}" />
-              <ListBox Grid.Row="2"
-                       Classes="FlatListBox EnvironmentListBox"
-                       ItemsSource="{Binding EnvironmentPanel.Environments}"
-                       SelectedItem="{Binding EnvironmentPanel.SelectedEnvironment}">
-                <ListBox.ItemTemplate>
-                  <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
-                    <Border Classes="EnvironmentListItem">
-                      <StackPanel Spacing="4">
-                        <Grid ColumnDefinitions="*,Auto"
-                              ColumnSpacing="{StaticResource Space.2}">
-                          <TextBlock Classes="EnvironmentListItemTitle"
-                                     Text="{Binding Name}"
-                                     FontWeight="SemiBold" />
-                          <u:Badge Grid.Column="1"
-                                   Header="当前"
-                                   IsVisible="{Binding IsActive}"
-                                   iri:ClassHelper.Classes="Light Success" />
-                        </Grid>
-                        <TextBlock Classes="EnvironmentListItemSubtitle"
-                                   Text="{Binding DisplayBaseUrl}"
-                                   TextTrimming="CharacterEllipsis" />
-                      </StackPanel>
-                    </Border>
-                  </DataTemplate>
-                </ListBox.ItemTemplate>
-              </ListBox>
-            </Grid>
-          </Border>
+  <!-- 弹窗 chrome 由 Ursa StandardDialogControl 提供；DataContext 为主窗口 VM，环境数据经 EnvironmentPanel 访问 -->
+  <Border Classes="EnvDrawerPanel">
+    <Grid RowDefinitions="Auto,*,Auto">
+      <!-- 头部：新增环境 -->
+      <Border Classes="EnvDrawerHead">
+        <Button Classes="EnvAddButton"
+                HorizontalAlignment="Right"
+                Content="&#xFF0B; 新增环境"
+                Command="{Binding EnvironmentPanel.AddEnvironmentCommand}" />
+      </Border>
 
-          <Grid Grid.Column="1"
-                Margin="{StaticResource Pad.4}"
-                RowDefinitions="Auto,*,Auto"
-                RowSpacing="{StaticResource Space.4}">
-            <Grid Classes="EnvironmentDialogHeader"
-                  ColumnDefinitions="*,Auto">
-              <StackPanel Spacing="2">
-                <TextBlock Classes="PageTitle"
-                           Text="环境详情" />
-                <TextBlock Classes="CaptionText"
-                           Text="这里只保留环境名称、前置 URL 和变量列表，便于快速维护。" />
-              </StackPanel>
-              <Button Grid.Column="1"
-                      Classes="DialogIconButton"
-                      Command="{Binding CloseEnvironmentManagerCommand}"
-                      Content="×" />
-            </Grid>
-
-            <ScrollViewer Grid.Row="1">
-              <StackPanel Spacing="{StaticResource Space.4}"
-                          IsVisible="{Binding EnvironmentPanel.HasSelectedEnvironment}">
-                <Border Classes="EnvironmentIdentityBar">
-                  <Grid ColumnDefinitions="*,Auto"
-                        ColumnSpacing="{StaticResource Space.3}">
-                    <StackPanel Spacing="{StaticResource Space.1}">
-                      <TextBlock Classes="CaptionText" Text="环境名称" />
-                      <TextBox Classes="SectionInput EnvironmentHeroNameInput"
-                               PlaceholderText="例如 开发 / 测试 / 生产"
-                               Text="{Binding EnvironmentPanel.SelectedEnvironment.Name}" />
-                    </StackPanel>
-                    <u:Badge Grid.Column="1"
-                             Header="当前环境"
-                             VerticalAlignment="Center"
-                             IsVisible="{Binding EnvironmentPanel.SelectedEnvironment.IsActive}"
-                             iri:ClassHelper.Classes="Light Success" />
-                  </Grid>
-                </Border>
-
-                <Border Classes="EnvironmentDetailCard EnvironmentUrlCard">
-                  <StackPanel Spacing="{StaticResource Space.3}">
-                    <Grid ColumnDefinitions="Auto,*"
-                          ColumnSpacing="{StaticResource Space.3}">
-                      <TextBlock Classes="SectionTitle"
-                                 Text="前置 URL" />
-                      <TextBlock Grid.Column="1"
-                                 Classes="CaptionText"
-                                 VerticalAlignment="Center"
-                                 Text="默认模块的基础地址" />
-                    </Grid>
-                    <TextBox Classes="SectionInput EnvironmentTableInput"
-                             PlaceholderText="例如 https://api.example.com"
-                             Text="{Binding EnvironmentPanel.SelectedEnvironment.BaseUrl}" />
-                    <TextBlock Classes="CaptionText"
-                               Text="末尾不需要带 /，保存时会自动规整。" />
-                  </StackPanel>
-                </Border>
-
-                <Border Classes="EnvironmentDetailCard">
-                  <Grid RowDefinitions="Auto,Auto,*"
-                        RowSpacing="{StaticResource Space.3}">
+      <!-- 环境卡片列表 -->
+      <ScrollViewer Grid.Row="1"
+                    Padding="16,12,16,0">
+        <ItemsControl ItemsSource="{Binding EnvironmentPanel.Environments}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
+              <Border Classes="EnvCard"
+                      Classes.EnvCardActive="{Binding IsActive}"
+                      Margin="0,0,0,10">
+                <StackPanel Spacing="{StaticResource Space.2}">
+                  <!-- 卡片头（点击切换选中/激活环境）：名称 + 激活标识 + BaseUrl -->
+                  <Button Classes="EnvCardHeadButton"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).EnvironmentPanel.SelectEnvironmentCommand}"
+                          CommandParameter="{Binding}">
                     <Grid ColumnDefinitions="*,Auto"
                           ColumnSpacing="{StaticResource Space.2}">
-                      <StackPanel Spacing="2">
-                        <TextBlock Classes="SectionTitle"
-                                   Text="环境变量" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="变量会随当前环境一起参与请求地址、Header 与 Body 的占位替换。" />
+                      <StackPanel Orientation="Horizontal"
+                                  Spacing="{StaticResource Space.2}"
+                                  VerticalAlignment="Center">
+                        <TextBlock Classes="EnvCardName"
+                                   Text="{Binding Name}" />
+                        <Border Classes="EnvCardActiveChip"
+                                IsVisible="{Binding IsActive}">
+                          <TextBlock Classes="EnvCardActiveChipText"
+                                     Text="激活" />
+                        </Border>
                       </StackPanel>
-                      <Button Grid.Column="1"
-                              Classes="SecondaryButton"
-                              Content="新增变量"
-                              Command="{Binding EnvironmentPanel.AddVariableCommand}" />
+                      <TextBlock Grid.Column="1"
+                                 Classes="EnvCardUrl"
+                                 Text="{Binding DisplayBaseUrl}"
+                                 TextTrimming="CharacterEllipsis"
+                                 MaxLines="1" />
+                    </Grid>
+                  </Button>
+
+                  <!-- 选中卡片：名称 / BaseUrl / 变量编辑 -->
+                  <StackPanel IsVisible="{Binding IsSelected}"
+                              Spacing="{StaticResource Space.2}">
+                    <Grid ColumnDefinitions="*,*"
+                          ColumnSpacing="{StaticResource Space.2}">
+                      <TextBox Grid.Column="0"
+                               Classes="SectionInput EnvCellInput"
+                               PlaceholderText="环境名称"
+                               Text="{Binding Name}" />
+                      <TextBox Grid.Column="1"
+                               Classes="SectionInput EnvCellInput EnvMonoInput"
+                               PlaceholderText="BaseUrl，例如 https://api.example.com"
+                               Text="{Binding BaseUrl}" />
                     </Grid>
 
-                    <Border Grid.Row="1"
-                            Classes="EnvironmentVariableHeader"
-                            IsVisible="{Binding EnvironmentPanel.HasEnvironmentVariables}">
-                      <Grid ColumnDefinitions="220,*,80,Auto"
-                            ColumnSpacing="{StaticResource Space.3}">
-                        <TextBlock Grid.Column="0"
-                                   Classes="CaptionText EnvironmentTableHeaderText"
-                                   Text="变量名" />
-                        <TextBlock Grid.Column="1"
-                                   Classes="CaptionText EnvironmentTableHeaderText"
-                                   Text="变量值" />
-                        <TextBlock Grid.Column="2"
-                                   Classes="CaptionText EnvironmentTableHeaderText"
-                                   Text="启用" />
-                      </Grid>
-                    </Border>
-
-                    <ItemsControl Grid.Row="2"
-                                  IsVisible="{Binding EnvironmentPanel.HasEnvironmentVariables}"
-                                  ItemsSource="{Binding EnvironmentPanel.EnvironmentVariables}">
+                    <ItemsControl ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).EnvironmentPanel.EnvironmentVariables}">
                       <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:EnvironmentVariableItemViewModel">
-                          <Border Classes="EnvironmentVariableRow">
-                            <Grid ColumnDefinitions="220,*,80,Auto"
-                                  ColumnSpacing="{StaticResource Space.3}">
-                              <TextBox Grid.Column="0"
-                                       Classes="SectionInput EnvironmentTableInput"
-                                       PlaceholderText="变量键"
-                                       Text="{Binding Key}" />
-                              <TextBox Grid.Column="1"
-                                       Classes="SectionInput EnvironmentTableInput"
-                                       PlaceholderText="变量值"
-                                       Text="{Binding Value}" />
-                              <CheckBox Grid.Column="2"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        IsChecked="{Binding IsEnabled}" />
-                              <u:PopConfirm Grid.Column="3"
-                                            PopupHeader="确认删除该变量？"
-                                            PopupContent="删除后当前环境下对应变量会立即失效。"
-                                            ConfirmCommand="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).EnvironmentPanel.RemoveVariableCommand}"
-                                            ConfirmCommandParameter="{Binding}">
-                                <u:IconButton Classes="Danger"
-                                              Theme="{DynamicResource BorderlessIconButton}"
-                                              Icon="{StaticResource SemiIconDelete}" />
-                              </u:PopConfirm>
-                            </Grid>
-                          </Border>
+                          <Grid ColumnDefinitions="1.1*,1.4*,Auto,26"
+                                ColumnSpacing="{StaticResource Space.2}"
+                                Margin="0,0,0,6">
+                            <TextBox Classes="EnvCellInput EnvMonoInput"
+                                     PlaceholderText="Key"
+                                     Text="{Binding Key}" />
+                            <TextBox Grid.Column="1"
+                                     Classes="EnvCellInput EnvMonoInput"
+                                     PlaceholderText="Value"
+                                     Text="{Binding Value}" />
+                            <CheckBox Grid.Column="2"
+                                      VerticalAlignment="Center"
+                                      ToolTip.Tip="是否参与请求"
+                                      IsChecked="{Binding IsEnabled}" />
+                            <Button Grid.Column="3"
+                                    Classes="EnvVarDeleteButton"
+                                    ToolTip.Tip="删除该变量"
+                                    Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).EnvironmentPanel.RemoveVariableCommand}"
+                                    CommandParameter="{Binding}"
+                                    Content="&#xE74D;" />
+                          </Grid>
                         </DataTemplate>
                       </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <Border Grid.Row="2"
-                            Classes="EnvironmentVariablesEmptyState"
-                            IsVisible="{Binding EnvironmentPanel.ShowEnvironmentVariablesEmptyState}">
-                      <StackPanel Spacing="{StaticResource Space.1}">
-                        <TextBlock Classes="EnvironmentEmptyStateTitle" Text="还没有环境变量" />
-                        <TextBlock Classes="CaptionText" Text="可添加 token、用户标识等值，并在 URL、Header 和 Body 中使用 {{变量名}}。" />
-                      </StackPanel>
-                    </Border>
-                  </Grid>
-                </Border>
-              </StackPanel>
-            </ScrollViewer>
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Classes="CaptionText"
+                                 VerticalAlignment="Center"
+                                 Text="发送时自动替换 {{变量名}}；启用状态决定该变量是否参与请求。" />
+                      <Button Grid.Column="1"
+                              Classes="EnvAddButton"
+                              Height="26"
+                              Padding="10,0"
+                              Content="&#xFF0B; 新增变量"
+                              Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).EnvironmentPanel.AddVariableCommand}" />
+                    </Grid>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </ScrollViewer>
 
-            <Border Grid.Row="2" Classes="EnvironmentDialogFooter">
-              <Grid ColumnDefinitions="Auto,*,Auto,Auto"
-                    ColumnSpacing="{StaticResource Space.3}">
-                <u:PopConfirm Grid.Column="0"
-                              PopupHeader="确认删除当前环境？"
-                              PopupContent="若这是当前激活环境，系统会自动切换到其他环境。"
-                              ConfirmCommand="{Binding EnvironmentPanel.RemoveEnvironmentCommand}">
-                  <Button Classes="SecondaryButton"
-                          Content="删除环境" />
-                </u:PopConfirm>
-                <TextBlock Grid.Column="1"
-                           Classes="CaptionText"
-                           Text="保存后会立即同步到当前项目工作区。"
-                           VerticalAlignment="Center" />
-                <Button Grid.Column="2"
-                        Classes="SecondaryButton"
-                        Content="保存"
-                        Command="{Binding SaveEnvironmentManagerCommand}" />
-                <Button Grid.Column="3"
-                        Classes="PrimaryButton"
-                        Content="保存并关闭"
-                        Command="{Binding SaveAndCloseEnvironmentManagerCommand}" />
-              </Grid>
-            </Border>
-          </Grid>
+      <!-- 底部：内联删除确认条 + 动作 -->
+      <StackPanel Grid.Row="2"
+                  Spacing="{StaticResource Space.2}"
+                  Margin="16,12,16,14">
+        <Border Classes="EnvDeleteStrip"
+                IsVisible="{Binding EnvironmentPanel.IsRemoveEnvironmentConfirmOpen}">
+          <StackPanel Spacing="{StaticResource Space.2}">
+            <TextBlock Classes="CaptionText"
+                       TextWrapping="Wrap"
+                       Text="{Binding EnvironmentPanel.SelectedEnvironment.Name, StringFormat='删除「{0}」环境？若这是激活环境，系统会自动切换到其他环境。'}" />
+            <StackPanel Orientation="Horizontal"
+                        Spacing="{StaticResource Space.2}">
+              <Button Classes="EnvDeleteStripConfirm"
+                      Content="确认删除"
+                      Command="{Binding EnvironmentPanel.RemoveEnvironmentCommand}" />
+              <Button Classes="DialogSecondaryButton EnvDeleteStripCancel"
+                      Content="取消"
+                      Command="{Binding EnvironmentPanel.CancelRemoveEnvironmentCommand}" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+
+        <Grid ColumnDefinitions="*,Auto"
+              ColumnSpacing="{StaticResource Space.2}">
+          <Button Classes="DialogPrimaryButton"
+                  HorizontalAlignment="Stretch"
+                  Content="保存环境"
+                  Command="{Binding SaveEnvironmentManagerCommand}" />
+          <Button Grid.Column="1"
+                  Classes="HttpCancelButton EnvDrawerDeleteButton"
+                  Padding="12,7"
+                  Content="删除环境"
+                  Command="{Binding EnvironmentPanel.RequestRemoveEnvironmentCommand}" />
         </Grid>
-      </Border>
+      </StackPanel>
     </Grid>
   </Border>
 </UserControl>

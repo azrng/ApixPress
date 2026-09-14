@@ -15,6 +15,8 @@ public partial class ResponseSectionViewModel : ViewModelBase
     private const int MaxSynchronousFormattedBodyLength = 256 * 1024;
     private const int MaxSynchronousFormatThreshold = 64 * 1024;
     private const int MaxSearchableBodyLength = 1024 * 1024;
+    // 小正文即时搜索保持零感知延迟；超过该长度（最长 1MB）的循环扫描合并进 250ms 防抖
+    private const int InstantSearchMaxBodyLength = 16 * 1024;
     private const int MaxDisplayBodyCharacters = 256 * 1024;
     private const string FormattingBodyPlaceholder = "正在格式化响应正文...";
 
@@ -25,6 +27,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
     };
 
     private CancellationTokenSource? _formatBodyCancellationTokenSource;
+    private CancellationTokenSource? _bodySearchDebounceCancellationTokenSource;
     private int _formatBodyGeneration;
     // 当前提示的严重度：info / warning / danger，用于横幅左侧色条与标题着色
     private string _noticeSeverity = "info";
@@ -59,6 +62,11 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     [ObservableProperty]
     private string headersText = string.Empty;
+
+    /// <summary>响应 Headers 只读键值行（对齐原型 kv-grid），每次响应整体替换</summary>
+    public IReadOnlyList<ResponseHeaderRowViewModel> HeaderRows { get; private set; } = [];
+
+    public bool HasHeaderRows => HeaderRows.Count > 0;
 
     [ObservableProperty]
     private bool showResponseNotice;
@@ -125,6 +133,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
             SizeText = string.Empty;
             BodyText = result.Message;
             HeadersText = string.Empty;
+            SetHeaderRows([]);
             return;
         }
 
@@ -133,6 +142,9 @@ public partial class ResponseSectionViewModel : ViewModelBase
         DurationText = $"{r.DurationMs} ms";
         SizeText = FormatResponseSizeText(r);
         HeadersText = string.Join(Environment.NewLine, r.Headers.Select(h => $"{h.Name}: {h.Value}"));
+        SetHeaderRows(r.Headers
+            .Select(h => new ResponseHeaderRowViewModel(h.Name, h.Value))
+            .ToArray());
         ApplyStatusNotice(r.StatusCode);
 
         if (r.Content is { Length: > MaxSynchronousFormatThreshold })
@@ -209,6 +221,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
         SizeText = string.Empty;
         BodyText = string.Empty;
         HeadersText = string.Empty;
+        SetHeaderRows([]);
         ClearResponseNotice();
         BodySearchText = string.Empty;
         BodySearchResultText = string.Empty;
@@ -241,6 +254,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
     protected override void DisposeManaged()
     {
         CancelPendingBodyFormat();
+        CancellationTokenSourceHelper.CancelAndDispose(ref _bodySearchDebounceCancellationTokenSource);
     }
 
     private void CancelPendingBodyFormat()
@@ -261,6 +275,26 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     partial void OnBodySearchTextChanged(string value)
     {
+        UpdateBodySearchResult();
+    }
+
+    private async Task DebounceBodySearchAsync()
+    {
+        var cts = CancellationTokenSourceHelper.Refresh(ref _bodySearchDebounceCancellationTokenSource);
+        try
+        {
+            await Task.Delay(250, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (IsDisposed)
+        {
+            return;
+        }
+
         UpdateBodySearchResult();
     }
 
@@ -342,6 +376,13 @@ public partial class ResponseSectionViewModel : ViewModelBase
         };
     }
 
+    private void SetHeaderRows(IReadOnlyList<ResponseHeaderRowViewModel> rows)
+    {
+        HeaderRows = rows;
+        OnPropertyChanged(nameof(HeaderRows));
+        OnPropertyChanged(nameof(HasHeaderRows));
+    }
+
     private void UpdateBodySearchResult()
     {
         if (string.IsNullOrWhiteSpace(BodySearchText) || string.IsNullOrEmpty(BodyText)
@@ -357,6 +398,39 @@ public partial class ResponseSectionViewModel : ViewModelBase
             return;
         }
 
+        // 大正文（>16KB）的全文字符合并进 250ms 防抖，避免每键在 UI 线程循环扫描；
+        // 小正文即时搜索保持零感知延迟
+        if (BodyText.Length > InstantSearchMaxBodyLength)
+        {
+            _ = DebounceCountBodySearchMatchesAsync();
+            return;
+        }
+
+        CountBodySearchMatches();
+    }
+
+    private async Task DebounceCountBodySearchMatchesAsync()
+    {
+        var cts = CancellationTokenSourceHelper.Refresh(ref _bodySearchDebounceCancellationTokenSource);
+        try
+        {
+            await Task.Delay(250, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        CountBodySearchMatches();
+    }
+
+    private void CountBodySearchMatches()
+    {
         var count = 0;
         var startIndex = 0;
         while (startIndex < BodyText.Length)

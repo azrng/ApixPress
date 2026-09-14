@@ -5,6 +5,7 @@ using Azrng.Core.DependencyInjection;
 using Azrng.Core.Json;
 using Azrng.Core.Results;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Buffers;
 using System.Text;
@@ -446,6 +447,9 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             var handler = new SocketsHttpHandler
             {
                 AllowAutoRedirect = key.AllowAutoRedirect,
+                // 与 Postman/浏览器一致：按 Content-Encoding 透明解压（gzip/deflate/br），
+                // 否则压缩响应会以二进制乱码进入响应区
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate | DecompressionMethods.Brotli,
                 // 定期回收连接池，让 DNS 变更生效；同一 client 长期复用不再缓存过期连接
                 PooledConnectionLifetime = TimeSpan.FromMinutes(5)
             };

@@ -19,7 +19,8 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
     private readonly IProjectHttpSettingsService _settingsService;
     private readonly Func<RequestCaseDto, Task> _openHttpInterfaceAsync;
     private readonly IMessenger _messenger;
-    private readonly ObservableCollection<ProjectHttpInterfaceOverviewItemViewModel> _httpInterfaces = [];
+    private readonly BatchObservableCollection<ProjectHttpInterfaceOverviewItemViewModel> _httpInterfaces = [];
+    private CancellationTokenSource? _searchDebounceCancellationTokenSource;
 
     public ProjectInterfaceRootWorkspaceViewModel(
         string projectId,
@@ -140,6 +141,7 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
 
     protected override void DisposeManaged()
     {
+        CancellationTokenSourceHelper.CancelAndDispose(ref _searchDebounceCancellationTokenSource);
         _savedRequests.CollectionChanged -= OnSavedRequestsCollectionChanged;
     }
 
@@ -217,6 +219,27 @@ public partial class ProjectInterfaceRootWorkspaceViewModel : ViewModelBase
 
     partial void OnSearchTextChanged(string value)
     {
+        // 与项目/历史/接口树搜索一致：合并 250ms 内的连续键入，避免每键全量过滤重建
+        _ = DebounceRefreshHttpInterfacesAsync();
+    }
+
+    private async Task DebounceRefreshHttpInterfacesAsync()
+    {
+        var cts = CancellationTokenSourceHelper.Refresh(ref _searchDebounceCancellationTokenSource);
+        try
+        {
+            await Task.Delay(250, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (IsDisposed)
+        {
+            return;
+        }
+
         RefreshHttpInterfaces();
     }
 

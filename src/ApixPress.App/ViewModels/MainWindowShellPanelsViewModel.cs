@@ -3,6 +3,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
@@ -11,17 +12,27 @@ public sealed partial class MainWindowShellPanelsViewModel : ViewModelBase
 {
     private readonly Action<string> _setStatusMessage;
     private readonly Func<string> _getDefaultStatusMessage;
+    private readonly IDialogService _dialogService;
+    private readonly Func<object?> _getShellDataContext;
+    private readonly Action _requestCloseShellDialog;
 
     public MainWindowShellPanelsViewModel(
         MainWindowSettingsViewModel settingsCenter,
         ObservableCollection<NotificationItemViewModel> notifications,
         Action<string> setStatusMessage,
-        Func<string> getDefaultStatusMessage)
+        Func<string> getDefaultStatusMessage,
+        IDialogService dialogService,
+        Func<object?> getShellDataContext,
+        Action requestCloseShellDialog)
     {
         SettingsCenter = settingsCenter;
         Notifications = notifications;
         _setStatusMessage = setStatusMessage;
         _getDefaultStatusMessage = getDefaultStatusMessage;
+        _dialogService = dialogService;
+        // 设置弹窗的 DataContext 是 MainWindowViewModel，展示与关闭都经它中转
+        _getShellDataContext = getShellDataContext;
+        _requestCloseShellDialog = requestCloseShellDialog;
 
         Notifications.CollectionChanged += OnNotificationsCollectionChanged;
         AttachNotificationHandlers(Notifications);
@@ -38,9 +49,6 @@ public sealed partial class MainWindowShellPanelsViewModel : ViewModelBase
     public bool HasUnreadNotifications => Notifications.Any(item => item.IsUnread);
 
     [ObservableProperty]
-    private bool isSettingsDialogOpen;
-
-    [ObservableProperty]
     private bool isNotificationCenterOpen;
 
     protected override void DisposeManaged()
@@ -50,8 +58,9 @@ public sealed partial class MainWindowShellPanelsViewModel : ViewModelBase
         SettingsCenter.Dispose();
     }
 
+    /// <summary>打开设置弹窗；弹窗关闭经 chrome 关闭钮或内容关闭按钮的 RequestClose 通道完成。</summary>
     [RelayCommand]
-    private void OpenSettingsDialog()
+    private async Task OpenSettingsDialogAsync()
     {
         if (IsDisposed)
         {
@@ -59,9 +68,18 @@ public sealed partial class MainWindowShellPanelsViewModel : ViewModelBase
         }
 
         SettingsCenter.SelectGeneralSection();
-        IsSettingsDialogOpen = true;
         IsNotificationCenterOpen = false;
         _setStatusMessage("可在这里调整通用、存储设置和查看版本信息。");
+        var shell = _getShellDataContext();
+        if (shell is null)
+        {
+            return;
+        }
+
+        // showCloseButton 必须保持默认 true：Ursa 对 false 的实现是 Opacity=0+禁用命中测试，
+        // 且本弹窗 CanLightDismiss=false、内容区也没有绑定 CloseSettingsDialog 的按钮，
+        // 关掉 chrome 关闭钮会让设置弹窗无任何关闭途径
+        await _dialogService.ShowDialogAsync<Views.Controls.SettingsDialogView>(shell, "设置");
     }
 
     [RelayCommand]
@@ -72,7 +90,7 @@ public sealed partial class MainWindowShellPanelsViewModel : ViewModelBase
             return;
         }
 
-        IsSettingsDialogOpen = false;
+        _requestCloseShellDialog();
         _setStatusMessage(_getDefaultStatusMessage());
     }
 
@@ -87,7 +105,6 @@ public sealed partial class MainWindowShellPanelsViewModel : ViewModelBase
         IsNotificationCenterOpen = !IsNotificationCenterOpen;
         if (IsNotificationCenterOpen)
         {
-            IsSettingsDialogOpen = false;
             MarkAllNotificationsRead();
             _setStatusMessage("这里展示近期动态和提醒。");
             return;

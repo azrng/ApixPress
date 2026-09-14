@@ -12,6 +12,9 @@ public static class OpenApiJsonParser
         "get", "post", "put", "delete", "patch", "options", "head"
     ];
 
+    // 复用序列化选项：System.Text.Json 按 options 缓存元数据，循环内每次 new 会反复重建缓存
+    private static readonly JsonSerializerOptions IndentedJsonOptions = new() { WriteIndented = true };
+
     public static ParsedDocumentGraph Parse(string json, string sourceType, string sourceValue)
     {
         using var document = JsonDocument.Parse(json);
@@ -232,7 +235,7 @@ public static class OpenApiJsonParser
         {
             if (jsonContent.TryGetProperty("example", out var example))
             {
-                return new RequestBodySeed(BodyModes.RawJson, JsonSerializer.Serialize(example, new JsonSerializerOptions { WriteIndented = true }));
+                return new RequestBodySeed(BodyModes.RawJson, JsonSerializer.Serialize(example, IndentedJsonOptions));
             }
 
             if (jsonContent.TryGetProperty("examples", out var examples)
@@ -242,7 +245,7 @@ public static class OpenApiJsonParser
                 {
                     if (exampleItem.Value.TryGetProperty("value", out var exampleValue))
                     {
-                        return new RequestBodySeed(BodyModes.RawJson, JsonSerializer.Serialize(exampleValue, new JsonSerializerOptions { WriteIndented = true }));
+                        return new RequestBodySeed(BodyModes.RawJson, JsonSerializer.Serialize(exampleValue, IndentedJsonOptions));
                     }
                 }
             }
@@ -252,7 +255,7 @@ public static class OpenApiJsonParser
                 var exampleValue = BuildSchemaExampleValue(jsonSchema, root, 0);
                 if (exampleValue is not null)
                 {
-                    return new RequestBodySeed(BodyModes.RawJson, JsonSerializer.Serialize(exampleValue, new JsonSerializerOptions { WriteIndented = true }));
+                    return new RequestBodySeed(BodyModes.RawJson, JsonSerializer.Serialize(exampleValue, IndentedJsonOptions));
                 }
             }
         }

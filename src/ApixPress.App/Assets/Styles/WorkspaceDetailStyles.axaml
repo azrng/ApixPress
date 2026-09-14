@@ -103,13 +103,44 @@
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
-  <Style Selector="ProgressBar.HttpResponseLoadingProgress">
-    <Setter Property="Height" Value="4" />
-  </Style>
-
   <Style Selector="TextBlock.HttpResponseLoadingText">
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextAlignment" Value="Center" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpResponseLoadingHint">
+    <Setter Property="TextAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- 响应 Headers 只读键值表（对齐原型 kv-grid） -->
+  <Style Selector="Border.HttpResponseKvGrid">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseKvRow">
+    <Setter Property="Padding" Value="12,7" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpResponseKvKey">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpResponseKvValue">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
   <Style Selector="Button.HttpResponseCancelButton">
@@ -205,8 +236,68 @@
   </Style>
 
   <Style Selector="Border.HistoryListCard">
-    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
     <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <!-- 日期分组标题行（对齐原型 h-group-cap） -->
+  <Style Selector="Grid.HistoryGroupHeaderRow">
+    <Setter Property="Margin" Value="2,4,2,0" />
+  </Style>
+
+  <!-- 历史行悬停操作：默认隐藏，行 hover 显示（对齐原型 h-actions） -->
+  <Style Selector="Button.HistoryRowAction">
+    <Setter Property="Width" Value="22" />
+    <Setter Property="Height" Value="22" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="Opacity" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Grid.HistoryItemRoot:pointerover Button.HistoryRowAction">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
+  <Style Selector="Button.HistoryRowAction:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Button.HistoryRowActionDanger:pointerover">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Danger}" />
+  </Style>
+
+  <!-- 两段式清空按钮：待确认态变红填充（对齐原型 case-op armed） -->
+  <Style Selector="Button.HistoryClearButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="10,4" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+  </Style>
+
+  <Style Selector="Button.HistoryClearButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Button.HistoryClearButton.HistoryClearArmed">
+    <Setter Property="Background" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
   <Style Selector="ListBox.HistoryListBox ListBoxItem:pointerover Border.HistoryListCard">
@@ -226,6 +317,14 @@
 
   <Style Selector="Border.HistoryRequestDetailCard">
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <!-- 「实际请求」tab 的键值文本：等宽字体，弱化为次级色 -->
+  <Style Selector="TextBlock.HistoryRequestKvValue">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
   <Style Selector="TabControl.HistoryRequestDetailTabs">

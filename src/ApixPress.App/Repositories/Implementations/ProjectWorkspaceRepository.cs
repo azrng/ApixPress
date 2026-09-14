@@ -96,21 +96,25 @@ public sealed class ProjectWorkspaceRepository : IProjectWorkspaceRepository, IT
 
     public async Task SetDefaultAsync(string id, CancellationToken cancellationToken)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+        // 连接打开、事务与提交整体放入线程池：Commit 不阻塞 UI 线程
+        await Task.Run(async () =>
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
 
-        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-            "update projects set is_default = 0 where is_default = 1",
-            transaction: transaction,
-            cancellationToken: cancellationToken)));
-        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-            "update projects set is_default = 1, updated_at = @UpdatedAt where id = @Id",
-            new { Id = id, UpdatedAt = DateTime.UtcNow },
-            transaction,
-            cancellationToken: cancellationToken)));
+            await connection.ExecuteAsync(new CommandDefinition(
+                "update projects set is_default = 0 where is_default = 1",
+                transaction: transaction,
+                cancellationToken: cancellationToken));
+            await connection.ExecuteAsync(new CommandDefinition(
+                "update projects set is_default = 1, updated_at = @UpdatedAt where id = @Id",
+                new { Id = id, UpdatedAt = DateTime.UtcNow },
+                transaction,
+                cancellationToken: cancellationToken));
 
-        transaction.Commit();
+            transaction.Commit();
+        });
     }
 
     public async Task DeleteAsync(string id, CancellationToken cancellationToken)

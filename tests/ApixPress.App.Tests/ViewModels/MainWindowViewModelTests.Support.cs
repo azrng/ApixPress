@@ -28,7 +28,8 @@ public sealed partial class MainWindowViewModelTests
         IApplicationRestartService? applicationRestartService = null,
         IEnvironmentVariableService? environmentVariableService = null,
         IApiWorkspaceService? apiWorkspaceService = null,
-        FakeAppNotificationService? appNotificationService = null)
+        FakeAppNotificationService? appNotificationService = null,
+        ViewModelSharedTestDoubles.FakeDialogService? dialogService = null)
     {
         return new MainWindowViewModel(
             new FakeRequestExecutionService(),
@@ -45,7 +46,9 @@ public sealed partial class MainWindowViewModelTests
             appNotificationService ?? new FakeAppNotificationService(),
             new FakeProjectDataExportService(),
             new FakeProjectHttpSettingsService(),
-            new FakeWindowHostService());
+            new ViewModelSharedTestDoubles.FakeClipboardService(),
+            new FakeWindowHostService(),
+            dialogService ?? new ViewModelSharedTestDoubles.FakeDialogService());
     }
 
     private sealed class FakeProjectWorkspaceService : IProjectWorkspaceService

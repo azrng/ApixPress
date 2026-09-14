@@ -34,17 +34,18 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    private async Task SaveHttpCaseAsync()
+    private Task SaveHttpCaseAsync()
     {
         if (ActiveProjectTab is null)
         {
             StatusMessage = "请先打开一个项目标签页。";
-            return;
+            return Task.CompletedTask;
         }
 
-        await ActiveProjectTab.Workflow.SaveHttpCaseAsync();
+        ActiveProjectTab.OpenHttpCaseSaveDialog();
         StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
+        return Task.CompletedTask;
     }
 
     [RelayCommand]

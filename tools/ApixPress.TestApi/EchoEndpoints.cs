@@ -19,37 +19,51 @@ internal static class EchoEndpoints
             app.MapMethods($"/{verb}", AllMethods, async (HttpContext context) =>
             {
                 return Results.Json(await BuildEchoAsync(context));
-            });
+            }).WithTags("回显类")
+                .WithSummary($"{verb.ToUpperInvariant()} 回显请求详情")
+                .WithDescription("原样回显真实请求方法、query、headers、cookies、请求体与 JSON/表单解析结果");
         }
 
         app.MapMethods("/anything", AllMethods, async (HttpContext context) =>
         {
             return Results.Json(await BuildEchoAsync(context));
-        });
+        }).WithTags("回显类")
+            .WithSummary("任意路径回显请求详情")
+            .WithDescription("回显内容与 /get 一致");
         app.MapMethods("/anything/{**path}", AllMethods, async (HttpContext context) =>
         {
             return Results.Json(await BuildEchoAsync(context));
-        });
+        }).WithTags("回显类")
+            .WithSummary("任意子路径回显请求详情")
+            .WithDescription("通配 /anything/ 后的任意子路径，回显内容与 /get 一致");
 
         app.MapMethods("/headers", AllMethods, (HttpContext context) => Results.Json(new
         {
             headers = context.Request.Headers.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray())
-        }));
+        })).WithTags("回显类")
+            .WithSummary("返回请求头集合")
+            .WithDescription("以键值对形式返回客户端发送的全部请求头");
 
         app.MapGet("/ip", (HttpContext context) => Results.Json(new
         {
             origin = context.Connection.RemoteIpAddress?.ToString()
-        }));
+        })).WithTags("回显类")
+            .WithSummary("返回客户端 IP")
+            .WithDescription("origin 字段为连接的远程 IP 地址");
 
         app.MapGet("/user-agent", (HttpContext context) => Results.Json(new
         {
             userAgent = context.Request.Headers.UserAgent.ToString()
-        }));
+        })).WithTags("回显类")
+            .WithSummary("返回 User-Agent")
+            .WithDescription("返回请求头 User-Agent 的原始值");
 
         app.MapGet("/uuid", () => Results.Json(new
         {
             uuid = Guid.NewGuid()
-        }));
+        })).WithTags("回显类")
+            .WithSummary("返回随机 GUID")
+            .WithDescription("每次请求生成新的 UUID v4");
     }
 
     /// <summary>构建统一回显载荷：表单与文件、原始请求体、JSON 解析结果互斥处理。</summary>

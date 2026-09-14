@@ -7,6 +7,9 @@ namespace ApixPress.App.ViewModels;
 
 public partial class RequestHistoryItemViewModel : ViewModelBase
 {
+    // 大请求体快照全文进 TextBox 会拖慢排版：预览截断，与响应侧展示策略保持一致
+    private const int MaxRequestBodyPreviewCharacters = 100 * 1024;
+
     public required string Id { get; init; }
     public required string Method { get; init; }
     public required string Url { get; init; }
@@ -58,6 +61,20 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
     public bool HasRequestParameters => HasQueryParameters || HasPathParameters;
     public bool HasRequestHeaders => RequestSnapshot.Headers.Count > 0;
     public bool HasRequestBody => !string.IsNullOrWhiteSpace(RequestSnapshot.BodyContent);
+
+    public string RequestBodyDisplayText
+    {
+        get
+        {
+            var body = RequestSnapshot.BodyContent;
+            if (string.IsNullOrEmpty(body) || body.Length <= MaxRequestBodyPreviewCharacters)
+            {
+                return body;
+            }
+
+            return $"{body[..MaxRequestBodyPreviewCharacters]}\n……（快照过长，仅展示前 {MaxRequestBodyPreviewCharacters} 字符）";
+        }
+    }
 
     partial void OnHasResponseChanged(bool value)
     {

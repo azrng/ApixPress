@@ -208,55 +208,55 @@
                     </Grid>
                   </Border>
 
-                  <Grid Grid.Row="1">
-                    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                                  IsVisible="{Binding InterfaceRoot.HasHttpInterfaces}">
-                      <ItemsControl Classes="InterfaceRootTableRows"
-                                    HorizontalAlignment="Stretch"
-                                    ItemsSource="{Binding InterfaceRoot.HttpInterfaces}">
-                        <ItemsControl.ItemTemplate>
-                          <DataTemplate x:DataType="vm:ProjectHttpInterfaceOverviewItemViewModel">
-                            <Button Classes="InterfaceRootTableRowButton"
-                                    HorizontalAlignment="Stretch"
-                                    Command="{Binding OpenCommand}">
-                              <Grid ColumnDefinitions="32,2.2*,82,2.4*,1.5*,90,110"
-                                    ColumnSpacing="{StaticResource Space.3}">
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding Name}"
-                                           TextTrimming="CharacterEllipsis" />
-                                <TextBlock Grid.Column="2"
-                                           Classes="InterfaceRootMethodText"
-                                           Classes.HttpMethodGet="{Binding IsGetMethod}"
-                                           Classes.HttpMethodPost="{Binding IsPostMethod}"
-                                           Classes.HttpMethodPut="{Binding IsPutMethod}"
-                                           Classes.HttpMethodDelete="{Binding IsDeleteMethod}"
-                                           Classes.HttpMethodPatch="{Binding IsPatchMethod}"
-                                           Text="{Binding Method}" />
-                                <TextBlock Grid.Column="3"
-                                           Text="{Binding Path}"
-                                           TextTrimming="CharacterEllipsis" />
-                                <TextBlock Grid.Column="4"
-                                           Text="{Binding GroupPath}"
-                                           TextTrimming="CharacterEllipsis" />
-                                <StackPanel Grid.Column="5"
-                                            Orientation="Horizontal"
-                                            Spacing="{StaticResource Space.1}">
-                                  <Border Classes="InterfaceRootStatusDot" />
-                                  <TextBlock Text="{Binding StatusText}" />
-                                </StackPanel>
-                                <Border Grid.Column="6"
-                                        Classes="InterfaceRootTag">
-                                  <TextBlock Text="{Binding TagText}"
-                                             TextTrimming="CharacterEllipsis" />
-                                </Border>
-                              </Grid>
-                            </Button>
-                          </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                      </ItemsControl>
-                    </ScrollViewer>
+                  <!-- ListBox 自带虚拟化面板：接口多时只物化可视行，避免全量构建行容器 -->
+                  <ListBox Grid.Row="1"
+                           Classes="InterfaceRootTableRows"
+                           HorizontalAlignment="Stretch"
+                           IsVisible="{Binding InterfaceRoot.HasHttpInterfaces}"
+                           ItemsSource="{Binding InterfaceRoot.HttpInterfaces}">
+                    <ListBox.ItemTemplate>
+                      <DataTemplate x:DataType="vm:ProjectHttpInterfaceOverviewItemViewModel">
+                        <Button Classes="InterfaceRootTableRowButton"
+                                HorizontalAlignment="Stretch"
+                                Command="{Binding OpenCommand}">
+                          <Grid ColumnDefinitions="32,2.2*,82,2.4*,1.5*,90,110"
+                                ColumnSpacing="{StaticResource Space.3}">
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding Name}"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Grid.Column="2"
+                                       Classes="InterfaceRootMethodText"
+                                       Classes.HttpMethodGet="{Binding IsGetMethod}"
+                                       Classes.HttpMethodPost="{Binding IsPostMethod}"
+                                       Classes.HttpMethodPut="{Binding IsPutMethod}"
+                                       Classes.HttpMethodDelete="{Binding IsDeleteMethod}"
+                                       Classes.HttpMethodPatch="{Binding IsPatchMethod}"
+                                       Text="{Binding Method}" />
+                            <TextBlock Grid.Column="3"
+                                       Text="{Binding Path}"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Grid.Column="4"
+                                       Text="{Binding GroupPath}"
+                                       TextTrimming="CharacterEllipsis" />
+                            <StackPanel Grid.Column="5"
+                                        Orientation="Horizontal"
+                                        Spacing="{StaticResource Space.1}">
+                              <Border Classes="InterfaceRootStatusDot" />
+                              <TextBlock Text="{Binding StatusText}" />
+                            </StackPanel>
+                            <Border Grid.Column="6"
+                                    Classes="InterfaceRootTag">
+                              <TextBlock Text="{Binding TagText}"
+                                         TextTrimming="CharacterEllipsis" />
+                            </Border>
+                          </Grid>
+                        </Button>
+                      </DataTemplate>
+                    </ListBox.ItemTemplate>
+                  </ListBox>
 
-                    <Border Classes="InterfaceRootEmptyState"
+                    <Border Grid.Row="1"
+                            Classes="InterfaceRootEmptyState"
                             IsVisible="{Binding InterfaceRoot.ShowHttpInterfacesEmptyState}">
                       <StackPanel Spacing="{StaticResource Space.2}"
                                   HorizontalAlignment="Center"
@@ -267,7 +267,6 @@
                                    Text="保存 HTTP 接口后会显示在这里。" />
                       </StackPanel>
                     </Border>
-                  </Grid>
                 </Grid>
               </Border>
             </Grid>

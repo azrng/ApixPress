@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -9,10 +10,12 @@ using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
 using Azrng.Core.Results;
+using Irihi.Avalonia.Shared.Contracts;
+using Ursa.Controls;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
+public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogContext
 {
     private const string ImportedEndpointKeyPrefix = "swagger-import:";
     private const int InterfaceSearchDebounceMilliseconds = 250;
@@ -26,6 +29,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     private readonly Action _showInterfaceManagementSection;
     private readonly IMessenger _messenger;
     private readonly Func<Task> _reloadImportedDocumentsAsync;
+    private readonly IDialogService _dialogService;
     private CancellationTokenSource? _interfaceSearchDebounceCancellationTokenSource;
     private int _navigationRebuildSuspendCount;
     private bool _interfaceNavigationRebuildPending;
@@ -40,7 +44,8 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         Func<Task> openInterfaceRootWorkspaceAsync,
         Action showInterfaceManagementSection,
         IMessenger messenger,
-        Func<Task> reloadImportedDocumentsAsync)
+        Func<Task> reloadImportedDocumentsAsync,
+        IDialogService dialogService)
     {
         _projectId = projectId;
         _requestCaseService = requestCaseService;
@@ -51,12 +56,22 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         _showInterfaceManagementSection = showInterfaceManagementSection;
         _messenger = messenger;
         _reloadImportedDocumentsAsync = reloadImportedDocumentsAsync;
+        _dialogService = dialogService;
 
         _useCasesPanel.RequestCases.CollectionChanged += OnSavedRequestsCollectionChanged;
     }
 
     public ObservableCollection<ExplorerItemViewModel> InterfaceTreeItems { get; } = [];
     public ObservableCollection<ExplorerItemViewModel> QuickRequestTreeItems { get; } = [];
+
+    /// <summary>
+    /// 接口树扁平化后的可见行，供 ListBox + VirtualizingStackPanel 虚拟化展示。
+    /// Avalonia TreeView 子层级无法虚拟化，151+ 接口时展开需要一次性实例化全部行导致卡顿，
+    /// 因此树模型（InterfaceTreeItems）仍是唯一事实，这里仅派生当前展开状态下的可见行。
+    /// </summary>
+    public ObservableCollection<ExplorerItemViewModel> InterfaceFlatRows { get; } = [];
+
+    private readonly List<ExplorerItemViewModel> _flatRowSubscriptions = [];
     public ObservableCollection<RequestCaseItemViewModel> SavedRequests => _useCasesPanel.RequestCases;
     public IReadOnlyList<ExplorerItemViewModel> InterfaceCatalogItems => InterfaceTreeItems.FirstOrDefault()?.Children ?? [];
     public bool HasQuickRequestEntries => SavedRequests.Any(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase));
@@ -100,11 +115,10 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     [ObservableProperty]
     private bool isQuickRequestCatalogExpanded = true;
 
-    [ObservableProperty]
-    private bool isDeleteConfirmDialogOpen;
+    /// <summary>删除确认 / 新建目录弹窗共用异步关闭通道（两者同为模态，不会同时打开）。</summary>
+    public event EventHandler<object?>? RequestClose;
 
-    [ObservableProperty]
-    private bool isCreateFolderDialogOpen;
+    public void Close() => RequestClose?.Invoke(this, null);
 
     [ObservableProperty]
     private string folderNameInput = string.Empty;
@@ -126,6 +140,8 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         DisposeExplorerItems(QuickRequestTreeItems);
         InterfaceTreeItems.Clear();
         QuickRequestTreeItems.Clear();
+        UnsubscribeFlatRows();
+        InterfaceFlatRows.Clear();
     }
 
     public async Task LoadWorkspaceItem(ExplorerItemViewModel? item)
@@ -157,7 +173,12 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         var source = item.SourceCase;
         _showInterfaceManagementSection();
         var targetTab = _workspace.ResolveTabForWorkspaceNavigation(source);
-        ApplyWorkspaceItemToTab(targetTab, source);
+        // 标签已在编辑该用例且有未保存修改时只激活不回填：旧快照覆盖编辑器状态会导致保存出陈旧数据
+        if (!IsTabStillEditingSource(targetTab, source) || !targetTab.HasUnsavedChanges)
+        {
+            ApplyWorkspaceItemToTab(targetTab, source);
+        }
+
         _workspace.ActivateWorkspaceTab(targetTab);
         _messenger.Send(new StatusMessageRequest(source.EntryType switch
         {
@@ -177,9 +198,15 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
 
     public Task OpenHttpInterfaceAsync(RequestCaseDto source)
     {
+        return LoadSavedRequestAsync(source);
+    }
+
+    /// <summary>从用例抽屉加载已保存请求，复用接口树的标签和详情加载流程。</summary>
+    public Task LoadSavedRequestAsync(RequestCaseDto source)
+    {
         var item = new ExplorerItemViewModel
         {
-            NodeType = ProjectTabRequestEntryTypes.HttpInterface,
+            NodeType = source.EntryType,
             CanLoad = true,
             SourceCase = source
         };
@@ -261,23 +288,25 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         await _openInterfaceRootWorkspaceAsync();
     }
 
-    /// <summary>打开“新建目录”弹窗；parentFolderPath 为空表示在根目录创建。</summary>
+    /// <summary>打开“新建目录”弹窗；parentFolderPath 为空表示在根目录创建。取消或 chrome 关闭时重置草稿。</summary>
     [RelayCommand]
-    private void RequestCreateFolderDialog(string? parentFolderPath)
+    private async Task RequestCreateFolderDialogAsync(string? parentFolderPath)
     {
         PendingCreateFolderParentPath = ProjectWorkspaceTreeBuilder.NormalizeFolderPath(parentFolderPath ?? string.Empty);
         FolderNameInput = string.Empty;
-        IsCreateFolderDialogOpen = true;
         _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+        var result = await _dialogService.ShowDialogAsync<Views.Controls.WorkspaceCreateFolderDialogView>(this, "新建目录");
+        if (result != DialogResult.OK)
+        {
+            FolderNameInput = string.Empty;
+            PendingCreateFolderParentPath = string.Empty;
+        }
     }
 
     [RelayCommand]
     private void CancelCreateFolder()
     {
-        FolderNameInput = string.Empty;
-        PendingCreateFolderParentPath = string.Empty;
-        IsCreateFolderDialogOpen = false;
-        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+        RequestClose?.Invoke(this, DialogResult.Cancel);
     }
 
     [RelayCommand]
@@ -295,13 +324,14 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         UpsertCaseItem(result.Data);
         FolderNameInput = string.Empty;
         PendingCreateFolderParentPath = string.Empty;
-        IsCreateFolderDialogOpen = false;
+        RequestClose?.Invoke(this, DialogResult.OK);
         _messenger.Send(new StatusMessageRequest($"已创建目录：{result.Data.Name}"));
         _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
+    /// <summary>打开删除确认弹窗；确认后执行删除，取消或 chrome 关闭时清空待删目标。</summary>
     [RelayCommand]
-    private void RequestDeleteWorkspaceTreeItem(ExplorerItemViewModel? item)
+    private async Task RequestDeleteWorkspaceTreeItemAsync(ExplorerItemViewModel? item)
     {
         if (item is null || !item.CanDelete)
         {
@@ -309,18 +339,21 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         }
 
         PendingDeleteWorkspaceItem = item;
-        IsDeleteConfirmDialogOpen = true;
         _messenger.Send(new StatusMessageRequest($"准备删除：{item.Title}"));
         _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+        var result = await _dialogService.ShowDialogAsync<Views.Controls.WorkspaceDeleteConfirmDialogView>(this, "确认删除");
+        if (result != DialogResult.OK)
+        {
+            PendingDeleteWorkspaceItem = null;
+            _messenger.Send(new StatusMessageRequest("已取消删除。"));
+            _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+        }
     }
 
     [RelayCommand]
     private void CancelDelete()
     {
-        PendingDeleteWorkspaceItem = null;
-        IsDeleteConfirmDialogOpen = false;
-        _messenger.Send(new StatusMessageRequest("已取消删除。"));
-        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+        RequestClose?.Invoke(this, DialogResult.Cancel);
     }
 
     [RelayCommand]
@@ -328,14 +361,14 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
     {
         if (PendingDeleteWorkspaceItem is null)
         {
-            IsDeleteConfirmDialogOpen = false;
+            RequestClose?.Invoke(this, DialogResult.None);
             _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return;
         }
 
         var item = PendingDeleteWorkspaceItem;
         PendingDeleteWorkspaceItem = null;
-        IsDeleteConfirmDialogOpen = false;
+        RequestClose?.Invoke(this, DialogResult.OK);
         await DeleteWorkspaceItemAsync(item);
     }
 
@@ -412,6 +445,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
                 HasInterfaceSearchText)]);
         OnPropertyChanged(nameof(InterfaceCatalogItems));
         OnPropertyChanged(nameof(ShowInterfaceEntriesEmptyState));
+        RebuildInterfaceFlatRows();
     }
 
     private void RebuildQuickRequestNavigation()
@@ -421,8 +455,109 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
             ProjectWorkspaceTreeBuilder.BuildQuickRequests(SavedRequests, RequestDeleteWorkspaceTreeItemCommand));
     }
 
-    private IReadOnlyList<RequestCaseItemViewModel> ResolveInterfaceNavigationItems()
+    /// <summary>按当前展开状态全量重建扁平可见行（树重建、搜索过滤后走这里）。</summary>
+    private void RebuildInterfaceFlatRows()
     {
+        UnsubscribeFlatRows();
+        InterfaceFlatRows.Clear();
+        if (InterfaceTreeItems.Count > 0)
+        {
+            AppendInterfaceFlatRows(InterfaceTreeItems[0].Children, depth: 0, insertIndex: 0);
+        }
+        OnPropertyChanged(nameof(InterfaceFlatRows));
+    }
+
+    /// <summary>把 nodes 及其已展开的后代按顺序写入扁平行列表，返回最后一个写入位置。</summary>
+    private int AppendInterfaceFlatRows(IReadOnlyList<ExplorerItemViewModel> nodes, int depth, int insertIndex)
+    {
+        foreach (var node in nodes)
+        {
+            node.DisplayDepth = depth;
+            InterfaceFlatRows.Insert(insertIndex, node);
+            TrackFlatRow(node);
+            insertIndex++;
+            if (node.IsExpanded && node.AreChildrenLoaded)
+            {
+                insertIndex = AppendInterfaceFlatRows(node.Children, depth + 1, insertIndex);
+            }
+        }
+
+        return insertIndex;
+    }
+
+    /// <summary>展开/收起只增量维护可见行，避免整表 Reset 导致滚动位置丢失与全行重建。</summary>
+    private void OnFlatRowPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (IsDisposed
+            || sender is not ExplorerItemViewModel node
+            || !string.Equals(e.PropertyName, nameof(ExplorerItemViewModel.IsExpanded), StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var rowIndex = InterfaceFlatRows.IndexOf(node);
+        if (rowIndex < 0)
+        {
+            RebuildInterfaceFlatRows();
+            return;
+        }
+
+        RemoveFlatDescendantRows(node);
+        if (node.IsExpanded)
+        {
+            // OnIsExpandedChanged 已触发延迟子级加载，这里兜底幂等
+            node.EnsureChildrenLoaded();
+            AppendInterfaceFlatRows(node.Children, node.DisplayDepth + 1, rowIndex + 1);
+        }
+    }
+
+    private void RemoveFlatDescendantRows(ExplorerItemViewModel node)
+    {
+        var descendants = new HashSet<ExplorerItemViewModel>();
+        CollectDescendants(node, descendants);
+        for (var index = InterfaceFlatRows.Count - 1; index >= 0; index--)
+        {
+            var row = InterfaceFlatRows[index];
+            if (descendants.Contains(row))
+            {
+                UntrackFlatRow(row);
+                InterfaceFlatRows.RemoveAt(index);
+            }
+        }
+    }
+
+    private static void CollectDescendants(ExplorerItemViewModel node, HashSet<ExplorerItemViewModel> into)
+    {
+        foreach (var child in node.Children)
+        {
+            into.Add(child);
+            CollectDescendants(child, into);
+        }
+    }
+
+    private void TrackFlatRow(ExplorerItemViewModel node)
+    {
+        node.PropertyChanged += OnFlatRowPropertyChanged;
+        _flatRowSubscriptions.Add(node);
+    }
+
+    private void UntrackFlatRow(ExplorerItemViewModel node)
+    {
+        node.PropertyChanged -= OnFlatRowPropertyChanged;
+        _flatRowSubscriptions.Remove(node);
+    }
+
+    private void UnsubscribeFlatRows()
+    {
+        foreach (var node in _flatRowSubscriptions)
+        {
+            node.PropertyChanged -= OnFlatRowPropertyChanged;
+        }
+
+        _flatRowSubscriptions.Clear();
+    }
+
+    private IReadOnlyList<RequestCaseItemViewModel> ResolveInterfaceNavigationItems()    {
         var keyword = InterfaceSearchText.Trim();
         if (string.IsNullOrWhiteSpace(keyword))
         {
@@ -576,11 +711,8 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
         RunWithNavigationRebuildSuppressed(() =>
         {
             RemoveCases(syncResult.DeletedCaseIds);
-
-            foreach (var requestCase in syncResult.UpsertedCases)
-            {
-                UpsertCaseItem(requestCase);
-            }
+            // 导入 N 个接口一次批量落集合：单次 Reset，避免逐条 Upsert 触发 2N 次级联重建
+            _useCasesPanel.UpsertCases(syncResult.UpsertedCases);
         });
     }
 
@@ -696,7 +828,8 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase
             await Task.Yield();
             var detail = await EnsureCaseDetailLoadedAsync(item);
             if (string.Equals(detail.Id, source.Id, StringComparison.OrdinalIgnoreCase)
-                && IsTabStillEditingSource(targetTab, source))
+                && IsTabStillEditingSource(targetTab, source)
+                && !targetTab.HasUnsavedChanges)
             {
                 ApplyWorkspaceItemToTab(targetTab, detail);
                 _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));

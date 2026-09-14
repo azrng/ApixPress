@@ -6,8 +6,8 @@
              x:Class="ApixPress.App.Views.Controls.ProjectSettingsWorkspaceView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <Grid ColumnDefinitions="286,*"
-        ColumnSpacing="{StaticResource Space.3}"
+  <Grid ColumnDefinitions="220,*"
+        ColumnSpacing="{StaticResource Space.Shell}"
         Panel.ZIndex="1"
         IsVisible="{Binding Shell.IsProjectSettingsSection}">
     <Border Grid.Column="0"
@@ -114,13 +114,17 @@
                       </Border>
 
                       <Border Classes="ProjectSettingsBasicRow">
-                        <Grid ColumnDefinitions="180,*"
+                        <Grid ColumnDefinitions="180,*,Auto"
                               ColumnSpacing="{StaticResource Space.4}">
                           <TextBlock Classes="ProjectSettingsRowLabel"
                                      Text="项目 ID" />
                           <TextBlock Grid.Column="1"
                                      Text="{Binding ProjectId}"
                                      VerticalAlignment="Center" />
+                          <Button Grid.Column="2"
+                                  Classes="ProjectSettingsInlineActionButton"
+                                  Content="复制"
+                                  Command="{Binding Settings.CopyProjectIdCommand}" />
                         </Grid>
                       </Border>
 

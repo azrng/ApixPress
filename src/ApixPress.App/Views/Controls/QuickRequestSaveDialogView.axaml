@@ -5,52 +5,43 @@
              xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.QuickRequestSaveDialogView"
-             x:DataType="vm:MainWindowViewModel"
+             x:DataType="vm:ProjectQuickRequestSaveViewModel"
              mc:Ignorable="d">
-  <Border Classes="CreateProjectDialogBackdrop"
-          IsVisible="{Binding ShowQuickRequestSaveDialog}">
-    <Grid HorizontalAlignment="Center"
-          VerticalAlignment="Center">
-      <Border Classes="QuickRequestSaveDialogCard">
-        <Grid RowDefinitions="Auto,Auto,Auto"
-              RowSpacing="{StaticResource Space.3}">
-          <StackPanel Spacing="2">
-            <TextBlock Classes="DialogTitle"
-                       Text="保存快捷请求" />
-            <TextBlock Classes="CaptionText"
-                       Text="保存时再输入名称，已保存的快捷请求会继续保留在左侧目录中。" />
-          </StackPanel>
+  <!-- 弹窗 chrome 由 Ursa StandardDialogControl 提供；DataContext 为快捷请求保存 VM -->
+  <Border Classes="QuickRequestSaveDialogCard">
+    <Grid RowDefinitions="Auto,Auto,Auto"
+          RowSpacing="{StaticResource Space.3}">
+      <TextBlock Classes="CaptionText"
+                 Text="保存时再输入名称，已保存的快捷请求会继续保留在左侧目录中。" />
 
-          <Border Grid.Row="1"
-                  Classes="CreateProjectFormShell">
-            <u:Form LabelPosition="Top">
-              <TextBox Classes="SectionInput DialogInput"
-                       u:FormItem.Label="快捷请求名称"
-                       PlaceholderText="请输入保存名称"
-                       Text="{Binding ActiveProjectTab.QuickRequestSave.DraftName}" />
-              <TextBox Classes="SectionInput DialogInput"
-                       u:FormItem.Label="备注"
-                       AcceptsReturn="True"
-                       Height="96"
-                       TextWrapping="Wrap"
-                       PlaceholderText="可选，补充请求用途说明"
-                       Text="{Binding ActiveProjectTab.QuickRequestSave.DraftDescription}" />
-            </u:Form>
-          </Border>
-
-          <StackPanel Grid.Row="2"
-                      Orientation="Horizontal"
-                      HorizontalAlignment="Right"
-                      Spacing="{StaticResource Space.2}">
-            <Button Classes="DialogSecondaryButton"
-                    Content="取消"
-                    Command="{Binding ActiveProjectTab.QuickRequestSave.CloseDialogCommand}" />
-            <Button Classes="DialogPrimaryButton"
-                    Content="保存"
-                    Command="{Binding ActiveProjectTab.QuickRequestSave.ConfirmSaveCommand}" />
-          </StackPanel>
-        </Grid>
+      <Border Grid.Row="1"
+              Classes="CreateProjectFormShell">
+        <u:Form LabelPosition="Top">
+          <TextBox Classes="SectionInput DialogInput"
+                   u:FormItem.Label="快捷请求名称"
+                   PlaceholderText="请输入保存名称"
+                   Text="{Binding DraftName}" />
+          <TextBox Classes="SectionInput DialogInput"
+                   u:FormItem.Label="备注"
+                   AcceptsReturn="True"
+                   Height="96"
+                   TextWrapping="Wrap"
+                   PlaceholderText="可选，补充请求用途说明"
+                   Text="{Binding DraftDescription}" />
+        </u:Form>
       </Border>
+
+      <StackPanel Grid.Row="2"
+                  Orientation="Horizontal"
+                  HorizontalAlignment="Right"
+                  Spacing="{StaticResource Space.2}">
+        <Button Classes="DialogSecondaryButton"
+                Content="取消"
+                Command="{Binding CloseDialogCommand}" />
+        <Button Classes="DialogPrimaryButton"
+                Content="保存"
+                Command="{Binding ConfirmSaveCommand}" />
+      </StackPanel>
     </Grid>
   </Border>
 </UserControl>

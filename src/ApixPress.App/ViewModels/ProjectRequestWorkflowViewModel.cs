@@ -194,10 +194,15 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         var requestName = string.IsNullOrWhiteSpace(requestNameOverride)
             ? workspaceTab.ResolveRequestName()
             : requestNameOverride.Trim();
+        // 名称相对上次保存发生变化时按新用例入库：改个名字就静默覆盖旧用例不符合“保存不同用例”的预期
+        var savedName = workspaceTab.SavedQuickRequestName;
+        var savesAsNewCase = !string.IsNullOrEmpty(workspaceTab.EditingQuickRequestId)
+            && !string.IsNullOrWhiteSpace(savedName)
+            && !string.Equals(savedName, requestName, StringComparison.Ordinal);
         var snapshot = workspaceTab.BuildSnapshot(requestName);
         var result = await _requestCaseService.SaveAsync(new RequestCaseDto
         {
-            Id = workspaceTab.EditingQuickRequestId,
+            Id = savesAsNewCase ? string.Empty : workspaceTab.EditingQuickRequestId,
             ProjectId = _projectId,
             EntryType = ProjectTabRequestEntryTypes.QuickRequest,
             Name = requestName,
@@ -210,6 +215,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         if (result.IsSuccess && result.Data is not null)
         {
             workspaceTab.EditingQuickRequestId = result.Data.Id;
+            workspaceTab.SavedQuickRequestName = requestName;
             _catalog.UpsertCaseItem(result.Data);
             workspaceTab.MarkCleanState();
             _hostContext.Messenger.Send(new StatusMessageRequest("快捷请求已保存到左侧目录。"));
@@ -232,22 +238,46 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             return;
         }
 
+        await SaveHttpCaseCoreAsync(workspaceTab, caseNameOverride: null);
+    }
+
+    public async Task<bool> SaveHttpCaseNamedAsync(RequestWorkspaceTabViewModel workspaceTab, string caseName)
+    {
+        if (!ReferenceEquals(_workspaceContext.GetActiveWorkspaceTab(), workspaceTab)
+            || !workspaceTab.IsHttpInterfaceTab)
+        {
+            return false;
+        }
+
+        return await SaveHttpCaseCoreAsync(workspaceTab, caseName);
+    }
+
+    private async Task<bool> SaveHttpCaseCoreAsync(
+        RequestWorkspaceTabViewModel workspaceTab,
+        string? caseNameOverride)
+    {
+        if (IsDisposed || !workspaceTab.IsHttpInterfaceTab)
+        {
+            return false;
+        }
+
         _hostContext.Messenger.Send(new NavigationRequestMessage(NavigationTarget.InterfaceManagementSection));
         var savedInterface = await EnsureHttpInterfaceSavedAsync(workspaceTab, reloadAfterSave: false);
         if (savedInterface is null)
         {
-            return;
+            return false;
         }
 
         _catalog.UpsertCaseItem(savedInterface);
 
         var snapshot = workspaceTab.BuildSnapshot();
+        var requestName = BuildHttpCaseName(workspaceTab, caseNameOverride);
         var result = await _requestCaseService.SaveAsync(new RequestCaseDto
         {
             Id = workspaceTab.EditingCaseId,
             ProjectId = _projectId,
             EntryType = ProjectTabRequestEntryTypes.HttpCase,
-            Name = BuildHttpCaseName(workspaceTab),
+            Name = requestName,
             GroupName = "用例",
             FolderPath = ProjectWorkspaceTreeBuilder.NormalizeFolderPath(workspaceTab.InterfaceFolderPath),
             ParentId = savedInterface.Id,
@@ -260,6 +290,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         {
             workspaceTab.EditingCaseId = result.Data.Id;
             workspaceTab.SourceEndpointId = result.Data.RequestSnapshot.EndpointId;
+            workspaceTab.HttpCaseName = requestName;
             _catalog.UpsertCaseItem(result.Data);
             workspaceTab.MarkCleanState();
             _hostContext.Messenger.Send(new StatusMessageRequest("HTTP 接口用例已保存。"));
@@ -270,6 +301,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         }
 
         _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+        return result.IsSuccess && result.Data is not null;
     }
 
     private ProjectEnvironmentDto BuildExecutionEnvironment()
@@ -343,8 +375,13 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         return result.Data;
     }
 
-    private static string BuildHttpCaseName(RequestWorkspaceTabViewModel workspaceTab)
+    private static string BuildHttpCaseName(RequestWorkspaceTabViewModel workspaceTab, string? caseNameOverride)
     {
+        if (!string.IsNullOrWhiteSpace(caseNameOverride))
+        {
+            return caseNameOverride.Trim();
+        }
+
         return string.IsNullOrWhiteSpace(workspaceTab.HttpCaseName)
             ? "成功"
             : workspaceTab.HttpCaseName.Trim();

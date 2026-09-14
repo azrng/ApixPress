@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Helpers;
@@ -11,16 +12,30 @@ namespace ApixPress.App.ViewModels;
 public partial class UseCasesPanelViewModel : ViewModelBase
 {
     private readonly IRequestCaseService _requestCaseService;
+    private readonly ProjectWorkspaceTabsViewModel? _workspace;
     private CancellationTokenSource? _loadCasesCancellationTokenSource;
     private string _currentProjectId = string.Empty;
+    private readonly BatchObservableCollection<RequestCaseItemViewModel> _currentInterfaceCaseItems = [];
+    private RequestWorkspaceTabViewModel? _subscribedActiveWorkspaceTab;
+    private Func<RequestCaseDto, Task>? _loadRequestCaseAsync;
 
     public event Action<RequestSnapshotDto>? CaseApplied;
 
-    public UseCasesPanelViewModel(IRequestCaseService requestCaseService)
+    public UseCasesPanelViewModel(
+        IRequestCaseService requestCaseService,
+        ProjectWorkspaceTabsViewModel? workspace = null)
     {
         _requestCaseService = requestCaseService;
+        _workspace = workspace;
         SelectableCaseItems = new ReadOnlyObservableCollection<RequestCaseItemViewModel>(_selectableCaseItems);
+        CurrentInterfaceCaseItems = new ReadOnlyObservableCollection<RequestCaseItemViewModel>(_currentInterfaceCaseItems);
         RequestCases.CollectionChanged += (_, _) => RefreshSelectableCaseItems();
+
+        if (_workspace is not null)
+        {
+            _workspace.ActiveWorkspaceTabChanged += OnActiveWorkspaceTabChanged;
+            SubscribeActiveWorkspaceTab(_workspace.ActiveWorkspaceTab);
+        }
     }
 
     public BatchObservableCollection<RequestCaseItemViewModel> RequestCases { get; } = [];
@@ -28,7 +43,33 @@ public partial class UseCasesPanelViewModel : ViewModelBase
     /// <summary>可加载/复制的用例列表：目录节点只承载树结构，不出现在用例管理抽屉中。</summary>
     public ReadOnlyObservableCollection<RequestCaseItemViewModel> SelectableCaseItems { get; }
 
-    private readonly ObservableCollection<RequestCaseItemViewModel> _selectableCaseItems = [];
+    /// <summary>当前活动 HTTP 接口下的用例列表，供用例抽屉展示。</summary>
+    public ReadOnlyObservableCollection<RequestCaseItemViewModel> CurrentInterfaceCaseItems { get; }
+
+    public bool HasSelectableCases => SelectableCaseItems.Count > 0;
+    public bool HasCurrentInterfaceCases => CurrentInterfaceCaseItems.Count > 0;
+    public bool HasCurrentHttpInterface => _workspace?.ActiveWorkspaceTab?.IsHttpInterfaceTab == true;
+    public string CurrentInterfaceName => _workspace?.ActiveWorkspaceTab is { IsHttpInterfaceTab: true } tab
+        ? tab.ResolveRequestName()
+        : string.Empty;
+    public string CurrentInterfaceMethod => _workspace?.ActiveWorkspaceTab is { IsHttpInterfaceTab: true } tab
+        ? tab.SelectedMethod.ToUpperInvariant()
+        : string.Empty;
+    public string CurrentInterfaceMethodBadgeClass => CurrentInterfaceMethod switch
+    {
+        "GET" => "Light Success",
+        "POST" => "Light Warning",
+        "PUT" => "Light Primary",
+        "DELETE" => "Light Danger",
+        "PATCH" => "Light Success",
+        _ => "Light Secondary"
+    };
+    public string CurrentInterfaceCaseCountText => $"共 {CurrentInterfaceCaseItems.Count} 个用例";
+    public string CurrentInterfaceCaseEmptyStateText => HasCurrentHttpInterface
+        ? "当前接口还没有用例；在请求编辑区填写用例名称后即可保存。"
+        : "请先打开一个 HTTP 接口。";
+
+    private readonly BatchObservableCollection<RequestCaseItemViewModel> _selectableCaseItems = [];
 
     [ObservableProperty]
     private string caseName = string.Empty;
@@ -47,12 +88,20 @@ public partial class UseCasesPanelViewModel : ViewModelBase
     protected override void DisposeManaged()
     {
         CancellationTokenSourceHelper.CancelAndDispose(ref _loadCasesCancellationTokenSource);
+        if (_workspace is not null)
+        {
+            _workspace.ActiveWorkspaceTabChanged -= OnActiveWorkspaceTabChanged;
+        }
+
+        SubscribeActiveWorkspaceTab(null);
+        _loadRequestCaseAsync = null;
         CaseApplied = null;
     }
 
     public void SetProjectContext(string projectId)
     {
         _currentProjectId = projectId;
+        RefreshSelectableCaseItems();
     }
 
     public void ClearProjectContext()
@@ -60,6 +109,12 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         _currentProjectId = string.Empty;
         RequestCases.Clear();
         SelectedRequestCase = null;
+    }
+
+    /// <summary>注入工作区用例加载入口，复用目录加载的标签复用、详情加载和请求回填逻辑。</summary>
+    public void SetRequestCaseLoader(Func<RequestCaseDto, Task> loadRequestCaseAsync)
+    {
+        _loadRequestCaseAsync = loadRequestCaseAsync;
     }
 
     public async Task LoadCasesAsync()
@@ -128,24 +183,80 @@ public partial class UseCasesPanelViewModel : ViewModelBase
     private async Task LoadSelectedCase()
     {
         if (SelectedRequestCase is null) return;
-        var detail = await EnsureCaseDetailLoadedAsync(SelectedRequestCase);
+        await LoadCaseCoreAsync(SelectedRequestCase);
+    }
+
+    [RelayCommand]
+    private async Task LoadCaseAsync(RequestCaseItemViewModel? item)
+    {
+        if (item is null) return;
+        SelectedRequestCase = item;
+        await LoadCaseCoreAsync(item);
+    }
+
+    private async Task LoadCaseCoreAsync(RequestCaseItemViewModel item)
+    {
+        var detail = await EnsureCaseDetailLoadedAsync(item);
         var snapshot = detail.RequestSnapshot;
-        CaseName = SelectedRequestCase.SourceCase.Name;
-        CaseGroupName = SelectedRequestCase.SourceCase.GroupName;
-        ReplaceCaseTags(SelectedRequestCase.SourceCase.Tags);
-        CaseDescription = SelectedRequestCase.SourceCase.Description;
+        CaseName = detail.Name;
+        CaseGroupName = detail.GroupName;
+        ReplaceCaseTags(detail.Tags);
+        CaseDescription = detail.Description;
         CaseApplied?.Invoke(snapshot);
+        if (_loadRequestCaseAsync is not null)
+        {
+            await _loadRequestCaseAsync(detail);
+        }
+    }
+
+    [RelayCommand]
+    private async Task DuplicateCaseAsync(RequestCaseItemViewModel? item)
+    {
+        if (item is null) return;
+        if (string.IsNullOrWhiteSpace(_currentProjectId)) return;
+        var result = await _requestCaseService.DuplicateAsync(_currentProjectId, item.Id, CancellationToken.None);
+        if (result.IsSuccess && result.Data is not null)
+        {
+            UpsertCaseItem(result.Data);
+        }
     }
 
     [RelayCommand]
     private async Task DuplicateSelectedCaseAsync()
     {
         if (SelectedRequestCase is null) return;
-        if (string.IsNullOrWhiteSpace(_currentProjectId)) return;
-        var result = await _requestCaseService.DuplicateAsync(_currentProjectId, SelectedRequestCase.Id, CancellationToken.None);
-        if (result.IsSuccess && result.Data is not null)
+        await DuplicateCaseAsync(SelectedRequestCase);
+    }
+
+    /// <summary>两段式删除：第一次点击武装该卡片，再点执行；武装状态 3 秒后自动还原。</summary>
+    [RelayCommand]
+    private async Task RequestDeleteCaseAsync(RequestCaseItemViewModel? item)
+    {
+        if (item is null) return;
+
+        if (!item.IsDeleteArmed)
         {
-            UpsertCaseItem(result.Data);
+            foreach (var caseItem in RequestCases)
+            {
+                caseItem.IsDeleteArmed = ReferenceEquals(caseItem, item);
+            }
+
+            await Task.Delay(3000);
+            if (!IsDisposed && item.IsDeleteArmed)
+            {
+                item.IsDeleteArmed = false;
+            }
+
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_currentProjectId)) return;
+        await _requestCaseService.DeleteAsync(_currentProjectId, item.Id, CancellationToken.None);
+        item.IsDeleteArmed = false;
+        RemoveCases([item.Id]);
+        if (ReferenceEquals(SelectedRequestCase, item))
+        {
+            SelectedRequestCase = null;
         }
     }
 
@@ -160,6 +271,14 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         SelectedRequestCase = null;
     }
 
+    partial void OnSelectedRequestCaseChanged(RequestCaseItemViewModel? value)
+    {
+        foreach (var caseItem in _selectableCaseItems)
+        {
+            caseItem.IsSelected = ReferenceEquals(caseItem, value);
+        }
+    }
+
     private void ReplaceCaseTags(IEnumerable<string> tags)
     {
         CaseTags.Clear();
@@ -171,20 +290,25 @@ public partial class UseCasesPanelViewModel : ViewModelBase
 
     public void UpsertCaseItem(RequestCaseDto requestCase)
     {
-        var existing = RequestCases.FirstOrDefault(item => string.Equals(item.Id, requestCase.Id, StringComparison.OrdinalIgnoreCase));
-        if (existing is not null)
+        UpsertCases([requestCase]);
+    }
+
+    /// <summary>批量按排序位置插入/更新用例：整体一次 ReplaceWith，导入 N 条只触发一次集合重置。</summary>
+    public void UpsertCases(IEnumerable<RequestCaseDto> requestCases)
+    {
+        var upserts = requestCases as IReadOnlyList<RequestCaseDto> ?? requestCases.ToList();
+        if (upserts.Count == 0)
         {
-            RequestCases.Remove(existing);
+            return;
         }
 
-        var nextItem = CreateRequestCaseItem(requestCase);
-        var insertIndex = 0;
-        while (insertIndex < RequestCases.Count && CompareRequestCaseItems(RequestCases[insertIndex], nextItem) <= 0)
-        {
-            insertIndex++;
-        }
-
-        RequestCases.Insert(insertIndex, nextItem);
+        var upsertIds = upserts.Select(item => item.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var merged = RequestCases
+            .Where(item => !upsertIds.Contains(item.Id))
+            .Concat(upserts.Select(CreateRequestCaseItem))
+            .ToList();
+        merged.Sort((left, right) => CompareRequestCaseItems(left, right));
+        RequestCases.ReplaceWith(merged);
     }
 
     public void RemoveCases(IEnumerable<string> ids)
@@ -197,24 +321,83 @@ public partial class UseCasesPanelViewModel : ViewModelBase
             return;
         }
 
-        for (var index = RequestCases.Count - 1; index >= 0; index--)
+        var retained = RequestCases
+            .Where(item => !targetIds.Contains(item.Id))
+            .ToList();
+        if (retained.Count == RequestCases.Count)
         {
-            if (targetIds.Contains(RequestCases[index].Id))
-            {
-                RequestCases.RemoveAt(index);
-            }
+            return;
         }
+
+        RequestCases.ReplaceWith(retained);
     }
 
     private void RefreshSelectableCaseItems()
     {
-        _selectableCaseItems.Clear();
-        foreach (var item in RequestCases)
+        // 可选用例列表随用例集合全量重建：用批量替换单次 Reset 通知 UI，避免逐个 Add 触发 N 次刷新
+        _selectableCaseItems.ReplaceWith(RequestCases
+            .Where(item => !string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.Folder, StringComparison.OrdinalIgnoreCase))
+            .ToList());
+
+        var currentInterfaceId = ResolveCurrentInterfaceId();
+        _currentInterfaceCaseItems.ReplaceWith(string.IsNullOrWhiteSpace(currentInterfaceId)
+            ? []
+            : RequestCases
+                .Where(item => string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpCase, StringComparison.OrdinalIgnoreCase))
+                .Where(item => string.Equals(item.SourceCase.ParentId, currentInterfaceId, StringComparison.OrdinalIgnoreCase))
+                .ToList());
+
+        if (SelectedRequestCase is not null && !_currentInterfaceCaseItems.Contains(SelectedRequestCase))
         {
-            if (!string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.Folder, StringComparison.OrdinalIgnoreCase))
-            {
-                _selectableCaseItems.Add(item);
-            }
+            SelectedRequestCase = null;
+        }
+
+        OnPropertyChanged(nameof(HasSelectableCases));
+        OnPropertyChanged(nameof(HasCurrentInterfaceCases));
+        OnPropertyChanged(nameof(HasCurrentHttpInterface));
+        OnPropertyChanged(nameof(CurrentInterfaceName));
+        OnPropertyChanged(nameof(CurrentInterfaceMethod));
+        OnPropertyChanged(nameof(CurrentInterfaceMethodBadgeClass));
+        OnPropertyChanged(nameof(CurrentInterfaceCaseCountText));
+        OnPropertyChanged(nameof(CurrentInterfaceCaseEmptyStateText));
+    }
+
+    private string ResolveCurrentInterfaceId()
+    {
+        return _workspace?.ActiveWorkspaceTab is { IsHttpInterfaceTab: true } tab
+            ? tab.EditingInterfaceId
+            : string.Empty;
+    }
+
+    private void OnActiveWorkspaceTabChanged(RequestWorkspaceTabViewModel? oldValue, RequestWorkspaceTabViewModel? newValue)
+    {
+        SubscribeActiveWorkspaceTab(newValue);
+        RefreshSelectableCaseItems();
+    }
+
+    private void SubscribeActiveWorkspaceTab(RequestWorkspaceTabViewModel? tab)
+    {
+        if (_subscribedActiveWorkspaceTab is not null)
+        {
+            _subscribedActiveWorkspaceTab.PropertyChanged -= OnActiveWorkspaceTabPropertyChanged;
+        }
+
+        _subscribedActiveWorkspaceTab = tab;
+        if (_subscribedActiveWorkspaceTab is not null)
+        {
+            _subscribedActiveWorkspaceTab.PropertyChanged += OnActiveWorkspaceTabPropertyChanged;
+        }
+    }
+
+    private void OnActiveWorkspaceTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(RequestWorkspaceTabViewModel.EntryType)
+            or nameof(RequestWorkspaceTabViewModel.EditingInterfaceId)
+            or nameof(RequestWorkspaceTabViewModel.EditingCaseId)
+            or nameof(RequestWorkspaceTabViewModel.SelectedMethod)
+            or nameof(RequestWorkspaceTabViewModel.HeaderText))
+        {
+            RefreshSelectableCaseItems();
         }
     }
 

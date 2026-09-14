@@ -90,6 +90,12 @@ public partial class MainWindow : Window
 
     private void OnOpenUseCasesDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        OpenUseCasesDrawer();
+    }
+
+    // 供视图层（如调试区 URL 行「用例」按钮）调用的抽屉入口
+    internal void OpenUseCasesDrawer()
+    {
         if (_isUseCasesDrawerOpen)
         {
             return;

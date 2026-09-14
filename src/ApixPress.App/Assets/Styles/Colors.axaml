@@ -61,4 +61,16 @@
   <SolidColorBrush x:Key="Brush.Code.String" Color="#7EC699" />
   <SolidColorBrush x:Key="Brush.Code.Number" Color="#E5B567" />
   <SolidColorBrush x:Key="Brush.Code.Punctuation" Color="#70707A" />
+
+  <!-- AvaloniaEdit 主题兼容层：其 Fluent 主题用 StaticResource 急切解析以下 key，
+       应用只有 Semi 主题缺这些定义，缺失会在 ResponseBodyEditor 模板应用时直接崩溃。
+       注意 System* 三项在 Fluent 契约里是 Color（包装字典以 <Color="{DynamicResource...}"> 消费），
+       定义成 Brush 会在运行时 InvalidCastException；取值统一走本文件深色调色板。 -->
+  <SolidColorBrush x:Key="ToolTipBackground" Color="#2B2B32" />
+  <SolidColorBrush x:Key="ToolTipForeground" Color="#E8E8EC" />
+  <SolidColorBrush x:Key="ToolTipBorderBrush" Color="#45454E" />
+  <Thickness x:Key="ToolTipBorderThemeThickness">1</Thickness>
+  <Color x:Key="SystemChromeMediumColor">#26262B</Color>
+  <Color x:Key="SystemBaseLowColor">#36363D</Color>
+  <Color x:Key="SystemAccentColor">#7C6CF0</Color>
 </ResourceDictionary>

@@ -3,10 +3,12 @@ using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
+using Irihi.Avalonia.Shared.Contracts;
+using Ursa.Controls;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class MainWindowViewModel : ViewModelBase
+public partial class MainWindowViewModel : ViewModelBase, IDialogContext
 {
     private sealed class ConstructionResult
     {
@@ -31,6 +33,9 @@ public partial class MainWindowViewModel : ViewModelBase
         private readonly IApplicationRestartService _applicationRestartService;
         private readonly IFilePickerService _filePickerService;
         private readonly IWindowHostService _windowHostService;
+        private readonly IDialogService _dialogService;
+        private readonly Func<object?> _getShellDataContext;
+        private readonly Action _requestCloseShellDialog;
         private readonly string _currentAppVersion;
         private readonly Action<string> _setStatusMessage;
         private readonly Action _notifyShellState;
@@ -48,6 +53,9 @@ public partial class MainWindowViewModel : ViewModelBase
             IApplicationRestartService applicationRestartService,
             IFilePickerService filePickerService,
             IWindowHostService windowHostService,
+            IDialogService dialogService,
+            Func<object?> getShellDataContext,
+            Action requestCloseShellDialog,
             string currentAppVersion,
             Action<string> setStatusMessage,
             Action notifyShellState,
@@ -64,6 +72,9 @@ public partial class MainWindowViewModel : ViewModelBase
             _applicationRestartService = applicationRestartService;
             _filePickerService = filePickerService;
             _windowHostService = windowHostService;
+            _dialogService = dialogService;
+            _getShellDataContext = getShellDataContext;
+            _requestCloseShellDialog = requestCloseShellDialog;
             _currentAppVersion = currentAppVersion;
             _setStatusMessage = setStatusMessage;
             _notifyShellState = notifyShellState;
@@ -95,7 +106,10 @@ public partial class MainWindowViewModel : ViewModelBase
                         _clearSystemDataViews),
                     CreateNotifications(),
                     _setStatusMessage,
-                    _getDefaultStatusMessage)
+                    _getDefaultStatusMessage,
+                    _dialogService,
+                    _getShellDataContext,
+                    _requestCloseShellDialog)
             };
         }
     }
@@ -112,6 +126,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IAppNotificationService _appNotificationService;
     private readonly IProjectDataExportService _projectDataExportService;
     private readonly IProjectHttpSettingsService _projectHttpSettingsService;
+    private readonly IClipboardService _clipboardService;
+    private readonly IDialogService _dialogService;
     private readonly RequestConfigTabViewModel _fallbackConfigTab;
     private readonly ResponseSectionViewModel _fallbackResponseSection;
     private readonly EnvironmentPanelViewModel _fallbackEnvironmentPanel;
@@ -134,7 +150,9 @@ public partial class MainWindowViewModel : ViewModelBase
         IAppNotificationService appNotificationService,
         IProjectDataExportService projectDataExportService,
         IProjectHttpSettingsService projectHttpSettingsService,
-        IWindowHostService windowHostService)
+        IClipboardService clipboardService,
+        IWindowHostService windowHostService,
+        IDialogService dialogService)
     {
         _requestExecutionService = requestExecutionService;
         _requestCaseService = requestCaseService;
@@ -148,6 +166,8 @@ public partial class MainWindowViewModel : ViewModelBase
         _appNotificationService = appNotificationService;
         _projectDataExportService = projectDataExportService;
         _projectHttpSettingsService = projectHttpSettingsService;
+        _clipboardService = clipboardService;
+        _dialogService = dialogService;
 
         var construction = new Builder(
             environmentVariableService,
@@ -160,6 +180,9 @@ public partial class MainWindowViewModel : ViewModelBase
             applicationRestartService,
             filePickerService,
             windowHostService,
+            dialogService,
+            () => this,
+            () => RequestClose?.Invoke(this, DialogResult.None),
             ResolveCurrentAppVersion(),
             message => StatusMessage = message,
             NotifyShellState,
@@ -199,12 +222,6 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool ShowProjectListEmptyState => IsHomeTabActive && !ProjectPanel.HasAnyProjects;
     public bool ShowProjectSearchEmptyState => IsHomeTabActive && ProjectPanel.HasAnyProjects && !ProjectPanel.HasProjects;
     public bool HasEnvironmentContext => ActiveProjectTab?.Summary.HasEnvironmentContext ?? false;
-    public bool ShowQuickRequestSaveDialog => ActiveProjectTab?.QuickRequestSave.IsDialogOpen ?? false;
-    public bool ShowRequestCodeDialog => ActiveProjectTab?.Editor.IsRequestCodeDialogOpen ?? false;
-    public bool ShowProjectImportDialog => ActiveProjectTab?.Import.IsDialogOpen ?? false;
-    public bool ShowProjectImportOverwriteConfirmDialog => ActiveProjectTab?.Import.IsOverwriteConfirmDialogOpen ?? false;
-    public bool ShowWorkspaceDeleteConfirmDialog => ActiveProjectTab?.Catalog.IsDeleteConfirmDialogOpen ?? false;
-    public bool ShowCreateFolderDialog => ActiveProjectTab?.Catalog.IsCreateFolderDialogOpen ?? false;
 
     public string AppDisplayName { get; } = "ApixPress";
     public string CurrentProjectName => ActiveProjectTab?.Project.Name ?? "项目列表";
@@ -226,13 +243,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private string statusMessage = "欢迎使用 ApixPress。";
 
     [ObservableProperty]
-    private bool isCreateProjectDialogOpen;
-
-    [ObservableProperty]
-    private bool isEnvironmentManagerOpen;
-
-    [ObservableProperty]
     private bool isWindowMaximized;
+
+    /// <summary>弹窗异步关闭通道：环境管理、新建项目、设置弹窗共用（同一时刻至多一个弹窗打开，互不叠加）。</summary>
+    public event EventHandler<object?>? RequestClose;
+
+    public void Close() => RequestClose?.Invoke(this, null);
 
     protected override void DisposeManaged()
     {
@@ -305,7 +321,6 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         ActiveProjectTab = null;
-        IsEnvironmentManagerOpen = false;
         NotifyActiveProjectTabBindings();
         NotifyShellState();
     }

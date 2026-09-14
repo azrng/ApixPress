@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels;
 
 namespace ApixPress.App.Tests.ViewModels;
@@ -129,5 +130,24 @@ public sealed class ViewModelLifecycleTests
                 hasChildrenChangedCount++;
             }
         }
+    }
+
+    [Fact]
+    public void ExplorerInterfaceSidebarTitle_ShouldNotRepeatHttpMethod()
+    {
+        var viewModel = new ExplorerItemViewModel
+        {
+            NodeType = "http-interface",
+            Title = "POST /orders (2)",
+            SourceCase = new RequestCaseDto
+            {
+                RequestSnapshot = new RequestSnapshotDto
+                {
+                    Method = "POST"
+                }
+            }
+        };
+
+        Assert.Equal("/orders (2)", viewModel.SidebarDisplayText);
     }
 }

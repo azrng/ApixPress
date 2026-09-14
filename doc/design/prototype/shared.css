@@ -145,24 +145,22 @@ body {
 }
 .tb-plus:hover { background: var(--bg-subtle); color: var(--text-primary); }
 
-/* 项目内接口标签独立于顶部项目标签，挂在整个项目工作区上方。 */
+/* 项目内接口标签：嵌入内容列顶部的轻量行（对齐 Apifox：侧栏不被压住、标签为小胶囊） */
 .inner-tabbar {
-  height: 44px; flex: none; display: flex; align-items: flex-end; gap: 4px;
-  padding: 0 14px; border-bottom: 1px solid var(--border-default); background: var(--bg-app);
+  height: 40px; flex: none; display: flex; align-items: center; gap: 4px;
+  padding: 0; border-bottom: 1px solid var(--border-subtle); background: transparent;
   overflow-x: auto; overflow-y: hidden;
 }
 .inner-tabbar .inner-tab {
-  height: 36px; min-width: 132px; max-width: 240px; padding: 0 12px;
-  border-radius: var(--r-md) var(--r-md) 0 0; border: 1px solid transparent;
-  border-bottom: 2px solid transparent; white-space: nowrap; overflow: hidden;
+  height: 28px; min-width: 0; max-width: 220px; padding: 0 10px;
+  border-radius: var(--r-md); border: 1px solid transparent; white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; font-size: 12px; justify-content: flex-start;
 }
 .inner-tabbar .inner-tab:hover { background: var(--bg-subtle); }
 .inner-tabbar .inner-tab.active {
-  background: var(--bg-surface); border-color: var(--border-default);
-  border-bottom-color: var(--brand); color: var(--text-primary);
+  background: var(--bg-selected); border-color: transparent; color: var(--text-primary);
 }
-.inner-tabbar .tb-plus { margin: 0 0 4px 2px; }
+.inner-tabbar .tb-plus { margin: 0 0 0 2px; }
 
 /* ===== 环境选择器 ===== */
 .env-chip {

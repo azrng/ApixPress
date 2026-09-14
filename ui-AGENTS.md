@@ -1,7 +1,7 @@
 ---
 rule_id: ui-agents
-version: 1.60.0
-last_updated: 2026-09-07
+version: 1.65.0
+last_updated: 2026-09-13
 dependencies: [agents-root]
 ---
 
@@ -23,9 +23,12 @@ dependencies: [agents-root]
 ## 技术栈
 
 ### UI
-- .NET + Avalonia 11+ + Ursa.Avalonia + CommunityToolkit.Mvvm；版本以仓库现有 `TargetFramework` 为准，不主动升级，新项目先联网检索当前最新正式版
+- .NET + Avalonia + Ursa.Avalonia + CommunityToolkit.Mvvm；Avalonia 大版本以仓库实际引用的 NuGet 包为准，规则不锚定大版本（仓库可能已高于规则编写时的基线），不主动升级，新项目先联网检索当前最新正式版
 - 设计风格：Fluent Design
 - 消息传递：`IMessenger`
+
+### 版本敏感 API 查证
+- Avalonia 大版本之间存在破坏性 API 变更（动画、剪贴板、阴影等写法在 11.x 与 12.x 已不同）：涉及动画（RenderTransform / 关键帧）、剪贴板（`IClipboard`）、阴影（`BoxShadow`）或平台集成等版本敏感 API 时，先按根 `AGENTS.md` 的查证优先级确认项目实际引用大版本的 API 形态（仓库既有同领域写法、NuGet 引用程序集、锁定版本源码或官方升级说明），禁止凭旧大版本经验直接书写，仍无法确认时询问用户
 
 ### 设计系统
 #### 设计系统基线与定制

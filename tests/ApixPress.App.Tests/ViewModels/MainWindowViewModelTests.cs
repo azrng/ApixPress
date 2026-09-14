@@ -173,19 +173,29 @@ public sealed partial class MainWindowViewModelTests
         [
             new("project-1", "订单项目", "订单接口", true)
         ]);
-        var viewModel = CreateViewModel(projectService);
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        var viewModel = CreateViewModel(projectService, dialogService: dialogService);
         await viewModel.InitializeAsync();
         var project = viewModel.ProjectPanel.Projects.Single();
         await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(project);
+        string? statusAtDialogOpen = null;
+        dialogService.OnShow = request =>
+        {
+            if (request.ViewType == typeof(ApixPress.App.Views.Controls.EnvironmentManagerDialogView))
+            {
+                statusAtDialogOpen = viewModel.StatusMessage;
+            }
+        };
 
-        viewModel.OpenEnvironmentManagerCommand.Execute(null);
+        await viewModel.OpenEnvironmentManagerCommand.ExecuteAsync(null);
 
-        Assert.True(viewModel.IsEnvironmentManagerOpen);
         Assert.Same(viewModel.ActiveProjectTab!.EnvironmentPanel, viewModel.EnvironmentPanel);
         Assert.True(viewModel.EnvironmentPanel.HasSelectedEnvironment);
         Assert.Equal("开发", viewModel.EnvironmentPanel.SelectedEnvironment?.Name);
         Assert.Equal("https://api.demo.local", viewModel.EnvironmentPanel.SelectedEnvironment?.BaseUrl);
-        Assert.Equal("正在管理项目 订单项目 的环境。", viewModel.StatusMessage);
+        // 弹窗打开期间状态栏提示管理中；关闭后恢复为项目标签自身的状态文案
+        Assert.Equal("正在管理项目 订单项目 的环境。", statusAtDialogOpen);
+        Assert.Equal(viewModel.ActiveProjectTab.StatusMessage, viewModel.StatusMessage);
     }
 
     [Fact]
@@ -516,22 +526,20 @@ public sealed partial class MainWindowViewModelTests
         viewModel.ShellPanels.ToggleNotificationCenterCommand.Execute(null);
 
         Assert.True(viewModel.ShellPanels.IsNotificationCenterOpen);
-        Assert.False(viewModel.ShellPanels.IsSettingsDialogOpen);
         Assert.False(viewModel.ShellPanels.HasUnreadNotifications);
         Assert.All(viewModel.ShellPanels.Notifications, item => Assert.False(item.IsUnread));
         Assert.Equal("这里展示近期动态和提醒。", viewModel.StatusMessage);
     }
 
     [Fact]
-    public void OpenSettingsDialogCommand_ShouldCloseNotificationCenterAndResetToGeneralSection()
+    public async Task OpenSettingsDialogCommand_ShouldCloseNotificationCenterAndResetToGeneralSection()
     {
         var viewModel = CreateViewModel();
         viewModel.SettingsCenter.ShowAboutSettingsCommand.Execute(null);
         viewModel.ShellPanels.ToggleNotificationCenterCommand.Execute(null);
 
-        viewModel.ShellPanels.OpenSettingsDialogCommand.Execute(null);
+        await viewModel.ShellPanels.OpenSettingsDialogCommand.ExecuteAsync(null);
 
-        Assert.True(viewModel.ShellPanels.IsSettingsDialogOpen);
         Assert.False(viewModel.ShellPanels.IsNotificationCenterOpen);
         Assert.True(viewModel.SettingsCenter.ShowGeneralSettingsSection);
         Assert.False(viewModel.SettingsCenter.ShowAboutSettingsSection);

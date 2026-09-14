@@ -8,7 +8,7 @@ namespace ApixPress.App.Data.Context;
 
 public sealed class DatabaseInitializer : ISingletonDependency
 {
-    private const int CurrentSchemaVersion = 4;
+    private const int CurrentSchemaVersion = 5;
     private const string SchemaMigrationsTable = "schema_migrations";
 
     private readonly IDbConnectionFactory _connectionFactory;

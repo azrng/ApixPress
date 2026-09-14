@@ -321,7 +321,8 @@ public sealed partial class WorkspacePersistenceTests
         Assert.Equal(201, item.StatusCode);
         Assert.Equal(128, item.DurationMs);
         Assert.Equal(2048, item.SizeBytes);
-        Assert.NotEmpty(item.ResponseSnapshotJson);
+        // 摘要投影不携带响应快照原文（单条可达 MB 级，列表场景不使用），详情走单条查询
+        Assert.Equal(string.Empty, item.ResponseSnapshotJson);
     }
 
     [Fact]
