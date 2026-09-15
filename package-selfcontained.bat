@@ -53,6 +53,10 @@ if not exist "%OUTPUT_DIR%\ApixPress.exe" (
 
 echo Verification passed: single-file exe is present.
 
+rem Strip debug symbol files: not needed at runtime, keep them out
+rem of both the folder and the zip package.
+del /q "%OUTPUT_DIR%\*.pdb" 2>nul
+
 echo.
 echo [3/3] Creating zip package...
 

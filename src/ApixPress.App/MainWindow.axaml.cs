@@ -50,6 +50,7 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
         Opened += OnOpened;
         Closed += OnClosed;
+        Closing += OnWindowClosing;
         KeyDown += OnWindowKeyDown;
     }
 
@@ -68,6 +69,7 @@ public partial class MainWindow : Window
     {
         Opened -= OnOpened;
         Closed -= OnClosed;
+        Closing -= OnWindowClosing;
         KeyDown -= OnWindowKeyDown;
 
         if (ReferenceEquals(_windowHostService.MainWindow, this))
@@ -76,6 +78,22 @@ public partial class MainWindow : Window
         }
 
         _viewModel.Dispose();
+    }
+
+    private void OnWindowClosing(object? sender, WindowClosingEventArgs e)
+    {
+        // 更新包下载/应用期间阻止误关窗口：主窗口一关更新进度就没了，提示用户先取消或等待完成
+        if (!_viewModel.ShellPanels.SettingsCenter.IsUpdating)
+        {
+            return;
+        }
+
+        e.Cancel = true;
+        _appNotificationService.Show(
+            "更新进行中",
+            "更新包正在下载或应用，可到设置中心取消更新后再关闭应用。",
+            Avalonia.Controls.Notifications.NotificationType.Warning,
+            System.TimeSpan.FromSeconds(6));
     }
 
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)

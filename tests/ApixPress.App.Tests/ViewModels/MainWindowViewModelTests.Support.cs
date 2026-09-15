@@ -239,13 +239,16 @@ public sealed partial class MainWindowViewModelTests
             HasUpdate = false
         };
 
-        public string StartMessage { get; set; } = string.Empty;
+        // 默认返回成功就绪的假暂存包；置为 Failure 可模拟准备阶段失败
+        public IResultModel<AppUpdateStagedPackageDto>? PrepareResult { get; set; }
 
-        public bool StartSucceeded { get; set; } = true;
+        public IResultModel<bool>? ApplyResult { get; set; }
 
         public int CheckCalls { get; private set; }
 
-        public int StartCalls { get; private set; }
+        public int PrepareCalls { get; private set; }
+
+        public int ApplyCalls { get; private set; }
 
         public Task<IResultModel<AppUpdateCheckResultDto>> CheckForUpdatesAsync(string currentVersion, CancellationToken cancellationToken)
         {
@@ -253,12 +256,38 @@ public sealed partial class MainWindowViewModelTests
             return Task.FromResult<IResultModel<AppUpdateCheckResultDto>>(ResultModel<AppUpdateCheckResultDto>.Success(CheckResult));
         }
 
-        public Task<IResultModel<bool>> StartUpdateAsync(AppUpdateCheckResultDto updateInfo, CancellationToken cancellationToken)
+        public Task<IResultModel<AppUpdateStagedPackageDto>> PrepareUpdatePackageAsync(
+            AppUpdateCheckResultDto updateInfo,
+            IProgress<AppUpdateProgressDto>? progress,
+            CancellationToken cancellationToken)
         {
-            StartCalls++;
-            return Task.FromResult<IResultModel<bool>>(StartSucceeded
-                ? ResultModel<bool>.Success(true)
-                : ResultModel<bool>.Failure(StartMessage));
+            PrepareCalls++;
+            if (PrepareResult is not null)
+            {
+                return Task.FromResult(PrepareResult);
+            }
+
+            var workspaceDirectory = Path.Combine(Path.GetTempPath(), "ApixPress-update-fake-tests");
+            progress?.Report(new AppUpdateProgressDto
+            {
+                Stage = AppUpdateProgressStage.Downloading,
+                ReceivedBytes = 1024,
+                TotalBytes = 2048
+            });
+            return Task.FromResult(ResultModel<AppUpdateStagedPackageDto>.Success(new AppUpdateStagedPackageDto
+            {
+                WorkspaceDirectory = workspaceDirectory,
+                PackageFilePath = Path.Combine(workspaceDirectory, "package.zip"),
+                ExtractDirectory = Path.Combine(workspaceDirectory, "package"),
+                TargetDirectory = Path.GetTempPath(),
+                RestartExecutablePath = Path.Combine(Path.GetTempPath(), "ApixPress.exe")
+            }));
+        }
+
+        public Task<IResultModel<bool>> ApplyStagedUpdateAsync(AppUpdateStagedPackageDto stagedPackage, CancellationToken cancellationToken)
+        {
+            ApplyCalls++;
+            return Task.FromResult(ApplyResult ?? ResultModel<bool>.Success(true));
         }
     }
 

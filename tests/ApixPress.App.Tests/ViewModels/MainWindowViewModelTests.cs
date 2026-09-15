@@ -322,7 +322,7 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.SettingsCenter.CheckForUpdatesCommand.ExecuteAsync(null);
 
         Assert.Equal(1, updateService.CheckCalls);
-        Assert.Equal(0, updateService.StartCalls);
+        Assert.Equal(0, updateService.PrepareCalls);
         Assert.Equal("1.0.0.0", viewModel.SettingsCenter.LatestAvailableVersion);
         Assert.Equal("当前已是最新版本 1.0.0.0。", viewModel.SettingsCenter.AboutUpdateStatus);
         Assert.Equal(viewModel.SettingsCenter.AboutUpdateStatus, viewModel.StatusMessage);
@@ -330,7 +330,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task CheckForUpdatesCommand_ShouldStartUpdateFlowWhenNewVersionDetected()
+    public async Task CheckForUpdatesCommand_ShouldRunPrepareAndApplyWhenNewVersionDetected()
     {
         var updateService = new FakeApplicationUpdateService
         {
@@ -347,8 +347,35 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.SettingsCenter.CheckForUpdatesCommand.ExecuteAsync(null);
 
         Assert.Equal(1, updateService.CheckCalls);
-        Assert.Equal(1, updateService.StartCalls);
+        Assert.Equal(1, updateService.PrepareCalls);
+        Assert.Equal(1, updateService.ApplyCalls);
         Assert.Equal("1.1.0.0", viewModel.SettingsCenter.LatestAvailableVersion);
+        Assert.False(viewModel.SettingsCenter.IsUpdating);
+        Assert.Contains("即将退出并自动重启", viewModel.SettingsCenter.AboutUpdateStatus);
+    }
+
+    [Fact]
+    public async Task CheckForUpdatesCommand_ShouldAbortWithoutApplyWhenPrepareFails()
+    {
+        var updateService = new FakeApplicationUpdateService
+        {
+            CheckResult = new AppUpdateCheckResultDto
+            {
+                CurrentVersion = "1.0.0.0",
+                LatestVersion = "1.1.0.0",
+                HasUpdate = true
+            },
+            PrepareResult = ResultModel<AppUpdateStagedPackageDto>.Failure("准备更新包失败：网络不可达", "app_update_prepare_failed")
+        };
+        var viewModel = CreateViewModel(applicationUpdateService: updateService);
+        await viewModel.InitializeAsync();
+
+        await viewModel.SettingsCenter.CheckForUpdatesCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, updateService.PrepareCalls);
+        Assert.Equal(0, updateService.ApplyCalls);
+        Assert.False(viewModel.SettingsCenter.IsUpdating);
+        Assert.Contains("准备更新包失败", viewModel.SettingsCenter.AboutUpdateStatus);
     }
 
     [Fact]

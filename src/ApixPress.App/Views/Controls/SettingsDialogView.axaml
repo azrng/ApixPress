@@ -256,10 +256,29 @@
                   </Border>
                   <Border Classes="SettingsPageSection">
                     <StackPanel Spacing="{StaticResource Space.2}">
-                      <TextBlock Classes="SettingsGroupTitle"
-                                 Text="更新状态" />
+                      <Grid ColumnDefinitions="*,Auto"
+                            ColumnSpacing="{StaticResource Space.4}">
+                        <TextBlock Classes="SettingsGroupTitle"
+                                   Text="更新状态" />
+                        <Button Grid.Column="1"
+                                Classes="DialogSecondaryButton"
+                                Content="取消更新"
+                                IsVisible="{Binding ShellPanels.SettingsCenter.IsUpdating}"
+                                Command="{Binding ShellPanels.SettingsCenter.CancelUpdateCommand}" />
+                      </Grid>
+                      <StackPanel IsVisible="{Binding ShellPanels.SettingsCenter.IsUpdating}"
+                                  Spacing="6">
+                        <ProgressBar Height="6"
+                                     Minimum="0"
+                                     Maximum="100"
+                                     IsIndeterminate="{Binding ShellPanels.SettingsCenter.IsUpdateProgressIndeterminate}"
+                                     Value="{Binding ShellPanels.SettingsCenter.UpdateProgressPercent, Mode=OneWay}" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="{Binding ShellPanels.SettingsCenter.UpdateStageText}" />
+                      </StackPanel>
                       <TextBlock Classes="CaptionText"
-                                 Text="{Binding ShellPanels.SettingsCenter.AboutUpdateStatus}" />
+                                 Text="{Binding ShellPanels.SettingsCenter.AboutUpdateStatus}"
+                                 TextWrapping="Wrap" />
                       <TextBlock Classes="CaptionText"
                                  Text="{Binding ShellPanels.SettingsCenter.LastUpdateCheckText, StringFormat='最近检查：{0}'}" />
                     </StackPanel>

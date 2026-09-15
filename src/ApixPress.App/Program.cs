@@ -3,7 +3,6 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using ApixPress.App.Helpers;
-using ApixPress.App.Services.Implementations;
 
 namespace ApixPress.App;
 
@@ -30,11 +29,6 @@ class Program
             CrashLog.Write(e.Exception, "UnobservedTask");
             e.SetObserved();
         };
-
-        if (AppUpdateRunner.IsUpdateMode(args))
-        {
-            return AppUpdateRunner.RunAsync(args).GetAwaiter().GetResult();
-        }
 
         App.Services = PerfLog.Measure("启动·DI容器构建", () => ServiceBootstrapper.Build());
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
