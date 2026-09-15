@@ -83,6 +83,7 @@
                                   IsChecked="{Binding IsEnabled}"
                                   ToolTip.Tip="启用状态决定该变量是否参与请求" />
                         <u:PopConfirm Grid.Column="3"
+                                      Placement="Left"
                                       PopupHeader="确认删除该环境变量？"
                                       PopupContent="删除后当前环境下对应的变量引用会立即失效。"
                                       ConfirmCommand="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).EnvironmentPanel.RemoveVariableCommand}"
@@ -116,6 +117,7 @@
                           Command="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).EnvironmentPanel.SaveEnvironmentCommand}"
                           CommandParameter="{Binding}" />
                   <u:PopConfirm Grid.Column="1"
+                                Placement="Left"
                                 PopupHeader="确认删除该环境？"
                                 PopupContent="若这是激活环境，系统会自动切换到其他环境。"
                                 ConfirmCommand="{Binding $parent[UserControl].((vm:MainWindowViewModel)DataContext).EnvironmentPanel.RemoveEnvironmentCommand}"

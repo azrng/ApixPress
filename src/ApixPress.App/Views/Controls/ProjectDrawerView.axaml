@@ -155,6 +155,7 @@
                     Content="保存"
                     Command="{Binding ProjectPanel.SaveSelectedProjectCommand}" />
             <u:PopConfirm Grid.Column="2"
+                          Placement="Left"
                           PopupHeader="确认删除当前项目？"
                           PopupContent="该项目下的环境、用例、文档和请求历史都会被一起删除。"
                           ConfirmCommand="{Binding ProjectPanel.DeleteSelectedProjectCommand}">
