@@ -6,26 +6,29 @@ namespace ApixPress.App.Tests.ViewModels;
 public sealed class EnvironmentPanelViewModelTests
 {
     [Fact]
-    public void EnvironmentVariablesState_ShouldTrackCollectionChanges()
+    public void EnvironmentItemVariables_ShouldUpdateDerivedState()
     {
         var viewModel = new EnvironmentPanelViewModel(new ViewModelSharedTestDoubles.FakeEnvironmentVariableService());
+        var environment = new ProjectEnvironmentItemViewModel { Id = "env-1", Name = "开发" };
+        viewModel.Environments.Add(environment);
 
-        Assert.False(viewModel.HasEnvironmentVariables);
-        Assert.True(viewModel.ShowEnvironmentVariablesEmptyState);
+        Assert.False(environment.HasVariables);
+        Assert.Contains("暂无变量", environment.VariableCountText);
 
-        viewModel.EnvironmentVariables.Add(new EnvironmentVariableItemViewModel
+        environment.Variables.Add(new EnvironmentVariableItemViewModel
         {
+            EnvironmentId = "env-1",
             Key = "token",
             Value = "abc"
         });
 
-        Assert.True(viewModel.HasEnvironmentVariables);
-        Assert.False(viewModel.ShowEnvironmentVariablesEmptyState);
+        Assert.True(environment.HasVariables);
+        Assert.Contains("1 个变量", environment.VariableCountText);
 
-        viewModel.EnvironmentVariables.Clear();
+        environment.Variables.Clear();
 
-        Assert.False(viewModel.HasEnvironmentVariables);
-        Assert.True(viewModel.ShowEnvironmentVariablesEmptyState);
+        Assert.False(environment.HasVariables);
+        Assert.Contains("暂无变量", environment.VariableCountText);
     }
 
     [Fact]

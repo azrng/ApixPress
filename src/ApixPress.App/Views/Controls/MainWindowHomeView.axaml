@@ -4,6 +4,7 @@
              xmlns:iri="https://irihi.tech/shared"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:controls="using:ApixPress.App.Views.Controls"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.MainWindowHomeView"
              x:DataType="vm:MainWindowViewModel"
@@ -131,10 +132,11 @@
                           IsVisible="{Binding ProjectPanel.HasProjects}">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                  <!-- 单元格 = 卡片 334 + 右/下间距 10，对齐原型 tiles 自适应换行 -->
-                  <WrapPanel Orientation="Horizontal"
-                             ItemWidth="344"
-                             ItemHeight="224" />
+                  <!-- 自适应列数 + 行内均分填满整行宽（等价 CSS repeat(auto-fill, minmax(300px,1fr))），消除宽屏右缘留白 -->
+                  <controls:AdaptiveTilePanel MinItemWidth="300"
+                                              ItemHeight="224"
+                                              Gap="10"
+                                              MaxColumns="5" />
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>

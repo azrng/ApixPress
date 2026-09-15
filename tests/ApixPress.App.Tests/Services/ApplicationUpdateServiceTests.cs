@@ -41,6 +41,41 @@ public sealed class ApplicationUpdateServiceTests
     }
 
     [Fact]
+    public async Task CheckForUpdatesAsync_ShouldPreferSelfContainedEntryInDualPackageManifest()
+    {
+        // 双包清单：同一版本两条记录（Version、PubTime 相同），必须显式选中自包含包
+        var configuration = CreateConfiguration();
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler("""
+            [
+              {
+                "PacketName": "ApixPress-framework-win-x64",
+                "Hash": "framework-hash",
+                "Version": "1.1.16",
+                "Url": "https://example.com/ApixPress-framework-win-x64.zip",
+                "PubTime": "2026-09-15T08:00:00Z"
+              },
+              {
+                "PacketName": "ApixPress-selfcontained-win-x64",
+                "Hash": "selfcontained-hash",
+                "Version": "1.1.16",
+                "Url": "https://example.com/ApixPress-selfcontained-win-x64.zip",
+                "PubTime": "2026-09-15T08:00:00Z"
+              }
+            ]
+            """));
+        var service = new ApplicationUpdateService(configuration, httpClient);
+
+        var result = await service.CheckForUpdatesAsync("1.1.15", CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Data);
+        Assert.True(result.Data!.HasUpdate);
+        Assert.Equal("selfcontained-hash", result.Data.PackageHash);
+        Assert.Equal("ApixPress-selfcontained-win-x64", result.Data.PackageName);
+        Assert.Equal("https://example.com/ApixPress-selfcontained-win-x64.zip", result.Data.DownloadUrl);
+    }
+
+    [Fact]
     public async Task CheckForUpdatesAsync_ShouldReadSingleObjectManifest()
     {
         var configuration = CreateConfiguration();
@@ -113,6 +148,32 @@ public sealed class ApplicationUpdateServiceTests
         Assert.True(result.Data!.HasUpdate);
         Assert.Equal("2026.4.20", result.Data.CurrentVersion);
         Assert.Equal("2026.4.21", result.Data.LatestVersion);
+    }
+
+    [Fact]
+    public async Task CheckForUpdatesAsync_ShouldNotifyLegacyTimestampVersionAboutCalendarUpdate()
+    {
+        // 版本策略回归：旧时间戳版本（2026.9.15.10，四段）必须能感知日历版本 2026.9.16+ 的更新
+        var configuration = CreateConfiguration();
+        using var httpClient = new HttpClient(new FakeHttpMessageHandler("""
+            [
+              {
+                "PacketName": "ApixPress-selfcontained-win-x64",
+                "Hash": "abc123",
+                "Version": "2026.9.16",
+                "Url": "https://github.com/azrng/ApixPress/releases/latest/download/ApixPress-selfcontained-win-x64.zip",
+                "PubTime": "2026-09-15T08:00:00Z"
+              }
+            ]
+            """));
+        var service = new ApplicationUpdateService(configuration, httpClient);
+
+        var result = await service.CheckForUpdatesAsync("2026.9.15.10", CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Data);
+        Assert.True(result.Data!.HasUpdate);
+        Assert.Equal("2026.9.16", result.Data.LatestVersion);
     }
 
     [Fact]

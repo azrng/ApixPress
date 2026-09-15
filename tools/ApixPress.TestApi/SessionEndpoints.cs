@@ -45,17 +45,17 @@ internal static class SessionEndpoints
             .WithSummary("删除 Cookie")
             .WithDescription("按查询参数中的键删除 Cookie 后 302 跳回 /cookies");
 
-        app.MapMethods("/basic-auth/{user}/{password}", AnyMethods, (string user, string password, HttpContext context)
-            => TryBasicAuth(context, user, password, hidden: false)).WithTags("Cookie 与认证")
-            .WithSummary("Basic 认证校验")
-            .WithDescription("路径参数 user/password 与 Authorization: Basic 头解码结果一致时返回 200，否则 401");
+        app.MapPerMethod("/basic-auth/{user}/{password}", AnyMethods, (string user, string password, HttpContext context)
+            => TryBasicAuth(context, user, password, hidden: false), "Cookie 与认证",
+            method => $"{method} /basic-auth Basic 认证校验",
+            "路径参数 user/password 与 Authorization: Basic 头解码结果一致时返回 200，否则 401");
 
-        app.MapMethods("/hidden-basic-auth/{user}/{password}", AnyMethods, (string user, string password, HttpContext context)
-            => TryBasicAuth(context, user, password, hidden: true)).WithTags("Cookie 与认证")
-            .WithSummary("隐藏式 Basic 认证")
-            .WithDescription("认证失败时返回 404 而非 401，避免暴露端点存在");
+        app.MapPerMethod("/hidden-basic-auth/{user}/{password}", AnyMethods, (string user, string password, HttpContext context)
+            => TryBasicAuth(context, user, password, hidden: true), "Cookie 与认证",
+            method => $"{method} /hidden-basic-auth 隐藏式 Basic 认证",
+            "认证失败时返回 404 而非 401，避免暴露端点存在");
 
-        app.MapMethods("/bearer", AnyMethods, (HttpContext context) =>
+        app.MapPerMethod("/bearer", AnyMethods, (HttpContext context) =>
         {
             var authorization = context.Request.Headers.Authorization.ToString();
             if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) &&
@@ -70,11 +70,10 @@ internal static class SessionEndpoints
 
             context.Response.Headers.WWWAuthenticate = "Bearer";
             return Results.Json(new { authenticated = false, message = "缺少 Bearer Token" }, statusCode: 401);
-        }).WithTags("Cookie 与认证")
-            .WithSummary("Bearer Token 认证校验")
-            .WithDescription("仅校验 Authorization: Bearer 头格式（不校验令牌内容），缺失返回 401");
+        }, "Cookie 与认证", method => $"{method} /bearer Bearer Token 认证校验",
+            "仅校验 Authorization: Bearer 头格式（不校验令牌内容），缺失返回 401");
 
-        app.MapMethods("/apikey", AnyMethods, (HttpContext context) =>
+        app.MapPerMethod("/apikey", AnyMethods, (HttpContext context) =>
         {
             // 自定义请求头认证场景，约定测试密钥 apixpress-dev-key
             var key = context.Request.Headers["X-Api-Key"].ToString();
@@ -99,9 +98,8 @@ internal static class SessionEndpoints
             }
 
             return Results.Json(new { authenticated = true, key_name = "default" });
-        }).WithTags("Cookie 与认证")
-            .WithSummary("API Key 请求头认证")
-            .WithDescription("要求请求头 X-Api-Key: apixpress-dev-key，缺失或不匹配返回 401");
+        }, "Cookie 与认证", method => $"{method} /apikey API Key 请求头认证",
+            "要求请求头 X-Api-Key: apixpress-dev-key，缺失或不匹配返回 401");
     }
 
     private static IResult TryBasicAuth(HttpContext context, string user, string password, bool hidden)

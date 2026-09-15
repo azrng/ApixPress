@@ -92,7 +92,7 @@ internal static class FormatEndpoints
             .WithSummary("返回 ProblemDetails 错误")
             .WithDescription("RFC 9457 格式，路径参数 code 指定状态码（200~599）");
 
-        app.MapMethods("/forms/post", WriteMethods, async (HttpContext context) =>
+        app.MapPerMethod("/forms/post", WriteMethods, async (HttpContext context) =>
         {
             if (!context.Request.HasFormContentType)
             {
@@ -106,25 +106,22 @@ internal static class FormatEndpoints
                 method = context.Request.Method,
                 form = form.ToDictionary(kv => kv.Key, kv => kv.Value.ToString())
             });
-        }).WithTags("请求体格式")
-            .WithSummary("解析表单并回显")
-            .WithDescription("Content-Type 需为 application/x-www-form-urlencoded，否则返回 400");
+        }, "请求体格式", method => $"{method} /forms/post 解析表单并回显",
+            "Content-Type 需为 application/x-www-form-urlencoded，否则返回 400");
 
-        app.MapMethods("/upload", WriteMethods, async (HttpContext context) =>
+        app.MapPerMethod("/upload", WriteMethods, async (HttpContext context) =>
         {
             return Results.Json(await EchoEndpoints.BuildEchoAsync(context));
-        }).WithTags("请求体格式")
-            .WithSummary("解析 multipart/form-data 并回显")
-            .WithDescription("回显表单字段与文件元信息（文件名、类型、大小、SHA-256）");
+        }, "请求体格式", method => $"{method} /upload 解析 multipart/form-data 并回显",
+            "回显表单字段与文件元信息（文件名、类型、大小、SHA-256）");
 
-        app.MapMethods("/binary-echo", WriteMethods, async (HttpContext context) =>
+        app.MapPerMethod("/binary-echo", WriteMethods, async (HttpContext context) =>
         {
             using var buffer = new MemoryStream();
             await context.Request.Body.CopyToAsync(buffer, context.RequestAborted);
             return Results.Bytes(buffer.ToArray(), context.Request.ContentType ?? "application/octet-stream");
-        }).WithTags("请求体格式")
-            .WithSummary("按原始字节回显请求体")
-            .WithDescription("以请求的 Content-Type 原样返回字节，用于二进制上传比对");
+        }, "请求体格式", method => $"{method} /binary-echo 按原始字节回显请求体",
+            "以请求的 Content-Type 原样返回字节，用于二进制上传比对");
     }
 
     private const string SampleJsonForCompression = """

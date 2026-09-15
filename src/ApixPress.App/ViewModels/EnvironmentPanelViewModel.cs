@@ -21,12 +21,9 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     public EnvironmentPanelViewModel(IEnvironmentVariableService environmentVariableService)
     {
         _environmentVariableService = environmentVariableService;
-        EnvironmentVariables.CollectionChanged += OnEnvironmentVariablesCollectionChanged;
     }
 
     public BatchObservableCollection<ProjectEnvironmentItemViewModel> Environments { get; } = [];
-
-    public BatchObservableCollection<EnvironmentVariableItemViewModel> EnvironmentVariables { get; } = [];
 
     [ObservableProperty]
     private ProjectEnvironmentItemViewModel? selectedEnvironment;
@@ -36,17 +33,12 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
 
     public bool HasSelectedEnvironment => SelectedEnvironment is not null && !string.IsNullOrWhiteSpace(SelectedEnvironment.Id);
 
-    public bool HasEnvironmentVariables => EnvironmentVariables.Count > 0;
-
-    public bool ShowEnvironmentVariablesEmptyState => !HasEnvironmentVariables;
-
     public string ActiveEnvironmentName => SelectedEnvironment?.Name ?? string.Empty;
 
     public string EnvironmentChipText => string.IsNullOrWhiteSpace(ActiveEnvironmentName) ? "环境" : ActiveEnvironmentName;
 
     protected override void DisposeManaged()
     {
-        EnvironmentVariables.CollectionChanged -= OnEnvironmentVariablesCollectionChanged;
         CancellationTokenSourceHelper.CancelAndDispose(ref _loadProjectCancellationTokenSource);
         CancellationTokenSourceHelper.CancelAndDispose(ref _activateEnvironmentCancellationTokenSource);
         SelectedEnvironmentChanged = null;
@@ -63,7 +55,6 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
         try
         {
             _currentProjectId = projectId;
-            EnvironmentVariables.Clear();
             Environments.Clear();
 
             if (string.IsNullOrWhiteSpace(projectId))
@@ -86,8 +77,13 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
 
             if (SelectedEnvironment is not null)
             {
-                await LoadVariablesAsync(SelectedEnvironment.Id, cancellationToken);
                 UpdateActiveFlags(SelectedEnvironment.Id);
+            }
+
+            // 环境抽屉多卡片平铺展示：一次性把每个环境的变量挂到各自 item 上
+            foreach (var item in Environments)
+            {
+                await LoadVariablesIntoItemAsync(item, cancellationToken);
             }
 
             NotifySelectionState();
@@ -101,7 +97,6 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     {
         _currentProjectId = string.Empty;
         Environments.Clear();
-        EnvironmentVariables.Clear();
         _isUpdatingSelection = true;
         SelectedEnvironment = null;
         _isUpdatingSelection = false;
@@ -186,27 +181,41 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
             _isUpdatingSelection = true;
             SelectedEnvironment = createdItem;
             _isUpdatingSelection = false;
-            EnvironmentVariables.Clear();
             NotifySelectionState();
         }
     }
 
+    // 抽屉底部全局保存：把全部环境与其变量依次入库
     [RelayCommand]
-    private async Task SaveEnvironmentAsync()
+    private async Task SaveAllEnvironmentsAsync()
     {
-        if (SelectedEnvironment is null || string.IsNullOrWhiteSpace(_currentProjectId))
+        foreach (var item in Environments.ToList())
+        {
+            await SaveEnvironmentCoreAsync(item);
+        }
+    }
+
+    [RelayCommand]
+    private async Task SaveEnvironmentAsync(ProjectEnvironmentItemViewModel? item)
+    {
+        await SaveEnvironmentCoreAsync(item);
+    }
+
+    private async Task SaveEnvironmentCoreAsync(ProjectEnvironmentItemViewModel? item)
+    {
+        if (item is null || string.IsNullOrWhiteSpace(_currentProjectId))
         {
             return;
         }
 
         var saveResult = await _environmentVariableService.SaveEnvironmentAsync(new ProjectEnvironmentDto
         {
-            Id = SelectedEnvironment.Id,
+            Id = item.Id,
             ProjectId = _currentProjectId,
-            Name = SelectedEnvironment.Name,
-            BaseUrl = SelectedEnvironment.BaseUrl,
-            IsActive = SelectedEnvironment.IsActive,
-            SortOrder = SelectedEnvironment.SortOrder
+            Name = item.Name,
+            BaseUrl = item.BaseUrl,
+            IsActive = item.IsActive,
+            SortOrder = item.SortOrder
         }, CancellationToken.None);
 
         if (!saveResult.IsSuccess || saveResult.Data is null)
@@ -216,14 +225,14 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
 
         var variablesResult = await _environmentVariableService.SaveVariablesAsync(
             saveResult.Data,
-            EnvironmentVariables.Select(item => new EnvironmentVariableDto
+            item.Variables.Select(variable => new EnvironmentVariableDto
             {
-                Id = item.Id,
+                Id = variable.Id,
                 EnvironmentId = saveResult.Data.Id,
                 EnvironmentName = saveResult.Data.Name,
-                Key = item.Key,
-                Value = item.Value,
-                IsEnabled = item.IsEnabled
+                Key = variable.Key,
+                Value = variable.Value,
+                IsEnabled = variable.IsEnabled
             }).ToList(),
             CancellationToken.None);
         if (!variablesResult.IsSuccess || variablesResult.Data is null)
@@ -231,74 +240,47 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
             return;
         }
 
-        ApplySavedEnvironment(saveResult.Data);
-        ApplySavedVariables(variablesResult.Data);
+        ApplySavedEnvironment(item, saveResult.Data);
+        ApplySavedVariables(item, variablesResult.Data);
     }
 
     [RelayCommand]
-    private void RequestRemoveEnvironment()
+    private async Task RemoveEnvironmentAsync(ProjectEnvironmentItemViewModel? item)
     {
-        if (SelectedEnvironment is null)
+        if (item is null || string.IsNullOrWhiteSpace(_currentProjectId))
         {
             return;
         }
 
-        IsRemoveEnvironmentConfirmOpen = true;
-    }
-
-    [RelayCommand]
-    private void CancelRemoveEnvironment()
-    {
-        IsRemoveEnvironmentConfirmOpen = false;
-    }
-
-    [RelayCommand]
-    private async Task RemoveEnvironmentAsync()
-    {
-        if (SelectedEnvironment is null || string.IsNullOrWhiteSpace(_currentProjectId))
-        {
-            return;
-        }
-
-        IsRemoveEnvironmentConfirmOpen = false;
-        var deletedEnvironmentId = SelectedEnvironment.Id;
-        var result = await _environmentVariableService.DeleteEnvironmentAsync(_currentProjectId, deletedEnvironmentId, CancellationToken.None);
+        var result = await _environmentVariableService.DeleteEnvironmentAsync(_currentProjectId, item.Id, CancellationToken.None);
         if (result.IsSuccess)
         {
-            var nextSelection = Environments.FirstOrDefault(item => !string.Equals(item.Id, deletedEnvironmentId, StringComparison.OrdinalIgnoreCase));
-            var deletedItem = SelectedEnvironment;
-            if (deletedItem is not null)
+            Environments.Remove(item);
+            if (ReferenceEquals(SelectedEnvironment, item))
             {
-                Environments.Remove(deletedItem);
+                var nextSelection = Environments.FirstOrDefault(environment => environment.IsActive) ?? Environments.FirstOrDefault();
+                _isUpdatingSelection = true;
+                SelectedEnvironment = nextSelection;
+                _isUpdatingSelection = false;
+                NotifySelectionState();
             }
 
-            _isUpdatingSelection = true;
-            SelectedEnvironment = nextSelection;
-            _isUpdatingSelection = false;
-            EnvironmentVariables.Clear();
-
-            if (nextSelection is not null)
-            {
-                UpdateActiveFlags(nextSelection.Id);
-                await LoadVariablesAsync(nextSelection.Id, CancellationToken.None);
-            }
-
-            NotifySelectionState();
+            UpdateActiveFlags(SelectedEnvironment?.Id ?? string.Empty);
         }
     }
 
     [RelayCommand]
-    private void AddVariable()
+    private void AddVariable(ProjectEnvironmentItemViewModel? item)
     {
-        if (SelectedEnvironment is null)
+        if (item is null || string.IsNullOrWhiteSpace(item.Id))
         {
             return;
         }
 
-        EnvironmentVariables.Add(new EnvironmentVariableItemViewModel
+        item.Variables.Add(new EnvironmentVariableItemViewModel
         {
-            EnvironmentId = SelectedEnvironment.Id,
-            EnvironmentName = SelectedEnvironment.Name,
+            EnvironmentId = item.Id,
+            EnvironmentName = item.Name,
             Key = string.Empty,
             Value = string.Empty,
             IsEnabled = true
@@ -306,26 +288,30 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task RemoveVariableAsync(EnvironmentVariableItemViewModel? item)
+    private async Task RemoveVariableAsync(EnvironmentVariableItemViewModel? variable)
     {
-        if (item is null)
+        if (variable is null)
         {
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(item.Id))
+        if (!string.IsNullOrWhiteSpace(variable.Id))
         {
-            await _environmentVariableService.DeleteVariableAsync(item.Id, CancellationToken.None);
+            await _environmentVariableService.DeleteVariableAsync(variable.Id, CancellationToken.None);
         }
 
-        EnvironmentVariables.Remove(item);
+        var owner = Environments.FirstOrDefault(environment => string.Equals(environment.Id, variable.EnvironmentId, StringComparison.OrdinalIgnoreCase));
+        owner?.Variables.Remove(variable);
     }
 
-    private async Task LoadVariablesAsync(string environmentId, CancellationToken cancellationToken)
+    private async Task LoadVariablesIntoItemAsync(ProjectEnvironmentItemViewModel item, CancellationToken cancellationToken)
     {
-        EnvironmentVariables.Clear();
-        var items = await _environmentVariableService.GetVariablesAsync(environmentId, cancellationToken);
-        EnvironmentVariables.ReplaceWith(items.Select(CreateVariableItem));
+        var variables = await _environmentVariableService.GetVariablesAsync(item.Id, cancellationToken);
+        item.Variables.Clear();
+        foreach (var variable in variables)
+        {
+            item.Variables.Add(CreateVariableItem(variable));
+        }
     }
 
     private ProjectEnvironmentItemViewModel? ResolveSelection(IReadOnlyList<ProjectEnvironmentItemViewModel> items, string? preferredEnvironmentId)
@@ -381,38 +367,36 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
         OnPropertyChanged(nameof(EnvironmentChipText));
     }
 
-    private void OnEnvironmentVariablesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    private void ApplySavedEnvironment(ProjectEnvironmentItemViewModel item, ProjectEnvironmentDto environment)
     {
-        OnPropertyChanged(nameof(HasEnvironmentVariables));
-        OnPropertyChanged(nameof(ShowEnvironmentVariablesEmptyState));
-    }
-
-    private void ApplySavedEnvironment(ProjectEnvironmentDto environment)
-    {
-        var existing = Environments.FirstOrDefault(item => string.Equals(item.Id, environment.Id, StringComparison.OrdinalIgnoreCase));
-        if (existing is null)
+        // 新增场景：保存成功后把服务端分配的 Id 回填到卡片
+        if (string.IsNullOrWhiteSpace(item.Id))
         {
-            existing = CreateEnvironmentItem(environment);
-            Environments.Add(existing);
-        }
-        else
-        {
-            existing.Name = environment.Name;
-            existing.BaseUrl = environment.BaseUrl;
-            existing.ProjectId = environment.ProjectId;
-            existing.SortOrder = environment.SortOrder;
+            item.Id = environment.Id;
         }
 
-        UpdateActiveFlags(environment.Id);
-        _isUpdatingSelection = true;
-        SelectedEnvironment = existing;
-        _isUpdatingSelection = false;
-        NotifySelectionState();
+        item.ProjectId = environment.ProjectId;
+        item.SortOrder = environment.SortOrder;
+        UpdateActiveFlags(item.IsActive ? item.Id : (SelectedEnvironment?.Id ?? string.Empty));
     }
 
-    private void ApplySavedVariables(IReadOnlyList<EnvironmentVariableDto> variables)
+    private void ApplySavedVariables(ProjectEnvironmentItemViewModel item, IReadOnlyList<EnvironmentVariableDto> variables)
     {
-        EnvironmentVariables.ReplaceWith(variables.Select(CreateVariableItem));
+        // 以服务端返回为准回填 Id/EnvironmentId（新增变量入库后才有 Id），不整表替换避免打断编辑
+        foreach (var variable in item.Variables)
+        {
+            var saved = variables.FirstOrDefault(candidate => string.Equals(candidate.Key, variable.Key, StringComparison.Ordinal)
+                && string.Equals(candidate.Value, variable.Value, StringComparison.Ordinal)
+                && candidate.IsEnabled == variable.IsEnabled);
+            if (saved is null)
+            {
+                continue;
+            }
+
+            variable.Id = saved.Id;
+            variable.EnvironmentId = saved.EnvironmentId;
+            variable.EnvironmentName = saved.EnvironmentName;
+        }
     }
 
     private static ProjectEnvironmentItemViewModel CreateEnvironmentItem(ProjectEnvironmentDto environment)
@@ -471,7 +455,6 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     {
         try
         {
-            EnvironmentVariables.Clear();
             if (value is null || string.IsNullOrWhiteSpace(value.Id) || string.IsNullOrWhiteSpace(_currentProjectId))
             {
                 SelectedEnvironmentChanged?.Invoke(value);
@@ -484,7 +467,6 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
                 UpdateActiveFlags(value.Id);
             }
 
-            await LoadVariablesAsync(value.Id, cancellationToken);
             SelectedEnvironmentChanged?.Invoke(value);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

@@ -57,7 +57,8 @@ public partial class ProjectPanelViewModel : ViewModelBase
         var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadProjectsCancellationTokenSource).Token;
         try
         {
-            var projects = await _projectWorkspaceService.GetProjectsAsync(cancellationToken);
+            var projects = await PerfLog.MeasureAsync("首页·项目列表加载",
+                () => _projectWorkspaceService.GetProjectsAsync(cancellationToken));
             _allProjects = projects.Select(project => new ProjectWorkspaceItemViewModel
             {
                 Id = project.Id,

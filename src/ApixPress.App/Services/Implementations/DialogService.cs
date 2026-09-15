@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using ApixPress.App.Helpers;
 using ApixPress.App.Services.Interfaces;
 using Ursa.Controls;
 using Ursa.Controls.Options;
@@ -18,11 +19,23 @@ public sealed class DialogService : IDialogService
         _windowHostService = windowHostService;
     }
 
-    public async Task<DialogResult> ShowDialogAsync<TView>(
+    public Task<DialogResult> ShowDialogAsync<TView>(
         object dataContext,
         string? title = null,
         bool canResize = false,
         bool showCloseButton = true)
+        where TView : Control, new()
+    {
+        // 弹窗打开→关闭整段计时：宿主布局、内容物化与模态级联都在这段里
+        return PerfLog.MeasureAsync($"弹窗·{title ?? typeof(TView).Name}", () =>
+            ShowDialogCoreAsync<TView>(dataContext, title, canResize, showCloseButton));
+    }
+
+    private async Task<DialogResult> ShowDialogCoreAsync<TView>(
+        object dataContext,
+        string? title,
+        bool canResize,
+        bool showCloseButton)
         where TView : Control, new()
     {
         var options = new OverlayDialogOptions

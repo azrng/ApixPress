@@ -98,7 +98,8 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
                 return await ImportPreparedGraphAsync(projectId, preparedGraph, cancellationToken);
             }
 
-            var json = await _sourceReader.ReadFromUrlAsync(targetUri, cancellationToken);
+            var json = await PerfLog.MeasureAsync("导入·URL下载",
+                () => _sourceReader.ReadFromUrlAsync(targetUri, cancellationToken));
             return await ImportCoreAsync(projectId, "URL", url, json, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -243,7 +244,8 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     {
         try
         {
-            var graph = await Task.Run(() => _parseOpenApiDocument(json, sourceType, sourceValue), cancellationToken);
+            var graph = await PerfLog.MeasureAsync("导入·OpenAPI解析",
+                () => Task.Run(() => _parseOpenApiDocument(json, sourceType, sourceValue), cancellationToken));
             return await ImportPreparedGraphAsync(projectId, graph, cancellationToken);
         }
         catch (BaseException exception)
@@ -295,7 +297,9 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         CancellationToken cancellationToken)
     {
         graph.Document.ProjectId = projectId;
-        await _apiDocumentRepository.SaveDocumentGraphAsync(graph.Document, graph.Endpoints, graph.Parameters, cancellationToken);
+        await PerfLog.MeasureAsync(
+            $"导入·入库(端点{graph.Endpoints.Count})",
+            () => _apiDocumentRepository.SaveDocumentGraphAsync(graph.Document, graph.Endpoints, graph.Parameters, cancellationToken));
         return ResultModel<ApiDocumentDto>.Success(ToDocumentDto(graph.Document));
     }
 

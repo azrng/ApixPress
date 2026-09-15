@@ -120,6 +120,12 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     public void ApplyResult(IResultModel<ResponseSnapshotDto> result, RequestSnapshotDto request)
     {
+        // 大响应时 BodyText 写入与 JSON 格式化是响应区卡顿的主要来源，整段计时
+        PerfLog.Measure("响应·结果渲染", () => ApplyResultCore(result, request));
+    }
+
+    private void ApplyResultCore(IResultModel<ResponseSnapshotDto> result, RequestSnapshotDto request)
+    {
         CancelPendingBodyFormat();
         IsLoading = false;
         HasResponse = true;

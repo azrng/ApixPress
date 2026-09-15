@@ -1,3 +1,4 @@
+using ApixPress.App.Helpers;
 using CommunityToolkit.Mvvm.Input;
 using Ursa.Controls;
 
@@ -26,7 +27,7 @@ public partial class MainWindowViewModel
                     string.Equals(item.Id, project.Id, StringComparison.OrdinalIgnoreCase));
                 StatusMessage = $"正在打开项目：{tab.Project.Name}";
                 NotifyShellState();
-                await tab.InitializeAsync();
+                await PerfLog.MeasureAsync($"打开项目·工作区初始化({tab.Project.Name})", () => tab.InitializeAsync());
             }
             else
             {

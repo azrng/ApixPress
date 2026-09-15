@@ -89,18 +89,26 @@ public sealed class ApplicationUpdateService : IApplicationUpdateService, ISingl
                 return ResultModel<AppUpdateCheckResultDto>.Failure("更新清单为空。", "app_update_empty_manifest");
             }
 
-            var latestRelease = manifest
+            var manifestVersions = manifest
                 .Where(item => TryParseComparableVersion(item.Version, out _))
-                .OrderByDescending(item => item.PubTime)
-                .ThenByDescending(item => ParseComparableVersion(item.Version))
-                .FirstOrDefault();
-
-            if (latestRelease is null)
+                .Select(item => ParseComparableVersion(item.Version))
+                .ToList();
+            if (manifestVersions.Count == 0)
             {
                 return ResultModel<AppUpdateCheckResultDto>.Failure("更新清单中未找到有效版本。", "app_update_invalid_manifest");
             }
 
-            var latestVersion = ParseComparableVersion(latestRelease.Version);
+            // 先取清单最高版本，再在该版本的记录里显式优先自包含包：
+            // 同一版本有自包含/非自包含两条记录（Version、PubTime 相同），依赖排序顺序选中包不可靠
+            var highestVersion = manifestVersions.Max();
+            var latestRelease = manifest
+                .Where(item => TryParseComparableVersion(item.Version, out _)
+                    && ParseComparableVersion(item.Version) == highestVersion)
+                .OrderByDescending(item => item.PacketName?.Contains("selfcontained", StringComparison.OrdinalIgnoreCase) == true)
+                .ThenByDescending(item => item.PubTime)
+                .First();
+
+            var latestVersion = highestVersion;
             var latestDisplayVersion = NormalizeVersion(latestRelease.Version);
             return ResultModel<AppUpdateCheckResultDto>.Success(new AppUpdateCheckResultDto
             {

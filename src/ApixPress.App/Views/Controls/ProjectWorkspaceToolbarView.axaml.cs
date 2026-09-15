@@ -15,16 +15,23 @@ public partial class ProjectWorkspaceToolbarView : UserControl
 
     private void OnEnvironmentManagerButtonClick(object? sender, RoutedEventArgs e)
     {
-        if (this.FindAncestorOfType<Window>()?.DataContext is MainWindowViewModel viewModel
-            && viewModel.OpenEnvironmentManagerCommand.CanExecute(null))
+        // 环境管理走右侧抽屉（多环境平铺编辑，对齐原型 07-environments）
+        if (this.FindAncestorOfType<MainWindow>() is { } mainWindow)
         {
-            viewModel.OpenEnvironmentManagerCommand.Execute(null);
+            mainWindow.OpenEnvironmentDrawer();
         }
     }
 
     // 环境菜单项点击：业务由 SelectEnvironmentCommand 承担，这里只负责收起浮层
     private void OnEnvironmentMenuItemClick(object? sender, RoutedEventArgs e)
     {
+        // Flyout 内容在 PopupRoot 中编译绑定 $parent 链断裂（命令恒 null），这里手动执行切换命令
+        if (sender is Button { DataContext: ProjectEnvironmentItemViewModel item }
+            && DataContext is ProjectTabViewModel tab
+            && tab.EnvironmentPanel.SelectEnvironmentCommand.CanExecute(item))
+        {
+            tab.EnvironmentPanel.SelectEnvironmentCommand.Execute(item);
+        }
         CloseEnvironmentChipFlyout();
     }
 

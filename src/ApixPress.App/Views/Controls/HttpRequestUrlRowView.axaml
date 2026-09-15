@@ -97,6 +97,7 @@
               Content="&#xE70D;"
               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
               FontSize="10"
+              IsVisible="{Binding Editor.ShowSaveHttpCaseAction}"
               ToolTip.Tip="更多保存方式"
               Click="OnCaretButtonClick">
         <Button.Flyout>

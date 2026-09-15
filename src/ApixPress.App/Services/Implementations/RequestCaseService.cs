@@ -1,4 +1,5 @@
 ﻿using Azrng.Core.Json;
+using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Models.Entities;
 using ApixPress.App.Repositories.Interfaces;
@@ -31,10 +32,13 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         return cases.Select(ToSummaryDto).ToList();
     }
 
-    public async Task<IReadOnlyList<RequestCaseDto>> GetCaseDetailsAsync(string projectId, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<RequestCaseDto>> GetCaseDetailsAsync(string projectId, CancellationToken cancellationToken)
     {
-        var cases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
-        return cases.Select(ToDto).ToList();
+        return PerfLog.MeasureAsync<IReadOnlyList<RequestCaseDto>>("开项目·用例明细加载", async () =>
+        {
+            var cases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
+            return cases.Select(ToDto).ToList();
+        });
     }
 
     public async Task<RequestCaseDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
@@ -48,7 +52,12 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         return await Task.Run(() => ToDto(entity), cancellationToken);
     }
 
-    public async Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
+    public Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
+    {
+        return PerfLog.MeasureAsync("用例·保存", () => SaveCoreAsync(requestCase, cancellationToken));
+    }
+
+    private async Task<IResultModel<RequestCaseDto>> SaveCoreAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
     {
         var validationError = ValidateSaveRequest(requestCase);
         if (validationError is not null)

@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using ApixPress.App.Helpers;
 
 namespace ApixPress.App.ViewModels;
 
@@ -39,7 +40,8 @@ public partial class MainWindowViewModel
             return;
         }
 
-        ActiveProjectTab = tab;
+        // 赋值同步触发 ProjectTabHostView 的内容切换（有宿主缓存，正常应毫秒级）
+        PerfLog.Measure("项目标签·激活切换", () => ActiveProjectTab = tab);
     }
 
     private void OnProjectsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

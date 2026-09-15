@@ -153,10 +153,12 @@ internal sealed class ProjectTabComposition : DisposableObject
                 GetActiveWorkspaceTab = _hostContext.GetActiveWorkspaceTab,
                 GetFallbackWorkspaceTab = () => _fallbackWorkspaceTab,
                 GetCurrentBaseUrl = () => environmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty,
-                GetActiveVariables = () => environmentPanel.EnvironmentVariables
-                    .Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Key))
-                    .GroupBy(item => item.Key.Trim(), StringComparer.OrdinalIgnoreCase)
-                    .ToDictionary(group => group.Key, group => group.Last().Value, StringComparer.OrdinalIgnoreCase),
+                GetActiveVariables = () => environmentPanel.SelectedEnvironment is { } selected
+                    ? selected.Variables
+                        .Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Key))
+                        .GroupBy(item => item.Key.Trim(), StringComparer.OrdinalIgnoreCase)
+                        .ToDictionary(group => group.Key, group => group.Last().Value, StringComparer.OrdinalIgnoreCase)
+                    : [],
                 IsInterfaceRootWorkspaceActive = _hostContext.IsInterfaceRootWorkspaceActive,
                 HasHistory = () => historyPanel.HistoryItems.Count > 0
             };
@@ -442,7 +444,6 @@ internal sealed class ProjectTabComposition : DisposableObject
         _project.PropertyChanged += OnProjectPropertyChanged;
         EnvironmentPanel.SelectedEnvironmentChanged += Lifecycle.OnSelectedEnvironmentChanged;
         EnvironmentPanel.Environments.CollectionChanged += OnCollectionChanged;
-        EnvironmentPanel.EnvironmentVariables.CollectionChanged += OnEnvironmentVariablesCollectionChanged;
         HistoryPanel.HistoryItems.CollectionChanged += OnCollectionChanged;
         Workspace.PropertyChanged += Lifecycle.OnWorkspacePropertyChanged;
         Workspace.StateChanged += _onStateChanged;
@@ -469,7 +470,6 @@ internal sealed class ProjectTabComposition : DisposableObject
         _project.PropertyChanged -= OnProjectPropertyChanged;
         EnvironmentPanel.SelectedEnvironmentChanged -= Lifecycle.OnSelectedEnvironmentChanged;
         EnvironmentPanel.Environments.CollectionChanged -= OnCollectionChanged;
-        EnvironmentPanel.EnvironmentVariables.CollectionChanged -= OnEnvironmentVariablesCollectionChanged;
         HistoryPanel.HistoryItems.CollectionChanged -= OnCollectionChanged;
         Workspace.PropertyChanged -= Lifecycle.OnWorkspacePropertyChanged;
         Workspace.StateChanged -= _onStateChanged;
@@ -517,11 +517,6 @@ internal sealed class ProjectTabComposition : DisposableObject
     private void OnCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
-    }
-
-    private void OnEnvironmentVariablesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-    {
-        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.EditorState | WorkspaceStateChangeFlags.ShellState));
     }
 
     private void OnChildPropertyChanged(object? sender, PropertyChangedEventArgs e)

@@ -10,7 +10,7 @@ internal static class ControlEndpoints
     public static void Map(WebApplication app)
     {
         // 返回指定状态码；418 返回彩蛋响应体，便于区分"空状态码"与"带响应体"两种场景
-        app.MapMethods("/status/{code:int}", ["GET", "POST", "PUT", "PATCH", "DELETE"], (int code) =>
+        app.MapPerMethod("/status/{code:int}", ["GET", "POST", "PUT", "PATCH", "DELETE"], (int code) =>
         {
             if (code is < 200 or > 599)
             {
@@ -20,18 +20,16 @@ internal static class ControlEndpoints
             return code == 418
                 ? Results.Content("-=[ teapot ]=-\n\n我是茶壶，短而胖。", "text/plain; charset=utf-8", statusCode: 418)
                 : Results.StatusCode(code);
-        }).WithTags("状态与控制")
-            .WithSummary("返回指定状态码")
-            .WithDescription("路径参数 code 取 200~599；418 返回茶壶彩蛋响应体");
+        }, "状态与控制", method => $"{method} /status/{{code}} 返回指定状态码",
+            "路径参数 code 取 200~599；418 返回茶壶彩蛋响应体");
 
-        app.MapMethods("/delay/{seconds:double}", ["GET", "POST", "PUT", "PATCH", "DELETE"],
+        app.MapPerMethod("/delay/{seconds:double}", ["GET", "POST", "PUT", "PATCH", "DELETE"],
             async (double seconds, HttpContext context) =>
             {
                 await Task.Delay(TimeSpan.FromSeconds(Math.Clamp(seconds, 0, 60)), context.RequestAborted);
                 return Results.Json(await EchoEndpoints.BuildEchoAsync(context));
-            }).WithTags("状态与控制")
-            .WithSummary("延迟指定秒数后回显")
-            .WithDescription("延迟 seconds 秒（0~60）后返回请求回显，用于验证超时与响应计时");
+            }, "状态与控制", method => $"{method} /delay/{{seconds}} 延迟后回显",
+            "延迟 seconds 秒（0~60）后返回请求回显，用于验证超时与响应计时");
 
         MapRedirect(app, "/redirect/{n:int}", relative: true);
         MapRedirect(app, "/relative-redirect/{n:int}", relative: true);

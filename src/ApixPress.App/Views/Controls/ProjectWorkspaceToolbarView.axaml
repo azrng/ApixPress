@@ -32,12 +32,11 @@
               <ItemsControl ItemsSource="{Binding EnvironmentPanel.Environments}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:ProjectEnvironmentItemViewModel">
+                    <!-- 环境切换不走 XAML 命令绑定：Flyout 内容挂在 PopupRoot，编译绑定 $parent[Window]/$parent[ItemsControl] 均解析失败导致命令静默失效，改由 code-behind 执行 -->
                     <Button Classes="EnvMenuItem"
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Stretch"
-                            Click="OnEnvironmentMenuItemClick"
-                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ActiveProjectTab.EnvironmentPanel.SelectEnvironmentCommand}"
-                            CommandParameter="{Binding}">
+                            Click="OnEnvironmentMenuItemClick">
                       <Grid ColumnDefinitions="Auto,*,Auto"
                             ColumnSpacing="8">
                         <TextBlock Classes="EnvMenuCheck"

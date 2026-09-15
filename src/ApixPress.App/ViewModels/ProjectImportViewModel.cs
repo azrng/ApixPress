@@ -610,7 +610,7 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
         IsImportDataBusy = true;
         try
         {
-            var previewResult = await previewAction(cancellationToken);
+            var previewResult = await PerfLog.MeasureAsync("导入·预检查", () => previewAction(cancellationToken));
             if (!previewResult.IsSuccess || previewResult.Data is null)
             {
                 var failureMessage = string.IsNullOrWhiteSpace(previewResult.Message)
@@ -668,7 +668,7 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
         CancellationToken cancellationToken)
     {
         ImportDataBusyText = importBusyText;
-        var result = await importAction(cancellationToken);
+        var result = await PerfLog.MeasureAsync("导入·执行入库", () => importAction(cancellationToken));
         if (!result.IsSuccess || result.Data is null)
         {
             var failureMessage = string.IsNullOrWhiteSpace(result.Message)

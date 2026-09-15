@@ -1,3 +1,4 @@
+using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Models.Entities;
 using ApixPress.App.Repositories.Interfaces;
@@ -20,32 +21,41 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
         _serializer = serializer;
     }
 
-    public async Task<IReadOnlyList<RequestHistoryItemDto>> GetHistoryAsync(string projectId, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<RequestHistoryItemDto>> GetHistoryAsync(string projectId, CancellationToken cancellationToken)
     {
-        const int limit = 50;
-        var entities = await _requestHistoryRepository.GetHistoryAsync(projectId, limit, cancellationToken);
-        return entities.Select(ToSummaryDto).ToList();
-    }
-
-    public async Task<RequestHistoryItemDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
-    {
-        var entity = await _requestHistoryRepository.GetByIdAsync(projectId, id, cancellationToken);
-        return entity is null ? null : ToDetailDto(entity);
-    }
-
-    public async Task<IResultModel<RequestHistoryItemDto>> AddAsync(string projectId, RequestSnapshotDto request, ResponseSnapshotDto? response, CancellationToken cancellationToken)
-    {
-        var entity = new RequestHistoryEntity
+        return PerfLog.MeasureAsync<IReadOnlyList<RequestHistoryItemDto>>("历史·列表加载", async () =>
         {
-            Id = Guid.NewGuid().ToString("N"),
-            ProjectId = projectId,
-            Timestamp = DateTime.UtcNow,
-            RequestSnapshotJson = _serializer.ToJson(request),
-            ResponseSnapshotJson = response is not null ? _serializer.ToJson(response) : "{}"
-        };
+            const int limit = 50;
+            var entities = await _requestHistoryRepository.GetHistoryAsync(projectId, limit, cancellationToken);
+            return entities.Select(ToSummaryDto).ToList();
+        });
+    }
 
-        await _requestHistoryRepository.UpsertAsync(entity, cancellationToken);
-        return ResultModel<RequestHistoryItemDto>.Success(CreateDetailDto(entity.Id, entity.Timestamp, request, response));
+    public Task<RequestHistoryItemDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
+    {
+        return PerfLog.MeasureAsync("历史·详情加载", async () =>
+        {
+            var entity = await _requestHistoryRepository.GetByIdAsync(projectId, id, cancellationToken);
+            return entity is null ? null : ToDetailDto(entity);
+        });
+    }
+
+    public Task<IResultModel<RequestHistoryItemDto>> AddAsync(string projectId, RequestSnapshotDto request, ResponseSnapshotDto? response, CancellationToken cancellationToken)
+    {
+        return PerfLog.MeasureAsync("历史·写入", async () =>
+        {
+            var entity = new RequestHistoryEntity
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                ProjectId = projectId,
+                Timestamp = DateTime.UtcNow,
+                RequestSnapshotJson = _serializer.ToJson(request),
+                ResponseSnapshotJson = response is not null ? _serializer.ToJson(response) : "{}"
+            };
+
+            await _requestHistoryRepository.UpsertAsync(entity, cancellationToken);
+            return ResultModel<RequestHistoryItemDto>.Success(CreateDetailDto(entity.Id, entity.Timestamp, request, response));
+        });
     }
 
     public async Task<IResultModel<bool>> ClearAsync(string projectId, CancellationToken cancellationToken)

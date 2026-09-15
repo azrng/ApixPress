@@ -1,4 +1,5 @@
-﻿using ApixPress.App.Models.DTOs;
+﻿using ApixPress.App.Helpers;
+using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using Azrng.Core;
 using Azrng.Core.DependencyInjection;
@@ -46,7 +47,15 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<IResultModel<ResponseSnapshotDto>> SendAsync(
+    public Task<IResultModel<ResponseSnapshotDto>> SendAsync(
+        RequestSnapshotDto request,
+        ProjectEnvironmentDto environment,
+        CancellationToken cancellationToken)
+    {
+        return PerfLog.MeasureAsync("请求·发送总耗时", () => SendCoreAsync(request, environment, cancellationToken));
+    }
+
+    private async Task<IResultModel<ResponseSnapshotDto>> SendCoreAsync(
         RequestSnapshotDto request,
         ProjectEnvironmentDto environment,
         CancellationToken cancellationToken)

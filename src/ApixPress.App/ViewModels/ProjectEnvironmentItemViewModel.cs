@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.ViewModels.Base;
 
@@ -27,6 +29,20 @@ public partial class ProjectEnvironmentItemViewModel : ViewModelBase
     [ObservableProperty]
     private bool isSelected;
 
+    public ProjectEnvironmentItemViewModel()
+    {
+        Variables.CollectionChanged += OnVariablesCollectionChanged;
+    }
+
+    // 变量集合挂环境自身：抽屉多卡片平铺时每个环境的变量可同时展开编辑
+    public ObservableCollection<EnvironmentVariableItemViewModel> Variables { get; } = [];
+
+    public bool HasVariables => Variables.Count > 0;
+
+    public string VariableCountText => HasVariables
+        ? $"{Variables.Count} 个变量 · 发送时自动替换 {{{{变量名}}}}"
+        : "暂无变量 · 发送时自动替换 {{变量名}}";
+
     public string DisplayName => IsActive ? $"{Name}（当前）" : Name;
     public string CompactDisplayName => Name;
     public string DisplayBaseUrl => string.IsNullOrWhiteSpace(BaseUrl) ? "未配置前置 URL" : BaseUrl;
@@ -46,5 +62,11 @@ public partial class ProjectEnvironmentItemViewModel : ViewModelBase
     partial void OnBaseUrlChanged(string value)
     {
         OnPropertyChanged(nameof(DisplayBaseUrl));
+    }
+
+    private void OnVariablesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(HasVariables));
+        OnPropertyChanged(nameof(VariableCountText));
     }
 }

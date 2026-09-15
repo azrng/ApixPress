@@ -377,3 +377,6 @@ dist/
 # AI rule 本地产物（use-ai-rule 生成：配方记录、生成器本体与规则效果反馈记录，勿提交）
 use-ai-rule*
 .ai-rule-feedback.md
+
+# Git Bash 崩溃转储
+bash.exe.stackdump

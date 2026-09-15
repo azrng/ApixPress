@@ -166,36 +166,24 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task OpenEnvironmentManagerCommand_ShouldOpenCurrentProjectEnvironmentSettings()
+    public async Task OpenProjectWorkspace_ShouldBindEnvironmentPanelForDrawer()
     {
         var projectService = new FakeProjectWorkspaceService();
         projectService.SeedProjects(
         [
             new("project-1", "订单项目", "订单接口", true)
         ]);
-        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
-        var viewModel = CreateViewModel(projectService, dialogService: dialogService);
+        var viewModel = CreateViewModel(projectService);
         await viewModel.InitializeAsync();
         var project = viewModel.ProjectPanel.Projects.Single();
         await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(project);
-        string? statusAtDialogOpen = null;
-        dialogService.OnShow = request =>
-        {
-            if (request.ViewType == typeof(ApixPress.App.Views.Controls.EnvironmentManagerDialogView))
-            {
-                statusAtDialogOpen = viewModel.StatusMessage;
-            }
-        };
 
-        await viewModel.OpenEnvironmentManagerCommand.ExecuteAsync(null);
-
+        // 环境抽屉（多卡片平铺）依赖 EnvironmentPanel 转发与每个环境的变量集合
         Assert.Same(viewModel.ActiveProjectTab!.EnvironmentPanel, viewModel.EnvironmentPanel);
         Assert.True(viewModel.EnvironmentPanel.HasSelectedEnvironment);
         Assert.Equal("开发", viewModel.EnvironmentPanel.SelectedEnvironment?.Name);
         Assert.Equal("https://api.demo.local", viewModel.EnvironmentPanel.SelectedEnvironment?.BaseUrl);
-        // 弹窗打开期间状态栏提示管理中；关闭后恢复为项目标签自身的状态文案
-        Assert.Equal("正在管理项目 订单项目 的环境。", statusAtDialogOpen);
-        Assert.Equal(viewModel.ActiveProjectTab.StatusMessage, viewModel.StatusMessage);
+        Assert.NotNull(viewModel.EnvironmentPanel.SelectedEnvironment?.Variables);
     }
 
     [Fact]

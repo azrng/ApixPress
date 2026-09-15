@@ -4,8 +4,10 @@ setlocal
 rem =====================================================
 rem ApixPress self-contained publish script (win-x64)
 rem Usage : run package-selfcontained.bat from the repo root
-rem Output: dist\apixpress-selfcontained\        (runnable)
+rem Output: dist\apixpress-selfcontained\           (runnable)
 rem         dist\ApixPress-selfcontained-win-x64.zip
+rem Paired: package-framework.bat builds the framework-
+rem         dependent variant for machines with .NET 10.
 rem About: self-contained = the .NET runtime is bundled, no
 rem        runtime install needed on target machines. This
 rem        build keeps the JIT (faster startup than AOT to

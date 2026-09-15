@@ -342,23 +342,18 @@ public sealed class WorkbenchLayoutTests
     [Fact]
     public void EnvironmentManager_ShouldUseDrawerWithEnvCardsAndInlineDeleteStrip()
     {
-        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "EnvironmentManagerDialogView.axaml"));
+        // 环境管理已迁移为右侧抽屉（多环境卡片平铺，对齐原型 07）：EnvironmentDrawerView
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "EnvironmentDrawerView.axaml"));
 
-        // 对齐原型 07：右侧抽屉 + 环境卡片列表 + 内联删除确认条
+        // 卡片式环境列表：每张卡片含激活徽章、逐卡新增变量、单卡保存与全局保存
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Border"
-            && HasClass(element, "EnvDrawerPanel"));
+            && HasClass(element, "PanelCard"));
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Border"
-            && HasClass(element, "EnvDrawerHead"));
-        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Border"
-            && HasClass(element, "EnvCard"));
-        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Border"
-            && HasClass(element, "EnvDeleteStrip"));
-
-        var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "DialogStyles.axaml"));
-        Assert.Contains(styles.Descendants(), element => element.Name.LocalName == "Style"
-            && element.Attribute("Selector")?.Value == "Border.EnvDrawerPanel");
-        Assert.Contains(styles.Descendants(), element => element.Name.LocalName == "Style"
-            && element.Attribute("Selector")?.Value == "Border.EnvDeleteStrip");
+            && HasClass(element, "EnvMenuActiveChip"));
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Button"
+            && element.Attribute("Command")?.Value?.Contains("AddVariableCommand") == true);
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Button"
+            && element.Attribute("Command")?.Value?.Contains("SaveAllEnvironmentsCommand") == true);
     }
 
     private static bool HasClass(XElement element, string className)

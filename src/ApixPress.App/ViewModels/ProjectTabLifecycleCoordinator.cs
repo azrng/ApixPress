@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
+using ApixPress.App.Helpers;
 using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
 
@@ -171,9 +172,10 @@ internal sealed class ProjectTabLifecycleCoordinator
         _useCasesPanel.SetProjectContext(_projectId);
         _historyPanel.SetProjectContext(_projectId);
         await Task.WhenAll(
-            _environmentPanel.LoadProjectAsync(_projectId, preferredEnvironmentId),
-            _useCasesPanel.LoadCasesAsync(),
-            _interfaceRoot.InitializeAsync());
+            PerfLog.MeasureAsync("开项目·环境加载",
+                () => _environmentPanel.LoadProjectAsync(_projectId, preferredEnvironmentId)),
+            PerfLog.MeasureAsync("开项目·用例加载", () => _useCasesPanel.LoadCasesAsync()),
+            PerfLog.MeasureAsync("开项目·接口树初始化", () => _interfaceRoot.InitializeAsync()));
         _workspace.EnsureLandingWorkspaceTab();
         _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }

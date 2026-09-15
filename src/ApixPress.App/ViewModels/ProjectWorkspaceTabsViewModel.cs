@@ -163,7 +163,8 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
     public void ActivateWorkspaceTab(RequestWorkspaceTabViewModel tab)
     {
-        ActiveWorkspaceTab = tab;
+        // 属性赋值会同步触发 ActiveWorkspaceTabChanged 级联（编辑器状态应用、视图切换），是切换卡顿的主要测量点
+        PerfLog.Measure("工作标签·激活切换", () => ActiveWorkspaceTab = tab);
     }
 
     public void RunWithNotificationsSuspended(Action action)
@@ -367,35 +368,39 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         var removedIndex = WorkspaceTabs.IndexOf(tab);
         // 挂起通知把 Remove 级联（同步可见列表 + StateChanged）合并为收尾的一次，
         // 中间的每一步不再触发 TabStrip 全量重建与工作台级联刷新
-        RunWithNotificationsSuspended(() =>
+        PerfLog.Measure("工作标签·关闭全路径", () =>
         {
-            DetachWorkspaceTab(tab);
-            WorkspaceTabs.Remove(tab);
+            RunWithNotificationsSuspended(() =>
+            {
+                DetachWorkspaceTab(tab);
+                WorkspaceTabs.Remove(tab);
 
-            if (WorkspaceTabs.Count == 0)
-            {
-                EnsureLandingWorkspaceTab();
-                SyncVisibleWorkspaceTabs();
-            }
-            else
-            {
-                if (ReferenceEquals(ActiveWorkspaceTab, tab))
+                if (WorkspaceTabs.Count == 0)
                 {
-                    var nextIndex = Math.Clamp(removedIndex - 1, 0, WorkspaceTabs.Count - 1);
-                    ActivateWorkspaceTab(WorkspaceTabs[nextIndex]);
+                    EnsureLandingWorkspaceTab();
+                    SyncVisibleWorkspaceTabs();
                 }
+                else
+                {
+                    if (ReferenceEquals(ActiveWorkspaceTab, tab))
+                    {
+                        var nextIndex = Math.Clamp(removedIndex - 1, 0, WorkspaceTabs.Count - 1);
+                        ActivateWorkspaceTab(WorkspaceTabs[nextIndex]);
+                    }
 
-                SyncVisibleWorkspaceTabs();
-            }
+                    SyncVisibleWorkspaceTabs();
+                }
+            });
+
+            _messenger.Send(new StatusMessageRequest("工作标签已关闭。"));
+            StateChanged?.Invoke();
         });
-
-        _messenger.Send(new StatusMessageRequest("工作标签已关闭。"));
-        StateChanged?.Invoke();
         return true;
     }
 
     partial void OnActiveWorkspaceTabChanged(RequestWorkspaceTabViewModel? oldValue, RequestWorkspaceTabViewModel? newValue)
     {
+        // 激活级联分段计时：定位切到落地/接口标签的 250ms 级卡顿具体在哪一段
         if (oldValue is not null)
         {
             oldValue.IsActive = false;
@@ -404,14 +409,15 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         if (newValue is not null)
         {
             newValue.IsActive = true;
-            _selectInterfaceManagementSection();
-            _messenger.Send(new StatusMessageRequest(newValue.IsLandingTab
-                ? "已切换到新建页。"
-                : $"已切换到标签：{newValue.HeaderText}"));
+            PerfLog.Measure("标签激活·段1-选择接口分区", _selectInterfaceManagementSection);
+            PerfLog.Measure("标签激活·段2-状态消息", () =>
+                _messenger.Send(new StatusMessageRequest(newValue.IsLandingTab
+                    ? "已切换到新建页。"
+                    : $"已切换到标签：{newValue.HeaderText}")));
         }
 
-        ActiveWorkspaceTabChanged?.Invoke(oldValue, newValue);
-        RequestNotifications(stateChanged: true, editorStateChanged: true);
+        PerfLog.Measure("标签激活·段3-变更事件", () => ActiveWorkspaceTabChanged?.Invoke(oldValue, newValue));
+        PerfLog.Measure("标签激活·段4-通知广播", () => RequestNotifications(stateChanged: true, editorStateChanged: true));
     }
 
     partial void OnIsWorkspaceTabMenuOpenChanged(bool value)
@@ -523,33 +529,36 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
     {
         // 差量同步：Clear+Add 全量重建会触发 TabStrip Reset 级联（选定值回写 → ActiveWorkspaceTab churn
         // → 工作台视图整体重建），单次代价 300ms+，直接表现为关闭标签卡顿；逐项 Remove/Insert 只产生增量变更
-        var nextVisible = WorkspaceTabs.Where(item => !item.IsLandingTab || item.ShowInTabStrip).ToList();
-        for (var index = _visibleWorkspaceTabs.Count - 1; index >= 0; index--)
+        PerfLog.Measure("工作标签·差量同步", () =>
         {
-            if (!nextVisible.Contains(_visibleWorkspaceTabs[index]))
+            var nextVisible = WorkspaceTabs.Where(item => !item.IsLandingTab || item.ShowInTabStrip).ToList();
+            for (var index = _visibleWorkspaceTabs.Count - 1; index >= 0; index--)
             {
-                _visibleWorkspaceTabs.RemoveAt(index);
-            }
-        }
-
-        foreach (var item in nextVisible)
-        {
-            var currentIndex = _visibleWorkspaceTabs.IndexOf(item);
-            var targetIndex = nextVisible.IndexOf(item);
-            if (currentIndex == targetIndex)
-            {
-                continue;
+                if (!nextVisible.Contains(_visibleWorkspaceTabs[index]))
+                {
+                    _visibleWorkspaceTabs.RemoveAt(index);
+                }
             }
 
-            if (currentIndex < 0)
+            foreach (var item in nextVisible)
             {
-                _visibleWorkspaceTabs.Insert(Math.Min(targetIndex, _visibleWorkspaceTabs.Count), item);
+                var currentIndex = _visibleWorkspaceTabs.IndexOf(item);
+                var targetIndex = nextVisible.IndexOf(item);
+                if (currentIndex == targetIndex)
+                {
+                    continue;
+                }
+
+                if (currentIndex < 0)
+                {
+                    _visibleWorkspaceTabs.Insert(Math.Min(targetIndex, _visibleWorkspaceTabs.Count), item);
+                }
+                else
+                {
+                    _visibleWorkspaceTabs.Move(currentIndex, targetIndex);
+                }
             }
-            else
-            {
-                _visibleWorkspaceTabs.Move(currentIndex, targetIndex);
-            }
-        }
+        });
     }
 
     private void CloseOtherWorkspaceTabs(RequestWorkspaceTabViewModel? keepTab)

@@ -171,6 +171,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
         }
 
         var source = item.SourceCase;
+        var openStopwatch = System.Diagnostics.Stopwatch.StartNew();
         _showInterfaceManagementSection();
         var targetTab = _workspace.ResolveTabForWorkspaceNavigation(source);
         // 标签已在编辑该用例且有未保存修改时只激活不回填：旧快照覆盖编辑器状态会导致保存出陈旧数据
@@ -187,6 +188,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
             _ => $"已加载快捷请求：{source.Name}"
         }));
         _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+        PerfLog.Log("树节点·打开工作区标签", openStopwatch.ElapsedMilliseconds, source.Name);
 
         if (source.HasLoadedDetail)
         {
@@ -433,19 +435,22 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
 
     private void RebuildInterfaceNavigation()
     {
-        var treeCommands = new WorkspaceTreeItemCommands(
-            RequestDeleteWorkspaceTreeItemCommand,
-            RequestCreateFolderDialogCommand,
-            _workspace.OpenHttpInterfaceWorkspaceCommand);
-        SynchronizeExplorerItems(
-            InterfaceTreeItems,
-            [ProjectWorkspaceTreeBuilder.BuildInterfaceRoot(
-                ResolveInterfaceNavigationItems(),
-                treeCommands,
-                HasInterfaceSearchText)]);
-        OnPropertyChanged(nameof(InterfaceCatalogItems));
-        OnPropertyChanged(nameof(ShowInterfaceEntriesEmptyState));
-        RebuildInterfaceFlatRows();
+        PerfLog.Measure("接口树·导航重建", () =>
+        {
+            var treeCommands = new WorkspaceTreeItemCommands(
+                RequestDeleteWorkspaceTreeItemCommand,
+                RequestCreateFolderDialogCommand,
+                _workspace.OpenHttpInterfaceWorkspaceCommand);
+            SynchronizeExplorerItems(
+                InterfaceTreeItems,
+                [ProjectWorkspaceTreeBuilder.BuildInterfaceRoot(
+                    ResolveInterfaceNavigationItems(),
+                    treeCommands,
+                    HasInterfaceSearchText)]);
+            OnPropertyChanged(nameof(InterfaceCatalogItems));
+            OnPropertyChanged(nameof(ShowInterfaceEntriesEmptyState));
+            RebuildInterfaceFlatRows();
+        });
     }
 
     private void RebuildQuickRequestNavigation()
@@ -495,20 +500,24 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
             return;
         }
 
-        var rowIndex = InterfaceFlatRows.IndexOf(node);
-        if (rowIndex < 0)
+        // 大组（如 59 个端点）首次展开的行插入是树交互卡顿的主要测量点
+        PerfLog.Measure(node.IsExpanded ? "接口树·展开节点" : "接口树·收起节点", () =>
         {
-            RebuildInterfaceFlatRows();
-            return;
-        }
+            var rowIndex = InterfaceFlatRows.IndexOf(node);
+            if (rowIndex < 0)
+            {
+                RebuildInterfaceFlatRows();
+                return;
+            }
 
-        RemoveFlatDescendantRows(node);
-        if (node.IsExpanded)
-        {
-            // OnIsExpandedChanged 已触发延迟子级加载，这里兜底幂等
-            node.EnsureChildrenLoaded();
-            AppendInterfaceFlatRows(node.Children, node.DisplayDepth + 1, rowIndex + 1);
-        }
+            RemoveFlatDescendantRows(node);
+            if (node.IsExpanded)
+            {
+                // OnIsExpandedChanged 已触发延迟子级加载，这里兜底幂等
+                node.EnsureChildrenLoaded();
+                AppendInterfaceFlatRows(node.Children, node.DisplayDepth + 1, rowIndex + 1);
+            }
+        });
     }
 
     private void RemoveFlatDescendantRows(ExplorerItemViewModel node)

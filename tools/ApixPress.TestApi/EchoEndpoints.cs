@@ -14,35 +14,34 @@ internal static class EchoEndpoints
         // 注意：这里的处理器统一使用块体 lambda。.NET 10 下 MapMethods 搭配
         // "async (...) => Results.Json(...)" 表达式体时响应体会丢失（实测 200 空响应），
         // 块体写法则一切正常。
+        // summary 按方法区分（如 "PUT /get 回显请求详情"）：此前 MapMethods 全方法共享
+        // 一份 summary，ApixPress 导入后同一路径的 7 个接口全部同名。
         foreach (var verb in new[] { "get", "post", "put", "patch", "delete" })
         {
-            app.MapMethods($"/{verb}", AllMethods, async (HttpContext context) =>
+            var pattern = $"/{verb}";
+            app.MapPerMethod(pattern, AllMethods, async (HttpContext context) =>
             {
                 return Results.Json(await BuildEchoAsync(context));
-            }).WithTags("回显类")
-                .WithSummary($"{verb.ToUpperInvariant()} 回显请求详情")
-                .WithDescription("原样回显真实请求方法、query、headers、cookies、请求体与 JSON/表单解析结果");
+            }, "回显类", method => $"{method} {pattern} 回显请求详情",
+                "原样回显真实请求方法、query、headers、cookies、请求体与 JSON/表单解析结果");
         }
 
-        app.MapMethods("/anything", AllMethods, async (HttpContext context) =>
+        app.MapPerMethod("/anything", AllMethods, async (HttpContext context) =>
         {
             return Results.Json(await BuildEchoAsync(context));
-        }).WithTags("回显类")
-            .WithSummary("任意路径回显请求详情")
-            .WithDescription("回显内容与 /get 一致");
-        app.MapMethods("/anything/{**path}", AllMethods, async (HttpContext context) =>
+        }, "回显类", method => $"{method} /anything 回显请求详情",
+            "回显内容与 /get 一致");
+        app.MapPerMethod("/anything/{**path}", AllMethods, async (HttpContext context) =>
         {
             return Results.Json(await BuildEchoAsync(context));
-        }).WithTags("回显类")
-            .WithSummary("任意子路径回显请求详情")
-            .WithDescription("通配 /anything/ 后的任意子路径，回显内容与 /get 一致");
+        }, "回显类", method => $"{method} /anything/{{path}} 回显请求详情",
+            "通配 /anything/ 后的任意子路径，回显内容与 /get 一致");
 
-        app.MapMethods("/headers", AllMethods, (HttpContext context) => Results.Json(new
+        app.MapPerMethod("/headers", AllMethods, (HttpContext context) => Results.Json(new
         {
             headers = context.Request.Headers.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray())
-        })).WithTags("回显类")
-            .WithSummary("返回请求头集合")
-            .WithDescription("以键值对形式返回客户端发送的全部请求头");
+        }), "回显类", method => $"{method} /headers 返回请求头集合",
+            "以键值对形式返回客户端发送的全部请求头");
 
         app.MapGet("/ip", (HttpContext context) => Results.Json(new
         {

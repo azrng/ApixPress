@@ -1,6 +1,7 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
 using ApixPress.App.Data.Context;
+using ApixPress.App.Helpers;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
 using ApixPress.App.Views.Controls;
@@ -58,8 +59,8 @@ public partial class MainWindow : Window
         {
             _windowHostService.MainWindow = this;
             _viewModel.UpdateWindowState(WindowState);
-            await _databaseInitializer.InitializeAsync();
-            await _viewModel.InitializeAsync();
+            await PerfLog.MeasureAsync("启动·数据库初始化", () => _databaseInitializer.InitializeAsync());
+            await PerfLog.MeasureAsync("启动·主视图模型初始化", () => _viewModel.InitializeAsync());
         });
     }
 
@@ -164,6 +165,12 @@ public partial class MainWindow : Window
 
     private void OnOpenEnvironmentDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        OpenEnvironmentDrawer();
+    }
+
+    // 供视图层（环境芯片「管理环境…」入口）调用的抽屉入口
+    internal void OpenEnvironmentDrawer()
+    {
         if (_isEnvironmentDrawerOpen)
         {
             return;
@@ -183,8 +190,8 @@ public partial class MainWindow : Window
                         Buttons = DialogButton.None,
                         Title = "环境变量",
                         Position = Ursa.Common.Position.Right,
-                        MinWidth = 420,
-                        MaxWidth = 460,
+                        MinWidth = 480,
+                        MaxWidth = 560,
                         CanResize = true,
                         TopLevelHashCode = GetHashCode()
                     });
