@@ -1,7 +1,7 @@
 ---
 rule_id: application-agents
-version: 1.65.0
-last_updated: 2026-09-13
+version: 1.75.0
+last_updated: 2026-09-14
 dependencies: [agents-root]
 ---
 
@@ -117,11 +117,12 @@ src/AppName/
 - 禁止在 ViewModel、Service、Repository、Model、DTO 等 C# 类中使用主构造函数（Primary Constructor），统一使用显式构造函数
 
 ### Service 层规则
-- 服务类必须实现接口，接口定义在 `Services/Interfaces/` 目录。
-- 服务方法必须优先采用异步形式（返回 `Task<T>` 或 `ValueTask<T>`）。
-- 服务层处理所有业务逻辑，不直接访问 Repository 以外的数据依赖。
-- 服务层异常必须统一封装，抛出 Azrng 异常体系中的业务异常类型。
-- 服务类实现 `ITransientDependency` / `IScopedDependency` / `ISingletonDependency` 接口表达生命周期，按对应生命周期显式注册（`RegisterBusinessServices` 属 `Azrng.AspNetCore.Core`，桌面项目不使用）。
+- 服务类必须实现接口，接口定义在 `Services/Interfaces/` 目录
+- 服务方法必须优先采用异步形式（返回 `Task<T>` 或 `ValueTask<T>`）
+- 服务层处理所有业务逻辑，不直接承担视图渲染、控件操作与数据访问实现细节
+- 服务层异常必须统一封装，抛出 Azrng 异常体系的业务异常类型
+- 服务类实现 `ITransientDependency` / `IScopedDependency` / `ISingletonDependency` 接口表达生命周期，按对应生命周期显式 `AddTransient` / `AddScoped` / `AddSingleton` 注册（`RegisterBusinessServices` 属 `Azrng.AspNetCore.Core`，桌面项目不使用）
+- 禁止在 ViewModel、Service、Repository、Model、DTO 等 C# 类中使用主构造函数（Primary Constructor），统一使用显式构造函数
 
 ### DTO 与模型规则
 - DTO 是视图层与业务逻辑层之间的稳定契约，变更时必须同步更新相关映射和调用方
@@ -153,8 +154,8 @@ src/AppName/
   - `NotFoundException`：资源不存在
   - `ForbiddenException`：禁止访问
   - `InternalServerException`：服务器内部错误
-- 禁止抛出非 Azrng 体系的随意自定义异常。
-- 异常处理应尽量保留可定位信息，同时对用户输出友好、可理解的提示。
+- 禁止抛出非 Azrng 体系的随意自定义异常
+- 异常处理应尽量保留可定位信息，同时对用户输出友好、可理解的提示
 
 ### 代码注释规范
 - 必须补 XML 注释的位置：
@@ -193,7 +194,7 @@ src/AppName/
 
 ### 提交前最小回归
 - 默认执行：项目现有的编译、静态检查或单元测试
-- ViewModel、命令、Service 改动：至少验证一项业务流程、状态流转或错误分支
+- ViewModel、命令、Provider、Service 改动：至少验证一项业务流程、状态流转或错误分支
 - DTO、映射、结果包装改动：至少验证输入输出结构和边界条件
 - 与数据访问、集成或配置相关的改动：至少补一项联调或等价验证，证明真实链路生效
 

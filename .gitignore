@@ -380,3 +380,12 @@ use-ai-rule*
 
 # Git Bash 崩溃转储
 bash.exe.stackdump
+
+# AI rule 本地产物与 AI 工具目录（use-ai-rule 生成：配方记录、生成器本体、规则效果反馈与 AI 工具本地目录，勿提交）
+.zcode/
+.claude/
+.dotnet/
+.codex/
+.cursor/
+.codegraph/
+.learnings/
