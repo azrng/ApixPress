@@ -16,20 +16,26 @@
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <PublishSingleFile>true</PublishSingleFile>
-    <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- R2R 关闭（体积优先）：zip 分发体积 65.4MB→47.3MB（-28%），代价是 JIT 冷启动约 1.5s→2.6s；
+         产物经 GitHub Release zip 分发，下载体积是首要指标 -->
+    <PublishReadyToRun>false</PublishReadyToRun>
     <PublishTrimmed>false</PublishTrimmed>
     <PublishAot>false</PublishAot>
-    <!-- 单文件压缩与原生库捆绑仅在自包含下合法（NETSDK1176），framework-dependent 时自动关闭 -->
+    <!-- 单文件压缩仅在自包含下合法（NETSDK1176 约束的是压缩，不含原生库捆绑），framework-dependent 时自动关闭；
+         原生库捆绑对自包含 / framework-dependent 都合法且必须开启，否则 Skia/HarfBuzz/SQLite 等
+         原生库会散落在 exe 旁而不是打进单文件（framework 版曾因此不是单文件） -->
     <EnableCompressionInSingleFile Condition="'$(SelfContained)' == 'true'">true</EnableCompressionInSingleFile>
-    <IncludeNativeLibrariesForSelfExtract Condition="'$(SelfContained)' == 'true'">true</IncludeNativeLibrariesForSelfExtract>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.1.2" />
-    <PackageReference Include="Avalonia.Desktop" Version="12.1.2" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.2" />
+    <!-- 本产品仅发布 win-x64：不引用 Avalonia.Desktop（会连带 X11 / macOS / FreeDesktop 后端
+         约 4-5MB 进产物），显式引用 Win32 窗口平台 + Skia 渲染层 + HarfBuzz 文本整形 -->
+    <PackageReference Include="Avalonia.Win32" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.2" />
+    <PackageReference Include="Avalonia.HarfBuzz" Version="12.1.2" />
     <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.2" />
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
@@ -66,14 +72,34 @@
     <AvaloniaResource Include="Assets\AppLogo.png" />
   </ItemGroup>
 
+  <!-- 发布瘦身：剔除纯诊断用途的原生文件（原生库 pdb、托管 pdb 读取器 DiaSymReader）。
+       两个挂钩各管一条发布链路，缺一不可：
+       - ComputeResolvedFilesToPublishList：文件夹发布/单文件发布共用的清单构建点，直接 Remove；
+         _ComputeFilesToBundle 在非单文件发布时不存在，只挂它会让 pdb 全数留下
+       - _ComputeFilesToBundle 之前 Update 打 ExcludeFromSingleFile 再 Remove：单文件 bundle 的
+         收集发生在该 target，直接 Remove 会被 SDK 重新收集（实测无效） -->
   <Target Name="RemoveNativeDebugSymbolsFromPublish"
           AfterTargets="ComputeResolvedFilesToPublishList"
           Condition="'$(Configuration)' == 'Release'">
     <ItemGroup>
       <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
-                             Condition="'%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'libHarfBuzzSharp.pdb'" />
+                             Condition="'%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'libSkiaSharp.pdb'
+                                    Or '%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'libHarfBuzzSharp.pdb'
+                                    Or '%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'Microsoft.DiaSymReader.Native.amd64.dll'" />
+    </ItemGroup>
+  </Target>
+  <Target Name="ExcludeNativeDebugSymbolsFromSingleFile"
+          BeforeTargets="_ComputeFilesToBundle"
+          Condition="'$(Configuration)' == 'Release' and '$(PublishSingleFile)' == 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish Update="@(ResolvedFileToPublish)"
+                             Condition="'%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'libSkiaSharp.pdb'
+                                    Or '%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'libHarfBuzzSharp.pdb'
+                                    Or '%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'Microsoft.DiaSymReader.Native.amd64.dll'">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
       <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
-                             Condition="'%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'libSkiaSharp.pdb'" />
+                             Condition="'%(ResolvedFileToPublish.ExcludeFromSingleFile)' == 'true'" />
     </ItemGroup>
   </Target>
 

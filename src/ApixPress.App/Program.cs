@@ -36,9 +36,14 @@ class Program
     }
 
     // Avalonia configuration, don't remove; also used by visual designer.
+    // 不用 Avalonia.Desktop（会把 X11/macOS 后端约 4-5MB 带进产物），等价手工装配：
+    // UsePlatformDetect 在 Windows 分支就是 UseWin32 + UseSkia + UseHarfBuzz（HarfBuzz 负责文本整形）。
+    // 不再注册 Inter 字体（WithInterFont 会把 1.9MB 的 Avalonia.Fonts.Inter 打进产物）：
+    // 全部视图均未引用 Inter 字体家族，中文回退系统字体不受影响
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-            .WithInterFont()
+            .UseWin32()
+            .UseSkia()
+            .UseHarfBuzz()
             .LogToTrace();
 }

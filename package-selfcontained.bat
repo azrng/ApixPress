@@ -10,8 +10,9 @@ rem Paired: package-framework.bat builds the framework-
 rem         dependent variant for machines with .NET 10.
 rem About: self-contained = the .NET runtime is bundled, no
 rem        runtime install needed on target machines. This
-rem        build keeps the JIT (faster startup than AOT to
-rem        produce, larger single-file exe).
+rem        build keeps the JIT. ReadyToRun is disabled for
+rem        size (zip download -31%%, cold start ~1.5s->2.6s),
+rem        matching the Release config in the csproj.
 rem Note  : keep this file ASCII-only. cmd.exe on this
 rem         machine mis-parses batch lines containing
 rem         multi-byte UTF-8 comments (verified).
@@ -35,8 +36,8 @@ echo Project: %PROJECT%
 echo Output: %OUTPUT_DIR%
 
 rem Release config in the csproj already enables SelfContained,
-rem PublishSingleFile, PublishReadyToRun, compression and
-rem IncludeNativeLibrariesForSelfExtract, so no overrides here.
+rem PublishSingleFile, compression and IncludeNativeLibrariesForSelfExtract,
+rem and disables ReadyToRun (size first), so no overrides here.
 dotnet publish "%PROJECT%" -c Release -r win-x64 -o "%OUTPUT_DIR%"
 if errorlevel 1 (
     echo [ERROR] dotnet publish failed, check the log above

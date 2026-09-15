@@ -601,8 +601,13 @@ public sealed partial class ProjectTabViewModelTests
             return;
         }
 
+        // 主工程已改用 Win32+Skia 显式装配（不再引用 Avalonia.Desktop），
+        // UsePlatformDetect 扩展随包移除，这里保持等价平台初始化；
+        // HarfBuzz 必须显式注册，缺失时文本整形在 Setup 期直接抛异常
         AppBuilder.Configure<App>()
-            .UsePlatformDetect()
+            .UseWin32()
+            .UseSkia()
+            .UseHarfBuzz()
             .SetupWithoutStarting();
         _isAvaloniaInitialized = true;
     }

@@ -39,7 +39,9 @@ $publishArgs = @(
     "-p:SelfContained=true",
     "-p:PublishSingleFile=true",
     "-p:IncludeNativeLibrariesForSelfExtract=true",
-    "-p:PublishReadyToRun=true",
+    # R2R 关闭（体积优先）：zip 分发体积 -31%，代价是 JIT 冷启动约 1.5s→2.6s，
+    # 与 csproj Release 配置保持一致
+    "-p:PublishReadyToRun=false",
     "-p:EnableCompressionInSingleFile=true",
     "-p:PublishTrimmed=false"
 )
