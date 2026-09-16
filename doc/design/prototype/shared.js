@@ -28,6 +28,17 @@
     toastTimer = setTimeout(function () { el.classList.remove("show"); }, 2200);
   }
 
+  /* Body 模式 → 内容类型提示文案（与 body-modes 同行展示） */
+  var bodyModeHints = {
+    "none": "不发送请求体。",
+    "form-data": "按字段组合为 multipart/form-data 请求体。",
+    "urlencode": "按字段进行 URL 编码，适合传统表单接口。",
+    "json": "以 application/json 发送原始 JSON 内容。",
+    "xml": "以 application/xml 发送原始 XML 内容。",
+    "raw": "以 text/plain 发送纯文本内容。",
+    "binary": "选择单个文件作为请求体。"
+  };
+
   /* Tab 组：视觉单选 + 面板切换 */
   function activateTab(tab) {
     var group = tab.closest("[data-tabs]");
@@ -44,6 +55,10 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-tabs-panel="' + name + '"]'), function (p) {
       p.classList.toggle("on", p.getAttribute("data-v") === value);
     });
+    if (name === "bd") {
+      var hint = group.querySelector(".body-mode-hint");
+      if (hint && bodyModeHints[value]) hint.textContent = bodyModeHints[value];
+    }
   }
 
   function closeLayer(el) { if (el) el.classList.remove("open"); }
