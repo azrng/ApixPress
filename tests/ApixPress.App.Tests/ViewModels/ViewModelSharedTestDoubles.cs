@@ -417,7 +417,7 @@ public static class ViewModelSharedTestDoubles
         }
     }
 
-    public sealed class FakeRequestHistoryService : IRequestHistoryService
+    public class FakeRequestHistoryService : IRequestHistoryService
     {
         public List<RequestHistoryItemDto> Items { get; } = [];
         public int GetHistoryCallCount { get; private set; }
@@ -478,6 +478,14 @@ public static class ViewModelSharedTestDoubles
         public Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
         {
             return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
+        }
+
+        public List<TimeSpan> CleanupRetentions { get; } = [];
+
+        public virtual Task<int> CleanupOlderThanAsync(TimeSpan retention, CancellationToken cancellationToken)
+        {
+            CleanupRetentions.Add(retention);
+            return Task.FromResult(0);
         }
     }
 

@@ -10,111 +10,128 @@
              d:DesignWidth="420"
              d:DesignHeight="720"
              mc:Ignorable="d">
-  <!-- 对齐原型 08：用例卡片列表（行内 加载/复制/删除两段式）+ 保存当前请求 -->
-  <ScrollViewer>
-    <StackPanel Spacing="{StaticResource Space.3}">
-      <Grid ColumnDefinitions="*,Auto"
-            ColumnSpacing="{StaticResource Space.2}">
-        <StackPanel Spacing="2">
-          <TextBlock Classes="SectionTitle"
-                     Text="接口用例" />
-          <TextBlock Classes="CaptionText"
-                     Text="同一接口的多组参数组合；加载用例会回填调试区。" />
-        </StackPanel>
-        <Button Grid.Column="1"
-                Classes="PrimaryButton"
-                Content="保存当前请求"
-                IsEnabled="{Binding UseCasesPanel.HasCurrentHttpInterface}"
-                Command="{Binding SaveHttpCaseCommand}" />
-      </Grid>
+  <!-- 对齐原型 08：用例卡片列表（行内 加载/复制/删除两段式）+ 保存当前请求；
+       列表区自带 ScrollViewer+VirtualizingStackPanel（外层 Grid 给有界高度），
+       用例多时只实例化可视行，不再随抽屉整页滚动全量实例化 -->
+  <Grid RowDefinitions="Auto,Auto,Auto,*"
+        RowSpacing="{StaticResource Space.3}">
+    <Grid Grid.Row="0"
+          ColumnDefinitions="*,Auto"
+          ColumnSpacing="{StaticResource Space.2}">
+      <StackPanel Spacing="2">
+        <TextBlock Classes="SectionTitle"
+                   Text="接口用例" />
+        <TextBlock Classes="CaptionText"
+                   Text="同一接口的多组参数组合；加载用例会回填调试区。" />
+      </StackPanel>
+      <Button Grid.Column="1"
+              Classes="PrimaryButton"
+              Content="保存当前请求"
+              IsEnabled="{Binding UseCasesPanel.HasCurrentHttpInterface}"
+              Command="{Binding SaveHttpCaseCommand}" />
+    </Grid>
 
-      <Grid ColumnDefinitions="Auto,*,Auto"
-            ColumnSpacing="{StaticResource Space.2}">
-        <u:Badge Header="{Binding UseCasesPanel.CurrentInterfaceMethod}"
-                 iri:ClassHelper.Classes="{Binding UseCasesPanel.CurrentInterfaceMethodBadgeClass}" />
-        <TextBlock Grid.Column="1"
-                   VerticalAlignment="Center"
-                   Text="{Binding UseCasesPanel.CurrentInterfaceName}"
-                   TextTrimming="CharacterEllipsis"
-                   ToolTip.Tip="{Binding UseCasesPanel.CurrentInterfaceName}" />
-        <TextBlock Grid.Column="2"
-                   Classes="CaptionText"
-                   VerticalAlignment="Center"
-                   Text="{Binding UseCasesPanel.CurrentInterfaceCaseCountText}" />
-      </Grid>
+    <Grid Grid.Row="1"
+          ColumnDefinitions="Auto,*,Auto"
+          ColumnSpacing="{StaticResource Space.2}">
+      <u:Badge Header="{Binding UseCasesPanel.CurrentInterfaceMethod}"
+               iri:ClassHelper.Classes="{Binding UseCasesPanel.CurrentInterfaceMethodBadgeClass}" />
+      <TextBlock Grid.Column="1"
+                 VerticalAlignment="Center"
+                 Text="{Binding UseCasesPanel.CurrentInterfaceName}"
+                 TextTrimming="CharacterEllipsis"
+                 ToolTip.Tip="{Binding UseCasesPanel.CurrentInterfaceName}" />
+      <TextBlock Grid.Column="2"
+                 Classes="CaptionText"
+                 VerticalAlignment="Center"
+                 Text="{Binding UseCasesPanel.CurrentInterfaceCaseCountText}" />
+    </Grid>
 
-      <TextBlock Classes="CaptionText"
-                 Text="{Binding UseCasesPanel.CurrentInterfaceCaseEmptyStateText}"
-                 IsVisible="{Binding !UseCasesPanel.HasCurrentInterfaceCases}" />
+    <TextBlock Grid.Row="2"
+               Classes="CaptionText"
+               Text="{Binding UseCasesPanel.CurrentInterfaceCaseEmptyStateText}"
+               IsVisible="{Binding !UseCasesPanel.HasCurrentInterfaceCases}" />
 
-      <ItemsControl ItemsSource="{Binding UseCasesPanel.CurrentInterfaceCaseItems}">
-        <ItemsControl.ItemTemplate>
-          <DataTemplate x:DataType="vm:RequestCaseItemViewModel">
-            <Border Classes="CaseCard"
-                    Classes.CaseCardSelected="{Binding IsSelected}"
-                    Margin="0,0,0,8">
-              <StackPanel Spacing="{StaticResource Space.2}">
-                <!-- 第一行：名称 + 已加载标识 -->
-                <Grid ColumnDefinitions="Auto,*,Auto"
-                      ColumnSpacing="{StaticResource Space.2}">
-                  <u:Badge Header="{Binding Method}"
-                           iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
-                  <TextBlock Classes="CaseCardName"
-                             Grid.Column="1"
-                             Text="{Binding Name}"
-                             TextTrimming="CharacterEllipsis" />
-                  <Border Grid.Column="2"
-                          Classes="CaseCardLoadedChip"
-                          IsVisible="{Binding IsSelected}">
-                    <TextBlock Classes="CaseCardLoadedChipText"
-                               Text="已加载" />
-                  </Border>
-                </Grid>
+    <ItemsControl Grid.Row="3"
+                  ItemsSource="{Binding UseCasesPanel.CurrentInterfaceCaseItems}">
+      <ItemsControl.Template>
+        <ControlTemplate>
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+            <ItemsPresenter />
+          </ScrollViewer>
+        </ControlTemplate>
+      </ItemsControl.Template>
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <VirtualizingStackPanel />
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:RequestCaseItemViewModel">
+          <Border Classes="CaseCard"
+                  Classes.CaseCardSelected="{Binding IsSelected}"
+                  Margin="0,0,0,8">
+            <StackPanel Spacing="{StaticResource Space.2}">
+              <!-- 第一行：名称 + 已加载标识 -->
+              <Grid ColumnDefinitions="Auto,*,Auto"
+                    ColumnSpacing="{StaticResource Space.2}">
+                <u:Badge Header="{Binding Method}"
+                         iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
+                <TextBlock Classes="CaseCardName"
+                           Grid.Column="1"
+                           Text="{Binding Name}"
+                           TextTrimming="CharacterEllipsis" />
+                <Border Grid.Column="2"
+                        Classes="CaseCardLoadedChip"
+                        IsVisible="{Binding IsSelected}">
+                  <TextBlock Classes="CaseCardLoadedChipText"
+                             Text="已加载" />
+                </Border>
+              </Grid>
 
-                <!-- 第二行：请求地址 + 更新时间 -->
-                <Grid ColumnDefinitions="*,Auto"
-                      ColumnSpacing="{StaticResource Space.1}">
-                  <TextBlock Classes="CaptionText"
-                             Text="{Binding RequestUrlText}"
-                             TextTrimming="CharacterEllipsis"
-                             ToolTip.Tip="{Binding RequestUrlText}" />
-                  <TextBlock Grid.Column="1"
-                             Classes="CaptionText"
-                             Text="{Binding UpdatedAtText}"
-                             TextTrimming="CharacterEllipsis" />
-                </Grid>
+              <!-- 第二行：请求地址 + 更新时间 -->
+              <Grid ColumnDefinitions="*,Auto"
+                    ColumnSpacing="{StaticResource Space.1}">
+                <TextBlock Classes="CaptionText"
+                           Text="{Binding RequestUrlText}"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip.Tip="{Binding RequestUrlText}" />
+                <TextBlock Grid.Column="1"
+                           Classes="CaptionText"
+                           Text="{Binding UpdatedAtText}"
+                           TextTrimming="CharacterEllipsis" />
+              </Grid>
 
-                <!-- 第三行：行内操作 -->
-                <Grid ColumnDefinitions="*,Auto">
-                  <StackPanel Grid.Column="1"
-                              Orientation="Horizontal"
-                              Spacing="{StaticResource Space.1}">
-                    <Button Classes="CaseCardOp"
-                            Content="加载"
-                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.LoadCaseCommand}"
-                            CommandParameter="{Binding}" />
-                    <Button Classes="CaseCardOp"
-                            Content="复制"
-                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.DuplicateCaseCommand}"
-                            CommandParameter="{Binding}" />
-                    <!-- 两段式删除：第一次点击武装变红，再点确认；3 秒未确认自动还原 -->
-                    <Button Classes="CaseCardOp"
-                            IsVisible="{Binding !IsDeleteArmed}"
-                            Content="删除"
-                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.RequestDeleteCaseCommand}"
-                            CommandParameter="{Binding}" />
-                    <Button Classes="CaseCardOp CaseCardOpArmed"
-                            IsVisible="{Binding IsDeleteArmed}"
-                            Content="确认删除"
-                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.RequestDeleteCaseCommand}"
-                            CommandParameter="{Binding}" />
-                  </StackPanel>
-                </Grid>
-              </StackPanel>
-            </Border>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-    </StackPanel>
-  </ScrollViewer>
+              <!-- 第三行：行内操作 -->
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="{StaticResource Space.1}">
+                  <Button Classes="CaseCardOp"
+                          Content="加载"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.LoadCaseCommand}"
+                          CommandParameter="{Binding}" />
+                  <Button Classes="CaseCardOp"
+                          Content="复制"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.DuplicateCaseCommand}"
+                          CommandParameter="{Binding}" />
+                  <!-- 两段式删除：第一次点击武装变红，再点确认；3 秒未确认自动还原 -->
+                  <Button Classes="CaseCardOp"
+                          IsVisible="{Binding !IsDeleteArmed}"
+                          Content="删除"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.RequestDeleteCaseCommand}"
+                          CommandParameter="{Binding}" />
+                  <Button Classes="CaseCardOp CaseCardOpArmed"
+                          IsVisible="{Binding IsDeleteArmed}"
+                          Content="确认删除"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.RequestDeleteCaseCommand}"
+                          CommandParameter="{Binding}" />
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+          </Border>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+  </Grid>
 </UserControl>

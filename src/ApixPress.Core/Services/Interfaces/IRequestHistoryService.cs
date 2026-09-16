@@ -16,4 +16,7 @@ public interface IRequestHistoryService
     Task<IResultModel<bool>> ClearAllAsync(CancellationToken cancellationToken);
 
     Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken);
+
+    /// <summary>按保留期清理过期历史记录，返回删除条数（定时保留策略用）。</summary>
+    Task<int> CleanupOlderThanAsync(TimeSpan retention, CancellationToken cancellationToken);
 }

@@ -400,9 +400,9 @@
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
-  <Style Selector="TreeView.QuickRequestSidebarTree">
+  <Style Selector="ListBox.QuickRequestSidebarTree">
     <Setter Property="Margin" Value="0" />
-    <!-- 快捷请求区固定可视上限：条目多时走树内部滚动，避免无界高度全量实例化并撑破侧栏 -->
+    <!-- 快捷请求区固定可视上限：条目多时走列表内部滚动（配合 VirtualizingStackPanel 只实例化可视行） -->
     <Setter Property="MaxHeight" Value="220" />
   </Style>
 

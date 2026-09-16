@@ -27,7 +27,8 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
         {
             const int limit = 50;
             var entities = await _requestHistoryRepository.GetHistoryAsync(projectId, limit, cancellationToken);
-            return entities.Select(ToSummaryDto).ToList();
+            // 50 行完整请求快照 JSON 的逐行反序列化是 CPU 密集操作：不能落回 UI 线程 continuation
+            return await Task.Run(() => entities.Select(ToSummaryDto).ToList(), cancellationToken);
         });
     }
 
@@ -74,6 +75,15 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
     {
         await _requestHistoryRepository.DeleteAsync(projectId, id, cancellationToken);
         return ResultModel<bool>.Success(true);
+    }
+
+    public Task<int> CleanupOlderThanAsync(TimeSpan retention, CancellationToken cancellationToken)
+    {
+        return PerfLog.MeasureAsync<int>("历史·定时清理", async () =>
+        {
+            var cutoff = DateTime.UtcNow - retention;
+            return await _requestHistoryRepository.DeleteOlderThanAsync(cutoff, cancellationToken);
+        });
     }
 
     private RequestHistoryItemDto ToSummaryDto(RequestHistoryEntity entity)

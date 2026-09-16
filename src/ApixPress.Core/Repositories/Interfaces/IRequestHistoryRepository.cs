@@ -15,4 +15,7 @@ public interface IRequestHistoryRepository
     Task ClearAsync(string projectId, CancellationToken cancellationToken);
 
     Task ClearAllAsync(CancellationToken cancellationToken);
+
+    /// <summary>删除时间戳早于截止时刻的历史记录，返回删除条数（保留策略用）。</summary>
+    Task<int> DeleteOlderThanAsync(DateTime cutoff, CancellationToken cancellationToken);
 }

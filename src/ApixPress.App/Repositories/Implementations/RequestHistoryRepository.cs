@@ -125,4 +125,14 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
             "delete from request_history",
             cancellationToken: cancellationToken)));
     }
+
+    public async Task<int> DeleteOlderThanAsync(DateTime cutoff, CancellationToken cancellationToken)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        // timestamp 以 UTC ISO-8601 TEXT 存储，按字典序比较与时间序一致
+        return await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
+            "delete from request_history where timestamp < @Cutoff",
+            new { Cutoff = cutoff },
+            cancellationToken: cancellationToken)));
+    }
 }

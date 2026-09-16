@@ -100,5 +100,10 @@ public sealed class RequestHistoryServiceTests
             ClearAllCalled = true;
             return Task.CompletedTask;
         }
+
+        public Task<int> DeleteOlderThanAsync(DateTime cutoff, CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
     }
 }

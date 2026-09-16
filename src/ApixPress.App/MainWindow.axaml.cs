@@ -16,6 +16,7 @@ public partial class MainWindow : Window
     private readonly MainWindowViewModel _viewModel;
     private readonly IWindowHostService _windowHostService;
     private readonly DatabaseInitializer _databaseInitializer;
+    private readonly IRequestHistoryRetentionService _historyRetentionService;
     private bool _isCreateProjectDrawerOpen;
     private bool _isEnvironmentDrawerOpen;
     private bool _isUseCasesDrawerOpen;
@@ -32,6 +33,7 @@ public partial class MainWindow : Window
         _viewModel = null!;
         _windowHostService = null!;
         _databaseInitializer = null!;
+        _historyRetentionService = null!;
         _appNotificationService = null!;
         InitializeComponent();
     }
@@ -40,11 +42,13 @@ public partial class MainWindow : Window
         MainWindowViewModel viewModel,
         IWindowHostService windowHostService,
         DatabaseInitializer databaseInitializer,
+        IRequestHistoryRetentionService historyRetentionService,
         IAppNotificationService appNotificationService)
     {
         _viewModel = viewModel;
         _windowHostService = windowHostService;
         _databaseInitializer = databaseInitializer;
+        _historyRetentionService = historyRetentionService;
         _appNotificationService = appNotificationService;
         InitializeComponent();
         DataContext = _viewModel;
@@ -62,6 +66,8 @@ public partial class MainWindow : Window
             _viewModel.UpdateWindowState(WindowState);
             await PerfLog.MeasureAsync("启动·数据库初始化", () => _databaseInitializer.InitializeAsync());
             await PerfLog.MeasureAsync("启动·主视图模型初始化", () => _viewModel.InitializeAsync());
+            // 历史保留策略在 DB 就绪后启动：立即清理一次过期记录，之后每 24 小时重复
+            _historyRetentionService.Start();
         });
     }
 
@@ -77,6 +83,7 @@ public partial class MainWindow : Window
             _windowHostService.MainWindow = null;
         }
 
+        _historyRetentionService.Stop();
         _viewModel.Dispose();
     }
 

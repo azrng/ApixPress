@@ -246,11 +246,17 @@
                 <Border Classes="ProjectSidebarCatalogBody QuickRequestCatalogBody"
                         IsVisible="{Binding Catalog.IsQuickRequestCatalogExpanded}">
                   <StackPanel Classes="ProjectSidebarCatalogContent QuickRequestCatalogContent">
-                    <TreeView Classes="WorkspaceTreeView ProjectSidebarTree QuickRequestSidebarTree"
-                              ItemsSource="{Binding Catalog.QuickRequestTreeItems}">
-                      <TreeView.ItemTemplate>
-                        <TreeDataTemplate x:DataType="vm:ExplorerItemViewModel"
-                                          ItemsSource="{Binding Children}">
+                    <!-- 快捷请求本就是扁平列表（无目录层级）：ListBox+VirtualizingStackPanel 真虚拟化，
+                         TreeView 默认面板即便有 MaxHeight 也会全部实例化行容器 -->
+                    <ListBox Classes="InterfaceFlatTree QuickRequestSidebarTree"
+                             ItemsSource="{Binding Catalog.QuickRequestTreeItems}">
+                      <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <VirtualizingStackPanel />
+                        </ItemsPanelTemplate>
+                      </ListBox.ItemsPanel>
+                      <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:ExplorerItemViewModel">
                           <Button Classes="WorkspaceTreeNodeButton QuickRequestTreeNodeButton"
                                   IsHitTestVisible="{Binding CanLoad}"
                                   Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).LoadSavedRequestCommand}"
@@ -299,9 +305,9 @@
                                          ToolTip.Tip="{Binding Subtitle}" />
                             </StackPanel>
                           </Button>
-                        </TreeDataTemplate>
-                      </TreeView.ItemTemplate>
-                    </TreeView>
+                        </DataTemplate>
+                      </ListBox.ItemTemplate>
+                    </ListBox>
                     <Button Classes="ProjectSidebarGhostButton ProjectSidebarBottomCreateButton QuickRequestBottomCreateButton"
                             Content="+ 新建"
                             Command="{Binding Workspace.OpenQuickRequestWorkspaceCommand}" />

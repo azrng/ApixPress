@@ -356,6 +356,43 @@ public sealed class WorkbenchLayoutTests
             && element.Attribute("Command")?.Value?.Contains("SaveAllEnvironmentsCommand") == true);
     }
 
+    [Fact]
+    public void ProjectWorkspaceSidebar_QuickRequestArea_ShouldUseVirtualizedListBox()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "ProjectWorkspaceSidebarView.axaml"));
+
+        // 快捷请求是扁平列表：TreeView 默认面板不虚拟化（有 MaxHeight 也全量实例化），必须走 ListBox+VSP
+        Assert.DoesNotContain(document.Descendants(), element => element.Name.LocalName == "TreeView");
+
+        var quickList = document.Descendants()
+            .Single(element => element.Name.LocalName == "ListBox" && HasClass(element, "QuickRequestSidebarTree"));
+        Assert.Equal("{Binding Catalog.QuickRequestTreeItems}", quickList.Attribute("ItemsSource")?.Value);
+        Assert.Contains(
+            quickList.Descendants(),
+            element => element.Name.LocalName == "VirtualizingStackPanel");
+    }
+
+    [Fact]
+    public void UseCasesDrawerView_CaseList_ShouldVirtualizeInsideOwnViewport()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "UseCasesDrawerView.axaml"));
+
+        // 用例列表自身提供 ScrollViewer+VSP 并占据有界行（Grid * 行），不再外层整页滚动导致全量实例化
+        var caseList = document.Descendants()
+            .Single(element => element.Name.LocalName == "ItemsControl"
+                && (element.Attribute("ItemsSource")?.Value ?? string.Empty).Contains("CurrentInterfaceCaseItems"));
+        Assert.Contains(
+            caseList.Descendants(),
+            element => element.Name.LocalName == "VirtualizingStackPanel");
+        Assert.Contains(
+            caseList.Descendants(),
+            element => element.Name.LocalName == "ScrollViewer");
+        Assert.Equal("3", caseList.Attribute("Grid.Row")?.Value);
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => element.Name.LocalName == "ScrollViewer" && element.Parent?.Name.LocalName == "UserControl");
+    }
+
     private static bool HasClass(XElement element, string className)
     {
         return (element.Attribute("Classes")?.Value ?? string.Empty)
