@@ -68,8 +68,9 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
     /// 接口树扁平化后的可见行，供 ListBox + VirtualizingStackPanel 虚拟化展示。
     /// Avalonia TreeView 子层级无法虚拟化，151+ 接口时展开需要一次性实例化全部行导致卡顿，
     /// 因此树模型（InterfaceTreeItems）仍是唯一事实，这里仅派生当前展开状态下的可见行。
+    /// 全量重建走 ReplaceWith 单次 Reset：逐条 Insert 会让虚拟化容器生成器失效 N+1 次。
     /// </summary>
-    public ObservableCollection<ExplorerItemViewModel> InterfaceFlatRows { get; } = [];
+    public BatchObservableCollection<ExplorerItemViewModel> InterfaceFlatRows { get; } = [];
 
     private readonly List<ExplorerItemViewModel> _flatRowSubscriptions = [];
     public ObservableCollection<RequestCaseItemViewModel> SavedRequests => _useCasesPanel.RequestCases;
@@ -460,30 +461,31 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
             ProjectWorkspaceTreeBuilder.BuildQuickRequests(SavedRequests, RequestDeleteWorkspaceTreeItemCommand));
     }
 
-    /// <summary>按当前展开状态全量重建扁平可见行（树重建、搜索过滤后走这里）。</summary>
+    /// <summary>按当前展开状态全量重建扁平可见行（树重建、搜索过滤后走这里）：先收集成列表再一次 Reset。</summary>
     private void RebuildInterfaceFlatRows()
     {
         UnsubscribeFlatRows();
-        InterfaceFlatRows.Clear();
+        var rows = new List<ExplorerItemViewModel>();
         if (InterfaceTreeItems.Count > 0)
         {
-            AppendInterfaceFlatRows(InterfaceTreeItems[0].Children, depth: 0, insertIndex: 0);
+            AppendInterfaceFlatRows(rows, InterfaceTreeItems[0].Children, depth: 0, insertIndex: 0);
         }
-        OnPropertyChanged(nameof(InterfaceFlatRows));
+
+        InterfaceFlatRows.ReplaceWith(rows);
     }
 
-    /// <summary>把 nodes 及其已展开的后代按顺序写入扁平行列表，返回最后一个写入位置。</summary>
-    private int AppendInterfaceFlatRows(IReadOnlyList<ExplorerItemViewModel> nodes, int depth, int insertIndex)
+    /// <summary>把 nodes 及其已展开的后代按顺序写入扁平行列表，返回最后一个写入位置；展开路径直接写目标集合（增量事件）。</summary>
+    private int AppendInterfaceFlatRows(IList<ExplorerItemViewModel> rows, IReadOnlyList<ExplorerItemViewModel> nodes, int depth, int insertIndex)
     {
         foreach (var node in nodes)
         {
             node.DisplayDepth = depth;
-            InterfaceFlatRows.Insert(insertIndex, node);
+            rows.Insert(insertIndex, node);
             TrackFlatRow(node);
             insertIndex++;
             if (node.IsExpanded && node.AreChildrenLoaded)
             {
-                insertIndex = AppendInterfaceFlatRows(node.Children, depth + 1, insertIndex);
+                insertIndex = AppendInterfaceFlatRows(rows, node.Children, depth + 1, insertIndex);
             }
         }
 
@@ -515,7 +517,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
             {
                 // OnIsExpandedChanged 已触发延迟子级加载，这里兜底幂等
                 node.EnsureChildrenLoaded();
-                AppendInterfaceFlatRows(node.Children, node.DisplayDepth + 1, rowIndex + 1);
+                AppendInterfaceFlatRows(InterfaceFlatRows, node.Children, node.DisplayDepth + 1, rowIndex + 1);
             }
         });
     }

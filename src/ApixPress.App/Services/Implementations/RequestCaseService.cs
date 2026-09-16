@@ -29,7 +29,8 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
     public async Task<IReadOnlyList<RequestCaseDto>> GetCasesAsync(string projectId, CancellationToken cancellationToken)
     {
         var cases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
-        return cases.Select(ToSummaryDto).ToList();
+        // 逐行快照反序列化移出 UI 线程（打开项目时用例列表全量加载路径）
+        return await Task.Run(() => cases.Select(ToSummaryDto).ToList(), cancellationToken);
     }
 
     public Task<IReadOnlyList<RequestCaseDto>> GetCaseDetailsAsync(string projectId, CancellationToken cancellationToken)
@@ -37,7 +38,8 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         return PerfLog.MeasureAsync<IReadOnlyList<RequestCaseDto>>("开项目·用例明细加载", async () =>
         {
             var cases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
-            return cases.Select(ToDto).ToList();
+            // 全量完整快照反序列化是 CPU 密集操作，与 GetDetailAsync 同款处理
+            return await Task.Run(() => cases.Select(ToDto).ToList(), cancellationToken);
         });
     }
 

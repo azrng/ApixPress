@@ -1,6 +1,6 @@
-using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.ComponentModel;
+using ApixPress.App.Helpers;
 using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
@@ -34,8 +34,8 @@ public partial class ProjectEnvironmentItemViewModel : ViewModelBase
         Variables.CollectionChanged += OnVariablesCollectionChanged;
     }
 
-    // 变量集合挂环境自身：抽屉多卡片平铺时每个环境的变量可同时展开编辑
-    public ObservableCollection<EnvironmentVariableItemViewModel> Variables { get; } = [];
+    // 变量集合挂环境自身：抽屉多卡片平铺时每个环境的变量可同时展开编辑；批量集合避免加载时 Clear+Add 逐条通知
+    public BatchObservableCollection<EnvironmentVariableItemViewModel> Variables { get; } = [];
 
     public bool HasVariables => Variables.Count > 0;
 

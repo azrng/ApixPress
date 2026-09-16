@@ -266,6 +266,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDialogContext
         _fallbackEnvironmentPanel.Dispose();
         _fallbackUseCasesPanel.Dispose();
         _fallbackHistoryPanel.Dispose();
+        _fallbackConfigTab.Dispose();
     }
 
     private void AttachShellEventHandlers()

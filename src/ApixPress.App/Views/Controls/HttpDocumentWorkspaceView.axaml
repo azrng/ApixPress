@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:views="using:ApixPress.App.Views.Controls"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.HttpDocumentWorkspaceView"
              x:DataType="vm:ProjectTabViewModel"
@@ -141,12 +142,10 @@
                          Text="响应示例" />
               <TextBlock Classes="CaptionText"
                          Text="{Binding Editor.CurrentHttpDocumentResponseSummary}" />
-              <TextBox Classes="HttpDocumentReadonlyCode"
-                       AcceptsReturn="True"
-                       IsReadOnly="True"
-                       Text="{Binding Editor.CurrentHttpDocumentBodyPreview}"
-                       TextWrapping="Wrap"
-                       VerticalContentAlignment="Top" />
+              <!-- 大响应（上限 256K 字符）只排版可视区：Wrap TextBox 会对整篇文本重建 TextLayout 阻塞 UI 线程 -->
+              <Border Classes="HttpDocumentPreviewCodeCard">
+                <views:ResponseBodyEditor Text="{Binding Editor.CurrentHttpDocumentBodyPreview}" />
+              </Border>
             </StackPanel>
           </Border>
 
@@ -154,12 +153,9 @@
             <StackPanel Spacing="{StaticResource Space.3}">
               <TextBlock Classes="SectionTitle"
                          Text="请求示例" />
-              <TextBox Classes="HttpDocumentReadonlyCode"
-                       AcceptsReturn="True"
-                       IsReadOnly="True"
-                       Text="{Binding Editor.CurrentHttpDocumentCurlSnippet}"
-                       TextWrapping="Wrap"
-                       VerticalContentAlignment="Top" />
+              <Border Classes="HttpDocumentPreviewCodeCard">
+                <views:ResponseBodyEditor Text="{Binding Editor.CurrentHttpDocumentCurlSnippet}" />
+              </Border>
             </StackPanel>
           </Border>
         </StackPanel>

@@ -498,6 +498,8 @@ internal sealed class ProjectTabComposition : DisposableObject
     protected override void DisposeManaged()
     {
         Detach();
+        // 子 VM 全量释放：漏掉的 Editor 会让关闭标签后防抖计时器仍回调一次无效重算，
+        // 各子 VM 的 CTS 也不再被取消（飞行中的后台格式化跑完才结束）
         Catalog.Dispose();
         InterfaceRoot.Dispose();
         Import.Dispose();
@@ -506,6 +508,12 @@ internal sealed class ProjectTabComposition : DisposableObject
         UseCasesPanel.Dispose();
         HistoryPanel.Dispose();
         Workspace.Dispose();
+        Editor.Dispose();
+        Settings.Dispose();
+        Shell.Dispose();
+        QuickRequestSave.Dispose();
+        HttpCaseSave.Dispose();
+        Summary.Dispose();
     }
 
     private void OnProjectPropertyChanged(object? sender, PropertyChangedEventArgs e)

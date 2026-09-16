@@ -1,7 +1,7 @@
-using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
+using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels.Base;
 
@@ -37,7 +37,8 @@ public partial class ExplorerItemViewModel : ViewModelBase
     [ObservableProperty]
     private bool isExpanded;
 
-    public ObservableCollection<ExplorerItemViewModel> Children { get; } = [];
+    /// <summary>子节点集合：延迟加载的大组整体替换时只发一次 Reset（否则每个 Add 都向所有订阅者广播一次）。</summary>
+    public BatchObservableCollection<ExplorerItemViewModel> Children { get; } = [];
 
     public bool HasChildren => Children.Count > 0 || HasDeferredChildren;
 
@@ -304,10 +305,8 @@ public partial class ExplorerItemViewModel : ViewModelBase
             child.Dispose();
         }
 
-        Children.Clear();
-        foreach (var item in items)
-        {
-            Children.Add(item);
-        }
+        // 大组（59+ 子节点）展开时逐条 Add 会触发 N 次集合事件、每次再派生 7 个属性通知；
+        // ReplaceWith 单次 Reset 把通知成本从 8N 压到常数
+        Children.ReplaceWith(items);
     }
 }

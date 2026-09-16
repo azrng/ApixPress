@@ -1,5 +1,3 @@
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Helpers;
@@ -13,6 +11,7 @@ namespace ApixPress.App.ViewModels;
 public partial class RequestHistoryPanelViewModel : ViewModelBase
 {
     private const int SearchDebounceMilliseconds = 250;
+    private const int MaxHistoryItems = 50;
 
     private readonly IRequestHistoryService _requestHistoryService;
     private CancellationTokenSource? _loadHistoryCancellationTokenSource;
@@ -51,12 +50,10 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     public RequestHistoryPanelViewModel(IRequestHistoryService requestHistoryService)
     {
         _requestHistoryService = requestHistoryService;
-        HistoryItems.CollectionChanged += OnHistoryItemsCollectionChanged;
     }
 
     protected override void DisposeManaged()
     {
-        HistoryItems.CollectionChanged -= OnHistoryItemsCollectionChanged;
         CancellationTokenSourceHelper.CancelAndDispose(ref _loadHistoryCancellationTokenSource);
         CancellationTokenSourceHelper.CancelAndDispose(ref _searchDebounceCancellationTokenSource);
         SelectedResponseSection.Dispose();
@@ -77,8 +74,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         SearchText = string.Empty;
         SelectedHistoryItem = null;
         HistoryItems.Clear();
-        VisibleHistoryItems.Clear();
-        NotifyHistoryVisibilityChanged();
+        RefreshVisibleHistoryItems();
     }
 
     public async Task EnsureHistoryLoadedAsync()
@@ -112,6 +108,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
             var history = await _requestHistoryService.GetHistoryAsync(_currentProjectId, cancellationToken);
             HistoryItems.ReplaceWith(history.Select(CreateHistoryItem));
             _hasLoadedHistory = true;
+            RefreshVisibleHistoryItems();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -157,6 +154,10 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// 新请求写入历史：无搜索时走差量路径（头部插入 + 尾部裁剪），
+    /// 避免每条新记录都触发可见与展示两条集合的全量 Reset 重建。
+    /// </summary>
     public void PrependHistoryItem(RequestHistoryItemDto item)
     {
         var viewModel = CreateHistoryItem(item);
@@ -166,11 +167,35 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
             HistoryItems.Remove(existing);
         }
 
-        HistoryItems.Insert(0, viewModel);
-        while (HistoryItems.Count > 50)
+        // 差量路径的收益监控点：发送请求后的历史列表 UI 同步耗时
+        PerfLog.Measure("历史·前置插入", () =>
         {
-            HistoryItems.RemoveAt(HistoryItems.Count - 1);
-        }
+            HistoryItems.Insert(0, viewModel);
+            while (HistoryItems.Count > MaxHistoryItems)
+            {
+                HistoryItems.RemoveAt(HistoryItems.Count - 1);
+            }
+
+            if (HasSearchText)
+            {
+                RefreshVisibleHistoryItems();
+                return;
+            }
+
+            if (existing is not null)
+            {
+                VisibleHistoryItems.Remove(existing);
+            }
+
+            VisibleHistoryItems.Insert(0, viewModel);
+            while (VisibleHistoryItems.Count > MaxHistoryItems)
+            {
+                VisibleHistoryItems.RemoveAt(VisibleHistoryItems.Count - 1);
+            }
+
+            SyncHistoryDisplayItems();
+            NotifyHistoryVisibilityChanged();
+        });
     }
 
     [RelayCommand]
@@ -186,6 +211,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         SearchText = string.Empty;
         SelectedHistoryItem = null;
         HistoryItems.Clear();
+        RefreshVisibleHistoryItems();
     }
 
     partial void OnSelectedHistoryItemChanged(RequestHistoryItemViewModel? value)
@@ -242,36 +268,28 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         RefreshVisibleHistoryItems();
     }
 
-    private void OnHistoryItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-    {
-        if (IsDisposed)
-        {
-            return;
-        }
-
-        RefreshVisibleHistoryItems();
-    }
-
+    /// <summary>可见/展示集合的全量重算入口：加载、清空、搜索场景走这里（展示集合仍按差量应用）。</summary>
     private void RefreshVisibleHistoryItems()
     {
         var keyword = SearchText.Trim();
-        if (string.IsNullOrWhiteSpace(keyword))
-        {
-            VisibleHistoryItems.ReplaceWith(HistoryItems);
-        }
-        else
-        {
-            VisibleHistoryItems.ReplaceWith(HistoryItems.Where(item => MatchesSearch(item, keyword)));
-        }
+        VisibleHistoryItems.ReplaceWith(string.IsNullOrWhiteSpace(keyword)
+            ? HistoryItems
+            : HistoryItems.Where(item => MatchesSearch(item, keyword)));
 
-        RebuildHistoryDisplayItems();
+        SyncHistoryDisplayItems();
         NotifyHistoryVisibilityChanged();
     }
 
+    /// <summary>按当前可见集合重算期望的分组展示行，并以差量方式应用到展示集合。</summary>
+    private void SyncHistoryDisplayItems()
+    {
+        ApplyDisplayItemsDifferentially(BuildHistoryDisplayItems());
+    }
+
     /// <summary>
-    /// 按本地日期把可见记录切分为 今天 / 昨天 / 更早日期 的分组行 + 记录行，整体替换避免逐项动画
+    /// 按本地日期把可见记录切分为 今天 / 昨天 / 更早日期 的分组行 + 记录行
     /// </summary>
-    private void RebuildHistoryDisplayItems()
+    private List<object> BuildHistoryDisplayItems()
     {
         var displayItems = new List<object>(VisibleHistoryItems.Count + 4);
         var today = DateTime.Today;
@@ -292,7 +310,77 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
             }
         }
 
-        HistoryDisplayItems.ReplaceWith(displayItems);
+        return displayItems;
+    }
+
+    /// <summary>
+    /// 期望行与现有展示行的指针合并：记录行按引用匹配、分组头按标题匹配，
+    /// 只对差异位置做 Insert/Remove/Replace——高频的新增/删除单条历史不再整表 Reset。
+    /// </summary>
+    private void ApplyDisplayItemsDifferentially(IReadOnlyList<object> desired)
+    {
+        var target = HistoryDisplayItems;
+        var consumed = 0;
+        for (var index = 0; index < desired.Count; index++)
+        {
+            var desiredItem = desired[index];
+            var matchIndex = FindDisplayMatch(target, desiredItem, consumed);
+            if (matchIndex < 0)
+            {
+                target.Insert(consumed, desiredItem);
+                consumed++;
+                continue;
+            }
+
+            // 每删一行，匹配位置随之左移：matchIndex 同步递减，只移除真正过期的行
+            while (consumed < matchIndex)
+            {
+                target.RemoveAt(consumed);
+                matchIndex--;
+            }
+
+            // 分组头不可变：计数变化用新实例 Replace，避免引入可变状态
+            if (desiredItem is HistoryDateGroupHeaderViewModel header
+                && target[consumed] is HistoryDateGroupHeaderViewModel existing
+                && existing.Count != header.Count)
+            {
+                target[consumed] = header;
+            }
+
+            consumed++;
+        }
+
+        while (target.Count > consumed)
+        {
+            target.RemoveAt(target.Count - 1);
+        }
+    }
+
+    private static int FindDisplayMatch(BatchObservableCollection<object> target, object desiredItem, int startIndex)
+    {
+        if (desiredItem is HistoryDateGroupHeaderViewModel header)
+        {
+            for (var index = startIndex; index < target.Count; index++)
+            {
+                if (target[index] is HistoryDateGroupHeaderViewModel existing
+                    && string.Equals(existing.Title, header.Title, StringComparison.Ordinal))
+                {
+                    return index;
+                }
+            }
+
+            return -1;
+        }
+
+        for (var index = startIndex; index < target.Count; index++)
+        {
+            if (ReferenceEquals(target[index], desiredItem))
+            {
+                return index;
+            }
+        }
+
+        return -1;
     }
 
     private static string ResolveDateGroupTitle(DateTime date, DateTime today)
@@ -353,6 +441,16 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         }
 
         HistoryItems.Remove(item);
+        if (HasSearchText)
+        {
+            RefreshVisibleHistoryItems();
+            return;
+        }
+
+        // 无搜索时单条删除走差量：展示集合只移除一行并更新所属分组头计数
+        VisibleHistoryItems.Remove(item);
+        SyncHistoryDisplayItems();
+        NotifyHistoryVisibilityChanged();
     }
 
     private void NotifyHistoryVisibilityChanged()

@@ -368,6 +368,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     protected override void DisposeManaged()
     {
         ConfigTab.PropertyChanged -= OnConfigTabPropertyChanged;
+        // 标签独占的子 VM 同步释放：ConfigTab/ResponseSection 各自的 CTS 与防抖资源不再悬挂
+        ConfigTab.Dispose();
+        ResponseSection.Dispose();
     }
 
     private void OnConfigTabPropertyChanged(object? sender, PropertyChangedEventArgs e)

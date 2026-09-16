@@ -34,33 +34,35 @@ public partial class ProjectWorkspaceItemViewModel : ViewModelBase
     public string CategoryText => "HTTP";
     public string AvatarText => string.IsNullOrWhiteSpace(Name) ? "A" : Name[..1].ToUpperInvariant();
 
-    // 按名称稳定哈希取模，让不同项目获得固定且分布均匀的彩色图标底色
-    public IBrush AvatarBrush
-    {
-        get
-        {
-            var hash = 0;
-            foreach (var ch in Name)
-            {
-                hash = (hash * 31 + ch) & 0x7FFFFFFF;
-            }
+    // 按名称稳定哈希取模，让不同项目获得固定且分布均匀的彩色图标底色；名称未变时复用缓存的画刷实例
+    private IBrush? _avatarBrush;
 
-            var (from, to) = AvatarGradients[hash % AvatarGradients.Length];
-            return new LinearGradientBrush
-            {
-                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
-                EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
-                GradientStops =
-                {
-                    new GradientStop(from, 0),
-                    new GradientStop(to, 1),
-                },
-            };
+    public IBrush AvatarBrush => _avatarBrush ??= BuildAvatarBrush();
+
+    private IBrush BuildAvatarBrush()
+    {
+        var hash = 0;
+        foreach (var ch in Name)
+        {
+            hash = (hash * 31 + ch) & 0x7FFFFFFF;
         }
+
+        var (from, to) = AvatarGradients[hash % AvatarGradients.Length];
+        return new LinearGradientBrush
+        {
+            StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+            EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+            GradientStops =
+            {
+                new GradientStop(from, 0),
+                new GradientStop(to, 1),
+            },
+        };
     }
 
     partial void OnNameChanged(string value)
     {
+        _avatarBrush = null;
         OnPropertyChanged(nameof(DisplayName));
         OnPropertyChanged(nameof(AvatarText));
         OnPropertyChanged(nameof(AvatarBrush));

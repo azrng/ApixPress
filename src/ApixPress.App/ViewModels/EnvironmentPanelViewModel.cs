@@ -80,11 +80,9 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
                 UpdateActiveFlags(SelectedEnvironment.Id);
             }
 
-            // 环境抽屉多卡片平铺展示：一次性把每个环境的变量挂到各自 item 上
-            foreach (var item in Environments)
-            {
-                await LoadVariablesIntoItemAsync(item, cancellationToken);
-            }
+            // 环境抽屉多卡片平铺展示：一次性把每个环境的变量挂到各自 item 上；
+            // 各环境独立 DB 连接，并行加载避免环境数增多时打开抽屉延迟线性放大
+            await Task.WhenAll(Environments.Select(item => LoadVariablesIntoItemAsync(item, cancellationToken)));
 
             NotifySelectionState();
         }
@@ -307,11 +305,7 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     private async Task LoadVariablesIntoItemAsync(ProjectEnvironmentItemViewModel item, CancellationToken cancellationToken)
     {
         var variables = await _environmentVariableService.GetVariablesAsync(item.Id, cancellationToken);
-        item.Variables.Clear();
-        foreach (var variable in variables)
-        {
-            item.Variables.Add(CreateVariableItem(variable));
-        }
+        item.Variables.ReplaceWith(variables.Select(CreateVariableItem));
     }
 
     private ProjectEnvironmentItemViewModel? ResolveSelection(IReadOnlyList<ProjectEnvironmentItemViewModel> items, string? preferredEnvironmentId)

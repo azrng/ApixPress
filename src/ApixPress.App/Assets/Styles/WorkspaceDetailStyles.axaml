@@ -33,14 +33,14 @@
     <Setter Property="Margin" Value="0,0,0,8" />
   </Style>
 
-  <Style Selector="TextBox.HttpDocumentReadonlyCode">
+  <!-- 文档预览只读代码卡：内部承载 ResponseBodyEditor（等宽字体由编辑器挂树时从 token 解析） -->
+  <Style Selector="Border.HttpDocumentPreviewCodeCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
     <Setter Property="MinHeight" Value="180" />
-    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
   </Style>
 
   <Style Selector="Border.HttpResponsePlaceholderHost">
