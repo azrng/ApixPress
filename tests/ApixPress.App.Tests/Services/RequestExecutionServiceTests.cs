@@ -109,6 +109,72 @@ public sealed class RequestExecutionServiceTests
     }
 
     [Fact]
+    public async Task SendAsync_ShouldCaptureActualRequestSnapshot()
+    {
+        var handler = new CapturingHttpMessageHandler();
+        using var client = new HttpClient(handler);
+        var service = new RequestExecutionService(
+            new ViewModelSharedTestDoubles.FakeEnvironmentVariableService(),
+            new FakeAppShellSettingsService(),
+            serializer: null!,
+            (_, _, _) => client);
+
+        var result = await service.SendAsync(
+            new RequestSnapshotDto
+            {
+                Method = "post",
+                Url = "{{baseUrl}}/orders",
+                BodyMode = BodyModes.RawJson,
+                BodyContent = "{\"name\":\"order\"}",
+                Headers =
+                [
+                    new RequestKeyValueDto { Name = "X-Token", Value = "{{baseUrl}}", IsEnabled = true },
+                    new RequestKeyValueDto { Name = "X-Skip", Value = "0", IsEnabled = false }
+                ]
+            },
+            new ProjectEnvironmentDto { Id = "env-1", BaseUrl = "https://api.example.com" },
+            CancellationToken.None);
+
+        var actual = result.Data!.ActualRequest;
+        Assert.NotNull(actual);
+        Assert.Equal("POST", actual!.Method);
+        Assert.Equal("https://api.example.com/orders", actual.Url);
+        Assert.Contains(actual.Headers, header => header.Name == "X-Token" && header.Value == "https://api.example.com");
+        Assert.DoesNotContain(actual.Headers, header => header.Name == "X-Skip");
+        Assert.Contains(actual.Headers, header => header.Name == "Content-Type");
+        Assert.True(actual.HasBody);
+        Assert.Equal("application/json", actual.BodyContentType);
+        Assert.Equal("{\"name\":\"order\"}", actual.BodyText);
+    }
+
+    [Fact]
+    public async Task SendAsync_ShouldMarkActualRequestWithoutBody_WhenBodyModeIsNone()
+    {
+        var handler = new CapturingHttpMessageHandler();
+        using var client = new HttpClient(handler);
+        var service = new RequestExecutionService(
+            new ViewModelSharedTestDoubles.FakeEnvironmentVariableService(),
+            new FakeAppShellSettingsService(),
+            serializer: null!,
+            (_, _, _) => client);
+
+        var result = await service.SendAsync(
+            new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "https://api.example.com/users"
+            },
+            new ProjectEnvironmentDto { Id = "env-1" },
+            CancellationToken.None);
+
+        var actual = result.Data!.ActualRequest;
+        Assert.NotNull(actual);
+        Assert.False(actual!.HasBody);
+        Assert.Equal(string.Empty, actual.BodyText);
+        Assert.Equal(string.Empty, actual.BodyContentType);
+    }
+
+    [Fact]
     public async Task ReadResponseContentPreviewAsync_ShouldCapLargeResponseBody()
     {
         var oversizedBody = new string('a', RequestExecutionService.ResponsePreviewByteLimit + 8192);

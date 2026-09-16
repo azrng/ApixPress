@@ -149,6 +149,9 @@
                 </ScrollViewer>
               </Border>
             </TabItem>
+            <TabItem Header="实际请求">
+              <views:ActualRequestPanelView DataContext="{Binding ResponseSection}" />
+            </TabItem>
           </TabControl>
         </Grid>
 

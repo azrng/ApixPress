@@ -4,6 +4,7 @@
              xmlns:iri="https://irihi.tech/shared"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:views="using:ApixPress.App.Views.Controls"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.RequestHistoryDetailView"
              x:DataType="vm:ProjectTabViewModel"
@@ -274,6 +275,9 @@
                     </ItemsControl>
                   </Border>
                 </ScrollViewer>
+              </TabItem>
+              <TabItem Header="实际请求">
+                <views:ActualRequestPanelView DataContext="{Binding HistoryPanel.SelectedResponseSection}" />
               </TabItem>
             </TabControl>
           </Grid>

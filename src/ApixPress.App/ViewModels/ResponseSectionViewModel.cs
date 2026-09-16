@@ -18,6 +18,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
     // 小正文即时搜索保持零感知延迟；超过该长度（最长 1MB）的循环扫描合并进 250ms 防抖
     private const int InstantSearchMaxBodyLength = 16 * 1024;
     private const int MaxDisplayBodyCharacters = 256 * 1024;
+    private const int MaxActualRequestBodyCharacters = 256 * 1024;
     private const string FormattingBodyPlaceholder = "正在格式化响应正文...";
 
     private static readonly JsonSerializerOptions PrettyJsonOptions = new()
@@ -67,6 +68,41 @@ public partial class ResponseSectionViewModel : ViewModelBase
     public IReadOnlyList<ResponseHeaderRowViewModel> HeaderRows { get; private set; } = [];
 
     public bool HasHeaderRows => HeaderRows.Count > 0;
+
+    [ObservableProperty]
+    private string actualRequestMethod = string.Empty;
+
+    [ObservableProperty]
+    private string actualRequestUrl = string.Empty;
+
+    [ObservableProperty]
+    private string actualRequestBodyContentType = string.Empty;
+
+    [ObservableProperty]
+    private string actualRequestBodyText = string.Empty;
+
+    /// <summary>实际请求 Header 只读键值行，每次响应整体替换</summary>
+    public IReadOnlyList<ResponseHeaderRowViewModel> ActualRequestHeaderRows { get; private set; } = [];
+
+    public bool HasActualRequestHeaderRows => ActualRequestHeaderRows.Count > 0;
+
+    /// <summary>是否有可展示的实际请求数据；失败结果与旧历史记录没有该数据</summary>
+    public bool HasActualRequest => !string.IsNullOrWhiteSpace(ActualRequestUrl);
+
+    public bool HasActualRequestBody => !string.IsNullOrEmpty(ActualRequestBodyText);
+
+    public bool HasActualRequestBodyContentType => !string.IsNullOrEmpty(ActualRequestBodyContentType);
+
+    /// <summary>方法徽章配色沿用既有 Light* 惯例（GET 绿 / DELETE 红等），对齐用例列表的方法徽章</summary>
+    public string ActualRequestMethodBadgeClass => ActualRequestMethod switch
+    {
+        "GET" => "Light Success",
+        "POST" => "Light Warning",
+        "PUT" => "Light Primary",
+        "DELETE" => "Light Danger",
+        "PATCH" => "Light Success",
+        _ => "Light Secondary"
+    };
 
     [ObservableProperty]
     private bool showResponseNotice;
@@ -140,6 +176,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
             BodyText = result.Message;
             HeadersText = string.Empty;
             SetHeaderRows([]);
+            ClearActualRequest();
             return;
         }
 
@@ -151,6 +188,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
         SetHeaderRows(r.Headers
             .Select(h => new ResponseHeaderRowViewModel(h.Name, h.Value))
             .ToArray());
+        ApplyActualRequest(r.ActualRequest);
         ApplyStatusNotice(r.StatusCode);
 
         if (r.Content is { Length: > MaxSynchronousFormatThreshold })
@@ -228,6 +266,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
         BodyText = string.Empty;
         HeadersText = string.Empty;
         SetHeaderRows([]);
+        ClearActualRequest();
         ClearResponseNotice();
         BodySearchText = string.Empty;
         BodySearchResultText = string.Empty;
@@ -387,6 +426,69 @@ public partial class ResponseSectionViewModel : ViewModelBase
         HeaderRows = rows;
         OnPropertyChanged(nameof(HeaderRows));
         OnPropertyChanged(nameof(HasHeaderRows));
+    }
+
+    private void ApplyActualRequest(ActualRequestSnapshotDto? actualRequest)
+    {
+        if (actualRequest is null)
+        {
+            ClearActualRequest();
+            return;
+        }
+
+        ActualRequestMethod = actualRequest.Method;
+        ActualRequestUrl = actualRequest.Url;
+        ActualRequestBodyContentType = actualRequest.BodyContentType;
+        ActualRequestBodyText = LimitActualRequestBodyText(actualRequest.BodyText);
+        SetActualRequestHeaderRows(actualRequest.Headers
+            .Select(h => new ResponseHeaderRowViewModel(h.Name, h.Value))
+            .ToArray());
+    }
+
+    private void ClearActualRequest()
+    {
+        ActualRequestMethod = string.Empty;
+        ActualRequestUrl = string.Empty;
+        ActualRequestBodyContentType = string.Empty;
+        ActualRequestBodyText = string.Empty;
+        SetActualRequestHeaderRows([]);
+    }
+
+    private static string LimitActualRequestBodyText(string body)
+    {
+        if (string.IsNullOrEmpty(body) || body.Length <= MaxActualRequestBodyCharacters)
+        {
+            return body;
+        }
+
+        return $"{body[..MaxActualRequestBodyCharacters]}{Environment.NewLine}{Environment.NewLine}[请求体过大，界面仅展示前 {UiFormatHelper.FormatBytes(MaxActualRequestBodyCharacters)}。]";
+    }
+
+    private void SetActualRequestHeaderRows(IReadOnlyList<ResponseHeaderRowViewModel> rows)
+    {
+        ActualRequestHeaderRows = rows;
+        OnPropertyChanged(nameof(ActualRequestHeaderRows));
+        OnPropertyChanged(nameof(HasActualRequestHeaderRows));
+    }
+
+    partial void OnActualRequestUrlChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasActualRequest));
+    }
+
+    partial void OnActualRequestMethodChanged(string value)
+    {
+        OnPropertyChanged(nameof(ActualRequestMethodBadgeClass));
+    }
+
+    partial void OnActualRequestBodyTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasActualRequestBody));
+    }
+
+    partial void OnActualRequestBodyContentTypeChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasActualRequestBodyContentType));
     }
 
     private void UpdateBodySearchResult()

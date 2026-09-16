@@ -27,7 +27,6 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     private bool _isQuickRequestEditor;
     private bool _isHttpInterfaceEditor;
     private bool _isHttpDebugEditorMode;
-    private bool _isHttpDesignEditorMode;
     private bool _isHttpDocumentPreviewMode;
     private RequestEditorContentMode _currentContentMode;
     private bool _showHttpWorkbenchContent;
@@ -43,6 +42,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     private string _currentHttpDocumentBodyModeText = "无";
     private string _currentHttpDocumentUrl = string.Empty;
     private string _currentHttpDocumentResponseSummary = "等待调试后生成响应示例";
+    private bool _hasHttpDocumentBodyPreview;
     private string _currentHttpDocumentBodyPreview = "{ }";
     private string _currentHttpDocumentCurlSnippet = string.Empty;
     private bool _canGenerateRequestCode;
@@ -75,24 +75,25 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     public string CurrentEditorPrimaryActionText => _currentEditorPrimaryActionText;
     public string CurrentEditorUrlWatermark => _currentEditorUrlWatermark;
     public string CurrentHttpInterfaceBaseUrl => _currentHttpInterfaceBaseUrl;
+    // 名称展示与保存口径（ResolveRequestName）一致：用户未命名时直接显示生成名（方法+路径），
+    // 与侧栏树、工作区标签对齐；仅当用户显式输入后 RequestName 才落值
     public string CurrentHttpInterfaceName
     {
-        get => ResolveEditorRequestName("未命名接口", workspace => workspace.IsHttpInterfaceTab);
-        set => SetEditorRequestName(value, "未命名接口");
+        get => ActiveWorkspaceTab?.ResolveRequestName() ?? string.Empty;
+        set => SetEditorRequestName(value);
     }
 
     public string CurrentHttpInterfaceDisplayName => _currentHttpInterfaceDisplayName;
 
     public string CurrentQuickRequestName
     {
-        get => ResolveEditorRequestName("未命名请求", workspace => workspace.IsQuickRequestTab);
-        set => SetEditorRequestName(value, "未命名请求");
+        get => ActiveWorkspaceTab?.ResolveRequestName() ?? string.Empty;
+        set => SetEditorRequestName(value);
     }
 
     public bool IsQuickRequestEditor => _isQuickRequestEditor;
     public bool IsHttpInterfaceEditor => _isHttpInterfaceEditor;
     public bool IsHttpDebugEditorMode => _isHttpDebugEditorMode;
-    public bool IsHttpDesignEditorMode => _isHttpDesignEditorMode;
     public bool IsHttpDocumentPreviewMode => _isHttpDocumentPreviewMode;
     public RequestEditorContentMode CurrentContentMode => _currentContentMode;
     public bool ShowHttpWorkbenchContent => _showHttpWorkbenchContent;
@@ -109,6 +110,9 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     public string CurrentHttpDocumentUrl => _currentHttpDocumentUrl;
     public string CurrentHttpDocumentResponseSummary => _currentHttpDocumentResponseSummary;
     public string CurrentHttpDocumentBodyPreview => _currentHttpDocumentBodyPreview;
+
+    /// <summary>是否已有真实响应正文可作响应示例；未调试时展示空态占位</summary>
+    public bool HasHttpDocumentBodyPreview { get; private set; }
     public string CurrentHttpDocumentCurlSnippet => _currentHttpDocumentCurlSnippet;
     public bool CanGenerateRequestCode => _canGenerateRequestCode;
     public string CurrentRequestCodeTitle => RequestCodeTitle;
@@ -256,18 +260,6 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     }
 
     [RelayCommand]
-    private void ShowHttpDesignEditorMode()
-    {
-        if (ActiveWorkspaceTab is null || !ActiveWorkspaceTab.IsHttpInterfaceTab)
-        {
-            return;
-        }
-
-        ActiveWorkspaceTab.HttpEditorViewIndex = 1;
-        NotifyStateChanged();
-    }
-
-    [RelayCommand]
     private void ShowHttpDocumentPreviewMode()
     {
         if (ActiveWorkspaceTab is null || !ActiveWorkspaceTab.IsHttpInterfaceTab)
@@ -275,7 +267,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
             return;
         }
 
-        ActiveWorkspaceTab.HttpEditorViewIndex = 2;
+        ActiveWorkspaceTab.HttpEditorViewIndex = 1;
         NotifyStateChanged();
     }
 
@@ -646,7 +638,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         var workspace = ActiveWorkspaceTab;
         var configTab = ResolveWorkspaceTabOrFallback().ConfigTab;
         var responseSection = ResolveWorkspaceTabOrFallback().ResponseSection;
-        var currentHttpInterfaceName = ResolveEditorRequestName("未命名接口", tab => tab.IsHttpInterfaceTab);
+        var currentHttpInterfaceName = workspace?.ResolveRequestName() ?? string.Empty;
 
         SetComputedProperty(ref _currentEditorTitle, workspace?.EditorTitle ?? "新建...", nameof(CurrentEditorTitle));
         SetComputedProperty(ref _currentEditorDescription, workspace?.EditorDescription ?? "从下方卡片中选择要创建的工作内容。", nameof(CurrentEditorDescription));
@@ -657,7 +649,6 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         SetComputedProperty(ref _isQuickRequestEditor, workspace?.IsQuickRequestTab ?? false, nameof(IsQuickRequestEditor));
         SetComputedProperty(ref _isHttpInterfaceEditor, workspace?.IsHttpInterfaceTab ?? false, nameof(IsHttpInterfaceEditor));
         SetComputedProperty(ref _isHttpDebugEditorMode, workspace?.IsHttpDebugView ?? false, nameof(IsHttpDebugEditorMode));
-        SetComputedProperty(ref _isHttpDesignEditorMode, workspace?.IsHttpDesignView ?? false, nameof(IsHttpDesignEditorMode));
         SetComputedProperty(ref _isHttpDocumentPreviewMode, workspace?.IsHttpDocumentPreviewView ?? false, nameof(IsHttpDocumentPreviewMode));
         SetComputedProperty(ref _currentContentMode, ResolveCurrentContentMode(), nameof(CurrentContentMode));
         SetComputedProperty(ref _showHttpWorkbenchContent, _isHttpInterfaceEditor && !_isHttpDocumentPreviewMode, nameof(ShowHttpWorkbenchContent));
@@ -684,7 +675,9 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         SetComputedProperty(ref _currentHttpDocumentResponseSummary, responseSection.HasResponse
             ? _currentResponseValidationResultText
             : "等待调试后生成响应示例", nameof(CurrentHttpDocumentResponseSummary));
-        SetComputedProperty(ref _currentHttpDocumentBodyPreview, responseSection.HasResponse && !string.IsNullOrWhiteSpace(responseSection.BodyText)
+        var hasHttpDocumentBodyPreview = responseSection.HasResponse && !string.IsNullOrWhiteSpace(responseSection.BodyText);
+        SetComputedProperty(ref _hasHttpDocumentBodyPreview, hasHttpDocumentBodyPreview, nameof(HasHttpDocumentBodyPreview));
+        SetComputedProperty(ref _currentHttpDocumentBodyPreview, hasHttpDocumentBodyPreview
             ? responseSection.BodyText
             : "{ }", nameof(CurrentHttpDocumentBodyPreview));
         SetComputedProperty(ref _currentHttpDocumentCurlSnippet, ResolveCurrentHttpDocumentCurlSnippet(), nameof(CurrentHttpDocumentCurlSnippet));
@@ -748,35 +741,14 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         return responseSection.StatusText;
     }
 
-    private string ResolveEditorRequestName(string fallbackName, Func<RequestWorkspaceTabViewModel, bool> matchEditorType)
-    {
-        if (ActiveWorkspaceTab is null)
-        {
-            return string.Empty;
-        }
-
-        var currentName = ActiveWorkspaceTab.ConfigTab.RequestName?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(currentName))
-        {
-            return fallbackName;
-        }
-
-        return matchEditorType(ActiveWorkspaceTab)
-            && string.Equals(currentName, ActiveWorkspaceTab.ResolveGeneratedRequestName(), StringComparison.Ordinal)
-                ? fallbackName
-                : currentName;
-    }
-
-    private void SetEditorRequestName(string? value, string fallbackName)
+    private void SetEditorRequestName(string? value)
     {
         if (ActiveWorkspaceTab is null)
         {
             return;
         }
 
-        var normalizedValue = string.Equals(value?.Trim(), fallbackName, StringComparison.Ordinal)
-            ? string.Empty
-            : value?.Trim() ?? string.Empty;
+        var normalizedValue = value?.Trim() ?? string.Empty;
         if (ActiveWorkspaceTab.ConfigTab.RequestName == normalizedValue)
         {
             return;

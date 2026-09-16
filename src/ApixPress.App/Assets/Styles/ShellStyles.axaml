@@ -156,6 +156,7 @@
   </Style>
 
   <Style Selector="TextBlock.EnvChipCaret">
+    <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
     <Setter Property="FontSize" Value="10" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
   </Style>
@@ -646,12 +647,6 @@
   <Style Selector="TextBlock.CreateProjectDialogFooterHint">
     <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
-  </Style>
-
-  <Style Selector="Border.CreateProjectFormShell">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
   <Style Selector="TextBox.DialogInput">

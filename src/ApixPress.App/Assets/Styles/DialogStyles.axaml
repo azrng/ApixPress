@@ -1,7 +1,33 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:u="https://irihi.tech/ursa">  <Style Selector="Border.QuickRequestSaveDialogCard">
-    <Setter Property="Width" Value="480" />
+    <Setter Property="Width" Value="460" />
+  </Style>
+
+  <!-- 小型表单弹窗（保存快捷请求/保存为用例/新建目录）：
+       表单直接铺放在弹窗正文上（对齐原型 modal-body，不套内层卡片），底栏带分隔线 -->
+  <Style Selector="StackPanel.DialogFormStack">
+    <Setter Property="Spacing" Value="{StaticResource Space.3}" />
+  </Style>
+
+  <Style Selector="StackPanel.DialogFormField">
+    <Setter Property="Spacing" Value="{StaticResource Space.2}" />
+  </Style>
+
+  <Style Selector="TextBlock.DialogFormLabel">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="TextBlock.DialogFormHint">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+  </Style>
+
+  <Style Selector="Border.DialogFooter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+    <Setter Property="Padding" Value="{StaticResource Pad.Top3}" />
   </Style>
 
   <Style Selector="Border.RequestCodeDialogCard">

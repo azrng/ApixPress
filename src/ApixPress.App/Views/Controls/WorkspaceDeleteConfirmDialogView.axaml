@@ -18,23 +18,23 @@
                    IsVisible="{Binding HasPendingDeleteTarget}" />
       </StackPanel>
 
-      <Border Grid.Row="1"
-              Classes="CreateProjectFormShell">
-        <TextBlock Text="{Binding PendingDeleteDescription}"
-                   TextWrapping="Wrap" />
-      </Border>
+      <TextBlock Grid.Row="1"
+                 Text="{Binding PendingDeleteDescription}"
+                 TextWrapping="Wrap" />
 
-      <StackPanel Grid.Row="2"
-                  Orientation="Horizontal"
-                  HorizontalAlignment="Right"
-                  Spacing="{StaticResource Space.2}">
-        <Button Classes="DialogSecondaryButton"
-                Content="取消"
-                Command="{Binding CancelDeleteCommand}" />
-        <Button Classes="DialogDangerButton"
-                Content="确认删除"
-                Command="{Binding ConfirmDeleteCommand}" />
-      </StackPanel>
+      <Border Grid.Row="2"
+              Classes="DialogFooter">
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="{StaticResource Space.2}">
+          <Button Classes="DialogSecondaryButton"
+                  Content="取消"
+                  Command="{Binding CancelDeleteCommand}" />
+          <Button Classes="DialogDangerButton"
+                  Content="确认删除"
+                  Command="{Binding ConfirmDeleteCommand}" />
+        </StackPanel>
+      </Border>
     </Grid>
   </Border>
 </UserControl>

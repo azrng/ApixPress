@@ -96,8 +96,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     public bool IsQuickRequestTab => EntryType == WorkspaceEntryTypes.QuickRequest;
     public bool IsHttpInterfaceTab => EntryType == WorkspaceEntryTypes.HttpInterface;
     public bool IsHttpDebugView => IsHttpInterfaceTab && HttpEditorViewIndex == 0;
-    public bool IsHttpDesignView => IsHttpInterfaceTab && HttpEditorViewIndex == 1;
-    public bool IsHttpDocumentPreviewView => IsHttpInterfaceTab && HttpEditorViewIndex == 2;
+    public bool IsHttpDocumentPreviewView => IsHttpInterfaceTab && HttpEditorViewIndex == 1;
     public bool ShowMethodBadge => IsHttpInterfaceTab;
     public string MethodBadgeText => SelectedMethod;
     public bool CanCloseFromTab => !IsPinned;
@@ -395,7 +394,6 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsQuickRequestTab));
         OnPropertyChanged(nameof(IsHttpInterfaceTab));
         OnPropertyChanged(nameof(IsHttpDebugView));
-        OnPropertyChanged(nameof(IsHttpDesignView));
         OnPropertyChanged(nameof(IsHttpDocumentPreviewView));
         OnPropertyChanged(nameof(ShowMethodBadge));
         OnPropertyChanged(nameof(MethodBadgeText));
@@ -444,7 +442,6 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     partial void OnHttpEditorViewIndexChanged(int value)
     {
         OnPropertyChanged(nameof(IsHttpDebugView));
-        OnPropertyChanged(nameof(IsHttpDesignView));
         OnPropertyChanged(nameof(IsHttpDocumentPreviewView));
         NotifyDirtyStateChanged();
     }

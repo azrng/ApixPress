@@ -102,6 +102,8 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
                 }
             }
 
+            var actualRequest = CaptureActualRequest(request, message, finalUrl, activeVariables);
+
             var stopwatch = Stopwatch.StartNew();
             using var response = await httpClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             stopwatch.Stop();
@@ -127,7 +129,8 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
                 IsBodyPreviewAvailable = shouldCaptureBodyPreview,
                 Content = contentPreview.Content,
                 Headers = headers,
-                RequestSummary = $"{request.Method.ToUpperInvariant()} {finalUrl}"
+                RequestSummary = $"{request.Method.ToUpperInvariant()} {finalUrl}",
+                ActualRequest = actualRequest
             });
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -166,6 +169,45 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             BodyModes.FormData => BuildMultipartContent(bodyContent),
             _ => new StringContent(bodyContent, Encoding.UTF8, "text/plain")
         };
+    }
+
+    /// <summary>
+    /// 采集实际发送的请求：URL 已完成变量替换与参数合并，Headers 为消息上真实携带的
+    /// 请求头与内容头（不含传输层发送时才注入的 Host、Accept-Encoding 等）。
+    /// </summary>
+    private static ActualRequestSnapshotDto CaptureActualRequest(
+        RequestSnapshotDto request,
+        HttpRequestMessage message,
+        string finalUrl,
+        IReadOnlyDictionary<string, string> activeVariables)
+    {
+        var headers = new List<ResponseHeaderDto>();
+        headers.AddRange(EnumerateActualHeaders(message.Headers));
+        if (message.Content is not null)
+        {
+            headers.AddRange(EnumerateActualHeaders(message.Content.Headers));
+        }
+
+        return new ActualRequestSnapshotDto
+        {
+            Method = request.Method.ToUpperInvariant(),
+            Url = finalUrl,
+            Headers = headers,
+            BodyContentType = message.Content?.Headers.ContentType?.MediaType ?? string.Empty,
+            BodyText = message.Content is null
+                ? string.Empty
+                : ReplaceVariables(request.BodyContent, activeVariables),
+            HasBody = message.Content is not null
+        };
+    }
+
+    private static IEnumerable<ResponseHeaderDto> EnumerateActualHeaders(HttpHeaders headers)
+    {
+        return headers.SelectMany(header => header.Value.Select(value => new ResponseHeaderDto
+        {
+            Name = header.Key,
+            Value = value
+        }));
     }
 
     private static MultipartFormDataContent BuildMultipartContent(string encodedPairs)

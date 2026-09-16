@@ -38,11 +38,4 @@ public partial class HttpRequestUrlRowView : UserControl
     }
 
     // 「用例」按钮：打开用例管理抽屉（宿主窗口负责抽屉生命周期）
-    private void OnOpenUseCasesClick(object? sender, RoutedEventArgs e)
-    {
-        if (this.FindAncestorOfType<MainWindow>() is { } mainWindow)
-        {
-            mainWindow.OpenUseCasesDrawer();
-        }
-    }
 }

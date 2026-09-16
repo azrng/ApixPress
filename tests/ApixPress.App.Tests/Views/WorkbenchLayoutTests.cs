@@ -52,9 +52,6 @@ public sealed class WorkbenchLayoutTests
         Assert.Equal("{Binding ConfigTab.ConfigPanelMaxHeight}", rowDefinitions[0].Attribute("MaxHeight")?.Value);
         Assert.Equal("6", rowDefinitions[1].Attribute("Height")?.Value);
         Assert.Equal("*", rowDefinitions[2].Attribute("Height")?.Value);
-        Assert.DoesNotContain(
-            splitterHost.Descendants(),
-            element => HasClass(element, "HttpDesignMetaCard"));
     }
 
     [Theory]
@@ -247,11 +244,18 @@ public sealed class WorkbenchLayoutTests
         var contentHost = document.Descendants()
             .Single(element => element.Name.LocalName == "Grid" && HasClass(element, "HttpBodyContentHost"));
 
-        Assert.Equal("2", contentHost.Attribute("Grid.Row")?.Value);
+        // 模式选择与提示合并为一行后，内容宿主位于第 1 行并占满剩余空间
+        Assert.Equal("1", contentHost.Attribute("Grid.Row")?.Value);
 
+        // 宿主最小高必须留在紧凑面板预算内（288 - URL行/页签行/边距/选择器 ≈ 剩 128），
+        // 超预算会触发 Grid 亏空排列，空态向上叠住选择器行（T057 回归守卫）
         var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceEditorStyles.axaml"));
-        Assert.Contains(styles.Descendants(), element => element.Name.LocalName == "Style"
+        var hostStyle = styles.Descendants().Single(element => element.Name.LocalName == "Style"
             && element.Attribute("Selector")?.Value == "Grid.HttpBodyContentHost");
+        var minHeight = double.Parse(hostStyle.Elements()
+            .Single(element => element.Name.LocalName == "Setter" && element.Attribute("Property")?.Value == "MinHeight")
+            .Attribute("Value")?.Value ?? "0");
+        Assert.True(minHeight <= 128, $"HttpBodyContentHost MinHeight={minHeight} 超出紧凑面板可用高度");
     }
 
     [Fact]
@@ -398,6 +402,154 @@ public sealed class WorkbenchLayoutTests
         return (element.Attribute("Classes")?.Value ?? string.Empty)
             .Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .Contains(className);
+    }
+
+    [Theory]
+    [InlineData("HttpInterfaceWorkbenchView.axaml", "{Binding ResponseSection}")]
+    [InlineData("QuickRequestWorkbenchView.axaml", "{Binding ResponseSection}")]
+    [InlineData("RequestHistoryDetailView.axaml", "{Binding HistoryPanel.SelectedResponseSection}")]
+    public void ResponseTabs_ShouldExposeActualRequestTab(string fileName, string expectedDataContext)
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
+        var responseTabs = document.Descendants()
+            .Single(element => element.Name.LocalName == "TabControl"
+                && HasClass(element, "ResponseTabs"));
+
+        var actualRequestTab = responseTabs.Descendants()
+            .Single(element => element.Name.LocalName == "TabItem"
+                && (element.Attribute("Header")?.Value == "实际请求"));
+
+        var panel = actualRequestTab.Descendants()
+            .Single(element => element.Name.LocalName == "ActualRequestPanelView");
+        Assert.Equal(expectedDataContext, panel.Attribute("DataContext")?.Value);
+    }
+
+    [Fact]
+    public void ActualRequestPanel_ShouldKeepUrlHeaderBodySections()
+    {
+        var document = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "ActualRequestPanelView.axaml"));
+
+        Assert.Equal("vm:ResponseSectionViewModel", document.Root?.Attribute("{http://schemas.microsoft.com/winfx/2006/xaml}DataType")?.Value);
+        var source = File.ReadAllText(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "ActualRequestPanelView.axaml"));
+
+        // 面板必须覆盖 URL / Header / Body 三段与无数据兜底，防止后续重写丢段
+        Assert.Contains("请求 URL", source);
+        Assert.Contains("ActualRequestHeaderRows", source);
+        Assert.Contains("ActualRequestBodyText", source);
+        Assert.Contains("暂无实际请求数据", source);
+    }
+
+    [Theory]
+    [InlineData("QuickRequestSaveDialogView.axaml")]
+    [InlineData("HttpCaseSaveDialogView.axaml")]
+    [InlineData("WorkspaceCreateFolderDialogView.axaml")]
+    public void SmallFormDialogs_ShouldLayFormDirectlyWithSeparatedFooter(string fileName)
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
+
+        // 对齐原型 modal-body：表单直接铺放在正文上，禁止回到内层卡片嵌套（CreateProjectFormShell 已删除）
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => HasClass(element, "CreateProjectFormShell"));
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => element.Name.LocalName == "Form");
+        // 底栏带分隔线（对齐原型 modal-foot border-top）
+        Assert.Contains(
+            document.Descendants(),
+            element => HasClass(element, "DialogFooter"));
+        Assert.Contains(
+            document.Descendants(),
+            element => element.Name.LocalName == "TextBlock" && HasClass(element, "DialogFormLabel"));
+    }
+
+    [Fact]
+    public void HttpRequestUrlRow_ShouldAlignPrototypeWithSendAndSplitSave()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "HttpRequestUrlRowView.axaml"));
+        var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceEditorStyles.axaml"));
+
+        // 对齐原型 02：URL 行只有 发送 + 保存▾，用例管理入口收敛到侧栏计数芯片与用例抽屉
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => HasClass(element, "HttpUseCasesButton"));
+        Assert.DoesNotContain(styles.Descendants(), element => element.Name.LocalName == "Style"
+            && (element.Attribute("Selector")?.Value ?? string.Empty).Contains("HttpUseCasesButton"));
+    }
+
+    [Fact]
+    public void SidebarTree_ShouldExposeCaseCountChipInsteadOfCaseNodes()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "ProjectWorkspaceSidebarView.axaml"));
+        var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceEditorStyles.axaml"));
+
+        // 对齐原型 08：树上无用例节点，接口节点用计数芯片承载用例数（点击开抽屉）
+        Assert.Contains(
+            document.Descendants(),
+            element => HasClass(element, "WorkspaceTreeCaseChip"));
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => (element.Attribute("IsVisible")?.Value ?? string.Empty).Contains("IsHttpCaseNode"));
+        Assert.DoesNotContain(styles.Descendants(), element => element.Name.LocalName == "Style"
+            && (element.Attribute("Selector")?.Value ?? string.Empty).Contains("WorkspaceTreeStatusDot"));
+    }
+
+    [Fact]
+    public void HttpInterfaceWorkbench_ShouldDropDesignModeCard()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "HttpInterfaceWorkbenchView.axaml"));
+        var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceEditorStyles.axaml"));
+
+        // 「设计」页签已移除，接口说明编辑唯一入口在文档预览页
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => HasClass(element, "HttpDesignMetaCard"));
+        Assert.DoesNotContain(styles.Descendants(), element => element.Name.LocalName == "Style"
+            && (element.Attribute("Selector")?.Value ?? string.Empty).Contains("HttpDesign"));
+    }
+
+    [Fact]
+    public void HttpDocumentPreview_ShouldHostDescriptionEditorAndInfoRows()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "HttpDocumentWorkspaceView.axaml"));
+
+        Assert.Contains(
+            document.Descendants(),
+            element => element.Name.LocalName == "TextBox" && HasClass(element, "HttpDocumentDescriptionInput"));
+        // 概览改 info-row 形态并带标签类
+        Assert.Contains(
+            document.Descendants(),
+            element => HasClass(element, "HttpDocumentInfoRow"));
+        Assert.Contains(
+            document.Descendants(),
+            element => HasClass(element, "HttpDocumentInfoRowLast"));
+        // 未调试时响应示例收缩为空态，不渲染空编辑器
+        Assert.Contains(
+            document.Descendants(),
+            element => (element.Attribute("IsVisible")?.Value ?? string.Empty) == "{Binding !Editor.HasHttpDocumentBodyPreview}");
+    }
+
+    [Fact]
+    public void BodyTab_ShouldMergeModeSelectorAndHintIntoSingleRow()
+    {
+        var document = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "HttpInterfaceBodyTabView.axaml"));
+
+        // 对齐原型 body-modes：提示横条已删除，提示文字与模式选择器同行（同一父容器）
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => HasClass(element, "HttpBodyModeHint"));
+        var hintText = document.Descendants()
+            .Single(element => element.Name.LocalName == "TextBlock"
+                && HasClass(element, "HttpBodyModeHintText"));
+        var hintRow = hintText.Parent;
+        Assert.NotNull(hintRow);
+        Assert.Contains(
+            hintRow.Descendants(),
+            element => element.Name.LocalName == "SelectionList"
+                && HasClass(element, "HttpBodyModeSelector"));
     }
 
     private static string FindSourceFile(params string[] pathParts)

@@ -178,11 +178,6 @@
                                                FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                                Text="{Binding NodeGlyph}"
                                                IsVisible="{Binding ShowLeadingGlyph}" />
-                                    <TextBlock Grid.Column="1"
-                                               Classes="WorkspaceTreeNodeGlyph WorkspaceTreeCaseGlyph"
-                                               FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                               Text="{Binding NodeGlyph}"
-                                               IsVisible="{Binding IsHttpCaseNode}" />
                                     <u:Badge Grid.Column="2"
                                              Margin="{StaticResource Pad.RightHalf}"
                                              Header="{Binding MethodBadgeText}"
@@ -194,9 +189,13 @@
                                                TextTrimming="CharacterEllipsis"
                                                TextWrapping="NoWrap"
                                                ToolTip.Tip="{Binding SidebarDisplayText}" />
-                                    <Border Grid.Column="4"
-                                            Classes="WorkspaceTreeStatusDot"
-                                            IsVisible="{Binding ShowTrailingDot}" />
+                                    <Button Grid.Column="4"
+                                            Classes="WorkspaceTreeCaseChip"
+                                            IsVisible="{Binding HasCases}"
+                                            Content="{Binding CaseCount}"
+                                            ToolTip.Tip="查看用例"
+                                            Click="OnOpenUseCasesClick"
+                                            Focusable="False" />
                                   </Grid>
                                   <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
                                              Text="{Binding Subtitle}"
@@ -277,11 +276,6 @@
                                            FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
                                            Text="{Binding NodeGlyph}"
                                            IsVisible="{Binding ShowLeadingGlyph}" />
-                                <TextBlock Grid.Column="0"
-                                           Classes="WorkspaceTreeNodeGlyph WorkspaceTreeCaseGlyph"
-                                           FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-                                           Text="{Binding NodeGlyph}"
-                                           IsVisible="{Binding IsHttpCaseNode}" />
                                 <u:Badge Grid.Column="1"
                                          Margin="{StaticResource Pad.Right1}"
                                          Header="{Binding MethodBadgeText}"
@@ -293,9 +287,6 @@
                                            TextTrimming="CharacterEllipsis"
                                            TextWrapping="NoWrap"
                                            ToolTip.Tip="{Binding DisplayTitle}" />
-                                <Border Grid.Column="3"
-                                        Classes="WorkspaceTreeStatusDot"
-                                        IsVisible="{Binding ShowTrailingDot}" />
                               </Grid>
                               <TextBlock Classes="CaptionText WorkspaceTreeSubtitleText"
                                          Text="{Binding Subtitle}"

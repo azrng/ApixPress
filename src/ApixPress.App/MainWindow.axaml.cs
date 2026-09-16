@@ -114,12 +114,7 @@ public partial class MainWindow : Window
         _ = RunUiActionAsync(() => _viewModel.SaveCaseCommand.ExecuteAsync(null));
     }
 
-    private void OnOpenUseCasesDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        OpenUseCasesDrawer();
-    }
-
-    // 供视图层（如调试区 URL 行「用例」按钮）调用的抽屉入口
+    // 供视图层（如侧栏接口节点的用例计数芯片）调用的抽屉入口
     internal void OpenUseCasesDrawer()
     {
         if (_isUseCasesDrawerOpen)

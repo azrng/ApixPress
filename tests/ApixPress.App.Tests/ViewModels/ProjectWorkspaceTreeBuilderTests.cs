@@ -78,20 +78,30 @@ public sealed class ProjectWorkspaceTreeBuilderTests
     }
 
     [Fact]
-    public void Build_ShouldGroupCasesUnderInterface()
+    public void Build_ShouldAttachCaseCountToInterfaceInsteadOfCaseNodes()
     {
+        // 对齐原型 08：树上不列用例节点，接口节点携带用例计数（芯片打开用例抽屉）
         var interfaceId = "case-parent";
         var interfaceItem = CreateItem(CreateCase("http-interface", "获取信息", folderPath: string.Empty, id: interfaceId));
         var caseItem = CreateItem(CreateCase("http-case", "成功", folderPath: string.Empty, parentId: interfaceId));
         var root = ProjectWorkspaceTreeBuilder.BuildInterfaceRoot([interfaceItem, caseItem], CreateCommands());
 
         var interfaceNode = Assert.Single(root.Children);
-        Assert.Equal("获取信息 (1)", interfaceNode.Title);
-        interfaceNode.EnsureChildrenLoaded();
+        Assert.Equal("获取信息", interfaceNode.Title);
+        Assert.Equal(1, interfaceNode.CaseCount);
+        Assert.True(interfaceNode.HasCases);
+        Assert.False(interfaceNode.HasChildren);
+    }
 
-        var caseNode = Assert.Single(interfaceNode.Children);
-        Assert.Equal("http-case", caseNode.NodeType);
-        Assert.Equal("成功", caseNode.Title);
+    [Fact]
+    public void Build_ShouldLeaveInterfaceWithoutCaseCountMark()
+    {
+        var interfaceItem = CreateItem(CreateCase("http-interface", "无用例接口", folderPath: string.Empty));
+        var root = ProjectWorkspaceTreeBuilder.BuildInterfaceRoot([interfaceItem], CreateCommands());
+
+        var interfaceNode = Assert.Single(root.Children);
+        Assert.Equal(0, interfaceNode.CaseCount);
+        Assert.False(interfaceNode.HasCases);
     }
 
     [Fact]

@@ -259,44 +259,19 @@ public static class ProjectWorkspaceTreeBuilder
 
     private static ExplorerItemViewModel BuildInterfaceNode(InterfaceNodeSpec spec, ICommand deleteCommand, bool expandAll)
     {
-        var interfaceNode = new ExplorerItemViewModel
+        // 对齐原型 08：树上不列用例节点，接口节点仅以计数芯片提示用例数（点击打开用例抽屉）
+        return new ExplorerItemViewModel
         {
             NodeKey = $"http-interface:{spec.Item.SourceCase.Id}",
-            Title = BuildInterfaceTitle(spec.Item.Name, spec.Cases.Count),
+            Title = spec.Item.Name,
             Subtitle = string.Empty,
             NodeType = ProjectTabRequestEntryTypes.HttpInterface,
             CanLoad = true,
             IsExpanded = expandAll,
             DeleteCommand = deleteCommand,
+            CaseCount = spec.Cases.Count,
             SourceCase = spec.Item.SourceCase
         };
-
-        if (spec.Cases.Count > 0)
-        {
-            var caseChildren = spec.Cases.Select(caseItem => new ExplorerItemViewModel
-            {
-                NodeKey = $"http-case:{caseItem.SourceCase.Id}",
-                Title = caseItem.Name,
-                Subtitle = string.Empty,
-                NodeType = ProjectTabRequestEntryTypes.HttpCase,
-                CanLoad = true,
-                DeleteCommand = deleteCommand,
-                SourceCase = caseItem.SourceCase
-            }).ToList();
-            if (expandAll)
-            {
-                foreach (var child in caseChildren)
-                {
-                    interfaceNode.Children.Add(child);
-                }
-            }
-            else
-            {
-                interfaceNode.SetDeferredChildren(() => caseChildren);
-            }
-        }
-
-        return interfaceNode;
     }
 
     private static ExplorerItemViewModel BuildQuickRequestNode(RequestCaseItemViewModel item, ICommand deleteCommand)
@@ -335,11 +310,6 @@ public static class ProjectWorkspaceTreeBuilder
         }
 
         return counts;
-    }
-
-    private static string BuildInterfaceTitle(string name, int caseCount)
-    {
-        return caseCount > 0 ? $"{name} ({caseCount})" : name;
     }
 
     private sealed class FolderNodeSpec

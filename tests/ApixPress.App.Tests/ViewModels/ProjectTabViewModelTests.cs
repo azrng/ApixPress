@@ -542,6 +542,57 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task LoadWorkspaceItem_ShouldShowRouteNameForUnnamedSavedInterface()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "osp 服务", "FILE", @"C:\temp\osp.json", "https://osp.demo.local", 1);
+        // 模拟保存时未显式命名的接口：保存口径会把生成名（方法+路径）落为接口名
+        requestCaseService.Cases.Add(new RequestCaseDto
+        {
+            Id = "case-unnamed-home",
+            ProjectId = "project-1",
+            EntryType = "http-interface",
+            Name = "GET /home",
+            GroupName = "Home",
+            RequestSnapshot = new RequestSnapshotDto { Method = "GET", Url = "/home" },
+            UpdatedAt = DateTime.UtcNow
+        });
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "GET /home");
+        Assert.NotNull(interfaceItem);
+
+        await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+
+        // 编辑器名称框须与侧栏树、工作区标签一致显示路由名，而非"未命名接口"
+        Assert.Equal("GET /home", viewModel.Editor.CurrentHttpInterfaceName);
+        Assert.Equal("GET /home", viewModel.ActiveWorkspaceTab?.HeaderText);
+    }
+
+    [Fact]
+    public async Task UnnamedNewInterface_ShouldFollowMethodAndUrlAsName()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        await viewModel.InitializeAsync();
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
+        Assert.Equal("新建 HTTP 接口", viewModel.Editor.CurrentHttpInterfaceName);
+
+        viewModel.Editor.RequestUrl = "/home";
+
+        // 未显式命名时，名称随方法+路径实时生成（保存口径一致），不再停留"未命名接口"
+        Assert.Equal("GET /home", viewModel.Editor.CurrentHttpInterfaceName);
+
+        viewModel.Editor.CurrentHttpInterfaceName = "首页";
+
+        // 用户显式命名后以用户名为准
+        Assert.Equal("首页", viewModel.Editor.CurrentHttpInterfaceName);
+    }
+
+    [Fact]
     public async Task LoadWorkspaceItem_ShouldNotGenerateRequestCodeUntilDialogOpens()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
@@ -589,9 +640,28 @@ public sealed partial class ProjectTabViewModelTests
             DataContext = viewModel
         });
         var requestCodeDialogException = Record.Exception(() => new RequestCodeDialogView());
+        // 实际请求面板依赖响应区样式 token，实例化冒烟防止 StaticResource 缺失在运行期才暴露
+        var actualRequestPanelException = Record.Exception(() => new ApixPress.App.Views.Controls.ActualRequestPanelView());
+        // 弹窗 chrome 由 Ursa 提供，冒烟四个小弹窗内容视图。注意：UI 实例化测试统一并入本用例，
+        // 不再新增独立实例化测试——新增方法会扰动 xUnit 集合内调度并触发 Avalonia 跨线程竞态
+        // （ContentHost 系列曾因此复现 "different thread owns it"，2026-09-16）。
+        var quickRequestSaveDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.QuickRequestSaveDialogView());
+        var httpCaseSaveDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.HttpCaseSaveDialogView());
+        var createFolderDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.WorkspaceCreateFolderDialogView());
+        var deleteConfirmDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.WorkspaceDeleteConfirmDialogView());
+        var bodyTabException = Record.Exception(() => new ApixPress.App.Views.Controls.HttpInterfaceBodyTabView
+        {
+            DataContext = viewModel
+        });
 
         Assert.Null(exception);
         Assert.Null(requestCodeDialogException);
+        Assert.Null(actualRequestPanelException);
+        Assert.Null(quickRequestSaveDialogException);
+        Assert.Null(httpCaseSaveDialogException);
+        Assert.Null(createFolderDialogException);
+        Assert.Null(deleteConfirmDialogException);
+        Assert.Null(bodyTabException);
     }
 
     private static void EnsureAvaloniaInitialized()
@@ -1399,14 +1469,14 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Equal("订单", savedCase.FolderPath);
 
         var folderItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "订单 (1)");
-        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "创建订单 (1)");
-        var caseItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "成功响应");
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "创建订单");
 
+        // 对齐原型 08：树上不生成用例节点，接口节点以计数承载用例数
         Assert.NotNull(folderItem);
         Assert.NotNull(interfaceItem);
-        Assert.NotNull(caseItem);
-        Assert.Single(interfaceItem!.Children);
-        Assert.Same(caseItem, interfaceItem.Children[0]);
+        Assert.Empty(interfaceItem!.Children);
+        Assert.Equal(1, interfaceItem.CaseCount);
+        Assert.True(interfaceItem.HasCases);
     }
 
     [Fact]
@@ -1469,8 +1539,9 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.InitializeAsync();
 
-        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "用户接口 (1)");
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "用户接口");
         Assert.NotNull(interfaceItem);
+        Assert.Equal(1, interfaceItem.CaseCount);
         await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
         await WaitUntilAsync(() => viewModel.UseCasesPanel.CurrentInterfaceName == "用户接口");
 

@@ -205,10 +205,10 @@ public sealed class RequestConfigTabViewModelTests
         var viewModel = new RequestConfigTabViewModel();
 
         viewModel.SelectedTabIndex = 0;
-        Assert.Equal(240, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
 
         viewModel.SelectedTabIndex = 2;
-        Assert.Equal(240, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
     }
 
     [Fact]
@@ -217,7 +217,7 @@ public sealed class RequestConfigTabViewModelTests
         var viewModel = new RequestConfigTabViewModel();
 
         viewModel.SelectedTabIndex = 1;
-        Assert.Equal(240, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
 
         viewModel.SelectedBodyMode = BodyModes.RawJson;
         Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
@@ -227,7 +227,7 @@ public sealed class RequestConfigTabViewModelTests
         Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
 
         viewModel.SelectedTabIndex = 2;
-        Assert.Equal(240, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
 
         viewModel.Headers.Add(new RequestParameterItemViewModel());
         Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
@@ -242,7 +242,7 @@ public sealed class RequestConfigTabViewModelTests
             SelectedBodyMode = BodyModes.FormData
         };
 
-        Assert.Equal(240, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
 
         viewModel.FormFields.Add(new RequestParameterItemViewModel());
 
@@ -282,6 +282,56 @@ public sealed class RequestConfigTabViewModelTests
         Assert.Equal(2, viewModel.FormFields.Count);
         Assert.Contains(viewModel.FormFields, item => item.Name == "file" && item.Value == string.Empty);
         Assert.Contains(viewModel.FormFields, item => item.Name == "userId" && item.Value == "u-1");
+    }
+
+    [Theory]
+    [InlineData(BodyModes.RawJson, "{\"model\":\"demo\"}", 0, 0, 1)]
+    [InlineData(BodyModes.FormUrlEncoded, "field=1", 0, 0, 1)]
+    [InlineData(BodyModes.FormUrlEncoded, "", 1, 0, 0)]
+    [InlineData(BodyModes.None, "", 2, 0, 0)]
+    [InlineData(BodyModes.None, "", 0, 2, 2)]
+    [InlineData(BodyModes.None, "", 0, 0, 0)]
+    public void ApplySnapshot_ShouldSelectDefaultTabByContent(
+        string bodyMode,
+        string bodyContent,
+        int queryCount,
+        int headerCount,
+        int expectedTabIndex)
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        viewModel.ApplySnapshot(new RequestSnapshotDto
+        {
+            Method = "POST",
+            Url = "https://api.example.com",
+            BodyMode = bodyMode,
+            BodyContent = bodyContent,
+            QueryParameters = Enumerable.Range(0, queryCount)
+                .Select(i => new RequestKeyValueDto { Name = $"q{i}", Value = $"{i}" })
+                .ToList(),
+            Headers = Enumerable.Range(0, headerCount)
+                .Select(i => new RequestKeyValueDto { Name = $"X-H{i}", Value = $"{i}" })
+                .ToList()
+        });
+
+        Assert.Equal(expectedTabIndex, viewModel.SelectedTabIndex);
+    }
+
+    [Fact]
+    public void Reset_ShouldRestoreDefaultParamsTab()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+        viewModel.ApplySnapshot(new RequestSnapshotDto
+        {
+            Method = "POST",
+            BodyMode = BodyModes.RawText,
+            BodyContent = "hello"
+        });
+        Assert.Equal(1, viewModel.SelectedTabIndex);
+
+        viewModel.Reset();
+
+        Assert.Equal(0, viewModel.SelectedTabIndex);
     }
 
     private static void AssertResetNotification(NotifyCollectionChangedEventArgs e, ref int count)

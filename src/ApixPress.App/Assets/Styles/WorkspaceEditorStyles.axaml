@@ -487,9 +487,25 @@
     <Setter Property="Margin" Value="0,0,4,0" />
   </Style>
 
-  <Style Selector="TextBlock.WorkspaceTreeCaseGlyph">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+  <!-- 用例计数芯片：对齐原型 08 接口节点的 "(N 个用例)" 提示，点击打开用例抽屉 -->
+  <Style Selector="Button.WorkspaceTreeCaseChip">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="Padding" Value="7,1" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="4,0,0,0" />
+  </Style>
+
+  <Style Selector="Button.WorkspaceTreeCaseChip:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
   </Style>
 
   <Style Selector="TextBlock.WorkspaceTreeSubtitleText">
@@ -519,14 +535,6 @@
     <Setter Property="Margin" Value="0,6,0,0" />
   </Style>
 
-  <Style Selector="Border.WorkspaceTreeStatusDot">
-    <Setter Property="Width" Value="6" />
-    <Setter Property="Height" Value="6" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="Margin" Value="4,0,0,0" />
-  </Style>
 
   <!-- URL 输入壳对齐原型：内嵌区域使用最深的应用底色，与外部卡片拉开层次 -->
   <Style Selector="Grid.HttpRequestUrlRow">
@@ -843,32 +851,34 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 
+  <!-- 对齐原型 body-modes：选择器压薄并与内容类型提示同行 -->
   <Style Selector="u|SelectionList.HttpBodyModeSelector">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.1}" />
+    <Setter Property="Padding" Value="3,2" />
   </Style>
 
   <Style Selector="Border.HttpBodyModeOption">
-    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+    <Setter Property="Padding" Value="10,3" />
   </Style>
 
-  <Style Selector="Border.HttpBodyModeHint">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+  <Style Selector="Border.HttpBodyModeOption TextBlock">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
   </Style>
 
-  <Style Selector="Border.HttpBodyEmptyState">
-    <Setter Property="MinHeight" Value="116" />
+  <Style Selector="TextBlock.HttpBodyModeHintText">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
   </Style>
 
+  <!--
+      内容宿主最小高需与紧凑面板预算匹配：紧凑上限 288 扣除 URL 行(~58)+页签行(~36)+页签边距(24)+行距(12)+选择器(~30)
+      后约剩 128，MinHeight 超过可用高度会触发 Grid 亏空排列，拉伸子项按负偏移居中向上叠住选择器行
+  -->
   <Style Selector="Grid.HttpBodyContentHost">
-    <Setter Property="MinHeight" Value="168" />
+    <Setter Property="MinHeight" Value="120" />
   </Style>
 
   <Style Selector="Border.HttpBodyEmptyState TextBlock">
@@ -879,23 +889,6 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
     <Setter Property="Margin" Value="{StaticResource Pad.3}" />
-  </Style>
-
-  <Style Selector="Border.HttpDesignMetaCard">
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-  </Style>
-
-  <Style Selector="Border.HttpDesignSummaryCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
-    <Setter Property="MinWidth" Value="220" />
-  </Style>
-
-  <Style Selector="TextBox.HttpDesignMultilineInput">
-    <Setter Property="MinHeight" Value="108" />
   </Style>
 
   <Style Selector="Border.HttpResponseCard">

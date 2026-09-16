@@ -15,8 +15,9 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     private readonly List<RequestParameterItemViewModel> _subscribedQueryParameterItems = [];
     private bool _isUpdatingQueryParametersSelectionState;
     private bool? _queryParametersSelectionState;
-    // 空状态时也要完整容纳“区域标题 + 表头 + 空提示”，过小会触发 Avalonia Grid 按比例压缩内容，导致副标题被裁剪
-    private const double CompactConfigPanelMaxHeight = 240;
+    // 空状态时也要完整容纳“区域标题 + 表头 + 空提示”，过小会触发 Avalonia Grid 按比例压缩内容，导致副标题被裁剪。
+    // 预算需覆盖整卡高度：URL 行（约 54px）+ 页签行（约 36px）+ 内容区（边距 12 + 区域栏 40 + 间距 8 + 表格最小高 114）
+    private const double CompactConfigPanelMaxHeight = 288;
     private const double ExpandedConfigPanelMaxHeight = 420;
 
     public BatchObservableCollection<RequestParameterItemViewModel> QueryParameters { get; } = [];
@@ -150,7 +151,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         BodyModes.RawJson => "以 application/json 发送原始 JSON 内容。",
         BodyModes.RawXml => "以 application/xml 发送原始 XML 内容。",
         BodyModes.RawText => "以 text/plain 发送纯文本内容。",
-        _ => "不发送请求体；可在上方选择一种内容类型。"
+        _ => "不发送请求体。"
     };
 
     partial void OnSelectedTabIndexChanged(int value)
@@ -271,6 +272,22 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         IgnoreSslErrors = snapshot.IgnoreSslErrors;
         ReplaceParameters(snapshot);
         ReplaceFormFieldsFromBodyContent(SelectedBodyMode, snapshot.BodyContent);
+        SelectDefaultTabByContent();
+    }
+
+    /// <summary>
+    /// 按内容选择默认配置页签：请求体有内容（含表单字段）时打开 Body，
+    /// 其次有 Query 参数时停在 Params，仅配置了 Header 时打开 Headers，空请求维持 Params。
+    /// </summary>
+    public void SelectDefaultTabByContent()
+    {
+        var hasBodyContent = SelectedBodyMode != BodyModes.None
+            && (!string.IsNullOrWhiteSpace(RequestBody) || FormFields.Count > 0);
+        SelectedTabIndex = hasBodyContent
+            ? 1
+            : Headers.Count > 0 && QueryParameters.Count == 0
+                ? 2
+                : 0;
     }
 
     public RequestSnapshotDto BuildRequestSnapshot(string endpointId, string method, string url, string? requestNameOverride = null)
@@ -314,6 +331,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         PathParameters.ReplaceWith([]);
         Headers.ReplaceWith([]);
         FormFields.ReplaceWith([]);
+        SelectedTabIndex = 0;
     }
 
     protected override void DisposeManaged()

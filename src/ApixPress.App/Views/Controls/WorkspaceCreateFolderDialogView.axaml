@@ -10,27 +10,34 @@
   <Border Classes="QuickRequestSaveDialogCard">
     <Grid RowDefinitions="Auto,Auto,Auto"
           RowSpacing="{StaticResource Space.3}">
-      <TextBlock Classes="CaptionText"
+      <TextBlock Classes="DialogFormHint"
                  Text="{Binding PendingCreateFolderParentDisplay, StringFormat='将在：{0} 下创建目录'}" />
 
-      <Border Grid.Row="1"
-              Classes="CreateProjectFormShell">
-        <TextBox Classes="SectionInput"
-                 PlaceholderText="请输入目录名称"
-                 Text="{Binding FolderNameInput, Mode=TwoWay}" />
-      </Border>
-
-      <StackPanel Grid.Row="2"
-                  Orientation="Horizontal"
-                  HorizontalAlignment="Right"
-                  Spacing="{StaticResource Space.2}">
-        <Button Classes="DialogSecondaryButton"
-                Content="取消"
-                Command="{Binding CancelCreateFolderCommand}" />
-        <Button Classes="DialogPrimaryButton"
-                Content="创建"
-                Command="{Binding ConfirmCreateFolderCommand}" />
+      <!-- 表单直接铺放在正文上（对齐原型 modal-body），不再嵌套内层卡片 -->
+      <StackPanel Grid.Row="1"
+                  Classes="DialogFormStack">
+        <StackPanel Classes="DialogFormField">
+          <TextBlock Classes="DialogFormLabel"
+                     Text="目录名称" />
+          <TextBox Classes="SectionInput"
+                   PlaceholderText="请输入目录名称"
+                   Text="{Binding FolderNameInput, Mode=TwoWay}" />
+        </StackPanel>
       </StackPanel>
+
+      <Border Grid.Row="2"
+              Classes="DialogFooter">
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="{StaticResource Space.2}">
+          <Button Classes="DialogSecondaryButton"
+                  Content="取消"
+                  Command="{Binding CancelCreateFolderCommand}" />
+          <Button Classes="DialogPrimaryButton"
+                  Content="创建"
+                  Command="{Binding ConfirmCreateFolderCommand}" />
+        </StackPanel>
+      </Border>
     </Grid>
   </Border>
 </UserControl>

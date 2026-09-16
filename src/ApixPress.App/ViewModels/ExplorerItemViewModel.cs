@@ -34,6 +34,12 @@ public partial class ExplorerItemViewModel : ViewModelBase
     [ObservableProperty]
     private bool canLoad;
 
+    /// <summary>接口节点关联的用例数（对齐原型 08 的 "(N 个用例)" 提示）；点击行内芯片打开用例抽屉</summary>
+    [ObservableProperty]
+    private int caseCount;
+
+    public bool HasCases => CaseCount > 0;
+
     [ObservableProperty]
     private bool isExpanded;
 
@@ -59,7 +65,6 @@ public partial class ExplorerItemViewModel : ViewModelBase
         : NodeType switch
         {
             "http-interface" => "未命名接口",
-            "http-case" => "未命名用例",
             "folder" => "未命名目录",
             "quick-request" => "未命名请求",
             _ => "未命名项"
@@ -77,13 +82,9 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public bool ShowMethodBadge => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase);
 
-    public bool ShowLeadingGlyph => !ShowMethodBadge && !IsHttpCaseNode;
-
-    public bool IsHttpCaseNode => string.Equals(NodeType, "http-case", StringComparison.OrdinalIgnoreCase);
+    public bool ShowLeadingGlyph => !ShowMethodBadge;
 
     public bool IsQuickRequestNode => string.Equals(NodeType, "quick-request", StringComparison.OrdinalIgnoreCase);
-
-    public bool ShowTrailingDot => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase) && HasChildren;
 
     public string MethodBadgeText => SourceCase?.RequestSnapshot.Method?.ToUpperInvariant()
         ?? Endpoint?.Method?.ToUpperInvariant()
@@ -117,7 +118,6 @@ public partial class ExplorerItemViewModel : ViewModelBase
         "module" => "\uE8B7",
         "interface-root" => "\uE71D",
         "folder" => "\uE8B7",
-        "http-case" => "\uE7C3",
         "quick-root" => "\uE945",
         "quick-request" => "\uE8A5",
         _ => "\uE8A5"
@@ -175,6 +175,7 @@ public partial class ExplorerItemViewModel : ViewModelBase
         IsGroup = source.IsGroup;
         NodeType = source.NodeType;
         CanLoad = source.CanLoad;
+        CaseCount = source.CaseCount;
         DeleteCommand = source.DeleteCommand;
         CreateSubfolderCommand = source.CreateSubfolderCommand;
         CreateInterfaceInFolderCommand = source.CreateInterfaceInFolderCommand;
@@ -259,7 +260,6 @@ public partial class ExplorerItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasChildren));
         OnPropertyChanged(nameof(IsClickable));
         OnPropertyChanged(nameof(CanDelete));
-        OnPropertyChanged(nameof(ShowTrailingDot));
         OnPropertyChanged(nameof(HasChildrenCount));
         OnPropertyChanged(nameof(ChildrenCountSuffix));
         OnPropertyChanged(nameof(SidebarDisplayText));
@@ -288,11 +288,9 @@ public partial class ExplorerItemViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(ShowMethodBadge));
         OnPropertyChanged(nameof(ShowLeadingGlyph));
-        OnPropertyChanged(nameof(IsHttpCaseNode));
         OnPropertyChanged(nameof(IsQuickRequestNode));
         OnPropertyChanged(nameof(IsFolderNode));
         OnPropertyChanged(nameof(CanCreateSubfolder));
-        OnPropertyChanged(nameof(ShowTrailingDot));
         OnPropertyChanged(nameof(NodeGlyph));
         OnPropertyChanged(nameof(DisplayTitle));
         OnPropertyChanged(nameof(SidebarDisplayText));

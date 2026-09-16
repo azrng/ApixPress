@@ -2,7 +2,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.QuickRequestSaveDialogView"
              x:DataType="vm:ProjectQuickRequestSaveViewModel"
@@ -11,37 +10,44 @@
   <Border Classes="QuickRequestSaveDialogCard">
     <Grid RowDefinitions="Auto,Auto,Auto"
           RowSpacing="{StaticResource Space.3}">
-      <TextBlock Classes="CaptionText"
+      <TextBlock Classes="DialogFormHint"
                  Text="保存时再输入名称，已保存的快捷请求会继续保留在左侧目录中。" />
 
-      <Border Grid.Row="1"
-              Classes="CreateProjectFormShell">
-        <u:Form LabelPosition="Top">
+      <!-- 表单直接铺放在正文上（对齐原型 modal-body），不再嵌套内层卡片 -->
+      <StackPanel Grid.Row="1"
+                  Classes="DialogFormStack">
+        <StackPanel Classes="DialogFormField">
+          <TextBlock Classes="DialogFormLabel"
+                     Text="快捷请求名称" />
           <TextBox Classes="SectionInput DialogInput"
-                   u:FormItem.Label="快捷请求名称"
                    PlaceholderText="请输入保存名称"
                    Text="{Binding DraftName}" />
+        </StackPanel>
+        <StackPanel Classes="DialogFormField">
+          <TextBlock Classes="DialogFormLabel"
+                     Text="备注" />
           <TextBox Classes="SectionInput DialogInput"
-                   u:FormItem.Label="备注"
                    AcceptsReturn="True"
                    Height="96"
                    TextWrapping="Wrap"
                    PlaceholderText="可选，补充请求用途说明"
                    Text="{Binding DraftDescription}" />
-        </u:Form>
-      </Border>
-
-      <StackPanel Grid.Row="2"
-                  Orientation="Horizontal"
-                  HorizontalAlignment="Right"
-                  Spacing="{StaticResource Space.2}">
-        <Button Classes="DialogSecondaryButton"
-                Content="取消"
-                Command="{Binding CloseDialogCommand}" />
-        <Button Classes="DialogPrimaryButton"
-                Content="保存"
-                Command="{Binding ConfirmSaveCommand}" />
+        </StackPanel>
       </StackPanel>
+
+      <Border Grid.Row="2"
+              Classes="DialogFooter">
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="{StaticResource Space.2}">
+          <Button Classes="DialogSecondaryButton"
+                  Content="取消"
+                  Command="{Binding CloseDialogCommand}" />
+          <Button Classes="DialogPrimaryButton"
+                  Content="保存"
+                  Command="{Binding ConfirmSaveCommand}" />
+        </StackPanel>
+      </Border>
     </Grid>
   </Border>
 </UserControl>

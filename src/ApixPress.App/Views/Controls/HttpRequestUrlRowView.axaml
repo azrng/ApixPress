@@ -9,7 +9,7 @@
              mc:Ignorable="d">
   <!-- 请求动作行：方法 + BaseUrl + 路径 + 发送/发送中 + 取消 + 用例入口 + 保存分裂按钮 -->
   <Grid Classes="HttpRequestUrlRow"
-        ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto"
+        ColumnDefinitions="*,Auto,Auto,Auto"
         ColumnSpacing="{StaticResource Space.2}">
     <Border Grid.Column="0"
             Classes="HttpRequestUrlShell">
@@ -65,22 +65,8 @@
             Command="{Binding CancelRequestCommand}"
             Content="取消" />
 
-    <!-- 用例动作与请求动作之间用分隔线区分归属 -->
-    <Border Grid.Column="3"
-            Width="1"
-            Height="22"
-            Background="{DynamicResource Brush.Border.Default}"
-            IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
-    <Button Grid.Column="4"
-            Classes="HttpCancelButton HttpUseCasesButton"
-            Padding="12,7"
-            MinWidth="0"
-            Content="用例"
-            IsVisible="{Binding Editor.ShowSaveHttpCaseAction}"
-            ToolTip.Tip="管理该接口的用例"
-            Click="OnOpenUseCasesClick" />
-    <!-- 保存分裂按钮：主操作保存接口，caret 菜单提供保存为用例 -->
-    <Grid Grid.Column="5"
+    <!-- 保存分裂按钮：主操作保存接口，caret 菜单提供保存为用例；用例管理入口在侧栏接口节点的用例计数（对齐原型 02/08） -->
+    <Grid Grid.Column="3"
           Classes="HttpSaveSplit"
           IsVisible="{Binding !ResponseSection.IsLoading}">
       <Grid.ColumnDefinitions>

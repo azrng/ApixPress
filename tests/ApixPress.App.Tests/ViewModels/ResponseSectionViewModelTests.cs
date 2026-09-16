@@ -63,6 +63,138 @@ public sealed class ResponseSectionViewModelTests
     }
 
     [Fact]
+    public void ApplyResult_ShouldExposeActualRequestSnapshot_WhenPresent()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 12,
+                SizeBytes = 2,
+                Content = "{}",
+                ActualRequest = new ActualRequestSnapshotDto
+                {
+                    Method = "GET",
+                    Url = "https://api.example.com/users?expand=profile",
+                    Headers =
+                    [
+                        new ResponseHeaderDto { Name = "Accept", Value = "*/*" }
+                    ],
+                    BodyContentType = "application/json",
+                    BodyText = "{\"name\":\"order\"}",
+                    HasBody = true
+                }
+            }),
+            new RequestSnapshotDto());
+
+        Assert.True(viewModel.HasActualRequest);
+        Assert.Equal("GET", viewModel.ActualRequestMethod);
+        Assert.Equal("https://api.example.com/users?expand=profile", viewModel.ActualRequestUrl);
+        Assert.Equal("Light Success", viewModel.ActualRequestMethodBadgeClass);
+        Assert.True(viewModel.HasActualRequestHeaderRows);
+        Assert.Equal("Accept", viewModel.ActualRequestHeaderRows[0].Name);
+        Assert.Equal("*/*", viewModel.ActualRequestHeaderRows[0].Value);
+        Assert.True(viewModel.HasActualRequestBodyContentType);
+        Assert.Equal("application/json", viewModel.ActualRequestBodyContentType);
+        Assert.True(viewModel.HasActualRequestBody);
+        Assert.Equal("{\"name\":\"order\"}", viewModel.ActualRequestBodyText);
+    }
+
+    [Fact]
+    public void ApplyResult_ShouldKeepActualRequestEmpty_WhenSnapshotMissing()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 12,
+                SizeBytes = 2,
+                Content = "{}"
+            }),
+            new RequestSnapshotDto());
+
+        Assert.False(viewModel.HasActualRequest);
+        Assert.False(viewModel.HasActualRequestHeaderRows);
+        Assert.False(viewModel.HasActualRequestBody);
+    }
+
+    [Fact]
+    public void ApplyResult_ShouldClearActualRequest_WhenResultFails()
+    {
+        var viewModel = new ResponseSectionViewModel();
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                ActualRequest = new ActualRequestSnapshotDto
+                {
+                    Method = "GET",
+                    Url = "https://api.example.com/users"
+                }
+            }),
+            new RequestSnapshotDto());
+        Assert.True(viewModel.HasActualRequest);
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Failure("请求超时。", "request_timeout"),
+            new RequestSnapshotDto());
+
+        Assert.False(viewModel.HasActualRequest);
+        Assert.False(viewModel.HasActualRequestHeaderRows);
+        Assert.False(viewModel.HasActualRequestBody);
+    }
+
+    [Fact]
+    public void Reset_ShouldClearActualRequest()
+    {
+        var viewModel = new ResponseSectionViewModel();
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                ActualRequest = new ActualRequestSnapshotDto
+                {
+                    Method = "DELETE",
+                    Url = "https://api.example.com/users/1"
+                }
+            }),
+            new RequestSnapshotDto());
+
+        viewModel.Reset();
+
+        Assert.False(viewModel.HasActualRequest);
+        Assert.Equal(string.Empty, viewModel.ActualRequestMethod);
+        Assert.Equal(string.Empty, viewModel.ActualRequestUrl);
+        Assert.Equal("Light Secondary", viewModel.ActualRequestMethodBadgeClass);
+    }
+
+    [Fact]
+    public void ApplyResult_ShouldLimitActualRequestBodyText_WhenTooLarge()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                ActualRequest = new ActualRequestSnapshotDto
+                {
+                    Method = "POST",
+                    Url = "https://api.example.com/orders",
+                    HasBody = true,
+                    BodyText = new string('a', 256 * 1024 + 1)
+                }
+            }),
+            new RequestSnapshotDto());
+
+        Assert.Contains("请求体过大", viewModel.ActualRequestBodyText);
+    }
+
+    [Fact]
     public void BodySearchText_ShouldUpdateMatchCount()
     {
         var viewModel = new ResponseSectionViewModel();

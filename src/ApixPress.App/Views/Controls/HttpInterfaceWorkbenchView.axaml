@@ -9,39 +9,12 @@
              x:Class="ApixPress.App.Views.Controls.HttpInterfaceWorkbenchView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <Grid RowDefinitions="Auto,*"
-        HorizontalAlignment="Stretch"
+  <Grid HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
-        RowSpacing="0"
         MinHeight="0"
         ClipToBounds="True"
         IsVisible="{Binding Editor.ShowHttpWorkbenchContent}">
-    <Border Grid.Row="0"
-            Classes="PanelCard HttpDesignMetaCard"
-            IsVisible="{Binding Editor.IsHttpDesignEditorMode}">
-      <StackPanel Spacing="{StaticResource Space.3}">
-        <StackPanel Spacing="2">
-          <TextBlock Classes="SectionTitle"
-                     Text="接口设计" />
-          <TextBlock Classes="CaptionText"
-                     Text="这里只保留接口说明，用于补充接口用途、前置条件和返回约定。" />
-        </StackPanel>
-
-        <StackPanel Spacing="{StaticResource Space.2}">
-          <TextBlock Classes="CaptionText"
-                     Text="接口说明" />
-          <TextBox Classes="SectionInput HttpDesignMultilineInput"
-                   AcceptsReturn="True"
-                   Text="{Binding ConfigTab.RequestDescription}"
-                   TextWrapping="Wrap"
-                   VerticalContentAlignment="Top"
-                   PlaceholderText="补充接口用途、前置条件和返回约定" />
-        </StackPanel>
-      </StackPanel>
-    </Border>
-
-    <Grid Grid.Row="1"
-          RowSpacing="0"
+    <Grid RowSpacing="0"
           MinHeight="0"
           ClipToBounds="True">
       <Grid.RowDefinitions>
@@ -197,6 +170,9 @@
                     </Border>
                   </ScrollViewer>
                 </Border>
+              </TabItem>
+              <TabItem Header="实际请求">
+                <views:ActualRequestPanelView DataContext="{Binding ResponseSection}" />
               </TabItem>
             </TabControl>
           </Grid>
