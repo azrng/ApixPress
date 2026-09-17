@@ -178,9 +178,9 @@
   document.addEventListener("click", function (e) {
     var t = e.target;
 
-    /* 点击下拉以外区域时收起环境下拉 / 分裂按钮菜单 */
-    if (!t.closest(".env-switch, .btn-split")) {
-      document.querySelectorAll(".env-switch.open, .btn-split.open").forEach(function (el) {
+    /* 点击下拉以外区域时收起环境下拉 */
+    if (!t.closest(".env-switch")) {
+      document.querySelectorAll(".env-switch.open").forEach(function (el) {
         el.classList.remove("open");
       });
     }
@@ -206,15 +206,6 @@
       toast("已切换到环境「" + envItem.getAttribute("data-name") + "」（演示）");
       return;
     }
-
-    /* 分裂按钮：▾ 展开菜单；菜单项收起菜单后按 data-open 继续 */
-    var caretBtn = t.closest(".split-caret");
-    if (caretBtn) {
-      caretBtn.closest(".btn-split").classList.toggle("open");
-      return;
-    }
-    var splitItem = t.closest(".split-item");
-    if (splitItem) splitItem.closest(".btn-split").classList.remove("open");
 
     /* 单选项：导入冲突策略等互斥选项 */
     var radio = t.closest("[data-choice-group] .radio");

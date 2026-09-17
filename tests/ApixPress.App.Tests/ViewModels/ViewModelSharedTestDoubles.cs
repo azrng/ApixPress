@@ -224,7 +224,11 @@ public static class ViewModelSharedTestDoubles
             return ResultModel<int>.Success(count);
         }
 
-        public async Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
+        public async Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(
+            string projectId,
+            IReadOnlyList<ApiEndpointDto> endpoints,
+            CancellationToken cancellationToken,
+            IReadOnlySet<string>? preservedEndpointIds = null)
         {
             var existingImported = Cases
                 .Where(item => string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase))
@@ -234,11 +238,14 @@ public static class ViewModelSharedTestDoubles
             var targetKeys = endpoints
                 .Select(BuildImportedEndpointKey)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var explicitlyPreservedEndpointIds = preservedEndpointIds
+                ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var deletedIds = Cases
                 .Where(item =>
                 string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(item.EntryType, "http-interface", StringComparison.OrdinalIgnoreCase)
                 && item.RequestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase)
+                && !explicitlyPreservedEndpointIds.Contains(item.RequestSnapshot.EndpointId)
                 && !targetKeys.Contains(item.RequestSnapshot.EndpointId))
                 .Select(item => item.Id)
                 .ToList();

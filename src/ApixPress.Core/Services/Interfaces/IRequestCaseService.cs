@@ -18,7 +18,12 @@ public interface IRequestCaseService
 
     Task<IResultModel<int>> SaveRangeAsync(IEnumerable<RequestCaseDto> requestCases, CancellationToken cancellationToken);
 
-    Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken);
+    /// <summary>同步导入接口；preservedEndpointIds 用于本次导入选择跳过的冲突接口。</summary>
+    Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(
+        string projectId,
+        IReadOnlyList<ApiEndpointDto> endpoints,
+        CancellationToken cancellationToken,
+        IReadOnlySet<string>? preservedEndpointIds = null);
 
     Task<IResultModel<RequestCaseDto>> DuplicateAsync(string projectId, string id, CancellationToken cancellationToken);
 

@@ -639,4 +639,33 @@
   <Style Selector="TextBlock.ImportConflictWarning">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Warning.Text}" />
   </Style>
+
+  <Style Selector="Border.DialogDangerNotice">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.Background}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Border.ProjectSettingsImportHistoryRow">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+  </Style>
+
+  <Style Selector="ToggleButton.ImportResolutionChoice">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="ToggleButton.ImportResolutionChoice:checked">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
 </Styles>

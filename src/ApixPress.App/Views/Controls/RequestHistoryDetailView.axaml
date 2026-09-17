@@ -39,10 +39,11 @@
       </Grid>
 
       <Border Grid.Row="1"
-              Classes="PanelCard HistoryRequestDetailCard"
-              IsVisible="{Binding HistoryPanel.HasSelectedHistory}">
+              Classes="PanelCard HistoryRequestDetailCard">
+        <Grid>
         <Grid RowDefinitions="Auto,Auto,*"
-              RowSpacing="{StaticResource Space.2}">
+              RowSpacing="{StaticResource Space.2}"
+              IsVisible="{Binding HistoryPanel.HasSelectedHistory}">
           <Grid ColumnDefinitions="Auto,*,Auto"
                 ColumnSpacing="{StaticResource Space.2}">
             <u:Badge Grid.Column="0"
@@ -124,7 +125,7 @@
                     </ItemsControl.ItemTemplate>
                   </ItemsControl>
                   <TextBlock Classes="CaptionText"
-                             Text="此请求没有 Headers。"
+                             Text="暂无自定义 Header。"
                              IsVisible="{Binding !HistoryPanel.SelectedHistoryItem.HasRequestHeaders}" />
                 </StackPanel>
               </ScrollViewer>
@@ -178,6 +179,13 @@
                        VerticalContentAlignment="Top" />
             </TabItem>
           </TabControl>
+        </Grid>
+        <StackPanel HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Spacing="{StaticResource Space.2}"
+                    IsVisible="{Binding !HistoryPanel.HasSelectedHistory}">
+          <TextBlock Classes="SubtleText" Text="选择左侧历史记录后查看请求快照。" />
+        </StackPanel>
         </Grid>
       </Border>
 

@@ -100,9 +100,13 @@ public partial class RequestConfigTabViewModel : ViewModelBase
 
     public bool HasQueryParameters => QueryParameters.Count > 0;
 
+    public string QueryParameterCountText => QueryParameters.Count.ToString();
+
     public bool ShowQueryParametersEmptyState => !HasQueryParameters;
 
     public bool HasHeaders => Headers.Count > 0;
+
+    public string HeaderCountText => Headers.Count.ToString();
 
     public bool ShowHeadersEmptyState => !HasHeaders;
 
@@ -581,6 +585,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         SyncQueryParameterSubscriptions();
         UpdateQueryParametersSelectionState();
         OnPropertyChanged(nameof(HasQueryParameters));
+        OnPropertyChanged(nameof(QueryParameterCountText));
         OnPropertyChanged(nameof(ShowQueryParametersEmptyState));
         OnPropertyChanged(nameof(ConfigPanelMaxHeight));
     }
@@ -588,6 +593,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     private void OnHeadersCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         OnPropertyChanged(nameof(HasHeaders));
+        OnPropertyChanged(nameof(HeaderCountText));
         OnPropertyChanged(nameof(ShowHeadersEmptyState));
         OnPropertyChanged(nameof(ConfigPanelMaxHeight));
     }

@@ -182,6 +182,35 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
+    [RelayCommand]
+    private void SaveQuickRequestAsInterface()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        var quickRequest = _workspaceContext.GetActiveWorkspaceTab();
+        if (quickRequest is null || !quickRequest.IsQuickRequestTab)
+        {
+            return;
+        }
+
+        if (!HasAbsoluteHttpUrl(quickRequest.RequestUrl))
+        {
+            _hostContext.Messenger.Send(new StatusMessageRequest("快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。"));
+            return;
+        }
+
+        var interfaceTab = _workspace.ReuseActiveLandingOrCreateWorkspace();
+        interfaceTab.ConfigureAsHttpInterface();
+        interfaceTab.ApplySnapshot(quickRequest.BuildSnapshot(quickRequest.ResolveRequestName()));
+        interfaceTab.ConfigTab.RequestDescription = quickRequest.ConfigTab.RequestDescription;
+        _workspace.ActivateWorkspaceTab(interfaceTab);
+        _hostContext.Messenger.Send(new StatusMessageRequest("已将快捷请求转为 HTTP 接口，请保存后写入接口目录。"));
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+    }
+
     public async Task<bool> SaveQuickRequestAsync(RequestWorkspaceTabViewModel workspaceTab, string? requestNameOverride = null)
     {
         if (!HasAbsoluteHttpUrl(workspaceTab.RequestUrl))

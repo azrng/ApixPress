@@ -191,7 +191,11 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         return null;
     }
 
-    public async Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
+    public async Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(
+        string projectId,
+        IReadOnlyList<ApiEndpointDto> endpoints,
+        CancellationToken cancellationToken,
+        IReadOnlySet<string>? preservedEndpointIds = null)
     {
         if (string.IsNullOrWhiteSpace(projectId))
         {
@@ -225,9 +229,17 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             var targetKeys = normalizedEndpoints
                 .Select(BuildImportedEndpointKey)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var explicitlyPreservedEndpointIds = preservedEndpointIds
+                ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var removedInterface in importedInterfaces.Values.Where(item => !targetKeys.Contains(item.Snapshot.EndpointId)))
             {
+                if (explicitlyPreservedEndpointIds.Contains(removedInterface.Snapshot.EndpointId))
+                {
+                    upserts.Add(BuildPreservedImportedInterfaceEntity(removedInterface, preserveImportedIdentity: true));
+                    continue;
+                }
+
                 if (importedCasesByInterfaceId.ContainsKey(removedInterface.Id))
                 {
                     upserts.Add(BuildPreservedImportedInterfaceEntity(removedInterface));
@@ -316,7 +328,9 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         return $"{ImportedEndpointKeyPrefix}{method} {path}";
     }
 
-    private RequestCaseEntity BuildPreservedImportedInterfaceEntity(ImportedInterfaceRecord requestCase)
+    private RequestCaseEntity BuildPreservedImportedInterfaceEntity(
+        ImportedInterfaceRecord requestCase,
+        bool preserveImportedIdentity = false)
     {
         return new RequestCaseEntity
         {
@@ -326,10 +340,14 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             Name = requestCase.Name,
             GroupName = requestCase.GroupName,
             FolderPath = requestCase.FolderPath,
-            ParentId = BuildPreservedInterfaceParentId(requestCase.Id),
+            ParentId = preserveImportedIdentity
+                ? requestCase.Snapshot.EndpointId
+                : BuildPreservedInterfaceParentId(requestCase.Id),
             TagsJson = requestCase.TagsJson,
             Description = requestCase.Description,
-            RequestSnapshotJson = _serializer.ToJson(BuildDetachedSnapshot(requestCase.Snapshot)),
+            RequestSnapshotJson = _serializer.ToJson(preserveImportedIdentity
+                ? requestCase.Snapshot
+                : BuildDetachedSnapshot(requestCase.Snapshot)),
             UpdatedAt = DateTime.UtcNow
         };
     }

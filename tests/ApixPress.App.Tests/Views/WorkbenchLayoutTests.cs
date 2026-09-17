@@ -490,17 +490,77 @@ public sealed class WorkbenchLayoutTests
     }
 
     [Fact]
-    public void HttpRequestUrlRow_ShouldAlignPrototypeWithSendAndSplitSave()
+    public void HttpRequestUrlRow_ShouldExposeSaveAndSaveCaseButtonsWithoutFlyout()
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "HttpRequestUrlRowView.axaml"));
         var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceEditorStyles.axaml"));
 
-        // 对齐原型 02：URL 行只有 发送 + 保存▾，用例管理入口收敛到侧栏计数芯片与用例抽屉
+        // 用户决策：caret 下拉交互繁琐，保存与保存用例平铺两按钮；用例管理入口收敛到侧栏计数芯片与用例抽屉
+        Assert.Contains(
+            document.Descendants(),
+            element => element.Name.LocalName == "Button"
+                && (element.Attribute("Content")?.Value ?? string.Empty) == "保存"
+                && (element.Attribute("Command")?.Value ?? string.Empty).Contains("SaveCaseCommand"));
+        Assert.Contains(
+            document.Descendants(),
+            element => element.Name.LocalName == "Button"
+                && (element.Attribute("Content")?.Value ?? string.Empty) == "保存用例"
+                && (element.Attribute("Command")?.Value ?? string.Empty).Contains("SaveHttpCaseCommand"));
+        Assert.DoesNotContain(document.Descendants(), element => element.Name.LocalName == "Flyout");
+        Assert.DoesNotContain(
+            styles.Descendants(), element => element.Name.LocalName == "Style"
+                && (element.Attribute("Selector")?.Value ?? string.Empty).Contains("HttpSplit"));
         Assert.DoesNotContain(
             document.Descendants(),
             element => HasClass(element, "HttpUseCasesButton"));
         Assert.DoesNotContain(styles.Descendants(), element => element.Name.LocalName == "Style"
             && (element.Attribute("Selector")?.Value ?? string.Empty).Contains("HttpUseCasesButton"));
+    }
+
+    [Theory]
+    [InlineData("HttpInterfaceWorkbenchView.axaml")]
+    [InlineData("QuickRequestWorkbenchView.axaml")]
+    public void RequestConfigurationTabs_ShouldExposeParameterCountBadges(string fileName)
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
+
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Badge"
+            && (element.Attribute("Header")?.Value ?? string.Empty).Contains("QueryParameterCountText"));
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Badge"
+            && (element.Attribute("Header")?.Value ?? string.Empty).Contains("HeaderCountText"));
+    }
+
+    [Fact]
+    public void T064ConfirmationAndHistoryViews_ShouldExposeNewDecisionStates()
+    {
+        var importDialog = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "ImportOverwriteConfirmDialogView.axaml"));
+        Assert.Contains(importDialog.Descendants(), element =>
+            (element.Attribute("Content")?.Value ?? string.Empty).Contains("跳过同名接口", StringComparison.Ordinal)
+            || (element.Attribute("Text")?.Value ?? string.Empty).Contains("跳过同名接口", StringComparison.Ordinal));
+
+        var deleteDialog = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "WorkspaceDeleteConfirmDialogView.axaml"));
+        Assert.Contains(deleteDialog.Descendants(), element => HasClass(element, "DialogDangerNotice"));
+
+        var history = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "RequestHistoryDetailView.axaml"));
+        var snapshotCard = history.Descendants().Single(element => HasClass(element, "HistoryRequestDetailCard"));
+        Assert.Contains(snapshotCard.Descendants(), element =>
+            (element.Attribute("Text")?.Value ?? string.Empty)
+                .Contains("选择左侧历史记录后查看请求快照", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void RequestCodeDialog_ShouldLayLanguagesAcrossTheHeader()
+    {
+        var document = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "RequestCodeDialogView.axaml"));
+        var languageBar = document.Descendants()
+            .Single(element => element.Name.LocalName == "StackPanel"
+                && HasClass(element, "RequestCodeDialogLanguageList"));
+
+        Assert.Equal("Horizontal", languageBar.Attribute("Orientation")?.Value);
     }
 
     [Fact]

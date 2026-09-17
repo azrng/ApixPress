@@ -9,7 +9,7 @@
              mc:Ignorable="d">
   <!-- 弹窗 chrome 由 Ursa StandardDialogControl 提供；DataContext 为覆盖确认独立上下文，经 Import 访问导入数据 -->
   <Border Classes="QuickRequestSaveDialogCard">
-    <Grid RowDefinitions="Auto,Auto,Auto"
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto"
           RowSpacing="{StaticResource Space.3}">
       <StackPanel Spacing="2">
         <TextBlock Classes="CaptionText"
@@ -57,7 +57,31 @@
         </Border>
       </StackPanel>
 
-      <StackPanel Grid.Row="2"
+      <StackPanel Grid.Row="2" Spacing="{StaticResource Space.2}">
+        <TextBlock Classes="CaptionText" Text="导入处理方式" />
+        <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource Space.2}">
+          <ToggleButton Grid.Column="0"
+                        Classes="ImportResolutionChoice"
+                        IsChecked="{Binding Import.IsOverwriteImportSelected, Mode=OneWay}"
+                        Command="{Binding Import.ChooseOverwriteImportCommand}">
+            <StackPanel Spacing="2">
+              <TextBlock FontWeight="SemiBold" Text="覆盖现有接口" />
+              <TextBlock Classes="CaptionText" Text="参数与说明以导入文档为准" TextWrapping="Wrap" />
+            </StackPanel>
+          </ToggleButton>
+          <ToggleButton Grid.Column="1"
+                        Classes="ImportResolutionChoice"
+                        IsChecked="{Binding Import.SkipSameNameInterfaces, Mode=OneWay}"
+                        Command="{Binding Import.ChooseSkipSameNameInterfacesCommand}">
+            <StackPanel Spacing="2">
+              <TextBlock FontWeight="SemiBold" Text="跳过同名接口" />
+              <TextBlock Classes="CaptionText" Text="仅导入新接口，不改动现有接口" TextWrapping="Wrap" />
+            </StackPanel>
+          </ToggleButton>
+        </Grid>
+      </StackPanel>
+
+      <StackPanel Grid.Row="3"
                   Orientation="Horizontal"
                   HorizontalAlignment="Right"
                   Spacing="{StaticResource Space.2}">

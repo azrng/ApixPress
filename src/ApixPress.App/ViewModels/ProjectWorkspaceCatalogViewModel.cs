@@ -323,9 +323,15 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
         await RunWithNavigationRebuildSuppressedAsync(() => _useCasesPanel.LoadCasesAsync());
     }
 
-    public async Task SyncImportedInterfacesAsync(IReadOnlyList<ApiEndpointDto> endpoints)
+    public async Task SyncImportedInterfacesAsync(
+        IReadOnlyList<ApiEndpointDto> endpoints,
+        IReadOnlySet<string>? preservedEndpointIds = null)
     {
-        var syncResult = await _requestCaseService.SyncImportedHttpInterfacesAsync(_projectId, endpoints, CancellationToken.None);
+        var syncResult = await _requestCaseService.SyncImportedHttpInterfacesAsync(
+            _projectId,
+            endpoints,
+            CancellationToken.None,
+            preservedEndpointIds);
         ApplyImportedInterfaceSyncResult(syncResult);
     }
 

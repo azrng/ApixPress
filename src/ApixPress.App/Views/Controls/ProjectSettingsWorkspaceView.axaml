@@ -99,7 +99,7 @@
                   <Border Classes="ProjectSettingsBasicCard">
                     <StackPanel>
                       <Border Classes="ProjectSettingsBasicRow">
-                        <Grid ColumnDefinitions="180,*,Auto"
+                        <Grid ColumnDefinitions="90,*,Auto"
                               ColumnSpacing="{StaticResource Space.4}">
                           <TextBlock Classes="ProjectSettingsRowLabel"
                                      Text="项目名称" />
@@ -114,7 +114,7 @@
                       </Border>
 
                       <Border Classes="ProjectSettingsBasicRow">
-                        <Grid ColumnDefinitions="180,*,Auto"
+                        <Grid ColumnDefinitions="90,*,Auto"
                               ColumnSpacing="{StaticResource Space.4}">
                           <TextBlock Classes="ProjectSettingsRowLabel"
                                      Text="项目 ID" />
@@ -129,7 +129,7 @@
                       </Border>
 
                       <Border Classes="ProjectSettingsBasicRow ProjectSettingsBasicRowLast">
-                        <Grid ColumnDefinitions="180,*,Auto"
+                        <Grid ColumnDefinitions="90,*,Auto"
                               ColumnSpacing="{StaticResource Space.4}">
                           <TextBlock Classes="ProjectSettingsRowLabel"
                                      Text="简介" />
@@ -151,7 +151,7 @@
               <Border Classes="SettingsPageSection SettingsDangerSection">
                 <StackPanel Spacing="{StaticResource Space.3}">
                   <StackPanel Spacing="2">
-                    <TextBlock Classes="SettingsGroupTitle"
+              <TextBlock Classes="SettingsGroupTitle DialogDangerText"
                                Text="{Binding Summary.ProjectSettingsDangerCardTitle}" />
                     <TextBlock Classes="CaptionText"
                                Text="{Binding Summary.ProjectSettingsDangerCardDescription}"
@@ -272,6 +272,41 @@
                       </StackPanel>
                     </Grid>
                   </Button>
+
+                  <Border Classes="ProjectSettingsSectionDivider" />
+                  <StackPanel Spacing="2">
+                    <TextBlock Classes="SectionTitle" Text="最近导入" />
+                    <TextBlock Classes="CaptionText" Text="当前项目最近导入的 OpenAPI / Swagger 文档。" />
+                  </StackPanel>
+                  <ItemsControl ItemsSource="{Binding Import.ImportedApiDocuments}"
+                                IsVisible="{Binding Import.HasImportedApiDocuments}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:ProjectImportedDocumentItemViewModel">
+                        <Border Classes="ProjectSettingsImportHistoryRow">
+                          <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource Space.3}">
+                            <TextBlock Classes="CaptionText" Text="{Binding ImportedAtText}" />
+                            <StackPanel Grid.Column="1" Spacing="2">
+                              <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                              <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.1}">
+                                <TextBlock Classes="CaptionText" Text="{Binding SourceTypeText}" />
+                                <TextBlock Classes="CaptionText" Text="·" />
+                                <TextBlock Classes="CaptionText" Text="接口" />
+                                <TextBlock Classes="CaptionText" Text="{Binding EndpointCountText}" />
+                                <TextBlock Classes="CaptionText" Text="个" />
+                              </StackPanel>
+                            </StackPanel>
+                            <TextBlock Grid.Column="2"
+                                       Classes="CaptionText"
+                                       Text="{Binding SourceValueText}"
+                                       TextTrimming="CharacterEllipsis" />
+                          </Grid>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Classes="CaptionText"
+                             Text="暂无导入记录。"
+                             IsVisible="{Binding Import.ShowImportedApiDocumentsEmptyState}" />
                 </StackPanel>
               </Border>
             </StackPanel>
@@ -328,11 +363,17 @@
         <Border Classes="SettingsDangerConfirmCard">
           <StackPanel Spacing="{StaticResource Space.4}">
             <StackPanel Spacing="{StaticResource Space.2}">
-              <TextBlock Classes="DialogTitle"
+              <TextBlock Classes="DialogTitle DialogDangerText"
                          Text="确认清空项目数据？" />
               <TextBlock Classes="CaptionText"
                          Text="{Binding Project.Name, StringFormat='将清空项目 {0} 的接口、用例、导入文档、环境变量和请求历史，项目本身会保留。'}"
                          TextWrapping="Wrap" />
+            <Border Classes="DialogDangerNotice">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="DialogDangerText" Text="该操作无法恢复" />
+                <TextBlock Classes="CaptionText" Text="项目本身会保留，但接口、用例、环境变量和请求历史将被清空。" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
             </StackPanel>
             <Border Classes="CreateProjectDialogDivider" />
             <StackPanel Orientation="Horizontal"
@@ -358,11 +399,17 @@
         <Border Classes="SettingsDangerConfirmCard">
           <StackPanel Spacing="{StaticResource Space.4}">
             <StackPanel Spacing="{StaticResource Space.2}">
-              <TextBlock Classes="DialogTitle"
+              <TextBlock Classes="DialogTitle DialogDangerText"
                          Text="确认删除项目？" />
               <TextBlock Classes="CaptionText"
                          Text="{Binding Project.Name, StringFormat='项目 {0} 会被删除，相关接口、用例、导入文档、环境配置和请求历史都会一并删除，不能撤销。'}"
                          TextWrapping="Wrap" />
+            <Border Classes="DialogDangerNotice">
+              <StackPanel Spacing="2">
+                <TextBlock Classes="DialogDangerText" Text="该操作无法恢复" />
+                <TextBlock Classes="CaptionText" Text="项目及其接口、用例、导入文档、环境配置和请求历史都会被删除。" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
             </StackPanel>
             <Border Classes="CreateProjectDialogDivider" />
             <StackPanel Orientation="Horizontal"

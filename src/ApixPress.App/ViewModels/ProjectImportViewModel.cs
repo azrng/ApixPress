@@ -37,13 +37,14 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
     private readonly IAppNotificationService _appNotificationService;
     private readonly IProjectDataExportService _projectDataExportService;
     private readonly Func<ProjectWorkspaceItemViewModel> _getProject;
-    private readonly Func<IReadOnlyList<ApiEndpointDto>, Task> _syncImportedInterfacesAsync;
+    private readonly Func<IReadOnlyList<ApiEndpointDto>, IReadOnlySet<string>, Task> _syncImportedInterfacesAsync;
     private readonly Func<string, Task<bool>> _applyImportedBaseUrlAsync;
     private readonly IMessenger _messenger;
     private readonly IDialogService _dialogService;
     private CancellationTokenSource? _importCancellationTokenSource;
     private PendingImportRequest? _pendingImportRequest;
     private bool _hasLoadedImportedDocuments;
+    private readonly HashSet<string> _skipPendingConflictKeys = new(StringComparer.OrdinalIgnoreCase);
     private static readonly ImportOperationTextBundle SwaggerImportTextBundle = new(
         "Swagger 导入成功",
         "Swagger 导入失败",
@@ -66,7 +67,7 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
         IAppNotificationService appNotificationService,
         IProjectDataExportService projectDataExportService,
         Func<ProjectWorkspaceItemViewModel> getProject,
-        Func<IReadOnlyList<ApiEndpointDto>, Task> syncImportedInterfacesAsync,
+        Func<IReadOnlyList<ApiEndpointDto>, IReadOnlySet<string>, Task> syncImportedInterfacesAsync,
         Func<string, Task<bool>> applyImportedBaseUrlAsync,
         IMessenger messenger,
         IDialogService dialogService)
@@ -121,6 +122,11 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
                 PendingImportPreview.ConflictCount);
         }
     }
+
+    public bool IsOverwriteImportSelected => !SkipSameNameInterfaces;
+
+    [ObservableProperty]
+    private bool skipSameNameInterfaces;
 
     public string PendingImportOverwriteDetailText
     {
@@ -244,6 +250,8 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
         ImportUrl = string.Empty;
         SetImportDataStatus(ImportTexts.EmptyStateStatus, ImportStatusStates.Info);
         ClearPendingImportConfirmation();
+        _skipPendingConflictKeys.Clear();
+        SkipSameNameInterfaces = false;
     }
 
     [RelayCommand]
@@ -256,6 +264,20 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
     private void ShowImportUrlMode()
     {
         SelectedImportDataMode = ImportDataModes.Url;
+    }
+
+    [RelayCommand]
+    private void ChooseOverwriteImport()
+    {
+        SkipSameNameInterfaces = false;
+        OnPropertyChanged(nameof(IsOverwriteImportSelected));
+    }
+
+    [RelayCommand]
+    private void ChooseSkipSameNameInterfaces()
+    {
+        SkipSameNameInterfaces = true;
+        OnPropertyChanged(nameof(IsOverwriteImportSelected));
     }
 
     [RelayCommand]
@@ -368,6 +390,15 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
             return;
         }
 
+        _skipPendingConflictKeys.Clear();
+        if (SkipSameNameInterfaces && PendingImportPreview is not null)
+        {
+            foreach (var conflict in PendingImportPreview.ConflictItems)
+            {
+                _skipPendingConflictKeys.Add(BuildImportConflictKey(conflict.Method, conflict.Path));
+            }
+        }
+
         await ConfirmImportOverwriteCoreAsync();
     }
 
@@ -430,7 +461,18 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
                 .GroupBy(item => item.DocumentId, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
 
-            await _syncImportedInterfacesAsync(endpoints);
+            var endpointsToSync = endpoints;
+            if (_skipPendingConflictKeys.Count > 0)
+            {
+                endpointsToSync = endpoints
+                    .Where(endpoint => !_skipPendingConflictKeys.Contains(BuildImportConflictKey(endpoint.Method, endpoint.Path)))
+                    .ToList();
+            }
+
+            var preservedEndpointIds = _skipPendingConflictKeys
+                .Select(key => $"swagger-import:{key}")
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            await _syncImportedInterfacesAsync(endpointsToSync, preservedEndpointIds);
             ImportedApiDocuments.ReplaceWith(documents.Select(document => new ProjectImportedDocumentItemViewModel
             {
                 Id = document.Id,
@@ -592,6 +634,11 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
         OnPropertyChanged(nameof(ImportedApiDocumentCountText));
     }
 
+    private static string BuildImportConflictKey(string method, string path)
+    {
+        return $"{method.Trim().ToUpperInvariant()} {path.Trim()}";
+    }
+
     private async Task ImportSwaggerAsync(
         Func<CancellationToken, Task<IResultModel<ApiImportPreviewDto>>> previewAction,
         Func<CancellationToken, Task<IResultModel<ApiDocumentDto>>> importAction,
@@ -669,20 +716,22 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
     {
         ImportDataBusyText = importBusyText;
         var result = await PerfLog.MeasureAsync("导入·执行入库", () => importAction(cancellationToken));
-        if (!result.IsSuccess || result.Data is null)
-        {
-            var failureMessage = string.IsNullOrWhiteSpace(result.Message)
-                ? operationTexts.ImportFailureFallback
-                : result.Message;
-            if (IsCancelledImportResult(result.Code))
+            if (!result.IsSuccess || result.Data is null)
             {
-                SetImportDataStatus(failureMessage, ImportStatusStates.Info);
-                _messenger.Send(new StatusMessageRequest(failureMessage));
-                return;
-            }
+                var failureMessage = string.IsNullOrWhiteSpace(result.Message)
+                    ? operationTexts.ImportFailureFallback
+                    : result.Message;
+                if (IsCancelledImportResult(result.Code))
+                {
+                    ClearPendingImportConfirmation();
+                    SetImportDataStatus(failureMessage, ImportStatusStates.Info);
+                    _messenger.Send(new StatusMessageRequest(failureMessage));
+                    return;
+                }
 
-            SetImportDataStatus(failureMessage, ImportStatusStates.Error);
-            _messenger.Send(new StatusMessageRequest(failureMessage));
+                ClearPendingImportConfirmation();
+                SetImportDataStatus(failureMessage, ImportStatusStates.Error);
+                _messenger.Send(new StatusMessageRequest(failureMessage));
             PublishGlobalNotification(operationTexts.FailureNotificationTitle, failureMessage, NotificationType.Error);
             return;
         }
@@ -775,6 +824,8 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
     {
         _pendingImportRequest = null;
         PendingImportPreview = null;
+        _skipPendingConflictKeys.Clear();
+        SkipSameNameInterfaces = false;
     }
 
     private static bool IsCancelledImportResult(string? code)

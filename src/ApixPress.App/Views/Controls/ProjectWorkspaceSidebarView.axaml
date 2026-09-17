@@ -380,10 +380,10 @@
                       <TextBlock Grid.Column="1"
                                  Text="{Binding Url}"
                                  TextTrimming="CharacterEllipsis" />
-                      <!-- 行悬停操作：重发 / 删除 -->
+                      <!-- 行悬停操作：重新发送 / 删除 -->
                       <Button Grid.Column="2"
                               Classes="HistoryRowAction"
-                              ToolTip.Tip="重发"
+                              ToolTip.Tip="重新发送"
                               Command="{Binding $parent[ListBox].((vm:ProjectTabViewModel)DataContext).ResendHistoryRequestCommand}"
                               CommandParameter="{Binding}">
                         <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"

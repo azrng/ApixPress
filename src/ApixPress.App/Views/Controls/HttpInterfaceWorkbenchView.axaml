@@ -35,9 +35,25 @@
           <TabControl Grid.Row="1"
                       Classes="ConfigTabControl HttpRequestTabs"
                       SelectedIndex="{Binding ConfigTab.SelectedTabIndex}">
-            <TabItem Header="Params" />
+            <TabItem>
+              <TabItem.Header>
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.1}">
+                  <TextBlock Text="Params" />
+                  <u:Badge Header="{Binding ConfigTab.QueryParameterCountText}"
+                           IsVisible="{Binding ConfigTab.HasQueryParameters}" />
+                </StackPanel>
+              </TabItem.Header>
+            </TabItem>
             <TabItem Header="Body" />
-            <TabItem Header="Headers" />
+            <TabItem>
+              <TabItem.Header>
+                <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.1}">
+                  <TextBlock Text="Headers" />
+                  <u:Badge Header="{Binding ConfigTab.HeaderCountText}"
+                           IsVisible="{Binding ConfigTab.HasHeaders}" />
+                </StackPanel>
+              </TabItem.Header>
+            </TabItem>
           </TabControl>
           <Grid x:Name="ConfigTabContentHost"
                 Grid.Row="2"

@@ -7,7 +7,7 @@
              x:Class="ApixPress.App.Views.Controls.HttpRequestUrlRowView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <!-- 请求动作行：方法 + BaseUrl + 路径 + 发送/发送中 + 取消 + 用例入口 + 保存分裂按钮 -->
+  <!-- 请求动作行：方法 + BaseUrl + 路径 + 发送/发送中 + 取消 + 保存/保存用例（用户决策：caret 下拉交互繁琐，平铺两按钮） -->
   <Grid Classes="HttpRequestUrlRow"
         ColumnDefinitions="*,Auto,Auto,Auto"
         ColumnSpacing="{StaticResource Space.2}">
@@ -65,43 +65,23 @@
             Command="{Binding CancelRequestCommand}"
             Content="取消" />
 
-    <!-- 保存分裂按钮：主操作保存接口，caret 菜单提供保存为用例；用例管理入口在侧栏接口节点的用例计数（对齐原型 02/08） -->
-    <Grid Grid.Column="3"
-          Classes="HttpSaveSplit"
-          IsVisible="{Binding !ResponseSection.IsLoading}">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="Auto" />
-        <ColumnDefinition Width="Auto" />
-      </Grid.ColumnDefinitions>
-      <Button Classes="HttpSaveButton HttpSaveSplitMain"
-              MinWidth="70"
+    <!-- 保存动作组：主操作保存接口，旁边直接放保存用例（HTTP 接口编辑器才显示） -->
+    <StackPanel Grid.Column="3"
+                Orientation="Horizontal"
+                Spacing="{StaticResource Space.1}"
+                VerticalAlignment="Center"
+                IsVisible="{Binding !ResponseSection.IsLoading}">
+      <Button Classes="HttpSaveButton"
               Content="保存"
               Command="{Binding SaveCaseCommand}" />
-      <Button x:Name="HttpSaveSplitCaretButton"
-              Grid.Column="1"
-              Classes="HttpSaveButton HttpSaveSplitCaret"
-              Content="&#xE70D;"
-              FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
-              FontSize="10"
-              IsVisible="{Binding Editor.ShowSaveHttpCaseAction}"
-              ToolTip.Tip="更多保存方式"
-              Click="OnCaretButtonClick">
-        <Button.Flyout>
-          <Flyout Placement="BottomEdgeAlignedRight"
-                  ShowMode="Transient">
-            <Border Classes="HttpSplitMenuCard">
-              <StackPanel>
-                <Button Classes="HttpSplitMenuItem"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Left"
-                        Content="保存为用例"
-                        Command="{Binding #HttpSaveSplitCaretButton.DataContext.SaveHttpCaseCommand}"
-                        IsVisible="{Binding #HttpSaveSplitCaretButton.DataContext.Editor.ShowSaveHttpCaseAction}" />
-              </StackPanel>
-            </Border>
-          </Flyout>
-        </Button.Flyout>
-      </Button>
-    </Grid>
+      <Button Classes="HttpSaveButton"
+              Content="保存用例"
+              Command="{Binding SaveHttpCaseCommand}"
+              IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
+      <Button Classes="HttpSaveButton"
+              Content="保存为接口"
+              Command="{Binding Workflow.SaveQuickRequestAsInterfaceCommand}"
+              IsVisible="{Binding Editor.IsQuickRequestEditor}" />
+    </StackPanel>
   </Grid>
 </UserControl>

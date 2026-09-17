@@ -479,6 +479,57 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task ImportSwaggerUrlCommand_ShouldKeepConflictingInterfaceWhenUserChoosesSkip()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "旧文档", "FILE", @"C:\temp\legacy-swagger.json", "https://legacy.demo.local",
+        [
+            ("订单", "旧的查询订单列表", "GET", "/orders")
+        ]);
+        requestCaseService.Cases.Add(new RequestCaseDto
+        {
+            Id = "existing-orders",
+            ProjectId = "project-1",
+            EntryType = "http-interface",
+            Name = "旧的查询订单列表",
+            GroupName = "接口",
+            FolderPath = "订单",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                EndpointId = "swagger-import:GET /orders",
+                Method = "GET",
+                Url = "/orders"
+            },
+            UpdatedAt = DateTime.UtcNow
+        });
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService
+        {
+            OnShow = request =>
+            {
+                var confirmContext = Assert.IsType<ImportOverwriteConfirmDialogViewModel>(request.DataContext);
+                confirmContext.Import.ChooseSkipSameNameInterfacesCommand.Execute(null);
+            }
+        };
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService, dialogService: dialogService);
+        await viewModel.InitializeAsync();
+
+        await viewModel.Settings.ShowImportDataCommand.ExecuteAsync(null);
+        viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
+
+        await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
+
+        Assert.Contains(requestCaseService.Cases, item =>
+            item.Id == "existing-orders"
+            && item.Name == "旧的查询订单列表"
+            && item.RequestSnapshot.EndpointId == "swagger-import:GET /orders");
+        Assert.Contains(requestCaseService.Cases, item =>
+            item.EntryType == "http-interface"
+            && item.RequestSnapshot.Method == "POST"
+            && item.RequestSnapshot.Url == "/orders");
+    }
+
+    [Fact]
     public async Task SaveCurrentEditorAsync_ShouldKeepImportedEndpointIdentity()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
