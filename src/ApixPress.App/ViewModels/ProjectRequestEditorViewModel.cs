@@ -33,6 +33,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     private bool _showHttpWorkbenchContent;
     private bool _showHttpDocumentPreviewContent;
     private bool _showSaveHttpCaseAction;
+    private bool _isEditingHttpCase;
+    private string _currentHttpCaseContextText = "接口模式";
     private string _currentEditorBaseUrlCaption = string.Empty;
     private bool _hasResolvedRequestPreview;
     private string _resolvedRequestPreviewText = string.Empty;
@@ -104,6 +106,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     public bool ShowHttpWorkbenchContent => _showHttpWorkbenchContent;
     public bool ShowHttpDocumentPreviewContent => _showHttpDocumentPreviewContent;
     public bool ShowSaveHttpCaseAction => _showSaveHttpCaseAction;
+    public bool IsEditingHttpCase => _isEditingHttpCase;
+    public string CurrentHttpCaseContextText => _currentHttpCaseContextText;
     public string CurrentEditorBaseUrlCaption => _currentEditorBaseUrlCaption;
     public bool HasResolvedRequestPreview => _hasResolvedRequestPreview;
     public string ResolvedRequestPreviewText => _resolvedRequestPreviewText;
@@ -337,6 +341,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         OnPropertyChanged(nameof(RequestUrl));
         OnPropertyChanged(nameof(CurrentInterfaceFolderPath));
         OnPropertyChanged(nameof(CurrentHttpCaseName));
+        OnPropertyChanged(nameof(IsEditingHttpCase));
+        OnPropertyChanged(nameof(CurrentHttpCaseContextText));
     }
 
     /// <summary>生成代码对话框跟随请求状态刷新的尾逻辑，立即刷新与防抖刷新共用。</summary>
@@ -379,6 +385,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         OnPropertyChanged(nameof(RequestUrl));
         OnPropertyChanged(nameof(CurrentInterfaceFolderPath));
         OnPropertyChanged(nameof(CurrentHttpCaseName));
+        OnPropertyChanged(nameof(IsEditingHttpCase));
+        OnPropertyChanged(nameof(CurrentHttpCaseContextText));
         ScheduleComputedStateRefresh();
     }
 
@@ -700,6 +708,11 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         SetComputedProperty(ref _showHttpWorkbenchContent, _isHttpInterfaceEditor && !_isHttpDocumentPreviewMode, nameof(ShowHttpWorkbenchContent));
         SetComputedProperty(ref _showHttpDocumentPreviewContent, _isHttpInterfaceEditor && _isHttpDocumentPreviewMode, nameof(ShowHttpDocumentPreviewContent));
         SetComputedProperty(ref _showSaveHttpCaseAction, _isHttpInterfaceEditor, nameof(ShowSaveHttpCaseAction));
+        var isEditingHttpCase = _isHttpInterfaceEditor && !string.IsNullOrWhiteSpace(workspace?.EditingCaseId);
+        SetComputedProperty(ref _isEditingHttpCase, isEditingHttpCase, nameof(IsEditingHttpCase));
+        SetComputedProperty(ref _currentHttpCaseContextText,
+            isEditingHttpCase ? $"用例模式 · {workspace!.HttpCaseName}" : "接口模式",
+            nameof(CurrentHttpCaseContextText));
         SetComputedProperty(ref _currentEditorBaseUrlCaption, ResolveCurrentEditorBaseUrlCaption(), nameof(CurrentEditorBaseUrlCaption));
 
         var resolvedRequestPreviewText = BuildResolvedRequestPreviewText();

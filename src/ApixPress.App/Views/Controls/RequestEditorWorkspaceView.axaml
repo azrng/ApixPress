@@ -54,12 +54,16 @@
                           IsChecked="{Binding Editor.IsHttpDocumentPreviewMode, Mode=OneWay}" />
           </StackPanel>
         </Border>
-        <TextBox Grid.Column="1"
-                 Classes="SectionInput HttpInterfaceNameInput HttpEditorTitleInput"
-                 HorizontalAlignment="Stretch"
-                 VerticalAlignment="Center"
-                 PlaceholderText="未命名接口"
-                 Text="{Binding Editor.CurrentHttpInterfaceName}" />
+        <StackPanel Grid.Column="1"
+                    Spacing="{StaticResource Space.1}">
+          <TextBox Classes="SectionInput HttpInterfaceNameInput HttpEditorTitleInput"
+                   HorizontalAlignment="Stretch"
+                   PlaceholderText="未命名接口"
+                   Text="{Binding Editor.CurrentHttpInterfaceName}" />
+          <TextBlock Classes="CaptionText"
+                     Text="{Binding Editor.CurrentHttpCaseContextText}"
+                     IsVisible="{Binding Editor.IsHttpInterfaceEditor}" />
+        </StackPanel>
         <Button Grid.Column="2"
                 Classes="IconButton HttpCodeIconButton"
                 VerticalAlignment="Center"

@@ -293,7 +293,33 @@ public static class ViewModelSharedTestDoubles
 
         public Task<IResultModel<RequestCaseDto>> DuplicateAsync(string projectId, string id, CancellationToken cancellationToken)
         {
-            return Task.FromResult<IResultModel<RequestCaseDto>>(ResultModel<RequestCaseDto>.Failure("未实现"));
+            var source = Cases.FirstOrDefault(item =>
+                string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase));
+            if (source is null)
+            {
+                return Task.FromResult<IResultModel<RequestCaseDto>>(
+                    ResultModel<RequestCaseDto>.Failure("未找到待复制的用例。"));
+            }
+
+            var sourceClone = CloneFullCase(source);
+            var duplicate = new RequestCaseDto
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                ProjectId = sourceClone.ProjectId,
+                EntryType = sourceClone.EntryType,
+                Name = $"{source.Name}_copy",
+                GroupName = sourceClone.GroupName,
+                FolderPath = sourceClone.FolderPath,
+                ParentId = sourceClone.ParentId,
+                Tags = sourceClone.Tags,
+                Description = sourceClone.Description,
+                RequestSnapshot = sourceClone.RequestSnapshot,
+                HasLoadedDetail = true,
+                UpdatedAt = DateTime.UtcNow
+            };
+            Cases.Add(duplicate);
+            return Task.FromResult<IResultModel<RequestCaseDto>>(ResultModel<RequestCaseDto>.Success(duplicate));
         }
 
         public Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken)

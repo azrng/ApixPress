@@ -597,14 +597,6 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Strong}" />
   </Style>
 
-  <!-- 两段式删除：待确认态红底白字（对齐原型 case-op armed） -->
-  <Style Selector="Button.CaseCardOp.CaseCardOpArmed">
-    <Setter Property="Background" Value="{DynamicResource Brush.Border.Danger}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Danger}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
-  </Style>
-
   <!-- 覆盖确认：同名接口清单（对齐原型 overwrite modal） -->
   <Style Selector="Border.ImportConflictListCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />

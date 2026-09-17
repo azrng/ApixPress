@@ -149,6 +149,33 @@ public sealed class ResponseSectionViewModelTests
     }
 
     [Fact]
+    public void ApplyResult_ShouldBuildFallbackActualRequest_WhenFailureHasNoResponseData()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Failure("请求发送失败。", "request_http_failed"),
+            new RequestSnapshotDto
+            {
+                Method = "POST",
+                Url = "https://api.example.com/orders",
+                BodyMode = BodyModes.RawJson,
+                BodyContent = "{\"name\":\"中文\"}",
+                Headers =
+                [
+                    new RequestKeyValueDto { Name = "X-Trace", Value = "trace-1", IsEnabled = true }
+                ]
+            });
+
+        Assert.True(viewModel.HasActualRequest);
+        Assert.Equal("POST", viewModel.ActualRequestMethod);
+        Assert.Equal("https://api.example.com/orders", viewModel.ActualRequestUrl);
+        Assert.Contains(viewModel.ActualRequestHeaderRows, row => row.Name == "X-Trace");
+        Assert.Equal("application/json", viewModel.ActualRequestBodyContentType);
+        Assert.Contains("中文", viewModel.ActualRequestBodyText);
+    }
+
+    [Fact]
     public void Reset_ShouldClearActualRequest()
     {
         var viewModel = new ResponseSectionViewModel();

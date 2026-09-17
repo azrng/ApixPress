@@ -10,7 +10,7 @@
              d:DesignWidth="420"
              d:DesignHeight="720"
              mc:Ignorable="d">
-  <!-- 对齐原型 08：用例卡片列表（行内 加载/复制/删除两段式）+ 保存当前请求；
+  <!-- 对齐原型 08：用例卡片列表（行内 加载/复制/删除确认）+ 保存当前请求；
        列表区自带 ScrollViewer+VirtualizingStackPanel（外层 Grid 给有界高度），
        用例多时只实例化可视行，不再随抽屉整页滚动全量实例化 -->
   <Grid RowDefinitions="Auto,Auto,Auto,*"
@@ -119,15 +119,8 @@
                           Content="复制"
                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.DuplicateCaseCommand}"
                           CommandParameter="{Binding}" />
-                  <!-- 两段式删除：第一次点击武装变红，再点确认；3 秒未确认自动还原 -->
                   <Button Classes="CaseCardOp"
-                          IsVisible="{Binding !IsDeleteArmed}"
                           Content="删除"
-                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.RequestDeleteCaseCommand}"
-                          CommandParameter="{Binding}" />
-                  <Button Classes="CaseCardOp CaseCardOpArmed"
-                          IsVisible="{Binding IsDeleteArmed}"
-                          Content="确认删除"
                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.RequestDeleteCaseCommand}"
                           CommandParameter="{Binding}" />
                 </StackPanel>

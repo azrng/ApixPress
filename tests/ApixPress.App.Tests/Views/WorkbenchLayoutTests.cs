@@ -289,9 +289,10 @@ public sealed class WorkbenchLayoutTests
         Assert.Equal("Auto,*,Auto", contextGrid.Attribute("ColumnDefinitions")?.Value);
         Assert.Contains(
             contextGrid.Descendants(),
-            element => element.Name.LocalName == "TextBox"
+            element => element.Name.LocalName == "StackPanel"
                 && element.Attribute("Grid.Column")?.Value == "1"
-                && HasClass(element, "HttpEditorTitleInput"));
+                && element.Descendants().Any(child => child.Name.LocalName == "TextBox"
+                    && HasClass(child, "HttpEditorTitleInput")));
         Assert.Contains(
             contextGrid.Descendants(),
             element => element.Name.LocalName == "Border" && HasClass(element, "HttpEditorModeBar"));
@@ -543,6 +544,15 @@ public sealed class WorkbenchLayoutTests
             "src", "ApixPress.App", "Views", "Controls", "WorkspaceDeleteConfirmDialogView.axaml"));
         Assert.Contains(deleteDialog.Descendants(), element => HasClass(element, "DialogDangerNotice"));
 
+        var caseDeleteDialog = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "RequestCaseDeleteConfirmDialogView.axaml"));
+        Assert.Contains(caseDeleteDialog.Descendants(), element => HasClass(element, "DialogDangerNotice"));
+        var casesDrawer = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "UseCasesDrawerView.axaml"));
+        Assert.Contains(casesDrawer.Descendants(), element =>
+            (element.Attribute("Command")?.Value ?? string.Empty).Contains("RequestDeleteCaseCommand", StringComparison.Ordinal)
+            && (element.Attribute("Content")?.Value ?? string.Empty) == "删除");
+
         var history = XDocument.Load(FindSourceFile(
             "src", "ApixPress.App", "Views", "Controls", "RequestHistoryDetailView.axaml"));
         var snapshotCard = history.Descendants().Single(element => HasClass(element, "HistoryRequestDetailCard"));
@@ -634,6 +644,42 @@ public sealed class WorkbenchLayoutTests
             hintRow.Descendants(),
             element => element.Name.LocalName == "SelectionList"
                 && HasClass(element, "HttpBodyModeSelector"));
+    }
+
+    [Fact]
+    public void BodyTab_ShouldExposeJsonFormatActionOnlyForJsonMode()
+    {
+        var document = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "HttpInterfaceBodyTabView.axaml"));
+        var formatButton = document.Descendants().Single(element =>
+            element.Name.LocalName == "Button" && HasClass(element, "HttpJsonFormatButton"));
+
+        Assert.Equal("格式化", formatButton.Attribute("Content")?.Value);
+        Assert.Equal("{Binding ConfigTab.IsRawJsonBodyMode}", formatButton.Attribute("IsVisible")?.Value);
+        Assert.Equal("{Binding ConfigTab.FormatJsonBodyCommand}", formatButton.Attribute("Command")?.Value);
+    }
+
+    [Fact]
+    public void BodyTab_ShouldExposeImportedBodyExampleActionForJsonOrXml()
+    {
+        var document = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "HttpInterfaceBodyTabView.axaml"));
+        var exampleButton = document.Descendants().Single(element =>
+            element.Name.LocalName == "Button" && HasClass(element, "HttpBodyExampleButton"));
+
+        Assert.Equal("生成示例", exampleButton.Attribute("Content")?.Value);
+        Assert.Equal("{Binding ConfigTab.CanGenerateBodyExample}", exampleButton.Attribute("IsVisible")?.Value);
+        Assert.Equal("{Binding ConfigTab.GenerateBodyExampleCommand}", exampleButton.Attribute("Command")?.Value);
+    }
+
+    [Fact]
+    public void RequestEditor_ShouldExposeCurrentHttpCaseContext()
+    {
+        var source = File.ReadAllText(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "RequestEditorWorkspaceView.axaml"));
+
+        Assert.Contains("Editor.CurrentHttpCaseContextText", source);
+        Assert.Contains("Editor.IsHttpInterfaceEditor", source);
     }
 
     [Fact]

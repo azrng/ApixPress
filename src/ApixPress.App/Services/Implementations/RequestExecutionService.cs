@@ -60,6 +60,7 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         ProjectEnvironmentDto environment,
         CancellationToken cancellationToken)
     {
+        ActualRequestSnapshotDto? actualRequest = null;
         try
         {
             var shellSettingsResult = await _appShellSettingsService.LoadAsync(cancellationToken);
@@ -102,7 +103,7 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
                 }
             }
 
-            var actualRequest = CaptureActualRequest(request, message, finalUrl, activeVariables);
+            actualRequest = CaptureActualRequest(request, message, finalUrl, activeVariables);
 
             var stopwatch = Stopwatch.StartNew();
             using var response = await httpClient.SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -135,20 +136,40 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            return ResultModel<ResponseSnapshotDto>.Failure("请求已取消。", "request_cancelled");
+            return BuildFailureResult("请求已取消。", "request_cancelled", actualRequest);
         }
         catch (TaskCanceledException exception)
         {
-            return ResultModel<ResponseSnapshotDto>.Failure($"请求超时：{exception.Message}", "request_timeout");
+            return BuildFailureResult($"请求超时：{exception.Message}", "request_timeout", actualRequest);
         }
         catch (HttpRequestException exception)
         {
-            return ResultModel<ResponseSnapshotDto>.Failure($"请求发送失败：{exception.Message}", "request_http_failed");
+            return BuildFailureResult($"请求发送失败：{exception.Message}", "request_http_failed", actualRequest);
         }
         catch (Exception exception)
         {
-            return ResultModel<ResponseSnapshotDto>.Failure($"请求发送失败：{exception.Message}", "request_send_failed");
+            return BuildFailureResult($"请求发送失败：{exception.Message}", "request_send_failed", actualRequest);
         }
+    }
+
+    private static IResultModel<ResponseSnapshotDto> BuildFailureResult(
+        string message,
+        string code,
+        ActualRequestSnapshotDto? actualRequest)
+    {
+        if (actualRequest is null)
+        {
+            return ResultModel<ResponseSnapshotDto>.Failure(message, code);
+        }
+
+        // Azrng 的 Failure 工厂不承载 Data；请求已经组装完成时保留失败结果中的实际请求快照。
+        return new ResultModel<ResponseSnapshotDto>
+        {
+            IsSuccess = false,
+            Code = code,
+            Message = message,
+            Data = new ResponseSnapshotDto { ActualRequest = actualRequest }
+        };
     }
 
     private static HttpContent? BuildHttpContent(RequestSnapshotDto request, IReadOnlyDictionary<string, string> activeVariables)

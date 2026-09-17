@@ -842,6 +842,46 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task UseCasesPanel_DuplicateCase_ShouldUseCopySuffixAndDeleteAfterConfirmation()
+    {
+        var requestCaseService = new FakeRequestCaseService();
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            requestCaseService,
+            dialogService: dialogService);
+        var panel = viewModel.UseCasesPanel;
+        panel.SetProjectContext("project-1");
+        var sourceCase = new RequestCaseDto
+        {
+            Id = "case-1",
+            ProjectId = "project-1",
+            EntryType = ProjectTabRequestEntryTypes.HttpCase,
+            ParentId = "interface-1",
+            Name = "成功响应",
+            RequestSnapshot = new RequestSnapshotDto { Method = "POST", Url = "/orders" },
+            HasLoadedDetail = true,
+            UpdatedAt = DateTime.UtcNow
+        };
+        requestCaseService.Cases.Add(sourceCase);
+        panel.UpsertCaseItem(sourceCase);
+
+        await panel.DuplicateCaseCommand.ExecuteAsync(panel.RequestCases.Single());
+
+        var duplicate = Assert.Single(panel.RequestCases, item => item.Id != "case-1");
+        Assert.Equal("成功响应_copy", duplicate.Name);
+        Assert.Contains(requestCaseService.Cases, item => item.Id == duplicate.Id && item.Name == "成功响应_copy");
+
+        await panel.RequestDeleteCaseCommand.ExecuteAsync(duplicate);
+
+        Assert.DoesNotContain(panel.RequestCases, item => item.Id == duplicate.Id);
+        Assert.DoesNotContain(requestCaseService.Cases, item => item.Id == duplicate.Id);
+        var confirmation = Assert.Single(dialogService.Requests, request =>
+            request.ViewType == typeof(RequestCaseDeleteConfirmDialogView));
+        Assert.IsType<RequestCaseDeleteConfirmDialogViewModel>(confirmation.DataContext);
+    }
+
+    [Fact]
     public async Task RequestEditorWorkspaceView_ShouldInstantiateAfterLoadingHttpInterface()
     {
         EnsureAvaloniaInitialized();
@@ -872,6 +912,7 @@ public sealed partial class ProjectTabViewModelTests
         var httpCaseSaveDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.HttpCaseSaveDialogView());
         var createFolderDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.WorkspaceCreateFolderDialogView());
         var deleteConfirmDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.WorkspaceDeleteConfirmDialogView());
+        var requestCaseDeleteConfirmDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.RequestCaseDeleteConfirmDialogView());
         var bodyTabException = Record.Exception(() => new ApixPress.App.Views.Controls.HttpInterfaceBodyTabView
         {
             DataContext = viewModel
@@ -890,6 +931,7 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Null(httpCaseSaveDialogException);
         Assert.Null(createFolderDialogException);
         Assert.Null(deleteConfirmDialogException);
+        Assert.Null(requestCaseDeleteConfirmDialogException);
         Assert.Null(bodyTabException);
     }
 
@@ -1796,6 +1838,21 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Equal(BodyModes.RawJson, viewModel.Editor.ConfigTab.SelectedBodyMode);
         Assert.Equal("{\"id\":1}", viewModel.Editor.ConfigTab.RequestBody);
         Assert.True(currentCase.IsSelected);
+
+        viewModel.Editor.RequestUrl = "/users?id=2";
+        viewModel.Editor.ConfigTab.RequestBody = "{\"id\":2}";
+
+        await viewModel.Workflow.SaveCurrentEditorAsync();
+
+        var updatedCase = Assert.Single(requestCaseService.Cases, item => item.Id == "case-1");
+        var unchangedInterface = Assert.Single(requestCaseService.Cases, item => item.Id == "interface-1");
+        Assert.Equal("case-1", viewModel.ActiveWorkspaceTab!.EditingCaseId);
+        Assert.Equal("成功", updatedCase.Name);
+        Assert.Equal("interface-1", updatedCase.ParentId);
+        Assert.Equal("/users?id=2", updatedCase.RequestSnapshot.Url);
+        Assert.Equal("{\"id\":2}", updatedCase.RequestSnapshot.BodyContent);
+        Assert.Equal("/users", unchangedInterface.RequestSnapshot.Url);
+        Assert.Equal(3, requestCaseService.Cases.Count);
     }
 
     [Fact]

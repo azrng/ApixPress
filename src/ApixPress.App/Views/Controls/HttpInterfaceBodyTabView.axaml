@@ -13,7 +13,7 @@
         HorizontalAlignment="Stretch">
     <!-- 对齐原型 body-modes：模式选择与内容类型提示并排一行，编辑器紧随其上移 -->
     <Grid Grid.Row="0"
-          ColumnDefinitions="Auto,*"
+          ColumnDefinitions="Auto,*,Auto"
           ColumnSpacing="{StaticResource Space.3}">
       <u:SelectionList Grid.Column="0"
                        Classes="HttpBodyModeSelector"
@@ -37,6 +37,20 @@
                  VerticalAlignment="Center"
                  TextTrimming="CharacterEllipsis"
                  Text="{Binding ConfigTab.BodyModeHint}" />
+      <StackPanel Grid.Column="2"
+                  Orientation="Horizontal"
+                  Spacing="{StaticResource Space.2}">
+        <Button Classes="HttpBodyExampleButton"
+                Content="生成示例"
+                ToolTip.Tip="使用导入接口提供的请求体示例"
+                IsVisible="{Binding ConfigTab.CanGenerateBodyExample}"
+                Command="{Binding ConfigTab.GenerateBodyExampleCommand}" />
+        <Button Classes="HttpJsonFormatButton"
+                Content="格式化"
+                ToolTip.Tip="格式化当前 JSON 请求体"
+                IsVisible="{Binding ConfigTab.IsRawJsonBodyMode}"
+                Command="{Binding ConfigTab.FormatJsonBodyCommand}" />
+      </StackPanel>
     </Grid>
 
     <Grid Grid.Row="1"

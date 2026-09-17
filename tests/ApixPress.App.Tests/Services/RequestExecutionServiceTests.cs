@@ -176,6 +176,33 @@ public sealed class RequestExecutionServiceTests
     }
 
     [Fact]
+    public async Task SendAsync_ShouldKeepActualRequestWhenTransportFails()
+    {
+        using var client = new HttpClient(new ThrowingHttpMessageHandler());
+        var service = new RequestExecutionService(
+            new ViewModelSharedTestDoubles.FakeEnvironmentVariableService(),
+            new FakeAppShellSettingsService(),
+            serializer: null!,
+            (_, _, _) => client);
+
+        var result = await service.SendAsync(
+            new RequestSnapshotDto
+            {
+                Method = "POST",
+                Url = "https://api.example.com/orders",
+                BodyMode = BodyModes.RawJson,
+                BodyContent = "{\"name\":\"中文\"}"
+            },
+            new ProjectEnvironmentDto { Id = "env-1" },
+            CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.Data);
+        Assert.Equal("https://api.example.com/orders", result.Data!.ActualRequest!.Url);
+        Assert.Contains("中文", result.Data.ActualRequest.BodyText);
+    }
+
+    [Fact]
     public async Task ReadResponseContentPreviewAsync_ShouldCapLargeResponseBody()
     {
         var oversizedBody = new string('a', RequestExecutionService.ResponsePreviewByteLimit + 8192);
@@ -437,6 +464,14 @@ public sealed class RequestExecutionServiceTests
             {
                 Content = new StringContent("{}")
             });
+        }
+    }
+
+    private sealed class ThrowingHttpMessageHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            throw new HttpRequestException("网络不可达");
         }
     }
 }

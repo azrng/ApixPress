@@ -125,6 +125,49 @@ public sealed class OpenApiJsonParserTests
     }
 
     [Fact]
+    public void Parse_ShouldKeepChineseTextAndReadExplicitXmlExample()
+    {
+        const string json = """
+                            {
+                              "openapi": "3.0.1",
+                              "info": { "title": "示例接口" },
+                              "paths": {
+                                "/orders": {
+                                  "post": {
+                                    "requestBody": {
+                                      "content": {
+                                        "application/json": {
+                                          "example": { "name": "中文" }
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "/orders-xml": {
+                                  "post": {
+                                    "requestBody": {
+                                      "content": {
+                                        "application/xml": {
+                                          "example": "<order><name>中文</name></order>"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                            """;
+
+        var result = OpenApiJsonParser.Parse(json, "FILE", "demo.json");
+
+        var jsonEndpoint = Assert.Single(result.Endpoints, endpoint => endpoint.Path == "/orders");
+        Assert.Contains("中文", jsonEndpoint.RequestBodyTemplate);
+        var xmlEndpoint = Assert.Single(result.Endpoints, endpoint => endpoint.Path == "/orders-xml");
+        Assert.Equal(BodyModes.RawXml, xmlEndpoint.RequestBodyMode);
+        Assert.Equal("<order><name>中文</name></order>", xmlEndpoint.RequestBodyTemplate);
+    }
+
+    [Fact]
     public void Parse_ShouldBuildFormDataTemplateFromSchema()
     {
         const string json = """

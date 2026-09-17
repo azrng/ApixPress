@@ -24,12 +24,9 @@ public partial class RequestCaseItemViewModel : ViewModelBase
     [ObservableProperty]
     private DateTime updatedAt;
 
-    // 用例抽屉内：该卡片是否被选中加载 / 删除是否处于待确认态
+    // 用例抽屉内：该卡片是否被选中加载
     [ObservableProperty]
     private bool isSelected;
-
-    [ObservableProperty]
-    private bool isDeleteArmed;
 
     public RequestCaseDto SourceCase { get; set; } = new();
 

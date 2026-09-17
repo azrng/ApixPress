@@ -284,31 +284,42 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         await _dialogService.ShowDialogAsync<Views.Controls.ProjectInfoEditDialogView>(dialog);
     }
 
-    /// <summary>两段式删除：第一次点击武装该卡片，再点执行；武装状态 3 秒后自动还原。</summary>
+    /// <summary>打开用例删除确认弹窗；确认后从持久化层和当前抽屉列表同时删除。</summary>
     [RelayCommand]
     private async Task RequestDeleteCaseAsync(RequestCaseItemViewModel? item)
     {
-        if (item is null) return;
-
-        if (!item.IsDeleteArmed)
+        if (item is null || string.IsNullOrWhiteSpace(_currentProjectId) || _dialogService is null)
         {
-            foreach (var caseItem in RequestCases)
-            {
-                caseItem.IsDeleteArmed = ReferenceEquals(caseItem, item);
-            }
-
-            await Task.Delay(3000);
-            if (!IsDisposed && item.IsDeleteArmed)
-            {
-                item.IsDeleteArmed = false;
-            }
-
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_currentProjectId)) return;
-        await _requestCaseService.DeleteAsync(_currentProjectId, item.Id, CancellationToken.None);
-        item.IsDeleteArmed = false;
+        var result = await _dialogService.ShowDialogAsync<Views.Controls.RequestCaseDeleteConfirmDialogView>(
+            new RequestCaseDeleteConfirmDialogViewModel(item.Name),
+            "确认删除");
+        if (result != Ursa.Controls.DialogResult.OK)
+        {
+            return;
+        }
+
+        await DeleteCaseAsync(item);
+    }
+
+    [RelayCommand]
+    private async Task DeleteSelectedCaseAsync()
+    {
+        if (SelectedRequestCase is null) return;
+        await RequestDeleteCaseAsync(SelectedRequestCase);
+    }
+
+    private async Task DeleteCaseAsync(RequestCaseItemViewModel item)
+    {
+        var result = await _requestCaseService.DeleteAsync(_currentProjectId, item.Id, CancellationToken.None);
+        if (!result.IsSuccess)
+        {
+            _messenger?.Send(new StatusMessageRequest(result.Message));
+            return;
+        }
+
         RemoveCases([item.Id]);
         if (ReferenceEquals(SelectedRequestCase, item))
         {
@@ -316,17 +327,6 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         }
 
         _messenger?.Send(new StatusMessageRequest($"已删除用例「{item.Name}」。"));
-    }
-
-    [RelayCommand]
-    private async Task DeleteSelectedCaseAsync()
-    {
-        if (SelectedRequestCase is null) return;
-        if (string.IsNullOrWhiteSpace(_currentProjectId)) return;
-
-        await _requestCaseService.DeleteAsync(_currentProjectId, SelectedRequestCase.Id, CancellationToken.None);
-        RemoveCases([SelectedRequestCase.Id]);
-        SelectedRequestCase = null;
     }
 
     partial void OnSelectedRequestCaseChanged(RequestCaseItemViewModel? value)

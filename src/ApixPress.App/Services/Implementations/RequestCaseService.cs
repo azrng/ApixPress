@@ -291,7 +291,7 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             Id = Guid.NewGuid().ToString("N"),
             ProjectId = duplicate.ProjectId,
             EntryType = duplicate.EntryType,
-            Name = $"{duplicate.Name} 副本",
+            Name = $"{duplicate.Name}_copy",
             GroupName = duplicate.GroupName,
             FolderPath = duplicate.FolderPath,
             ParentId = duplicate.ParentId,

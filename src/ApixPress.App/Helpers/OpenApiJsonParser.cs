@@ -2,6 +2,7 @@ using System.Text.Json;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Models.Entities;
 using Azrng.Core.Exceptions;
+using System.Text.Encodings.Web;
 
 namespace ApixPress.App.Helpers;
 
@@ -13,7 +14,11 @@ public static class OpenApiJsonParser
     ];
 
     // 复用序列化选项：System.Text.Json 按 options 缓存元数据，循环内每次 new 会反复重建缓存
-    private static readonly JsonSerializerOptions IndentedJsonOptions = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions IndentedJsonOptions = new()
+    {
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
 
     public static ParsedDocumentGraph Parse(string json, string sourceType, string sourceValue)
     {
@@ -260,6 +265,20 @@ public static class OpenApiJsonParser
             }
         }
 
+        foreach (var contentType in new[] { "application/xml", "text/xml" })
+        {
+            if (!content.TryGetProperty(contentType, out var xmlContent))
+            {
+                continue;
+            }
+
+            var explicitExample = ResolveTextExample(xmlContent);
+            if (!string.IsNullOrWhiteSpace(explicitExample))
+            {
+                return new RequestBodySeed(BodyModes.RawXml, explicitExample);
+            }
+        }
+
         if (content.TryGetProperty("multipart/form-data", out var formDataContent))
         {
             return new RequestBodySeed(BodyModes.FormData, BuildFormBodyTemplate(formDataContent, root));
@@ -271,6 +290,30 @@ public static class OpenApiJsonParser
         }
 
         return RequestBodySeed.Empty;
+    }
+
+    private static string ResolveTextExample(JsonElement content)
+    {
+        if (content.TryGetProperty("example", out var example)
+            && example.ValueKind == JsonValueKind.String)
+        {
+            return example.GetString() ?? string.Empty;
+        }
+
+        if (content.TryGetProperty("examples", out var examples)
+            && examples.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var exampleItem in examples.EnumerateObject())
+            {
+                if (exampleItem.Value.TryGetProperty("value", out var value)
+                    && value.ValueKind == JsonValueKind.String)
+                {
+                    return value.GetString() ?? string.Empty;
+                }
+            }
+        }
+
+        return string.Empty;
     }
 
     private static IEnumerable<ParameterSeed> ReadParameters(JsonElement element, string requestBodyMode)

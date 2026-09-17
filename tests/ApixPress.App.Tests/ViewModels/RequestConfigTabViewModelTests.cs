@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using System.Text.Json;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels;
 
@@ -129,6 +130,58 @@ public sealed class RequestConfigTabViewModelTests
 
         Assert.Equal(showEmptyState, viewModel.ShowBodyModeEmptyState);
         Assert.Contains(hintFragment, viewModel.BodyModeHint);
+    }
+
+    [Fact]
+    public void FormatJsonBodyCommand_ShouldIndentJsonAndPreserveChineseText()
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = BodyModes.RawJson,
+            RequestBody = "{\"name\":\"你好\",\"count\":2}"
+        };
+
+        Assert.True(viewModel.CanFormatJsonBody);
+        viewModel.FormatJsonBodyCommand.Execute(null);
+
+        Assert.Contains(Environment.NewLine, viewModel.RequestBody);
+        Assert.Contains("你好", viewModel.RequestBody);
+        using var document = JsonDocument.Parse(viewModel.RequestBody);
+        Assert.Equal("你好", document.RootElement.GetProperty("name").GetString());
+        Assert.Contains("application/json", viewModel.BodyModeHint);
+    }
+
+    [Fact]
+    public void FormatJsonBodyCommand_ShouldKeepInvalidJsonUnchangedAndShowStatus()
+    {
+        const string invalidJson = "{not-json";
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = BodyModes.RawJson,
+            RequestBody = invalidJson
+        };
+
+        viewModel.FormatJsonBodyCommand.Execute(null);
+
+        Assert.Equal(invalidJson, viewModel.RequestBody);
+        Assert.Contains("格式无效", viewModel.BodyModeHint);
+        Assert.Contains("未修改", viewModel.BodyModeHint);
+    }
+
+    [Fact]
+    public void FormatJsonBodyCommand_ShouldOnlyBeAvailableForNonEmptyJsonBody()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        Assert.False(viewModel.CanFormatJsonBody);
+        viewModel.SelectedBodyMode = BodyModes.RawJson;
+        Assert.False(viewModel.CanFormatJsonBody);
+
+        viewModel.RequestBody = "{}";
+        Assert.True(viewModel.CanFormatJsonBody);
+
+        viewModel.SelectedBodyMode = BodyModes.RawText;
+        Assert.False(viewModel.CanFormatJsonBody);
     }
 
     [Fact]
@@ -264,6 +317,43 @@ public sealed class RequestConfigTabViewModelTests
         Assert.Equal(BodyModes.RawJson, viewModel.SelectedBodyMode);
         Assert.Equal("{\n  \"pageIndex\": 1\n}", viewModel.RequestBody);
         Assert.Empty(viewModel.FormFields);
+    }
+
+    [Fact]
+    public void GenerateBodyExample_ShouldRestoreImportedJsonTemplate()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+        viewModel.PopulateFromEndpoint(new ApiEndpointDto
+        {
+            RequestBodyMode = BodyModes.RawJson,
+            RequestBodyTemplate = "{\n  \"name\": \"中文\"\n}"
+        });
+
+        viewModel.RequestBody = "{\"name\":\"用户修改\"}";
+
+        Assert.True(viewModel.CanGenerateBodyExample);
+        viewModel.GenerateBodyExampleCommand.Execute(null);
+
+        Assert.Contains("中文", viewModel.RequestBody);
+        Assert.DoesNotContain("用户修改", viewModel.RequestBody);
+    }
+
+    [Fact]
+    public void GenerateBodyExample_ShouldSupportImportedXmlExample()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+        viewModel.PopulateFromEndpoint(new ApiEndpointDto
+        {
+            RequestBodyMode = BodyModes.RawXml,
+            RequestBodyTemplate = "<order><name>中文</name></order>"
+        });
+
+        viewModel.RequestBody = "<order />";
+
+        Assert.True(viewModel.CanGenerateBodyExample);
+        viewModel.GenerateBodyExampleCommand.Execute(null);
+
+        Assert.Equal("<order><name>中文</name></order>", viewModel.RequestBody);
     }
 
     [Fact]

@@ -167,7 +167,15 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
 
         if (workspaceTab.IsHttpInterfaceTab)
         {
-            await SaveHttpInterfaceAsync(workspaceTab);
+            if (!string.IsNullOrWhiteSpace(workspaceTab.EditingCaseId))
+            {
+                await SaveHttpCaseCoreAsync(workspaceTab, caseNameOverride: null);
+            }
+            else
+            {
+                await SaveHttpInterfaceAsync(workspaceTab);
+            }
+
             return;
         }
 
@@ -291,13 +299,28 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         }
 
         _hostContext.Messenger.Send(new NavigationRequestMessage(NavigationTarget.InterfaceManagementSection));
-        var savedInterface = await EnsureHttpInterfaceSavedAsync(workspaceTab, reloadAfterSave: false);
-        if (savedInterface is null)
+
+        // 已加载用例时只更新用例快照。接口本体是用例的父资源，不能因为编辑某个用例而被覆盖。
+        var isUpdatingExistingCase = !string.IsNullOrWhiteSpace(workspaceTab.EditingCaseId);
+        RequestCaseDto? savedInterface = null;
+        if (!isUpdatingExistingCase)
         {
-            return false;
+            savedInterface = await EnsureHttpInterfaceSavedAsync(workspaceTab, reloadAfterSave: false);
+            if (savedInterface is null)
+            {
+                return false;
+            }
+
+            _catalog.UpsertCaseItem(savedInterface);
         }
 
-        _catalog.UpsertCaseItem(savedInterface);
+        var parentId = savedInterface?.Id ?? workspaceTab.EditingInterfaceId;
+        if (string.IsNullOrWhiteSpace(parentId))
+        {
+            _hostContext.Messenger.Send(new StatusMessageRequest("当前用例缺少所属接口，无法保存。"));
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+            return false;
+        }
 
         var snapshot = workspaceTab.BuildSnapshot();
         var requestName = BuildHttpCaseName(workspaceTab, caseNameOverride);
@@ -309,7 +332,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             Name = requestName,
             GroupName = "用例",
             FolderPath = ProjectWorkspaceTreeBuilder.NormalizeFolderPath(workspaceTab.InterfaceFolderPath),
-            ParentId = savedInterface.Id,
+            ParentId = parentId,
             Description = $"{workspaceTab.ResolveRequestName()} 的请求用例",
             RequestSnapshot = snapshot,
             UpdatedAt = DateTime.UtcNow

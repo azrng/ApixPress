@@ -176,7 +176,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
             BodyText = result.Message;
             HeadersText = string.Empty;
             SetHeaderRows([]);
-            ClearActualRequest();
+            ApplyActualRequest(result.Data?.ActualRequest ?? BuildFallbackActualRequest(request));
             return;
         }
 
@@ -443,6 +443,47 @@ public partial class ResponseSectionViewModel : ViewModelBase
         SetActualRequestHeaderRows(actualRequest.Headers
             .Select(h => new ResponseHeaderRowViewModel(h.Name, h.Value))
             .ToArray());
+    }
+
+    private static ActualRequestSnapshotDto? BuildFallbackActualRequest(RequestSnapshotDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Method) && string.IsNullOrWhiteSpace(request.Url))
+        {
+            return null;
+        }
+
+        var headers = request.Headers
+            .Where(header => header.IsEnabled && !string.IsNullOrWhiteSpace(header.Name))
+            .Select(header => new ResponseHeaderDto
+            {
+                Name = header.Name,
+                Value = header.Value
+            })
+            .ToList();
+
+        var bodyContentType = request.BodyMode switch
+        {
+            BodyModes.RawJson => "application/json",
+            BodyModes.RawXml => "application/xml",
+            BodyModes.RawText => "text/plain",
+            BodyModes.FormUrlEncoded => "application/x-www-form-urlencoded",
+            BodyModes.FormData => "multipart/form-data",
+            BodyModes.Binary => "application/octet-stream",
+            _ => string.Empty
+        };
+
+        return new ActualRequestSnapshotDto
+        {
+            Method = request.Method.ToUpperInvariant(),
+            Url = request.Url,
+            Headers = headers,
+            BodyContentType = bodyContentType,
+            BodyText = request.BodyMode == BodyModes.Binary
+                ? $"[二进制文件] {request.BodyContent}"
+                : request.BodyContent,
+            HasBody = request.BodyMode != BodyModes.None
+                       && (!string.IsNullOrWhiteSpace(request.BodyContent) || request.FormFields.Count > 0)
+        };
     }
 
     private void ClearActualRequest()

@@ -188,6 +188,55 @@ public sealed partial class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task RequestCaseService_ShouldDuplicateWithCopySuffixAndDeleteDuplicate()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Id = "project-1",
+            Name = "用例复制项目"
+        }, CancellationToken.None)).Data!;
+        var serializer = CreateSerializer();
+        var caseRepository = new RequestCaseRepository(factory);
+        var caseService = new RequestCaseService(caseRepository, serializer);
+        var source = (await caseService.SaveAsync(new RequestCaseDto
+        {
+            ProjectId = project.Id,
+            EntryType = "http-case",
+            ParentId = "interface-1",
+            Name = "成功响应",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "POST",
+                Url = "/orders",
+                BodyMode = BodyModes.RawJson,
+                BodyContent = "{\"id\":1}"
+            },
+            UpdatedAt = DateTime.UtcNow
+        }, CancellationToken.None)).Data!;
+
+        var duplicateResult = await caseService.DuplicateAsync(project.Id, source.Id, CancellationToken.None);
+
+        Assert.True(duplicateResult.IsSuccess);
+        var duplicate = Assert.IsType<RequestCaseDto>(duplicateResult.Data);
+        Assert.Equal("成功响应_copy", duplicate.Name);
+        Assert.NotEqual(source.Id, duplicate.Id);
+        Assert.Equal(source.ParentId, duplicate.ParentId);
+
+        var deleteResult = await caseService.DeleteAsync(project.Id, duplicate.Id, CancellationToken.None);
+
+        Assert.True(deleteResult.IsSuccess);
+        var cases = await caseService.GetCasesAsync(project.Id, CancellationToken.None);
+        Assert.Single(cases);
+        Assert.Equal(source.Id, cases[0].Id);
+    }
+
+    [Fact]
     public async Task RequestCaseService_ShouldReturnSummaryWithoutBodyUntilDetailRequested()
     {
         using var factory = new TestSqliteConnectionFactory();

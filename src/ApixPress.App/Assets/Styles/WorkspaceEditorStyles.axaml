@@ -835,6 +835,21 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
   </Style>
 
+  <Style Selector="Button.HttpJsonFormatButton">
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+  </Style>
+
+  <Style Selector="Button.HttpJsonFormatButton:pointerover">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
   <!-- 对齐原型 03 type-chip：text/file 类型互切 chip，file 态走品牌紫 -->
   <Style Selector="Button.HttpFieldTypeChip">
     <Setter Property="Height" Value="24" />

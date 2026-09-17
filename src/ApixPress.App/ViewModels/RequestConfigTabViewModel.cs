@@ -1,5 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Helpers;
@@ -19,6 +21,13 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     // 预算需覆盖整卡高度：URL 行（约 54px）+ 页签行（约 36px）+ 内容区（边距 12 + 区域栏 40 + 间距 8 + 表格最小高 114）
     private const double CompactConfigPanelMaxHeight = 288;
     private const double ExpandedConfigPanelMaxHeight = 420;
+    private static readonly JsonSerializerOptions FormattedJsonOptions = new()
+    {
+        WriteIndented = true,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+    private string _jsonBodyFormatStatus = string.Empty;
+    private string _bodyExampleTemplate = string.Empty;
 
     public BatchObservableCollection<RequestParameterItemViewModel> QueryParameters { get; } = [];
 
@@ -115,6 +124,14 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     public bool HasRawBodyEditor =>
         SelectedBodyMode is BodyModes.RawJson or BodyModes.RawXml or BodyModes.RawText;
 
+    public bool IsRawJsonBodyMode => SelectedBodyMode == BodyModes.RawJson;
+
+    public bool CanFormatJsonBody => IsRawJsonBodyMode && !string.IsNullOrWhiteSpace(RequestBody);
+
+    /// <summary>导入接口存在明确的 JSON/XML 示例时允许主动覆盖当前请求体。</summary>
+    public bool CanGenerateBodyExample => SelectedBodyMode is BodyModes.RawJson or BodyModes.RawXml
+        && !string.IsNullOrWhiteSpace(_bodyExampleTemplate);
+
     /// <summary>仅 FormData 模式承载文件字段；FormUrlEncoded 与其他模式只按文本发送。</summary>
     public bool IsFormDataOnly => SelectedBodyMode == BodyModes.FormData;
 
@@ -164,16 +181,18 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         _ => "请求体内容"
     };
 
-    public string BodyModeHint => SelectedBodyMode switch
-    {
-        BodyModes.FormData => "按字段组合为 multipart/form-data 请求体，file 类型字段可携带多个文件。",
-        BodyModes.FormUrlEncoded => "按字段进行 URL 编码，适合传统表单接口。",
-        BodyModes.RawJson => "以 application/json 发送原始 JSON 内容。",
-        BodyModes.RawXml => "以 application/xml 发送原始 XML 内容。",
-        BodyModes.RawText => "以 text/plain 发送纯文本内容。",
-        BodyModes.Binary => "将所选文件以 application/octet-stream 作为请求体发送。",
-        _ => "不发送请求体。"
-    };
+    public string BodyModeHint => !string.IsNullOrWhiteSpace(_jsonBodyFormatStatus)
+        ? _jsonBodyFormatStatus
+        : SelectedBodyMode switch
+        {
+            BodyModes.FormData => "按字段组合为 multipart/form-data 请求体，file 类型字段可携带多个文件。",
+            BodyModes.FormUrlEncoded => "按字段进行 URL 编码，适合传统表单接口。",
+            BodyModes.RawJson => "以 application/json 发送原始 JSON 内容。",
+            BodyModes.RawXml => "以 application/xml 发送原始 XML 内容。",
+            BodyModes.RawText => "以 text/plain 发送纯文本内容。",
+            BodyModes.Binary => "将所选文件以 application/octet-stream 作为请求体发送。",
+            _ => "不发送请求体。"
+        };
 
     partial void OnSelectedTabIndexChanged(int value)
     {
@@ -188,11 +207,14 @@ public partial class RequestConfigTabViewModel : ViewModelBase
 
     partial void OnRequestBodyChanged(string value)
     {
+        ClearJsonBodyFormatStatus();
         RefreshBinaryFileState();
+        FormatJsonBodyCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnSelectedBodyModeChanged(string value)
     {
+        ClearJsonBodyFormatStatus();
         OnPropertyChanged(nameof(IsBodyModeFormData));
         OnPropertyChanged(nameof(IsFormDataOnly));
         OnPropertyChanged(nameof(ShowFormDataEmptyState));
@@ -204,6 +226,10 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(RequestBodyWatermark));
         OnPropertyChanged(nameof(BodyModeHint));
         OnPropertyChanged(nameof(ConfigPanelMaxHeight));
+        OnPropertyChanged(nameof(IsRawJsonBodyMode));
+        OnPropertyChanged(nameof(CanGenerateBodyExample));
+        FormatJsonBodyCommand.NotifyCanExecuteChanged();
+        GenerateBodyExampleCommand.NotifyCanExecuteChanged();
         RefreshBinaryFileState();
 
         // Sync the option selection if changed programmatically
@@ -241,6 +267,48 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     }
 
     // --- Commands ---
+
+    [RelayCommand(CanExecute = nameof(CanFormatJsonBody))]
+    private void FormatJsonBody()
+    {
+        if (!IsRawJsonBodyMode)
+        {
+            return;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(RequestBody);
+            RequestBody = JsonSerializer.Serialize(document.RootElement, FormattedJsonOptions);
+        }
+        catch (JsonException)
+        {
+            _jsonBodyFormatStatus = "JSON 格式无效，未修改请求体。";
+            OnPropertyChanged(nameof(BodyModeHint));
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanGenerateBodyExample))]
+    private void GenerateBodyExample()
+    {
+        if (!CanGenerateBodyExample)
+        {
+            return;
+        }
+
+        RequestBody = _bodyExampleTemplate;
+    }
+
+    private void ClearJsonBodyFormatStatus()
+    {
+        if (string.IsNullOrWhiteSpace(_jsonBodyFormatStatus))
+        {
+            return;
+        }
+
+        _jsonBodyFormatStatus = string.Empty;
+        OnPropertyChanged(nameof(BodyModeHint));
+    }
 
     [RelayCommand]
     private void AddQueryParameter()
@@ -362,9 +430,12 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         RequestName = endpoint.Name;
         RequestDescription = endpoint.Description;
         RequestBody = endpoint.RequestBodyTemplate;
+        _bodyExampleTemplate = endpoint.RequestBodyTemplate;
         SelectedBodyMode = ResolveEndpointBodyMode(endpoint);
         ReplaceParameters(endpoint.Parameters);
         ReplaceFormFields(SelectedBodyMode, [], endpoint.RequestBodyTemplate);
+        OnPropertyChanged(nameof(CanGenerateBodyExample));
+        GenerateBodyExampleCommand.NotifyCanExecuteChanged();
     }
 
     public void ApplySnapshot(RequestSnapshotDto snapshot)
@@ -372,6 +443,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         RequestName = snapshot.Name;
         RequestDescription = snapshot.Description;
         RequestBody = snapshot.BodyContent;
+        _bodyExampleTemplate = string.Empty;
         SelectedBodyMode = snapshot.BodyMode;
         IgnoreSslErrors = snapshot.IgnoreSslErrors;
         ReplaceParameters(snapshot);
@@ -437,6 +509,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         RequestName = string.Empty;
         RequestDescription = string.Empty;
         RequestBody = string.Empty;
+        _bodyExampleTemplate = string.Empty;
         SelectedBodyMode = BodyModes.None;
         IgnoreSslErrors = false;
         QueryParameters.ReplaceWith([]);
@@ -444,6 +517,8 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         Headers.ReplaceWith([]);
         FormFields.ReplaceWith([]);
         SelectedTabIndex = 0;
+        OnPropertyChanged(nameof(CanGenerateBodyExample));
+        GenerateBodyExampleCommand.NotifyCanExecuteChanged();
     }
 
     protected override void DisposeManaged()
