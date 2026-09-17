@@ -49,7 +49,7 @@ public partial class ProjectTabViewModel : ViewModelBase,
             IsDefault = project.IsDefault
         };
 
-        _fallbackWorkspaceTab = new RequestWorkspaceTabViewModel();
+        _fallbackWorkspaceTab = new RequestWorkspaceTabViewModel(filePickerService);
         _fallbackWorkspaceTab.ConfigureAsLanding();
         _messenger = new WeakReferenceMessenger();
         _messenger.RegisterAll(this);

@@ -86,10 +86,10 @@ public partial class MainWindowViewModel : ViewModelBase, IDialogContext
         {
             return new ConstructionResult
             {
-                FallbackConfigTab = new RequestConfigTabViewModel(null),
+                FallbackConfigTab = new RequestConfigTabViewModel(_filePickerService),
                 FallbackResponseSection = new ResponseSectionViewModel(),
                 FallbackEnvironmentPanel = new EnvironmentPanelViewModel(_environmentVariableService),
-                FallbackUseCasesPanel = new UseCasesPanelViewModel(_requestCaseService),
+                FallbackUseCasesPanel = new UseCasesPanelViewModel(_requestCaseService, dialogService: _dialogService),
                 FallbackHistoryPanel = new RequestHistoryPanelViewModel(_requestHistoryService),
                 ProjectPanel = new ProjectPanelViewModel(_projectWorkspaceService),
                 ShellPanels = new MainWindowShellPanelsViewModel(

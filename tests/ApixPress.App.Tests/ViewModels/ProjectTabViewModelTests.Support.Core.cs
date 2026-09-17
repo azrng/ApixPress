@@ -29,6 +29,7 @@ public sealed partial class ProjectTabViewModelTests
         FakeSystemDataService? systemDataService = null,
         FakeProjectWorkspaceService? projectWorkspaceService = null,
         FakeProjectHttpSettingsService? projectHttpSettingsService = null,
+        ViewModelSharedTestDoubles.FakeClipboardService? clipboardService = null,
         Func<string, Task>? handleProjectDeletedAsync = null,
         ViewModelSharedTestDoubles.FakeDialogService? dialogService = null)
     {
@@ -50,9 +51,8 @@ public sealed partial class ProjectTabViewModelTests
             appNotificationService ?? new FakeAppNotificationService(),
             projectDataExportService ?? new FakeProjectDataExportService(),
             projectHttpSettingsService ?? new FakeProjectHttpSettingsService(),
-            new ViewModelSharedTestDoubles.FakeClipboardService(),
-            dialogService ?? new ViewModelSharedTestDoubles.FakeDialogService(),
-            handleProjectDeletedAsync ?? (_ => Task.CompletedTask));
+            clipboardService ?? new ViewModelSharedTestDoubles.FakeClipboardService(),
+            dialogService ?? new ViewModelSharedTestDoubles.FakeDialogService(),            handleProjectDeletedAsync ?? (_ => Task.CompletedTask));
     }
 
     private static IEnumerable<string> FlattenExplorerTitles(IEnumerable<ExplorerItemViewModel> items)

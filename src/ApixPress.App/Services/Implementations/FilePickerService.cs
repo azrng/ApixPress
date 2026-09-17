@@ -1,4 +1,5 @@
 using Avalonia.Platform.Storage;
+using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using Azrng.Core.DependencyInjection;
 
@@ -102,5 +103,36 @@ public sealed class FilePickerService : IFilePickerService, ITransientDependency
 
         cancellationToken.ThrowIfCancellationRequested();
         return folders.FirstOrDefault() is { } folder ? folder.TryGetLocalPath() : null;
+    }
+
+    public async Task<IReadOnlyList<FormFieldFileDto>?> PickOpenFilesAsync(string title, bool allowMultiple, CancellationToken cancellationToken = default)
+    {
+        if (_windowHostService.MainWindow is null)
+        {
+            return null;
+        }
+
+        var files = await _windowHostService.MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = title,
+            AllowMultiple = allowMultiple
+        });
+
+        cancellationToken.ThrowIfCancellationRequested();
+        if (files.Count == 0)
+        {
+            return null;
+        }
+
+        return files.Select(file =>
+        {
+            var path = file.TryGetLocalPath() ?? string.Empty;
+            return new FormFieldFileDto
+            {
+                Path = path,
+                Name = file.Name,
+                SizeBytes = path.Length > 0 && File.Exists(path) ? new FileInfo(path).Length : 0
+            };
+        }).ToList();
     }
 }

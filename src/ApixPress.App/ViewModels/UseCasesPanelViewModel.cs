@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using ApixPress.App.Helpers;
+using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -13,6 +15,8 @@ public partial class UseCasesPanelViewModel : ViewModelBase
 {
     private readonly IRequestCaseService _requestCaseService;
     private readonly ProjectWorkspaceTabsViewModel? _workspace;
+    private readonly IDialogService? _dialogService;
+    private readonly IMessenger? _messenger;
     private CancellationTokenSource? _loadCasesCancellationTokenSource;
     private string _currentProjectId = string.Empty;
     private readonly BatchObservableCollection<RequestCaseItemViewModel> _currentInterfaceCaseItems = [];
@@ -23,10 +27,14 @@ public partial class UseCasesPanelViewModel : ViewModelBase
 
     public UseCasesPanelViewModel(
         IRequestCaseService requestCaseService,
-        ProjectWorkspaceTabsViewModel? workspace = null)
+        ProjectWorkspaceTabsViewModel? workspace = null,
+        IDialogService? dialogService = null,
+        IMessenger? messenger = null)
     {
         _requestCaseService = requestCaseService;
         _workspace = workspace;
+        _dialogService = dialogService;
+        _messenger = messenger;
         SelectableCaseItems = new ReadOnlyObservableCollection<RequestCaseItemViewModel>(_selectableCaseItems);
         CurrentInterfaceCaseItems = new ReadOnlyObservableCollection<RequestCaseItemViewModel>(_currentInterfaceCaseItems);
         RequestCases.CollectionChanged += (_, _) => RefreshSelectableCaseItems();
@@ -218,6 +226,7 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         if (result.IsSuccess && result.Data is not null)
         {
             UpsertCaseItem(result.Data);
+            _messenger?.Send(new StatusMessageRequest($"已复制为「{result.Data.Name}」。"));
         }
     }
 
@@ -226,6 +235,53 @@ public partial class UseCasesPanelViewModel : ViewModelBase
     {
         if (SelectedRequestCase is null) return;
         await DuplicateCaseAsync(SelectedRequestCase);
+    }
+
+    /// <summary>
+    /// 重命名用例：弹窗预填当前名，确认后按全量 DTO 更新（快照保持原样），同名校验错误在弹窗内回显。
+    /// </summary>
+    [RelayCommand]
+    private async Task RenameCaseAsync(RequestCaseItemViewModel? item)
+    {
+        if (item is null || _dialogService is null || string.IsNullOrWhiteSpace(_currentProjectId))
+        {
+            return;
+        }
+
+        var detail = await EnsureCaseDetailLoadedAsync(item);
+        var dialog = new ProjectInfoEditDialogViewModel(
+            isNameMode: true,
+            detail.Name,
+            async newName =>
+            {
+                var renamed = new RequestCaseDto
+                {
+                    Id = detail.Id,
+                    ProjectId = detail.ProjectId,
+                    EntryType = detail.EntryType,
+                    Name = newName,
+                    GroupName = detail.GroupName,
+                    FolderPath = detail.FolderPath,
+                    ParentId = detail.ParentId,
+                    Tags = detail.Tags,
+                    Description = detail.Description,
+                    RequestSnapshot = detail.RequestSnapshot,
+                    HasLoadedDetail = true,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                var result = await _requestCaseService.SaveAsync(renamed, CancellationToken.None);
+                if (!result.IsSuccess)
+                {
+                    return result.Message;
+                }
+
+                UpsertCaseItem(result.Data!);
+                return null;
+            },
+            title: "重命名用例",
+            fieldLabel: "用例名称");
+
+        await _dialogService.ShowDialogAsync<Views.Controls.ProjectInfoEditDialogView>(dialog);
     }
 
     /// <summary>两段式删除：第一次点击武装该卡片，再点执行；武装状态 3 秒后自动还原。</summary>
@@ -258,6 +314,8 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         {
             SelectedRequestCase = null;
         }
+
+        _messenger?.Send(new StatusMessageRequest($"已删除用例「{item.Name}」。"));
     }
 
     [RelayCommand]

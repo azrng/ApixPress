@@ -44,7 +44,7 @@
       </Border>
 
       <Grid Grid.Column="1"
-            RowDefinitions="Auto,*"
+            RowDefinitions="Auto,*,Auto"
             RowSpacing="{StaticResource Space.2}"
             MinHeight="0">
         <TextBlock Grid.Row="0"
@@ -100,6 +100,24 @@
                    ScrollViewer.VerticalScrollBarVisibility="Auto"
                    Text="{Binding RequestCodeCSharpCommand}"
                    FontFamily="{StaticResource Font.Monospace}" />
+        </Border>
+
+        <!-- 对齐原型 10 modal-foot：复制反馈提示 + 关闭/复制代码按钮 -->
+        <Border Grid.Row="2" Classes="DialogFooter">
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource Space.2}">
+            <TextBlock Grid.Column="0"
+                       Classes="CaptionText"
+                       VerticalAlignment="Center"
+                       Text="{Binding RequestCodeCopiedHint}" />
+            <Button Grid.Column="1"
+                    Classes="DialogSecondaryButton"
+                    Content="关闭"
+                    Command="{Binding CloseRequestCodeDialogCommand}" />
+            <Button Grid.Column="2"
+                    Classes="DialogPrimaryButton"
+                    Content="复制代码"
+                    Command="{Binding CopyRequestCodeCommand}" />
+          </Grid>
         </Border>
       </Grid>
     </Grid>

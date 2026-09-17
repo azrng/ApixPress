@@ -16,6 +16,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     private const int ResolvedPreviewUrlLengthLimit = 4096;
     private readonly ProjectTabWorkspaceContext _workspaceContext;
     private readonly IDialogService _dialogService;
+    private readonly IClipboardService _clipboardService;
     private RequestWorkspaceTabViewModel? _subscribedWorkspaceTab;
 
     private string _currentEditorTitle = "新建...";
@@ -48,10 +49,14 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     private bool _canGenerateRequestCode;
     private string _currentResponseValidationResultText = "等待响应";
 
-    internal ProjectRequestEditorViewModel(ProjectTabWorkspaceContext workspaceContext, IDialogService dialogService)
+    internal ProjectRequestEditorViewModel(
+        ProjectTabWorkspaceContext workspaceContext,
+        IDialogService dialogService,
+        IClipboardService clipboardService)
     {
         _workspaceContext = workspaceContext;
         _dialogService = dialogService;
+        _clipboardService = clipboardService;
     }
 
     public RequestConfigTabViewModel ConfigTab => ResolveWorkspaceTabOrFallback().ConfigTab;
@@ -244,7 +249,42 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     private void CloseRequestCodeDialog()
     {
         RequestClose?.Invoke(this, null);
+        RequestCodeCopiedHint = string.Empty;
         ClearRequestCodeDialogContent();
+    }
+
+    /// <summary>底栏复制反馈文案：复制成功/失败后展示，切换语言、页签或关闭时清除。</summary>
+    [ObservableProperty]
+    private string requestCodeCopiedHint = string.Empty;
+
+    /// <summary>复制当前选中语言与页签的生成代码到剪贴板，结果以底栏提示反馈。</summary>
+    [RelayCommand]
+    private async Task CopyRequestCodeAsync()
+    {
+        var code = ResolveCurrentRequestCodeText();
+        if (string.IsNullOrEmpty(code))
+        {
+            return;
+        }
+
+        var copied = await _clipboardService.CopyTextAsync(code);
+        RequestCodeCopiedHint = copied ? "已复制到剪贴板" : "复制失败，请手动选择代码复制。";
+    }
+
+    /// <summary>按当前语言与页签解析复制目标文本，供复制命令与测试共用。</summary>
+    internal string ResolveCurrentRequestCodeText()
+    {
+        if (SelectedRequestCodeLanguage == 1)
+        {
+            return RequestCodeCSharpCommand;
+        }
+
+        return SelectedRequestCodeTab switch
+        {
+            1 => RequestCodeWgetCommand,
+            2 => RequestCodePowerShellCommand,
+            _ => RequestCodeCurlCommand
+        };
     }
 
     [RelayCommand]
@@ -594,6 +634,12 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         OnPropertyChanged(nameof(CurrentRequestCodeLanguageTitle));
         OnPropertyChanged(nameof(IsShellRequestCodeLanguageSelected));
         OnPropertyChanged(nameof(IsCSharpRequestCodeLanguageSelected));
+        RequestCodeCopiedHint = string.Empty;
+    }
+
+    partial void OnSelectedRequestCodeTabChanged(int value)
+    {
+        RequestCodeCopiedHint = string.Empty;
     }
 
     private string BuildResolvedRequestPreviewText()

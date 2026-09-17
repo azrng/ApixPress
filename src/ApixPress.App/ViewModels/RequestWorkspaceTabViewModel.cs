@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Models.DTOs;
+using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
@@ -23,9 +24,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         public const string HttpInterface = "http-interface";
     }
 
-    public RequestWorkspaceTabViewModel()
+    public RequestWorkspaceTabViewModel(IFilePickerService? filePickerService = null)
     {
-        ConfigTab = new RequestConfigTabViewModel(null);
+        ConfigTab = new RequestConfigTabViewModel(filePickerService);
         ResponseSection = new ResponseSectionViewModel();
 
         ConfigTab.PropertyChanged += OnConfigTabPropertyChanged;

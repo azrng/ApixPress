@@ -13,4 +13,7 @@ public sealed class RequestSnapshotDto
     public List<RequestKeyValueDto> QueryParameters { get; init; } = [];
     public List<RequestKeyValueDto> PathParameters { get; init; } = [];
     public List<RequestKeyValueDto> Headers { get; init; } = [];
+
+    /// <summary>form-data 字段完整状态（含禁用字段与文件引用）；旧快照无此字段时按 BodyContent 兼容解析。</summary>
+    public List<FormFieldDto> FormFields { get; init; } = [];
 }

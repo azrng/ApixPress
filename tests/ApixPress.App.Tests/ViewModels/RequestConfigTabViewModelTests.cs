@@ -334,6 +334,192 @@ public sealed class RequestConfigTabViewModelTests
         Assert.Equal(0, viewModel.SelectedTabIndex);
     }
 
+    [Fact]
+    public void BodyModes_ShouldIncludeBinaryOption()
+    {
+        // 对齐原型 03：Body 七模式（含 Binary）
+        var viewModel = new RequestConfigTabViewModel();
+
+        Assert.Equal(7, viewModel.BodyModeOptions.Count);
+        Assert.Contains(viewModel.BodyModeOptions, option => option.Mode == BodyModes.Binary);
+    }
+
+    [Fact]
+    public void BuildRequestSnapshot_FormDataWithFiles_ShouldCarryFormFieldsAndJsonBody()
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = BodyModes.FormData
+        };
+        viewModel.FormFields.Add(new RequestParameterItemViewModel
+        {
+            Name = "title",
+            Value = "hello"
+        });
+        var fileField = new RequestParameterItemViewModel
+        {
+            Name = "file",
+            FieldType = FormFieldTypes.File
+        };
+        fileField.Files.Add(new FormFieldFileViewModel { Path = @"C:\temp\a.txt", Name = "a.txt", SizeBytes = 12 });
+        viewModel.FormFields.Add(fileField);
+
+        var snapshot = viewModel.BuildRequestSnapshot("endpoint-1", "POST", "/upload");
+
+        Assert.Equal(2, snapshot.FormFields.Count);
+        Assert.Equal(FormFieldTypes.File, snapshot.FormFields[1].FieldType);
+        Assert.Single(snapshot.FormFields[1].Files);
+        // 含文件字段时 BodyContent 落 JSON，执行层按 FormFields 组装 multipart
+        Assert.StartsWith("[", snapshot.BodyContent);
+    }
+
+    [Fact]
+    public void BuildRequestSnapshot_FormUrlEncoded_ShouldExcludeFileFieldsFromLegacyBody()
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = BodyModes.FormUrlEncoded
+        };
+        viewModel.FormFields.Add(new RequestParameterItemViewModel { Name = "a", Value = "1" });
+        var fileField = new RequestParameterItemViewModel { Name = "f", FieldType = FormFieldTypes.File };
+        fileField.Files.Add(new FormFieldFileViewModel { Path = @"C:\a.txt", Name = "a.txt" });
+        viewModel.FormFields.Add(fileField);
+
+        var snapshot = viewModel.BuildRequestSnapshot("e", "POST", "/submit");
+
+        // 残留的 file 字段不进 urlencoded 编码串；FormFields 保留完整编辑态
+        Assert.Equal("a=1", snapshot.BodyContent);
+        Assert.Equal(2, snapshot.FormFields.Count);
+    }
+
+    [Fact]
+    public void ApplySnapshot_ShouldRoundTripFileFieldsThroughSnapshot()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+        var snapshot = new RequestSnapshotDto
+        {
+            Method = "POST",
+            Url = "/upload",
+            BodyMode = BodyModes.FormData,
+            FormFields =
+            [
+                new FormFieldDto { Name = "title", Value = "hi", IsEnabled = false },
+                new FormFieldDto
+                {
+                    Name = "file",
+                    FieldType = FormFieldTypes.File,
+                    Files = [new FormFieldFileDto { Path = @"C:\a.txt", Name = "a.txt", SizeBytes = 9 }]
+                }
+            ]
+        };
+
+        viewModel.ApplySnapshot(snapshot);
+
+        Assert.Equal(2, viewModel.FormFields.Count);
+        Assert.False(viewModel.FormFields[0].IsEnabled);
+        Assert.True(viewModel.FormFields[1].IsFileField);
+        Assert.Equal("a.txt", viewModel.FormFields[1].Files[0].Name);
+        Assert.Equal("9 B", viewModel.FormFields[1].Files[0].SizeText);
+
+        // 回写快照保留完整编辑态（禁用字段与文件引用）
+        var rebuilt = viewModel.BuildRequestSnapshot("e", "POST", "/upload");
+        Assert.Equal(2, rebuilt.FormFields.Count);
+        Assert.False(rebuilt.FormFields[0].IsEnabled);
+        Assert.Single(rebuilt.FormFields[1].Files);
+    }
+
+    [Fact]
+    public void ApplySnapshot_LegacyBodyContent_ShouldParseTextFields()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        viewModel.ApplySnapshot(new RequestSnapshotDto
+        {
+            Method = "POST",
+            Url = "/form",
+            BodyMode = BodyModes.FormData,
+            BodyContent = "a=1&b=2"
+        });
+
+        Assert.Equal(2, viewModel.FormFields.Count);
+        Assert.Equal("a", viewModel.FormFields[0].Name);
+        Assert.Equal("1", viewModel.FormFields[0].Value);
+    }
+
+    [Fact]
+    public void ToggleFormFieldType_ShouldOnlyWorkInFormDataMode()
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = BodyModes.FormUrlEncoded
+        };
+        viewModel.FormFields.Add(new RequestParameterItemViewModel
+        {
+            ParameterType = RequestParameterKind.FormField,
+            Name = "f"
+        });
+
+        viewModel.ToggleFormFieldTypeCommand.Execute(viewModel.FormFields[0]);
+        Assert.Equal(FormFieldTypes.Text, viewModel.FormFields[0].FieldType);
+
+        viewModel.SelectedBodyMode = BodyModes.FormData;
+        viewModel.ToggleFormFieldTypeCommand.Execute(viewModel.FormFields[0]);
+        Assert.Equal(FormFieldTypes.File, viewModel.FormFields[0].FieldType);
+        Assert.True(viewModel.FormFields[0].IsFileField);
+    }
+
+    [Fact]
+    public async Task PickBinaryFile_ShouldFillRequestBodyAndFileState()
+    {
+        var tempFile = System.IO.Path.GetTempFileName();
+        try
+        {
+            await System.IO.File.WriteAllBytesAsync(tempFile, new byte[2048]);
+            var picker = new ViewModelSharedTestDoubles.FakeFilePickerService
+            {
+                PickOpenFilesResult =
+                [
+                    new FormFieldFileDto { Path = tempFile, Name = "demo.bin", SizeBytes = 2048 }
+                ]
+            };
+            var viewModel = new RequestConfigTabViewModel(picker)
+            {
+                SelectedBodyMode = BodyModes.Binary
+            };
+
+            Assert.True(viewModel.ShowBinaryEmptyState);
+
+            await viewModel.PickBinaryFileCommand.ExecuteAsync(null);
+
+            Assert.Equal(tempFile, viewModel.RequestBody);
+            Assert.Equal(System.IO.Path.GetFileName(tempFile), viewModel.BinaryFileName);
+            Assert.Equal("2 KB", viewModel.BinaryFileSizeText);
+            Assert.True(viewModel.HasBinaryFile);
+            Assert.False(viewModel.ShowBinaryEmptyState);
+
+            viewModel.ClearBinaryFileCommand.Execute(null);
+            Assert.True(viewModel.ShowBinaryEmptyState);
+        }
+        finally
+        {
+            System.IO.File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void SelectDefaultTabByContent_BinaryWithFile_ShouldOpenBodyTab()
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = BodyModes.Binary,
+            RequestBody = @"C:\temp\a.bin"
+        };
+
+        viewModel.SelectDefaultTabByContent();
+
+        Assert.Equal(1, viewModel.SelectedTabIndex);
+    }
+
     private static void AssertResetNotification(NotifyCollectionChangedEventArgs e, ref int count)
     {
         count++;

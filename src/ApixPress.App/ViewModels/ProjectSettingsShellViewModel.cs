@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using ApixPress.App.Messages;
+using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
 
@@ -28,7 +29,9 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
     private readonly ISystemDataService _systemDataService;
     private readonly IProjectWorkspaceService _projectWorkspaceService;
     private readonly IClipboardService _clipboardService;
+    private readonly IDialogService _dialogService;
     private readonly IMessenger _messenger;
+    private readonly Action<string, string> _applyProjectInfo;
 
     public ProjectSettingsShellViewModel(
         Action showProjectSettingsWorkspace,
@@ -43,7 +46,9 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         ISystemDataService systemDataService,
         IProjectWorkspaceService projectWorkspaceService,
         IClipboardService clipboardService,
-        IMessenger messenger)
+        IDialogService dialogService,
+        IMessenger messenger,
+        Action<string, string> applyProjectInfo)
     {
         _showProjectSettingsWorkspace = showProjectSettingsWorkspace;
         _dismissImportDialog = dismissImportDialog;
@@ -57,7 +62,9 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         _systemDataService = systemDataService;
         _projectWorkspaceService = projectWorkspaceService;
         _clipboardService = clipboardService;
+        _dialogService = dialogService;
         _messenger = messenger;
+        _applyProjectInfo = applyProjectInfo;
     }
 
     public bool IsOverviewSelected => SelectedSection == Sections.Overview;
@@ -106,6 +113,64 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         var copied = await _clipboardService.CopyTextAsync(_projectId);
         var message = copied ? ProjectSettingsTexts.ProjectIdCopiedStatus : ProjectSettingsTexts.ProjectIdCopyFailureStatus;
         _messenger.Send(new StatusMessageRequest(message));
+    }
+
+    /// <summary>打开项目名称编辑弹窗（对齐原型 06 editProjectModal，替代跳转项目管理抽屉）。</summary>
+    [RelayCommand]
+    private async Task OpenRenameProjectDialogAsync()
+    {
+        await OpenProjectInfoEditDialogAsync(isNameMode: true);
+    }
+
+    /// <summary>打开项目简介编辑弹窗。</summary>
+    [RelayCommand]
+    private async Task OpenEditProjectDescriptionDialogAsync()
+    {
+        await OpenProjectInfoEditDialogAsync(isNameMode: false);
+    }
+
+    private async Task OpenProjectInfoEditDialogAsync(bool isNameMode)
+    {
+        var initialValue = isNameMode ? _getProjectName() : _getProjectDescription();
+        var dialog = new ProjectInfoEditDialogViewModel(
+            isNameMode,
+            initialValue,
+            value => SaveProjectInfoAsync(isNameMode, value));
+        await _dialogService.ShowDialogAsync<Views.Controls.ProjectInfoEditDialogView>(dialog);
+    }
+
+    /// <summary>
+    /// 保存项目信息：设置 VM 只持有项目 id 与展示 getter，先读一次当前项目取 IsDefault 等全量口径再回写；
+    /// 返回 null 表示成功（同步本地展示字段并广播 ShellState 刷新首页瓦片/标题栏），否则返回错误文案。
+    /// </summary>
+    private async Task<string?> SaveProjectInfoAsync(bool isNameMode, string value)
+    {
+        var projects = await _projectWorkspaceService.GetProjectsAsync(CancellationToken.None);
+        var current = projects.FirstOrDefault(item =>
+            string.Equals(item.Id, _projectId, StringComparison.OrdinalIgnoreCase));
+        if (current is null)
+        {
+            return "未找到当前项目，请刷新后重试。";
+        }
+
+        var name = isNameMode ? value : current.Name;
+        var description = isNameMode ? current.Description : value;
+        var result = await _projectWorkspaceService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Id = current.Id,
+            Name = name,
+            Description = description,
+            IsDefault = current.IsDefault
+        }, CancellationToken.None);
+
+        if (!result.IsSuccess)
+        {
+            return result.Message;
+        }
+
+        _applyProjectInfo(name, description);
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+        return null;
     }
 
     [RelayCommand]

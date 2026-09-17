@@ -873,6 +873,72 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
   </Style>
 
+  <!-- 对齐原型 03 type-chip：text/file 类型互切 chip，file 态走品牌紫 -->
+  <Style Selector="Button.HttpFieldTypeChip">
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+  </Style>
+
+  <Style Selector="Button.HttpFieldTypeChip.file">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent.Violet}" />
+  </Style>
+
+  <!-- 对齐原型 03 file-chip：文件名（mono 省略）+ 大小 + 移除 -->
+  <Style Selector="Border.HttpFileChip">
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Padding" Value="9,0" />
+    <Setter Property="MaxWidth" Value="220" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpFileChipName">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpFileChipSize">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+  </Style>
+
+  <Style Selector="Button.HttpFileChipRemove">
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinWidth" Value="14" />
+    <Setter Property="MinHeight" Value="14" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="Button.HttpFileChipRemove:pointerover /template/ ContentPresenter">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Danger}" />
+  </Style>
+
+  <!-- 对齐原型 03 file-add：虚线描边添加文件按钮 -->
+  <Style Selector="Button.HttpFileAddButton">
+    <Setter Property="Height" Value="24" />
+    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Strong}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+  </Style>
+
   <!--
       内容宿主最小高需与紧凑面板预算匹配：紧凑上限 288 扣除 URL 行(~58)+页签行(~36)+页签边距(24)+行距(12)+选择器(~30)
       后约剩 128，MinHeight 超过可用高度会触发 Grid 亏空排列，拉伸子项按负偏移居中向上叠住选择器行

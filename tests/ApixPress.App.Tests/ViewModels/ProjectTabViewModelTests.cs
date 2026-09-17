@@ -619,6 +619,178 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task CopyRequestCode_ShouldCopySelectedLanguageAndTabTextWithHintFeedback()
+    {
+        var clipboard = new ViewModelSharedTestDoubles.FakeClipboardService();
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), clipboardService: clipboard);
+        var editor = viewModel.Editor;
+        editor.RequestCodeCurlCommand = "curl-demo";
+        editor.RequestCodeWgetCommand = "wget-demo";
+        editor.RequestCodePowerShellCommand = "ps-demo";
+        editor.RequestCodeCSharpCommand = "cs-demo";
+
+        // 默认 Shell 语言 + curl 页签
+        Assert.Equal("curl-demo", editor.ResolveCurrentRequestCodeText());
+        await editor.CopyRequestCodeCommand.ExecuteAsync(null);
+        Assert.Equal("curl-demo", clipboard.CopiedTexts[0]);
+        Assert.Equal("已复制到剪贴板", editor.RequestCodeCopiedHint);
+
+        // 切页签清除提示并切换复制目标
+        editor.SelectedRequestCodeTab = 2;
+        Assert.Equal(string.Empty, editor.RequestCodeCopiedHint);
+        await editor.CopyRequestCodeCommand.ExecuteAsync(null);
+        Assert.Equal(2, clipboard.CopiedTexts.Count);
+        Assert.Equal("ps-demo", clipboard.CopiedTexts[1]);
+
+        // 切语言复制 C#，切语言同样清除提示
+        editor.ShowCSharpRequestCodeLanguageCommand.Execute(null);
+        Assert.Equal(string.Empty, editor.RequestCodeCopiedHint);
+        await editor.CopyRequestCodeCommand.ExecuteAsync(null);
+        Assert.Equal(3, clipboard.CopiedTexts.Count);
+        Assert.Equal("cs-demo", clipboard.CopiedTexts[2]);
+
+        // 复制失败走失败提示，不静默
+        clipboard.ShouldSucceed = false;
+        await editor.CopyRequestCodeCommand.ExecuteAsync(null);
+        Assert.Equal("复制失败，请手动选择代码复制。", editor.RequestCodeCopiedHint);
+    }
+
+    [Fact]
+    public async Task Settings_OpenRenameDialog_ShouldPrefillCurrentNameAndSaveThroughService()
+    {
+        var projectWorkspaceService = new ViewModelSharedTestDoubles.FakeProjectWorkspaceService
+        {
+            ProjectsResult =
+            [
+                new ProjectWorkspaceDto { Id = "project-1", Name = "旧名", Description = "旧简介", IsDefault = true }
+            ]
+        };
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            projectWorkspaceService: projectWorkspaceService,
+            dialogService: dialogService);
+
+        await viewModel.Settings.OpenRenameProjectDialogCommand.ExecuteAsync(null);
+
+        var dialog = Assert.IsType<ProjectInfoEditDialogViewModel>(
+            Assert.Single(dialogService.Requests).DataContext);
+        Assert.Equal("编辑项目名称", dialog.Title);
+        Assert.Equal("测试项目", dialog.Value);
+
+        dialog.Value = "新名字";
+        await dialog.SaveCommand.ExecuteAsync(null);
+
+        // 保存按全量口径回写（IsDefault 保留），并同步设置页行展示
+        Assert.NotNull(projectWorkspaceService.LastSavedProject);
+        Assert.Equal("新名字", projectWorkspaceService.LastSavedProject!.Name);
+        Assert.Equal("旧简介", projectWorkspaceService.LastSavedProject.Description);
+        Assert.True(projectWorkspaceService.LastSavedProject.IsDefault);
+        Assert.Equal("新名字", viewModel.Project.Name);
+    }
+
+    [Fact]
+    public async Task Settings_DescriptionSave_ShouldKeepNameAndSyncLocalDescription()
+    {
+        var projectWorkspaceService = new ViewModelSharedTestDoubles.FakeProjectWorkspaceService
+        {
+            ProjectsResult =
+            [
+                new ProjectWorkspaceDto { Id = "project-1", Name = "测试项目", Description = "旧简介", IsDefault = false }
+            ]
+        };
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            projectWorkspaceService: projectWorkspaceService,
+            dialogService: dialogService);
+
+        await viewModel.Settings.OpenEditProjectDescriptionDialogCommand.ExecuteAsync(null);
+
+        var dialog = Assert.IsType<ProjectInfoEditDialogViewModel>(
+            Assert.Single(dialogService.Requests).DataContext);
+        Assert.Equal("编辑项目简介", dialog.Title);
+        Assert.Equal("用于验证项目设置数据管理", dialog.Value);
+
+        dialog.Value = "新简介";
+        await dialog.SaveCommand.ExecuteAsync(null);
+
+        Assert.NotNull(projectWorkspaceService.LastSavedProject);
+        Assert.Equal("测试项目", projectWorkspaceService.LastSavedProject!.Name);
+        Assert.Equal("新简介", projectWorkspaceService.LastSavedProject.Description);
+        Assert.Equal("新简介", viewModel.Project.Description);
+    }
+
+    [Fact]
+    public async Task Settings_SaveFailure_ShouldSurfaceMessageAndNotSyncLocal()
+    {
+        var projectWorkspaceService = new ViewModelSharedTestDoubles.FakeProjectWorkspaceService
+        {
+            SaveShouldFail = true,
+            ProjectsResult =
+            [
+                new ProjectWorkspaceDto { Id = "project-1", Name = "测试项目", Description = string.Empty, IsDefault = false }
+            ]
+        };
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            projectWorkspaceService: projectWorkspaceService,
+            dialogService: dialogService);
+
+        await viewModel.Settings.OpenRenameProjectDialogCommand.ExecuteAsync(null);
+
+        var dialog = Assert.IsType<ProjectInfoEditDialogViewModel>(
+            Assert.Single(dialogService.Requests).DataContext);
+        var closed = false;
+        dialog.RequestClose += (_, _) => closed = true;
+
+        dialog.Value = "新名字";
+        await dialog.SaveCommand.ExecuteAsync(null);
+
+        Assert.False(closed);
+        Assert.Equal("项目名称不能为空。", dialog.ErrorMessage);
+        Assert.Equal("测试项目", viewModel.Project.Name);
+    }
+
+    [Fact]
+    public async Task UseCasesPanel_RenameCase_ShouldUpdateNameAndRefreshDrawer()
+    {
+        var requestCaseService = new FakeRequestCaseService();
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestCaseService, dialogService: dialogService);
+        var panel = viewModel.UseCasesPanel;
+        panel.SetProjectContext("project-1");
+        panel.UpsertCaseItem(new RequestCaseDto
+        {
+            Id = "case-1",
+            ProjectId = "project-1",
+            EntryType = "http-case",
+            Name = "旧用例名",
+            RequestSnapshot = new RequestSnapshotDto { Method = "GET", Url = "/get" },
+            HasLoadedDetail = true,
+            UpdatedAt = DateTime.UtcNow
+        });
+        var item = panel.RequestCases.Single();
+        Assert.Equal("旧用例名", item.Name);
+
+        await panel.RenameCaseCommand.ExecuteAsync(item);
+
+        var dialog = Assert.IsType<ProjectInfoEditDialogViewModel>(
+            Assert.Single(dialogService.Requests).DataContext);
+        Assert.Equal("重命名用例", dialog.Title);
+        Assert.Equal("用例名称", dialog.FieldLabel);
+        Assert.Equal("旧用例名", dialog.Value);
+
+        dialog.Value = "新用例名";
+        await dialog.SaveCommand.ExecuteAsync(null);
+
+        // 改名后抽屉按 Id upsert 出新条目，名称刷新
+        var renamedItem = panel.RequestCases.Single(caseItem => caseItem.Id == "case-1");
+        Assert.Equal("新用例名", renamedItem.Name);
+    }
+
+    [Fact]
     public async Task RequestEditorWorkspaceView_ShouldInstantiateAfterLoadingHttpInterface()
     {
         EnsureAvaloniaInitialized();
@@ -653,10 +825,16 @@ public sealed partial class ProjectTabViewModelTests
         {
             DataContext = viewModel
         });
+        // 项目信息编辑弹窗（名称/简介二选一）实例化冒烟，防止 StaticResource 缺失在运行期才暴露
+        var projectInfoEditDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.ProjectInfoEditDialogView
+        {
+            DataContext = new ProjectInfoEditDialogViewModel(true, "示例项目", _ => Task.FromResult<string?>(null))
+        });
 
         Assert.Null(exception);
         Assert.Null(requestCodeDialogException);
         Assert.Null(actualRequestPanelException);
+        Assert.Null(projectInfoEditDialogException);
         Assert.Null(quickRequestSaveDialogException);
         Assert.Null(httpCaseSaveDialogException);
         Assert.Null(createFolderDialogException);
@@ -1477,6 +1655,15 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Empty(interfaceItem!.Children);
         Assert.Equal(1, interfaceItem.CaseCount);
         Assert.True(interfaceItem.HasCases);
+
+        // 第二个用例：重新打开接口本体清掉编辑中的用例上下文（EditingCaseId），保存应新建而非覆盖
+        await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+        viewModel.HttpCaseSave.DraftName = "异常响应";
+        await viewModel.HttpCaseSave.ConfirmSaveCommand.ExecuteAsync(null);
+
+        // 导航重建被抑制时，接口节点计数须定向刷新 1 → 2
+        Assert.Equal(2, interfaceItem.CaseCount);
+        Assert.Equal(2, requestCaseService.Cases.Count(item => item.EntryType == ProjectTabRequestEntryTypes.HttpCase));
     }
 
     [Fact]

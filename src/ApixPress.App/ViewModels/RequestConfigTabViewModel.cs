@@ -51,6 +51,14 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     [ObservableProperty]
     private int selectedTabIndex;
 
+    /// <summary>Binary 模式已选文件名（由 RequestBody 路径推导）。</summary>
+    [ObservableProperty]
+    private string binaryFileName = string.Empty;
+
+    /// <summary>Binary 模式已选文件大小展示文本；文件被外部移动/删除时提示"文件不存在"。</summary>
+    [ObservableProperty]
+    private string binaryFileSizeText = string.Empty;
+
 
     public RequestConfigTabViewModel() : this(null) { }
 
@@ -66,6 +74,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
             (BodyModes.RawJson, "JSON"),
             (BodyModes.RawXml, "XML"),
             (BodyModes.RawText, "Text"),
+            (BodyModes.Binary, "Binary"),
         };
 
         foreach (var (mode, displayName) in modes)
@@ -101,6 +110,13 @@ public partial class RequestConfigTabViewModel : ViewModelBase
 
     public bool HasRawBodyEditor =>
         SelectedBodyMode is BodyModes.RawJson or BodyModes.RawXml or BodyModes.RawText;
+
+    /// <summary>仅 FormData 模式承载文件字段；FormUrlEncoded 与其他模式只按文本发送。</summary>
+    public bool IsFormDataOnly => SelectedBodyMode == BodyModes.FormData;
+
+    public bool HasBinaryFile => SelectedBodyMode == BodyModes.Binary && !string.IsNullOrWhiteSpace(RequestBody);
+
+    public bool ShowBinaryEmptyState => SelectedBodyMode == BodyModes.Binary && !HasBinaryFile;
 
     public bool HasBodyContent => SelectedBodyMode != BodyModes.None;
 
@@ -146,11 +162,12 @@ public partial class RequestConfigTabViewModel : ViewModelBase
 
     public string BodyModeHint => SelectedBodyMode switch
     {
-        BodyModes.FormData => "按字段组合为 multipart/form-data 请求体。",
+        BodyModes.FormData => "按字段组合为 multipart/form-data 请求体，file 类型字段可携带多个文件。",
         BodyModes.FormUrlEncoded => "按字段进行 URL 编码，适合传统表单接口。",
         BodyModes.RawJson => "以 application/json 发送原始 JSON 内容。",
         BodyModes.RawXml => "以 application/xml 发送原始 XML 内容。",
         BodyModes.RawText => "以 text/plain 发送纯文本内容。",
+        BodyModes.Binary => "将所选文件以 application/octet-stream 作为请求体发送。",
         _ => "不发送请求体。"
     };
 
@@ -165,21 +182,46 @@ public partial class RequestConfigTabViewModel : ViewModelBase
             SelectedBodyMode = value.Mode;
     }
 
+    partial void OnRequestBodyChanged(string value)
+    {
+        RefreshBinaryFileState();
+    }
+
     partial void OnSelectedBodyModeChanged(string value)
     {
         OnPropertyChanged(nameof(IsBodyModeFormData));
+        OnPropertyChanged(nameof(IsFormDataOnly));
         OnPropertyChanged(nameof(ShowFormDataEmptyState));
         OnPropertyChanged(nameof(HasRawBodyEditor));
         OnPropertyChanged(nameof(HasBodyContent));
         OnPropertyChanged(nameof(ShowBodyModeEmptyState));
+        OnPropertyChanged(nameof(HasBinaryFile));
+        OnPropertyChanged(nameof(ShowBinaryEmptyState));
         OnPropertyChanged(nameof(RequestBodyWatermark));
         OnPropertyChanged(nameof(BodyModeHint));
         OnPropertyChanged(nameof(ConfigPanelMaxHeight));
+        RefreshBinaryFileState();
 
         // Sync the option selection if changed programmatically
         var match = BodyModeOptions.FirstOrDefault(o => o.Mode == value);
         if (match is not null && SelectedBodyModeOption != match)
             SelectedBodyModeOption = match;
+    }
+
+    /// <summary>Binary 文件展示态统一从 RequestBody 路径推导，选择、清除与程序化赋值共用一条口径。</summary>
+    private void RefreshBinaryFileState()
+    {
+        if (SelectedBodyMode != BodyModes.Binary)
+        {
+            BinaryFileName = string.Empty;
+            BinaryFileSizeText = string.Empty;
+            return;
+        }
+
+        BinaryFileName = System.IO.Path.GetFileName(RequestBody);
+        BinaryFileSizeText = File.Exists(RequestBody)
+            ? FormFieldFileViewModel.FormatSize(new FileInfo(RequestBody).Length)
+            : "文件不存在";
     }
 
     private void OnFormFieldsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -250,6 +292,64 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         }
     }
 
+    /// <summary>切换 form-data 字段的 text/file 类型；仅 FormData 模式允许，FormUrlEncoded 不承载文件。</summary>
+    [RelayCommand]
+    private void ToggleFormFieldType(RequestParameterItemViewModel? item)
+    {
+        if (item is null || !IsFormDataOnly) return;
+        item.FieldType = item.FieldType == FormFieldTypes.File
+            ? FormFieldTypes.Text
+            : FormFieldTypes.File;
+    }
+
+    /// <summary>为文件字段追加一个或多个文件 chip；文件内容不驻留内存，发送时按路径读取。</summary>
+    [RelayCommand]
+    private async Task AddFormFieldFilesAsync(RequestParameterItemViewModel? item)
+    {
+        if (item is null || _filePickerService is null) return;
+
+        var files = await _filePickerService.PickOpenFilesAsync("选择上传文件", allowMultiple: true);
+        if (files is null) return;
+
+        foreach (var file in files)
+        {
+            if (string.IsNullOrWhiteSpace(file.Path)) continue;
+            item.Files.Add(new FormFieldFileViewModel
+            {
+                Path = file.Path,
+                Name = string.IsNullOrWhiteSpace(file.Name) ? System.IO.Path.GetFileName(file.Path) : file.Name,
+                SizeBytes = file.SizeBytes
+            });
+        }
+    }
+
+    /// <summary>移除文件 chip；chip 只被一个字段持有，按引用反查所属字段即可。</summary>
+    [RelayCommand]
+    private void RemoveFormFieldFile(FormFieldFileViewModel? file)
+    {
+        if (file is null) return;
+        FormFields.FirstOrDefault(field => field.Files.Contains(file))?.Files.Remove(file);
+    }
+
+    /// <summary>Binary 模式选择单个文件：路径写入 RequestBody 落快照，文件名/大小随之刷新。</summary>
+    [RelayCommand]
+    private async Task PickBinaryFileAsync()
+    {
+        if (_filePickerService is null) return;
+
+        var files = await _filePickerService.PickOpenFilesAsync("选择二进制文件", allowMultiple: false);
+        var file = files?.FirstOrDefault(f => !string.IsNullOrWhiteSpace(f.Path));
+        if (file is null) return;
+
+        RequestBody = file.Path;
+    }
+
+    [RelayCommand]
+    private void ClearBinaryFile()
+    {
+        RequestBody = string.Empty;
+    }
+
 
     // --- Populate / Apply / Build / Reset ---
 
@@ -260,7 +360,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         RequestBody = endpoint.RequestBodyTemplate;
         SelectedBodyMode = ResolveEndpointBodyMode(endpoint);
         ReplaceParameters(endpoint.Parameters);
-        ReplaceFormFieldsFromBodyContent(SelectedBodyMode, endpoint.RequestBodyTemplate);
+        ReplaceFormFields(SelectedBodyMode, [], endpoint.RequestBodyTemplate);
     }
 
     public void ApplySnapshot(RequestSnapshotDto snapshot)
@@ -271,7 +371,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         SelectedBodyMode = snapshot.BodyMode;
         IgnoreSslErrors = snapshot.IgnoreSslErrors;
         ReplaceParameters(snapshot);
-        ReplaceFormFieldsFromBodyContent(SelectedBodyMode, snapshot.BodyContent);
+        ReplaceFormFields(SelectedBodyMode, snapshot.FormFields, snapshot.BodyContent);
         SelectDefaultTabByContent();
     }
 
@@ -295,13 +395,20 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         // For form modes, serialize form fields into body content
         var bodyMode = SelectedBodyMode;
         var bodyContent = RequestBody;
+        var formFields = Array.Empty<FormFieldDto>();
 
-        if (bodyMode == BodyModes.FormData || bodyMode == BodyModes.FormUrlEncoded)
+        if (bodyMode is BodyModes.FormData or BodyModes.FormUrlEncoded)
         {
-            var parts = FormFields
+            formFields = FormFields.Select(ToFormFieldDto).ToArray();
+            // 快照 FormFields 携带完整编辑态（含禁用字段与文件引用）；BodyContent 只按发送口径编码，
+            // FormData 含文件时落 JSON，FormUrlEncoded 恒为 URL 编码串以兼容旧解析器
+            var sendableFields = formFields
                 .Where(f => f.IsEnabled && !string.IsNullOrWhiteSpace(f.Name))
-                .Select(f => $"{Uri.EscapeDataString(f.Name)}={Uri.EscapeDataString(f.Value)}");
-            bodyContent = string.Join("&", parts);
+                .ToList();
+            bodyContent = bodyMode == BodyModes.FormData
+                ? FormFieldContentCodec.Encode(sendableFields)
+                : FormFieldContentCodec.EncodeTextPairs(
+                    sendableFields.Where(f => f.FieldType != FormFieldTypes.File).ToList());
         }
 
         return new RequestSnapshotDto
@@ -316,7 +423,8 @@ public partial class RequestConfigTabViewModel : ViewModelBase
             IgnoreSslErrors = IgnoreSslErrors,
             QueryParameters = QueryParameters.Select(ToKeyValue).ToList(),
             PathParameters = PathParameters.Select(ToKeyValue).ToList(),
-            Headers = Headers.Select(ToKeyValue).ToList()
+            Headers = Headers.Select(ToKeyValue).ToList(),
+            FormFields = formFields.ToList()
         };
     }
 
@@ -411,7 +519,11 @@ public partial class RequestConfigTabViewModel : ViewModelBase
             : BodyModes.RawJson;
     }
 
-    private void ReplaceFormFieldsFromBodyContent(string bodyMode, string bodyContent)
+    /// <summary>
+    /// 装载 form 字段：快照 FormFields 优先（完整编辑态，含禁用字段与文件引用），
+    /// 旧快照/导入模板无 FormFields 时按 BodyContent 双格式兼容解析。
+    /// </summary>
+    private void ReplaceFormFields(string bodyMode, IReadOnlyList<FormFieldDto> snapshotFields, string bodyContent)
     {
         if (bodyMode is not (BodyModes.FormData or BodyModes.FormUrlEncoded))
         {
@@ -419,29 +531,50 @@ public partial class RequestConfigTabViewModel : ViewModelBase
             return;
         }
 
-        FormFields.ReplaceWith(ParseFormFields(bodyContent));
+        var source = snapshotFields.Count > 0
+            ? snapshotFields
+            : FormFieldContentCodec.Parse(bodyContent);
+
+        FormFields.ReplaceWith(source.Select(ToFormFieldItem));
     }
 
-    private static IEnumerable<RequestParameterItemViewModel> ParseFormFields(string bodyContent)
+    private static RequestParameterItemViewModel ToFormFieldItem(FormFieldDto field)
     {
-        foreach (var pair in bodyContent.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        var item = new RequestParameterItemViewModel
         {
-            var parts = pair.Split('=', 2);
-            var name = Uri.UnescapeDataString(parts[0]);
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                continue;
-            }
+            ParameterType = RequestParameterKind.FormField,
+            Name = field.Name,
+            Value = field.Value,
+            IsEnabled = field.IsEnabled,
+            FieldType = field.FieldType
+        };
 
-            yield return new RequestParameterItemViewModel
+        foreach (var file in field.Files)
+        {
+            item.Files.Add(new FormFieldFileViewModel
             {
-                ParameterType = RequestParameterKind.FormField,
-                Name = name,
-                Value = parts.Length > 1 ? Uri.UnescapeDataString(parts[1]) : string.Empty,
-                IsEnabled = true
-            };
+                Path = file.Path,
+                Name = file.Name,
+                SizeBytes = file.SizeBytes
+            });
         }
+
+        return item;
     }
+
+    private static FormFieldDto ToFormFieldDto(RequestParameterItemViewModel item) => new()
+    {
+        Name = item.Name,
+        Value = item.Value,
+        FieldType = item.FieldType,
+        IsEnabled = item.IsEnabled,
+        Files = item.Files.Select(file => new FormFieldFileDto
+        {
+            Path = file.Path,
+            Name = file.Name,
+            SizeBytes = file.SizeBytes
+        }).ToList()
+    };
 
     private void OnQueryParametersCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {

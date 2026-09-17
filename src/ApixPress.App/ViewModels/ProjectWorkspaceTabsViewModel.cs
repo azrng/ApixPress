@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using ApixPress.App.Helpers;
 using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
+using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
@@ -16,6 +17,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 {
     private readonly Action _selectInterfaceManagementSection;
     private readonly IMessenger _messenger;
+    private readonly IFilePickerService? _filePickerService;
     private readonly BatchObservableCollection<RequestWorkspaceTabViewModel> _visibleWorkspaceTabs = [];
     private readonly Dictionary<RequestConfigTabViewModel, RequestWorkspaceTabViewModel> _tabByConfig = [];
     private readonly Dictionary<INotifyCollectionChanged, RequestWorkspaceTabViewModel> _tabByConfigCollection = [];
@@ -26,10 +28,12 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
     public ProjectWorkspaceTabsViewModel(
         Action selectInterfaceManagementSection,
-        IMessenger messenger)
+        IMessenger messenger,
+        IFilePickerService? filePickerService = null)
     {
         _selectInterfaceManagementSection = selectInterfaceManagementSection;
         _messenger = messenger;
+        _filePickerService = filePickerService;
 
         VisibleWorkspaceTabs = new ReadOnlyObservableCollection<RequestWorkspaceTabViewModel>(_visibleWorkspaceTabs);
         WorkspaceTabs.CollectionChanged += OnWorkspaceTabsCollectionChanged;
@@ -82,7 +86,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
     public RequestWorkspaceTabViewModel CreateWorkspaceTab(bool activate, bool showInTabStrip = true)
     {
-        var tab = new RequestWorkspaceTabViewModel();
+        var tab = new RequestWorkspaceTabViewModel(_filePickerService);
         tab.ConfigureAsLanding();
         tab.ShowInTabStrip = showInTabStrip;
         AttachWorkspaceTab(tab);

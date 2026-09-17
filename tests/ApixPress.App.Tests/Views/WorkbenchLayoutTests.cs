@@ -466,6 +466,30 @@ public sealed class WorkbenchLayoutTests
     }
 
     [Fact]
+    public void RequestCodeDialog_ShouldProvideCopyAndCloseFooter()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "RequestCodeDialogView.axaml"));
+
+        // 对齐原型 10 modal-foot：此前弹窗 showCloseButton:false 且无 footer，用户没有任何复制/关闭途径
+        Assert.Contains(
+            document.Descendants(),
+            element => HasClass(element, "DialogFooter"));
+        Assert.Contains(
+            document.Descendants(),
+            element => element.Name.LocalName == "Button"
+                && (element.Attribute("Content")?.Value ?? string.Empty) == "复制代码"
+                && (element.Attribute("Command")?.Value ?? string.Empty).Contains("CopyRequestCodeCommand"));
+        Assert.Contains(
+            document.Descendants(),
+            element => element.Name.LocalName == "Button"
+                && (element.Attribute("Content")?.Value ?? string.Empty) == "关闭"
+                && (element.Attribute("Command")?.Value ?? string.Empty).Contains("CloseRequestCodeDialogCommand"));
+        Assert.Contains(
+            document.Descendants(),
+            element => (element.Attribute("Text")?.Value ?? string.Empty).Contains("RequestCodeCopiedHint"));
+    }
+
+    [Fact]
     public void HttpRequestUrlRow_ShouldAlignPrototypeWithSendAndSplitSave()
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "HttpRequestUrlRowView.axaml"));
@@ -550,6 +574,49 @@ public sealed class WorkbenchLayoutTests
             hintRow.Descendants(),
             element => element.Name.LocalName == "SelectionList"
                 && HasClass(element, "HttpBodyModeSelector"));
+    }
+
+    [Fact]
+    public void HttpInterfaceBodyTab_ShouldExposeFieldTypeChipsFileChipsAndBinaryMode()
+    {
+        var document = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "HttpInterfaceBodyTabView.axaml"));
+
+        // 对齐原型 03：类型 chip + 文件 chip + 添加文件入口 + Binary 空态选择入口
+        Assert.Contains(document.Descendants(), element => HasClass(element, "HttpFieldTypeChip"));
+        Assert.Contains(document.Descendants(), element => HasClass(element, "HttpFileChip"));
+        Assert.Contains(document.Descendants(), element => HasClass(element, "HttpFileAddButton"));
+        Assert.Contains(
+            document.Descendants(),
+            element => element.Name.LocalName == "TextBlock"
+                && (element.Attribute("Text")?.Value ?? string.Empty).Contains("未选择文件"));
+        // 旧「说明（可选）」列已让位给类型列（对齐原型 03 表头）
+        Assert.DoesNotContain(
+            document.Descendants(),
+            element => element.Name.LocalName == "TextBlock" && (element.Attribute("Text")?.Value ?? string.Empty) == "说明（可选）");
+    }
+
+    [Fact]
+    public void ProjectSettingsBasicInfo_ShouldOpenEditDialogInsteadOfProjectDrawer()
+    {
+        var settings = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "ProjectSettingsWorkspaceView.axaml"));
+        var dialog = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "ProjectInfoEditDialogView.axaml"));
+
+        // 对齐原型 06：基本信息「编辑」打开居中编辑弹窗（editProjectModal），不再跳转右侧项目管理抽屉
+        Assert.DoesNotContain(
+            settings.Descendants(),
+            element => (element.Attribute("Click")?.Value ?? string.Empty).Contains("OnOpenProjectDrawer"));
+        Assert.Contains(
+            settings.Descendants(),
+            element => (element.Attribute("Command")?.Value ?? string.Empty).Contains("OpenRenameProjectDialogCommand"));
+        Assert.Contains(
+            settings.Descendants(),
+            element => (element.Attribute("Command")?.Value ?? string.Empty).Contains("OpenEditProjectDescriptionDialogCommand"));
+        Assert.Contains(dialog.Descendants(), element => HasClass(element, "ProjectInfoEditDialogCard"));
+        Assert.Contains(dialog.Descendants(), element => HasClass(element, "DialogFooter"));
+        Assert.Contains(dialog.Descendants(), element => HasClass(element, "DialogFormLabel"));
     }
 
     private static string FindSourceFile(params string[] pathParts)

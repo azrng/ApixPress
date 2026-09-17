@@ -23,6 +23,14 @@
                    PlaceholderText="请输入保存名称"
                    Text="{Binding DraftName}" />
         </StackPanel>
+        <!-- 对齐原型 13 saveQuickModal：只读展示保存位置 -->
+        <StackPanel Classes="DialogFormField">
+          <TextBlock Classes="DialogFormLabel"
+                     Text="保存位置" />
+          <TextBox Classes="SectionInput DialogInput"
+                   IsReadOnly="True"
+                   Text="侧栏 · 快捷请求" />
+        </StackPanel>
         <StackPanel Classes="DialogFormField">
           <TextBlock Classes="DialogFormLabel"
                      Text="备注" />

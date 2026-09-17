@@ -4,6 +4,11 @@
     <Setter Property="Width" Value="460" />
   </Style>
 
+  <!-- 项目信息编辑弹窗（对齐原型 06 editProjectModal 宽 460） -->
+  <Style Selector="Border.ProjectInfoEditDialogCard">
+    <Setter Property="Width" Value="460" />
+  </Style>
+
   <!-- 小型表单弹窗（保存快捷请求/保存为用例/新建目录）：
        表单直接铺放在弹窗正文上（对齐原型 modal-body，不套内层卡片），底栏带分隔线 -->
   <Style Selector="StackPanel.DialogFormStack">

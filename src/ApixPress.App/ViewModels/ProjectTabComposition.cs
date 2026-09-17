@@ -80,10 +80,10 @@ internal sealed class ProjectTabComposition : DisposableObject
             var historyPanel = new RequestHistoryPanelViewModel(_requestHistoryService);
             _ensureRequestHistoryLoadedAsync = historyPanel.EnsureHistoryLoadedAsync;
             var workspace = CreateWorkspace();
-            var useCasesPanel = new UseCasesPanelViewModel(_requestCaseService, workspace);
+            var useCasesPanel = new UseCasesPanelViewModel(_requestCaseService, workspace, _hostContext.DialogService, Messenger);
             var workspaceContext = CreateWorkspaceContext(workspace, environmentPanel, historyPanel);
             var shell = CreateShell(workspaceContext);
-            var editor = new ProjectRequestEditorViewModel(workspaceContext, _hostContext.DialogService);
+            var editor = new ProjectRequestEditorViewModel(workspaceContext, _hostContext.DialogService, _clipboardService);
             ProjectInterfaceRootWorkspaceViewModel? interfaceRoot = null;
             var catalog = CreateCatalog(
                 useCasesPanel,
@@ -140,7 +140,8 @@ internal sealed class ProjectTabComposition : DisposableObject
                 {
                     _shellViewModel?.SelectInterfaceManagementSection();
                 },
-                Messenger);
+                Messenger,
+                _filePickerService);
         }
 
         private ProjectTabWorkspaceContext CreateWorkspaceContext(
@@ -189,7 +190,14 @@ internal sealed class ProjectTabComposition : DisposableObject
                 _systemDataService,
                 _projectWorkspaceService,
                 _clipboardService,
-                Messenger);
+                _hostContext.DialogService,
+                Messenger,
+                (name, description) =>
+                {
+                    // 名称/简介弹窗保存成功后同步设置页行展示（首页瓦片/标题栏由 ShellState 广播刷新）
+                    _project.Name = name;
+                    _project.Description = description;
+                });
         }
 
         private ProjectWorkspaceCatalogViewModel CreateCatalog(

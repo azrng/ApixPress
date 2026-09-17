@@ -108,7 +108,7 @@
                                      VerticalAlignment="Center" />
                           <Button Grid.Column="2"
                                   Classes="ProjectSettingsInlineActionButton"
-                                  Click="OnOpenProjectDrawer"
+                                  Command="{Binding Settings.OpenRenameProjectDialogCommand}"
                                   Content="编辑" />
                         </Grid>
                       </Border>
@@ -139,7 +139,7 @@
                                      VerticalAlignment="Center" />
                           <Button Grid.Column="2"
                                   Classes="ProjectSettingsInlineActionButton"
-                                  Click="OnOpenProjectDrawer"
+                                  Command="{Binding Settings.OpenEditProjectDescriptionDialogCommand}"
                                   Content="编辑" />
                         </Grid>
                       </Border>

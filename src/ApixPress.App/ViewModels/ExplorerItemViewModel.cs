@@ -40,6 +40,13 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public bool HasCases => CaseCount > 0;
 
+    /// <summary>保存/改名用例后由目录定向调用：更新计数并广播 HasCases，避免整树重建。</summary>
+    public void UpdateCaseCount(int count)
+    {
+        CaseCount = count;
+        OnPropertyChanged(nameof(HasCases));
+    }
+
     [ObservableProperty]
     private bool isExpanded;
 

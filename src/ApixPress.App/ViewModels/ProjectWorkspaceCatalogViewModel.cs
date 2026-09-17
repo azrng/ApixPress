@@ -266,7 +266,51 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
 
     public void UpsertCaseItem(RequestCaseDto requestCase)
     {
-        RunWithNavigationRebuildSuppressed(() => _useCasesPanel.UpsertCaseItem(requestCase));
+        RunWithNavigationRebuildSuppressed(() =>
+        {
+            _useCasesPanel.UpsertCaseItem(requestCase);
+            // 保存/改名用例后定向刷新所属接口节点的用例计数芯片；整树重建仍保持抑制（T051 性能口径不回退）
+            RefreshInterfaceCaseCount(requestCase.ParentId);
+        });
+    }
+
+    /// <summary>按树构建器同口径（http-case 按 ParentId 分组）统计并更新接口节点的用例数。</summary>
+    private void RefreshInterfaceCaseCount(string? interfaceRecordId)
+    {
+        if (string.IsNullOrWhiteSpace(interfaceRecordId) || InterfaceTreeItems.Count == 0)
+        {
+            return;
+        }
+
+        var node = FindInterfaceNodeById(InterfaceTreeItems[0], interfaceRecordId);
+        if (node is null)
+        {
+            return;
+        }
+
+        var count = SavedRequests.Count(item =>
+            string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.HttpCase, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(item.SourceCase.ParentId, interfaceRecordId, StringComparison.OrdinalIgnoreCase));
+        node.UpdateCaseCount(count);
+    }
+
+    private static ExplorerItemViewModel? FindInterfaceNodeById(ExplorerItemViewModel parent, string interfaceRecordId)
+    {
+        foreach (var child in parent.Children)
+        {
+            if (string.Equals(child.SourceCase?.Id, interfaceRecordId, StringComparison.OrdinalIgnoreCase))
+            {
+                return child;
+            }
+
+            var nested = FindInterfaceNodeById(child, interfaceRecordId);
+            if (nested is not null)
+            {
+                return nested;
+            }
+        }
+
+        return null;
     }
 
     public void RemoveCases(IEnumerable<string> ids)

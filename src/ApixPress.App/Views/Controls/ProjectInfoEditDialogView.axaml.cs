@@ -2,9 +2,9 @@ using Avalonia.Controls;
 
 namespace ApixPress.App.Views.Controls;
 
-public partial class ProjectDrawerView : UserControl
+public partial class ProjectInfoEditDialogView : UserControl
 {
-    public ProjectDrawerView()
+    public ProjectInfoEditDialogView()
     {
         InitializeComponent();
     }

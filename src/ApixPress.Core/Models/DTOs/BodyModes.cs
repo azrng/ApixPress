@@ -8,4 +8,5 @@ public static class BodyModes
     public const string RawJson = "RawJson";
     public const string RawXml = "RawXml";
     public const string RawText = "RawText";
+    public const string Binary = "Binary";
 }

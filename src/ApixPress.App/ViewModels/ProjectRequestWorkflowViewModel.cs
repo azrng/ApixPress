@@ -293,7 +293,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             workspaceTab.HttpCaseName = requestName;
             _catalog.UpsertCaseItem(result.Data);
             workspaceTab.MarkCleanState();
-            _hostContext.Messenger.Send(new StatusMessageRequest("HTTP 接口用例已保存。"));
+            _hostContext.Messenger.Send(new StatusMessageRequest($"已保存用例「{requestName}」。"));
         }
         else
         {

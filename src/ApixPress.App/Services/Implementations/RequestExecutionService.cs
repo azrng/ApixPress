@@ -153,7 +153,15 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
 
     private static HttpContent? BuildHttpContent(RequestSnapshotDto request, IReadOnlyDictionary<string, string> activeVariables)
     {
-        if (string.IsNullOrWhiteSpace(request.BodyContent) || request.BodyMode == BodyModes.None)
+        if (request.BodyMode == BodyModes.None)
+        {
+            return null;
+        }
+
+        // FormData 允许 BodyContent 为空但 FormFields 携带有效字段（手填快照/旧数据修复场景），不静默丢请求体
+        var hasSendableFormFields = request.BodyMode == BodyModes.FormData && request.FormFields
+            .Any(field => field.IsEnabled && !string.IsNullOrWhiteSpace(field.Name));
+        if (string.IsNullOrWhiteSpace(request.BodyContent) && !hasSendableFormFields)
         {
             return null;
         }
@@ -166,9 +174,76 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             BodyModes.RawText => new StringContent(bodyContent, Encoding.UTF8, "text/plain"),
             BodyModes.FormUrlEncoded => new FormUrlEncodedContent(
                 ParseKeyValuePairs(bodyContent)),
-            BodyModes.FormData => BuildMultipartContent(bodyContent),
+            BodyModes.FormData => BuildFormDataContent(request, bodyContent, activeVariables),
+            BodyModes.Binary => BuildBinaryFileContent(bodyContent),
             _ => new StringContent(bodyContent, Encoding.UTF8, "text/plain")
         };
+    }
+
+    /// <summary>
+    /// 组装 multipart 请求体：快照 FormFields 优先（文本 + 文件 part），旧快照无 FormFields 时
+    /// 回退按 URL 编码串组装纯文本 part，与既有行为保持一致。
+    /// </summary>
+    private static MultipartFormDataContent BuildFormDataContent(
+        RequestSnapshotDto request,
+        string encodedBodyContent,
+        IReadOnlyDictionary<string, string> activeVariables)
+    {
+        var fields = request.FormFields.Count > 0
+            ? request.FormFields
+            : FormFieldContentCodec.Parse(encodedBodyContent);
+
+        var content = new MultipartFormDataContent();
+        var hasPart = false;
+        foreach (var field in fields.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
+        {
+            if (field.FieldType == FormFieldTypes.File)
+            {
+                foreach (var file in field.Files)
+                {
+                    var part = new StreamContent(OpenFileForUpload(file.Path));
+                    part.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                    // 三参 Add 才会写入 filename 到 Content-Disposition，服务端靠它识别上传文件名
+                    content.Add(part, field.Name, file.Name);
+                    hasPart = true;
+                }
+            }
+            else
+            {
+                content.Add(new StringContent(ReplaceVariables(field.Value, activeVariables)), field.Name);
+                hasPart = true;
+            }
+        }
+
+        // 字段解码为空（例如手工清空）时保持旧行为：按 URL 编码串兜底组装，不发出空 multipart
+        if (!hasPart)
+        {
+            foreach (var pair in ParseKeyValuePairs(encodedBodyContent))
+            {
+                content.Add(new StringContent(pair.Value), pair.Key);
+            }
+        }
+
+        return content;
+    }
+
+    /// <summary>按路径构建单个文件 part；文件缺失抛业务可读异常，由发送入口统一转为失败结果。</summary>
+    private static StreamContent BuildBinaryFileContent(string path)
+    {
+        var content = new StreamContent(OpenFileForUpload(path));
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        return content;
+    }
+
+    private static FileStream OpenFileForUpload(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        {
+            throw new InvalidOperationException($"上传文件不存在：{path}");
+        }
+
+        // FileShare.Read 允许文件同时被其他程序打开；流随 HttpRequestMessage.Dispose 一并释放
+        return new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
     }
 
     /// <summary>
@@ -194,11 +269,33 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             Url = finalUrl,
             Headers = headers,
             BodyContentType = message.Content?.Headers.ContentType?.MediaType ?? string.Empty,
-            BodyText = message.Content is null
-                ? string.Empty
-                : ReplaceVariables(request.BodyContent, activeVariables),
+            BodyText = message.Content is null ? string.Empty : ResolveActualBodyText(request, activeVariables),
             HasBody = message.Content is not null
         };
+    }
+
+    /// <summary>
+    /// 实际请求体展示口径：FormData 含文件字段时 BodyContent 是 JSON 编码，对用户无意义，
+    /// 改按「字段=值 / 文件名」汇总；Binary 展示文件路径标记；其余模式保持变量替换后的原文。
+    /// </summary>
+    private static string ResolveActualBodyText(RequestSnapshotDto request, IReadOnlyDictionary<string, string> activeVariables)
+    {
+        if (request.BodyMode == BodyModes.FormData && request.FormFields.Count > 0)
+        {
+            var lines = request.FormFields
+                .Where(field => field.IsEnabled && !string.IsNullOrWhiteSpace(field.Name))
+                .Select(field => field.FieldType == FormFieldTypes.File
+                    ? $"{field.Name}={string.Join(", ", field.Files.Select(file => file.Name))}（文件）"
+                    : $"{field.Name}={ReplaceVariables(field.Value, activeVariables)}");
+            return string.Join("\n", lines);
+        }
+
+        if (request.BodyMode == BodyModes.Binary && !string.IsNullOrWhiteSpace(request.BodyContent))
+        {
+            return $"[二进制文件] {request.BodyContent}";
+        }
+
+        return ReplaceVariables(request.BodyContent, activeVariables);
     }
 
     private static IEnumerable<ResponseHeaderDto> EnumerateActualHeaders(HttpHeaders headers)
@@ -208,16 +305,6 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             Name = header.Key,
             Value = value
         }));
-    }
-
-    private static MultipartFormDataContent BuildMultipartContent(string encodedPairs)
-    {
-        var content = new MultipartFormDataContent();
-        foreach (var pair in ParseKeyValuePairs(encodedPairs))
-        {
-            content.Add(new StringContent(pair.Value), pair.Key);
-        }
-        return content;
     }
 
     private static IEnumerable<KeyValuePair<string, string>> ParseKeyValuePairs(string encoded)

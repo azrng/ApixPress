@@ -525,9 +525,16 @@ public static class ViewModelSharedTestDoubles
 
         public bool DeleteShouldSucceed { get; set; } = true;
 
+        /// <summary>GetProjectsAsync 返回的项目列表；SaveShouldFail 时 SaveAsync 回写失败结果。</summary>
+        public List<ProjectWorkspaceDto> ProjectsResult { get; set; } = [];
+
+        public ProjectWorkspaceDto? LastSavedProject { get; private set; }
+
+        public bool SaveShouldFail { get; set; }
+
         public Task<IReadOnlyList<ProjectWorkspaceDto>> GetProjectsAsync(CancellationToken cancellationToken)
         {
-            return Task.FromResult<IReadOnlyList<ProjectWorkspaceDto>>([]);
+            return Task.FromResult<IReadOnlyList<ProjectWorkspaceDto>>(ProjectsResult);
         }
 
         public Task<ProjectWorkspaceDto?> GetStartupProjectAsync(CancellationToken cancellationToken)
@@ -537,7 +544,10 @@ public static class ViewModelSharedTestDoubles
 
         public Task<IResultModel<ProjectWorkspaceDto>> SaveAsync(ProjectWorkspaceDto project, CancellationToken cancellationToken)
         {
-            return Task.FromResult<IResultModel<ProjectWorkspaceDto>>(ResultModel<ProjectWorkspaceDto>.Success(project));
+            LastSavedProject = project;
+            return Task.FromResult<IResultModel<ProjectWorkspaceDto>>(SaveShouldFail
+                ? ResultModel<ProjectWorkspaceDto>.Failure("项目名称不能为空。", "project_name_required")
+                : ResultModel<ProjectWorkspaceDto>.Success(project));
         }
 
         public Task<IResultModel<ProjectWorkspaceDto>> SetDefaultAsync(string projectId, CancellationToken cancellationToken)
@@ -574,6 +584,7 @@ public static class ViewModelSharedTestDoubles
     {
         public string? PickProjectDataPackageFileResult { get; set; }
         public string? SaveProjectDataExportFileResult { get; set; }
+        public IReadOnlyList<FormFieldFileDto>? PickOpenFilesResult { get; set; }
 
         public Task<string?> PickSwaggerJsonFileAsync(CancellationToken cancellationToken)
         {
@@ -593,6 +604,11 @@ public static class ViewModelSharedTestDoubles
         public Task<string?> PickStorageDirectoryAsync(CancellationToken cancellationToken)
         {
             return Task.FromResult<string?>(null);
+        }
+
+        public Task<IReadOnlyList<FormFieldFileDto>?> PickOpenFilesAsync(string title, bool allowMultiple, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(PickOpenFilesResult);
         }
     }
 

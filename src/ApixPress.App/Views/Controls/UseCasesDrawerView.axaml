@@ -112,6 +112,10 @@
                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.LoadCaseCommand}"
                           CommandParameter="{Binding}" />
                   <Button Classes="CaseCardOp"
+                          Content="改名"
+                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.RenameCaseCommand}"
+                          CommandParameter="{Binding}" />
+                  <Button Classes="CaseCardOp"
                           Content="复制"
                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.DuplicateCaseCommand}"
                           CommandParameter="{Binding}" />
