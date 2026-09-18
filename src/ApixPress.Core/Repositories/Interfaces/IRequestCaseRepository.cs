@@ -4,6 +4,8 @@ namespace ApixPress.App.Repositories.Interfaces;
 
 public interface IRequestCaseRepository
 {
+    Task<IReadOnlyList<RequestCaseEntity>> GetCaseSummariesAsync(string projectId, CancellationToken cancellationToken);
+
     Task<IReadOnlyList<RequestCaseEntity>> GetCasesAsync(string projectId, CancellationToken cancellationToken);
 
     Task<RequestCaseEntity?> GetByIdAsync(string projectId, string id, CancellationToken cancellationToken);

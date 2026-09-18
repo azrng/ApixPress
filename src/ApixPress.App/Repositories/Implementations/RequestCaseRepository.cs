@@ -15,6 +15,46 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
         _connectionFactory = connectionFactory;
     }
 
+    public async Task<IReadOnlyList<RequestCaseEntity>> GetCaseSummariesAsync(string projectId, CancellationToken cancellationToken)
+    {
+        const string sql = """
+                           select
+                               id Id,
+                               project_id ProjectId,
+                               entry_type EntryType,
+                               name Name,
+                               group_name GroupName,
+                               folder_path FolderPath,
+                               parent_id ParentId,
+                               tags_json TagsJson,
+                               description Description,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.endpointId'),
+                                   json_extract(request_snapshot_json, '$.EndpointId'),
+                                   ''
+                               ) EndpointId,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.method'),
+                                   json_extract(request_snapshot_json, '$.Method'),
+                                   ''
+                               ) Method,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.url'),
+                                   json_extract(request_snapshot_json, '$.Url'),
+                                   ''
+                               ) Url,
+                               updated_at UpdatedAt
+                           from request_cases
+                           where project_id = @ProjectId
+                           order by entry_type, folder_path, updated_at desc
+                           """;
+
+        using var connection = _connectionFactory.CreateConnection();
+        var items = await Task.Run(async () => await connection.QueryAsync<RequestCaseEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken)));
+        return items.ToList();
+    }
+
     public async Task<IReadOnlyList<RequestCaseEntity>> GetCasesAsync(string projectId, CancellationToken cancellationToken)
     {
         const string sql = """
@@ -168,10 +208,16 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
         }
 
         using var connection = _connectionFactory.CreateConnection();
-        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
-            "delete from request_cases where project_id = @ProjectId and id in @Ids",
-            new { ProjectId = projectId, Ids = targetIds },
-            cancellationToken: cancellationToken)));
+        await Task.Run(async () =>
+        {
+            foreach (var batch in targetIds.Chunk(250))
+            {
+                await connection.ExecuteAsync(new CommandDefinition(
+                    "delete from request_cases where project_id = @ProjectId and id in @Ids",
+                    new { ProjectId = projectId, Ids = batch },
+                    cancellationToken: cancellationToken));
+            }
+        });
     }
 
     public async Task SyncImportedRangeAsync(
@@ -216,11 +262,14 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
             using var transaction = connection.BeginTransaction();
             if (targetIds.Length > 0)
             {
-                await connection.ExecuteAsync(new CommandDefinition(
-                    "delete from request_cases where project_id = @ProjectId and id in @Ids",
-                    new { ProjectId = projectId, Ids = targetIds },
-                    transaction,
-                    cancellationToken: cancellationToken));
+                foreach (var batch in targetIds.Chunk(250))
+                {
+                    await connection.ExecuteAsync(new CommandDefinition(
+                        "delete from request_cases where project_id = @ProjectId and id in @Ids",
+                        new { ProjectId = projectId, Ids = batch },
+                        transaction,
+                        cancellationToken: cancellationToken));
+                }
             }
 
             if (upserts.Count > 0)

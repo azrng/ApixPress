@@ -82,6 +82,14 @@ public static class ViewModelSharedTestDoubles
             return Task.FromResult<IReadOnlyList<EnvironmentVariableDto>>([]);
         }
 
+        public Task<IReadOnlyDictionary<string, IReadOnlyList<EnvironmentVariableDto>>> GetVariablesByEnvironmentIdsAsync(
+            IEnumerable<string> environmentIds,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyDictionary<string, IReadOnlyList<EnvironmentVariableDto>>>(
+                new Dictionary<string, IReadOnlyList<EnvironmentVariableDto>>(StringComparer.OrdinalIgnoreCase));
+        }
+
         public Task<IResultModel<EnvironmentVariableDto>> SaveVariableAsync(EnvironmentVariableDto variable, CancellationToken cancellationToken)
         {
             return Task.FromResult<IResultModel<EnvironmentVariableDto>>(ResultModel<EnvironmentVariableDto>.Success(variable));

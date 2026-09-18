@@ -6,6 +6,10 @@ public interface IEnvironmentVariableRepository
 {
     Task<IReadOnlyList<EnvironmentVariableEntity>> GetByEnvironmentAsync(string environmentId, CancellationToken cancellationToken);
 
+    Task<IReadOnlyDictionary<string, IReadOnlyList<EnvironmentVariableEntity>>> GetByEnvironmentIdsAsync(
+        IEnumerable<string> environmentIds,
+        CancellationToken cancellationToken);
+
     Task UpsertAsync(EnvironmentVariableEntity entity, CancellationToken cancellationToken);
 
     Task UpsertRangeAsync(IReadOnlyList<EnvironmentVariableEntity> entities, CancellationToken cancellationToken);

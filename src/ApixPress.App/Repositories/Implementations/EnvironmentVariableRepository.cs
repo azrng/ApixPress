@@ -36,6 +36,44 @@ public sealed class EnvironmentVariableRepository : IEnvironmentVariableReposito
         return items.ToList();
     }
 
+    public async Task<IReadOnlyDictionary<string, IReadOnlyList<EnvironmentVariableEntity>>> GetByEnvironmentIdsAsync(
+        IEnumerable<string> environmentIds,
+        CancellationToken cancellationToken)
+    {
+        var ids = environmentIds
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (ids.Length == 0)
+        {
+            return new Dictionary<string, IReadOnlyList<EnvironmentVariableEntity>>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        const string sql = """
+                           select
+                               id Id,
+                               environment_id EnvironmentId,
+                               environment_name EnvironmentName,
+                               key Key,
+                               value Value,
+                               is_enabled IsEnabled
+                           from environment_variables
+                           where environment_id in @EnvironmentIds
+                           order by environment_id, key
+                           """;
+
+        using var connection = _connectionFactory.CreateConnection();
+        var items = await Task.Run(async () => await connection.QueryAsync<EnvironmentVariableEntity>(
+            new CommandDefinition(sql, new { EnvironmentIds = ids }, cancellationToken: cancellationToken)));
+        var result = new Dictionary<string, IReadOnlyList<EnvironmentVariableEntity>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var group in items.GroupBy(item => item.EnvironmentId, StringComparer.OrdinalIgnoreCase))
+        {
+            result[group.Key] = group.ToList();
+        }
+
+        return result;
+    }
+
     public async Task UpsertAsync(EnvironmentVariableEntity entity, CancellationToken cancellationToken)
     {
         const string sql = """

@@ -24,7 +24,21 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
                                id Id,
                                project_id ProjectId,
                                timestamp Timestamp,
-                               request_snapshot_json RequestSnapshotJson,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.name'),
+                                   json_extract(request_snapshot_json, '$.Name'),
+                                   ''
+                               ) RequestName,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.method'),
+                                   json_extract(request_snapshot_json, '$.Method'),
+                                   ''
+                               ) RequestMethod,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.url'),
+                                   json_extract(request_snapshot_json, '$.Url'),
+                                   ''
+                               ) RequestUrl,
                                case
                                    when trim(coalesce(response_snapshot_json, '')) = '' then 0
                                    when json_valid(response_snapshot_json) = 0 then 1

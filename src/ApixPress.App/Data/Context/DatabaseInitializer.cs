@@ -8,7 +8,7 @@ namespace ApixPress.App.Data.Context;
 
 public sealed class DatabaseInitializer : ISingletonDependency
 {
-    private const int CurrentSchemaVersion = 5;
+    private const int CurrentSchemaVersion = 6;
     private const string SchemaMigrationsTable = "schema_migrations";
 
     private readonly IDbConnectionFactory _connectionFactory;
@@ -128,6 +128,7 @@ public sealed class DatabaseInitializer : ISingletonDependency
         connection.Execute("CREATE INDEX IF NOT EXISTS ix_api_endpoints_method_path ON api_endpoints(method, path);");
         connection.Execute("CREATE INDEX IF NOT EXISTS ix_request_parameters_endpoint_id ON request_parameters(endpoint_id);");
         connection.Execute("CREATE INDEX IF NOT EXISTS ix_request_cases_project_parent_id ON request_cases(project_id, parent_id);");
+        connection.Execute("CREATE INDEX IF NOT EXISTS ix_request_cases_project_listing ON request_cases(project_id, entry_type, folder_path, updated_at DESC);");
 
         connection.Execute("update request_cases set entry_type = 'quick-request' where ifnull(entry_type, '') = ''");
         connection.Execute("update request_cases set folder_path = '' where folder_path is null");

@@ -17,6 +17,10 @@ public interface IEnvironmentVariableService
 
     Task<IReadOnlyList<EnvironmentVariableDto>> GetVariablesAsync(string environmentId, CancellationToken cancellationToken);
 
+    Task<IReadOnlyDictionary<string, IReadOnlyList<EnvironmentVariableDto>>> GetVariablesByEnvironmentIdsAsync(
+        IEnumerable<string> environmentIds,
+        CancellationToken cancellationToken);
+
     Task<IResultModel<EnvironmentVariableDto>> SaveVariableAsync(EnvironmentVariableDto variable, CancellationToken cancellationToken);
 
     Task<IResultModel<IReadOnlyList<EnvironmentVariableDto>>> SaveVariablesAsync(

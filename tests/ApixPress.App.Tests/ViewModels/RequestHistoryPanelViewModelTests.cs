@@ -105,6 +105,37 @@ public sealed class RequestHistoryPanelViewModelTests
         Assert.DoesNotContain(target, viewModel.HistoryDisplayItems.OfType<RequestHistoryItemViewModel>());
     }
 
+    [Fact]
+    public void HistoryItem_ApplyDetail_ShouldReplaceSummaryRequestSnapshot()
+    {
+        var item = new RequestHistoryItemViewModel
+        {
+            Id = "history-1",
+            Method = "POST",
+            Url = "/orders",
+            Timestamp = DateTime.UtcNow,
+            RequestSnapshot = new RequestSnapshotDto { Method = "POST", Url = "/orders" }
+        };
+
+        item.ApplyDetail(new RequestHistoryItemDto
+        {
+            Id = item.Id,
+            Timestamp = item.Timestamp,
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "POST",
+                Url = "/orders",
+                BodyMode = BodyModes.RawJson,
+                BodyContent = "{\"amount\":1}",
+                Headers = [new RequestKeyValueDto { Name = "Content-Type", Value = "application/json" }]
+            }
+        });
+
+        Assert.True(item.HasRequestBody);
+        Assert.True(item.HasRequestHeaders);
+        Assert.Equal("{\"amount\":1}", item.RequestSnapshot.BodyContent);
+    }
+
     private static (RequestHistoryPanelViewModel Panel, ViewModelSharedTestDoubles.FakeRequestHistoryService Service) CreatePanel(bool yesterdayOnly = false)
     {
         var service = new ViewModelSharedTestDoubles.FakeRequestHistoryService();

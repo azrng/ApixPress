@@ -27,7 +27,7 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
     [ObservableProperty]
     private string sizeText = string.Empty;
 
-    public required RequestSnapshotDto RequestSnapshot { get; init; }
+    public RequestSnapshotDto RequestSnapshot { get; set; } = new();
 
     [ObservableProperty]
     private ResponseSnapshotDto? responseSnapshot;
@@ -88,7 +88,15 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
 
     public void ApplyDetail(RequestHistoryItemDto detail)
     {
+        RequestSnapshot = detail.RequestSnapshot;
         ResponseSnapshot = detail.ResponseSnapshot;
         HasLoadedDetail = true;
+        OnPropertyChanged(nameof(RequestSnapshot));
+        OnPropertyChanged(nameof(HasQueryParameters));
+        OnPropertyChanged(nameof(HasPathParameters));
+        OnPropertyChanged(nameof(HasRequestParameters));
+        OnPropertyChanged(nameof(HasRequestHeaders));
+        OnPropertyChanged(nameof(HasRequestBody));
+        OnPropertyChanged(nameof(RequestBodyDisplayText));
     }
 }

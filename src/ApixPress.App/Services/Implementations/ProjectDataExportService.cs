@@ -306,13 +306,14 @@ public sealed class ProjectDataExportService : IProjectDataExportService, ITrans
                 Path = NormalizePath(item.RequestSnapshot.Url)
             })
             .ToList();
+        var existingEndpointByKey = existingEndpoints
+            .GroupBy(endpoint => BuildConflictKey(endpoint.Method, endpoint.Path), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
         var conflicts = importedEndpoints
             .Select(item => new
             {
                 Imported = item,
-                Existing = existingEndpoints.FirstOrDefault(endpoint =>
-                    string.Equals(endpoint.Method, item.Method, StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(endpoint.Path, item.Path, StringComparison.OrdinalIgnoreCase))
+                Existing = existingEndpointByKey.GetValueOrDefault(BuildConflictKey(item.Method, item.Path))
             })
             .Where(item => item.Existing is not null)
             .Select(item => new ApiImportConflictDto
@@ -337,6 +338,11 @@ public sealed class ProjectDataExportService : IProjectDataExportService, ITrans
             ConflictCount = conflicts.Count,
             ConflictItems = conflicts
         };
+    }
+
+    private static string BuildConflictKey(string method, string path)
+    {
+        return $"{method}\u0000{path}";
     }
 
     private static EndpointMap BuildEndpointMap(string documentId, ProjectDataExportEntryDto source)

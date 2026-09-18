@@ -28,9 +28,8 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
 
     public async Task<IReadOnlyList<RequestCaseDto>> GetCasesAsync(string projectId, CancellationToken cancellationToken)
     {
-        var cases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
-        // 逐行快照反序列化移出 UI 线程（打开项目时用例列表全量加载路径）
-        return await Task.Run(() => cases.Select(ToSummaryDto).ToList(), cancellationToken);
+        var cases = await _requestCaseRepository.GetCaseSummariesAsync(projectId, cancellationToken);
+        return cases.Select(ToSummaryDto).ToList();
     }
 
     public Task<IReadOnlyList<RequestCaseDto>> GetCaseDetailsAsync(string projectId, CancellationToken cancellationToken)

@@ -24,7 +24,7 @@ public sealed class DatabaseInitializerTests
         var basicColumnCount = connection.ExecuteScalar<long>(
             "select count(1) from pragma_table_info('project_http_settings') where name in ('basic_username', 'basic_password')");
 
-        Assert.Equal(5, schemaVersion);
+        Assert.Equal(6, schemaVersion);
         Assert.Equal(0, projectCount);
         Assert.Equal(0, environmentCount);
         Assert.Equal(1, httpSettingsTableCount);
@@ -147,7 +147,7 @@ public sealed class DatabaseInitializerTests
         var basicColumnCount = verificationConnection.ExecuteScalar<long>(
             "select count(1) from pragma_table_info('project_http_settings') where name in ('basic_username', 'basic_password')");
 
-        Assert.Equal(5, schemaVersion);
+        Assert.Equal(6, schemaVersion);
         Assert.Equal(1, httpSettingsTableCount);
         Assert.Equal(2, basicColumnCount);
     }
@@ -190,6 +190,6 @@ public sealed class DatabaseInitializerTests
             "select max(version) from schema_migrations");
 
         Assert.Equal(string.Empty, folderPath);
-        Assert.Equal(5, schemaVersion);
+        Assert.Equal(6, schemaVersion);
     }
 }

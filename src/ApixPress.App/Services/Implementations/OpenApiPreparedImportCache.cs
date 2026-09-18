@@ -6,11 +6,13 @@ namespace ApixPress.App.Services.Implementations;
 internal sealed class OpenApiPreparedImportCache
 {
     private static readonly TimeSpan PreparedImportCacheLifetime = TimeSpan.FromMinutes(10);
-    // 每条缓存含完整原始文档（最大 20MB），条目数需保持低位避免内存驻留数百 MB
+    // 解析图会与原始字符串同时驻留，按原始文本字符数的近似托管内存占用控制总量。
     private const int MaxCacheEntries = 6;
+    private const long MaxCacheBytes = 96L * 1024 * 1024;
 
     private readonly Dictionary<string, PreparedImportPayload> _preparedImports = new(StringComparer.OrdinalIgnoreCase);
     private readonly Lock _preparedImportCacheLock = new();
+    private long _cachedBytes;
 
     public bool TryGet(string projectId, string sourceType, string sourceValue, out ParsedDocumentGraph graph, out ApiImportPreviewDto preview)
     {
@@ -57,21 +59,29 @@ internal sealed class OpenApiPreparedImportCache
         {
             EvictExpiredEntries();
 
-            _preparedImports[BuildPreparedImportKey(projectId, sourceType, sourceValue)] =
-                new PreparedImportPayload(graph, preview, DateTime.UtcNow);
+            var cacheKey = BuildPreparedImportKey(projectId, sourceType, sourceValue);
+            var estimatedBytes = EstimatePayloadBytes(graph);
+            RemoveEntry(cacheKey);
+            if (estimatedBytes > MaxCacheBytes)
+            {
+                return;
+            }
 
-            if (_preparedImports.Count > MaxCacheEntries)
+            while (_preparedImports.Count >= MaxCacheEntries || _cachedBytes + estimatedBytes > MaxCacheBytes)
             {
                 var overflowKeys = _preparedImports
                     .OrderBy(item => item.Value.CachedAt)
-                    .Take(_preparedImports.Count - MaxCacheEntries)
+                    .Take(1)
                     .Select(item => item.Key)
                     .ToList();
                 foreach (var key in overflowKeys)
                 {
-                    _preparedImports.Remove(key);
+                    RemoveEntry(key);
                 }
             }
+
+            _preparedImports[cacheKey] = new PreparedImportPayload(graph, preview, DateTime.UtcNow, estimatedBytes);
+            _cachedBytes += estimatedBytes;
         }
     }
 
@@ -79,7 +89,7 @@ internal sealed class OpenApiPreparedImportCache
     {
         lock (_preparedImportCacheLock)
         {
-            _preparedImports.Remove(BuildPreparedImportKey(projectId, sourceType, sourceValue));
+            RemoveEntry(BuildPreparedImportKey(projectId, sourceType, sourceValue));
         }
     }
 
@@ -92,8 +102,22 @@ internal sealed class OpenApiPreparedImportCache
             .ToList();
         foreach (var key in expiredKeys)
         {
-            _preparedImports.Remove(key);
+            RemoveEntry(key);
         }
+    }
+
+    private void RemoveEntry(string key)
+    {
+        if (_preparedImports.Remove(key, out var payload))
+        {
+            _cachedBytes -= payload.EstimatedBytes;
+        }
+    }
+
+    private static long EstimatePayloadBytes(ParsedDocumentGraph graph)
+    {
+        var rawJsonLength = graph.Document.RawJson?.Length ?? 0;
+        return checked((long)rawJsonLength * sizeof(char) * 3);
     }
 
     private bool TryGetPayload(
@@ -111,14 +135,14 @@ internal sealed class OpenApiPreparedImportCache
 
         if (DateTime.UtcNow - payload.CachedAt > PreparedImportCacheLifetime)
         {
-            _preparedImports.Remove(cacheKey);
+            RemoveEntry(cacheKey);
             payload = null!;
             return false;
         }
 
         if (removeAfterRead)
         {
-            _preparedImports.Remove(cacheKey);
+            RemoveEntry(cacheKey);
         }
 
         return true;
@@ -129,5 +153,9 @@ internal sealed class OpenApiPreparedImportCache
         return $"{projectId}::{sourceType.Trim().ToUpperInvariant()}::{sourceValue.Trim()}";
     }
 
-    private sealed record PreparedImportPayload(ParsedDocumentGraph Graph, ApiImportPreviewDto Preview, DateTime CachedAt);
+    private sealed record PreparedImportPayload(
+        ParsedDocumentGraph Graph,
+        ApiImportPreviewDto Preview,
+        DateTime CachedAt,
+        long EstimatedBytes);
 }

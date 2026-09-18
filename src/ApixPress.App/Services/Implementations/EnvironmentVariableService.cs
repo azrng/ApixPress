@@ -142,6 +142,20 @@ public sealed class EnvironmentVariableService : IEnvironmentVariableService, IT
         return items.Select(ToVariableDto).ToList();
     }
 
+    public async Task<IReadOnlyDictionary<string, IReadOnlyList<EnvironmentVariableDto>>> GetVariablesByEnvironmentIdsAsync(
+        IEnumerable<string> environmentIds,
+        CancellationToken cancellationToken)
+    {
+        var grouped = await _environmentVariableRepository.GetByEnvironmentIdsAsync(environmentIds, cancellationToken);
+        var result = new Dictionary<string, IReadOnlyList<EnvironmentVariableDto>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var item in grouped)
+        {
+            result[item.Key] = item.Value.Select(ToVariableDto).ToList();
+        }
+
+        return result;
+    }
+
     public async Task<IResultModel<EnvironmentVariableDto>> SaveVariableAsync(EnvironmentVariableDto variable, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(variable.EnvironmentId))

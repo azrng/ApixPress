@@ -149,6 +149,60 @@ public sealed class RequestExecutionServiceTests
     }
 
     [Fact]
+    public async Task SendAsync_ShouldRejectOversizedTextRequestBodyBeforeTransport()
+    {
+        var handler = new CapturingHttpMessageHandler();
+        using var client = new HttpClient(handler);
+        var service = new RequestExecutionService(
+            new ViewModelSharedTestDoubles.FakeEnvironmentVariableService(),
+            new FakeAppShellSettingsService(),
+            serializer: null!,
+            (_, _, _) => client);
+
+        var result = await service.SendAsync(
+            new RequestSnapshotDto
+            {
+                Method = "POST",
+                Url = "https://api.example.com/upload",
+                BodyMode = BodyModes.RawText,
+                BodyContent = new string('x', RequestExecutionService.RequestBodyByteLimit + 1)
+            },
+            new ProjectEnvironmentDto { Id = "env-1" },
+            CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("8 MB", result.Message);
+        Assert.Null(handler.LastRequest);
+    }
+
+    [Fact]
+    public async Task SendAsync_ShouldLimitActualRequestBodySnapshot()
+    {
+        var handler = new CapturingHttpMessageHandler();
+        using var client = new HttpClient(handler);
+        var service = new RequestExecutionService(
+            new ViewModelSharedTestDoubles.FakeEnvironmentVariableService(),
+            new FakeAppShellSettingsService(),
+            serializer: null!,
+            (_, _, _) => client);
+
+        var result = await service.SendAsync(
+            new RequestSnapshotDto
+            {
+                Method = "POST",
+                Url = "https://api.example.com/upload",
+                BodyMode = BodyModes.RawText,
+                BodyContent = new string('x', RequestExecutionService.ActualRequestBodyPreviewCharacterLimit + 1024)
+            },
+            new ProjectEnvironmentDto { Id = "env-1" },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(RequestExecutionService.ActualRequestBodyPreviewCharacterLimit, result.Data!.ActualRequest!.BodyText.Length);
+        Assert.Equal(RequestExecutionService.ActualRequestBodyPreviewCharacterLimit + 1024, handler.LastBodyText!.Length);
+    }
+
+    [Fact]
     public async Task SendAsync_ShouldMarkActualRequestWithoutBody_WhenBodyModeIsNone()
     {
         var handler = new CapturingHttpMessageHandler();

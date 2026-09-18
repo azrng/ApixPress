@@ -37,7 +37,9 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
         return PerfLog.MeasureAsync("历史·详情加载", async () =>
         {
             var entity = await _requestHistoryRepository.GetByIdAsync(projectId, id, cancellationToken);
-            return entity is null ? null : ToDetailDto(entity);
+            return entity is null
+                ? null
+                : await Task.Run(() => ToDetailDto(entity), cancellationToken);
         });
     }
 
@@ -45,13 +47,19 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
     {
         return PerfLog.MeasureAsync("历史·写入", async () =>
         {
+            // 快照序列化可能包含 MB 级响应正文，移出 UI continuation，避免发送完成后卡住历史面板。
+            var serializedSnapshots = await Task.Run(() =>
+            (
+                Request: _serializer.ToJson(request),
+                Response: response is not null ? _serializer.ToJson(response) : "{}"
+            ), cancellationToken);
             var entity = new RequestHistoryEntity
             {
                 Id = Guid.NewGuid().ToString("N"),
                 ProjectId = projectId,
                 Timestamp = DateTime.UtcNow,
-                RequestSnapshotJson = _serializer.ToJson(request),
-                ResponseSnapshotJson = response is not null ? _serializer.ToJson(response) : "{}"
+                RequestSnapshotJson = serializedSnapshots.Request,
+                ResponseSnapshotJson = serializedSnapshots.Response
             };
 
             await _requestHistoryRepository.UpsertAsync(entity, cancellationToken);
@@ -88,7 +96,7 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
 
     private RequestHistoryItemDto ToSummaryDto(RequestHistoryEntity entity)
     {
-        var requestSnapshot = _serializer.ToObject<RequestSnapshotDto>(entity.RequestSnapshotJson) ?? new RequestSnapshotDto();
+        var requestSnapshot = BuildSummarySnapshot(entity);
         return new RequestHistoryItemDto
         {
             Id = entity.Id,
@@ -107,6 +115,24 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
         var requestSnapshot = _serializer.ToObject<RequestSnapshotDto>(entity.RequestSnapshotJson) ?? new RequestSnapshotDto();
         var responseSnapshot = _serializer.ToObject<ResponseSnapshotDto>(entity.ResponseSnapshotJson);
         return CreateDetailDto(entity.Id, entity.Timestamp, requestSnapshot, responseSnapshot);
+    }
+
+    private RequestSnapshotDto BuildSummarySnapshot(RequestHistoryEntity entity)
+    {
+        if (!string.IsNullOrWhiteSpace(entity.RequestMethod)
+            || !string.IsNullOrWhiteSpace(entity.RequestUrl)
+            || !string.IsNullOrWhiteSpace(entity.RequestName))
+        {
+            return new RequestSnapshotDto
+            {
+                Name = entity.RequestName,
+                Method = entity.RequestMethod,
+                Url = entity.RequestUrl
+            };
+        }
+
+        // 兼容测试替身和旧仓储实现：摘要字段为空时才回退到完整快照。
+        return _serializer.ToObject<RequestSnapshotDto>(entity.RequestSnapshotJson) ?? new RequestSnapshotDto();
     }
 
     private static RequestHistoryItemDto CreateDetailDto(

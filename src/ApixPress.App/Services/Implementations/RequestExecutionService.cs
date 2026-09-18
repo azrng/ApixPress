@@ -18,6 +18,8 @@ namespace ApixPress.App.Services.Implementations;
 public sealed partial class RequestExecutionService : IRequestExecutionService, ITransientDependency
 {
     internal const int ResponsePreviewByteLimit = 1024 * 1024;
+    internal const int ActualRequestBodyPreviewCharacterLimit = 256 * 1024;
+    internal const int RequestBodyByteLimit = 8 * 1024 * 1024;
     private const int MaxSharedHttpClients = 16;
     private static readonly ConcurrentDictionary<RequestClientOptions, SharedHttpClientEntry> SharedHttpClients = new();
     private static long _lastClientCleanupTicks;
@@ -188,6 +190,11 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         }
 
         var bodyContent = ReplaceVariables(request.BodyContent, activeVariables);
+        if (request.BodyMode != BodyModes.FormData && request.BodyMode != BodyModes.Binary)
+        {
+            EnsureTextRequestBodySize(bodyContent);
+        }
+
         return request.BodyMode switch
         {
             BodyModes.RawJson => new StringContent(bodyContent, Encoding.UTF8, "application/json"),
@@ -216,6 +223,7 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
 
         var content = new MultipartFormDataContent();
         var hasPart = false;
+        var textBodyBytes = 0L;
         foreach (var field in fields.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
         {
             if (field.FieldType == FormFieldTypes.File)
@@ -231,7 +239,10 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             }
             else
             {
-                content.Add(new StringContent(ReplaceVariables(field.Value, activeVariables)), field.Name);
+                var fieldValue = ReplaceVariables(field.Value, activeVariables);
+                textBodyBytes = checked(textBodyBytes + Encoding.UTF8.GetByteCount(fieldValue));
+                EnsureTextRequestBodySize(textBodyBytes);
+                content.Add(new StringContent(fieldValue), field.Name);
                 hasPart = true;
             }
         }
@@ -246,6 +257,19 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         }
 
         return content;
+    }
+
+    private static void EnsureTextRequestBodySize(string body)
+    {
+        EnsureTextRequestBodySize(Encoding.UTF8.GetByteCount(body));
+    }
+
+    private static void EnsureTextRequestBodySize(long byteCount)
+    {
+        if (byteCount > RequestBodyByteLimit)
+        {
+            throw new InvalidOperationException("文本请求体超过 8 MB 限制，请缩小内容或改用文件上传。");
+        }
     }
 
     /// <summary>按路径构建单个文件 part；文件缺失抛业务可读异常，由发送入口统一转为失败结果。</summary>
@@ -308,15 +332,22 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
                 .Select(field => field.FieldType == FormFieldTypes.File
                     ? $"{field.Name}={string.Join(", ", field.Files.Select(file => file.Name))}（文件）"
                     : $"{field.Name}={ReplaceVariables(field.Value, activeVariables)}");
-            return string.Join("\n", lines);
+            return LimitActualRequestBodyText(string.Join("\n", lines));
         }
 
         if (request.BodyMode == BodyModes.Binary && !string.IsNullOrWhiteSpace(request.BodyContent))
         {
-            return $"[二进制文件] {request.BodyContent}";
+            return LimitActualRequestBodyText($"[二进制文件] {request.BodyContent}");
         }
 
-        return ReplaceVariables(request.BodyContent, activeVariables);
+        return LimitActualRequestBodyText(ReplaceVariables(request.BodyContent, activeVariables));
+    }
+
+    private static string LimitActualRequestBodyText(string body)
+    {
+        return body.Length <= ActualRequestBodyPreviewCharacterLimit
+            ? body
+            : body[..ActualRequestBodyPreviewCharacterLimit];
     }
 
     private static IEnumerable<ResponseHeaderDto> EnumerateActualHeaders(HttpHeaders headers)
