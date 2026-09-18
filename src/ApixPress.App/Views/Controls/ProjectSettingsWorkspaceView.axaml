@@ -276,7 +276,7 @@
                   <Border Classes="ProjectSettingsSectionDivider" />
                   <StackPanel Spacing="2">
                     <TextBlock Classes="SectionTitle" Text="最近导入" />
-                    <TextBlock Classes="CaptionText" Text="当前项目最近导入的 OpenAPI / Swagger 文档。" />
+                    <TextBlock Classes="CaptionText" Text="当前项目最近导入的 OpenAPI / Swagger / Postman 文档。" />
                   </StackPanel>
                   <ItemsControl ItemsSource="{Binding Import.ImportedApiDocuments}"
                                 IsVisible="{Binding Import.HasImportedApiDocuments}">

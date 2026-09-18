@@ -286,20 +286,28 @@ public sealed class WorkbenchLayoutTests
         var contextGrid = contextBar.Elements()
             .Single(element => element.Name.LocalName == "Grid");
 
-        Assert.Equal("Auto,*,Auto", contextGrid.Attribute("ColumnDefinitions")?.Value);
+        // T071：模式上下文移到接口名后，上下文栏单行 4 列（模式切换/接口名/上下文 chip/生成代码）
+        Assert.Equal("Auto,*,Auto,Auto", contextGrid.Attribute("ColumnDefinitions")?.Value);
         Assert.Contains(
             contextGrid.Descendants(),
-            element => element.Name.LocalName == "StackPanel"
+            element => element.Name.LocalName == "TextBox"
                 && element.Attribute("Grid.Column")?.Value == "1"
-                && element.Descendants().Any(child => child.Name.LocalName == "TextBox"
-                    && HasClass(child, "HttpEditorTitleInput")));
+                && HasClass(element, "HttpEditorTitleInput"));
+        Assert.Contains(
+            contextGrid.Descendants(),
+            element => element.Name.LocalName == "Border"
+                && HasClass(element, "HttpEditorContextChip")
+                && element.Attribute("Grid.Column")?.Value == "2"
+                && element.Descendants().Any(child => child.Name.LocalName == "TextBlock"
+                    && child.Attribute("Text")?.Value == "{Binding Editor.CurrentHttpCaseContextText}"));
         Assert.Contains(
             contextGrid.Descendants(),
             element => element.Name.LocalName == "Border" && HasClass(element, "HttpEditorModeBar"));
         Assert.Contains(
             contextGrid.Descendants(),
             element => element.Name.LocalName == "Button"
-                && HasClass(element, "HttpCodeIconButton"));
+                && HasClass(element, "HttpCodeIconButton")
+                && element.Attribute("Grid.Column")?.Value == "3");
     }
 
     [Fact]

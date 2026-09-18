@@ -23,10 +23,20 @@
     <Setter Property="Padding" Value="{StaticResource Pad.2}" />
   </Style>
 
-  <Style Selector="TextBlock.HttpEditorContextLabel">
+  <!-- 模式上下文 chip：接口名右侧同行展示「接口模式 / 用例模式 · 用例名」，超长用例名省略 -->
+  <Style Selector="Border.HttpEditorContextChip">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="Padding" Value="8,2" />
+    <Setter Property="MaxWidth" Value="220" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpEditorContextChipText">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
-    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
   </Style>
 
   <!-- 接口名输入对齐原型 name-input：撑满模式切换与代码按钮之间的空间 -->

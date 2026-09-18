@@ -23,7 +23,7 @@ public sealed class FilePickerService : IFilePickerService, ITransientDependency
 
         var files = await _windowHostService.MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "选择 Swagger / OpenAPI JSON 文件",
+            Title = "选择 OpenAPI / Swagger / Postman JSON 文件",
             AllowMultiple = false,
             FileTypeFilter =
             [

@@ -17,7 +17,7 @@
             <TextBlock Classes="WorkspaceLandingTitle"
                        Text="开始构建接口" />
             <TextBlock Classes="WorkspaceLandingSubtitle"
-                       Text="新建 HTTP 接口、发送快捷请求，或从项目设置导入 OpenAPI / Swagger 文档。" />
+                       Text="新建 HTTP 接口、发送快捷请求，或从项目设置导入 OpenAPI / Swagger / Postman 文档。" />
           </StackPanel>
 
           <StackPanel Classes="WorkspaceLandingChoicePanel"
@@ -83,7 +83,7 @@
                              Text="导入文档" />
                   <TextBlock Grid.Row="2"
                              Classes="WorkspaceLandingChoiceDescription"
-                             Text="OpenAPI / Swagger 一键同步" />
+                             Text="OpenAPI / Swagger / Postman 一键导入" />
                 </Grid>
               </Button>
             </StackPanel>

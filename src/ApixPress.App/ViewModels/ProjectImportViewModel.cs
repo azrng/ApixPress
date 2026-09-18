@@ -841,6 +841,11 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
             return ImportTexts.SourceTypeProjectPackage;
         }
 
+        if (string.Equals(sourceType, "POSTMAN", StringComparison.OrdinalIgnoreCase))
+        {
+            return ImportTexts.SourceTypePostman;
+        }
+
         return string.Equals(sourceType, "URL", StringComparison.OrdinalIgnoreCase)
             ? ImportTexts.SourceTypeUrl
             : ImportTexts.SourceTypeFile;

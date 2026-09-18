@@ -13,12 +13,12 @@ namespace ApixPress.App.Services.Implementations;
 public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDependency
 {
     private readonly IApiDocumentRepository _apiDocumentRepository;
-    private readonly Func<string, string, string, ParsedDocumentGraph> _parseOpenApiDocument;
+    private readonly Func<string, string, string, ParsedDocumentGraph> _parseDocument;
     private readonly OpenApiImportSourceReader _sourceReader;
     private readonly OpenApiPreparedImportCache _preparedImportCache;
 
     public ApiWorkspaceService(IApiDocumentRepository apiDocumentRepository)
-        : this(apiDocumentRepository, new OpenApiImportSourceReader(), OpenApiJsonParser.Parse)
+        : this(apiDocumentRepository, new OpenApiImportSourceReader(), ImportDocumentParser.Parse)
     {
     }
 
@@ -28,7 +28,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         : this(
             apiDocumentRepository,
             new OpenApiImportSourceReader(downloadOpenApiDocumentAsync, File.ReadAllTextAsync),
-            OpenApiJsonParser.Parse)
+            ImportDocumentParser.Parse)
     {
     }
 
@@ -51,7 +51,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     {
         _apiDocumentRepository = apiDocumentRepository;
         _sourceReader = sourceReader;
-        _parseOpenApiDocument = parseOpenApiDocument;
+        _parseDocument = parseOpenApiDocument;
         _preparedImportCache = new OpenApiPreparedImportCache();
     }
 
@@ -245,7 +245,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         try
         {
             var graph = await PerfLog.MeasureAsync("导入·OpenAPI解析",
-                () => Task.Run(() => _parseOpenApiDocument(json, sourceType, sourceValue), cancellationToken));
+                () => Task.Run(() => _parseDocument(json, sourceType, sourceValue), cancellationToken));
             return await ImportPreparedGraphAsync(projectId, graph, cancellationToken);
         }
         catch (BaseException exception)
@@ -271,7 +271,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     {
         try
         {
-            var graph = await Task.Run(() => _parseOpenApiDocument(json, sourceType, sourceValue), cancellationToken);
+            var graph = await Task.Run(() => _parseDocument(json, sourceType, sourceValue), cancellationToken);
             var existingEndpoints = await _apiDocumentRepository.GetEndpointsByProjectIdAsync(projectId, cancellationToken);
             var preview = OpenApiImportPreviewBuilder.Build(graph, existingEndpoints);
             _preparedImportCache.Cache(projectId, sourceType, sourceValue, graph, preview);
