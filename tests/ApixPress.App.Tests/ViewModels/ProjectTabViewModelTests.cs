@@ -1266,6 +1266,7 @@ public sealed partial class ProjectTabViewModelTests
         var request = Assert.Single(dialogService.Requests);
         Assert.Equal(typeof(RequestCodeDialogView), request.ViewType);
         Assert.Same(viewModel.Editor, request.DataContext);
+        Assert.True(request.ShowCloseButton);
         Assert.Equal("生成代码", viewModel.Editor.CurrentRequestCodeTitle);
         Assert.Contains("curl --request POST", viewModel.Editor.CurrentRequestCodeCurlCommand);
         Assert.Contains("https://demo.local/orders", viewModel.Editor.CurrentRequestCodeCurlCommand);

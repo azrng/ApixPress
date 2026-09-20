@@ -797,12 +797,16 @@ public static class ViewModelSharedTestDoubles
             bool showCloseButton = true)
             where TView : Control, new()
         {
-            var request = new DialogRequest(typeof(TView), dataContext, title);
+            var request = new DialogRequest(typeof(TView), dataContext, title, showCloseButton);
             Requests.Add(request);
             OnShow?.Invoke(request);
             return Task.FromResult(NextResult);
         }
 
-        public sealed record DialogRequest(Type ViewType, object DataContext, string? Title);
+        public sealed record DialogRequest(
+            Type ViewType,
+            object DataContext,
+            string? Title,
+            bool ShowCloseButton);
     }
 }

@@ -237,11 +237,11 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         RefreshRequestCodeDialogContent();
         SelectedRequestCodeLanguage = 0;
         SelectedRequestCodeTab = 0;
-        // 标题区保留在内容内（随请求实时刷新），chrome 不再展示标题与关闭钮
+        // 内容区保留动态请求信息，同时启用 chrome 关闭钮；底部关闭按钮继续保留
         _isRequestCodeDialogOpen = true;
         try
         {
-            await _dialogService.ShowDialogAsync<Views.Controls.RequestCodeDialogView>(this, showCloseButton: false);
+            await _dialogService.ShowDialogAsync<Views.Controls.RequestCodeDialogView>(this, showCloseButton: true);
         }
         finally
         {
