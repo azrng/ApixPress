@@ -8,7 +8,7 @@ namespace ApixPress.App.Data.Context;
 
 public sealed class DatabaseInitializer : ISingletonDependency
 {
-    private const int CurrentSchemaVersion = 1;
+    private const int CurrentSchemaVersion = 6;
     private const string SchemaMigrationsTable = "schema_migrations";
 
     private readonly IDbConnectionFactory _connectionFactory;
@@ -23,6 +23,9 @@ public sealed class DatabaseInitializer : ISingletonDependency
         using var connection = _connectionFactory.CreateConnection();
         connection.Open();
 
+        // WAL 允许读写并发，避免"发请求写历史"与导入批量写互相阻塞；模式持久化，设置一次即可
+        connection.Execute("pragma journal_mode=WAL;");
+
         var hasExistingWorkspace = HasExistingWorkspace(connection);
         EnsureMigrationsTable(connection);
 
@@ -30,6 +33,11 @@ public sealed class DatabaseInitializer : ISingletonDependency
         {
             RunMigrations(connection, hasExistingWorkspace);
         }
+    }
+
+    public Task InitializeAsync(CancellationToken cancellationToken = default)
+    {
+        return Task.Run(Initialize, cancellationToken);
     }
 
     private static void RunMigrations(IDbConnection connection, bool hasExistingWorkspace)
@@ -102,6 +110,9 @@ public sealed class DatabaseInitializer : ISingletonDependency
         EnsureColumn(connection, "request_history", "project_id", "TEXT");
         EnsureColumn(connection, "environment_variables", "environment_id", "TEXT");
         EnsureColumn(connection, "environment_variables", "environment_name", "TEXT NOT NULL DEFAULT ''");
+        EnsureProjectHttpSettingsTable(connection);
+        EnsureColumn(connection, "project_http_settings", "basic_username", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(connection, "project_http_settings", "basic_password", "TEXT NOT NULL DEFAULT ''");
 
         connection.Execute("DROP INDEX IF EXISTS ux_request_cases_group_name;");
         connection.Execute("DROP INDEX IF EXISTS ux_request_cases_project_group_name;");
@@ -117,10 +128,27 @@ public sealed class DatabaseInitializer : ISingletonDependency
         connection.Execute("CREATE INDEX IF NOT EXISTS ix_api_endpoints_method_path ON api_endpoints(method, path);");
         connection.Execute("CREATE INDEX IF NOT EXISTS ix_request_parameters_endpoint_id ON request_parameters(endpoint_id);");
         connection.Execute("CREATE INDEX IF NOT EXISTS ix_request_cases_project_parent_id ON request_cases(project_id, parent_id);");
+        connection.Execute("CREATE INDEX IF NOT EXISTS ix_request_cases_project_listing ON request_cases(project_id, entry_type, folder_path, updated_at DESC);");
 
         connection.Execute("update request_cases set entry_type = 'quick-request' where ifnull(entry_type, '') = ''");
         connection.Execute("update request_cases set folder_path = '' where folder_path is null");
         connection.Execute("update request_cases set parent_id = '' where parent_id is null");
+    }
+
+    private static void EnsureProjectHttpSettingsTable(IDbConnection connection)
+    {
+        connection.Execute(
+            """
+            create table if not exists project_http_settings (
+                project_id text primary key,
+                auth_mode text not null default 'none',
+                bearer_token text not null default '',
+                basic_username text not null default '',
+                basic_password text not null default '',
+                updated_at text not null,
+                foreign key(project_id) references projects(id) on delete cascade
+            )
+            """);
     }
 
     private static void MigrateLegacyWorkspaceData(IDbConnection connection)

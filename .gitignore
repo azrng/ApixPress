@@ -341,8 +341,15 @@ ASALocalRun/
 # BeatPulse healthcheck temp database 
 healthchecksdb
 
-# 忽略xml文件
+# 忽略xml文件（排除项目、解决方案、AXAML 等必要文件）
 *.xml
+!src/**/*.xml
+!src/**/*.axaml
+!*.csproj
+!*.slnx
+!*.props
+!*.targets
+!Directory.Build.*
 
 # 忽略生成的文档
 docs/
@@ -352,7 +359,33 @@ docs/
 .dotnet-cli
 .codex
 .dotnet
+.codegraph
+.cursor
+.learnings
 NUL
 
 # 本地工具生成的 NuGet 配置目录
 src/ApixPress.App/.appdata/
+# AI rule 生成器产物（use-ai-rule 生成：配方记录与生成器本体，勿提交）
+.ai-rule-profile.json
+use-ai-rule.exe
+use-ai-rule
+
+# NativeAOT 打包产物（package-aot.bat 输出）
+dist/
+.zcode
+# AI rule 本地产物（use-ai-rule 生成：配方记录、生成器本体与规则效果反馈记录，勿提交）
+use-ai-rule*
+.ai-rule-feedback.md
+
+# Git Bash 崩溃转储
+bash.exe.stackdump
+
+# AI rule 本地产物与 AI 工具目录（use-ai-rule 生成：配方记录、生成器本体、规则效果反馈与 AI 工具本地目录，勿提交）
+.zcode/
+.claude/
+.dotnet/
+.codex/
+.cursor/
+.codegraph/
+.learnings/

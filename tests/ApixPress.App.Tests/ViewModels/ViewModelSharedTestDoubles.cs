@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using Azrng.Core.Results;
+using Ursa.Controls;
 
 namespace ApixPress.App.Tests.ViewModels;
 
@@ -45,6 +47,31 @@ public static class ViewModelSharedTestDoubles
             }));
         }
 
+        // 默认模拟真实规则：环境已有 BaseUrl 时导入不同步；置为 true 可模拟空环境被填充
+        public bool ApplyImportedBaseUrlEnabled { get; set; }
+
+        public List<(string ProjectId, string BaseUrl)> AppliedImportedBaseUrls { get; } = [];
+
+        public Task<ProjectEnvironmentDto?> ApplyImportedBaseUrlAsync(string projectId, string baseUrl, CancellationToken cancellationToken)
+        {
+            AppliedImportedBaseUrls.Add((projectId, baseUrl));
+            if (!ApplyImportedBaseUrlEnabled)
+            {
+                return Task.FromResult<ProjectEnvironmentDto?>(null);
+            }
+
+            ProjectEnvironmentDto applied = new()
+            {
+                Id = "env-1",
+                ProjectId = projectId,
+                Name = "开发",
+                BaseUrl = baseUrl,
+                IsActive = true,
+                SortOrder = 1
+            };
+            return Task.FromResult<ProjectEnvironmentDto?>(applied);
+        }
+
         public Task<IResultModel<bool>> DeleteEnvironmentAsync(string projectId, string environmentId, CancellationToken cancellationToken)
         {
             return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
@@ -53,6 +80,14 @@ public static class ViewModelSharedTestDoubles
         public Task<IReadOnlyList<EnvironmentVariableDto>> GetVariablesAsync(string environmentId, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyList<EnvironmentVariableDto>>([]);
+        }
+
+        public Task<IReadOnlyDictionary<string, IReadOnlyList<EnvironmentVariableDto>>> GetVariablesByEnvironmentIdsAsync(
+            IEnumerable<string> environmentIds,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyDictionary<string, IReadOnlyList<EnvironmentVariableDto>>>(
+                new Dictionary<string, IReadOnlyList<EnvironmentVariableDto>>(StringComparer.OrdinalIgnoreCase));
         }
 
         public Task<IResultModel<EnvironmentVariableDto>> SaveVariableAsync(EnvironmentVariableDto variable, CancellationToken cancellationToken)
@@ -144,60 +179,64 @@ public static class ViewModelSharedTestDoubles
 
         public Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
         {
-            var saved = new RequestCaseDto
+            var id = string.IsNullOrWhiteSpace(requestCase.Id) ? Guid.NewGuid().ToString("N") : requestCase.Id;
+            var saved = CloneFullCase(requestCase);
+            saved = new RequestCaseDto
             {
-                Id = requestCase.Id,
-                ProjectId = requestCase.ProjectId,
-                EntryType = requestCase.EntryType,
-                Name = requestCase.Name,
-                GroupName = requestCase.GroupName,
-                FolderPath = requestCase.FolderPath,
-                ParentId = requestCase.ParentId,
-                Tags = requestCase.Tags.ToList(),
-                Description = requestCase.Description,
-                RequestSnapshot = new RequestSnapshotDto
-                {
-                    EndpointId = requestCase.RequestSnapshot.EndpointId,
-                    Name = requestCase.RequestSnapshot.Name,
-                    Method = requestCase.RequestSnapshot.Method,
-                    Url = requestCase.RequestSnapshot.Url,
-                    Description = requestCase.RequestSnapshot.Description,
-                    BodyMode = requestCase.RequestSnapshot.BodyMode,
-                    BodyContent = requestCase.RequestSnapshot.BodyContent,
-                    IgnoreSslErrors = requestCase.RequestSnapshot.IgnoreSslErrors,
-                    QueryParameters = requestCase.RequestSnapshot.QueryParameters.ToList(),
-                    PathParameters = requestCase.RequestSnapshot.PathParameters.ToList(),
-                    Headers = requestCase.RequestSnapshot.Headers.ToList()
-                },
+                Id = id,
+                ProjectId = saved.ProjectId,
+                EntryType = saved.EntryType,
+                Name = saved.Name,
+                GroupName = saved.GroupName,
+                FolderPath = saved.FolderPath,
+                ParentId = saved.ParentId,
+                Tags = saved.Tags,
+                Description = saved.Description,
+                RequestSnapshot = saved.RequestSnapshot,
                 HasLoadedDetail = true,
-                UpdatedAt = requestCase.UpdatedAt
+                UpdatedAt = saved.UpdatedAt
             };
-
-            if (string.IsNullOrWhiteSpace(saved.Id))
-            {
-                saved = new RequestCaseDto
-                {
-                    Id = Guid.NewGuid().ToString("N"),
-                    ProjectId = saved.ProjectId,
-                    EntryType = saved.EntryType,
-                    Name = saved.Name,
-                    GroupName = saved.GroupName,
-                    FolderPath = saved.FolderPath,
-                    ParentId = saved.ParentId,
-                    Tags = saved.Tags.ToList(),
-                    Description = saved.Description,
-                    RequestSnapshot = saved.RequestSnapshot,
-                    HasLoadedDetail = true,
-                    UpdatedAt = saved.UpdatedAt
-                };
-            }
 
             Cases.RemoveAll(item => string.Equals(item.Id, saved.Id, StringComparison.OrdinalIgnoreCase));
             Cases.Add(saved);
             return Task.FromResult<IResultModel<RequestCaseDto>>(ResultModel<RequestCaseDto>.Success(saved));
         }
 
-        public async Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
+        public Task<IResultModel<RequestCaseDto>> CreateFolderAsync(string projectId, string parentFolderPath, string name, CancellationToken cancellationToken)
+        {
+            var folderName = name.Trim();
+            if (string.IsNullOrWhiteSpace(projectId) || string.IsNullOrWhiteSpace(folderName))
+            {
+                return Task.FromResult(ResultModel<RequestCaseDto>.Failure("目录名称不能为空。", "request_case_folder_name_required"));
+            }
+
+            return SaveAsync(new RequestCaseDto
+            {
+                ProjectId = projectId,
+                EntryType = "folder",
+                Name = folderName,
+                GroupName = "目录",
+                FolderPath = parentFolderPath,
+                UpdatedAt = DateTime.UtcNow
+            }, cancellationToken);
+        }
+
+        public async Task<IResultModel<int>> SaveRangeAsync(IEnumerable<RequestCaseDto> requestCases, CancellationToken cancellationToken)
+        {
+            var count = 0;
+            foreach (var requestCase in requestCases)
+            {
+                await SaveAsync(requestCase, cancellationToken);
+                count++;
+            }
+            return ResultModel<int>.Success(count);
+        }
+
+        public async Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(
+            string projectId,
+            IReadOnlyList<ApiEndpointDto> endpoints,
+            CancellationToken cancellationToken,
+            IReadOnlySet<string>? preservedEndpointIds = null)
         {
             var existingImported = Cases
                 .Where(item => string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase))
@@ -207,11 +246,14 @@ public static class ViewModelSharedTestDoubles
             var targetKeys = endpoints
                 .Select(BuildImportedEndpointKey)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var explicitlyPreservedEndpointIds = preservedEndpointIds
+                ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var deletedIds = Cases
                 .Where(item =>
                 string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase)
                 && string.Equals(item.EntryType, "http-interface", StringComparison.OrdinalIgnoreCase)
                 && item.RequestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase)
+                && !explicitlyPreservedEndpointIds.Contains(item.RequestSnapshot.EndpointId)
                 && !targetKeys.Contains(item.RequestSnapshot.EndpointId))
                 .Select(item => item.Id)
                 .ToList();
@@ -259,7 +301,33 @@ public static class ViewModelSharedTestDoubles
 
         public Task<IResultModel<RequestCaseDto>> DuplicateAsync(string projectId, string id, CancellationToken cancellationToken)
         {
-            return Task.FromResult<IResultModel<RequestCaseDto>>(ResultModel<RequestCaseDto>.Failure("未实现"));
+            var source = Cases.FirstOrDefault(item =>
+                string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase));
+            if (source is null)
+            {
+                return Task.FromResult<IResultModel<RequestCaseDto>>(
+                    ResultModel<RequestCaseDto>.Failure("未找到待复制的用例。"));
+            }
+
+            var sourceClone = CloneFullCase(source);
+            var duplicate = new RequestCaseDto
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                ProjectId = sourceClone.ProjectId,
+                EntryType = sourceClone.EntryType,
+                Name = $"{source.Name}_copy",
+                GroupName = sourceClone.GroupName,
+                FolderPath = sourceClone.FolderPath,
+                ParentId = sourceClone.ParentId,
+                Tags = sourceClone.Tags,
+                Description = sourceClone.Description,
+                RequestSnapshot = sourceClone.RequestSnapshot,
+                HasLoadedDetail = true,
+                UpdatedAt = DateTime.UtcNow
+            };
+            Cases.Add(duplicate);
+            return Task.FromResult<IResultModel<RequestCaseDto>>(ResultModel<RequestCaseDto>.Success(duplicate));
         }
 
         public Task<IResultModel<bool>> DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
@@ -276,6 +344,38 @@ public static class ViewModelSharedTestDoubles
                 string.Equals(item.ProjectId, projectId, StringComparison.OrdinalIgnoreCase)
                 && targetIds.Contains(item.Id));
             return Task.CompletedTask;
+        }
+
+        private static RequestCaseDto CloneFullCase(RequestCaseDto requestCase)
+        {
+            return new RequestCaseDto
+            {
+                Id = requestCase.Id,
+                ProjectId = requestCase.ProjectId,
+                EntryType = requestCase.EntryType,
+                Name = requestCase.Name,
+                GroupName = requestCase.GroupName,
+                FolderPath = requestCase.FolderPath,
+                ParentId = requestCase.ParentId,
+                Tags = requestCase.Tags.ToList(),
+                Description = requestCase.Description,
+                RequestSnapshot = new RequestSnapshotDto
+                {
+                    EndpointId = requestCase.RequestSnapshot.EndpointId,
+                    Name = requestCase.RequestSnapshot.Name,
+                    Method = requestCase.RequestSnapshot.Method,
+                    Url = requestCase.RequestSnapshot.Url,
+                    Description = requestCase.RequestSnapshot.Description,
+                    BodyMode = requestCase.RequestSnapshot.BodyMode,
+                    BodyContent = requestCase.RequestSnapshot.BodyContent,
+                    IgnoreSslErrors = requestCase.RequestSnapshot.IgnoreSslErrors,
+                    QueryParameters = requestCase.RequestSnapshot.QueryParameters.ToList(),
+                    PathParameters = requestCase.RequestSnapshot.PathParameters.ToList(),
+                    Headers = requestCase.RequestSnapshot.Headers.ToList()
+                },
+                HasLoadedDetail = true,
+                UpdatedAt = requestCase.UpdatedAt
+            };
         }
 
         private static string BuildImportedEndpointKey(ApiEndpointDto endpoint)
@@ -358,7 +458,7 @@ public static class ViewModelSharedTestDoubles
         }
     }
 
-    public sealed class FakeRequestHistoryService : IRequestHistoryService
+    public class FakeRequestHistoryService : IRequestHistoryService
     {
         public List<RequestHistoryItemDto> Items { get; } = [];
         public int GetHistoryCallCount { get; private set; }
@@ -420,6 +520,14 @@ public static class ViewModelSharedTestDoubles
         {
             return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
         }
+
+        public List<TimeSpan> CleanupRetentions { get; } = [];
+
+        public virtual Task<int> CleanupOlderThanAsync(TimeSpan retention, CancellationToken cancellationToken)
+        {
+            CleanupRetentions.Add(retention);
+            return Task.FromResult(0);
+        }
     }
 
     public sealed class FakeSystemDataService : ISystemDataService
@@ -458,9 +566,16 @@ public static class ViewModelSharedTestDoubles
 
         public bool DeleteShouldSucceed { get; set; } = true;
 
+        /// <summary>GetProjectsAsync 返回的项目列表；SaveShouldFail 时 SaveAsync 回写失败结果。</summary>
+        public List<ProjectWorkspaceDto> ProjectsResult { get; set; } = [];
+
+        public ProjectWorkspaceDto? LastSavedProject { get; private set; }
+
+        public bool SaveShouldFail { get; set; }
+
         public Task<IReadOnlyList<ProjectWorkspaceDto>> GetProjectsAsync(CancellationToken cancellationToken)
         {
-            return Task.FromResult<IReadOnlyList<ProjectWorkspaceDto>>([]);
+            return Task.FromResult<IReadOnlyList<ProjectWorkspaceDto>>(ProjectsResult);
         }
 
         public Task<ProjectWorkspaceDto?> GetStartupProjectAsync(CancellationToken cancellationToken)
@@ -470,7 +585,10 @@ public static class ViewModelSharedTestDoubles
 
         public Task<IResultModel<ProjectWorkspaceDto>> SaveAsync(ProjectWorkspaceDto project, CancellationToken cancellationToken)
         {
-            return Task.FromResult<IResultModel<ProjectWorkspaceDto>>(ResultModel<ProjectWorkspaceDto>.Success(project));
+            LastSavedProject = project;
+            return Task.FromResult<IResultModel<ProjectWorkspaceDto>>(SaveShouldFail
+                ? ResultModel<ProjectWorkspaceDto>.Failure("项目名称不能为空。", "project_name_required")
+                : ResultModel<ProjectWorkspaceDto>.Success(project));
         }
 
         public Task<IResultModel<ProjectWorkspaceDto>> SetDefaultAsync(string projectId, CancellationToken cancellationToken)
@@ -507,6 +625,7 @@ public static class ViewModelSharedTestDoubles
     {
         public string? PickProjectDataPackageFileResult { get; set; }
         public string? SaveProjectDataExportFileResult { get; set; }
+        public IReadOnlyList<FormFieldFileDto>? PickOpenFilesResult { get; set; }
 
         public Task<string?> PickSwaggerJsonFileAsync(CancellationToken cancellationToken)
         {
@@ -526,6 +645,24 @@ public static class ViewModelSharedTestDoubles
         public Task<string?> PickStorageDirectoryAsync(CancellationToken cancellationToken)
         {
             return Task.FromResult<string?>(null);
+        }
+
+        public Task<IReadOnlyList<FormFieldFileDto>?> PickOpenFilesAsync(string title, bool allowMultiple, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(PickOpenFilesResult);
+        }
+    }
+
+    public sealed class FakeClipboardService : IClipboardService
+    {
+        public List<string> CopiedTexts { get; } = [];
+
+        public bool ShouldSucceed { get; set; } = true;
+
+        public Task<bool> CopyTextAsync(string text, CancellationToken cancellationToken = default)
+        {
+            CopiedTexts.Add(text);
+            return Task.FromResult(ShouldSucceed);
         }
     }
 
@@ -585,6 +722,41 @@ public static class ViewModelSharedTestDoubles
         }
     }
 
+    public sealed class FakeProjectHttpSettingsService : IProjectHttpSettingsService
+    {
+        public ProjectHttpAuthSettingsDto CurrentSettings { get; set; } = new();
+
+        public int SaveCallCount { get; private set; }
+
+        public Task<ProjectHttpAuthSettingsDto> GetAuthSettingsAsync(string projectId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new ProjectHttpAuthSettingsDto
+            {
+                ProjectId = string.IsNullOrWhiteSpace(CurrentSettings.ProjectId) ? projectId : CurrentSettings.ProjectId,
+                AuthMode = CurrentSettings.AuthMode,
+                BearerToken = CurrentSettings.BearerToken,
+                BasicUsername = CurrentSettings.BasicUsername,
+                BasicPassword = CurrentSettings.BasicPassword,
+                UpdatedAt = CurrentSettings.UpdatedAt
+            });
+        }
+
+        public Task<IResultModel<ProjectHttpAuthSettingsDto>> SaveAuthSettingsAsync(ProjectHttpAuthSettingsDto settings, CancellationToken cancellationToken)
+        {
+            SaveCallCount++;
+            CurrentSettings = new ProjectHttpAuthSettingsDto
+            {
+                ProjectId = settings.ProjectId,
+                AuthMode = settings.AuthMode,
+                BearerToken = settings.BearerToken,
+                BasicUsername = settings.BasicUsername,
+                BasicPassword = settings.BasicPassword,
+                UpdatedAt = settings.UpdatedAt
+            };
+            return Task.FromResult<IResultModel<ProjectHttpAuthSettingsDto>>(ResultModel<ProjectHttpAuthSettingsDto>.Success(CurrentSettings));
+        }
+    }
+
     public sealed class FakeAppNotificationService : IAppNotificationService
     {
         public List<(string Title, string Content, NotificationType Type)> Notifications { get; } = [];
@@ -603,5 +775,38 @@ public static class ViewModelSharedTestDoubles
         {
             Show(title, content, NotificationType.Error, expiration);
         }
+    }
+
+    /// <summary>
+    /// 可编程弹层替身：记录弹窗请求（视图类型 / DataContext / 标题），并按脚本返回结果，
+    /// 默认返回 OK 以模拟用户点击确认。
+    /// </summary>
+    public sealed class FakeDialogService : IDialogService
+    {
+        public DialogResult NextResult { get; set; } = DialogResult.OK;
+
+        /// <summary>弹窗展示时刻的检查钩子（此时弹窗内容仍处于打开态，可断言中间状态）。</summary>
+        public Action<DialogRequest>? OnShow { get; set; }
+
+        public List<DialogRequest> Requests { get; } = [];
+
+        public Task<DialogResult> ShowDialogAsync<TView>(
+            object dataContext,
+            string? title = null,
+            bool canResize = false,
+            bool showCloseButton = true)
+            where TView : Control, new()
+        {
+            var request = new DialogRequest(typeof(TView), dataContext, title, showCloseButton);
+            Requests.Add(request);
+            OnShow?.Invoke(request);
+            return Task.FromResult(NextResult);
+        }
+
+        public sealed record DialogRequest(
+            Type ViewType,
+            object DataContext,
+            string? Title,
+            bool ShowCloseButton);
     }
 }

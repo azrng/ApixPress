@@ -1,4 +1,6 @@
+using ApixPress.App.Helpers;
 using CommunityToolkit.Mvvm.Input;
+using Ursa.Controls;
 
 namespace ApixPress.App.ViewModels;
 
@@ -25,7 +27,7 @@ public partial class MainWindowViewModel
                     string.Equals(item.Id, project.Id, StringComparison.OrdinalIgnoreCase));
                 StatusMessage = $"正在打开项目：{tab.Project.Name}";
                 NotifyShellState();
-                await tab.InitializeAsync();
+                await PerfLog.MeasureAsync($"打开项目·工作区初始化({tab.Project.Name})", () => tab.InitializeAsync());
             }
             else
             {
@@ -48,8 +50,37 @@ public partial class MainWindowViewModel
     private void ActivateHomeTab()
     {
         ActiveProjectTab = null;
-        IsEnvironmentManagerOpen = false;
         StatusMessage = BrowserStatusText;
+    }
+
+    [RelayCommand]
+    private async Task OpenNewTabAsync()
+    {
+        // 对齐原型：标题栏「＋」在当前项目内打开「新建…」标签；首页态回退到默认项目工作区
+        var tab = ActiveProjectTab
+            ?? ProjectTabs.FirstOrDefault(item => item.Project.IsDefault)
+            ?? ProjectTabs.FirstOrDefault();
+
+        if (tab is null)
+        {
+            var project = ProjectPanel.Projects.FirstOrDefault(item => item.IsDefault)
+                ?? ProjectPanel.Projects.FirstOrDefault();
+            if (project is null)
+            {
+                StatusMessage = "请先创建项目，再新建接口或快捷请求。";
+                NotifyShellState();
+                return;
+            }
+
+            await OpenProjectWorkspaceAsync(project);
+            tab = ActiveProjectTab;
+        }
+        else if (!ReferenceEquals(tab, ActiveProjectTab))
+        {
+            ActivateProjectTabCore(tab);
+        }
+
+        tab?.Workspace.CreateWorkspaceTabCommand.Execute(null);
     }
 
     [RelayCommand]
@@ -91,7 +122,6 @@ public partial class MainWindowViewModel
         if (ProjectTabs.Count == 0)
         {
             ActiveProjectTab = null;
-            IsEnvironmentManagerOpen = false;
             StatusMessage = BrowserStatusText;
         }
         else
@@ -104,20 +134,25 @@ public partial class MainWindowViewModel
         NotifyShellState();
     }
 
+    /// <summary>打开「新建项目」弹窗；弹窗关闭后按结果恢复状态栏文案（成功文案由 OnProjectCreated 设置）。</summary>
     [RelayCommand]
-    private void OpenCreateProjectDialog()
+    private async Task OpenCreateProjectDialogAsync()
     {
-        IsCreateProjectDialogOpen = true;
         StatusMessage = "填写项目名称和备注信息后即可创建项目。";
+        NotifyShellState();
+        var result = await _dialogService.ShowDialogAsync<Views.Controls.CreateProjectDialogView>(this, "新建项目");
+        if (result != DialogResult.OK)
+        {
+            StatusMessage = IsHomeTabActive ? BrowserStatusText : ActiveProjectTab?.StatusMessage ?? BrowserStatusText;
+        }
+
         NotifyShellState();
     }
 
     [RelayCommand]
     private void CloseCreateProjectDialog()
     {
-        IsCreateProjectDialogOpen = false;
-        StatusMessage = IsHomeTabActive ? BrowserStatusText : ActiveProjectTab?.StatusMessage ?? BrowserStatusText;
-        NotifyShellState();
+        RequestClose?.Invoke(this, DialogResult.Cancel);
     }
 
     [RelayCommand]

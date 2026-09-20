@@ -1,0 +1,113 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:iri="https://irihi.tech/shared"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.ActualRequestPanelView"
+             x:DataType="vm:ResponseSectionViewModel"
+             mc:Ignorable="d">
+  <!-- 实际请求面板：请求经变量替换与参数合并后的最终 URL、Header、Body（对齐 Apifox 实际请求页签） -->
+  <Grid RowDefinitions="*">
+    <StackPanel Grid.Row="0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                IsVisible="{Binding !HasActualRequest}">
+      <TextBlock Classes="SubtleText"
+                 Text="暂无实际请求数据" />
+    </StackPanel>
+
+    <ScrollViewer Grid.Row="0"
+                  IsVisible="{Binding HasActualRequest}"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+      <StackPanel Margin="{StaticResource Pad.Top2}"
+                  Spacing="{StaticResource Space.4}">
+
+        <StackPanel Spacing="{StaticResource Space.2}">
+          <TextBlock Classes="CaptionText"
+                     Text="请求 URL" />
+          <Border Classes="ActualRequestUrlCard">
+            <StackPanel Orientation="Horizontal"
+                        Spacing="{StaticResource Space.3}">
+              <u:Badge VerticalAlignment="Center"
+                       Header="{Binding ActualRequestMethod}"
+                       iri:ClassHelper.Classes="{Binding ActualRequestMethodBadgeClass}" />
+              <SelectableTextBlock Classes="ActualRequestUrlText"
+                                   Text="{Binding ActualRequestUrl}" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <StackPanel Spacing="{StaticResource Space.2}">
+          <TextBlock Classes="CaptionText"
+                     Text="Header" />
+          <Border Classes="HttpResponseKvGrid">
+            <StackPanel>
+              <Border Classes="HttpResponseKvHeaderRow">
+                <Grid ColumnDefinitions="220,*"
+                      ColumnSpacing="{StaticResource Space.4}">
+                  <TextBlock Classes="HttpResponseKvHeaderText"
+                             Text="名称" />
+                  <TextBlock Grid.Column="1"
+                             Classes="HttpResponseKvHeaderText"
+                             Text="值" />
+                </Grid>
+              </Border>
+              <ItemsControl IsVisible="{Binding HasActualRequestHeaderRows}"
+                            ItemsSource="{Binding ActualRequestHeaderRows}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:ResponseHeaderRowViewModel">
+                    <Border Classes="HttpResponseKvRow">
+                      <Grid ColumnDefinitions="220,*"
+                            ColumnSpacing="{StaticResource Space.4}">
+                        <TextBlock Classes="HttpResponseKvKey"
+                                   Text="{Binding Name}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Grid.Column="1"
+                                   Classes="HttpResponseKvValue"
+                                   Text="{Binding Value}"
+                                   TextTrimming="CharacterEllipsis" />
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock IsVisible="{Binding !HasActualRequestHeaderRows}"
+                         Margin="12,8"
+                         Classes="SubtleText"
+                         Text="（空）" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <StackPanel Spacing="{StaticResource Space.2}">
+          <StackPanel Orientation="Horizontal"
+                      Spacing="{StaticResource Space.2}">
+            <TextBlock Classes="CaptionText"
+                       Text="Body" />
+            <TextBlock Classes="CaptionText"
+                       IsVisible="{Binding HasActualRequestBodyContentType}"
+                       Text="{Binding ActualRequestBodyContentType}" />
+          </StackPanel>
+          <Border Classes="HttpResponseBodyCard">
+            <ScrollViewer MaxHeight="360"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+              <StackPanel>
+                <SelectableTextBlock Classes="HttpResponseBodyViewer"
+                                     IsVisible="{Binding HasActualRequestBody}"
+                                     Text="{Binding ActualRequestBodyText}" />
+                <TextBlock IsVisible="{Binding !HasActualRequestBody}"
+                           Classes="SubtleText"
+                           Text="（空）" />
+              </StackPanel>
+            </ScrollViewer>
+          </Border>
+        </StackPanel>
+
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

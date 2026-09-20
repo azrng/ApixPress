@@ -6,350 +6,363 @@
              x:Class="ApixPress.App.Views.Controls.SettingsDialogView"
              x:DataType="vm:MainWindowViewModel"
              mc:Ignorable="d">
-  <Border Classes="SettingsDialogBackdrop"
-          IsVisible="{Binding ShellPanels.IsSettingsDialogOpen}">
-    <Grid HorizontalAlignment="Center"
-          VerticalAlignment="Center">
-      <Border Classes="SettingsDialogCard">
-        <Grid ColumnDefinitions="220,*"
-              RowDefinitions="*">
-          <Border Classes="SettingsSidebar">
-            <StackPanel Spacing="{StaticResource Space.2}">
-              <TextBlock Classes="SectionTitle"
-                         Text="设置中心" />
-               <TextBlock Classes="CaptionText"
-                          Text="按配置类型分组管理本地偏好。" />
-               <ToggleButton Classes="SettingsNavButton"
-                             Command="{Binding ShellPanels.SettingsCenter.ShowGeneralSettingsCommand}"
-                             IsChecked="{Binding ShellPanels.SettingsCenter.ShowGeneralSettingsSection, Mode=OneWay}">
-                 <TextBlock Text="通用" />
-               </ToggleButton>
-               <ToggleButton Classes="SettingsNavButton"
-                             Command="{Binding ShellPanels.SettingsCenter.ShowStorageSettingsCommand}"
-                             IsChecked="{Binding ShellPanels.SettingsCenter.ShowStorageSettingsSection, Mode=OneWay}">
-                 <TextBlock Text="存储" />
-               </ToggleButton>
-               <ToggleButton Classes="SettingsNavButton"
-                             Command="{Binding ShellPanels.SettingsCenter.ShowAboutSettingsCommand}"
-                             IsChecked="{Binding ShellPanels.SettingsCenter.ShowAboutSettingsSection, Mode=OneWay}">
-                 <TextBlock Text="关于" />
-               </ToggleButton>
-             </StackPanel>
-           </Border>
+  <!-- 弹窗 chrome 由 Ursa StandardDialogControl 提供；DataContext 为主窗口 VM；
+       内嵌清空确认 / 重启提示为卡片内的浮层，保持原有交互 -->
+  <Panel>
+    <Border Classes="SettingsDialogCard">
+      <Grid ColumnDefinitions="220,*"
+            RowDefinitions="*">
+        <Border Classes="SettingsSidebar">
+          <StackPanel Spacing="{StaticResource Space.2}">
+            <TextBlock Classes="SectionTitle"
+                       Text="设置中心" />
+            <TextBlock Classes="CaptionText"
+                       Text="按配置类型分组管理本地偏好。" />
+            <ToggleButton Classes="SettingsNavButton"
+                          Command="{Binding ShellPanels.SettingsCenter.ShowGeneralSettingsCommand}"
+                          IsChecked="{Binding ShellPanels.SettingsCenter.ShowGeneralSettingsSection, Mode=OneWay}">
+              <TextBlock Text="通用" />
+            </ToggleButton>
+            <ToggleButton Classes="SettingsNavButton"
+                          Command="{Binding ShellPanels.SettingsCenter.ShowStorageSettingsCommand}"
+                          IsChecked="{Binding ShellPanels.SettingsCenter.ShowStorageSettingsSection, Mode=OneWay}">
+              <TextBlock Text="存储" />
+            </ToggleButton>
+            <ToggleButton Classes="SettingsNavButton"
+                          Command="{Binding ShellPanels.SettingsCenter.ShowAboutSettingsCommand}"
+                          IsChecked="{Binding ShellPanels.SettingsCenter.ShowAboutSettingsSection, Mode=OneWay}">
+              <TextBlock Text="关于" />
+            </ToggleButton>
+          </StackPanel>
+        </Border>
 
-          <Grid Grid.Column="1"
-                RowDefinitions="Auto,*"
-                RowSpacing="{StaticResource Space.4}"
-                Margin="{StaticResource Pad.5}">
-            <Grid ColumnDefinitions="*,Auto">
-              <StackPanel Spacing="2">
-                <TextBlock Classes="PageTitle"
-                           Text="{Binding ShellPanels.SettingsCenter.CurrentSettingsTitle}" />
-                <TextBlock Classes="CaptionText"
-                           Text="{Binding ShellPanels.SettingsCenter.CurrentSettingsSubtitle}" />
-              </StackPanel>
-              <Button Grid.Column="1"
-                      Classes="DialogIconButton"
-                      Command="{Binding ShellPanels.CloseSettingsDialogCommand}"
-                      Content="×" />
-            </Grid>
+        <Grid Grid.Column="1"
+              RowDefinitions="Auto,*"
+              RowSpacing="{StaticResource Space.4}"
+              Margin="{StaticResource Pad.5}">
+          <StackPanel Spacing="2">
+            <TextBlock Classes="PageTitle"
+                       Text="{Binding ShellPanels.SettingsCenter.CurrentSettingsTitle}" />
+            <TextBlock Classes="CaptionText"
+                       Text="{Binding ShellPanels.SettingsCenter.CurrentSettingsSubtitle}" />
+          </StackPanel>
 
-            <ScrollViewer Grid.Row="1">
-              <StackPanel>
-                <Grid RowDefinitions="Auto,Auto"
-                      IsVisible="{Binding ShellPanels.SettingsCenter.ShowGeneralSettingsSection}"
-                      RowSpacing="{StaticResource Space.4}">
+          <ScrollViewer Grid.Row="1">
+            <StackPanel>
+              <Grid RowDefinitions="Auto,Auto"
+                    IsVisible="{Binding ShellPanels.SettingsCenter.ShowGeneralSettingsSection}"
+                    RowSpacing="{StaticResource Space.4}">
+                <Border Classes="SettingsPageSection">
+                  <Grid ColumnDefinitions="*,Auto"
+                        ColumnSpacing="{StaticResource Space.4}">
+                    <StackPanel Spacing="4">
+                      <TextBlock Classes="SettingsGroupTitle"
+                                 Text="请求超时时间" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="输入 0 表示不限时，其余值会作为请求超时毫秒数。" />
+                    </StackPanel>
+                    <NumericUpDown Grid.Column="1"
+                                   Classes="SettingsNumberInput"
+                                   Minimum="0"
+                                   Maximum="120000"
+                                   Increment="1000"
+                                   Value="{Binding ShellPanels.SettingsCenter.RequestTimeoutMilliseconds}" />
+                  </Grid>
+                </Border>
+
+                <StackPanel Grid.Row="1"
+                            Spacing="{StaticResource Space.3}">
                   <Border Classes="SettingsPageSection">
                     <Grid ColumnDefinitions="*,Auto"
                           ColumnSpacing="{StaticResource Space.4}">
                       <StackPanel Spacing="4">
                         <TextBlock Classes="SettingsGroupTitle"
-                                   Text="请求超时时间" />
+                                   Text="SSL 证书验证" />
                         <TextBlock Classes="CaptionText"
-                                   Text="输入 0 表示不限时，其余值会作为请求超时毫秒数。" />
+                                   Text="关闭后会忽略证书校验，适合本地或自签名环境调试。" />
                       </StackPanel>
-                      <NumericUpDown Grid.Column="1"
-                                     Classes="SettingsNumberInput"
-                                     Minimum="0"
-                                     Maximum="120000"
-                                     Increment="1000"
-                                     Value="{Binding ShellPanels.SettingsCenter.RequestTimeoutMilliseconds}" />
+                      <ToggleSwitch Grid.Column="1"
+                                    IsChecked="{Binding ShellPanels.SettingsCenter.ValidateSslCertificate}" />
                     </Grid>
                   </Border>
-
-                  <StackPanel Grid.Row="1"
-                              Spacing="{StaticResource Space.3}">
-                    <Border Classes="SettingsPageSection">
-                      <Grid ColumnDefinitions="*,Auto"
-                            ColumnSpacing="{StaticResource Space.4}">
-                        <StackPanel Spacing="4">
-                          <TextBlock Classes="SettingsGroupTitle"
-                                     Text="SSL 证书验证" />
-                          <TextBlock Classes="CaptionText"
-                                     Text="关闭后会忽略证书校验，适合本地或自签名环境调试。" />
-                        </StackPanel>
-                        <ToggleSwitch Grid.Column="1"
-                                      IsChecked="{Binding ShellPanels.SettingsCenter.ValidateSslCertificate}" />
-                      </Grid>
-                    </Border>
-                    <Border Classes="SettingsPageSection">
-                      <Grid ColumnDefinitions="*,Auto"
-                            ColumnSpacing="{StaticResource Space.4}">
-                        <StackPanel Spacing="4">
-                          <TextBlock Classes="SettingsGroupTitle"
-                                     Text="自动跟随重定向" />
-                          <TextBlock Classes="CaptionText"
-                                     Text="开启后，请求会自动处理 3xx 跳转响应。" />
-                        </StackPanel>
-                        <ToggleSwitch Grid.Column="1"
-                                      IsChecked="{Binding ShellPanels.SettingsCenter.AutoFollowRedirects}" />
-                      </Grid>
-                    </Border>
-                    <Border Classes="SettingsPageSection">
-                      <Grid ColumnDefinitions="*,Auto"
-                            ColumnSpacing="{StaticResource Space.4}">
-                        <StackPanel Spacing="4">
-                          <TextBlock Classes="SettingsGroupTitle"
-                                     Text="发送无缓存头" />
-                          <TextBlock Classes="CaptionText"
-                                     Text="开启后会自动补充 no-cache / no-store 请求头。" />
-                        </StackPanel>
-                        <ToggleSwitch Grid.Column="1"
-                                      IsChecked="{Binding ShellPanels.SettingsCenter.SendNoCacheHeader}" />
-                      </Grid>
-                    </Border>
-                    <Border Classes="SettingsPageSection">
-                      <Grid ColumnDefinitions="*,Auto"
-                            ColumnSpacing="{StaticResource Space.4}">
-                        <StackPanel Spacing="4">
-                          <TextBlock Classes="SettingsGroupTitle"
-                                     Text="详细日志 (Verbose Logging)" />
-                          <TextBlock Classes="CaptionText"
-                                     Text="当前先保存为本地偏好项，后续会继续扩展到更完整的调试输出。" />
-                        </StackPanel>
-                        <ToggleSwitch Grid.Column="1"
-                                      IsChecked="{Binding ShellPanels.SettingsCenter.EnableVerboseLogging}" />
-                      </Grid>
-                    </Border>
-                    <Border Classes="SettingsPageSection">
-                      <Grid ColumnDefinitions="*,Auto"
-                            ColumnSpacing="{StaticResource Space.4}">
-                        <StackPanel Spacing="4">
-                          <TextBlock Classes="SettingsGroupTitle"
-                                     Text="新版本提醒" />
-                          <TextBlock Classes="CaptionText"
-                                     Text="开启后，应用启动时会自动检查更新；发现新版本时会在右上角和通知中心提醒。" />
-                        </StackPanel>
-                        <ToggleSwitch Grid.Column="1"
-                                      IsChecked="{Binding ShellPanels.SettingsCenter.EnableUpdateReminder}" />
-                      </Grid>
-                    </Border>
-                    <TextBlock Classes="CaptionText"
-                               Text="{Binding ShellPanels.SettingsCenter.GeneralSettingsSaveStatus}" />
-                  </StackPanel>
-                </Grid>
-
-                <Grid IsVisible="{Binding ShellPanels.SettingsCenter.ShowStorageSettingsSection}">
-                  <StackPanel Spacing="{StaticResource Space.4}">
-                    <Border Classes="SettingsPageSection">
-                      <StackPanel Spacing="{StaticResource Space.3}">
-                        <Grid ColumnDefinitions="*,Auto"
-                              ColumnSpacing="{StaticResource Space.4}">
-                          <StackPanel Spacing="4">
-                            <TextBlock Classes="SettingsGroupTitle"
-                                       Text="存储目录" />
-                            <TextBlock Classes="CaptionText"
-                                       Text="{Binding ShellPanels.SettingsCenter.StorageDirectoryModeText}" />
-                          </StackPanel>
-                          <StackPanel Grid.Column="1"
-                                      Orientation="Horizontal"
-                                      Spacing="{StaticResource Space.2}">
-                            <Button Classes="DialogSecondaryButton"
-                                    Content="选择目录"
-                                    Command="{Binding ShellPanels.SettingsCenter.ChooseStorageDirectoryCommand}" />
-                            <Button Classes="DialogSecondaryButton"
-                                    Content="恢复默认"
-                                    Command="{Binding ShellPanels.SettingsCenter.ResetStorageDirectoryCommand}" />
-                          </StackPanel>
-                        </Grid>
-
-                        <Grid RowDefinitions="Auto,Auto"
-                              RowSpacing="{StaticResource Space.2}">
-                          <StackPanel Spacing="4">
-                            <TextBlock Classes="AboutMetaLabel"
-                                       Text="目录" />
-                            <TextBox Classes="SectionInput"
-                                     IsReadOnly="True"
-                                     Text="{Binding ShellPanels.SettingsCenter.EffectiveStorageDirectoryPath}" />
-                          </StackPanel>
-                          <TextBlock Grid.Row="1"
-                                     Classes="CaptionText"
-                                     Text="{Binding ShellPanels.SettingsCenter.StorageSettingsSaveStatus}" />
-                        </Grid>
+                  <Border Classes="SettingsPageSection">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="{StaticResource Space.4}">
+                      <StackPanel Spacing="4">
+                        <TextBlock Classes="SettingsGroupTitle"
+                                   Text="自动跟随重定向" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="开启后，请求会自动处理 3xx 跳转响应。" />
                       </StackPanel>
-                    </Border>
+                      <ToggleSwitch Grid.Column="1"
+                                    IsChecked="{Binding ShellPanels.SettingsCenter.AutoFollowRedirects}" />
+                    </Grid>
+                  </Border>
+                  <Border Classes="SettingsPageSection">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="{StaticResource Space.4}">
+                      <StackPanel Spacing="4">
+                        <TextBlock Classes="SettingsGroupTitle"
+                                   Text="发送无缓存头" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="开启后会自动补充 no-cache / no-store 请求头。" />
+                      </StackPanel>
+                      <ToggleSwitch Grid.Column="1"
+                                    IsChecked="{Binding ShellPanels.SettingsCenter.SendNoCacheHeader}" />
+                    </Grid>
+                  </Border>
+                  <Border Classes="SettingsPageSection">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="{StaticResource Space.4}">
+                      <StackPanel Spacing="4">
+                        <TextBlock Classes="SettingsGroupTitle"
+                                   Text="详细日志 (Verbose Logging)" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="当前先保存为本地偏好项，后续会继续扩展到更完整的调试输出。" />
+                      </StackPanel>
+                      <ToggleSwitch Grid.Column="1"
+                                    IsChecked="{Binding ShellPanels.SettingsCenter.EnableVerboseLogging}" />
+                    </Grid>
+                  </Border>
+                  <Border Classes="SettingsPageSection">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="{StaticResource Space.4}">
+                      <StackPanel Spacing="4">
+                        <TextBlock Classes="SettingsGroupTitle"
+                                   Text="新版本提醒" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="开启后，应用启动时会自动检查更新；发现新版本时会在右上角和通知中心提醒。" />
+                      </StackPanel>
+                      <ToggleSwitch Grid.Column="1"
+                                    IsChecked="{Binding ShellPanels.SettingsCenter.EnableUpdateReminder}" />
+                    </Grid>
+                  </Border>
+                  <TextBlock Classes="CaptionText"
+                             Text="{Binding ShellPanels.SettingsCenter.GeneralSettingsSaveStatus}" />
+                </StackPanel>
+              </Grid>
 
-                    <Border Classes="SettingsPageSection SettingsDangerSection">
+              <Grid IsVisible="{Binding ShellPanels.SettingsCenter.ShowStorageSettingsSection}">
+                <StackPanel Spacing="{StaticResource Space.4}">
+                  <Border Classes="SettingsPageSection">
+                    <StackPanel Spacing="{StaticResource Space.3}">
                       <Grid ColumnDefinitions="*,Auto"
                             ColumnSpacing="{StaticResource Space.4}">
                         <StackPanel Spacing="4">
                           <TextBlock Classes="SettingsGroupTitle"
-                                     Text="一键清空系统数据" />
+                                     Text="存储目录" />
                           <TextBlock Classes="CaptionText"
-                                     Text="{Binding ShellPanels.SettingsCenter.ClearSystemDataStatus}"
-                                     TextWrapping="Wrap" />
+                                     Text="{Binding ShellPanels.SettingsCenter.StorageDirectoryModeText}" />
                         </StackPanel>
-                        <Button Grid.Column="1"
-                                Classes="DialogDangerButton"
-                                Content="{Binding ShellPanels.SettingsCenter.ClearSystemDataButtonText}"
-                                Command="{Binding ShellPanels.SettingsCenter.RequestClearSystemDataCommand}" />
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    Spacing="{StaticResource Space.2}">
+                          <Button Classes="DialogSecondaryButton"
+                                  Content="选择目录"
+                                  Command="{Binding ShellPanels.SettingsCenter.ChooseStorageDirectoryCommand}" />
+                          <Button Classes="DialogSecondaryButton"
+                                  Content="恢复默认"
+                                  Command="{Binding ShellPanels.SettingsCenter.ResetStorageDirectoryCommand}" />
+                        </StackPanel>
                       </Grid>
-                    </Border>
-                  </StackPanel>
-                </Grid>
 
-                <Grid IsVisible="{Binding ShellPanels.SettingsCenter.ShowAboutSettingsSection}">
-                  <StackPanel Spacing="{StaticResource Space.4}">
-                    <Border Classes="AboutHeroCard">
-                      <Grid ColumnDefinitions="*,260"
-                            ColumnSpacing="{StaticResource Space.4}">
-                        <StackPanel Spacing="{StaticResource Space.2}"
-                                    VerticalAlignment="Center">
-                          <TextBlock Classes="HeroTitle"
-                                     Text="{Binding AppDisplayName}" />
-                          <TextBlock Classes="CaptionText"
-                                     Text="轻量 API 协作与调试工作台" />
-                          <StackPanel Orientation="Horizontal"
-                                      Spacing="{StaticResource Space.2}">
-                            <Button Classes="PrimaryButton"
-                                    Content="{Binding ShellPanels.SettingsCenter.CheckForUpdatesButtonText}"
-                                    Command="{Binding ShellPanels.SettingsCenter.CheckForUpdatesCommand}" />
-                            <Border Classes="VersionTag">
-                              <TextBlock Classes="CaptionText"
-                                         Text="{Binding ShellPanels.SettingsCenter.UpdateChannelName}" />
-                            </Border>
-                          </StackPanel>
+                      <Grid RowDefinitions="Auto,Auto"
+                            RowSpacing="{StaticResource Space.2}">
+                        <StackPanel Spacing="4">
+                          <TextBlock Classes="AboutMetaLabel"
+                                     Text="目录" />
+                          <TextBox Classes="SectionInput"
+                                   IsReadOnly="True"
+                                   Text="{Binding ShellPanels.SettingsCenter.EffectiveStorageDirectoryPath}" />
                         </StackPanel>
-                        <Border Grid.Column="1"
-                                Classes="AboutVersionPanel">
-                          <Grid RowDefinitions="Auto,Auto,Auto"
-                                RowSpacing="{StaticResource Space.3}">
-                            <Grid ColumnDefinitions="*,Auto">
-                              <TextBlock Classes="AboutMetaLabel"
-                                         Text="当前版本" />
-                              <TextBlock Grid.Column="1"
-                                         Classes="AboutMetaValue"
-                                         Text="{Binding ShellPanels.SettingsCenter.CurrentAppVersion}" />
-                            </Grid>
-                            <Grid Grid.Row="1"
-                                  ColumnDefinitions="*,Auto">
-                              <TextBlock Classes="AboutMetaLabel"
-                                         Text="最新版本" />
-                              <TextBlock Grid.Column="1"
-                                         Classes="AboutMetaValue"
-                                         Text="{Binding ShellPanels.SettingsCenter.LatestAvailableVersion}" />
-                            </Grid>
-                            <Grid Grid.Row="2"
-                                  ColumnDefinitions="*,Auto">
-                              <TextBlock Classes="AboutMetaLabel"
-                                         Text="更新渠道" />
-                              <TextBlock Grid.Column="1"
-                                         Classes="AboutMetaValue"
-                                         Text="{Binding ShellPanels.SettingsCenter.UpdateChannelName}" />
-                            </Grid>
-                          </Grid>
-                        </Border>
+                        <TextBlock Grid.Row="1"
+                                   Classes="CaptionText"
+                                   Text="{Binding ShellPanels.SettingsCenter.StorageSettingsSaveStatus}" />
                       </Grid>
-                    </Border>
-                    <Border Classes="SettingsPageSection">
-                      <StackPanel Spacing="{StaticResource Space.2}">
+                    </StackPanel>
+                  </Border>
+
+                  <Border Classes="SettingsPageSection SettingsDangerSection">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="{StaticResource Space.4}">
+                      <StackPanel Spacing="4">
+                        <TextBlock Classes="SettingsGroupTitle"
+                                   Text="一键清空系统数据" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="{Binding ShellPanels.SettingsCenter.ClearSystemDataStatus}"
+                                   TextWrapping="Wrap" />
+                      </StackPanel>
+                      <Button Grid.Column="1"
+                              Classes="DialogDangerButton"
+                              Content="{Binding ShellPanels.SettingsCenter.ClearSystemDataButtonText}"
+                              Command="{Binding ShellPanels.SettingsCenter.RequestClearSystemDataCommand}" />
+                    </Grid>
+                  </Border>
+                </StackPanel>
+              </Grid>
+
+              <Grid IsVisible="{Binding ShellPanels.SettingsCenter.ShowAboutSettingsSection}">
+                <StackPanel Spacing="{StaticResource Space.4}">
+                  <Border Classes="AboutHeroCard">
+                    <Grid ColumnDefinitions="*,260"
+                          ColumnSpacing="{StaticResource Space.4}">
+                      <StackPanel Spacing="{StaticResource Space.2}"
+                                  VerticalAlignment="Center">
+                        <TextBlock Classes="HeroTitle"
+                                   Text="{Binding AppDisplayName}" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="轻量 API 协作与调试工作台" />
+                        <StackPanel Orientation="Horizontal"
+                                    Spacing="{StaticResource Space.2}">
+                          <Button Classes="PrimaryButton"
+                                  Content="{Binding ShellPanels.SettingsCenter.CheckForUpdatesButtonText}"
+                                  Command="{Binding ShellPanels.SettingsCenter.CheckForUpdatesCommand}" />
+                          <Border Classes="VersionTag">
+                            <TextBlock Classes="CaptionText"
+                                       Text="{Binding ShellPanels.SettingsCenter.UpdateChannelName}" />
+                          </Border>
+                        </StackPanel>
+                      </StackPanel>
+                      <Border Grid.Column="1"
+                              Classes="AboutVersionPanel">
+                        <Grid RowDefinitions="Auto,Auto,Auto"
+                              RowSpacing="{StaticResource Space.3}">
+                          <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Classes="AboutMetaLabel"
+                                       Text="当前版本" />
+                            <TextBlock Grid.Column="1"
+                                       Classes="AboutMetaValue"
+                                       Text="{Binding ShellPanels.SettingsCenter.CurrentAppVersion}" />
+                          </Grid>
+                          <Grid Grid.Row="1"
+                                ColumnDefinitions="*,Auto">
+                            <TextBlock Classes="AboutMetaLabel"
+                                       Text="最新版本" />
+                            <TextBlock Grid.Column="1"
+                                       Classes="AboutMetaValue"
+                                       Text="{Binding ShellPanels.SettingsCenter.LatestAvailableVersion}" />
+                          </Grid>
+                          <Grid Grid.Row="2"
+                                ColumnDefinitions="*,Auto">
+                            <TextBlock Classes="AboutMetaLabel"
+                                       Text="更新渠道" />
+                            <TextBlock Grid.Column="1"
+                                       Classes="AboutMetaValue"
+                                       Text="{Binding ShellPanels.SettingsCenter.UpdateChannelName}" />
+                          </Grid>
+                        </Grid>
+                      </Border>
+                    </Grid>
+                  </Border>
+                  <Border Classes="SettingsPageSection">
+                    <StackPanel Spacing="{StaticResource Space.2}">
+                      <Grid ColumnDefinitions="*,Auto"
+                            ColumnSpacing="{StaticResource Space.4}">
                         <TextBlock Classes="SettingsGroupTitle"
                                    Text="更新状态" />
+                        <Button Grid.Column="1"
+                                Classes="DialogSecondaryButton"
+                                Content="取消更新"
+                                IsVisible="{Binding ShellPanels.SettingsCenter.IsUpdating}"
+                                Command="{Binding ShellPanels.SettingsCenter.CancelUpdateCommand}" />
+                      </Grid>
+                      <StackPanel IsVisible="{Binding ShellPanels.SettingsCenter.IsUpdating}"
+                                  Spacing="6">
+                        <ProgressBar Height="6"
+                                     Minimum="0"
+                                     Maximum="100"
+                                     IsIndeterminate="{Binding ShellPanels.SettingsCenter.IsUpdateProgressIndeterminate}"
+                                     Value="{Binding ShellPanels.SettingsCenter.UpdateProgressPercent, Mode=OneWay}" />
                         <TextBlock Classes="CaptionText"
-                                   Text="{Binding ShellPanels.SettingsCenter.AboutUpdateStatus}" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="{Binding ShellPanels.SettingsCenter.LastUpdateCheckText, StringFormat='最近检查：{0}'}" />
+                                   Text="{Binding ShellPanels.SettingsCenter.UpdateStageText}" />
                       </StackPanel>
-                    </Border>
-                    <Border Classes="SettingsPageSection">
-                      <StackPanel Spacing="{StaticResource Space.2}">
-                        <TextBlock Classes="SettingsGroupTitle"
-                                   Text="软件信息" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="{Binding AppDisplayName, StringFormat='软件名称：{0}'}" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="{Binding ShellPanels.SettingsCenter.CurrentAppVersion, StringFormat='版本号：{0}'}" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="{Binding RuntimeStackText, StringFormat='技术栈：{0}'}" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="本地数据：SQLite / 项目级工作目录隔离" />
-                      </StackPanel>
-                    </Border>
-                  </StackPanel>
-                </Grid>
-              </StackPanel>
-            </ScrollViewer>
-          </Grid>
-        </Grid>
-      </Border>
-
-      <Border Classes="SettingsDialogBackdrop"
-              IsVisible="{Binding ShellPanels.SettingsCenter.IsClearSystemDataConfirmDialogOpen}">
-        <Grid HorizontalAlignment="Center"
-              VerticalAlignment="Center">
-          <Border Classes="SettingsDangerConfirmCard">
-            <StackPanel Spacing="{StaticResource Space.4}">
-              <StackPanel Spacing="{StaticResource Space.2}">
-                <TextBlock Classes="DialogTitle"
-                           Text="确认清空系统数据？" />
-                <TextBlock Classes="CaptionText"
-                           Text="此操作会删除所有项目、接口、用例、环境配置和请求历史记录，不能撤销。"
-                           TextWrapping="Wrap" />
-              </StackPanel>
-              <Border Classes="CreateProjectDialogDivider" />
-              <StackPanel Orientation="Horizontal"
-                          HorizontalAlignment="Right"
-                          Spacing="{StaticResource Space.2}">
-                <Button Classes="DialogSecondaryButton"
-                        Content="取消"
-                        Command="{Binding ShellPanels.SettingsCenter.CancelClearSystemDataCommand}" />
-                <Button Classes="DialogDangerButton"
-                        Content="{Binding ShellPanels.SettingsCenter.ClearSystemDataButtonText}"
-                        Command="{Binding ShellPanels.SettingsCenter.ConfirmClearSystemDataCommand}" />
-              </StackPanel>
+                      <TextBlock Classes="CaptionText"
+                                 Text="{Binding ShellPanels.SettingsCenter.AboutUpdateStatus}"
+                                 TextWrapping="Wrap" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="{Binding ShellPanels.SettingsCenter.LastUpdateCheckText, StringFormat='最近检查：{0}'}" />
+                    </StackPanel>
+                  </Border>
+                  <Border Classes="SettingsPageSection">
+                    <StackPanel Spacing="{StaticResource Space.2}">
+                      <TextBlock Classes="SettingsGroupTitle"
+                                 Text="软件信息" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="{Binding AppDisplayName, StringFormat='软件名称：{0}'}" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="{Binding ShellPanels.SettingsCenter.CurrentAppVersion, StringFormat='版本号：{0}'}" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="{Binding RuntimeStackText, StringFormat='技术栈：{0}'}" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="本地数据：SQLite / 项目级工作目录隔离" />
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+              </Grid>
             </StackPanel>
-          </Border>
+          </ScrollViewer>
         </Grid>
-      </Border>
+      </Grid>
+    </Border>
 
-      <Border Classes="SettingsDialogBackdrop"
-              IsVisible="{Binding ShellPanels.SettingsCenter.IsSystemDataRestartPromptOpen}">
-        <Grid HorizontalAlignment="Center"
-              VerticalAlignment="Center">
-          <Border Classes="SettingsDangerConfirmCard">
-            <StackPanel Spacing="{StaticResource Space.4}">
-              <StackPanel Spacing="{StaticResource Space.2}">
-                <TextBlock Classes="DialogTitle"
-                           Text="系统数据已清空" />
-                <TextBlock Classes="CaptionText"
-                           Text="建议重启应用以释放全部运行状态，也可以稍后手动重启。"
-                           TextWrapping="Wrap" />
-              </StackPanel>
-              <Border Classes="CreateProjectDialogDivider" />
-              <StackPanel Orientation="Horizontal"
-                          HorizontalAlignment="Right"
-                          Spacing="{StaticResource Space.2}">
-                <Button Classes="DialogSecondaryButton"
-                        Content="稍后重启"
-                        Command="{Binding ShellPanels.SettingsCenter.DismissSystemDataRestartPromptCommand}" />
-                <Button Classes="DialogDangerButton"
-                        Content="{Binding ShellPanels.SettingsCenter.RestartApplicationButtonText}"
-                        Command="{Binding ShellPanels.SettingsCenter.RestartApplicationCommand}" />
-              </StackPanel>
+    <!-- 内嵌确认：清空系统数据（卡片内浮层） -->
+    <Border Classes="SettingsDialogBackdrop"
+            IsVisible="{Binding ShellPanels.SettingsCenter.IsClearSystemDataConfirmDialogOpen}">
+      <Grid HorizontalAlignment="Center"
+            VerticalAlignment="Center">
+        <Border Classes="SettingsDangerConfirmCard">
+          <StackPanel Spacing="{StaticResource Space.4}">
+            <StackPanel Spacing="{StaticResource Space.2}">
+              <TextBlock Classes="DialogTitle"
+                         Text="确认清空系统数据？" />
+              <TextBlock Classes="CaptionText"
+                         Text="此操作会删除所有项目、接口、用例、环境配置和请求历史记录，不能撤销。"
+                         TextWrapping="Wrap" />
             </StackPanel>
-          </Border>
-        </Grid>
-      </Border>
-    </Grid>
-  </Border>
+            <Border Classes="CreateProjectDialogDivider" />
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="{StaticResource Space.2}">
+              <Button Classes="DialogSecondaryButton"
+                      Content="取消"
+                      Command="{Binding ShellPanels.SettingsCenter.CancelClearSystemDataCommand}" />
+              <Button Classes="DialogDangerButton"
+                      Content="{Binding ShellPanels.SettingsCenter.ClearSystemDataButtonText}"
+                      Command="{Binding ShellPanels.SettingsCenter.ConfirmClearSystemDataCommand}" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Border>
+
+    <!-- 内嵌提示：清空后建议重启（卡片内浮层） -->
+    <Border Classes="SettingsDialogBackdrop"
+            IsVisible="{Binding ShellPanels.SettingsCenter.IsSystemDataRestartPromptOpen}">
+      <Grid HorizontalAlignment="Center"
+            VerticalAlignment="Center">
+        <Border Classes="SettingsDangerConfirmCard">
+          <StackPanel Spacing="{StaticResource Space.4}">
+            <StackPanel Spacing="{StaticResource Space.2}">
+              <TextBlock Classes="DialogTitle"
+                         Text="系统数据已清空" />
+              <TextBlock Classes="CaptionText"
+                         Text="建议重启应用以释放全部运行状态，也可以稍后手动重启。"
+                         TextWrapping="Wrap" />
+            </StackPanel>
+            <Border Classes="CreateProjectDialogDivider" />
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="{StaticResource Space.2}">
+              <Button Classes="DialogSecondaryButton"
+                      Content="稍后重启"
+                      Command="{Binding ShellPanels.SettingsCenter.DismissSystemDataRestartPromptCommand}" />
+              <Button Classes="DialogDangerButton"
+                      Content="{Binding ShellPanels.SettingsCenter.RestartApplicationButtonText}"
+                      Command="{Binding ShellPanels.SettingsCenter.RestartApplicationCommand}" />
+            </StackPanel>
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Border>
+  </Panel>
 </UserControl>

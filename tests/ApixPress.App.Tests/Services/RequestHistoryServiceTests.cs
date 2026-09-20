@@ -22,11 +22,10 @@ public sealed class RequestHistoryServiceTests
                     Id = "history-1",
                     ProjectId = "project-1",
                     Timestamp = new DateTime(2026, 4, 24, 10, 0, 0, DateTimeKind.Utc),
-                    RequestSnapshotJson = serializer.ToJson(new RequestSnapshotDto
-                    {
-                        Method = "GET",
-                        Url = "/users"
-                    }),
+                    RequestSnapshotJson = "this full snapshot is not loaded for a summary row",
+                    RequestName = "用户列表",
+                    RequestMethod = "GET",
+                    RequestUrl = "/users",
                     ResponseSnapshotJson = "{}",
                     HasResponse = true,
                     StatusCode = 204,
@@ -44,6 +43,7 @@ public sealed class RequestHistoryServiceTests
         Assert.Equal(33, item.DurationMs);
         Assert.Equal(4096, item.SizeBytes);
         Assert.Null(item.ResponseSnapshot);
+        Assert.Equal("用户列表", item.RequestSnapshot.Name);
         Assert.Equal("/users", item.RequestSnapshot.Url);
     }
 
@@ -99,6 +99,11 @@ public sealed class RequestHistoryServiceTests
         {
             ClearAllCalled = true;
             return Task.CompletedTask;
+        }
+
+        public Task<int> DeleteOlderThanAsync(DateTime cutoff, CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
         }
     }
 }

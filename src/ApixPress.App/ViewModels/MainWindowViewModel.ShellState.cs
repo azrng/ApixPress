@@ -1,10 +1,15 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using Ursa.Controls;
 
 namespace ApixPress.App.ViewModels;
 
 public partial class MainWindowViewModel
 {
+    private bool _isNotifyingShellState;
+    private bool _shellStateNotifyPending;
+    private bool _activeProjectShellStateNotifyPending;
+
     partial void OnActiveProjectTabChanged(ProjectTabViewModel? oldValue, ProjectTabViewModel? newValue)
     {
         if (IsDisposed)
@@ -38,9 +43,10 @@ public partial class MainWindowViewModel
             return;
         }
 
-        IsCreateProjectDialogOpen = false;
         StatusMessage = "项目已创建，可在首页卡片中继续打开为新标签页。";
         NotifyShellState();
+        // 项目创建成功后收起新建项目弹窗（无弹窗打开时无订阅者，调用为空操作）
+        RequestClose?.Invoke(this, DialogResult.OK);
     }
 
     private void OnProjectTabShellStateChanged(ProjectTabViewModel tab)
@@ -60,7 +66,8 @@ public partial class MainWindowViewModel
             StatusMessage = tab.StatusMessage;
         }
 
-        NotifyActiveProjectTabBindings();
+        // NotifyActiveProjectTabBindings 只在 ActiveProjectTab 切换时 raise（见 OnActiveProjectTabChanged），
+        // ShellState 高频路径（如每键输入）不再全量触发 6 个顶层引用属性重解析。
         NotifyActiveProjectShellState();
     }
 
@@ -88,16 +95,37 @@ public partial class MainWindowViewModel
             return;
         }
 
-        OnPropertyChanged(nameof(IsHomeTabActive));
-        OnPropertyChanged(nameof(HasActiveProjectTab));
-        OnPropertyChanged(nameof(HasProjectTabs));
-        OnPropertyChanged(nameof(IsProjectBrowserMode));
-        OnPropertyChanged(nameof(IsWorkspaceMode));
-        OnPropertyChanged(nameof(ShowProjectListEmptyState));
-        OnPropertyChanged(nameof(ShowProjectSearchEmptyState));
-        NotifyActiveProjectShellState();
-        OnPropertyChanged(nameof(BrowserStatusText));
-        OnPropertyChanged(nameof(WindowMaximizeGlyph));
+        if (_isNotifyingShellState)
+        {
+            _shellStateNotifyPending = true;
+            return;
+        }
+
+        _isNotifyingShellState = true;
+        try
+        {
+            do
+            {
+                _shellStateNotifyPending = false;
+                _activeProjectShellStateNotifyPending = false;
+
+                OnPropertyChanged(nameof(IsHomeTabActive));
+                OnPropertyChanged(nameof(HasActiveProjectTab));
+                OnPropertyChanged(nameof(HasProjectTabs));
+                OnPropertyChanged(nameof(IsProjectBrowserMode));
+                OnPropertyChanged(nameof(IsWorkspaceMode));
+                OnPropertyChanged(nameof(ShowProjectListEmptyState));
+                OnPropertyChanged(nameof(ShowProjectSearchEmptyState));
+                RaiseActiveProjectShellState();
+                OnPropertyChanged(nameof(BrowserStatusText));
+                OnPropertyChanged(nameof(WindowMaximizeGlyph));
+            }
+            while ((_shellStateNotifyPending || _activeProjectShellStateNotifyPending) && !IsDisposed);
+        }
+        finally
+        {
+            _isNotifyingShellState = false;
+        }
     }
 
     private void NotifyActiveProjectShellState()
@@ -107,12 +135,18 @@ public partial class MainWindowViewModel
             return;
         }
 
+        if (_isNotifyingShellState)
+        {
+            _activeProjectShellStateNotifyPending = true;
+            return;
+        }
+
+        RaiseActiveProjectShellState();
+    }
+
+    private void RaiseActiveProjectShellState()
+    {
         OnPropertyChanged(nameof(HasEnvironmentContext));
-        OnPropertyChanged(nameof(ShowQuickRequestSaveDialog));
-        OnPropertyChanged(nameof(ShowRequestCodeDialog));
-        OnPropertyChanged(nameof(ShowProjectImportDialog));
-        OnPropertyChanged(nameof(ShowProjectImportOverwriteConfirmDialog));
-        OnPropertyChanged(nameof(ShowWorkspaceDeleteConfirmDialog));
         OnPropertyChanged(nameof(CurrentProjectName));
         OnPropertyChanged(nameof(CurrentProjectSummary));
         OnPropertyChanged(nameof(CurrentEnvironmentLabel));

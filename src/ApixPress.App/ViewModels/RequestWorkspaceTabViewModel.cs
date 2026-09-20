@@ -1,16 +1,16 @@
-using System.ComponentModel;
-using System.Text;
+﻿using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Models.DTOs;
+using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
 
 public partial class RequestWorkspaceTabViewModel : ViewModelBase
 {
-    private const string DefaultInterfaceFolderName = "默认模块";
-    private string _cleanStateSignature = string.Empty;
+    private const string DefaultInterfaceFolderPath = "";
+    private bool _dirtySinceClean;
     private int _bulkStateMutationDepth;
     private bool _hasUnsavedChanges;
     private bool _dirtyStateUpdatePending;
@@ -19,13 +19,14 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     private static class WorkspaceEntryTypes
     {
         public const string Landing = "landing";
+        public const string InterfaceRoot = "interface-root";
         public const string QuickRequest = "quick-request";
         public const string HttpInterface = "http-interface";
     }
 
-    public RequestWorkspaceTabViewModel()
+    public RequestWorkspaceTabViewModel(IFilePickerService? filePickerService = null)
     {
-        ConfigTab = new RequestConfigTabViewModel(null);
+        ConfigTab = new RequestConfigTabViewModel(filePickerService);
         ResponseSection = new ResponseSectionViewModel();
 
         ConfigTab.PropertyChanged += OnConfigTabPropertyChanged;
@@ -48,7 +49,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     private string requestUrl = string.Empty;
 
     [ObservableProperty]
-    private string interfaceFolderPath = DefaultInterfaceFolderName;
+    private string interfaceFolderPath = DefaultInterfaceFolderPath;
 
     [ObservableProperty]
     private string httpCaseName = "成功";
@@ -64,6 +65,10 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
 
     [ObservableProperty]
     private string editingCaseId = string.Empty;
+
+    /// <summary>当前绑定的快捷请求上次保存时的名称；改名后再保存应存为新用例而非静默覆盖。</summary>
+    [ObservableProperty]
+    private string? savedQuickRequestName;
 
     [ObservableProperty]
     private int httpEditorViewIndex;
@@ -88,24 +93,25 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     internal Action? CloseAllRequested { get; set; }
 
     public bool IsLandingTab => EntryType == WorkspaceEntryTypes.Landing;
+    public bool IsInterfaceRootTab => EntryType == WorkspaceEntryTypes.InterfaceRoot;
     public bool IsQuickRequestTab => EntryType == WorkspaceEntryTypes.QuickRequest;
     public bool IsHttpInterfaceTab => EntryType == WorkspaceEntryTypes.HttpInterface;
     public bool IsHttpDebugView => IsHttpInterfaceTab && HttpEditorViewIndex == 0;
-    public bool IsHttpDesignView => IsHttpInterfaceTab && HttpEditorViewIndex == 1;
-    public bool IsHttpDocumentPreviewView => IsHttpInterfaceTab && HttpEditorViewIndex == 2;
+    public bool IsHttpDocumentPreviewView => IsHttpInterfaceTab && HttpEditorViewIndex == 1;
     public bool ShowMethodBadge => IsHttpInterfaceTab;
     public string MethodBadgeText => SelectedMethod;
     public bool CanCloseFromTab => !IsPinned;
     public bool HasUnsavedChanges => _hasUnsavedChanges;
     public bool ShowUnsavedChanges => HasUnsavedChanges;
-    public string UnsavedChangesMarker => HasUnsavedChanges ? "*" : string.Empty;
-    public bool CanReuseForWorkspaceNavigation => !IsPinned && !IsLandingTab && !HasUnsavedChanges;
+    public bool CanReuseForWorkspaceNavigation => !IsPinned && !IsLandingTab && !IsInterfaceRootTab && !HasUnsavedChanges;
     public string PinMenuHeader => IsPinned ? "取消固定标签页" : "固定标签页";
-    public string EditorTitle => IsHttpInterfaceTab ? "HTTP 接口" : IsQuickRequestTab ? "快捷请求" : "新建...";
+    public string EditorTitle => IsHttpInterfaceTab ? "HTTP 接口" : IsQuickRequestTab ? "快捷请求" : IsInterfaceRootTab ? "根目录" : "新建...";
     public string EditorDescription => IsHttpInterfaceTab
         ? "HTTP 接口会自动使用当前环境的 BaseUrl，请在右侧输入相对路径。"
         : IsQuickRequestTab
             ? "快捷请求不固定 BaseUrl，请输入完整的 http:// 或 https:// 地址。"
+            : IsInterfaceRootTab
+                ? "根目录承载当前模块下的 Auth 与全部接口。"
             : "从下方卡片中选择要创建的工作内容。";
     public string PrimaryActionText => IsHttpInterfaceTab ? "保存接口" : "保存";
     public string UrlWatermark => IsHttpInterfaceTab ? "接口路径，如 /起始" : "输入完整地址，如 https://api.example.com/users";
@@ -117,7 +123,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
             EntryType = WorkspaceEntryTypes.Landing;
             SelectedMethod = "GET";
             RequestUrl = string.Empty;
-            InterfaceFolderPath = DefaultInterfaceFolderName;
+            InterfaceFolderPath = DefaultInterfaceFolderPath;
             HttpCaseName = "成功";
             SourceEndpointId = string.Empty;
             EditingQuickRequestId = string.Empty;
@@ -138,7 +144,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
             EntryType = WorkspaceEntryTypes.QuickRequest;
             SelectedMethod = "GET";
             RequestUrl = string.Empty;
-            InterfaceFolderPath = DefaultInterfaceFolderName;
+            InterfaceFolderPath = DefaultInterfaceFolderPath;
             HttpCaseName = "成功";
             SourceEndpointId = string.Empty;
             EditingQuickRequestId = string.Empty;
@@ -152,14 +158,36 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         MarkCleanState();
     }
 
-    public void ConfigureAsHttpInterface()
+    public void ConfigureAsInterfaceRoot()
+    {
+        RunWithBulkStateMutation(() =>
+        {
+            EntryType = WorkspaceEntryTypes.InterfaceRoot;
+            SelectedMethod = "GET";
+            RequestUrl = string.Empty;
+            InterfaceFolderPath = DefaultInterfaceFolderPath;
+            HttpCaseName = "成功";
+            SourceEndpointId = string.Empty;
+            EditingQuickRequestId = string.Empty;
+            EditingInterfaceId = string.Empty;
+            EditingCaseId = string.Empty;
+            HttpEditorViewIndex = 0;
+            ConfigTab.Reset();
+            ResponseSection.Reset();
+        });
+
+        MarkCleanState();
+    }
+
+    /// <summary>打开新建 HTTP 接口编辑；传入目录路径时接口归属该目录，空值落在根目录。</summary>
+    public void ConfigureAsHttpInterface(string? folderPath = null)
     {
         RunWithBulkStateMutation(() =>
         {
             EntryType = WorkspaceEntryTypes.HttpInterface;
             SelectedMethod = "GET";
             RequestUrl = string.Empty;
-            InterfaceFolderPath = DefaultInterfaceFolderName;
+            InterfaceFolderPath = ProjectWorkspaceTreeBuilder.NormalizeFolderPath(folderPath ?? string.Empty);
             HttpCaseName = "成功";
             SourceEndpointId = string.Empty;
             EditingQuickRequestId = string.Empty;
@@ -184,7 +212,8 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
                     EditingInterfaceId = source.Id;
                     EditingCaseId = string.Empty;
                     EditingQuickRequestId = string.Empty;
-                    InterfaceFolderPath = string.IsNullOrWhiteSpace(source.FolderPath) ? DefaultInterfaceFolderName : source.FolderPath;
+                    SavedQuickRequestName = null;
+                    InterfaceFolderPath = string.IsNullOrWhiteSpace(source.FolderPath) ? DefaultInterfaceFolderPath : source.FolderPath;
                     HttpCaseName = "成功";
                     SourceEndpointId = source.RequestSnapshot.EndpointId;
                     break;
@@ -192,11 +221,12 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
                     EntryType = WorkspaceEntryTypes.HttpInterface;
                     EditingCaseId = source.Id;
                     EditingQuickRequestId = string.Empty;
+                    SavedQuickRequestName = null;
                     EditingInterfaceId = parentInterface?.Id ?? source.ParentId;
                     InterfaceFolderPath = !string.IsNullOrWhiteSpace(parentInterface?.FolderPath)
                         ? parentInterface.FolderPath
                         : string.IsNullOrWhiteSpace(source.FolderPath)
-                            ? DefaultInterfaceFolderName
+                            ? DefaultInterfaceFolderPath
                             : source.FolderPath;
                     HttpCaseName = source.Name;
                     SourceEndpointId = !string.IsNullOrWhiteSpace(source.RequestSnapshot.EndpointId)
@@ -206,9 +236,10 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
                 default:
                     EntryType = WorkspaceEntryTypes.QuickRequest;
                     EditingQuickRequestId = source.Id;
+                    SavedQuickRequestName = source.Name;
                     EditingInterfaceId = string.Empty;
                     EditingCaseId = string.Empty;
-                    InterfaceFolderPath = DefaultInterfaceFolderName;
+                    InterfaceFolderPath = DefaultInterfaceFolderPath;
                     HttpCaseName = "成功";
                     SourceEndpointId = source.RequestSnapshot.EndpointId;
                     break;
@@ -265,11 +296,19 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
 
     public void MarkCleanState()
     {
-        _cleanStateSignature = BuildStateSignature();
+        _dirtySinceClean = false;
         IsCloseDiscardPending = false;
         UpdateDirtyState(forceNotify: true);
     }
 
+    /// <summary>用户编辑了签名覆盖的字段（方法/URL/名称/请求体/参数集合等）时置脏，O(1) 不再拼接全文签名。</summary>
+    public void MarkDirtyFromUserEdit()
+    {
+        _dirtySinceClean = true;
+        NotifyDirtyStateChanged();
+    }
+
+    /// <summary>仅刷新未保存状态展示，不置脏（非编辑性写回、联动赋值等场景）。</summary>
     public void NotifyDirtyStateChanged()
     {
         if (_bulkStateMutationDepth > 0)
@@ -283,7 +322,14 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
 
     private void UpdateDirtyState(bool forceNotify)
     {
-        var hasUnsavedChanges = !string.Equals(_cleanStateSignature, BuildStateSignature(), StringComparison.Ordinal);
+        // 脏标志方案：相关属性一旦变化即置脏，避免每次按键在 UI 线程拼接全文签名做对比。
+        // 代价是把内容改回原样仍视为未保存（与主流工具行为一致）。
+        if (!forceNotify && _dirtySinceClean == _hasUnsavedChanges)
+        {
+            return;
+        }
+
+        var hasUnsavedChanges = _dirtySinceClean;
         if (!forceNotify && _hasUnsavedChanges == hasUnsavedChanges)
         {
             return;
@@ -292,7 +338,6 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         _hasUnsavedChanges = hasUnsavedChanges;
         OnPropertyChanged(nameof(HasUnsavedChanges));
         OnPropertyChanged(nameof(ShowUnsavedChanges));
-        OnPropertyChanged(nameof(UnsavedChangesMarker));
         OnPropertyChanged(nameof(CanReuseForWorkspaceNavigation));
     }
 
@@ -323,6 +368,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     protected override void DisposeManaged()
     {
         ConfigTab.PropertyChanged -= OnConfigTabPropertyChanged;
+        // 标签独占的子 VM 同步释放：ConfigTab/ResponseSection 各自的 CTS 与防抖资源不再悬挂
+        ConfigTab.Dispose();
+        ResponseSection.Dispose();
     }
 
     private void OnConfigTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -343,10 +391,10 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     {
         IsCloseDiscardPending = false;
         OnPropertyChanged(nameof(IsLandingTab));
+        OnPropertyChanged(nameof(IsInterfaceRootTab));
         OnPropertyChanged(nameof(IsQuickRequestTab));
         OnPropertyChanged(nameof(IsHttpInterfaceTab));
         OnPropertyChanged(nameof(IsHttpDebugView));
-        OnPropertyChanged(nameof(IsHttpDesignView));
         OnPropertyChanged(nameof(IsHttpDocumentPreviewView));
         OnPropertyChanged(nameof(ShowMethodBadge));
         OnPropertyChanged(nameof(MethodBadgeText));
@@ -355,7 +403,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(PrimaryActionText));
         OnPropertyChanged(nameof(UrlWatermark));
         RequestTabHeaderUpdate();
-        NotifyDirtyStateChanged();
+        MarkDirtyFromUserEdit();
     }
 
     partial void OnSelectedMethodChanged(string value)
@@ -363,7 +411,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         IsCloseDiscardPending = false;
         OnPropertyChanged(nameof(MethodBadgeText));
         RequestTabHeaderUpdate();
-        NotifyDirtyStateChanged();
+        MarkDirtyFromUserEdit();
     }
 
     partial void OnIsPinnedChanged(bool value)
@@ -377,25 +425,24 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     {
         IsCloseDiscardPending = false;
         RequestTabHeaderUpdate();
-        NotifyDirtyStateChanged();
+        MarkDirtyFromUserEdit();
     }
 
     partial void OnInterfaceFolderPathChanged(string value)
     {
         IsCloseDiscardPending = false;
-        NotifyDirtyStateChanged();
+        MarkDirtyFromUserEdit();
     }
 
     partial void OnHttpCaseNameChanged(string value)
     {
         IsCloseDiscardPending = false;
-        NotifyDirtyStateChanged();
+        MarkDirtyFromUserEdit();
     }
 
     partial void OnHttpEditorViewIndexChanged(int value)
     {
         OnPropertyChanged(nameof(IsHttpDebugView));
-        OnPropertyChanged(nameof(IsHttpDesignView));
         OnPropertyChanged(nameof(IsHttpDocumentPreviewView));
         NotifyDirtyStateChanged();
     }
@@ -405,6 +452,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         HeaderText = EntryType switch
         {
             WorkspaceEntryTypes.Landing => "新建...",
+            WorkspaceEntryTypes.InterfaceRoot => "根目录",
             WorkspaceEntryTypes.HttpInterface => ResolveHttpInterfaceTabHeader(),
             WorkspaceEntryTypes.QuickRequest => ResolveQuickRequestTabHeader(),
             _ => ResolveRequestName()
@@ -461,51 +509,6 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         }
     }
 
-    private string BuildStateSignature()
-    {
-        var builder = new StringBuilder();
-        Append(builder, EntryType);
-        Append(builder, SelectedMethod);
-        Append(builder, RequestUrl);
-        Append(builder, InterfaceFolderPath);
-        Append(builder, HttpCaseName);
-        Append(builder, SourceEndpointId);
-        Append(builder, EditingQuickRequestId);
-        Append(builder, EditingInterfaceId);
-        Append(builder, EditingCaseId);
-        Append(builder, HttpEditorViewIndex.ToString());
-        Append(builder, ConfigTab.RequestName);
-        Append(builder, ConfigTab.RequestDescription);
-        Append(builder, ConfigTab.RequestBody);
-        Append(builder, ConfigTab.SelectedBodyMode);
-        Append(builder, ConfigTab.IgnoreSslErrors ? "1" : "0");
-        AppendParameters(builder, ConfigTab.QueryParameters);
-        AppendParameters(builder, ConfigTab.PathParameters);
-        AppendParameters(builder, ConfigTab.Headers);
-        AppendParameters(builder, ConfigTab.FormFields);
-        return builder.ToString();
-    }
-
-    private static void Append(StringBuilder builder, string? value)
-    {
-        builder.Append(value?.Length ?? 0);
-        builder.Append(':');
-        builder.Append(value);
-        builder.Append('|');
-    }
-
-    private static void AppendParameters(StringBuilder builder, IEnumerable<RequestParameterItemViewModel> parameters)
-    {
-        foreach (var parameter in parameters)
-        {
-            Append(builder, parameter.Name);
-            Append(builder, parameter.Value);
-            Append(builder, parameter.Description);
-            Append(builder, parameter.IsEnabled ? "1" : "0");
-        }
-
-        builder.Append(';');
-    }
 
     private string ResolveHttpInterfaceTabHeader()
     {

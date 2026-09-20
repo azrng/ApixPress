@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress 原型 · 01 项目首页</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+
+<!-- ═══════════════ 项目首页（可交互） ═══════════════ -->
+<div class="window">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab active" data-tab-scope="directory">首页 <span class="n">3</span></div>
+    <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
+    <div class="tb-spacer"></div>
+    <button class="tb-icon" data-toast="已刷新项目列表（演示）">⟳</button>
+    <button class="tb-icon" data-toast="应用设置见 10 弹窗合集（演示）"><i class="ri-settings-line"></i></button>
+    <button class="tb-icon" data-open="#notifModal"><i class="ri-notification-3-line"></i></button>
+    <div class="tb-sep"></div>
+    <button class="tb-icon">—</button><button class="tb-icon">▢</button><button class="tb-icon">✕</button>
+  </div>
+  <div class="page">
+    <div class="card home-header">
+      <div class="page-title-row">
+        <span class="page-title">项目首页</span>
+        <span class="chip">本地工作区</span>
+      </div>
+      <div class="page-sub">本地 API 工作区：筛选、浏览项目卡片，并以标签页打开工作台。</div>
+      <div class="metric-line" id="homeMetric">
+        项目 <b>3</b> <span>·</span> 当前可见 <b>3</b> <span>·</span> 已打开标签 <b>0</b>
+      </div>
+    </div>
+
+    <div class="card toolbar">
+      <span class="cap">项目列表</span>
+      <span class="hint">搜索项目名称或备注，点击卡片后在顶部以新标签页进入工作区。</span>
+      <div class="search-box" style="width:240px;flex:none;"><span><i class="ri-search-line"></i></span><input id="homeSearch" placeholder="搜索项目…"></div>
+      <button class="btn btn-ghost" style="min-width:auto;" data-href="09-import-export.html">导入项目</button>
+      <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-open="#newProjectModal">＋ 新建项目</button>
+    </div>
+
+    <div class="tiles" id="homeTiles">
+      <div class="tile" data-href="02-debug-params.html">
+        <div class="tile-head">
+          <div class="tile-icon g2">E</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tile-name">example</div>
+            <div class="tile-hint">点击后在顶部打开独立工作标签</div>
+          </div>
+          <span class="default-badge">默认</span>
+        </div>
+        <div class="tile-summary">暂无备注信息，可进入项目详情继续完善说明。</div>
+        <div class="tile-foot">
+          <span class="name">example（默认）</span>
+          <span class="tile-open">打开项目 →</span>
+        </div>
+      </div>
+      <div class="tile" data-href="02-debug-params.html">
+        <div class="tile-head">
+          <div class="tile-icon g3">A</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tile-name">apifox</div>
+            <div class="tile-hint">点击后在顶部打开独立工作标签</div>
+          </div>
+        </div>
+        <div class="tile-summary">暂无备注信息，可进入项目详情继续完善说明。</div>
+        <div class="tile-foot">
+          <span class="name">apifox</span>
+          <span class="tile-open">打开项目 →</span>
+        </div>
+      </div>
+      <div class="tile" data-href="02-debug-params.html">
+        <div class="tile-head">
+          <div class="tile-icon g4">B</div>
+          <div style="flex:1;min-width:0;">
+            <div class="tile-name">bbb</div>
+            <div class="tile-hint">点击后在顶部打开独立工作标签</div>
+          </div>
+        </div>
+        <div class="tile-summary">暂无备注信息，可进入项目详情继续完善说明。</div>
+        <div class="tile-foot">
+          <span class="name">bbb</span>
+          <span class="tile-open">打开项目 →</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新建项目弹窗 -->
+  <div class="modal-wrap" id="newProjectModal">
+    <div class="modal" style="width:480px;">
+      <div class="modal-head"><span class="modal-title">新建项目</span><button class="drawer-close" data-close>✕</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <span class="form-label">项目名称 <span style="color:var(--err);">*</span></span>
+          <input class="form-input" id="npName" placeholder="例如：订单中心">
+        </div>
+        <div class="form-row">
+          <span class="form-label">备注（可选）</span>
+          <textarea class="form-textarea" id="npRemark" placeholder="简单描述这个项目的用途"></textarea>
+        </div>
+        <div class="form-hint">创建后会自动生成一个空的「开发」环境，并打开项目工作台。</div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close>取消</button>
+        <button class="btn btn-primary" id="npCreate">创建项目</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通知中心弹窗（简化版，完整形态见 10） -->
+  <div class="modal-wrap" id="notifModal">
+    <div class="modal" style="width:520px;">
+      <div class="modal-head">
+        <span class="modal-title">通知中心</span>
+        <button class="drawer-close" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="notif-item unread">
+          <span class="notif-dot"></span>
+          <div class="notif-body">
+            <div class="notif-title">导入完成</div>
+            <div class="notif-text">swagger.json 导入完成：新增 24 个接口，覆盖 2 个同名接口。</div>
+            <div class="notif-time">今天 14:22</div>
+          </div>
+        </div>
+        <div class="notif-item">
+          <span class="notif-dot read"></span>
+          <div class="notif-body">
+            <div class="notif-title">项目数据已导出</div>
+            <div class="notif-text">example 项目已导出到 D:\Backup\apixpress-example-0912.zip。</div>
+            <div class="notif-time">09-10 10:12</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  // 搜索过滤：按名称与备注匹配，实时更新可见计数
+  var searchInput = document.getElementById("homeSearch");
+  searchInput.addEventListener("input", function () {
+    var kw = this.value.trim().toLowerCase();
+    var visible = 0;
+    document.querySelectorAll("#homeTiles .tile").forEach(function (tile) {
+      var hit = tile.textContent.toLowerCase().indexOf(kw) !== -1;
+      tile.style.display = hit ? "" : "none";
+      if (hit) visible++;
+    });
+    document.querySelector("#homeMetric b:nth-of-type(2)").textContent = visible;
+  });
+
+  // 新建项目：校验名称 → 关闭弹窗 → 进入新项目工作台（原型不落数据）
+  document.getElementById("npCreate").addEventListener("click", function () {
+    var name = document.getElementById("npName").value.trim();
+    if (!name) { protoToast("请先填写项目名称"); return; }
+    document.getElementById("newProjectModal").classList.remove("open");
+    try {
+      sessionStorage.setItem("apixpress-prototype-project", JSON.stringify({ name: name, remark: document.getElementById("npRemark").value.trim() }));
+    } catch (ignore) { }
+    location.href = "02-debug-params.html?project=" + encodeURIComponent(name);
+  });
+</script>
+</body>
+</html>

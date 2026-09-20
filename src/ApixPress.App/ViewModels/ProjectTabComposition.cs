@@ -1,8 +1,10 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
+using CommunityToolkit.Mvvm.Messaging;
 
 namespace ApixPress.App.ViewModels;
 
@@ -22,14 +24,19 @@ internal sealed class ProjectTabComposition : DisposableObject
         private readonly IFilePickerService _filePickerService;
         private readonly IAppNotificationService _appNotificationService;
         private readonly IProjectDataExportService _projectDataExportService;
+        private readonly IProjectHttpSettingsService _projectHttpSettingsService;
+        private readonly IClipboardService _clipboardService;
         private readonly Func<string, Task> _handleProjectDeletedAsync;
         private readonly ProjectTabHostContext _hostContext;
 
         private ProjectImportViewModel? _importViewModel;
         private ProjectQuickRequestSaveViewModel? _quickRequestSaveViewModel;
+        private ProjectHttpCaseSaveViewModel? _httpCaseSaveViewModel;
         private ProjectRequestWorkflowViewModel? _workflowViewModel;
         private ProjectWorkspaceShellViewModel? _shellViewModel;
         private Func<Task> _ensureRequestHistoryLoadedAsync = static () => Task.CompletedTask;
+
+        private IMessenger Messenger => _hostContext.Messenger;
 
         public Builder(
             ProjectWorkspaceItemViewModel project,
@@ -44,6 +51,8 @@ internal sealed class ProjectTabComposition : DisposableObject
             IFilePickerService filePickerService,
             IAppNotificationService appNotificationService,
             IProjectDataExportService projectDataExportService,
+            IProjectHttpSettingsService projectHttpSettingsService,
+            IClipboardService clipboardService,
             Func<string, Task> handleProjectDeletedAsync,
             ProjectTabHostContext hostContext)
         {
@@ -59,6 +68,8 @@ internal sealed class ProjectTabComposition : DisposableObject
             _filePickerService = filePickerService;
             _appNotificationService = appNotificationService;
             _projectDataExportService = projectDataExportService;
+            _projectHttpSettingsService = projectHttpSettingsService;
+            _clipboardService = clipboardService;
             _handleProjectDeletedAsync = handleProjectDeletedAsync;
             _hostContext = hostContext;
         }
@@ -66,19 +77,40 @@ internal sealed class ProjectTabComposition : DisposableObject
         public ProjectTabComposition Build()
         {
             var environmentPanel = new EnvironmentPanelViewModel(_environmentVariableService);
-            var useCasesPanel = new UseCasesPanelViewModel(_requestCaseService);
             var historyPanel = new RequestHistoryPanelViewModel(_requestHistoryService);
             _ensureRequestHistoryLoadedAsync = historyPanel.EnsureHistoryLoadedAsync;
             var workspace = CreateWorkspace();
+            var useCasesPanel = new UseCasesPanelViewModel(_requestCaseService, workspace, _hostContext.DialogService, Messenger);
             var workspaceContext = CreateWorkspaceContext(workspace, environmentPanel, historyPanel);
             var shell = CreateShell(workspaceContext);
-            var editor = new ProjectRequestEditorViewModel(workspaceContext);
-            var catalog = CreateCatalog(useCasesPanel, workspace);
-            var import = CreateImport(catalog);
-            var workflow = CreateWorkflow(workspace, historyPanel, environmentPanel, catalog, workspaceContext);
+            var editor = new ProjectRequestEditorViewModel(workspaceContext, _hostContext.DialogService, _clipboardService);
+            ProjectInterfaceRootWorkspaceViewModel? interfaceRoot = null;
+            var catalog = CreateCatalog(
+                useCasesPanel,
+                workspace,
+                async () =>
+                {
+                    Messenger.Send(new StatusMessageRequest("正在打开接口根配置..."));
+                    workspace.EnsureInterfaceRootWorkspaceTab();
+                    Messenger.Send(new NavigationRequestMessage(NavigationTarget.InterfaceRootWorkspace));
+                    _shellViewModel?.SelectInterfaceManagementSection();
+                    if (interfaceRoot is not null)
+                    {
+                        await interfaceRoot.InitializeAsync();
+                    }
+
+                    _shellViewModel?.NotifyWorkspaceStateChanged();
+                    Messenger.Send(new StatusMessageRequest("接口根配置已打开。"));
+                    Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+                });
+            useCasesPanel.SetRequestCaseLoader(catalog.LoadSavedRequestAsync);
+            interfaceRoot = CreateInterfaceRoot(useCasesPanel, catalog);
+            var import = CreateImport(catalog, environmentPanel);
+            var workflow = CreateWorkflow(workspace, historyPanel, environmentPanel, catalog, interfaceRoot, workspaceContext);
             var quickRequestSave = CreateQuickRequestSave(workspaceContext);
+            var httpCaseSave = CreateHttpCaseSave(workspaceContext);
             var summary = CreateSummary(environmentPanel, useCasesPanel, historyPanel, import);
-            var lifecycle = CreateLifecycle(useCasesPanel, environmentPanel, historyPanel, import, workspace, quickRequestSave, shell, editor);
+            var lifecycle = CreateLifecycle(useCasesPanel, environmentPanel, historyPanel, import, workspace, quickRequestSave, httpCaseSave, shell, editor, interfaceRoot);
             var settings = CreateSettings(lifecycle.ReloadAfterProjectDataClearedAsync);
 
             return new ProjectTabComposition(
@@ -91,9 +123,11 @@ internal sealed class ProjectTabComposition : DisposableObject
                 editor,
                 settings,
                 catalog,
+                interfaceRoot,
                 import,
                 workflow,
                 quickRequestSave,
+                httpCaseSave,
                 summary,
                 lifecycle,
                 _hostContext);
@@ -106,7 +140,8 @@ internal sealed class ProjectTabComposition : DisposableObject
                 {
                     _shellViewModel?.SelectInterfaceManagementSection();
                 },
-                _hostContext.SetStatusMessage);
+                Messenger,
+                _filePickerService);
         }
 
         private ProjectTabWorkspaceContext CreateWorkspaceContext(
@@ -119,15 +154,13 @@ internal sealed class ProjectTabComposition : DisposableObject
                 GetActiveWorkspaceTab = _hostContext.GetActiveWorkspaceTab,
                 GetFallbackWorkspaceTab = () => _fallbackWorkspaceTab,
                 GetCurrentBaseUrl = () => environmentPanel.SelectedEnvironment?.BaseUrl ?? string.Empty,
-                GetActiveVariables = () => environmentPanel.EnvironmentVariables
-                    .Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Key))
-                    .GroupBy(item => item.Key.Trim(), StringComparer.OrdinalIgnoreCase)
-                    .ToDictionary(group => group.Key, group => group.Last().Value, StringComparer.OrdinalIgnoreCase),
-                EnsureLandingWorkspaceTab = workspace.EnsureLandingWorkspaceTab,
-                SelectInterfaceManagementSection = () =>
-                {
-                    _shellViewModel?.SelectInterfaceManagementSection();
-                },
+                GetActiveVariables = () => environmentPanel.SelectedEnvironment is { } selected
+                    ? selected.Variables
+                        .Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Key))
+                        .GroupBy(item => item.Key.Trim(), StringComparer.OrdinalIgnoreCase)
+                        .ToDictionary(group => group.Key, group => group.Last().Value, StringComparer.OrdinalIgnoreCase)
+                    : [],
+                IsInterfaceRootWorkspaceActive = _hostContext.IsInterfaceRootWorkspaceActive,
                 HasHistory = () => historyPanel.HistoryItems.Count > 0
             };
         }
@@ -156,13 +189,21 @@ internal sealed class ProjectTabComposition : DisposableObject
                 _handleProjectDeletedAsync,
                 _systemDataService,
                 _projectWorkspaceService,
-                _hostContext.SetStatusMessage,
-                _hostContext.NotifyShellState);
+                _clipboardService,
+                _hostContext.DialogService,
+                Messenger,
+                (name, description) =>
+                {
+                    // 名称/简介弹窗保存成功后同步设置页行展示（首页瓦片/标题栏由 ShellState 广播刷新）
+                    _project.Name = name;
+                    _project.Description = description;
+                });
         }
 
         private ProjectWorkspaceCatalogViewModel CreateCatalog(
             UseCasesPanelViewModel useCasesPanel,
-            ProjectWorkspaceTabsViewModel workspace)
+            ProjectWorkspaceTabsViewModel workspace,
+            Func<Task> openInterfaceRootWorkspaceAsync)
         {
             return new ProjectWorkspaceCatalogViewModel(
                 _project.Id,
@@ -170,13 +211,26 @@ internal sealed class ProjectTabComposition : DisposableObject
                 _apiWorkspaceService,
                 useCasesPanel,
                 workspace,
+                openInterfaceRootWorkspaceAsync,
                 () => _shellViewModel?.SelectInterfaceManagementSection(),
-                _hostContext.SetStatusMessage,
-                _hostContext.NotifyShellState,
-                () => _importViewModel?.LoadImportedDocumentsAsync(manageBusyState: false) ?? Task.CompletedTask);
+                Messenger,
+                () => _importViewModel?.LoadImportedDocumentsAsync(manageBusyState: false) ?? Task.CompletedTask,
+                _hostContext.DialogService);
         }
 
-        private ProjectImportViewModel CreateImport(ProjectWorkspaceCatalogViewModel catalog)
+        private ProjectInterfaceRootWorkspaceViewModel CreateInterfaceRoot(
+            UseCasesPanelViewModel useCasesPanel,
+            ProjectWorkspaceCatalogViewModel catalog)
+        {
+            return new ProjectInterfaceRootWorkspaceViewModel(
+                _project.Id,
+                useCasesPanel.RequestCases,
+                _projectHttpSettingsService,
+                catalog.OpenHttpInterfaceAsync,
+                Messenger);
+        }
+
+        private ProjectImportViewModel CreateImport(ProjectWorkspaceCatalogViewModel catalog, EnvironmentPanelViewModel environmentPanel)
         {
             var import = new ProjectImportViewModel(
                 _project.Id,
@@ -186,7 +240,9 @@ internal sealed class ProjectTabComposition : DisposableObject
                 _projectDataExportService,
                 () => _project,
                 catalog.SyncImportedInterfacesAsync,
-                _hostContext.SetStatusMessage);
+                environmentPanel.ApplyImportedBaseUrlAsync,
+                Messenger,
+                _hostContext.DialogService);
             _importViewModel = import;
             return import;
         }
@@ -196,6 +252,7 @@ internal sealed class ProjectTabComposition : DisposableObject
             RequestHistoryPanelViewModel historyPanel,
             EnvironmentPanelViewModel environmentPanel,
             ProjectWorkspaceCatalogViewModel catalog,
+            ProjectInterfaceRootWorkspaceViewModel interfaceRoot,
             ProjectTabWorkspaceContext workspaceContext)
         {
             var workflow = new ProjectRequestWorkflowViewModel(
@@ -207,6 +264,7 @@ internal sealed class ProjectTabComposition : DisposableObject
                 historyPanel,
                 environmentPanel,
                 catalog,
+                interfaceRoot,
                 workspaceContext,
                 workspaceTab =>
                 {
@@ -225,6 +283,16 @@ internal sealed class ProjectTabComposition : DisposableObject
                 _hostContext);
             _quickRequestSaveViewModel = quickRequestSave;
             return quickRequestSave;
+        }
+
+        private ProjectHttpCaseSaveViewModel CreateHttpCaseSave(ProjectTabWorkspaceContext workspaceContext)
+        {
+            var httpCaseSave = new ProjectHttpCaseSaveViewModel(
+                workspaceContext,
+                (workspaceTab, caseName) => _workflowViewModel?.SaveHttpCaseNamedAsync(workspaceTab, caseName) ?? Task.FromResult(false),
+                _hostContext);
+            _httpCaseSaveViewModel = httpCaseSave;
+            return httpCaseSave;
         }
 
         private ProjectTabSummaryViewModel CreateSummary(
@@ -250,8 +318,10 @@ internal sealed class ProjectTabComposition : DisposableObject
             ProjectImportViewModel import,
             ProjectWorkspaceTabsViewModel workspace,
             ProjectQuickRequestSaveViewModel quickRequestSave,
+            ProjectHttpCaseSaveViewModel httpCaseSave,
             ProjectWorkspaceShellViewModel shell,
-            ProjectRequestEditorViewModel editor)
+            ProjectRequestEditorViewModel editor,
+            ProjectInterfaceRootWorkspaceViewModel interfaceRoot)
         {
             return new ProjectTabLifecycleCoordinator(
                 _project.Id,
@@ -262,8 +332,10 @@ internal sealed class ProjectTabComposition : DisposableObject
                 import,
                 workspace,
                 quickRequestSave,
+                httpCaseSave,
                 shell,
                 editor,
+                interfaceRoot,
                 _hostContext);
         }
     }
@@ -271,6 +343,8 @@ internal sealed class ProjectTabComposition : DisposableObject
     private readonly ProjectWorkspaceItemViewModel _project;
     private readonly ProjectTabHostContext _hostContext;
     private bool _isAttached;
+    private Action? _onStateChanged;
+    private Action? _onEditorStateChanged;
 
     private ProjectTabComposition(
         ProjectWorkspaceItemViewModel project,
@@ -282,9 +356,11 @@ internal sealed class ProjectTabComposition : DisposableObject
         ProjectRequestEditorViewModel editor,
         ProjectSettingsShellViewModel settings,
         ProjectWorkspaceCatalogViewModel catalog,
+        ProjectInterfaceRootWorkspaceViewModel interfaceRoot,
         ProjectImportViewModel import,
         ProjectRequestWorkflowViewModel workflow,
         ProjectQuickRequestSaveViewModel quickRequestSave,
+        ProjectHttpCaseSaveViewModel httpCaseSave,
         ProjectTabSummaryViewModel summary,
         ProjectTabLifecycleCoordinator lifecycle,
         ProjectTabHostContext hostContext)
@@ -298,9 +374,11 @@ internal sealed class ProjectTabComposition : DisposableObject
         Editor = editor;
         Settings = settings;
         Catalog = catalog;
+        InterfaceRoot = interfaceRoot;
         Import = import;
         Workflow = workflow;
         QuickRequestSave = quickRequestSave;
+        HttpCaseSave = httpCaseSave;
         Summary = summary;
         Lifecycle = lifecycle;
         _hostContext = hostContext;
@@ -314,9 +392,11 @@ internal sealed class ProjectTabComposition : DisposableObject
     public ProjectRequestEditorViewModel Editor { get; }
     public ProjectSettingsShellViewModel Settings { get; }
     public ProjectWorkspaceCatalogViewModel Catalog { get; }
+    public ProjectInterfaceRootWorkspaceViewModel InterfaceRoot { get; }
     public ProjectImportViewModel Import { get; }
     public ProjectRequestWorkflowViewModel Workflow { get; }
     public ProjectQuickRequestSaveViewModel QuickRequestSave { get; }
+    public ProjectHttpCaseSaveViewModel HttpCaseSave { get; }
     public ProjectTabSummaryViewModel Summary { get; }
     public ProjectTabLifecycleCoordinator Lifecycle { get; }
 
@@ -333,6 +413,8 @@ internal sealed class ProjectTabComposition : DisposableObject
         IFilePickerService filePickerService,
         IAppNotificationService appNotificationService,
         IProjectDataExportService projectDataExportService,
+        IProjectHttpSettingsService projectHttpSettingsService,
+        IClipboardService clipboardService,
         Func<string, Task> handleProjectDeletedAsync,
         ProjectTabHostContext hostContext)
     {
@@ -349,6 +431,8 @@ internal sealed class ProjectTabComposition : DisposableObject
             filePickerService,
             appNotificationService,
             projectDataExportService,
+            projectHttpSettingsService,
+            clipboardService,
             handleProjectDeletedAsync,
             hostContext)
             .Build();
@@ -362,20 +446,23 @@ internal sealed class ProjectTabComposition : DisposableObject
             return;
         }
 
+        var messenger = _hostContext.Messenger;
+        _onStateChanged = () => messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+        _onEditorStateChanged = () => messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.EditorState));
         _project.PropertyChanged += OnProjectPropertyChanged;
         EnvironmentPanel.SelectedEnvironmentChanged += Lifecycle.OnSelectedEnvironmentChanged;
         EnvironmentPanel.Environments.CollectionChanged += OnCollectionChanged;
-        EnvironmentPanel.EnvironmentVariables.CollectionChanged += OnEnvironmentVariablesCollectionChanged;
         HistoryPanel.HistoryItems.CollectionChanged += OnCollectionChanged;
         Workspace.PropertyChanged += Lifecycle.OnWorkspacePropertyChanged;
-        Workspace.StateChanged += _hostContext.NotifyShellState;
-        Workspace.EditorStateChanged += _hostContext.NotifyWorkspaceEditorState;
+        Workspace.StateChanged += _onStateChanged;
+        Workspace.EditorStateChanged += _onEditorStateChanged;
         Workspace.ActiveWorkspaceTabChanged += Lifecycle.OnWorkspaceActiveWorkspaceTabChanged;
         Shell.PropertyChanged += OnShellPropertyChanged;
-        Editor.PropertyChanged += OnEditorPropertyChanged;
         Settings.PropertyChanged += OnChildPropertyChanged;
         Import.PropertyChanged += OnChildPropertyChanged;
+        InterfaceRoot.PropertyChanged += OnChildPropertyChanged;
         QuickRequestSave.PropertyChanged += OnChildPropertyChanged;
+        HttpCaseSave.PropertyChanged += OnChildPropertyChanged;
         Shell.AddProjectSettingsNavigation(Settings.OpenWorkspaceCommand);
         Workspace.EnsureLandingWorkspaceTab();
         _isAttached = true;
@@ -391,60 +478,66 @@ internal sealed class ProjectTabComposition : DisposableObject
         _project.PropertyChanged -= OnProjectPropertyChanged;
         EnvironmentPanel.SelectedEnvironmentChanged -= Lifecycle.OnSelectedEnvironmentChanged;
         EnvironmentPanel.Environments.CollectionChanged -= OnCollectionChanged;
-        EnvironmentPanel.EnvironmentVariables.CollectionChanged -= OnEnvironmentVariablesCollectionChanged;
         HistoryPanel.HistoryItems.CollectionChanged -= OnCollectionChanged;
         Workspace.PropertyChanged -= Lifecycle.OnWorkspacePropertyChanged;
-        Workspace.StateChanged -= _hostContext.NotifyShellState;
-        Workspace.EditorStateChanged -= _hostContext.NotifyWorkspaceEditorState;
+        Workspace.StateChanged -= _onStateChanged;
+        Workspace.EditorStateChanged -= _onEditorStateChanged;
         Workspace.ActiveWorkspaceTabChanged -= Lifecycle.OnWorkspaceActiveWorkspaceTabChanged;
         Shell.PropertyChanged -= OnShellPropertyChanged;
-        Editor.PropertyChanged -= OnEditorPropertyChanged;
         Settings.PropertyChanged -= OnChildPropertyChanged;
         Import.PropertyChanged -= OnChildPropertyChanged;
+        InterfaceRoot.PropertyChanged -= OnChildPropertyChanged;
         QuickRequestSave.PropertyChanged -= OnChildPropertyChanged;
+        HttpCaseSave.PropertyChanged -= OnChildPropertyChanged;
         _isAttached = false;
+    }
+
+    public Task OpenInterfaceRootWorkspaceAsync()
+    {
+        return Catalog.OpenInterfaceRootCommand.ExecuteAsync(null);
+    }
+
+    public void ClearInterfaceRootWorkspace()
+    {
+        // Handled by ProjectTabViewModel.Receive(WorkspaceStateChangedMessage) with EditorState flag,
+        // which sets IsInterfaceRootWorkspaceActive = false directly.
     }
 
     protected override void DisposeManaged()
     {
         Detach();
+        // 子 VM 全量释放：漏掉的 Editor 会让关闭标签后防抖计时器仍回调一次无效重算，
+        // 各子 VM 的 CTS 也不再被取消（飞行中的后台格式化跑完才结束）
         Catalog.Dispose();
+        InterfaceRoot.Dispose();
         Import.Dispose();
         Workflow.Dispose();
         EnvironmentPanel.Dispose();
         UseCasesPanel.Dispose();
         HistoryPanel.Dispose();
         Workspace.Dispose();
+        Editor.Dispose();
+        Settings.Dispose();
+        Shell.Dispose();
+        QuickRequestSave.Dispose();
+        HttpCaseSave.Dispose();
+        Summary.Dispose();
     }
 
     private void OnProjectPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         Settings.NotifyProjectChanged();
-        _hostContext.NotifyShellState();
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     private void OnCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
-        _hostContext.NotifyShellState();
-    }
-
-    private void OnEnvironmentVariablesCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-    {
-        _hostContext.NotifyWorkspaceEditorState();
-        _hostContext.NotifyShellState();
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     private void OnChildPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        _hostContext.NotifyShellState();
-    }
-
-    private void OnEditorPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName is nameof(ProjectRequestEditorViewModel.IsRequestCodeDialogOpen))
-        {
-            _hostContext.NotifyShellState();
-        }
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     private void OnShellPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -465,6 +558,6 @@ internal sealed class ProjectTabComposition : DisposableObject
             return;
         }
 
-        _hostContext.NotifyShellState();
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 }

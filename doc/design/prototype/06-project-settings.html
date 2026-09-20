@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress 原型 · 06 项目设置</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+
+<!-- ═══════════════ 项目设置 ═══════════════ -->
+<div class="window">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab" data-tab-scope="directory" data-href="01-home.html">首页 <span class="n">3</span></div>
+    <div class="tb-tab active" id="projectTab" data-tab-scope="directory" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
+    <div class="tb-spacer"></div>
+    <div class="env-switch">
+      <div class="env-chip"><span class="env-dot"></span><span class="env-chip-name">开发</span><span class="caret">▼</span></div>
+      <div class="env-menu">
+        <div class="env-item active" data-name="开发"><span class="check">✓</span><span class="t">开发</span><span class="chip">激活</span></div>
+        <div class="env-item" data-name="测试"><span class="check">✓</span><span class="t">测试</span><span class="chip">激活</span></div>
+        <div class="env-item" data-name="生产"><span class="check">✓</span><span class="t">生产</span><span class="chip">激活</span></div>
+        <div class="env-menu-foot" data-href="07-environments.html">管理环境…</div>
+      </div>
+    </div>
+    <button class="tb-icon"><i class="ri-settings-line"></i></button>
+  </div>
+
+  <div class="shell">
+    <div class="rail">
+      <button class="nav-item" data-href="02-debug-params.html">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <span class="t">接口管理</span>
+      </button>
+      <button class="nav-item" data-href="05-history.html">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="t">请求历史</span>
+      </button>
+      <button class="nav-item selected">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span>
+        <span class="t">项目设置</span>
+      </button>
+    </div>
+
+    <div class="settings-layout">
+      <div class="settings-nav">
+        <div class="side-title" style="margin-bottom:12px;">项目设置</div>
+        <div class="sn-cap">通用</div>
+        <div class="sn-item active">基本设置</div>
+        <div class="sn-cap">数据</div>
+        <div class="sn-item" onclick="location.href='09-import-export.html'">导入数据</div>
+        <div class="sn-item" onclick="location.href='09-import-export.html'">导出数据</div>
+        <div style="margin-top:18px; padding:12px; background:var(--bg-subtle); border-radius:var(--r-md); font-size:12px; color:var(--text-secondary); line-height:1.8;">
+          <b id="settingsProjectName" style="color:var(--text-primary);">example（默认）</b><br>
+          当前环境：开发<br>
+          已导入：1 份文档
+        </div>
+      </div>
+
+      <div class="page" style="padding:0;">
+        <div class="card" style="padding:16px 18px;">
+          <div class="section-title">基本信息</div>
+          <div class="section-hint" style="margin:4px 0 8px;">在这里维护当前项目名称、项目 ID 和项目简介。</div>
+          <div class="info-row">
+            <span class="info-label">项目名称</span><span class="info-value" id="projectNameValue">example</span>
+            <button class="link-btn" data-edit="name">编辑</button>
+          </div>
+          <div class="info-row">
+            <span class="info-label">项目 ID</span><span class="info-value" style="font-family:var(--mono); font-size:12px;">9494334d7a8f48b4ac617c40e65f9180</span>
+            <button class="link-btn" style="color:var(--text-secondary);">复制</button>
+          </div>
+          <div class="info-row">
+            <span class="info-label">简介</span><span class="info-value" id="projectRemarkValue">当前项目还没有补充备注，可在这里继续维护环境与工作区说明。</span>
+            <button class="link-btn" data-edit="remark">编辑</button>
+          </div>
+        </div>
+
+        <div class="danger-zone">
+          <div class="dz-head">
+            <div class="dz-title">危险操作</div>
+            <div class="dz-hint">这些操作会直接影响当前项目数据，请确认已导出或备份后再继续。</div>
+          </div>
+          <div class="dz-row">
+            <div class="dz-body">
+              <div class="dz-name">清空项目数据</div>
+              <div class="dz-desc">删除当前项目的接口、用例、导入文档、环境变量和请求历史，保留项目名称与简介，并重建一个空的开发环境。</div>
+            </div>
+            <button class="btn btn-danger" data-open="#dangerModal"
+                    data-msg-title="清空项目数据"
+                    data-msg="将删除当前项目的接口、用例、导入文档、环境变量和请求历史，并重建一个空的开发环境。该操作无法恢复，建议先导出备份。">清空项目数据</button>
+          </div>
+          <div class="dz-row">
+            <div class="dz-body">
+              <div class="dz-name">删除项目</div>
+              <div class="dz-desc">删除当前项目及其全部接口、用例、导入文档、环境配置和请求历史；删除后会关闭该项目标签。</div>
+            </div>
+            <button class="btn btn-danger" data-open="#dangerModal"
+                    data-msg-title="删除项目"
+                    data-msg="将删除项目「example」及其全部数据，并关闭该项目标签。该操作无法恢复，建议先导出备份。">删除项目</button>
+          </div>
+          <div class="dz-foot">危险操作需要二次确认后才会执行。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 危险操作二次确认弹窗（标题与说明由触发按钮注入） -->
+  <div class="modal-wrap" id="dangerModal">
+    <div class="modal" style="width:460px; border-color:rgba(229,72,77,.4);">
+      <div class="modal-head">
+        <span class="modal-title" style="color:var(--err);" data-msg-title>清空项目数据</span>
+        <button class="drawer-close" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size:13px; line-height:1.7; color:var(--text-primary);" data-msg-text>
+          将删除当前项目的全部数据，该操作无法恢复。
+        </div>
+        <div class="notice danger" style="margin-top:0;">
+          <span class="n-title">该操作无法恢复</span>
+          <span class="n-text">原型仅演示交互流程，不会改动真实数据。</span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close>取消</button>
+        <button class="btn btn-danger" data-close-toast="已执行（演示）——原型不改动真实数据">确认执行</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 项目信息编辑弹窗：原型演示名称/简介修改后的同步状态 -->
+  <div class="modal-wrap" id="editProjectModal">
+    <div class="modal" style="width:460px;">
+      <div class="modal-head">
+        <span class="modal-title" id="editProjectTitle">编辑项目名称</span>
+        <button class="drawer-close" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row" id="editNameField">
+          <span class="form-label">项目名称</span>
+          <input class="form-input" id="editProjectName" maxlength="80">
+        </div>
+        <div class="form-row" id="editRemarkField" style="display:none;">
+          <span class="form-label">项目简介</span>
+          <textarea class="form-textarea" id="editProjectRemark" maxlength="300"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close>取消</button>
+        <button class="btn btn-primary" id="saveProjectEdit">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  var editField = "name";
+  var editModal = document.getElementById("editProjectModal");
+  var editTitle = document.getElementById("editProjectTitle");
+  var editNameField = document.getElementById("editNameField");
+  var editRemarkField = document.getElementById("editRemarkField");
+  var editName = document.getElementById("editProjectName");
+  var editRemark = document.getElementById("editProjectRemark");
+
+  document.querySelectorAll("[data-edit]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      editField = button.getAttribute("data-edit");
+      var isName = editField === "name";
+      editTitle.textContent = isName ? "编辑项目名称" : "编辑项目简介";
+      editNameField.style.display = isName ? "flex" : "none";
+      editRemarkField.style.display = isName ? "none" : "flex";
+      editName.value = document.getElementById("projectNameValue").textContent.trim();
+      editRemark.value = document.getElementById("projectRemarkValue").textContent.trim();
+      editModal.classList.add("open");
+      (isName ? editName : editRemark).focus();
+    });
+  });
+
+  document.getElementById("saveProjectEdit").addEventListener("click", function () {
+    var nameValue = editName.value.trim();
+    var remarkValue = editRemark.value.trim();
+    if (editField === "name") {
+      if (!nameValue) { protoToast("项目名称不能为空"); return; }
+      document.getElementById("projectNameValue").textContent = nameValue;
+      document.getElementById("settingsProjectName").textContent = nameValue + "（默认）";
+      var projectTab = document.getElementById("projectTab");
+      projectTab.childNodes[0].nodeValue = nameValue + " ";
+      try {
+        sessionStorage.setItem("apixpress-prototype-project", JSON.stringify({ name: nameValue, remark: remarkValue }));
+      } catch (ignore) { }
+    } else {
+      document.getElementById("projectRemarkValue").textContent = remarkValue || "当前项目还没有补充备注，可在这里继续维护环境与工作区说明。";
+    }
+    editModal.classList.remove("open");
+    protoToast("项目设置已保存（演示）");
+  });
+</script>
+</body>
+</html>

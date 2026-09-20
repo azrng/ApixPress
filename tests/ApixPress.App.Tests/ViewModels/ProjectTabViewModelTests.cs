@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls.Notifications;
 using ApixPress.App;
@@ -6,6 +6,7 @@ using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTes
 using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeAppNotificationService;
 using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeFilePickerService;
 using FakeProjectDataExportService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectDataExportService;
+using FakeProjectHttpSettingsService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectHttpSettingsService;
 using FakeProjectWorkspaceService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectWorkspaceService;
 using FakeRequestExecutionService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestExecutionService;
 using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
@@ -81,6 +82,7 @@ public sealed partial class ProjectTabViewModelTests
         await viewModel.Import.LoadImportedDocumentsAsync(manageBusyState: false);
 
         viewModel.Catalog.InterfaceSearchText = "用户详情";
+        await Task.Delay(300);
         var nameMatchTitles = FlattenExplorerTitles(viewModel.Catalog.InterfaceCatalogItems).ToList();
 
         Assert.Contains("用户 (1)", nameMatchTitles);
@@ -88,6 +90,7 @@ public sealed partial class ProjectTabViewModelTests
         Assert.DoesNotContain("查询订单列表", nameMatchTitles);
 
         viewModel.Catalog.InterfaceSearchText = "/orders";
+        await Task.Delay(300);
         var pathMatchTitles = FlattenExplorerTitles(viewModel.Catalog.InterfaceCatalogItems).ToList();
 
         Assert.Contains("订单 (1)", pathMatchTitles);
@@ -447,7 +450,16 @@ public sealed partial class ProjectTabViewModelTests
         [
             ("订单", "旧的查询订单列表", "GET", "/orders")
         ]);
-        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        string? summaryAtConfirm = null;
+        string? conflictDetailAtConfirm = null;
+        dialogService.OnShow = request =>
+        {
+            var confirmContext = Assert.IsType<ImportOverwriteConfirmDialogViewModel>(request.DataContext);
+            summaryAtConfirm = confirmContext.Import.PendingImportOverwriteSummary;
+            conflictDetailAtConfirm = confirmContext.Import.PendingImportOverwriteDetailText;
+        };
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService, dialogService: dialogService);
         await viewModel.InitializeAsync();
 
         await viewModel.Settings.ShowImportDataCommand.ExecuteAsync(null);
@@ -455,16 +467,66 @@ public sealed partial class ProjectTabViewModelTests
 
         await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
 
-        Assert.True(viewModel.Import.IsOverwriteConfirmDialogOpen);
-        Assert.Contains("更新", viewModel.Import.PendingImportOverwriteSummary);
-        Assert.Contains("GET /orders", viewModel.Import.PendingImportOverwriteDetailText);
+        // 冲突时弹出覆盖确认弹窗（独立上下文），替身按脚本返回“确认更新”
+        var request = Assert.Single(dialogService.Requests);
+        Assert.Equal(typeof(ImportOverwriteConfirmDialogView), request.ViewType);
+        Assert.Contains("更新", summaryAtConfirm);
+        Assert.Contains("GET /orders", conflictDetailAtConfirm);
 
-        await viewModel.Import.ConfirmImportOverwriteCommand.ExecuteAsync(null);
-
-        Assert.False(viewModel.Import.IsOverwriteConfirmDialogOpen);
         Assert.Equal("1", viewModel.Import.ImportedApiDocumentCountText);
         Assert.Contains(requestCaseService.Cases, item => item.Name == "查询订单列表" && item.RequestSnapshot.Url == "/orders");
         Assert.DoesNotContain(requestCaseService.Cases, item => item.Name == "旧的查询订单列表");
+    }
+
+    [Fact]
+    public async Task ImportSwaggerUrlCommand_ShouldKeepConflictingInterfaceWhenUserChoosesSkip()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "旧文档", "FILE", @"C:\temp\legacy-swagger.json", "https://legacy.demo.local",
+        [
+            ("订单", "旧的查询订单列表", "GET", "/orders")
+        ]);
+        requestCaseService.Cases.Add(new RequestCaseDto
+        {
+            Id = "existing-orders",
+            ProjectId = "project-1",
+            EntryType = "http-interface",
+            Name = "旧的查询订单列表",
+            GroupName = "接口",
+            FolderPath = "订单",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                EndpointId = "swagger-import:GET /orders",
+                Method = "GET",
+                Url = "/orders"
+            },
+            UpdatedAt = DateTime.UtcNow
+        });
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService
+        {
+            OnShow = request =>
+            {
+                var confirmContext = Assert.IsType<ImportOverwriteConfirmDialogViewModel>(request.DataContext);
+                confirmContext.Import.ChooseSkipSameNameInterfacesCommand.Execute(null);
+            }
+        };
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService, dialogService: dialogService);
+        await viewModel.InitializeAsync();
+
+        await viewModel.Settings.ShowImportDataCommand.ExecuteAsync(null);
+        viewModel.Import.ImportUrl = "https://demo.local/swagger.json";
+
+        await viewModel.Import.ImportSwaggerUrlCommand.ExecuteAsync(null);
+
+        Assert.Contains(requestCaseService.Cases, item =>
+            item.Id == "existing-orders"
+            && item.Name == "旧的查询订单列表"
+            && item.RequestSnapshot.EndpointId == "swagger-import:GET /orders");
+        Assert.Contains(requestCaseService.Cases, item =>
+            item.EntryType == "http-interface"
+            && item.RequestSnapshot.Method == "POST"
+            && item.RequestSnapshot.Url == "/orders");
     }
 
     [Fact]
@@ -531,6 +593,57 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task LoadWorkspaceItem_ShouldShowRouteNameForUnnamedSavedInterface()
+    {
+        var apiWorkspaceService = new FakeApiWorkspaceService();
+        var requestCaseService = new FakeRequestCaseService();
+        apiWorkspaceService.SeedDocument("project-1", "osp 服务", "FILE", @"C:\temp\osp.json", "https://osp.demo.local", 1);
+        // 模拟保存时未显式命名的接口：保存口径会把生成名（方法+路径）落为接口名
+        requestCaseService.Cases.Add(new RequestCaseDto
+        {
+            Id = "case-unnamed-home",
+            ProjectId = "project-1",
+            EntryType = "http-interface",
+            Name = "GET /home",
+            GroupName = "Home",
+            RequestSnapshot = new RequestSnapshotDto { Method = "GET", Url = "/home" },
+            UpdatedAt = DateTime.UtcNow
+        });
+        var viewModel = CreateViewModel(apiWorkspaceService, requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "GET /home");
+        Assert.NotNull(interfaceItem);
+
+        await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+
+        // 编辑器名称框须与侧栏树、工作区标签一致显示路由名，而非"未命名接口"
+        Assert.Equal("GET /home", viewModel.Editor.CurrentHttpInterfaceName);
+        Assert.Equal("GET /home", viewModel.ActiveWorkspaceTab?.HeaderText);
+    }
+
+    [Fact]
+    public async Task UnnamedNewInterface_ShouldFollowMethodAndUrlAsName()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        await viewModel.InitializeAsync();
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
+        Assert.Equal("新建 HTTP 接口", viewModel.Editor.CurrentHttpInterfaceName);
+
+        viewModel.Editor.RequestUrl = "/home";
+
+        // 未显式命名时，名称随方法+路径实时生成（保存口径一致），不再停留"未命名接口"
+        Assert.Equal("GET /home", viewModel.Editor.CurrentHttpInterfaceName);
+
+        viewModel.Editor.CurrentHttpInterfaceName = "首页";
+
+        // 用户显式命名后以用户名为准
+        Assert.Equal("首页", viewModel.Editor.CurrentHttpInterfaceName);
+    }
+
+    [Fact]
     public async Task LoadWorkspaceItem_ShouldNotGenerateRequestCodeUntilDialogOpens()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
@@ -548,14 +661,224 @@ public sealed partial class ProjectTabViewModelTests
 
         Assert.Equal(RequestEditorContentMode.HttpWorkbench, viewModel.Editor.CurrentContentMode);
         Assert.True(viewModel.Editor.ShowHttpWorkbenchContent);
-        Assert.False(viewModel.Editor.IsRequestCodeDialogOpen);
         Assert.Equal(string.Empty, viewModel.Editor.RequestCodeCurlCommand);
 
-        viewModel.Editor.OpenRequestCodeDialogCommand.Execute(null);
+        await viewModel.Editor.OpenRequestCodeDialogCommand.ExecuteAsync(null);
 
-        Assert.True(viewModel.Editor.IsRequestCodeDialogOpen);
         Assert.Contains("curl --request GET", viewModel.Editor.RequestCodeCurlCommand);
         Assert.Contains("/endpoint-1", viewModel.Editor.RequestCodeCurlCommand);
+    }
+
+    [Fact]
+    public async Task CopyRequestCode_ShouldCopySelectedLanguageAndTabTextWithHintFeedback()
+    {
+        var clipboard = new ViewModelSharedTestDoubles.FakeClipboardService();
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), clipboardService: clipboard);
+        var editor = viewModel.Editor;
+        editor.RequestCodeCurlCommand = "curl-demo";
+        editor.RequestCodeWgetCommand = "wget-demo";
+        editor.RequestCodePowerShellCommand = "ps-demo";
+        editor.RequestCodeCSharpCommand = "cs-demo";
+
+        // 默认 Shell 语言 + curl 页签
+        Assert.Equal("curl-demo", editor.ResolveCurrentRequestCodeText());
+        await editor.CopyRequestCodeCommand.ExecuteAsync(null);
+        Assert.Equal("curl-demo", clipboard.CopiedTexts[0]);
+        Assert.Equal("已复制到剪贴板", editor.RequestCodeCopiedHint);
+
+        // 切页签清除提示并切换复制目标
+        editor.SelectedRequestCodeTab = 2;
+        Assert.Equal(string.Empty, editor.RequestCodeCopiedHint);
+        await editor.CopyRequestCodeCommand.ExecuteAsync(null);
+        Assert.Equal(2, clipboard.CopiedTexts.Count);
+        Assert.Equal("ps-demo", clipboard.CopiedTexts[1]);
+
+        // 切语言复制 C#，切语言同样清除提示
+        editor.ShowCSharpRequestCodeLanguageCommand.Execute(null);
+        Assert.Equal(string.Empty, editor.RequestCodeCopiedHint);
+        await editor.CopyRequestCodeCommand.ExecuteAsync(null);
+        Assert.Equal(3, clipboard.CopiedTexts.Count);
+        Assert.Equal("cs-demo", clipboard.CopiedTexts[2]);
+
+        // 复制失败走失败提示，不静默
+        clipboard.ShouldSucceed = false;
+        await editor.CopyRequestCodeCommand.ExecuteAsync(null);
+        Assert.Equal("复制失败，请手动选择代码复制。", editor.RequestCodeCopiedHint);
+    }
+
+    [Fact]
+    public async Task Settings_OpenRenameDialog_ShouldPrefillCurrentNameAndSaveThroughService()
+    {
+        var projectWorkspaceService = new ViewModelSharedTestDoubles.FakeProjectWorkspaceService
+        {
+            ProjectsResult =
+            [
+                new ProjectWorkspaceDto { Id = "project-1", Name = "旧名", Description = "旧简介", IsDefault = true }
+            ]
+        };
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            projectWorkspaceService: projectWorkspaceService,
+            dialogService: dialogService);
+
+        await viewModel.Settings.OpenRenameProjectDialogCommand.ExecuteAsync(null);
+
+        var dialog = Assert.IsType<ProjectInfoEditDialogViewModel>(
+            Assert.Single(dialogService.Requests).DataContext);
+        Assert.Equal("编辑项目名称", dialog.Title);
+        Assert.Equal("测试项目", dialog.Value);
+
+        dialog.Value = "新名字";
+        await dialog.SaveCommand.ExecuteAsync(null);
+
+        // 保存按全量口径回写（IsDefault 保留），并同步设置页行展示
+        Assert.NotNull(projectWorkspaceService.LastSavedProject);
+        Assert.Equal("新名字", projectWorkspaceService.LastSavedProject!.Name);
+        Assert.Equal("旧简介", projectWorkspaceService.LastSavedProject.Description);
+        Assert.True(projectWorkspaceService.LastSavedProject.IsDefault);
+        Assert.Equal("新名字", viewModel.Project.Name);
+    }
+
+    [Fact]
+    public async Task Settings_DescriptionSave_ShouldKeepNameAndSyncLocalDescription()
+    {
+        var projectWorkspaceService = new ViewModelSharedTestDoubles.FakeProjectWorkspaceService
+        {
+            ProjectsResult =
+            [
+                new ProjectWorkspaceDto { Id = "project-1", Name = "测试项目", Description = "旧简介", IsDefault = false }
+            ]
+        };
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            projectWorkspaceService: projectWorkspaceService,
+            dialogService: dialogService);
+
+        await viewModel.Settings.OpenEditProjectDescriptionDialogCommand.ExecuteAsync(null);
+
+        var dialog = Assert.IsType<ProjectInfoEditDialogViewModel>(
+            Assert.Single(dialogService.Requests).DataContext);
+        Assert.Equal("编辑项目简介", dialog.Title);
+        Assert.Equal("用于验证项目设置数据管理", dialog.Value);
+
+        dialog.Value = "新简介";
+        await dialog.SaveCommand.ExecuteAsync(null);
+
+        Assert.NotNull(projectWorkspaceService.LastSavedProject);
+        Assert.Equal("测试项目", projectWorkspaceService.LastSavedProject!.Name);
+        Assert.Equal("新简介", projectWorkspaceService.LastSavedProject.Description);
+        Assert.Equal("新简介", viewModel.Project.Description);
+    }
+
+    [Fact]
+    public async Task Settings_SaveFailure_ShouldSurfaceMessageAndNotSyncLocal()
+    {
+        var projectWorkspaceService = new ViewModelSharedTestDoubles.FakeProjectWorkspaceService
+        {
+            SaveShouldFail = true,
+            ProjectsResult =
+            [
+                new ProjectWorkspaceDto { Id = "project-1", Name = "测试项目", Description = string.Empty, IsDefault = false }
+            ]
+        };
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            projectWorkspaceService: projectWorkspaceService,
+            dialogService: dialogService);
+
+        await viewModel.Settings.OpenRenameProjectDialogCommand.ExecuteAsync(null);
+
+        var dialog = Assert.IsType<ProjectInfoEditDialogViewModel>(
+            Assert.Single(dialogService.Requests).DataContext);
+        var closed = false;
+        dialog.RequestClose += (_, _) => closed = true;
+
+        dialog.Value = "新名字";
+        await dialog.SaveCommand.ExecuteAsync(null);
+
+        Assert.False(closed);
+        Assert.Equal("项目名称不能为空。", dialog.ErrorMessage);
+        Assert.Equal("测试项目", viewModel.Project.Name);
+    }
+
+    [Fact]
+    public async Task UseCasesPanel_RenameCase_ShouldUpdateNameAndRefreshDrawer()
+    {
+        var requestCaseService = new FakeRequestCaseService();
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestCaseService, dialogService: dialogService);
+        var panel = viewModel.UseCasesPanel;
+        panel.SetProjectContext("project-1");
+        panel.UpsertCaseItem(new RequestCaseDto
+        {
+            Id = "case-1",
+            ProjectId = "project-1",
+            EntryType = "http-case",
+            Name = "旧用例名",
+            RequestSnapshot = new RequestSnapshotDto { Method = "GET", Url = "/get" },
+            HasLoadedDetail = true,
+            UpdatedAt = DateTime.UtcNow
+        });
+        var item = panel.RequestCases.Single();
+        Assert.Equal("旧用例名", item.Name);
+
+        await panel.RenameCaseCommand.ExecuteAsync(item);
+
+        var dialog = Assert.IsType<ProjectInfoEditDialogViewModel>(
+            Assert.Single(dialogService.Requests).DataContext);
+        Assert.Equal("重命名用例", dialog.Title);
+        Assert.Equal("用例名称", dialog.FieldLabel);
+        Assert.Equal("旧用例名", dialog.Value);
+
+        dialog.Value = "新用例名";
+        await dialog.SaveCommand.ExecuteAsync(null);
+
+        // 改名后抽屉按 Id upsert 出新条目，名称刷新
+        var renamedItem = panel.RequestCases.Single(caseItem => caseItem.Id == "case-1");
+        Assert.Equal("新用例名", renamedItem.Name);
+    }
+
+    [Fact]
+    public async Task UseCasesPanel_DuplicateCase_ShouldUseCopySuffixAndDeleteAfterConfirmation()
+    {
+        var requestCaseService = new FakeRequestCaseService();
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            requestCaseService,
+            dialogService: dialogService);
+        var panel = viewModel.UseCasesPanel;
+        panel.SetProjectContext("project-1");
+        var sourceCase = new RequestCaseDto
+        {
+            Id = "case-1",
+            ProjectId = "project-1",
+            EntryType = ProjectTabRequestEntryTypes.HttpCase,
+            ParentId = "interface-1",
+            Name = "成功响应",
+            RequestSnapshot = new RequestSnapshotDto { Method = "POST", Url = "/orders" },
+            HasLoadedDetail = true,
+            UpdatedAt = DateTime.UtcNow
+        };
+        requestCaseService.Cases.Add(sourceCase);
+        panel.UpsertCaseItem(sourceCase);
+
+        await panel.DuplicateCaseCommand.ExecuteAsync(panel.RequestCases.Single());
+
+        var duplicate = Assert.Single(panel.RequestCases, item => item.Id != "case-1");
+        Assert.Equal("成功响应_copy", duplicate.Name);
+        Assert.Contains(requestCaseService.Cases, item => item.Id == duplicate.Id && item.Name == "成功响应_copy");
+
+        await panel.RequestDeleteCaseCommand.ExecuteAsync(duplicate);
+
+        Assert.DoesNotContain(panel.RequestCases, item => item.Id == duplicate.Id);
+        Assert.DoesNotContain(requestCaseService.Cases, item => item.Id == duplicate.Id);
+        var confirmation = Assert.Single(dialogService.Requests, request =>
+            request.ViewType == typeof(RequestCaseDeleteConfirmDialogView));
+        Assert.IsType<RequestCaseDeleteConfirmDialogViewModel>(confirmation.DataContext);
     }
 
     [Fact]
@@ -580,9 +903,36 @@ public sealed partial class ProjectTabViewModelTests
             DataContext = viewModel
         });
         var requestCodeDialogException = Record.Exception(() => new RequestCodeDialogView());
+        // 实际请求面板依赖响应区样式 token，实例化冒烟防止 StaticResource 缺失在运行期才暴露
+        var actualRequestPanelException = Record.Exception(() => new ApixPress.App.Views.Controls.ActualRequestPanelView());
+        // 弹窗 chrome 由 Ursa 提供，冒烟四个小弹窗内容视图。注意：UI 实例化测试统一并入本用例，
+        // 不再新增独立实例化测试——新增方法会扰动 xUnit 集合内调度并触发 Avalonia 跨线程竞态
+        // （ContentHost 系列曾因此复现 "different thread owns it"，2026-09-16）。
+        var quickRequestSaveDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.QuickRequestSaveDialogView());
+        var httpCaseSaveDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.HttpCaseSaveDialogView());
+        var createFolderDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.WorkspaceCreateFolderDialogView());
+        var deleteConfirmDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.WorkspaceDeleteConfirmDialogView());
+        var requestCaseDeleteConfirmDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.RequestCaseDeleteConfirmDialogView());
+        var bodyTabException = Record.Exception(() => new ApixPress.App.Views.Controls.HttpInterfaceBodyTabView
+        {
+            DataContext = viewModel
+        });
+        // 项目信息编辑弹窗（名称/简介二选一）实例化冒烟，防止 StaticResource 缺失在运行期才暴露
+        var projectInfoEditDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.ProjectInfoEditDialogView
+        {
+            DataContext = new ProjectInfoEditDialogViewModel(true, "示例项目", _ => Task.FromResult<string?>(null))
+        });
 
         Assert.Null(exception);
         Assert.Null(requestCodeDialogException);
+        Assert.Null(actualRequestPanelException);
+        Assert.Null(projectInfoEditDialogException);
+        Assert.Null(quickRequestSaveDialogException);
+        Assert.Null(httpCaseSaveDialogException);
+        Assert.Null(createFolderDialogException);
+        Assert.Null(deleteConfirmDialogException);
+        Assert.Null(requestCaseDeleteConfirmDialogException);
+        Assert.Null(bodyTabException);
     }
 
     private static void EnsureAvaloniaInitialized()
@@ -592,8 +942,13 @@ public sealed partial class ProjectTabViewModelTests
             return;
         }
 
+        // 主工程已改用 Win32+Skia 显式装配（不再引用 Avalonia.Desktop），
+        // UsePlatformDetect 扩展随包移除，这里保持等价平台初始化；
+        // HarfBuzz 必须显式注册，缺失时文本整形在 Setup 期直接抛异常
         AppBuilder.Configure<App>()
-            .UsePlatformDetect()
+            .UseWin32()
+            .UseSkia()
+            .UseHarfBuzz()
             .SetupWithoutStarting();
         _isAvaloniaInitialized = true;
     }
@@ -818,8 +1173,55 @@ public sealed partial class ProjectTabViewModelTests
 
         Assert.Equal(1, requestHistoryService.GetDetailCallCount);
         Assert.NotNull(historyItem.ResponseSnapshot);
+        Assert.True(viewModel.Shell.IsInterfaceManagementSection);
+        Assert.Equal(ProjectWorkspaceContentMode.RequestEditor, viewModel.Shell.CurrentContentMode);
+        Assert.True(viewModel.ActiveWorkspaceTab?.IsQuickRequestTab);
+        Assert.Equal("https://demo.local/orders", viewModel.Editor.RequestUrl);
         Assert.True(viewModel.ResponseSection.HasResponse);
         Assert.Contains("\"items\":[]", viewModel.ResponseSection.BodyText);
+    }
+
+    [Fact]
+    public async Task SelectingHistoryItem_ShouldLoadItsRequestDetailsForPreview()
+    {
+        var requestHistoryService = new FakeRequestHistoryService();
+        requestHistoryService.Items.Add(new RequestHistoryItemDto
+        {
+            Id = "history-1",
+            Timestamp = new DateTime(2026, 4, 24, 10, 0, 0, DateTimeKind.Utc),
+            HasResponse = true,
+            StatusCode = 200,
+            DurationMs = 18,
+            SizeBytes = 256,
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "https://demo.local/orders",
+                QueryParameters = [new RequestKeyValueDto { Name = "page", Value = "2" }],
+                Headers = [new RequestKeyValueDto { Name = "X-Trace", Value = "history" }]
+            },
+            ResponseSnapshot = new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 18,
+                SizeBytes = 256,
+                Content = "{\"items\":[] }"
+            }
+        });
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestHistoryService: requestHistoryService);
+        await viewModel.InitializeAsync();
+        await viewModel.Shell.ShowRequestHistoryCommand.ExecuteAsync(null);
+
+        var historyItem = Assert.Single(viewModel.RequestHistory);
+        viewModel.HistoryPanel.SelectedHistoryItem = historyItem;
+
+        await WaitUntilAsync(() => requestHistoryService.GetDetailCallCount == 1);
+
+        Assert.Same(historyItem, viewModel.HistoryPanel.SelectedHistoryItem);
+        Assert.True(historyItem.HasQueryParameters);
+        Assert.True(historyItem.HasRequestHeaders);
+        Assert.True(viewModel.HistoryPanel.SelectedResponseSection.HasResponse);
+        Assert.Equal("HTTP 200", viewModel.HistoryPanel.SelectedResponseSection.StatusText);
     }
 
     [Fact]
@@ -843,11 +1245,10 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
-    public void RequestEditor_ShouldOpenRequestCodeDialogWithCurlCommand()
+    public async Task RequestEditor_ShouldOpenRequestCodeDialogWithCurlCommand()
     {
-        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
-        var shellStateChangedCount = 0;
-        viewModel.ShellStateChanged += _ => shellStateChangedCount++;
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), dialogService: dialogService);
 
         viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
         viewModel.Editor.SelectedMethod = "POST";
@@ -860,10 +1261,12 @@ public sealed partial class ProjectTabViewModelTests
             Value = "Bearer token"
         });
 
-        viewModel.Editor.OpenRequestCodeDialogCommand.Execute(null);
+        await viewModel.Editor.OpenRequestCodeDialogCommand.ExecuteAsync(null);
 
-        Assert.True(viewModel.Editor.IsRequestCodeDialogOpen);
-        Assert.True(shellStateChangedCount > 0);
+        var request = Assert.Single(dialogService.Requests);
+        Assert.Equal(typeof(RequestCodeDialogView), request.ViewType);
+        Assert.Same(viewModel.Editor, request.DataContext);
+        Assert.True(request.ShowCloseButton);
         Assert.Equal("生成代码", viewModel.Editor.CurrentRequestCodeTitle);
         Assert.Contains("curl --request POST", viewModel.Editor.CurrentRequestCodeCurlCommand);
         Assert.Contains("https://demo.local/orders", viewModel.Editor.CurrentRequestCodeCurlCommand);
@@ -891,8 +1294,8 @@ public sealed partial class ProjectTabViewModelTests
 
         viewModel.Editor.CloseRequestCodeDialogCommand.Execute(null);
 
-        Assert.False(viewModel.Editor.IsRequestCodeDialogOpen);
-        Assert.True(shellStateChangedCount > 1);
+        // 关闭后清空弹窗内容，避免残留上一请求的代码片段
+        Assert.Equal(string.Empty, viewModel.Editor.RequestCodeCurlCommand);
     }
 
     [Fact]
@@ -915,6 +1318,160 @@ public sealed partial class ProjectTabViewModelTests
         Assert.NotNull(requestExecutionService.LastRequest);
         Assert.Equal(requestUrl, requestExecutionService.LastRequest!.Url);
         Assert.Equal("快捷请求发送完成。", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task InterfaceRootCommand_ShouldOpenAuthByDefaultAndSaveBearerSettings()
+    {
+        var projectHttpSettingsService = new FakeProjectHttpSettingsService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            projectHttpSettingsService: projectHttpSettingsService);
+        await viewModel.InitializeAsync();
+        var root = Assert.Single(viewModel.Catalog.InterfaceTreeItems);
+
+        await viewModel.Catalog.LoadWorkspaceItem(root);
+        viewModel.InterfaceRoot.SelectedAuthModeIndex = 1;
+        viewModel.InterfaceRoot.BearerToken = "{{apiKey}}";
+        await viewModel.InterfaceRoot.SaveAuthCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.Shell.ShowInterfaceRootWorkspace);
+        Assert.NotNull(viewModel.ActiveWorkspaceTab);
+        Assert.Equal("根目录", viewModel.ActiveWorkspaceTab!.HeaderText);
+        Assert.Contains(viewModel.ActiveWorkspaceTab, viewModel.VisibleWorkspaceTabs);
+        Assert.True(viewModel.InterfaceRoot.IsAuthSelected);
+        Assert.False(viewModel.InterfaceRoot.IsAllInterfacesSelected);
+        Assert.Equal(1, projectHttpSettingsService.SaveCallCount);
+        Assert.Equal(ProjectHttpAuthSettingsDto.ModeBearer, projectHttpSettingsService.CurrentSettings.AuthMode);
+        Assert.Equal("{{apiKey}}", projectHttpSettingsService.CurrentSettings.BearerToken);
+    }
+
+    [Fact]
+    public async Task CloseInterfaceTabOpenedFromInterfaceRoot_ShouldKeepInterfaceRootTabActive()
+    {
+        var requestCaseService = new FakeRequestCaseService();
+        requestCaseService.Cases.Add(new RequestCaseDto
+        {
+            Id = "interface-1",
+            ProjectId = "project-1",
+            EntryType = ProjectTabRequestEntryTypes.HttpInterface,
+            Name = "查询用户",
+            GroupName = "接口",
+            FolderPath = "用户",
+            HasLoadedDetail = true,
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                EndpointId = "manual:GET /users",
+                Method = "GET",
+                Url = "/users"
+            },
+            UpdatedAt = DateTime.UtcNow
+        });
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestCaseService);
+        await viewModel.InitializeAsync();
+        var root = Assert.Single(viewModel.Catalog.InterfaceTreeItems);
+
+        await viewModel.Catalog.LoadWorkspaceItem(root);
+        var rootTab = viewModel.ActiveWorkspaceTab;
+        Assert.NotNull(rootTab);
+        Assert.True(rootTab!.IsInterfaceRootTab);
+        Assert.True(viewModel.Shell.ShowInterfaceRootWorkspace);
+
+        viewModel.InterfaceRoot.ShowAllInterfacesCommand.Execute(null);
+        var overviewItem = Assert.Single(viewModel.InterfaceRoot.HttpInterfaces);
+        await overviewItem.OpenCommand.ExecuteAsync(null);
+
+        var interfaceTab = viewModel.ActiveWorkspaceTab;
+        Assert.NotNull(interfaceTab);
+        Assert.NotSame(rootTab, interfaceTab);
+        Assert.True(interfaceTab!.IsHttpInterfaceTab);
+        var visibleTabsBeforeClose = viewModel.VisibleWorkspaceTabs.ToList();
+        Assert.Contains(rootTab, visibleTabsBeforeClose);
+        Assert.Contains(interfaceTab, visibleTabsBeforeClose);
+        Assert.True(viewModel.Shell.ShowRequestEditorWorkspace);
+
+        viewModel.Workspace.CloseWorkspaceTabCommand.Execute(interfaceTab);
+
+        Assert.Same(rootTab, viewModel.ActiveWorkspaceTab);
+        var visibleTabsAfterClose = viewModel.VisibleWorkspaceTabs.ToList();
+        Assert.Contains(rootTab, visibleTabsAfterClose);
+        Assert.DoesNotContain(interfaceTab, visibleTabsAfterClose);
+        Assert.True(viewModel.Shell.ShowInterfaceRootWorkspace);
+        Assert.False(viewModel.Shell.ShowRequestEditorWorkspace);
+        Assert.Equal(ProjectWorkspaceContentMode.InterfaceRoot, viewModel.Shell.CurrentContentMode);
+    }
+
+    [Fact]
+    public async Task SendRequestCommand_ShouldApplyGlobalBearerAuthOnlyForHttpInterface()
+    {
+        var requestExecutionService = new FakeRequestExecutionService();
+        var projectHttpSettingsService = new FakeProjectHttpSettingsService
+        {
+            CurrentSettings = new ProjectHttpAuthSettingsDto
+            {
+                ProjectId = "project-1",
+                AuthMode = ProjectHttpAuthSettingsDto.ModeBearer,
+                BearerToken = "{{apiKey}}"
+            }
+        };
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            requestExecutionService: requestExecutionService,
+            projectHttpSettingsService: projectHttpSettingsService);
+        await viewModel.InitializeAsync();
+
+        Assert.False(viewModel.Shell.ShowInterfaceRootWorkspace);
+
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = "/orders";
+        await viewModel.SendRequestCommand.ExecuteAsync(null);
+
+        var httpRequest = requestExecutionService.LastRequest;
+        Assert.NotNull(httpRequest);
+        Assert.Contains(httpRequest!.Headers, item =>
+            item.Name == "Authorization"
+            && item.Value == "Bearer {{apiKey}}"
+            && item.IsEnabled);
+
+        viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = "https://demo.local/ping";
+        await viewModel.SendRequestCommand.ExecuteAsync(null);
+
+        var quickRequest = requestExecutionService.LastRequest;
+        Assert.NotNull(quickRequest);
+        Assert.DoesNotContain(quickRequest!.Headers, item => item.Name == "Authorization");
+    }
+
+    [Fact]
+    public async Task SendRequestCommand_ShouldApplyGlobalBasicAuthForHttpInterface()
+    {
+        var requestExecutionService = new FakeRequestExecutionService();
+        var projectHttpSettingsService = new FakeProjectHttpSettingsService
+        {
+            CurrentSettings = new ProjectHttpAuthSettingsDto
+            {
+                ProjectId = "project-1",
+                AuthMode = ProjectHttpAuthSettingsDto.ModeBasic,
+                BasicUsername = "demo",
+                BasicPassword = "secret"
+            }
+        };
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            requestExecutionService: requestExecutionService,
+            projectHttpSettingsService: projectHttpSettingsService);
+        await viewModel.InitializeAsync();
+
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = "/orders";
+        await viewModel.SendRequestCommand.ExecuteAsync(null);
+
+        var httpRequest = requestExecutionService.LastRequest;
+        Assert.NotNull(httpRequest);
+        Assert.Contains(httpRequest!.Headers, item =>
+            item.Name == "Authorization"
+            && item.Value == "Basic ZGVtbzpzZWNyZXQ="
+            && item.IsEnabled);
     }
 
     [Fact]
@@ -949,7 +1506,10 @@ public sealed partial class ProjectTabViewModelTests
         viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
         viewModel.Editor.RequestUrl = longUrl;
 
-        Assert.True(viewModel.Editor.HasResolvedRequestPreview);
+        // URL 全量重算已并入 200ms 防抖：等防抖回调完成后断言（与真实输入路径契约一致）
+        Assert.True(SpinWait.SpinUntil(
+            () => viewModel.Editor.HasResolvedRequestPreview,
+            TimeSpan.FromSeconds(2)));
         Assert.Equal(longUrl, viewModel.Editor.RequestUrl);
         Assert.Contains("请求地址过长", viewModel.Editor.ResolvedRequestPreviewText);
     }
@@ -970,10 +1530,12 @@ public sealed partial class ProjectTabViewModelTests
             }
         };
 
-        var hasPreview = viewModel.Editor.HasResolvedRequestPreview;
+        // URL 全量重算已并入 200ms 防抖：等防抖回调完成后再取预览（与真实输入路径契约一致）
+        Assert.True(SpinWait.SpinUntil(
+            () => viewModel.Editor.HasResolvedRequestPreview,
+            TimeSpan.FromSeconds(2)));
         var previewText = viewModel.Editor.ResolvedRequestPreviewText;
 
-        Assert.True(hasPreview);
         Assert.Equal(0, requestNameChangedCount);
         Assert.Equal(string.Empty, viewModel.ActiveWorkspaceTab.ConfigTab.RequestName);
         Assert.Contains("发送预览", previewText);
@@ -1162,9 +1724,15 @@ public sealed partial class ProjectTabViewModelTests
         viewModel.Editor.SelectedMethod = "POST";
         viewModel.Editor.RequestUrl = "/orders";
         viewModel.Editor.CurrentInterfaceFolderPath = "订单";
-        viewModel.Editor.CurrentHttpCaseName = "成功响应";
 
-        await viewModel.Workflow.SaveHttpCaseAsync();
+        Assert.True(viewModel.SaveHttpCaseCommand.CanExecute(null));
+        var dialogService = new ViewModelSharedTestDoubles.FakeDialogService();
+        Assert.True(viewModel.SaveHttpCaseCommand.CanExecute(null));
+        await viewModel.SaveHttpCaseCommand.ExecuteAsync(null);
+        Assert.Empty(requestCaseService.Cases);
+
+        viewModel.HttpCaseSave.DraftName = "成功响应";
+        await viewModel.HttpCaseSave.ConfirmSaveCommand.ExecuteAsync(null);
 
         var savedInterface = Assert.Single(requestCaseService.Cases, item => item.EntryType == ProjectTabRequestEntryTypes.HttpInterface);
         var savedCase = Assert.Single(requestCaseService.Cases, item => item.EntryType == ProjectTabRequestEntryTypes.HttpCase);
@@ -1173,14 +1741,119 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Equal("订单", savedCase.FolderPath);
 
         var folderItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "订单 (1)");
-        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "创建订单 (1)");
-        var caseItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "成功响应");
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "创建订单");
 
+        // 对齐原型 08：树上不生成用例节点，接口节点以计数承载用例数
         Assert.NotNull(folderItem);
         Assert.NotNull(interfaceItem);
-        Assert.NotNull(caseItem);
-        Assert.Single(interfaceItem!.Children);
-        Assert.Same(caseItem, interfaceItem.Children[0]);
+        Assert.Empty(interfaceItem!.Children);
+        Assert.Equal(1, interfaceItem.CaseCount);
+        Assert.True(interfaceItem.HasCases);
+
+        // 第二个用例：重新打开接口本体清掉编辑中的用例上下文（EditingCaseId），保存应新建而非覆盖
+        await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+        viewModel.HttpCaseSave.DraftName = "异常响应";
+        await viewModel.HttpCaseSave.ConfirmSaveCommand.ExecuteAsync(null);
+
+        // 导航重建被抑制时，接口节点计数须定向刷新 1 → 2
+        Assert.Equal(2, interfaceItem.CaseCount);
+        Assert.Equal(2, requestCaseService.Cases.Count(item => item.EntryType == ProjectTabRequestEntryTypes.HttpCase));
+    }
+
+    [Fact]
+    public async Task UseCasesPanel_ShouldShowOnlyCurrentInterfaceCasesAndLoadSelectedCase()
+    {
+        var requestCaseService = new FakeRequestCaseService();
+        requestCaseService.Cases.AddRange(
+        [
+            new RequestCaseDto
+            {
+                Id = "interface-1",
+                ProjectId = "project-1",
+                EntryType = ProjectTabRequestEntryTypes.HttpInterface,
+                Name = "用户接口",
+                GroupName = "接口",
+                RequestSnapshot = new RequestSnapshotDto
+                {
+                    Name = "用户接口",
+                    Method = "GET",
+                    Url = "/users"
+                },
+                UpdatedAt = DateTime.UtcNow
+            },
+            new RequestCaseDto
+            {
+                Id = "case-1",
+                ProjectId = "project-1",
+                EntryType = ProjectTabRequestEntryTypes.HttpCase,
+                Name = "成功",
+                GroupName = "用例",
+                ParentId = "interface-1",
+                RequestSnapshot = new RequestSnapshotDto
+                {
+                    Name = "用户接口",
+                    Method = "GET",
+                    Url = "/users?id=1",
+                    BodyMode = BodyModes.RawJson,
+                    BodyContent = "{\"id\":1}"
+                },
+                UpdatedAt = DateTime.UtcNow
+            },
+            new RequestCaseDto
+            {
+                Id = "case-2",
+                ProjectId = "project-1",
+                EntryType = ProjectTabRequestEntryTypes.HttpCase,
+                Name = "不存在用户",
+                GroupName = "用例",
+                ParentId = "interface-2",
+                RequestSnapshot = new RequestSnapshotDto
+                {
+                    Name = "其他接口",
+                    Method = "POST",
+                    Url = "/users"
+                },
+                UpdatedAt = DateTime.UtcNow
+            }
+        ]);
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestCaseService);
+
+        await viewModel.InitializeAsync();
+
+        var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "用户接口");
+        Assert.NotNull(interfaceItem);
+        Assert.Equal(1, interfaceItem.CaseCount);
+        await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+        await WaitUntilAsync(() => viewModel.UseCasesPanel.CurrentInterfaceName == "用户接口");
+
+        var currentCases = viewModel.UseCasesPanel.CurrentInterfaceCaseItems;
+        var currentCase = Assert.Single(currentCases);
+        Assert.Equal("成功", currentCase.Name);
+        Assert.Equal("用户接口", viewModel.UseCasesPanel.CurrentInterfaceName);
+        Assert.Equal("共 1 个用例", viewModel.UseCasesPanel.CurrentInterfaceCaseCountText);
+
+        await viewModel.UseCasesPanel.LoadCaseCommand.ExecuteAsync(currentCase);
+
+        Assert.Equal("case-1", viewModel.ActiveWorkspaceTab!.EditingCaseId);
+        Assert.Equal("/users?id=1", viewModel.Editor.RequestUrl);
+        Assert.Equal(BodyModes.RawJson, viewModel.Editor.ConfigTab.SelectedBodyMode);
+        Assert.Equal("{\"id\":1}", viewModel.Editor.ConfigTab.RequestBody);
+        Assert.True(currentCase.IsSelected);
+
+        viewModel.Editor.RequestUrl = "/users?id=2";
+        viewModel.Editor.ConfigTab.RequestBody = "{\"id\":2}";
+
+        await viewModel.Workflow.SaveCurrentEditorAsync();
+
+        var updatedCase = Assert.Single(requestCaseService.Cases, item => item.Id == "case-1");
+        var unchangedInterface = Assert.Single(requestCaseService.Cases, item => item.Id == "interface-1");
+        Assert.Equal("case-1", viewModel.ActiveWorkspaceTab!.EditingCaseId);
+        Assert.Equal("成功", updatedCase.Name);
+        Assert.Equal("interface-1", updatedCase.ParentId);
+        Assert.Equal("/users?id=2", updatedCase.RequestSnapshot.Url);
+        Assert.Equal("{\"id\":2}", updatedCase.RequestSnapshot.BodyContent);
+        Assert.Equal("/users", unchangedInterface.RequestSnapshot.Url);
+        Assert.Equal(3, requestCaseService.Cases.Count);
     }
 
     [Fact]
@@ -1227,13 +1900,23 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
-    public void OpenHttpInterfaceWorkspace_ShouldUseDefaultModuleFolder()
+    public void OpenHttpInterfaceWorkspace_ShouldPlaceNewInterfaceAtRootFolder()
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
 
         viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
 
-        Assert.Equal("默认模块", viewModel.Editor.CurrentInterfaceFolderPath);
+        Assert.Equal(string.Empty, viewModel.Editor.CurrentInterfaceFolderPath);
+    }
+
+    [Fact]
+    public void OpenHttpInterfaceWorkspace_ShouldAssignFolderPathFromParameter()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute("WeatherForecast/子目录");
+
+        Assert.Equal("WeatherForecast/子目录", viewModel.Editor.CurrentInterfaceFolderPath);
     }
 
     [Fact]
@@ -1272,9 +1955,8 @@ public sealed partial class ProjectTabViewModelTests
         var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
         Assert.NotNull(interfaceItem);
 
-        viewModel.Catalog.RequestDeleteWorkspaceTreeItemCommand.Execute(interfaceItem);
+        await viewModel.Catalog.RequestDeleteWorkspaceTreeItemCommand.ExecuteAsync(interfaceItem);
 
-        Assert.True(viewModel.Catalog.IsDeleteConfirmDialogOpen);
         Assert.Equal("接口 1", viewModel.Catalog.PendingDeleteTitle);
         Assert.Contains("删除后无法恢复", viewModel.Catalog.PendingDeleteDescription);
     }
@@ -1293,10 +1975,9 @@ public sealed partial class ProjectTabViewModelTests
         var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "接口 1");
         Assert.NotNull(interfaceItem);
 
-        viewModel.Catalog.RequestDeleteWorkspaceTreeItemCommand.Execute(interfaceItem);
+        await viewModel.Catalog.RequestDeleteWorkspaceTreeItemCommand.ExecuteAsync(interfaceItem);
         await viewModel.Catalog.ConfirmDeleteCommand.ExecuteAsync(null);
 
-        Assert.False(viewModel.Catalog.IsDeleteConfirmDialogOpen);
         Assert.Null(viewModel.Catalog.PendingDeleteWorkspaceItem);
         Assert.Empty(viewModel.Catalog.InterfaceCatalogItems);
         Assert.Empty(requestCaseService.Cases);

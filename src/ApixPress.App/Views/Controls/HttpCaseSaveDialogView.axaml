@@ -1,0 +1,43 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.HttpCaseSaveDialogView"
+             x:DataType="vm:ProjectHttpCaseSaveViewModel"
+             mc:Ignorable="d">
+  <!-- 弹窗 chrome 由 Ursa StandardDialogControl 提供；DataContext 为用例保存 VM -->
+  <Border Classes="QuickRequestSaveDialogCard">
+    <Grid RowDefinitions="Auto,Auto,Auto"
+          RowSpacing="{StaticResource Space.3}">
+      <TextBlock Classes="DialogFormHint"
+                 Text="请输入用例名称，确认后保存到当前 HTTP 接口。" />
+
+      <!-- 表单直接铺放在正文上（对齐原型 modal-body），不再嵌套内层卡片 -->
+      <StackPanel Grid.Row="1"
+                  Classes="DialogFormStack">
+        <StackPanel Classes="DialogFormField">
+          <TextBlock Classes="DialogFormLabel"
+                     Text="用例名称" />
+          <TextBox Classes="SectionInput DialogInput"
+                   PlaceholderText="请输入用例名称"
+                   Text="{Binding DraftName}" />
+        </StackPanel>
+      </StackPanel>
+
+      <Border Grid.Row="2"
+              Classes="DialogFooter">
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="{StaticResource Space.2}">
+          <Button Classes="DialogSecondaryButton"
+                  Content="取消"
+                  Command="{Binding CloseDialogCommand}" />
+          <Button Classes="DialogPrimaryButton"
+                  Content="保存"
+                  Command="{Binding ConfirmSaveCommand}" />
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

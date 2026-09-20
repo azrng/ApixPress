@@ -1,8 +1,10 @@
-using Azrng.Core.Json;
+﻿using Azrng.Core.Json;
+using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Models.Entities;
 using ApixPress.App.Repositories.Interfaces;
 using ApixPress.App.Services.Interfaces;
+using ApixPress.App.ViewModels;
 using Azrng.Core;
 using Azrng.Core.DependencyInjection;
 using Azrng.Core.Results;
@@ -26,14 +28,18 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
 
     public async Task<IReadOnlyList<RequestCaseDto>> GetCasesAsync(string projectId, CancellationToken cancellationToken)
     {
-        var cases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
+        var cases = await _requestCaseRepository.GetCaseSummariesAsync(projectId, cancellationToken);
         return cases.Select(ToSummaryDto).ToList();
     }
 
-    public async Task<IReadOnlyList<RequestCaseDto>> GetCaseDetailsAsync(string projectId, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<RequestCaseDto>> GetCaseDetailsAsync(string projectId, CancellationToken cancellationToken)
     {
-        var cases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
-        return cases.Select(ToDto).ToList();
+        return PerfLog.MeasureAsync<IReadOnlyList<RequestCaseDto>>("开项目·用例明细加载", async () =>
+        {
+            var cases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
+            // 全量完整快照反序列化是 CPU 密集操作，与 GetDetailAsync 同款处理
+            return await Task.Run(() => cases.Select(ToDto).ToList(), cancellationToken);
+        });
     }
 
     public async Task<RequestCaseDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
@@ -47,16 +53,17 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         return await Task.Run(() => ToDto(entity), cancellationToken);
     }
 
-    public async Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
+    public Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(requestCase.ProjectId))
-        {
-            return ResultModel<RequestCaseDto>.Failure("请先选择项目后再保存用例。", "request_case_project_required");
-        }
+        return PerfLog.MeasureAsync("用例·保存", () => SaveCoreAsync(requestCase, cancellationToken));
+    }
 
-        if (string.IsNullOrWhiteSpace(requestCase.Name))
+    private async Task<IResultModel<RequestCaseDto>> SaveCoreAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
+    {
+        var validationError = ValidateSaveRequest(requestCase);
+        if (validationError is not null)
         {
-            return ResultModel<RequestCaseDto>.Failure("请输入用例名称。", "request_case_name_required");
+            return ResultModel<RequestCaseDto>.Failure(validationError.Message, validationError.ErrorCode);
         }
 
         var entity = ToEntity(requestCase);
@@ -77,7 +84,7 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         }
         catch (SqliteException exception) when (exception.SqliteErrorCode == 19)
         {
-            return ResultModel<RequestCaseDto>.Failure("保存失败：当前目录下已存在同名接口或用例，请调整名称后重试。", "request_case_unique_conflict");
+            return ResultModel<RequestCaseDto>.Failure("保存失败：当前目录下已存在同名接口、用例或目录，请调整名称后重试。", "request_case_unique_conflict");
         }
         catch (Exception exception)
         {
@@ -85,7 +92,109 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         }
     }
 
-    public async Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(string projectId, IReadOnlyList<ApiEndpointDto> endpoints, CancellationToken cancellationToken)
+    /// <summary>在指定父路径下新建目录；父路径为空表示根目录，目录层级最多两级。</summary>
+    public async Task<IResultModel<RequestCaseDto>> CreateFolderAsync(string projectId, string parentFolderPath, string name, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(projectId))
+        {
+            return ResultModel<RequestCaseDto>.Failure("请先选择项目后再新建目录。", "request_case_project_required");
+        }
+
+        var folderName = name.Trim();
+        if (string.IsNullOrWhiteSpace(folderName))
+        {
+            return ResultModel<RequestCaseDto>.Failure("请输入目录名称。", "request_case_folder_name_required");
+        }
+
+        var parentPath = NormalizeFolderPath(parentFolderPath);
+        if (parentPath.Split('/', StringSplitOptions.RemoveEmptyEntries).Length >= ProjectWorkspaceTreeBuilder.MaxFolderDepth)
+        {
+            return ResultModel<RequestCaseDto>.Failure("目录最多支持两级，请在一级目录下新建子目录。", "request_case_folder_depth_exceeded");
+        }
+
+        return await SaveAsync(new RequestCaseDto
+        {
+            ProjectId = projectId,
+            EntryType = ProjectTabRequestEntryTypes.Folder,
+            Name = folderName,
+            GroupName = "目录",
+            FolderPath = parentPath,
+            ParentId = string.Empty,
+            RequestSnapshot = new RequestSnapshotDto(),
+            UpdatedAt = DateTime.UtcNow
+        }, cancellationToken);
+    }
+
+    public async Task<IResultModel<int>> SaveRangeAsync(IEnumerable<RequestCaseDto> requestCases, CancellationToken cancellationToken)
+    {
+        var caseList = requestCases.ToList();
+        foreach (var requestCase in caseList)
+        {
+            var validationError = ValidateSaveRequest(requestCase);
+            if (validationError is not null)
+            {
+                return ResultModel<int>.Failure(validationError.Message, validationError.ErrorCode);
+            }
+        }
+
+        var entities = caseList
+            .Select(dto =>
+            {
+                var entity = ToEntity(dto);
+                if (string.IsNullOrWhiteSpace(entity.Id))
+                {
+                    entity.Id = Guid.NewGuid().ToString("N");
+                }
+
+                if (entity.UpdatedAt == default)
+                {
+                    entity.UpdatedAt = DateTime.UtcNow;
+                }
+
+                return entity;
+            })
+            .ToList();
+
+        if (entities.Count == 0)
+        {
+            return ResultModel<int>.Success(0);
+        }
+
+        try
+        {
+            await _requestCaseRepository.UpsertRangeAsync(entities, cancellationToken);
+            return ResultModel<int>.Success(entities.Count);
+        }
+        catch (SqliteException exception) when (exception.SqliteErrorCode == 19)
+        {
+            return ResultModel<int>.Failure("批量保存失败：存在同名接口或用例冲突。", "request_case_batch_unique_conflict");
+        }
+        catch (Exception exception)
+        {
+            return ResultModel<int>.Failure($"批量保存失败：{exception.Message}", "request_case_batch_save_failed");
+        }
+    }
+
+    private static RequestCaseValidationError? ValidateSaveRequest(RequestCaseDto requestCase)
+    {
+        if (string.IsNullOrWhiteSpace(requestCase.ProjectId))
+        {
+            return new RequestCaseValidationError("请先选择项目后再保存用例。", "request_case_project_required");
+        }
+
+        if (string.IsNullOrWhiteSpace(requestCase.Name))
+        {
+            return new RequestCaseValidationError("请输入用例名称。", "request_case_name_required");
+        }
+
+        return null;
+    }
+
+    public async Task<ImportedHttpInterfaceSyncResultDto> SyncImportedHttpInterfacesAsync(
+        string projectId,
+        IReadOnlyList<ApiEndpointDto> endpoints,
+        CancellationToken cancellationToken,
+        IReadOnlySet<string>? preservedEndpointIds = null)
     {
         if (string.IsNullOrWhiteSpace(projectId))
         {
@@ -93,48 +202,50 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         }
 
         var existingCases = await _requestCaseRepository.GetCasesAsync(projectId, cancellationToken);
-        var importedInterfaces = existingCases
-            .Where(item => string.Equals(item.EntryType, "http-interface", StringComparison.OrdinalIgnoreCase))
-            .Select(item => new ImportedInterfaceRecord(item, DeserializeRequestSnapshot(item.RequestSnapshotJson)))
-            .Where(item => IsImportedInterface(item.Snapshot))
-            .ToDictionary(item => item.Snapshot.EndpointId, StringComparer.OrdinalIgnoreCase);
-        var importedInterfaceIds = importedInterfaces.Values
-            .Select(item => item.Id)
-            .Where(item => !string.IsNullOrWhiteSpace(item))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var importedCases = existingCases
-            .Where(item => string.Equals(item.EntryType, "http-case", StringComparison.OrdinalIgnoreCase))
-            .Where(item => importedInterfaceIds.Contains(item.ParentId))
-            .ToList();
-        var importedCasesByInterfaceId = importedCases
-            .GroupBy(item => item.ParentId, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.OrdinalIgnoreCase);
-        var normalizedEndpoints = endpoints
-            .GroupBy(BuildImportedEndpointKey, StringComparer.OrdinalIgnoreCase)
-            .Select(group => group.Last())
-            .ToList();
-        var targetKeys = normalizedEndpoints
-            .Select(BuildImportedEndpointKey)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var deletedInterfaceIds = new List<string>();
-        var entitiesToUpsert = new List<RequestCaseEntity>();
-
-        foreach (var removedInterface in importedInterfaces.Values.Where(item => !targetKeys.Contains(item.Snapshot.EndpointId)))
+        // 全量分组与逐条快照反序列化是 CPU 密集操作：大文档导入时移出 UI 线程执行
+        var (deletedInterfaceIds, entitiesToUpsert) = await Task.Run(() =>
         {
-            if (importedCasesByInterfaceId.ContainsKey(removedInterface.Id))
-            {
-                entitiesToUpsert.Add(BuildPreservedImportedInterfaceEntity(removedInterface));
-                continue;
-            }
+            var deletedIds = new List<string>();
+            var upserts = new List<RequestCaseEntity>();
+            var importedInterfaces = existingCases
+                .Where(item => string.Equals(item.EntryType, "http-interface", StringComparison.OrdinalIgnoreCase))
+                .Select(item => new ImportedInterfaceRecord(item, DeserializeRequestSnapshot(item.RequestSnapshotJson)))
+                .Where(item => IsImportedInterface(item.Snapshot))
+                .ToDictionary(item => item.Snapshot.EndpointId, StringComparer.OrdinalIgnoreCase);
+            var importedInterfaceIds = importedInterfaces.Values
+                .Select(item => item.Id)
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var importedCasesByInterfaceId = existingCases
+                .Where(item => string.Equals(item.EntryType, "http-case", StringComparison.OrdinalIgnoreCase))
+                .Where(item => importedInterfaceIds.Contains(item.ParentId))
+                .GroupBy(item => item.ParentId, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.OrdinalIgnoreCase);
+            var normalizedEndpoints = endpoints
+                .GroupBy(BuildImportedEndpointKey, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.Last())
+                .ToList();
+            var targetKeys = normalizedEndpoints
+                .Select(BuildImportedEndpointKey)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var explicitlyPreservedEndpointIds = preservedEndpointIds
+                ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            deletedInterfaceIds.Add(removedInterface.Id);
-        }
-
-        try
-        {
-            if (deletedInterfaceIds.Count > 0)
+            foreach (var removedInterface in importedInterfaces.Values.Where(item => !targetKeys.Contains(item.Snapshot.EndpointId)))
             {
-                await _requestCaseRepository.DeleteRangeAsync(projectId, deletedInterfaceIds, cancellationToken);
+                if (explicitlyPreservedEndpointIds.Contains(removedInterface.Snapshot.EndpointId))
+                {
+                    upserts.Add(BuildPreservedImportedInterfaceEntity(removedInterface, preserveImportedIdentity: true));
+                    continue;
+                }
+
+                if (importedCasesByInterfaceId.ContainsKey(removedInterface.Id))
+                {
+                    upserts.Add(BuildPreservedImportedInterfaceEntity(removedInterface));
+                    continue;
+                }
+
+                deletedIds.Add(removedInterface.Id);
             }
 
             foreach (var endpoint in normalizedEndpoints)
@@ -142,13 +253,16 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
                 var endpointKey = BuildImportedEndpointKey(endpoint);
                 importedInterfaces.TryGetValue(endpointKey, out var existingInterface);
 
-                entitiesToUpsert.Add(BuildImportedInterfaceEntity(projectId, endpoint, endpointKey, existingInterface?.Id));
+                upserts.Add(BuildImportedInterfaceEntity(projectId, endpoint, endpointKey, existingInterface?.Id));
             }
 
-            if (entitiesToUpsert.Count > 0)
-            {
-                await _requestCaseRepository.UpsertRangeAsync(entitiesToUpsert, cancellationToken);
-            }
+            return (deletedIds, upserts);
+        });
+
+        try
+        {
+            // 删除与写入在单一事务内完成，中途失败不会留下"删了旧的、新的没写入"的半同步状态
+            await _requestCaseRepository.SyncImportedRangeAsync(projectId, deletedInterfaceIds, entitiesToUpsert, cancellationToken);
 
             return new ImportedHttpInterfaceSyncResultDto
             {
@@ -176,7 +290,7 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             Id = Guid.NewGuid().ToString("N"),
             ProjectId = duplicate.ProjectId,
             EntryType = duplicate.EntryType,
-            Name = $"{duplicate.Name} 副本",
+            Name = $"{duplicate.Name}_copy",
             GroupName = duplicate.GroupName,
             FolderPath = duplicate.FolderPath,
             ParentId = duplicate.ParentId,
@@ -213,7 +327,9 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
         return $"{ImportedEndpointKeyPrefix}{method} {path}";
     }
 
-    private RequestCaseEntity BuildPreservedImportedInterfaceEntity(ImportedInterfaceRecord requestCase)
+    private RequestCaseEntity BuildPreservedImportedInterfaceEntity(
+        ImportedInterfaceRecord requestCase,
+        bool preserveImportedIdentity = false)
     {
         return new RequestCaseEntity
         {
@@ -223,10 +339,14 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             Name = requestCase.Name,
             GroupName = requestCase.GroupName,
             FolderPath = requestCase.FolderPath,
-            ParentId = BuildPreservedInterfaceParentId(requestCase.Id),
+            ParentId = preserveImportedIdentity
+                ? requestCase.Snapshot.EndpointId
+                : BuildPreservedInterfaceParentId(requestCase.Id),
             TagsJson = requestCase.TagsJson,
             Description = requestCase.Description,
-            RequestSnapshotJson = _serializer.ToJson(BuildDetachedSnapshot(requestCase.Snapshot)),
+            RequestSnapshotJson = _serializer.ToJson(preserveImportedIdentity
+                ? requestCase.Snapshot
+                : BuildDetachedSnapshot(requestCase.Snapshot)),
             UpdatedAt = DateTime.UtcNow
         };
     }
@@ -330,9 +450,10 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
 
     private static string NormalizeFolderPath(string folderPath)
     {
+        // 未分组接口直接落在接口树根目录，不再生成"默认模块"虚拟目录
         if (string.IsNullOrWhiteSpace(folderPath))
         {
-            return "默认模块";
+            return string.Empty;
         }
 
         return string.Join('/',
@@ -443,4 +564,6 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
 
         public string Description => Entity.Description;
     }
+
+    private sealed record RequestCaseValidationError(string Message, string ErrorCode);
 }

@@ -3,16 +3,20 @@ using System.Collections.Specialized;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using ApixPress.App.Helpers;
+using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
 using Avalonia.Controls.Notifications;
 using Azrng.Core.Results;
+using Irihi.Avalonia.Shared.Contracts;
+using Ursa.Controls;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class ProjectImportViewModel : ViewModelBase
+public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
 {
     private static class ImportDataModes
     {
@@ -33,11 +37,14 @@ public partial class ProjectImportViewModel : ViewModelBase
     private readonly IAppNotificationService _appNotificationService;
     private readonly IProjectDataExportService _projectDataExportService;
     private readonly Func<ProjectWorkspaceItemViewModel> _getProject;
-    private readonly Func<IReadOnlyList<ApiEndpointDto>, Task> _syncImportedInterfacesAsync;
-    private readonly Action<string> _setStatusMessage;
+    private readonly Func<IReadOnlyList<ApiEndpointDto>, IReadOnlySet<string>, Task> _syncImportedInterfacesAsync;
+    private readonly Func<string, Task<bool>> _applyImportedBaseUrlAsync;
+    private readonly IMessenger _messenger;
+    private readonly IDialogService _dialogService;
     private CancellationTokenSource? _importCancellationTokenSource;
     private PendingImportRequest? _pendingImportRequest;
     private bool _hasLoadedImportedDocuments;
+    private readonly HashSet<string> _skipPendingConflictKeys = new(StringComparer.OrdinalIgnoreCase);
     private static readonly ImportOperationTextBundle SwaggerImportTextBundle = new(
         "Swagger 导入成功",
         "Swagger 导入失败",
@@ -60,8 +67,10 @@ public partial class ProjectImportViewModel : ViewModelBase
         IAppNotificationService appNotificationService,
         IProjectDataExportService projectDataExportService,
         Func<ProjectWorkspaceItemViewModel> getProject,
-        Func<IReadOnlyList<ApiEndpointDto>, Task> syncImportedInterfacesAsync,
-        Action<string> setStatusMessage)
+        Func<IReadOnlyList<ApiEndpointDto>, IReadOnlySet<string>, Task> syncImportedInterfacesAsync,
+        Func<string, Task<bool>> applyImportedBaseUrlAsync,
+        IMessenger messenger,
+        IDialogService dialogService)
     {
         _projectId = projectId;
         _apiWorkspaceService = apiWorkspaceService;
@@ -70,12 +79,14 @@ public partial class ProjectImportViewModel : ViewModelBase
         _projectDataExportService = projectDataExportService;
         _getProject = getProject;
         _syncImportedInterfacesAsync = syncImportedInterfacesAsync;
-        _setStatusMessage = setStatusMessage;
+        _applyImportedBaseUrlAsync = applyImportedBaseUrlAsync;
+        _messenger = messenger;
+        _dialogService = dialogService;
 
         ImportedApiDocuments.CollectionChanged += OnImportedApiDocumentsCollectionChanged;
     }
 
-    public ObservableCollection<ProjectImportedDocumentItemViewModel> ImportedApiDocuments { get; } = [];
+    public BatchObservableCollection<ProjectImportedDocumentItemViewModel> ImportedApiDocuments { get; } = [];
 
     public bool IsImportFileMode => SelectedImportDataMode == ImportDataModes.File;
     public bool IsImportUrlMode => SelectedImportDataMode == ImportDataModes.Url;
@@ -94,6 +105,9 @@ public partial class ProjectImportViewModel : ViewModelBase
     public string ImportedApiDocumentCountText => ImportedApiDocuments.Count.ToString();
     public bool HasPendingImportPreview => PendingImportPreview is not null;
     public string PendingImportOverwriteTitle => PendingImportPreview?.DocumentName ?? string.Empty;
+    public bool HasImportConflicts => PendingImportPreview is { ConflictItems.Count: > 0 };
+    public IReadOnlyList<ApiImportConflictDto> PendingImportConflicts =>
+        PendingImportPreview?.ConflictItems ?? [];
     public string PendingImportOverwriteSummary
     {
         get
@@ -108,6 +122,11 @@ public partial class ProjectImportViewModel : ViewModelBase
                 PendingImportPreview.ConflictCount);
         }
     }
+
+    public bool IsOverwriteImportSelected => !SkipSameNameInterfaces;
+
+    [ObservableProperty]
+    private bool skipSameNameInterfaces;
 
     public string PendingImportOverwriteDetailText
     {
@@ -170,11 +189,11 @@ public partial class ProjectImportViewModel : ViewModelBase
     [ObservableProperty]
     private string importDataStatusState = ImportStatusStates.Info;
 
-    [ObservableProperty]
-    private bool isDialogOpen;
+    /// <summary>导入主弹窗异步关闭通道（覆盖确认弹窗使用独立上下文，见 ImportOverwriteConfirmDialogViewModel）。</summary>
+    public event EventHandler<object?>? RequestClose;
 
-    [ObservableProperty]
-    private bool isOverwriteConfirmDialogOpen;
+    public void Close() => RequestClose?.Invoke(this, null);
+
 
     [ObservableProperty]
     private ApiImportPreviewDto? pendingImportPreview;
@@ -187,24 +206,26 @@ public partial class ProjectImportViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void OpenDialog()
+    private async Task OpenDialogAsync()
     {
         SelectedImportDataMode = ImportDataModes.File;
         ClearPendingImportConfirmation();
-        IsDialogOpen = true;
-        _setStatusMessage(ImportTexts.OpenDialogStatus);
+        _messenger.Send(new StatusMessageRequest(ImportTexts.OpenDialogStatus));
+        // 标题随导入格式动态变化，打开时取当前值
+        await _dialogService.ShowDialogAsync<Views.Controls.ProjectImportDialogView>(this, DialogTitle);
     }
 
     [RelayCommand]
     private void CloseDialog()
     {
         DismissDialog();
-        _setStatusMessage(ImportTexts.CloseDialogStatus);
+        _messenger.Send(new StatusMessageRequest(ImportTexts.CloseDialogStatus));
     }
 
+    /// <summary>关闭导入主弹窗；弹窗未打开时无订阅者，RequestClose 为空操作。</summary>
     public void DismissDialog()
     {
-        IsDialogOpen = false;
+        RequestClose?.Invoke(this, DialogResult.None);
         ClearPendingImportConfirmation();
     }
 
@@ -218,7 +239,7 @@ public partial class ProjectImportViewModel : ViewModelBase
 
         _importCancellationTokenSource.Cancel();
         SetImportDataStatus("正在取消当前导入操作...", ImportStatusStates.Info);
-        _setStatusMessage("正在取消当前导入操作...");
+        _messenger.Send(new StatusMessageRequest("正在取消当前导入操作..."));
     }
 
     public void ResetImportedDocuments()
@@ -229,6 +250,8 @@ public partial class ProjectImportViewModel : ViewModelBase
         ImportUrl = string.Empty;
         SetImportDataStatus(ImportTexts.EmptyStateStatus, ImportStatusStates.Info);
         ClearPendingImportConfirmation();
+        _skipPendingConflictKeys.Clear();
+        SkipSameNameInterfaces = false;
     }
 
     [RelayCommand]
@@ -241,6 +264,20 @@ public partial class ProjectImportViewModel : ViewModelBase
     private void ShowImportUrlMode()
     {
         SelectedImportDataMode = ImportDataModes.Url;
+    }
+
+    [RelayCommand]
+    private void ChooseOverwriteImport()
+    {
+        SkipSameNameInterfaces = false;
+        OnPropertyChanged(nameof(IsOverwriteImportSelected));
+    }
+
+    [RelayCommand]
+    private void ChooseSkipSameNameInterfaces()
+    {
+        SkipSameNameInterfaces = true;
+        OnPropertyChanged(nameof(IsOverwriteImportSelected));
     }
 
     [RelayCommand]
@@ -261,7 +298,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         SelectedImportFilePath = filePath;
         var selectedFileStatus = ImportTexts.FormatSelectedFileStatus(Path.GetFileName(filePath));
         SetImportDataStatus(selectedFileStatus, ImportStatusStates.Info);
-        _setStatusMessage(selectedFileStatus);
+        _messenger.Send(new StatusMessageRequest(selectedFileStatus));
     }
 
     [RelayCommand]
@@ -270,7 +307,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         if (!HasSelectedImportFile)
         {
             SetImportDataStatus(ImportTexts.MissingFileStatus, ImportStatusStates.Error);
-            _setStatusMessage(ImportTexts.MissingFileShellStatus);
+            _messenger.Send(new StatusMessageRequest(ImportTexts.MissingFileShellStatus));
             return;
         }
 
@@ -290,7 +327,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(importTargetUrl))
         {
             SetImportDataStatus(ImportTexts.MissingUrlStatus, ImportStatusStates.Error);
-            _setStatusMessage(ImportTexts.MissingUrlShellStatus);
+            _messenger.Send(new StatusMessageRequest(ImportTexts.MissingUrlShellStatus));
             return;
         }
 
@@ -315,7 +352,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(filePath))
         {
             SetImportDataStatus(ImportTexts.PickPackageCancelledStatus, ImportStatusStates.Info);
-            _setStatusMessage(ImportTexts.PickPackageCancelledStatus);
+            _messenger.Send(new StatusMessageRequest(ImportTexts.PickPackageCancelledStatus));
             return;
         }
 
@@ -332,23 +369,43 @@ public partial class ProjectImportViewModel : ViewModelBase
     private async Task RefreshImportedApiDocumentsAsync()
     {
         await LoadImportedDocumentsAsync();
-        _setStatusMessage(HasImportedApiDocuments
+        _messenger.Send(new StatusMessageRequest(HasImportedApiDocuments
             ? ImportTexts.FormatRefreshImportedDocumentsSuccess(ImportedApiDocuments.Count)
-            : ImportTexts.EmptyRefreshStatus);
+            : ImportTexts.EmptyRefreshStatus));
     }
 
-    [RelayCommand]
-    private void CancelImportOverwriteConfirm()
+    /// <summary>
+    /// 等待覆盖确认弹窗结果：确认后执行待导入请求；取消或 chrome 关闭则清空待确认状态。
+    /// 独立于预览流程等待，保证执行导入时 IsImportDataBusy 已由预览 finally 释放。
+    /// </summary>
+    private async Task AwaitOverwriteConfirmAndImportAsync()
     {
-        ClearPendingImportConfirmation();
-        SetImportDataStatus(ImportTexts.OverwriteCancelled, ImportStatusStates.Info);
-        _setStatusMessage(ImportTexts.OverwriteCancelled);
+        var confirmResult = await _dialogService.ShowDialogAsync<Views.Controls.ImportOverwriteConfirmDialogView>(
+            new ImportOverwriteConfirmDialogViewModel(this));
+        if (confirmResult != DialogResult.OK)
+        {
+            ClearPendingImportConfirmation();
+            SetImportDataStatus(ImportTexts.OverwriteCancelled, ImportStatusStates.Info);
+            _messenger.Send(new StatusMessageRequest(ImportTexts.OverwriteCancelled));
+            return;
+        }
+
+        _skipPendingConflictKeys.Clear();
+        if (SkipSameNameInterfaces && PendingImportPreview is not null)
+        {
+            foreach (var conflict in PendingImportPreview.ConflictItems)
+            {
+                _skipPendingConflictKeys.Add(BuildImportConflictKey(conflict.Method, conflict.Path));
+            }
+        }
+
+        await ConfirmImportOverwriteCoreAsync();
     }
 
-    [RelayCommand]
-    private async Task ConfirmImportOverwriteAsync()
+    /// <summary>执行待导入请求（仅由覆盖确认编排调用）。</summary>
+    private async Task ConfirmImportOverwriteCoreAsync()
     {
-        if (_pendingImportRequest is null || IsImportDataBusy)
+        if (_pendingImportRequest is null)
         {
             return;
         }
@@ -404,7 +461,18 @@ public partial class ProjectImportViewModel : ViewModelBase
                 .GroupBy(item => item.DocumentId, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
 
-            await _syncImportedInterfacesAsync(endpoints);
+            var endpointsToSync = endpoints;
+            if (_skipPendingConflictKeys.Count > 0)
+            {
+                endpointsToSync = endpoints
+                    .Where(endpoint => !_skipPendingConflictKeys.Contains(BuildImportConflictKey(endpoint.Method, endpoint.Path)))
+                    .ToList();
+            }
+
+            var preservedEndpointIds = _skipPendingConflictKeys
+                .Select(key => $"swagger-import:{key}")
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            await _syncImportedInterfacesAsync(endpointsToSync, preservedEndpointIds);
             ImportedApiDocuments.ReplaceWith(documents.Select(document => new ProjectImportedDocumentItemViewModel
             {
                 Id = document.Id,
@@ -427,7 +495,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             SetImportDataStatus("已取消项目数据导出。", ImportStatusStates.Info);
-            _setStatusMessage("已取消项目数据导出。");
+            _messenger.Send(new StatusMessageRequest("已取消项目数据导出。"));
         }
         catch (Exception exception)
         {
@@ -456,7 +524,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(filePath))
         {
             SetImportDataStatus(ImportTexts.ExportCancelledStatus, ImportStatusStates.Info);
-            _setStatusMessage(ImportTexts.ExportCancelledStatus);
+            _messenger.Send(new StatusMessageRequest(ImportTexts.ExportCancelledStatus));
             return;
         }
 
@@ -479,7 +547,7 @@ public partial class ProjectImportViewModel : ViewModelBase
                     ? ImportTexts.ExportFailureFallback
                     : exportResult.Message;
                 SetImportDataStatus(failureMessage, ImportStatusStates.Error);
-                _setStatusMessage(failureMessage);
+                _messenger.Send(new StatusMessageRequest(failureMessage));
                 PublishGlobalNotification("项目数据导出失败", failureMessage, NotificationType.Error);
                 return;
             }
@@ -489,13 +557,13 @@ public partial class ProjectImportViewModel : ViewModelBase
                 exportResult.Data.TestCaseCount,
                 Path.GetFileName(exportResult.Data.FilePath));
             SetImportDataStatus(successMessage, ImportStatusStates.Success);
-            _setStatusMessage(successMessage);
+            _messenger.Send(new StatusMessageRequest(successMessage));
             PublishGlobalNotification("项目数据导出成功", successMessage, NotificationType.Success);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             SetImportDataStatus("已取消当前导入操作。", ImportStatusStates.Info);
-            _setStatusMessage("已取消当前导入操作。");
+            _messenger.Send(new StatusMessageRequest("已取消当前导入操作。"));
         }
         catch (Exception exception)
         {
@@ -503,7 +571,7 @@ public partial class ProjectImportViewModel : ViewModelBase
                 ? ImportTexts.ExportFailureFallback
                 : $"{ImportTexts.ExportFailureFallback} {exception.Message}";
             SetImportDataStatus(failureMessage, ImportStatusStates.Error);
-            _setStatusMessage(failureMessage);
+            _messenger.Send(new StatusMessageRequest(failureMessage));
             PublishGlobalNotification("项目数据导出失败", failureMessage, NotificationType.Error);
         }
         finally
@@ -555,6 +623,8 @@ public partial class ProjectImportViewModel : ViewModelBase
         OnPropertyChanged(nameof(PendingImportOverwriteTitle));
         OnPropertyChanged(nameof(PendingImportOverwriteSummary));
         OnPropertyChanged(nameof(PendingImportOverwriteDetailText));
+        OnPropertyChanged(nameof(HasImportConflicts));
+        OnPropertyChanged(nameof(PendingImportConflicts));
     }
 
     private void OnImportedApiDocumentsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -562,6 +632,11 @@ public partial class ProjectImportViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasImportedApiDocuments));
         OnPropertyChanged(nameof(ShowImportedApiDocumentsEmptyState));
         OnPropertyChanged(nameof(ImportedApiDocumentCountText));
+    }
+
+    private static string BuildImportConflictKey(string method, string path)
+    {
+        return $"{method.Trim().ToUpperInvariant()} {path.Trim()}";
     }
 
     private async Task ImportSwaggerAsync(
@@ -582,7 +657,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         IsImportDataBusy = true;
         try
         {
-            var previewResult = await previewAction(cancellationToken);
+            var previewResult = await PerfLog.MeasureAsync("导入·预检查", () => previewAction(cancellationToken));
             if (!previewResult.IsSuccess || previewResult.Data is null)
             {
                 var failureMessage = string.IsNullOrWhiteSpace(previewResult.Message)
@@ -591,12 +666,12 @@ public partial class ProjectImportViewModel : ViewModelBase
                 if (IsCancelledImportResult(previewResult.Code))
                 {
                     SetImportDataStatus(failureMessage, ImportStatusStates.Info);
-                    _setStatusMessage(failureMessage);
+                    _messenger.Send(new StatusMessageRequest(failureMessage));
                     return;
                 }
 
                 SetImportDataStatus(failureMessage, ImportStatusStates.Error);
-                _setStatusMessage(failureMessage);
+                _messenger.Send(new StatusMessageRequest(failureMessage));
                 PublishGlobalNotification(operationTexts.FailureNotificationTitle, failureMessage, NotificationType.Error);
                 return;
             }
@@ -605,11 +680,13 @@ public partial class ProjectImportViewModel : ViewModelBase
             {
                 _pendingImportRequest = new PendingImportRequest(importAction, buildSuccessMessage, importBusyText, operationTexts);
                 PendingImportPreview = previewResult.Data;
-                IsOverwriteConfirmDialogOpen = true;
                 SetImportDataStatus(
                     ImportTexts.FormatOverwriteDetectedStatus(previewResult.Data.ConflictCount),
                     ImportStatusStates.Info);
-                _setStatusMessage(operationTexts.OverwritePendingShellStatus);
+                _messenger.Send(new StatusMessageRequest(operationTexts.OverwritePendingShellStatus));
+
+                // 预览流程先结束（finally 释放 busy），确认弹窗单独等待用户决定后执行导入
+                _ = AwaitOverwriteConfirmAndImportAsync();
                 return;
             }
 
@@ -618,7 +695,7 @@ public partial class ProjectImportViewModel : ViewModelBase
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             SetImportDataStatus("已取消当前导入操作。", ImportStatusStates.Info);
-            _setStatusMessage("已取消当前导入操作。");
+            _messenger.Send(new StatusMessageRequest("已取消当前导入操作。"));
         }
         catch (Exception exception)
         {
@@ -638,21 +715,23 @@ public partial class ProjectImportViewModel : ViewModelBase
         CancellationToken cancellationToken)
     {
         ImportDataBusyText = importBusyText;
-        var result = await importAction(cancellationToken);
-        if (!result.IsSuccess || result.Data is null)
-        {
-            var failureMessage = string.IsNullOrWhiteSpace(result.Message)
-                ? operationTexts.ImportFailureFallback
-                : result.Message;
-            if (IsCancelledImportResult(result.Code))
+        var result = await PerfLog.MeasureAsync("导入·执行入库", () => importAction(cancellationToken));
+            if (!result.IsSuccess || result.Data is null)
             {
-                SetImportDataStatus(failureMessage, ImportStatusStates.Info);
-                _setStatusMessage(failureMessage);
-                return;
-            }
+                var failureMessage = string.IsNullOrWhiteSpace(result.Message)
+                    ? operationTexts.ImportFailureFallback
+                    : result.Message;
+                if (IsCancelledImportResult(result.Code))
+                {
+                    ClearPendingImportConfirmation();
+                    SetImportDataStatus(failureMessage, ImportStatusStates.Info);
+                    _messenger.Send(new StatusMessageRequest(failureMessage));
+                    return;
+                }
 
-            SetImportDataStatus(failureMessage, ImportStatusStates.Error);
-            _setStatusMessage(failureMessage);
+                ClearPendingImportConfirmation();
+                SetImportDataStatus(failureMessage, ImportStatusStates.Error);
+                _messenger.Send(new StatusMessageRequest(failureMessage));
             PublishGlobalNotification(operationTexts.FailureNotificationTitle, failureMessage, NotificationType.Error);
             return;
         }
@@ -660,11 +739,36 @@ public partial class ProjectImportViewModel : ViewModelBase
         ImportDataBusyText = ImportTexts.BusyRefreshResult;
         await LoadImportedDocumentsAsync(manageBusyState: false);
         var successMessage = buildSuccessMessage(result.Data);
+        if (await TryApplyImportedBaseUrlAsync(result.Data))
+        {
+            successMessage += ImportTexts.BaseUrlSyncedSuffix;
+        }
+
         ClearPendingImportConfirmation();
         SetImportDataStatus(successMessage, ImportStatusStates.Success);
-        IsDialogOpen = false;
-        _setStatusMessage(successMessage);
+        RequestClose?.Invoke(this, DialogResult.None);
+        _messenger.Send(new StatusMessageRequest(successMessage));
         PublishGlobalNotification(operationTexts.SuccessNotificationTitle, successMessage, NotificationType.Success);
+    }
+
+    private async Task<bool> TryApplyImportedBaseUrlAsync(ApiDocumentDto document)
+    {
+        if (string.IsNullOrWhiteSpace(document.BaseUrl))
+        {
+            return false;
+        }
+
+        try
+        {
+            return await _applyImportedBaseUrlAsync(document.BaseUrl);
+        }
+        catch (Exception exception)
+        {
+            // BaseUrl 同步失败不影响导入结果，仅提示用户
+            var warningMessage = $"文档 BaseUrl 同步失败：{exception.Message}";
+            _messenger.Send(new StatusMessageRequest(warningMessage));
+            return false;
+        }
     }
 
     private void HandleUnexpectedImportFailure(Exception exception, ImportOperationTextBundle operationTexts)
@@ -676,7 +780,7 @@ public partial class ProjectImportViewModel : ViewModelBase
             : $"{operationTexts.UnexpectedFailureFallback} {exception.Message}";
 
         SetImportDataStatus(failureMessage, ImportStatusStates.Error);
-        _setStatusMessage(failureMessage);
+        _messenger.Send(new StatusMessageRequest(failureMessage));
         PublishGlobalNotification(operationTexts.FailureNotificationTitle, failureMessage, NotificationType.Error);
     }
 
@@ -689,7 +793,7 @@ public partial class ProjectImportViewModel : ViewModelBase
             : $"{fallbackMessage} {exception.Message}";
 
         SetImportDataStatus(failureMessage, ImportStatusStates.Error);
-        _setStatusMessage(failureMessage);
+        _messenger.Send(new StatusMessageRequest(failureMessage));
         PublishGlobalNotification("Swagger 导入失败", failureMessage, NotificationType.Error);
     }
 
@@ -720,7 +824,8 @@ public partial class ProjectImportViewModel : ViewModelBase
     {
         _pendingImportRequest = null;
         PendingImportPreview = null;
-        IsOverwriteConfirmDialogOpen = false;
+        _skipPendingConflictKeys.Clear();
+        SkipSameNameInterfaces = false;
     }
 
     private static bool IsCancelledImportResult(string? code)
@@ -734,6 +839,11 @@ public partial class ProjectImportViewModel : ViewModelBase
         if (string.Equals(sourceType, "APIXPKG", StringComparison.OrdinalIgnoreCase))
         {
             return ImportTexts.SourceTypeProjectPackage;
+        }
+
+        if (string.Equals(sourceType, "POSTMAN", StringComparison.OrdinalIgnoreCase))
+        {
+            return ImportTexts.SourceTypePostman;
         }
 
         return string.Equals(sourceType, "URL", StringComparison.OrdinalIgnoreCase)

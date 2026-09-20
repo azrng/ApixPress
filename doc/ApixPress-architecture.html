@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ApixPress 整体架构</title>
+  <style>
+    :root {
+      --ink: #10213f;
+      --muted: #52627a;
+      --line: #b9c9df;
+      --soft-line: #d9e3f1;
+      --blue: #1458c8;
+      --blue-soft: #eef5ff;
+      --green: #16823a;
+      --green-soft: #f1fbf1;
+      --amber: #b86a00;
+      --amber-soft: #fff8ed;
+      --purple: #6742c3;
+      --purple-soft: #f6f2ff;
+      --cyan: #087d96;
+      --cyan-soft: #effcff;
+      --red: #c62828;
+      --red-soft: #fff1f1;
+      --panel: rgba(255, 255, 255, 0.92);
+      --shadow: 0 10px 28px rgba(29, 63, 112, 0.10);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 1200px;
+      color: var(--ink);
+      font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(20, 88, 200, 0.08), transparent 28%),
+        radial-gradient(circle at 80% 8%, rgba(8, 125, 150, 0.08), transparent 24%),
+        linear-gradient(135deg, #f7fbff 0%, #edf3fa 100%);
+    }
+
+    code {
+      font-family: "Cascadia Mono", Consolas, monospace;
+      font-size: 0.93em;
+    }
+
+    .poster {
+      width: 1500px;
+      min-height: 980px;
+      margin: 16px auto;
+      padding: 18px 22px 20px;
+      position: relative;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      text-align: center;
+      font-size: 30px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: #064eaa;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0 0 7px;
+      font-size: 14px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.42;
+    }
+
+    .section {
+      border: 1px solid #8db3ed;
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .topology {
+      display: grid;
+      grid-template-columns: 178px minmax(0, 1fr) 234px;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .triggers {
+      padding: 16px 12px;
+      border-style: dashed;
+      min-height: 300px;
+    }
+
+    .trigger-item {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 6px;
+      min-height: 68px;
+    }
+
+    .trigger-icon,
+    .service-mark,
+    .mini-icon {
+      display: grid;
+      place-items: center;
+      border: 2px solid currentColor;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .trigger-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .trigger-item strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 3px;
+    }
+
+    .trigger-item span {
+      display: block;
+      color: #46566d;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .ellipsis {
+      text-align: center;
+      color: #0e4ca6;
+      font-size: 22px;
+      line-height: 1;
+      margin-top: 4px;
+    }
+
+    .pipeline {
+      position: relative;
+      min-width: 0;
+      min-height: 330px;
+      padding: 18px 14px 42px;
+    }
+
+    .pipeline-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 26px;
+    }
+
+    .pipeline-title h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .tech-strip {
+      display: flex;
+      gap: 8px;
+      color: #28415f;
+      font-size: 11px;
+    }
+
+    .tech-strip span {
+      padding: 3px 8px;
+      border: 1px solid #cbd8ec;
+      border-radius: 999px;
+      background: #f8fbff;
+      white-space: nowrap;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 16px;
+      align-items: stretch;
+      min-width: 0;
+    }
+
+    .step {
+      position: relative;
+      min-width: 0;
+      min-height: 176px;
+      padding: 14px 9px;
+      border: 1px solid #b8ccea;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, #fff 0%, #f4f8ff 100%);
+      text-align: center;
+    }
+
+    .step:not(:last-child)::after,
+    .data-node:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -16px;
+      width: 16px;
+      height: 2px;
+      background: #143b70;
+    }
+
+    .step:not(:last-child)::before,
+    .data-node:not(:last-child)::before {
+      content: "";
+      position: absolute;
+      top: calc(50% - 5px);
+      right: -18px;
+      width: 10px;
+      height: 10px;
+      border-top: 2px solid #143b70;
+      border-right: 2px solid #143b70;
+      transform: rotate(45deg);
+      z-index: 2;
+    }
+
+    .step .number {
+      color: var(--blue);
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .step .icon {
+      width: 36px;
+      height: 36px;
+      margin: 10px auto 9px;
+      color: currentColor;
+    }
+
+    .step .component {
+      display: block;
+      color: #083f90;
+      font-weight: 800;
+      font-size: 12px;
+      min-height: 34px;
+      line-height: 1.35;
+      overflow-wrap: normal;
+      word-break: keep-all;
+    }
+
+    .step p {
+      margin-top: 7px;
+      color: #233b5f;
+      font-size: 11px;
+    }
+
+    .step.green {
+      border-color: #a7cda9;
+      background: linear-gradient(180deg, #fff 0%, var(--green-soft) 100%);
+    }
+
+    .step.green .number,
+    .step.green {
+      color: var(--green);
+    }
+
+    .step.amber {
+      border-color: #e2b477;
+      background: linear-gradient(180deg, #fff 0%, var(--amber-soft) 100%);
+    }
+
+    .step.amber .number,
+    .step.amber {
+      color: var(--amber);
+    }
+
+    .step.cyan {
+      border-color: #9fd1dc;
+      background: linear-gradient(180deg, #fff 0%, var(--cyan-soft) 100%);
+    }
+
+    .step.cyan .number,
+    .step.cyan {
+      color: var(--cyan);
+    }
+
+    .step.red {
+      border-color: #efb1b1;
+      background: linear-gradient(180deg, #fff 0%, var(--red-soft) 100%);
+    }
+
+    .step.red .number,
+    .step.red {
+      color: var(--red);
+    }
+
+    .retry-line {
+      position: absolute;
+      left: 92px;
+      right: 138px;
+      bottom: 26px;
+      border-bottom: 1.5px dashed #193a66;
+      height: 22px;
+    }
+
+    .retry-line::before,
+    .retry-line::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      width: 0;
+      height: 54px;
+      border-left: 1.5px dashed #193a66;
+    }
+
+    .retry-line::before {
+      left: 0;
+    }
+
+    .retry-line::after {
+      left: 53%;
+    }
+
+    .retry-label {
+      position: absolute;
+      left: 44%;
+      bottom: -4px;
+      transform: translateX(-50%);
+      padding: 0 10px;
+      color: #183b67;
+      background: #f7fbff;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .external {
+      padding: 16px 10px;
+      text-align: center;
+    }
+
+    .service-mark {
+      width: 70px;
+      height: 70px;
+      margin: 10px auto 12px;
+      border-radius: 18px;
+      color: var(--cyan);
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .external h3 {
+      font-size: 18px;
+      color: #0754ad;
+    }
+
+    .external-list {
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px dashed #8db3ed;
+      border-radius: var(--radius);
+      text-align: left;
+      background: #fbfdff;
+    }
+
+    .external-list div {
+      padding: 5px 0;
+      color: #1f3554;
+      font-size: 12px;
+      border-bottom: 1px solid #e7eef8;
+    }
+
+    .external-list div:last-child {
+      border-bottom: 0;
+    }
+
+    .flow-arrow {
+      position: absolute;
+      height: 2px;
+      background: #143b70;
+    }
+
+    .flow-arrow::after {
+      content: "";
+      position: absolute;
+      right: -2px;
+      top: -5px;
+      width: 10px;
+      height: 10px;
+      border-top: 2px solid #143b70;
+      border-right: 2px solid #143b70;
+      transform: rotate(45deg);
+    }
+
+    .arrow-left-pipeline {
+      left: 202px;
+      top: 169px;
+      width: 50px;
+    }
+
+    .arrow-pipeline-external {
+      right: 254px;
+      top: 169px;
+      width: 45px;
+    }
+
+    .arrow-caption {
+      position: absolute;
+      color: #183b67;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .caption-create {
+      left: 194px;
+      top: 146px;
+    }
+
+    .middle-grid {
+      display: grid;
+      grid-template-columns: 1fr 310px;
+      gap: 14px;
+      margin-top: 14px;
+      align-items: start;
+    }
+
+    .modules {
+      padding: 12px 14px;
+    }
+
+    .module-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .module-card,
+    .model-box,
+    .cap-card,
+    .output-card {
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    .module-card {
+      min-height: 148px;
+      padding: 11px 12px 10px;
+    }
+
+    .module-card h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #0b3c83;
+    }
+
+    .mini-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      color: currentColor;
+      font-size: 16px;
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+
+    .module-card.green {
+      background: linear-gradient(180deg, #fff 0%, var(--green-soft) 100%);
+    }
+
+    .module-card.green h3,
+    .module-card.green .mini-icon {
+      color: var(--green);
+    }
+
+    .module-card.amber {
+      background: linear-gradient(180deg, #fff 0%, var(--amber-soft) 100%);
+    }
+
+    .module-card.amber h3,
+    .module-card.amber .mini-icon {
+      color: var(--amber);
+    }
+
+    .module-card.purple {
+      background: linear-gradient(180deg, #fff 0%, var(--purple-soft) 100%);
+    }
+
+    .module-card.purple h3,
+    .module-card.purple .mini-icon {
+      color: var(--purple);
+    }
+
+    .module-card.cyan {
+      background: linear-gradient(180deg, #fff 0%, var(--cyan-soft) 100%);
+    }
+
+    .module-card.cyan h3,
+    .module-card.cyan .mini-icon {
+      color: var(--cyan);
+    }
+
+    ul {
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    li {
+      position: relative;
+      margin: 4px 0;
+      padding-left: 12px;
+      color: #263e5f;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 7px;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .models {
+      padding: 12px 12px;
+      border-color: #b59de8;
+      background: linear-gradient(180deg, #fff 0%, #faf7ff 100%);
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .models h2 {
+      grid-column: 1 / -1;
+      margin-bottom: 2px;
+    }
+
+    .model-box {
+      padding: 8px 10px;
+      margin-bottom: 0;
+      background: rgba(255, 255, 255, 0.86);
+    }
+
+    .model-box strong {
+      display: block;
+      color: #3d2387;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .model-box span {
+      display: block;
+      color: #3d4c63;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .model-box:last-child {
+      margin-bottom: 0;
+    }
+
+    .io-grid {
+      display: grid;
+      grid-template-columns: 1fr 390px;
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .dataflow {
+      padding: 14px 18px;
+    }
+
+    .data-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 38px;
+      align-items: stretch;
+    }
+
+    .data-node {
+      position: relative;
+      min-height: 86px;
+      padding: 11px 10px;
+      text-align: center;
+      border: 1px solid #b8ccea;
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, #fff 0%, #f5f9ff 100%);
+    }
+
+    .data-node.cyan {
+      border-color: #9fd1dc;
+      background: var(--cyan-soft);
+    }
+
+    .data-node.amber {
+      border-color: #e2b477;
+      background: var(--amber-soft);
+    }
+
+    .data-node.green {
+      border-color: #a7cda9;
+      background: var(--green-soft);
+    }
+
+    .data-node strong {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 5px;
+      color: #0c438f;
+    }
+
+    .data-node span {
+      color: #344b68;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .outputs {
+      padding: 14px 16px;
+    }
+
+    .output-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .output-card {
+      min-height: 90px;
+      padding: 11px 8px;
+      text-align: center;
+      background: #fff;
+    }
+
+    .output-card .mini-icon {
+      margin: 0 auto 7px;
+      border-radius: 50%;
+      color: var(--cyan);
+    }
+
+    .output-card strong {
+      display: block;
+      color: #0c315d;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .output-card span {
+      color: #43546b;
+      font-size: 10.5px;
+      line-height: 1.3;
+    }
+
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 184px;
+      gap: 16px;
+      margin-top: 12px;
+      align-items: stretch;
+    }
+
+    .capabilities {
+      padding: 13px 16px;
+      border-color: #e2b477;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, #fffaf0 100%);
+    }
+
+    .cap-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+
+    .cap-card {
+      min-height: 86px;
+      padding: 10px 8px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    .cap-card .mini-icon {
+      width: 32px;
+      height: 32px;
+      margin: 0 auto 7px;
+      color: var(--amber);
+      border-radius: 50%;
+    }
+
+    .cap-card strong {
+      display: block;
+      color: #704000;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .cap-card span {
+      color: #5a4c3c;
+      font-size: 10.5px;
+      line-height: 1.28;
+    }
+
+    .legend {
+      padding: 12px;
+      align-self: end;
+    }
+
+    .legend-item {
+      display: grid;
+      grid-template-columns: 52px 1fr;
+      gap: 8px;
+      align-items: center;
+      margin: 8px 0;
+      color: #183b67;
+      font-size: 11px;
+    }
+
+    .legend-line {
+      position: relative;
+      height: 2px;
+      background: #143b70;
+    }
+
+    .legend-line::after {
+      content: "";
+      position: absolute;
+      right: -2px;
+      top: -4px;
+      width: 8px;
+      height: 8px;
+      border-top: 2px solid #143b70;
+      border-right: 2px solid #143b70;
+      transform: rotate(45deg);
+    }
+
+    .legend-line.retry {
+      background: repeating-linear-gradient(90deg, #143b70 0 7px, transparent 7px 11px);
+    }
+
+    .legend-line.retry::after {
+      display: none;
+    }
+
+    .legend-line.rw {
+      background: transparent;
+      border-top: 2px solid #143b70;
+    }
+
+    .legend-line.rw::before {
+      content: "";
+      position: absolute;
+      left: -2px;
+      top: -5px;
+      width: 8px;
+      height: 8px;
+      border-left: 2px solid #143b70;
+      border-bottom: 2px solid #143b70;
+      transform: rotate(45deg);
+    }
+
+    .legend-line.rw::after {
+      top: -6px;
+    }
+
+    .small-note {
+      position: absolute;
+      right: 22px;
+      bottom: 6px;
+      color: #6b7890;
+      font-size: 10px;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .poster {
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="poster">
+    <h1>ApixPress 整体架构</h1>
+
+    <section class="topology">
+      <aside class="section triggers">
+        <h2>1. 触发与入口</h2>
+        <div class="trigger-item">
+          <div class="trigger-icon">⌂</div>
+          <div><strong>桌面启动</strong><span><code>Program.Main</code> 启动 Avalonia 主窗口</span></div>
+        </div>
+        <div class="trigger-item">
+          <div class="trigger-icon">＋</div>
+          <div><strong>用户操作</strong><span>项目、接口、快捷请求、用例和设置</span></div>
+        </div>
+        <div class="trigger-item">
+          <div class="trigger-icon">⇩</div>
+          <div><strong>外部导入</strong><span>Swagger / OpenAPI 文件或 URL</span></div>
+        </div>
+        <div class="trigger-item">
+          <div class="trigger-icon">⚙</div>
+          <div><strong>恢复 / 配置</strong><span>数据库迁移、Shell 设置、更新提醒</span></div>
+        </div>
+        <div class="ellipsis">...</div>
+      </aside>
+
+      <section class="section pipeline">
+        <div class="pipeline-title">
+          <h2>2. API 协作生命周期（Pipeline）</h2>
+          <div class="tech-strip">
+            <span>.NET 10</span>
+            <span>Avalonia 12</span>
+            <span>CommunityToolkit.Mvvm</span>
+            <span>Dapper + SQLite</span>
+          </div>
+        </div>
+
+        <div class="steps">
+          <article class="step">
+            <div class="number">1. 初始化</div>
+            <div class="icon mini-icon">DI</div>
+            <span class="component">ServiceBootstrapper</span>
+            <p>加载内嵌与外部配置，注册服务并创建主窗口。</p>
+          </article>
+          <article class="step green">
+            <div class="number">2. 打开工作区</div>
+            <div class="icon mini-icon">TAB</div>
+        <span class="component">ProjectTab VM</span>
+            <p>项目标签常驻实例，承载接口、用例和设置。</p>
+          </article>
+          <article class="step amber">
+            <div class="number">3. 导入预检查</div>
+            <div class="icon mini-icon">API</div>
+            <span class="component">ApiWorkspace Service</span>
+            <p>解析 OpenAPI，识别新增、覆盖和冲突。</p>
+          </article>
+          <article class="step cyan">
+            <div class="number">4. 缓存确认</div>
+            <div class="icon mini-icon">↻</div>
+            <span class="component">PreparedImport Cache</span>
+            <p>预览结果短期缓存，确认后复用解析图。</p>
+          </article>
+          <article class="step">
+            <div class="number">5. 请求编排</div>
+            <div class="icon mini-icon">REQ</div>
+            <span class="component">RequestWorkflow VM</span>
+            <p>维护接口树、工作标签、脏状态和关闭保护。</p>
+          </article>
+          <article class="step red">
+            <div class="number">6. 调试执行</div>
+            <div class="icon mini-icon">HTTP</div>
+            <span class="component">RequestExecution Service</span>
+            <p>变量替换、认证、Body / Header 构造和异常分类。</p>
+          </article>
+          <article class="step green">
+            <div class="number">7. 保存输出</div>
+            <div class="icon mini-icon">DB</div>
+            <span class="component">Repository / Export</span>
+            <p>持久化接口、用例、历史，并支持项目数据包导出。</p>
+          </article>
+        </div>
+        <div class="retry-line"><span class="retry-label">失败重试 / 预览恢复 / 迁移兼容</span></div>
+      </section>
+
+      <aside class="section external">
+        <h2>3. 外部依赖与集成</h2>
+        <div class="service-mark">API</div>
+        <h3>目标 API / OpenAPI</h3>
+        <p>当前未接入 AI Agent 或模型 Runtime。</p>
+        <div class="external-list">
+          <div>本地 JSON 文件导入</div>
+          <div>Swagger / OpenAPI URL</div>
+          <div>用户配置的目标 HTTP API</div>
+          <div>GitHub Releases 更新清单</div>
+        </div>
+      </aside>
+
+      <div class="flow-arrow arrow-left-pipeline"></div>
+      <div class="flow-arrow arrow-pipeline-external"></div>
+      <div class="arrow-caption caption-create">创建 / 导入 / 调试</div>
+    </section>
+
+    <section class="middle-grid">
+      <div class="section modules">
+        <h2>4. 核心模块</h2>
+        <div class="module-row">
+          <article class="module-card">
+            <h3><span class="mini-icon">UI</span>View / UI</h3>
+            <ul>
+              <li><code>MainWindowHomeView</code></li>
+              <li><code>ProjectWorkspaceView</code></li>
+              <li><code>HttpInterfaceWorkbenchView</code></li>
+              <li><code>SettingsDialogView</code></li>
+            </ul>
+          </article>
+          <article class="module-card green">
+            <h3><span class="mini-icon">VM</span>Application</h3>
+            <ul>
+              <li><code>MainWindowViewModel</code></li>
+              <li><code>ProjectTabComposition</code></li>
+              <li><code>ProjectRequestEditorViewModel</code></li>
+              <li><code>ProjectImportViewModel</code></li>
+            </ul>
+          </article>
+          <article class="module-card amber">
+            <h3><span class="mini-icon">S</span>Service</h3>
+            <ul>
+              <li><code>ApiWorkspaceService</code></li>
+              <li><code>RequestExecutionService</code></li>
+              <li><code>RequestCaseService</code></li>
+              <li><code>ApplicationUpdateService</code></li>
+            </ul>
+          </article>
+          <article class="module-card purple">
+            <h3><span class="mini-icon">P</span>Parser / Tool</h3>
+            <ul>
+              <li><code>OpenApiJsonParser</code></li>
+              <li><code>OpenApiImportSourceReader</code></li>
+              <li><code>OpenApiImportPreviewBuilder</code></li>
+              <li><code>ProjectHttpDocumentFormatter</code></li>
+            </ul>
+          </article>
+          <article class="module-card cyan">
+            <h3><span class="mini-icon">DB</span>Storage</h3>
+            <ul>
+              <li><code>DatabaseInitializer</code></li>
+              <li><code>ApiDocumentRepository</code></li>
+              <li><code>RequestCaseRepository</code></li>
+              <li><code>RequestHistoryRepository</code></li>
+            </ul>
+          </article>
+        </div>
+      </div>
+
+      <aside class="section models">
+        <h2>5. 核心数据模型</h2>
+        <div class="model-box"><strong>ProjectWorkspaceDto</strong><span>项目空间、默认项目和更新时间。</span></div>
+        <div class="model-box"><strong>ApiDocumentDto / ApiEndpointDto</strong><span>OpenAPI 文档、接口分组、方法、路径和请求模板。</span></div>
+        <div class="model-box"><strong>RequestSnapshotDto</strong><span>一次 HTTP 请求的 URL、参数、Header 和 Body 快照。</span></div>
+        <div class="model-box"><strong>ResponseSnapshotDto</strong><span>状态码、耗时、大小、Header、正文预览和截断标记。</span></div>
+        <div class="model-box"><strong>RequestCaseDto / RequestHistoryEntity</strong><span>保存用例和请求历史。</span></div>
+        <div class="model-box"><strong>ProjectHttpAuthSettingsDto</strong><span>项目级 none、Bearer Token、Basic Auth 配置。</span></div>
+      </aside>
+    </section>
+
+    <section class="io-grid">
+      <div class="section dataflow">
+        <h2>6. 数据流向</h2>
+        <div class="data-row">
+          <article class="data-node">
+            <strong>用户输入</strong>
+            <span>项目、OpenAPI、快捷请求、环境变量</span>
+          </article>
+          <article class="data-node amber">
+            <strong>规则处理</strong>
+            <span>冲突预览、覆盖确认、变量替换、认证注入</span>
+          </article>
+          <article class="data-node">
+            <strong>业务服务</strong>
+            <span>导入、发送、保存、历史、更新检查</span>
+          </article>
+          <article class="data-node cyan">
+            <strong>持久化</strong>
+            <span>SQLite 表、配置文件、导出包</span>
+          </article>
+          <article class="data-node green">
+            <strong>结果输出</strong>
+            <span>UI 响应区、接口树、通知、项目数据包</span>
+          </article>
+        </div>
+      </div>
+
+      <aside class="section outputs">
+        <h2>7. 输出与应用</h2>
+        <div class="output-row">
+          <div class="output-card"><div class="mini-icon">▦</div><strong>接口工作区</strong><span>接口树 / Auth / 详情编辑</span></div>
+          <div class="output-card"><div class="mini-icon">↯</div><strong>调试响应</strong><span>状态码 / 耗时 / 正文预览</span></div>
+          <div class="output-card"><div class="mini-icon">⬇</div><strong>数据资产</strong><span>SQLite / 用例 / 历史</span></div>
+          <div class="output-card"><div class="mini-icon">...</div><strong>更多输出</strong><span>导出包 / 更新流程</span></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="bottom-grid">
+      <div class="section capabilities">
+        <h2>8. 横切能力</h2>
+        <div class="cap-row">
+          <div class="cap-card"><div class="mini-icon">⚙</div><strong>配置管理</strong><span>内嵌配置 + 外部覆盖</span></div>
+          <div class="cap-card"><div class="mini-icon">↺</div><strong>迁移恢复</strong><span><code>schema_migrations</code> 和旧数据归并</span></div>
+          <div class="cap-card"><div class="mini-icon">⏱</div><strong>缓存控制</strong><span>导入预览缓存与 HttpClient 上限</span></div>
+          <div class="cap-card"><div class="mini-icon">!</div><strong>异常处理</strong><span>取消、超时、HTTP、解析错误分类</span></div>
+          <div class="cap-card"><div class="mini-icon">1M</div><strong>性能保护</strong><span>响应正文预览 1 MB 截断</span></div>
+          <div class="cap-card"><div class="mini-icon">✓</div><strong>测试体系</strong><span>xUnit 覆盖服务、仓储、VM、布局</span></div>
+          <div class="cap-card"><div class="mini-icon">PKG</div><strong>发布部署</strong><span>win-x64 自包含单文件</span></div>
+        </div>
+      </div>
+
+      <aside class="section legend">
+        <h2>图例</h2>
+        <div class="legend-item"><span class="legend-line"></span><span>主流程数据流</span></div>
+        <div class="legend-item"><span class="legend-line retry"></span><span>重试 / 恢复 / 反馈流</span></div>
+        <div class="legend-item"><span class="legend-line rw"></span><span>读写交互</span></div>
+      </aside>
+    </section>
+
+    <div class="small-note">事实来源：ApixPress.App、ApixPress.Core、SQLite 迁移脚本、appsettings.json、ApixPress.App.Tests</div>
+  </main>
+</body>
+</html>

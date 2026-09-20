@@ -15,6 +15,46 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
         _connectionFactory = connectionFactory;
     }
 
+    public async Task<IReadOnlyList<RequestCaseEntity>> GetCaseSummariesAsync(string projectId, CancellationToken cancellationToken)
+    {
+        const string sql = """
+                           select
+                               id Id,
+                               project_id ProjectId,
+                               entry_type EntryType,
+                               name Name,
+                               group_name GroupName,
+                               folder_path FolderPath,
+                               parent_id ParentId,
+                               tags_json TagsJson,
+                               description Description,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.endpointId'),
+                                   json_extract(request_snapshot_json, '$.EndpointId'),
+                                   ''
+                               ) EndpointId,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.method'),
+                                   json_extract(request_snapshot_json, '$.Method'),
+                                   ''
+                               ) Method,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.url'),
+                                   json_extract(request_snapshot_json, '$.Url'),
+                                   ''
+                               ) Url,
+                               updated_at UpdatedAt
+                           from request_cases
+                           where project_id = @ProjectId
+                           order by entry_type, folder_path, updated_at desc
+                           """;
+
+        using var connection = _connectionFactory.CreateConnection();
+        var items = await Task.Run(async () => await connection.QueryAsync<RequestCaseEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken)));
+        return items.ToList();
+    }
+
     public async Task<IReadOnlyList<RequestCaseEntity>> GetCasesAsync(string projectId, CancellationToken cancellationToken)
     {
         const string sql = """
@@ -51,8 +91,8 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await connection.QueryAsync<RequestCaseEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken));
+        var items = await Task.Run(async () => await connection.QueryAsync<RequestCaseEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken)));
         return items.ToList();
     }
 
@@ -77,8 +117,8 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<RequestCaseEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId, Id = id }, cancellationToken: cancellationToken));
+        return await Task.Run(async () => await connection.QuerySingleOrDefaultAsync<RequestCaseEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId, Id = id }, cancellationToken: cancellationToken)));
     }
 
     public async Task UpsertAsync(RequestCaseEntity entity, CancellationToken cancellationToken)
@@ -103,7 +143,7 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken)));
     }
 
     public async Task UpsertRangeAsync(IReadOnlyList<RequestCaseEntity> entities, CancellationToken cancellationToken)
@@ -132,24 +172,28 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                                updated_at = excluded.updated_at
                            """;
 
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-        await connection.ExecuteAsync(new CommandDefinition(
-            sql,
-            entities,
-            transaction,
-            cancellationToken: cancellationToken));
-        transaction.Commit();
+        // 连接打开、事务与提交整体放入线程池：批量写入时 Commit 不阻塞 UI 线程
+        await Task.Run(async () =>
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            await connection.ExecuteAsync(new CommandDefinition(
+                sql,
+                entities,
+                transaction,
+                cancellationToken: cancellationToken));
+            transaction.Commit();
+        });
     }
 
     public async Task DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "delete from request_cases where project_id = @ProjectId and id = @Id",
             new { ProjectId = projectId, Id = id },
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
     }
 
     public async Task DeleteRangeAsync(string projectId, IEnumerable<string> ids, CancellationToken cancellationToken)
@@ -164,9 +208,80 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
         }
 
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(
-            "delete from request_cases where project_id = @ProjectId and id in @Ids",
-            new { ProjectId = projectId, Ids = targetIds },
-            cancellationToken: cancellationToken));
+        await Task.Run(async () =>
+        {
+            foreach (var batch in targetIds.Chunk(250))
+            {
+                await connection.ExecuteAsync(new CommandDefinition(
+                    "delete from request_cases where project_id = @ProjectId and id in @Ids",
+                    new { ProjectId = projectId, Ids = batch },
+                    cancellationToken: cancellationToken));
+            }
+        });
+    }
+
+    public async Task SyncImportedRangeAsync(
+        string projectId,
+        IReadOnlyList<string> deletedIds,
+        IReadOnlyList<RequestCaseEntity> upserts,
+        CancellationToken cancellationToken)
+    {
+        var targetIds = deletedIds
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (targetIds.Length == 0 && upserts.Count == 0)
+        {
+            return;
+        }
+
+        const string upsertSql = """
+                                 insert into request_cases (
+                                     id, project_id, entry_type, name, group_name, folder_path, parent_id, tags_json, description, request_snapshot_json, updated_at
+                                 ) values (
+                                     @Id, @ProjectId, @EntryType, @Name, @GroupName, @FolderPath, @ParentId, @TagsJson, @Description, @RequestSnapshotJson, @UpdatedAt
+                                 )
+                                 on conflict(id) do update set
+                                     project_id = excluded.project_id,
+                                     entry_type = excluded.entry_type,
+                                     name = excluded.name,
+                                     group_name = excluded.group_name,
+                                     folder_path = excluded.folder_path,
+                                     parent_id = excluded.parent_id,
+                                     tags_json = excluded.tags_json,
+                                     description = excluded.description,
+                                     request_snapshot_json = excluded.request_snapshot_json,
+                                     updated_at = excluded.updated_at
+                                 """;
+
+        // 删除与写入保持同一事务，整体放入线程池：导入同步的 Commit 不阻塞 UI 线程
+        await Task.Run(async () =>
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            if (targetIds.Length > 0)
+            {
+                foreach (var batch in targetIds.Chunk(250))
+                {
+                    await connection.ExecuteAsync(new CommandDefinition(
+                        "delete from request_cases where project_id = @ProjectId and id in @Ids",
+                        new { ProjectId = projectId, Ids = batch },
+                        transaction,
+                        cancellationToken: cancellationToken));
+                }
+            }
+
+            if (upserts.Count > 0)
+            {
+                await connection.ExecuteAsync(new CommandDefinition(
+                    upsertSql,
+                    upserts,
+                    transaction,
+                    cancellationToken: cancellationToken));
+            }
+
+            transaction.Commit();
+        });
     }
 }

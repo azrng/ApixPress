@@ -1,0 +1,43 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.WorkspaceCreateFolderDialogView"
+             x:DataType="vm:ProjectWorkspaceCatalogViewModel"
+             mc:Ignorable="d">
+  <!-- 弹窗 chrome 由 Ursa StandardDialogControl 提供；DataContext 为目录 VM -->
+  <Border Classes="QuickRequestSaveDialogCard">
+    <Grid RowDefinitions="Auto,Auto,Auto"
+          RowSpacing="{StaticResource Space.3}">
+      <TextBlock Classes="DialogFormHint"
+                 Text="{Binding PendingCreateFolderParentDisplay, StringFormat='将在：{0} 下创建目录'}" />
+
+      <!-- 表单直接铺放在正文上（对齐原型 modal-body），不再嵌套内层卡片 -->
+      <StackPanel Grid.Row="1"
+                  Classes="DialogFormStack">
+        <StackPanel Classes="DialogFormField">
+          <TextBlock Classes="DialogFormLabel"
+                     Text="目录名称" />
+          <TextBox Classes="SectionInput"
+                   PlaceholderText="请输入目录名称"
+                   Text="{Binding FolderNameInput, Mode=TwoWay}" />
+        </StackPanel>
+      </StackPanel>
+
+      <Border Grid.Row="2"
+              Classes="DialogFooter">
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="{StaticResource Space.2}">
+          <Button Classes="DialogSecondaryButton"
+                  Content="取消"
+                  Command="{Binding CancelCreateFolderCommand}" />
+          <Button Classes="DialogPrimaryButton"
+                  Content="创建"
+                  Command="{Binding ConfirmCreateFolderCommand}" />
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

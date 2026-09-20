@@ -1,4 +1,4 @@
-using Azrng.Core.DependencyInjection;
+﻿using Azrng.Core.DependencyInjection;
 using Azrng.Core.Exceptions;
 using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
@@ -13,12 +13,12 @@ namespace ApixPress.App.Services.Implementations;
 public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDependency
 {
     private readonly IApiDocumentRepository _apiDocumentRepository;
-    private readonly Func<string, string, string, ParsedDocumentGraph> _parseOpenApiDocument;
+    private readonly Func<string, string, string, ParsedDocumentGraph> _parseDocument;
     private readonly OpenApiImportSourceReader _sourceReader;
     private readonly OpenApiPreparedImportCache _preparedImportCache;
 
     public ApiWorkspaceService(IApiDocumentRepository apiDocumentRepository)
-        : this(apiDocumentRepository, new OpenApiImportSourceReader(), OpenApiJsonParser.Parse)
+        : this(apiDocumentRepository, new OpenApiImportSourceReader(), ImportDocumentParser.Parse)
     {
     }
 
@@ -28,7 +28,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         : this(
             apiDocumentRepository,
             new OpenApiImportSourceReader(downloadOpenApiDocumentAsync, File.ReadAllTextAsync),
-            OpenApiJsonParser.Parse)
+            ImportDocumentParser.Parse)
     {
     }
 
@@ -51,7 +51,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     {
         _apiDocumentRepository = apiDocumentRepository;
         _sourceReader = sourceReader;
-        _parseOpenApiDocument = parseOpenApiDocument;
+        _parseDocument = parseOpenApiDocument;
         _preparedImportCache = new OpenApiPreparedImportCache();
     }
 
@@ -98,7 +98,8 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
                 return await ImportPreparedGraphAsync(projectId, preparedGraph, cancellationToken);
             }
 
-            var json = await _sourceReader.ReadFromUrlAsync(targetUri, cancellationToken);
+            var json = await PerfLog.MeasureAsync("导入·URL下载",
+                () => _sourceReader.ReadFromUrlAsync(targetUri, cancellationToken));
             return await ImportCoreAsync(projectId, "URL", url, json, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -243,7 +244,8 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     {
         try
         {
-            var graph = _parseOpenApiDocument(json, sourceType, sourceValue);
+            var graph = await PerfLog.MeasureAsync("导入·OpenAPI解析",
+                () => Task.Run(() => _parseDocument(json, sourceType, sourceValue), cancellationToken));
             return await ImportPreparedGraphAsync(projectId, graph, cancellationToken);
         }
         catch (BaseException exception)
@@ -269,7 +271,7 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
     {
         try
         {
-            var graph = _parseOpenApiDocument(json, sourceType, sourceValue);
+            var graph = await Task.Run(() => _parseDocument(json, sourceType, sourceValue), cancellationToken);
             var existingEndpoints = await _apiDocumentRepository.GetEndpointsByProjectIdAsync(projectId, cancellationToken);
             var preview = OpenApiImportPreviewBuilder.Build(graph, existingEndpoints);
             _preparedImportCache.Cache(projectId, sourceType, sourceValue, graph, preview);
@@ -295,7 +297,9 @@ public sealed class ApiWorkspaceService : IApiWorkspaceService, ITransientDepend
         CancellationToken cancellationToken)
     {
         graph.Document.ProjectId = projectId;
-        await _apiDocumentRepository.SaveDocumentGraphAsync(graph.Document, graph.Endpoints, graph.Parameters, cancellationToken);
+        await PerfLog.MeasureAsync(
+            $"导入·入库(端点{graph.Endpoints.Count})",
+            () => _apiDocumentRepository.SaveDocumentGraphAsync(graph.Document, graph.Endpoints, graph.Parameters, cancellationToken));
         return ResultModel<ApiDocumentDto>.Success(ToDocumentDto(graph.Document));
     }
 

@@ -3,6 +3,7 @@ using FakeEnvironmentVariableService = ApixPress.App.Tests.ViewModels.ViewModelS
 using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeFilePickerService;
 using FakeProjectDataExportService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectDataExportService;
 using FakeProjectWorkspaceService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectWorkspaceService;
+using FakeProjectHttpSettingsService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectHttpSettingsService;
 using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
 using FakeRequestExecutionService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestExecutionService;
 using FakeRequestHistoryService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestHistoryService;
@@ -27,7 +28,10 @@ public sealed partial class ProjectTabViewModelTests
         FakeRequestExecutionService? requestExecutionService = null,
         FakeSystemDataService? systemDataService = null,
         FakeProjectWorkspaceService? projectWorkspaceService = null,
-        Func<string, Task>? handleProjectDeletedAsync = null)
+        FakeProjectHttpSettingsService? projectHttpSettingsService = null,
+        ViewModelSharedTestDoubles.FakeClipboardService? clipboardService = null,
+        Func<string, Task>? handleProjectDeletedAsync = null,
+        ViewModelSharedTestDoubles.FakeDialogService? dialogService = null)
     {
         return new ProjectTabViewModel(
             new ProjectWorkspaceItemViewModel
@@ -46,7 +50,9 @@ public sealed partial class ProjectTabViewModelTests
             filePickerService ?? new FakeFilePickerService(),
             appNotificationService ?? new FakeAppNotificationService(),
             projectDataExportService ?? new FakeProjectDataExportService(),
-            handleProjectDeletedAsync ?? (_ => Task.CompletedTask));
+            projectHttpSettingsService ?? new FakeProjectHttpSettingsService(),
+            clipboardService ?? new ViewModelSharedTestDoubles.FakeClipboardService(),
+            dialogService ?? new ViewModelSharedTestDoubles.FakeDialogService(),            handleProjectDeletedAsync ?? (_ => Task.CompletedTask));
     }
 
     private static IEnumerable<string> FlattenExplorerTitles(IEnumerable<ExplorerItemViewModel> items)

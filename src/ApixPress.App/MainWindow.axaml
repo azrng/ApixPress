@@ -16,9 +16,8 @@
         MinWidth="1280"
         MinHeight="800"
         WindowState="Maximized"
-        SystemDecorations="None"
+        WindowDecorations="None"
         ExtendClientAreaToDecorationsHint="True"
-        ExtendClientAreaChromeHints="NoChrome"
         Icon="/Assets/AppIcon.ico"
         Title="ApixPress">
   <Grid RowDefinitions="Auto,*">
@@ -26,21 +25,17 @@
 
     <Grid Grid.Row="1">
       <views:MainWindowHomeView IsVisible="{Binding IsHomeTabActive}" />
-      <ItemsControl IsVisible="{Binding HasActiveProjectTab}"
-                    ItemsSource="{Binding ProjectTabs}">
-        <ItemsControl.ItemsPanel>
-          <ItemsPanelTemplate>
-            <Grid />
-          </ItemsPanelTemplate>
-        </ItemsControl.ItemsPanel>
-        <ItemsControl.ItemTemplate>
-          <DataTemplate x:DataType="vm:ProjectTabViewModel">
-            <views:ProjectWorkspaceView IsVisible="{Binding IsActive}" />
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-      <views:MainWindowOverlaysView />
-      <u:OverlayDialogHost />
+      <!-- 标签级缓存宿主：ProjectWorkspaceView 按 ActiveProjectTab 缓存复用，切换项目标签不再整树重建 -->
+      <views:ProjectTabHostView Classes="ProjectWorkspaceHost"
+                                IsVisible="{Binding HasActiveProjectTab}"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch" />
+      <!-- 通知中心浮层面板（内部自带可见性绑定）；模态弹窗改由 Ursa OverlayDialogHost 承载 -->
+      <views:NotificationCenterOverlayView />
     </Grid>
+
+    <!-- 弹窗宿主必须横跨标题栏与内容两行：宿主是 ClipToBounds 的 Canvas，
+         若默认落进 Row 0（47px 标题栏行），弹窗会被裁剪成只剩顶部一条残影 -->
+    <u:OverlayDialogHost Grid.Row="0" Grid.RowSpan="2" />
   </Grid>
 </Window>

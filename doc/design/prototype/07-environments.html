@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress 原型 · 07 环境变量</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+
+<!-- ═══════════════ 环境变量抽屉（可关闭 / 重开，可交互） ═══════════════ -->
+<div class="window">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab" data-tab-scope="directory" data-href="01-home.html">首页 <span class="n">3</span></div>
+    <div class="tb-tab active" data-tab-scope="directory" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <div class="tb-tab" data-tab-scope="workspace">获取班级信息 <span class="close">✕</span></div>
+    <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
+    <div class="tb-spacer"></div>
+    <div class="env-chip highlight" data-open="#envDrawer"><span class="env-dot"></span><span id="envChipName">开发</span><span class="caret">▼</span></div>
+    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）"><i class="ri-settings-line"></i></button>
+  </div>
+
+  <div class="shell">
+    <div class="rail">
+      <button class="nav-item selected" data-href="02-debug-params.html">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <span class="t">接口管理</span>
+      </button>
+      <button class="nav-item" data-href="05-history.html">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="t">请求历史</span>
+      </button>
+      <button class="nav-item" data-href="06-project-settings.html">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span>
+        <span class="t">项目设置</span>
+      </button>
+    </div>
+
+    <div class="sidebar">
+      <div class="side-head">
+        <span class="side-title">接口管理</span>
+        <button class="icon-btn-violet" data-toast="新建接口（演示）">＋</button>
+      </div>
+      <div class="search-box"><span><i class="ri-search-line"></i></span><input placeholder="搜索"></div>
+      <div class="tree">
+            <div class="tree-node">
+              <div class="tree-row" data-toggle style="padding-left:6px;">
+                <span class="caret open">▸</span><span><i class="ri-link"></i></span><span class="t">接口</span>
+                <button class="row-more" data-toast="目录操作：新建目录 / 新建 HTTP 接口（演示）">⋯</button>
+              </div>
+              <div class="tree-children open">
+                <div class="tree-node">
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret open">▸</span><span><i class="ri-folder-line"></i></span><span class="t">Group</span><span class="cnt">(1)</span>
+                  </div>
+                  <div class="tree-children open">
+                    <div class="tree-row selected" style="padding-left:48px;">
+                      <span class="badge get">GET</span><span class="t">获取班级信息</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tree-node">
+                  <div class="tree-row" data-toggle style="padding-left:24px;">
+                    <span class="caret">▸</span><span><i class="ri-folder-line"></i></span><span class="t">HttpSample</span><span class="cnt">(8)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="card ctx-bar">
+        <input class="name-input" value="获取班级信息">
+        <button class="code-btn" data-toast="生成请求代码见 02 页（演示）">&lt;/&gt;</button>
+      </div>
+      <div class="card" style="padding:2px 12px 12px; margin-top:-10px;">
+        <div class="url-row" style="padding:12px 0 0;">
+          <div class="url-shell">
+            <span class="method-select get" data-toast="切换请求方法（演示）">GET <span class="caret">▼</span></span>
+            <span class="base-chip">{{BaseUrl}}</span>
+            <input class="path-input" value="/api/Group/GetGroupList">
+          </div>
+          <button class="btn btn-primary" id="sendBtn">发送</button>
+          <button class="btn btn-ghost" data-toast="已保存接口（演示）">保存</button>
+        </div>
+      </div>
+      <div class="card resp-card">
+        <div class="resp-head">
+          <span class="resp-title">返回响应</span>
+          <span class="resp-spacer"></span>
+          <span id="respBadge" class="status-badge ok">HTTP 200</span>
+          <span class="metric">126 ms</span>
+        </div>
+        <div class="resp-tabs"><span class="sub-tab active">Body</span><span class="sub-tab">Headers</span></div>
+        <div class="resp-body" style="flex:1;"><span class="j-punc">{</span> <span class="j-punc">"success":</span> <span class="j-num">true</span><span class="j-punc">,</span> <span class="j-punc">"message":</span> <span class="j-str">"操作成功"</span> <span class="j-punc">}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遮罩 + 环境抽屉（可开关） -->
+  <div class="drawer-layer open" id="envDrawer">
+    <div class="overlay-dim"></div>
+    <div class="drawer">
+      <div class="drawer-head">
+        <span class="drawer-title">环境变量</span>
+        <button class="btn-add" id="addEnv">＋ 新增环境</button>
+        <button class="drawer-close" data-close>✕</button>
+      </div>
+
+      <div class="drawer-body" id="envList">
+        <div class="env-card active">
+          <div class="env-card-head">
+            <span class="checkbox on"></span>
+            <span class="ename">开发</span>
+            <span class="eurl">http://localhost:5050</span>
+            <span class="chip">激活</span>
+            <span class="del-btn env-del" title="删除该环境"><i class="ri-delete-bin-line"></i></span>
+          </div>
+          <div class="env-baseurl-row">
+            <span class="env-baseurl-label">BaseUrl</span>
+            <input class="cell-input mono" value="http://localhost:5050">
+          </div>
+          <div class="env-vars">
+            <div class="env-var-row">
+              <input class="cell-input mono" value="token">
+              <input class="cell-input mono" value="eyJhbGciOiJIUzI1NiIs...">
+              <span class="var-switch on" title="启用状态决定该变量是否参与请求"></span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
+            </div>
+            <div class="env-var-row">
+              <input class="cell-input mono" value="groupId">
+              <input class="cell-input mono" value="1">
+              <span class="var-switch on" title="启用状态决定该变量是否参与请求"></span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
+            </div>
+          </div>
+          <div class="env-cap"><span class="varCount">2 个变量 · 发送时自动替换 {{变量名}}</span><button class="btn-add addVar" style="height:24px;padding:0 10px;">＋ 新增变量</button></div>
+          <div class="env-card-foot">
+            <span class="cap" style="font-size:11px;color:var(--text-tertiary);">逐卡保存或使用底部「保存全部环境」</span>
+            <button class="btn btn-primary" data-toast="环境「开发」已保存（演示）">保存该环境</button>
+          </div>
+        </div>
+
+        <div class="env-card">
+          <div class="env-card-head">
+            <span class="checkbox"></span>
+            <span class="ename">测试</span>
+            <span class="eurl">https://test.example.com</span>
+            <span class="chip">激活</span>
+            <span class="del-btn env-del" title="删除该环境"><i class="ri-delete-bin-line"></i></span>
+          </div>
+          <div class="env-baseurl-row">
+            <span class="env-baseurl-label">BaseUrl</span>
+            <input class="cell-input mono" value="https://test.example.com">
+          </div>
+          <div class="env-vars">
+            <div class="env-var-row">
+              <input class="cell-input mono" value="token">
+              <input class="cell-input mono" value="test-token-2">
+              <span class="var-switch on" title="启用状态决定该变量是否参与请求"></span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
+            </div>
+          </div>
+          <div class="env-cap"><span class="varCount">1 个变量 · 发送时自动替换 {{变量名}}</span><button class="btn-add addVar" style="height:24px;padding:0 10px;">＋ 新增变量</button></div>
+          <div class="env-card-foot">
+            <span class="cap" style="font-size:11px;color:var(--text-tertiary);">逐卡保存或使用底部「保存全部环境」</span>
+            <button class="btn btn-primary" data-toast="环境「测试」已保存（演示）">保存该环境</button>
+          </div>
+        </div>
+
+        <div class="env-card">
+          <div class="env-card-head">
+            <span class="checkbox"></span>
+            <span class="ename">生产</span>
+            <span class="eurl">https://api.example.com</span>
+            <span class="chip">激活</span>
+            <span class="del-btn env-del" title="删除该环境"><i class="ri-delete-bin-line"></i></span>
+          </div>
+          <div class="env-baseurl-row">
+            <span class="env-baseurl-label">BaseUrl</span>
+            <input class="cell-input mono" value="https://api.example.com">
+          </div>
+          <div class="env-vars">
+            <div class="env-var-row">
+              <input class="cell-input mono" value="token">
+              <input class="cell-input mono" value="••••••••（已隐藏）">
+              <span class="var-switch on" title="启用状态决定该变量是否参与请求"></span>
+              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
+            </div>
+          </div>
+          <div class="env-cap"><span class="varCount">1 个变量 · 发送时自动替换 {{变量名}}</span><button class="btn-add addVar" style="height:24px;padding:0 10px;">＋ 新增变量</button></div>
+          <div class="env-card-foot">
+            <span class="cap" style="font-size:11px;color:var(--text-tertiary);">逐卡保存或使用底部「保存全部环境」</span>
+            <button class="btn btn-primary" data-toast="环境「生产」已保存（演示）">保存该环境</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 删除确认内联条（点击「删除环境」出现） -->
+      <div id="delStrip" style="display:none; margin:0 16px 10px; padding:9px 12px; border:1px solid rgba(248,113,113,.4); background:rgba(248,113,113,.06); border-radius:var(--r-md); align-items:center; gap:10px; flex-direction:column;">
+        <span style="flex:1; font-size:12px; color:var(--text-secondary); line-height:1.5;" data-msg-text>删除「生产」环境？若这是激活环境，系统会自动切换到其他环境。</span>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-danger" id="confirmDelEnv" style="height:26px;min-width:auto;padding:0 12px;font-size:12px;">确认删除</button>
+          <button class="btn btn-ghost" id="cancelDelEnv" style="height:26px;min-width:auto;padding:0 12px;font-size:12px;">取消</button>
+        </div>
+      </div>
+
+      <div class="drawer-foot">
+        <button class="btn btn-primary" data-toast="全部环境已保存（演示）">保存全部环境</button>
+        <span style="flex:1; font-size:11px; color:var(--text-tertiary);">也可逐卡保存；删除环境在每张卡片右上角</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  // 环境卡片：点击切换激活（排除输入框、按钮等操作目标）
+  var envList = document.getElementById("envList");
+  envList.addEventListener("click", function (e) {
+    if (e.target.closest(".cell-input, .del-btn, .btn-add, .checkbox, .env-del, .env-baseurl-row, .env-card-foot, .btn")) return;
+    var card = e.target.closest(".env-card");
+    if (!card) return;
+    envList.querySelectorAll(".env-card").forEach(function (c) {
+      c.classList.remove("active");
+      c.querySelector(".checkbox").classList.remove("on");
+    });
+    card.classList.add("active");
+    card.querySelector(".checkbox").classList.add("on");
+    document.getElementById("envChipName").textContent = card.querySelector(".ename").textContent;
+    var baseUrlInput = card.querySelector(".env-baseurl-row .cell-input");
+    window.protoSetEnvironment(card.querySelector(".ename").textContent, baseUrlInput ? baseUrlInput.value.trim() : "");
+    protoToast("已切换激活环境「" + card.querySelector(".ename").textContent + "」（演示）");
+  });
+
+  // 修改 BaseUrl 时同步卡片摘要，保存后其他调试页面也会读取该值。
+  envList.addEventListener("input", function (e) {
+    if (!e.target.classList.contains("cell-input")) return;
+    var row = e.target.closest(".env-baseurl-row");
+    var card = e.target.closest(".env-card");
+    if (!row || !card) return;
+    card.querySelector(".eurl").textContent = e.target.value.trim() || "未配置 BaseUrl";
+    if (card.classList.contains("active")) {
+      window.protoSetEnvironment(card.querySelector(".ename").textContent, e.target.value.trim());
+    }
+  });
+
+  // 变量行删除 / 新增（事件委托，作用于所有环境卡）
+  envList.addEventListener("click", function (e) {
+    var card = e.target.closest(".env-card");
+    if (!card) return;
+    var del = e.target.closest(".env-vars .del-btn");
+    if (del) {
+      del.closest(".env-var-row").remove();
+      refreshVarCount(card);
+      return;
+    }
+    var sw = e.target.closest(".var-switch");
+    if (sw) {
+      sw.classList.toggle("on");
+      return;
+    }
+    if (e.target.closest(".addVar")) {
+      var row = document.createElement("div");
+      row.className = "env-var-row";
+      row.innerHTML = '<input class="cell-input mono" placeholder="变量名"><input class="cell-input mono" placeholder="变量值"><span class="var-switch on" title="启用"></span><span class="del-btn"><i class="ri-delete-bin-line"></i></span>';
+      card.querySelector(".env-vars").appendChild(row);
+      row.querySelector("input").focus();
+      refreshVarCount(card);
+    }
+  });
+  function refreshVarCount(card) {
+    var cap = card.querySelector(".varCount");
+    if (cap) cap.textContent = card.querySelectorAll(".env-var-row").length + " 个变量";
+  }
+
+  // 新增环境
+  var envSeq = 0;
+  document.getElementById("addEnv").addEventListener("click", function () {
+    envSeq++;
+    var name = "环境 " + envSeq;
+    var card = document.createElement("div");
+    card.className = "env-card";
+    card.innerHTML =
+      '<div class="env-card-head"><span class="checkbox"></span><span class="ename"></span><span class="eurl">未配置 BaseUrl</span><span class="chip">激活</span><span class="del-btn env-del" title="删除该环境"><i class="ri-delete-bin-line"></i></span></div>' +
+      '<div class="env-baseurl-row"><span class="env-baseurl-label">BaseUrl</span><input class="cell-input mono" placeholder="例如 https://api.example.com"></div>' +
+      '<div class="env-vars"></div>' +
+      '<div class="env-cap"><span class="varCount">暂无变量 · 发送时自动替换 {{变量名}}</span><button class="btn-add addVar" style="height:24px;padding:0 10px;">＋ 新增变量</button></div>' +
+      '<div class="env-card-foot"><span style="font-size:11px;color:var(--text-tertiary);">逐卡保存或使用底部「保存全部环境」</span><button class="btn btn-primary" data-toast="环境已保存（演示）">保存该环境</button></div>';
+    card.querySelector(".ename").textContent = name;
+    envList.appendChild(card);
+    protoToast("已新增「" + name + "」，可直接编辑名称与变量");
+    card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+
+  // 删除环境：卡片内删除图标 → 底部两段确认条
+  var delStrip = document.getElementById("delStrip");
+  var pendingDelCard = null;
+  envList.addEventListener("click", function (e) {
+    var delEnv = e.target.closest(".env-del");
+    if (!delEnv) return;
+    pendingDelCard = delEnv.closest(".env-card");
+    var name = pendingDelCard.querySelector(".ename").textContent;
+    delStrip.style.display = "flex";
+    delStrip.querySelector("[data-msg-text]").textContent =
+      "删除「" + name + "」环境？若这是激活环境，系统会自动切换到其他环境。";
+  });
+  document.getElementById("cancelDelEnv").addEventListener("click", function () {
+    delStrip.style.display = "none";
+  });
+  document.getElementById("confirmDelEnv").addEventListener("click", function () {
+    var cards = envList.querySelectorAll(".env-card");
+    if (cards.length <= 1) { protoToast("至少保留一个环境"); return; }
+    if (!pendingDelCard) { delStrip.style.display = "none"; return; }
+    var name = pendingDelCard.querySelector(".ename").textContent;
+    var wasActive = pendingDelCard.classList.contains("active");
+    var next = (pendingDelCard === cards[0]) ? cards[1] : cards[0];
+    pendingDelCard.remove();
+    pendingDelCard = null;
+    if (wasActive) {
+      // 删除激活环境后自动切换到相邻卡片
+      next.classList.add("active");
+      next.querySelector(".checkbox").classList.add("on");
+      document.getElementById("envChipName").textContent = next.querySelector(".ename").textContent;
+    }
+    delStrip.style.display = "none";
+    protoToast("已删除环境「" + name + "」（演示）");
+  });
+</script>
+</body>
+</html>

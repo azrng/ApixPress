@@ -2,6 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:u="https://irihi.tech/ursa"
+             xmlns:views="using:ApixPress.App.Views.Controls"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.HttpDocumentWorkspaceView"
              x:DataType="vm:ProjectTabViewModel"
@@ -9,7 +11,7 @@
   <ScrollViewer HorizontalScrollBarVisibility="Disabled"
                 VerticalScrollBarVisibility="Auto"
                 IsVisible="{Binding Editor.ShowHttpDocumentPreviewContent}">
-    <StackPanel Spacing="{StaticResource Space.4}"
+    <StackPanel Spacing="{StaticResource Space.3}"
                 MinWidth="0">
       <Border Classes="PanelCard HttpDocumentHeroCard">
         <Grid ColumnDefinitions="*,Auto"
@@ -21,21 +23,12 @@
                       Spacing="{StaticResource Space.3}">
             <StackPanel Orientation="Horizontal"
                         Spacing="{StaticResource Space.2}">
-              <Border Classes="HttpDocumentMethodBadge">
-                <TextBlock Text="{Binding Editor.SelectedMethod}" />
-              </Border>
-              <Border Classes="HttpDocumentStatusBadge">
-                <TextBlock Text="{Binding Editor.CurrentResponseValidationResultText}" />
-              </Border>
+              <u:Badge Header="{Binding Editor.SelectedMethod}" />
+              <u:Badge Header="{Binding Editor.CurrentResponseValidationResultText}" />
             </StackPanel>
 
-            <StackPanel Spacing="4">
-              <TextBlock Classes="PageTitle"
-                         Text="{Binding Editor.CurrentHttpInterfaceDisplayName}" />
-              <TextBlock Classes="CaptionText"
-                         Text="{Binding ConfigTab.RequestDescription}"
-                         TextWrapping="Wrap" />
-            </StackPanel>
+            <TextBlock Classes="PageTitle"
+                       Text="{Binding Editor.CurrentHttpInterfaceDisplayName}" />
 
             <Border Classes="HttpDocumentUrlCard">
               <StackPanel Spacing="4">
@@ -53,9 +46,8 @@
             <StackPanel Spacing="{StaticResource Space.2}">
               <TextBlock Classes="CaptionText"
                          Text="测试用例" />
-              <TextBox Classes="SectionInput HttpInterfaceNameInput HttpCaseNameInput"
-                       Watermark="用例名称"
-                       Text="{Binding Editor.CurrentHttpCaseName}" />
+              <TextBlock Text="{Binding Editor.CurrentHttpCaseName}"
+                         TextTrimming="CharacterEllipsis" />
               <Button Classes="HttpSaveButton"
                       Content="保存测试用例"
                       Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveHttpCaseCommand}" />
@@ -73,19 +65,47 @@
             <StackPanel Spacing="{StaticResource Space.3}">
               <TextBlock Classes="SectionTitle"
                          Text="请求概览" />
-              <Grid ColumnDefinitions="Auto,*"
-                    ColumnSpacing="{StaticResource Space.3}"
-                    RowDefinitions="Auto,Auto,Auto,Auto"
-                    RowSpacing="{StaticResource Space.2}">
-                <TextBlock Grid.Row="0" Classes="CaptionText" Text="接口目录" />
-                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Editor.CurrentInterfaceFolderPath}" />
-                <TextBlock Grid.Row="1" Classes="CaptionText" Text="BaseUrl" />
-                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Editor.CurrentEditorBaseUrlCaption}" TextWrapping="Wrap" />
-                <TextBlock Grid.Row="2" Classes="CaptionText" Text="接口用例" />
-                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Editor.CurrentHttpCaseName}" />
-                <TextBlock Grid.Row="3" Classes="CaptionText" Text="Body 模式" />
-                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Editor.CurrentHttpDocumentBodyModeText}" />
-              </Grid>
+              <!-- 对齐原型 info-row：标签列 + 值列 + 行分隔线 -->
+              <Border Classes="HttpDocumentInfoRow">
+                <Grid ColumnDefinitions="96,*"
+                      ColumnSpacing="{StaticResource Space.3}">
+                  <TextBlock Classes="CaptionText HttpDocumentInfoLabel" Text="接口目录" />
+                  <TextBlock Grid.Column="1" Text="{Binding Editor.CurrentInterfaceFolderPath}" TextWrapping="Wrap" />
+                </Grid>
+              </Border>
+              <Border Classes="HttpDocumentInfoRow">
+                <Grid ColumnDefinitions="96,*"
+                      ColumnSpacing="{StaticResource Space.3}">
+                  <TextBlock Classes="CaptionText HttpDocumentInfoLabel" Text="BaseUrl" />
+                  <TextBlock Grid.Column="1" Text="{Binding Editor.CurrentEditorBaseUrlCaption}" TextWrapping="Wrap" />
+                </Grid>
+              </Border>
+              <Border Classes="HttpDocumentInfoRow">
+                <Grid ColumnDefinitions="96,*"
+                      ColumnSpacing="{StaticResource Space.3}">
+                  <TextBlock Classes="CaptionText HttpDocumentInfoLabel" Text="接口用例" />
+                  <TextBlock Grid.Column="1" Text="{Binding Editor.CurrentHttpCaseName}" TextWrapping="Wrap" />
+                </Grid>
+              </Border>
+              <Border Classes="HttpDocumentInfoRow HttpDocumentInfoRowLast">
+                <Grid ColumnDefinitions="96,*"
+                      ColumnSpacing="{StaticResource Space.3}">
+                  <TextBlock Classes="CaptionText HttpDocumentInfoLabel" Text="Body 模式" />
+                  <TextBlock Grid.Column="1" Text="{Binding Editor.CurrentHttpDocumentBodyModeText}" TextWrapping="Wrap" />
+                </Grid>
+              </Border>
+
+              <!-- 接口说明编辑承接原「设计」页签，唯一编辑入口 -->
+              <StackPanel Spacing="{StaticResource Space.2}">
+                <TextBlock Classes="CaptionText HttpDocumentInfoLabel"
+                           Text="接口说明" />
+                <TextBox Classes="SectionInput HttpDocumentDescriptionInput"
+                         AcceptsReturn="True"
+                         Text="{Binding ConfigTab.RequestDescription}"
+                         TextWrapping="Wrap"
+                         VerticalContentAlignment="Top"
+                         PlaceholderText="补充接口用途、前置条件和返回约定" />
+              </StackPanel>
 
               <TextBlock Classes="CaptionText"
                          IsVisible="{Binding Editor.ShowHttpDocumentRequestEmpty}"
@@ -145,12 +165,16 @@
                          Text="响应示例" />
               <TextBlock Classes="CaptionText"
                          Text="{Binding Editor.CurrentHttpDocumentResponseSummary}" />
-              <TextBox Classes="HttpDocumentReadonlyCode"
-                       AcceptsReturn="True"
-                       IsReadOnly="True"
-                       Text="{Binding Editor.CurrentHttpDocumentBodyPreview}"
-                       TextWrapping="Wrap"
-                       VerticalContentAlignment="Top" />
+              <!-- 大响应（上限 256K 字符）只排版可视区：Wrap TextBox 会对整篇文本重建 TextLayout 阻塞 UI 线程 -->
+              <Border Classes="HttpDocumentPreviewCodeCard HttpDocumentCodeCardTall"
+                      IsVisible="{Binding Editor.HasHttpDocumentBodyPreview}">
+                <views:ResponseBodyEditor Text="{Binding Editor.CurrentHttpDocumentBodyPreview}" />
+              </Border>
+              <Border Classes="HttpConfigEmptyState"
+                      IsVisible="{Binding !Editor.HasHttpDocumentBodyPreview}">
+                <TextBlock Classes="CaptionText"
+                           Text="尚未调试，发送请求后生成响应示例。" />
+              </Border>
             </StackPanel>
           </Border>
 
@@ -158,12 +182,9 @@
             <StackPanel Spacing="{StaticResource Space.3}">
               <TextBlock Classes="SectionTitle"
                          Text="请求示例" />
-              <TextBox Classes="HttpDocumentReadonlyCode"
-                       AcceptsReturn="True"
-                       IsReadOnly="True"
-                       Text="{Binding Editor.CurrentHttpDocumentCurlSnippet}"
-                       TextWrapping="Wrap"
-                       VerticalContentAlignment="Top" />
+              <Border Classes="HttpDocumentPreviewCodeCard HttpDocumentCodeCardLow">
+                <views:ResponseBodyEditor Text="{Binding Editor.CurrentHttpDocumentCurlSnippet}" />
+              </Border>
             </StackPanel>
           </Border>
         </StackPanel>

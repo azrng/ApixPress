@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using ApixPress.App.Messages;
 using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
@@ -45,7 +47,10 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
     public bool IsRequestHistorySection => SelectedSection == Sections.RequestHistory;
     public bool IsProjectSettingsSection => SelectedSection == Sections.ProjectSettings;
     public bool ShowInterfaceManagementLanding => IsInterfaceManagementSection && (_workspaceContext.GetActiveWorkspaceTab()?.IsLandingTab ?? true);
-    public bool ShowRequestEditorWorkspace => IsInterfaceManagementSection && _workspaceContext.GetActiveWorkspaceTab() is { IsLandingTab: false };
+    public bool ShowRequestEditorWorkspace => IsInterfaceManagementSection
+        && !_workspaceContext.IsInterfaceRootWorkspaceActive()
+        && _workspaceContext.GetActiveWorkspaceTab() is { IsLandingTab: false, IsInterfaceRootTab: false };
+    public bool ShowInterfaceRootWorkspace => IsInterfaceManagementSection && _workspaceContext.IsInterfaceRootWorkspaceActive();
     public ProjectWorkspaceContentMode CurrentContentMode => ResolveCurrentContentMode();
 
     [ObservableProperty]
@@ -83,6 +88,7 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
         OnPropertyChanged(nameof(ShowRequestEditorWorkspace));
+        OnPropertyChanged(nameof(ShowInterfaceRootWorkspace));
         OnPropertyChanged(nameof(CurrentContentMode));
     }
 
@@ -90,22 +96,22 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
     private void ShowInterfaceManagement()
     {
         SelectInterfaceManagementSection();
-        _workspaceContext.EnsureLandingWorkspaceTab();
-        _hostContext.SetStatusMessage(_workspaceContext.GetActiveWorkspaceTab()?.IsLandingTab == true
+        _hostContext.Messenger.Send(new NavigationRequestMessage(NavigationTarget.LandingWorkspaceTab));
+        _hostContext.Messenger.Send(new StatusMessageRequest(_workspaceContext.GetActiveWorkspaceTab()?.IsLandingTab == true
             ? "接口管理已就绪，可在中间新建 HTTP 接口或快捷请求。"
-            : "接口管理已打开。");
+            : "接口管理已打开。"));
         NotifyWorkspaceStateChanged();
-        _hostContext.NotifyShellState();
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     [RelayCommand]
     private async Task ShowRequestHistory()
     {
         SelectRequestHistorySection();
-        _hostContext.SetStatusMessage("正在载入请求历史...");
+        _hostContext.Messenger.Send(new StatusMessageRequest("正在载入请求历史..."));
         await _ensureRequestHistoryLoadedAsync();
-        _hostContext.SetStatusMessage(_workspaceContext.HasHistory() ? "这里展示当前项目的请求历史。" : "当前项目还没有请求历史。");
-        _hostContext.NotifyShellState();
+        _hostContext.Messenger.Send(new StatusMessageRequest(_workspaceContext.HasHistory() ? "这里展示当前项目的请求历史。" : "当前项目还没有请求历史。"));
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     partial void OnSelectedSectionChanged(string value)
@@ -116,6 +122,7 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsProjectSettingsSection));
         OnPropertyChanged(nameof(ShowInterfaceManagementLanding));
         OnPropertyChanged(nameof(ShowRequestEditorWorkspace));
+        OnPropertyChanged(nameof(ShowInterfaceRootWorkspace));
         OnPropertyChanged(nameof(CurrentContentMode));
     }
 
@@ -155,6 +162,11 @@ public partial class ProjectWorkspaceShellViewModel : ViewModelBase
         if (IsRequestHistorySection)
         {
             return ProjectWorkspaceContentMode.RequestHistory;
+        }
+
+        if (_workspaceContext.IsInterfaceRootWorkspaceActive())
+        {
+            return ProjectWorkspaceContentMode.InterfaceRoot;
         }
 
         return _workspaceContext.GetActiveWorkspaceTab() is { IsLandingTab: false }

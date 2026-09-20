@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using ApixPress.App.Helpers;
+using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -16,6 +18,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
     private readonly RequestHistoryPanelViewModel _historyPanel;
     private readonly EnvironmentPanelViewModel _environmentPanel;
     private readonly ProjectWorkspaceCatalogViewModel _catalog;
+    private readonly ProjectInterfaceRootWorkspaceViewModel _interfaceRoot;
     private readonly ProjectTabWorkspaceContext _workspaceContext;
     private readonly Action<RequestWorkspaceTabViewModel> _openQuickRequestSaveDialog;
     private readonly ProjectTabHostContext _hostContext;
@@ -30,6 +33,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         RequestHistoryPanelViewModel historyPanel,
         EnvironmentPanelViewModel environmentPanel,
         ProjectWorkspaceCatalogViewModel catalog,
+        ProjectInterfaceRootWorkspaceViewModel interfaceRoot,
         ProjectTabWorkspaceContext workspaceContext,
         Action<RequestWorkspaceTabViewModel> openQuickRequestSaveDialog,
         ProjectTabHostContext hostContext)
@@ -42,6 +46,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         _historyPanel = historyPanel;
         _environmentPanel = environmentPanel;
         _catalog = catalog;
+        _interfaceRoot = interfaceRoot;
         _workspaceContext = workspaceContext;
         _openQuickRequestSaveDialog = openQuickRequestSaveDialog;
         _hostContext = hostContext;
@@ -59,30 +64,30 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             return;
         }
 
-        _workspaceContext.SelectInterfaceManagementSection();
+        _hostContext.Messenger.Send(new NavigationRequestMessage(NavigationTarget.InterfaceManagementSection));
         var workspaceTab = _workspaceContext.GetActiveWorkspaceTab();
         if (workspaceTab is null || workspaceTab.IsLandingTab)
         {
-            _hostContext.SetStatusMessage("请先打开一个 HTTP 接口或快捷请求标签。");
-            _hostContext.NotifyShellState();
+            _hostContext.Messenger.Send(new StatusMessageRequest("请先打开一个 HTTP 接口或快捷请求标签。"));
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return;
         }
 
         if (string.IsNullOrWhiteSpace(workspaceTab.RequestUrl))
         {
-            _hostContext.SetStatusMessage("请输入请求地址。");
-            _hostContext.NotifyShellState();
+            _hostContext.Messenger.Send(new StatusMessageRequest("请输入请求地址。"));
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return;
         }
 
         if (workspaceTab.IsQuickRequestTab && !HasAbsoluteHttpUrl(workspaceTab.RequestUrl))
         {
-            _hostContext.SetStatusMessage("快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。");
-            _hostContext.NotifyShellState();
+            _hostContext.Messenger.Send(new StatusMessageRequest("快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。"));
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return;
         }
 
-        _hostContext.SetBusyState(true);
+        _hostContext.Messenger.Send(new BusyStateChangedMessage(true));
         workspaceTab.ResponseSection.BeginLoading(workspaceTab.IsHttpInterfaceTab
             ? "正在发送 HTTP 接口请求..."
             : "正在发送快捷请求...");
@@ -90,7 +95,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         var cancellationToken = cancellationTokenSource.Token;
         try
         {
-            var snapshot = workspaceTab.BuildSnapshot();
+            var snapshot = BuildRequestSnapshotForSend(workspaceTab);
             var environment = BuildExecutionEnvironment();
             var result = await _requestExecutionService.SendAsync(snapshot, environment, cancellationToken);
             workspaceTab.ResponseSection.ApplyResult(result, snapshot);
@@ -104,21 +109,18 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
                 }
             }
 
-            _hostContext.SetStatusMessage(result.IsSuccess
+            _hostContext.Messenger.Send(new StatusMessageRequest(result.IsSuccess
                 ? (workspaceTab.IsHttpInterfaceTab ? "HTTP 接口请求发送完成。" : "快捷请求发送完成。")
-                : result.Message);
+                : result.Message));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            _hostContext.SetStatusMessage("已取消当前请求。");
+            // 取消文案统一在 finally 中发送一次，避免与 CancelRequest / finally 重复。
         }
         finally
         {
             workspaceTab.ResponseSection.EndLoading();
-            if (cancellationToken.IsCancellationRequested)
-            {
-                _hostContext.SetStatusMessage("已取消当前请求。");
-            }
+            var wasCancelled = cancellationToken.IsCancellationRequested;
 
             if (ReferenceEquals(_sendRequestCancellationTokenSource, cancellationTokenSource))
             {
@@ -126,8 +128,13 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
                 _sendRequestCancellationTokenSource = null;
             }
 
-            _hostContext.SetBusyState(false);
-            _hostContext.NotifyShellState();
+            _hostContext.Messenger.Send(new BusyStateChangedMessage(false));
+            if (wasCancelled)
+            {
+                _hostContext.Messenger.Send(new StatusMessageRequest("已取消当前请求。"));
+            }
+
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
         }
     }
 
@@ -138,9 +145,8 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             return;
         }
 
+        // 仅触发取消；状态文案由 SendRequestAsync 的 finally 统一发出。
         _sendRequestCancellationTokenSource.Cancel();
-        _hostContext.SetStatusMessage("已取消当前请求。");
-        _hostContext.NotifyShellState();
     }
 
     public async Task SaveCurrentEditorAsync()
@@ -150,79 +156,90 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             return;
         }
 
-        _workspaceContext.SelectInterfaceManagementSection();
+        _hostContext.Messenger.Send(new NavigationRequestMessage(NavigationTarget.InterfaceManagementSection));
         var workspaceTab = _workspaceContext.GetActiveWorkspaceTab();
         if (workspaceTab is null || workspaceTab.IsLandingTab)
         {
-            _hostContext.SetStatusMessage("请先打开一个请求标签。");
-            _hostContext.NotifyShellState();
+            _hostContext.Messenger.Send(new StatusMessageRequest("请先打开一个请求标签。"));
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return;
         }
 
         if (workspaceTab.IsHttpInterfaceTab)
         {
-            await SaveHttpInterfaceAsync(workspaceTab);
+            if (!string.IsNullOrWhiteSpace(workspaceTab.EditingCaseId))
+            {
+                await SaveHttpCaseCoreAsync(workspaceTab, caseNameOverride: null);
+            }
+            else
+            {
+                await SaveHttpInterfaceAsync(workspaceTab);
+            }
+
             return;
         }
 
         if (!HasAbsoluteHttpUrl(workspaceTab.RequestUrl))
         {
-            _hostContext.SetStatusMessage("快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。");
-            _hostContext.NotifyShellState();
+            _hostContext.Messenger.Send(new StatusMessageRequest("快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。"));
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return;
         }
 
         _openQuickRequestSaveDialog(workspaceTab);
-        _hostContext.NotifyShellState();
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
-    public async Task SaveHistoryAsQuickRequestAsync(RequestHistoryItemViewModel item)
+    [RelayCommand]
+    private void SaveQuickRequestAsInterface()
     {
-        var snapshot = item.RequestSnapshot;
-        var result = await _requestCaseService.SaveAsync(new RequestCaseDto
+        if (IsDisposed)
         {
-            ProjectId = _projectId,
-            EntryType = ProjectTabRequestEntryTypes.QuickRequest,
-            Name = $"{snapshot.Method} {snapshot.Url}",
-            GroupName = "快捷请求",
-            Description = $"从 {item.Timestamp.ToLocalTime():yyyy-MM-dd HH:mm} 的历史记录创建",
-            RequestSnapshot = snapshot,
-            UpdatedAt = DateTime.UtcNow
-        }, CancellationToken.None);
-
-        if (result.IsSuccess)
-        {
-            if (result.Data is not null)
-            {
-                _catalog.UpsertCaseItem(result.Data);
-            }
-
-            _hostContext.SetStatusMessage("已从历史记录生成快捷请求。");
-        }
-        else
-        {
-            _hostContext.SetStatusMessage(result.Message);
+            return;
         }
 
-        _hostContext.NotifyShellState();
+        var quickRequest = _workspaceContext.GetActiveWorkspaceTab();
+        if (quickRequest is null || !quickRequest.IsQuickRequestTab)
+        {
+            return;
+        }
+
+        if (!HasAbsoluteHttpUrl(quickRequest.RequestUrl))
+        {
+            _hostContext.Messenger.Send(new StatusMessageRequest("快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。"));
+            return;
+        }
+
+        var interfaceTab = _workspace.ReuseActiveLandingOrCreateWorkspace();
+        interfaceTab.ConfigureAsHttpInterface();
+        interfaceTab.ApplySnapshot(quickRequest.BuildSnapshot(quickRequest.ResolveRequestName()));
+        interfaceTab.ConfigTab.RequestDescription = quickRequest.ConfigTab.RequestDescription;
+        _workspace.ActivateWorkspaceTab(interfaceTab);
+        _hostContext.Messenger.Send(new StatusMessageRequest("已将快捷请求转为 HTTP 接口，请保存后写入接口目录。"));
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     public async Task<bool> SaveQuickRequestAsync(RequestWorkspaceTabViewModel workspaceTab, string? requestNameOverride = null)
     {
         if (!HasAbsoluteHttpUrl(workspaceTab.RequestUrl))
         {
-            _hostContext.SetStatusMessage("快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。");
-            _hostContext.NotifyShellState();
+            _hostContext.Messenger.Send(new StatusMessageRequest("快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。"));
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return false;
         }
 
         var requestName = string.IsNullOrWhiteSpace(requestNameOverride)
             ? workspaceTab.ResolveRequestName()
             : requestNameOverride.Trim();
+        // 名称相对上次保存发生变化时按新用例入库：改个名字就静默覆盖旧用例不符合“保存不同用例”的预期
+        var savedName = workspaceTab.SavedQuickRequestName;
+        var savesAsNewCase = !string.IsNullOrEmpty(workspaceTab.EditingQuickRequestId)
+            && !string.IsNullOrWhiteSpace(savedName)
+            && !string.Equals(savedName, requestName, StringComparison.Ordinal);
         var snapshot = workspaceTab.BuildSnapshot(requestName);
         var result = await _requestCaseService.SaveAsync(new RequestCaseDto
         {
-            Id = workspaceTab.EditingQuickRequestId,
+            Id = savesAsNewCase ? string.Empty : workspaceTab.EditingQuickRequestId,
             ProjectId = _projectId,
             EntryType = ProjectTabRequestEntryTypes.QuickRequest,
             Name = requestName,
@@ -235,16 +252,17 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         if (result.IsSuccess && result.Data is not null)
         {
             workspaceTab.EditingQuickRequestId = result.Data.Id;
+            workspaceTab.SavedQuickRequestName = requestName;
             _catalog.UpsertCaseItem(result.Data);
             workspaceTab.MarkCleanState();
-            _hostContext.SetStatusMessage("快捷请求已保存到左侧目录。");
+            _hostContext.Messenger.Send(new StatusMessageRequest("快捷请求已保存到左侧目录。"));
         }
         else
         {
-            _hostContext.SetStatusMessage(result.Message);
+            _hostContext.Messenger.Send(new StatusMessageRequest(result.Message));
         }
 
-        _hostContext.NotifyShellState();
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
         return result.IsSuccess && result.Data is not null;
     }
 
@@ -257,25 +275,64 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             return;
         }
 
-        _workspaceContext.SelectInterfaceManagementSection();
-        var savedInterface = await EnsureHttpInterfaceSavedAsync(workspaceTab, reloadAfterSave: false);
-        if (savedInterface is null)
+        await SaveHttpCaseCoreAsync(workspaceTab, caseNameOverride: null);
+    }
+
+    public async Task<bool> SaveHttpCaseNamedAsync(RequestWorkspaceTabViewModel workspaceTab, string caseName)
+    {
+        if (!ReferenceEquals(_workspaceContext.GetActiveWorkspaceTab(), workspaceTab)
+            || !workspaceTab.IsHttpInterfaceTab)
         {
-            return;
+            return false;
         }
 
-        _catalog.UpsertCaseItem(savedInterface);
+        return await SaveHttpCaseCoreAsync(workspaceTab, caseName);
+    }
+
+    private async Task<bool> SaveHttpCaseCoreAsync(
+        RequestWorkspaceTabViewModel workspaceTab,
+        string? caseNameOverride)
+    {
+        if (IsDisposed || !workspaceTab.IsHttpInterfaceTab)
+        {
+            return false;
+        }
+
+        _hostContext.Messenger.Send(new NavigationRequestMessage(NavigationTarget.InterfaceManagementSection));
+
+        // 已加载用例时只更新用例快照。接口本体是用例的父资源，不能因为编辑某个用例而被覆盖。
+        var isUpdatingExistingCase = !string.IsNullOrWhiteSpace(workspaceTab.EditingCaseId);
+        RequestCaseDto? savedInterface = null;
+        if (!isUpdatingExistingCase)
+        {
+            savedInterface = await EnsureHttpInterfaceSavedAsync(workspaceTab, reloadAfterSave: false);
+            if (savedInterface is null)
+            {
+                return false;
+            }
+
+            _catalog.UpsertCaseItem(savedInterface);
+        }
+
+        var parentId = savedInterface?.Id ?? workspaceTab.EditingInterfaceId;
+        if (string.IsNullOrWhiteSpace(parentId))
+        {
+            _hostContext.Messenger.Send(new StatusMessageRequest("当前用例缺少所属接口，无法保存。"));
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+            return false;
+        }
 
         var snapshot = workspaceTab.BuildSnapshot();
+        var requestName = BuildHttpCaseName(workspaceTab, caseNameOverride);
         var result = await _requestCaseService.SaveAsync(new RequestCaseDto
         {
             Id = workspaceTab.EditingCaseId,
             ProjectId = _projectId,
             EntryType = ProjectTabRequestEntryTypes.HttpCase,
-            Name = BuildHttpCaseName(workspaceTab),
+            Name = requestName,
             GroupName = "用例",
             FolderPath = ProjectWorkspaceTreeBuilder.NormalizeFolderPath(workspaceTab.InterfaceFolderPath),
-            ParentId = savedInterface.Id,
+            ParentId = parentId,
             Description = $"{workspaceTab.ResolveRequestName()} 的请求用例",
             RequestSnapshot = snapshot,
             UpdatedAt = DateTime.UtcNow
@@ -285,16 +342,18 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         {
             workspaceTab.EditingCaseId = result.Data.Id;
             workspaceTab.SourceEndpointId = result.Data.RequestSnapshot.EndpointId;
+            workspaceTab.HttpCaseName = requestName;
             _catalog.UpsertCaseItem(result.Data);
             workspaceTab.MarkCleanState();
-            _hostContext.SetStatusMessage("HTTP 接口用例已保存。");
+            _hostContext.Messenger.Send(new StatusMessageRequest($"已保存用例「{requestName}」。"));
         }
         else
         {
-            _hostContext.SetStatusMessage(result.Message);
+            _hostContext.Messenger.Send(new StatusMessageRequest(result.Message));
         }
 
-        _hostContext.NotifyShellState();
+        _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+        return result.IsSuccess && result.Data is not null;
     }
 
     private ProjectEnvironmentDto BuildExecutionEnvironment()
@@ -316,13 +375,21 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         };
     }
 
+    private RequestSnapshotDto BuildRequestSnapshotForSend(RequestWorkspaceTabViewModel workspaceTab)
+    {
+        var snapshot = workspaceTab.BuildSnapshot();
+        return workspaceTab.IsHttpInterfaceTab
+            ? _interfaceRoot.ApplyGlobalAuth(snapshot)
+            : snapshot;
+    }
+
     private async Task SaveHttpInterfaceAsync(RequestWorkspaceTabViewModel workspaceTab)
     {
         var savedInterface = await EnsureHttpInterfaceSavedAsync(workspaceTab, reloadAfterSave: true);
         if (savedInterface is not null)
         {
-            _hostContext.SetStatusMessage("HTTP 接口已保存到默认模块。");
-            _hostContext.NotifyShellState();
+            _hostContext.Messenger.Send(new StatusMessageRequest("HTTP 接口已保存。"));
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
         }
     }
 
@@ -344,8 +411,8 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
 
         if (!result.IsSuccess || result.Data is null)
         {
-            _hostContext.SetStatusMessage(result.Message);
-            _hostContext.NotifyShellState();
+            _hostContext.Messenger.Send(new StatusMessageRequest(result.Message));
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return null;
         }
 
@@ -360,8 +427,13 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         return result.Data;
     }
 
-    private static string BuildHttpCaseName(RequestWorkspaceTabViewModel workspaceTab)
+    private static string BuildHttpCaseName(RequestWorkspaceTabViewModel workspaceTab, string? caseNameOverride)
     {
+        if (!string.IsNullOrWhiteSpace(caseNameOverride))
+        {
+            return caseNameOverride.Trim();
+        }
+
         return string.IsNullOrWhiteSpace(workspaceTab.HttpCaseName)
             ? "成功"
             : workspaceTab.HttpCaseName.Trim();

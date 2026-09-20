@@ -15,6 +15,8 @@ internal static class ProjectSettingsTexts
     public const string DangerCardTitle = "危险操作";
     public const string DangerCardDescription = "这些操作会直接影响当前项目数据，请确认已导出或备份后再继续。";
     public const string DangerOperationStatus = "危险操作需要二次确认后才会执行。";
+    public const string ProjectIdCopiedStatus = "项目 ID 已复制到剪贴板。";
+    public const string ProjectIdCopyFailureStatus = "复制项目 ID 失败，请手动选择复制。";
     public const string ClearProjectDataTitle = "清空项目数据";
     public const string ClearProjectDataDescription = "删除当前项目的接口、用例、导入文档、环境变量和请求历史，保留项目名称与简介，并重建一个空的开发环境。";
     public const string ClearProjectDataAction = "清空项目数据";
@@ -30,12 +32,12 @@ internal static class ProjectSettingsTexts
     public const string DeletingProjectStatus = "正在删除当前项目...";
     public const string DeleteProjectFailureFallback = "删除项目失败，请稍后重试。";
     public const string ImportDataTitle = "导入数据";
-    public const string ImportDescription = "这里可以导入 Swagger 文档或 ApixPress 项目数据包。";
-    public const string ImportSubtitle = "支持 Swagger 文件上传、URL 导入，以及导入 `.apixpkg.json` 项目数据包。";
+    public const string ImportDescription = "这里可以导入 OpenAPI、Swagger、Postman 文档或 ApixPress 项目数据包。";
+    public const string ImportSubtitle = "支持 OpenAPI / Swagger / Postman JSON 文件上传、URL 导入，以及导入 `.apixpkg.json` 项目数据包。";
     public const string ImportCardTitle = "导入 API 数据";
-    public const string ImportCardDescription = "请选择要导入的数据源格式";
-    public const string ImportFormatName = "OpenAPI / Swagger";
-    public const string ImportFormatDescription = "支持导入 OpenAPI 3.x 与 Swagger 2.0 的 JSON 或 YAML 文档";
+    public const string ImportCardDescription = "选择 JSON 文件或输入 URL，格式自动识别";
+    public const string ImportFormatName = "OpenAPI / Swagger / Postman";
+    public const string ImportFormatDescription = "自动识别 OpenAPI、Swagger 与 Postman Collection JSON 文档";
     public const string ImportPackageCardTitle = "导入项目数据包";
     public const string ImportPackageCardDescription = "导入 ApixPress 导出的接口与测试用例数据";
     public const string ImportPackageFormatName = "ApixPress 项目数据包";
@@ -72,8 +74,8 @@ internal static class ImportTexts
 {
     public const string DialogTitle = "导入数据";
     public const string DataSourceFormatLabel = "数据源格式";
-    public const string DataSourceFormatName = "OpenAPI/Swagger";
-    public const string DialogNotice = "支持导入 OpenAPI 3.0、3.1 或 Swagger 2.0 数据格式的 JSON 或 YAML 文件。";
+    public const string DataSourceFormatName = "OpenAPI / Swagger / Postman";
+    public const string DialogNotice = "自动识别 OpenAPI、Swagger 与 Postman Collection JSON 文档。";
     public const string FileModeTitle = "上传文件";
     public const string UrlModeTitle = "URL 导入";
     public const string PickFileButton = "选择文件";
@@ -86,16 +88,16 @@ internal static class ImportTexts
     public const string PackageBusyProcessing = "正在处理项目数据包导入...";
     public const string ExportBusyProcessing = "正在导出当前项目数据...";
     public const string BusyRefreshResult = "正在刷新导入结果...";
-    public const string DefaultStatus = "可导入 Swagger 文档或 `.apixpkg.json` 项目数据包。";
-    public const string EmptyStateStatus = "当前项目还没有导入 Swagger 数据，可先从文件或 URL 开始导入。";
-    public const string EmptyRefreshStatus = "已刷新导入数据，当前项目还没有 Swagger 文档。";
-    public const string OpenDialogStatus = "请选择 OpenAPI / Swagger 导入方式。";
+    public const string DefaultStatus = "可导入 OpenAPI、Swagger、Postman 文档或 `.apixpkg.json` 项目数据包。";
+    public const string EmptyStateStatus = "当前项目还没有导入 API 文档，可先从文件或 URL 开始导入。";
+    public const string EmptyRefreshStatus = "已刷新导入数据，当前项目还没有 API 文档。";
+    public const string OpenDialogStatus = "请选择 OpenAPI、Swagger 或 Postman 导入方式。";
     public const string CloseDialogStatus = "已返回导入数据页面。";
     public const string PickFileCancelledStatus = "未选择文件，当前保持原有导入配置。";
     public const string PickPackageCancelledStatus = "未选择项目数据包文件。";
     public const string ExportCancelledStatus = "已取消导出项目数据。";
-    public const string MissingFileStatus = "请先选择要导入的 Swagger/OpenAPI JSON 文件。";
-    public const string MissingFileShellStatus = "请先选择要导入的 Swagger 文件。";
+    public const string MissingFileStatus = "请先选择要导入的 OpenAPI、Swagger 或 Postman JSON 文件。";
+    public const string MissingFileShellStatus = "请先选择要导入的 API 文档文件。";
     public const string MissingUrlStatus = "请输入 Swagger/OpenAPI 文档 URL。";
     public const string MissingUrlShellStatus = "请输入 Swagger 文档 URL。";
     public const string PreviewFailureFallback = "Swagger 导入预检查失败，请检查文档格式后重试。";
@@ -112,12 +114,14 @@ internal static class ImportTexts
     public const string OverwriteDetailPrefix = "同路径接口会更新为最新定义，当前已保存的用例不会因本次导入被自动删除。";
     public const string SourceTypeUrl = "URL 导入";
     public const string SourceTypeFile = "文件上传";
+    public const string SourceTypePostman = "Postman 导入";
     public const string SourceTypeProjectPackage = "项目数据包";
     public const string BaseUrlFallback = "未解析出 BaseUrl";
-    public const string UnselectedFileName = "尚未选择 Swagger 文件";
-    public const string UnselectedFileSummary = "请选择本地 Swagger/OpenAPI JSON 文件后再执行导入。";
-    public const string PreviewLocalBusyText = "正在校验本地 Swagger 文件...";
-    public const string ImportLocalBusyText = "正在导入本地 Swagger 文件...";
+    public const string BaseUrlSyncedSuffix = "；已将文档 BaseUrl 同步到当前环境";
+    public const string UnselectedFileName = "尚未选择 API 文档文件";
+    public const string UnselectedFileSummary = "请选择本地 OpenAPI、Swagger 或 Postman JSON 文件后再执行导入。";
+    public const string PreviewLocalBusyText = "正在识别并校验本地 API 文档...";
+    public const string ImportLocalBusyText = "正在导入本地 API 文档...";
     public const string PreviewUrlBusyText = "正在获取并校验 Swagger URL...";
     public const string ImportUrlBusyText = "正在导入 Swagger URL...";
     public const string PreviewPackageBusyText = "正在校验项目数据包...";
@@ -125,12 +129,12 @@ internal static class ImportTexts
 
     public static string FormatSelectedFileStatus(string fileName)
     {
-        return $"已选择 Swagger 文件：{fileName}";
+        return $"已选择 API 文档文件：{fileName}";
     }
 
     public static string FormatFileImportSuccess(string documentName)
     {
-        return $"Swagger 文件导入成功：{documentName}";
+        return $"API 文档文件导入成功：{documentName}";
     }
 
     public static string FormatUrlImportSuccess(string documentName)

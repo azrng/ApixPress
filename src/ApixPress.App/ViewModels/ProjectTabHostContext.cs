@@ -1,13 +1,14 @@
+using ApixPress.App.Services.Interfaces;
+using CommunityToolkit.Mvvm.Messaging;
+
 namespace ApixPress.App.ViewModels;
 
 internal sealed class ProjectTabHostContext
 {
     public required Func<RequestWorkspaceTabViewModel?> GetActiveWorkspaceTab { get; init; }
-    public required Action<string> SetStatusMessage { get; init; }
-    public required Action NotifyShellState { get; init; }
-    public required Action NotifyWorkspaceEditorState { get; init; }
-    public required Action NotifyWorkspaceBindingsChanged { get; init; }
-    public required Action NotifyActiveWorkspaceTabChanged { get; init; }
-    public required Action NotifyWorkspaceTabMenuChanged { get; init; }
-    public required Action<bool> SetBusyState { get; init; }
+    public required Func<bool> IsInterfaceRootWorkspaceActive { get; init; }
+    public required IMessenger Messenger { get; init; }
+
+    /// <summary>弹层入口：项目内保存/生成代码/导入/目录弹窗经此打开。</summary>
+    public required IDialogService DialogService { get; init; }
 }

@@ -1,0 +1,87 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:iri="https://irihi.tech/shared"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.HttpRequestUrlRowView"
+             x:DataType="vm:ProjectTabViewModel"
+             mc:Ignorable="d">
+  <!-- 请求动作行：方法 + BaseUrl + 路径 + 发送/发送中 + 取消 + 保存/保存用例（用户决策：caret 下拉交互繁琐，平铺两按钮） -->
+  <Grid Classes="HttpRequestUrlRow"
+        ColumnDefinitions="*,Auto,Auto,Auto"
+        ColumnSpacing="{StaticResource Space.2}">
+    <Border Grid.Column="0"
+            Classes="HttpRequestUrlShell">
+      <Grid ColumnDefinitions="Auto,Auto,*"
+            ColumnSpacing="{StaticResource Space.1}">
+        <ComboBox Grid.Column="0"
+                  Classes="HttpMethodSelector"
+                  iri:ClassHelper.Classes="{Binding Editor.MethodColorClass}"
+                  ItemsSource="{Binding Editor.HttpMethods}"
+                  SelectedItem="{Binding Editor.SelectedMethod}" />
+        <Border Grid.Column="1"
+                Classes="BaseUrlPrefixCard HttpBaseUrlPrefixCard">
+          <TextBlock Classes="HttpBaseUrlPrefixText"
+                     Text="{Binding Editor.CurrentEditorBaseUrlCaption}"
+                     VerticalAlignment="Center"
+                     TextTrimming="CharacterEllipsis" />
+        </Border>
+        <TextBox Grid.Column="2"
+                 Classes="HttpRequestPathInput"
+                 PlaceholderText="{Binding Editor.CurrentEditorUrlWatermark}"
+                 Text="{Binding Editor.RequestUrl}" />
+      </Grid>
+    </Border>
+
+    <!-- 发送：发送中切换为 spinner + 文案并禁用（对齐原型 btn-primary.loading） -->
+    <Button Grid.Column="1"
+            Classes="HttpSendButton"
+            MinWidth="96"
+            Command="{Binding SendRequestCommand}"
+            IsEnabled="{Binding !ResponseSection.IsLoading}">
+      <StackPanel Orientation="Horizontal"
+                  Spacing="7">
+        <Path Classes="HttpSpinner"
+              Width="14"
+              Height="14"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              IsVisible="{Binding ResponseSection.IsLoading}" />
+        <TextBlock VerticalAlignment="Center"
+                   IsVisible="{Binding ResponseSection.IsLoading}"
+                   Text="发送中…" />
+        <TextBlock VerticalAlignment="Center"
+                   IsVisible="{Binding !ResponseSection.IsLoading}"
+                   Text="发送" />
+      </StackPanel>
+    </Button>
+
+    <!-- 发送中的取消入口（对齐原型 URL 行取消按钮） -->
+    <Button Grid.Column="2"
+            Classes="HttpCancelButton"
+            MinWidth="70"
+            IsVisible="{Binding ResponseSection.IsLoading}"
+            Command="{Binding CancelRequestCommand}"
+            Content="取消" />
+
+    <!-- 保存动作组：主操作保存接口，旁边直接放保存用例（HTTP 接口编辑器才显示） -->
+    <StackPanel Grid.Column="3"
+                Orientation="Horizontal"
+                Spacing="{StaticResource Space.1}"
+                VerticalAlignment="Center"
+                IsVisible="{Binding !ResponseSection.IsLoading}">
+      <Button Classes="HttpSaveButton"
+              Content="保存"
+              Command="{Binding SaveCaseCommand}" />
+      <Button Classes="HttpSaveButton"
+              Content="保存用例"
+              Command="{Binding SaveHttpCaseCommand}"
+              IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
+      <Button Classes="HttpSaveButton"
+              Content="保存为接口"
+              Command="{Binding Workflow.SaveQuickRequestAsInterfaceCommand}"
+              IsVisible="{Binding Editor.IsQuickRequestEditor}" />
+    </StackPanel>
+  </Grid>
+</UserControl>

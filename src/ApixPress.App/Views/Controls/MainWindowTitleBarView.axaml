@@ -4,13 +4,14 @@
              xmlns:iri="https://irihi.tech/shared"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
+             xmlns:views="using:ApixPress.App.Views.Controls"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.MainWindowTitleBarView"
              x:DataType="vm:MainWindowViewModel"
              mc:Ignorable="d">    <Border Grid.Row="0"
             Classes="TopBarCard AppTopBar"
             PointerPressed="OnTitleBarPointerPressed">
-      <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto"
+      <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto"
             ColumnSpacing="{StaticResource Space.2}">
         <StackPanel Grid.Column="0"
                     Orientation="Horizontal"
@@ -41,10 +42,7 @@
                 <StackPanel Orientation="Horizontal"
                             Spacing="{StaticResource Space.1}">
                   <TextBlock Text="首页" />
-                  <Border Classes="WorkspaceTabBadge">
-                    <TextBlock Classes="CaptionText"
-                               Text="{Binding ProjectPanel.Projects.Count}" />
-                  </Border>
+                  <u:Badge Header="{Binding ProjectPanel.Projects.Count}" />
                 </StackPanel>
               </ToggleButton>
 
@@ -87,7 +85,22 @@
           </ScrollViewer>
         </Border>
 
-        <StackPanel Grid.Column="3"
+        <!-- 对齐原型：标题栏「＋ 新建标签」按钮 -->
+        <Button Grid.Column="2"
+                Classes="TitleBarPlusButton"
+                Command="{Binding OpenNewTabCommand}"
+                ToolTip.Tip="新建标签"
+                Content="&#xFF0B;" />
+
+        <!-- 对齐原型：工作区请求标签与环境选择器并入标题栏，替代独立工具栏行 -->
+        <Border Grid.Column="3"
+                MinWidth="0"
+                ClipToBounds="True"
+                IsVisible="{Binding HasActiveProjectTab}">
+          <views:ProjectWorkspaceToolbarView DataContext="{Binding ActiveProjectTab}" />
+        </Border>
+
+        <StackPanel Grid.Column="4"
                     Orientation="Horizontal"
                     Spacing="{StaticResource Space.1}"
                     VerticalAlignment="Center">
@@ -119,7 +132,7 @@
           </Button>
         </StackPanel>
 
-        <StackPanel Grid.Column="4"
+        <StackPanel Grid.Column="5"
                     Orientation="Horizontal"
                     Spacing="0"
                     VerticalAlignment="Center">

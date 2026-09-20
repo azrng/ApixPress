@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ApixPress 原型 · 09 导入与导出数据</title>
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+
+<!-- ═══════════════ 项目设置：导入与导出（可交互） ═══════════════ -->
+<div class="window">
+  <div class="titlebar">
+    <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
+    <div class="tb-tab" data-tab-scope="directory" data-href="01-home.html">首页 <span class="n">3</span></div>
+    <div class="tb-tab active" data-tab-scope="directory" data-href="02-debug-params.html">example <span class="default-badge" style="padding:1px 7px;">默认</span><span class="close">✕</span></div>
+    <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
+    <div class="tb-spacer"></div>
+    <div class="env-switch">
+      <div class="env-chip"><span class="env-dot"></span><span class="env-chip-name">开发</span><span class="caret">▼</span></div>
+      <div class="env-menu">
+        <div class="env-item active" data-name="开发"><span class="check">✓</span><span class="t">开发</span><span class="chip">激活</span></div>
+        <div class="env-item" data-name="测试"><span class="check">✓</span><span class="t">测试</span><span class="chip">激活</span></div>
+        <div class="env-item" data-name="生产"><span class="check">✓</span><span class="t">生产</span><span class="chip">激活</span></div>
+        <div class="env-menu-foot" data-href="07-environments.html">管理环境…</div>
+      </div>
+    </div>
+    <button class="tb-icon" data-toast="应用级设置见 10 弹窗合集（演示）"><i class="ri-settings-line"></i></button>
+  </div>
+
+  <div class="shell">
+    <div class="rail">
+      <button class="nav-item" data-href="02-debug-params.html">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <span class="t">接口管理</span>
+      </button>
+      <button class="nav-item" data-href="05-history.html">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+        <span class="t">请求历史</span>
+      </button>
+      <button class="nav-item selected">
+        <span class="icon-box"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></svg></span>
+        <span class="t">项目设置</span>
+      </button>
+    </div>
+
+    <div class="settings-layout">
+      <div class="settings-nav">
+        <div class="side-title" style="margin-bottom:12px;">项目设置</div>
+        <div class="sn-cap">通用</div>
+        <div class="sn-item" data-href="06-project-settings.html">基本设置</div>
+        <div class="sn-cap">数据</div>
+        <div class="sn-item active">导入数据</div>
+        <div class="sn-item" data-toast="导出面板见下方「导出数据」卡片（演示）">导出数据</div>
+        <div style="margin-top:18px; padding:12px; background:var(--bg-subtle); border-radius:var(--r-md); font-size:12px; color:var(--text-secondary); line-height:1.8;">
+          <b style="color:var(--text-primary);">example（默认）</b><br>
+          当前环境：开发<br>
+          已导入：1 份文档
+        </div>
+      </div>
+
+      <div class="page" style="padding:0;">
+        <!-- 导入卡片 -->
+        <div class="card" style="padding:16px 18px;">
+          <div class="section-title">导入数据</div>
+          <div class="section-hint" style="margin:4px 0 10px;">支持 OpenAPI 3.0 / Swagger 2.0 文档；导入后可在接口树中查看，同名接口会先进行覆盖确认。</div>
+
+          <div class="sub-tabs" data-tabs="src" style="padding:0; margin-bottom:12px;">
+            <span class="sub-tab active" data-v="url">URL 导入</span>
+            <span class="sub-tab" data-v="file">本地文件导入</span>
+          </div>
+
+          <!-- URL 模式 -->
+          <div data-tabs-panel="src" data-v="url" class="on">
+            <div class="form-row">
+              <span class="form-label">文档 URL</span>
+              <div style="display:flex; gap:8px;">
+                <input class="form-input" style="flex:1;" placeholder="https://example.com/swagger/v1/swagger.json" value="http://localhost:5050/swagger/v1/swagger.json">
+                <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-open="#overwriteModal">拉取并导入</button>
+              </div>
+              <span class="form-hint">从运行中的服务直接拉取 Swagger / OpenAPI 文档，适合联调阶段快速同步接口。</span>
+            </div>
+          </div>
+
+          <!-- 文件模式 -->
+          <div data-tabs-panel="src" data-v="file">
+            <div class="form-row">
+              <span class="form-label">本地文件</span>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button class="btn btn-ghost" data-toast="已选择 swagger.json（24.6 KB）（演示）">选择文件</button>
+                <span style="font-size:12px; color:var(--text-secondary); font-family:var(--mono);">swagger.json · 24.6 KB</span>
+              </div>
+              <span class="form-hint">支持 .json / .yaml / .yml 格式的 OpenAPI 或 Swagger 文档。</span>
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+              <button class="btn btn-primary" data-open="#overwriteModal">开始导入</button>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:8px; align-items:center; margin-top:10px;">
+            <span class="chip">OpenAPI 3.0</span>
+            <span class="chip" style="color:var(--text-secondary);background:var(--bg-subtle);border-color:var(--border-default);">Swagger 2.0</span>
+            <span style="flex:1;"></span>
+            <button class="btn btn-ghost" style="height:28px;min-width:auto;padding:0 12px;font-size:12px;" data-toast="已取消导入（演示）">取消导入</button>
+          </div>
+        </div>
+
+        <!-- 导出卡片 -->
+        <div class="card" style="padding:16px 18px;">
+          <div class="section-title">导出数据</div>
+          <div class="section-hint" style="margin:4px 0 10px;">支持导出 ApixPress 备份用于迁移备份，或导出 HTML / Markdown 接口文档用于分享与归档。</div>
+
+          <!-- 导出格式切换 -->
+          <div class="body-modes" data-tabs="fmt" style="padding:0 0 12px;">
+            <button class="body-mode on" data-v="backup">ApixPress 备份</button>
+            <button class="body-mode" data-v="html">HTML</button>
+            <button class="body-mode" data-v="md">Markdown</button>
+          </div>
+
+          <!-- 备份格式 -->
+          <div data-tabs-panel="fmt" data-v="backup" class="on">
+            <div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:12px;">
+              <span class="th-check"><span class="checkbox on"></span>接口与目录</span>
+              <span class="th-check"><span class="checkbox on"></span>测试用例</span>
+              <span class="th-check"><span class="checkbox on"></span>环境变量</span>
+              <span class="th-check"><span class="checkbox"></span>请求历史</span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span style="flex:1; font-size:12px; color:var(--text-tertiary);">导出位置：上次保存目录（导出时再次确认）</span>
+              <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-toast="已导出 ApixPress 备份文件（演示）">导出项目数据</button>
+            </div>
+          </div>
+
+          <!-- HTML 格式 -->
+          <div data-tabs-panel="fmt" data-v="html">
+            <div class="form-row">
+              <span class="form-label">导出内容</span>
+              <span class="form-hint" style="font-size:12px;">将接口目录与接口文档导出为单个静态 HTML 页面，适合浏览器浏览与分享。</span>
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+              <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-toast="已导出 HTML 文档（演示）">导出 HTML</button>
+            </div>
+          </div>
+
+          <!-- Markdown 格式 -->
+          <div data-tabs-panel="fmt" data-v="md">
+            <div class="form-row">
+              <span class="form-label">导出内容</span>
+              <span class="form-hint" style="font-size:12px;">将接口目录与接口文档导出为 Markdown 文件（每个目录一个 .md），适合放入 Git 仓库随代码维护。</span>
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+              <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-toast="已导出 Markdown 文档（演示）">导出 Markdown</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 最近导入记录 -->
+        <div class="card" style="padding:16px 18px;">
+          <div class="section-title">最近导入</div>
+          <div class="kv-grid" style="margin:10px 0 0;">
+            <div class="kv"><span class="k">09-10 14:22</span><span class="v">swagger.json · OpenAPI 3.0 · 新增 24 个接口，覆盖 2 个同名接口</span></div>
+            <div class="kv"><span class="k">09-02 09:41</span><span class="v">petstore-expanded.json · Swagger 2.0 · 新增 13 个接口</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 覆盖确认弹窗（点击导入后出现，可关闭） -->
+  <div class="modal-wrap" id="overwriteModal">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="modal-title">检测到同名接口</span>
+        <button class="drawer-close" data-close>✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size:13px; color:var(--text-secondary); line-height:1.6;">
+          导入文档 <span style="font-family:var(--mono); color:var(--text-primary);">swagger.json</span> 中有
+          <span style="color:var(--warn); font-weight:700;">2</span> 个接口与当前项目同名：
+        </div>
+        <div class="kv-grid" style="margin:0;">
+          <div class="kv"><span class="k"><span class="badge get">GET</span></span><span class="v">/api/User/{id} · 获取用户详情</span></div>
+          <div class="kv"><span class="k"><span class="badge post">POST</span></span><span class="v">/api/User · 创建用户</span></div>
+        </div>
+        <div class="import-resolution" data-choice-group="import-resolution">
+          <div class="import-choice selected" data-import-choice="overwrite" tabindex="0">
+            <span class="radio on"></span>
+            <span class="import-choice-copy">
+              <b>覆盖现有接口</b>
+              <small>参数与说明以导入文档为准</small>
+            </span>
+          </div>
+          <div class="import-choice" data-import-choice="skip" tabindex="0">
+            <span class="radio"></span>
+            <span class="import-choice-copy">
+              <b>跳过同名接口</b>
+              <small>仅导入新接口，不改动现有接口</small>
+            </span>
+          </div>
+        </div>
+        <div class="notice warning" id="overwriteWarning" style="margin-top:0;">
+          <span class="n-title">覆盖后无法自动恢复</span>
+          <span class="n-text">被覆盖接口的本地修改（参数说明、用例关联）将丢失，建议先导出备份。</span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" data-close-toast="已取消导入（演示）">取消导入</button>
+        <button class="btn btn-primary" id="importConfirmBtn" data-close-toast="导入完成：新增 24 个接口，覆盖 2 个同名接口（演示）">覆盖并继续导入</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  var importChoices = document.querySelectorAll("[data-import-choice]");
+  var importConfirmBtn = document.getElementById("importConfirmBtn");
+  var overwriteWarning = document.getElementById("overwriteWarning");
+
+  function setImportResolution(choice) {
+    importChoices.forEach(function (item) {
+      var selected = item.getAttribute("data-import-choice") === choice;
+      item.classList.toggle("selected", selected);
+      item.querySelector(".radio").classList.toggle("on", selected);
+    });
+    var isOverwrite = choice === "overwrite";
+    importConfirmBtn.textContent = isOverwrite ? "覆盖并继续导入" : "跳过冲突并导入";
+    importConfirmBtn.setAttribute(
+      "data-close-toast",
+      isOverwrite
+        ? "导入完成：新增 24 个接口，覆盖 2 个同名接口（演示）"
+        : "导入完成：新增 22 个接口，跳过 2 个同名接口（演示）"
+    );
+    overwriteWarning.style.display = isOverwrite ? "flex" : "none";
+  }
+
+  importChoices.forEach(function (item) {
+    item.addEventListener("click", function () {
+      setImportResolution(item.getAttribute("data-import-choice"));
+    });
+    item.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        setImportResolution(item.getAttribute("data-import-choice"));
+      }
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>ApixPress</AssemblyName>
+    <Product>ApixPress</Product>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- 自包含为默认形态；framework-dependent 发布由脚本以 SelfContained=false 属性覆盖 -->
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishSingleFile>true</PublishSingleFile>
+    <!-- R2R 关闭（体积优先）：zip 分发体积 65.4MB→47.3MB（-28%），代价是 JIT 冷启动约 1.5s→2.6s；
+         产物经 GitHub Release zip 分发，下载体积是首要指标 -->
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <PublishTrimmed>false</PublishTrimmed>
+    <PublishAot>false</PublishAot>
+    <!-- 单文件压缩仅在自包含下合法（NETSDK1176 约束的是压缩，不含原生库捆绑），framework-dependent 时自动关闭；
+         原生库捆绑对自包含 / framework-dependent 都合法且必须开启，否则 Skia/HarfBuzz/SQLite 等
+         原生库会散落在 exe 旁而不是打进单文件（framework 版曾因此不是单文件） -->
+    <EnableCompressionInSingleFile Condition="'$(SelfContained)' == 'true'">true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.2" />
+    <!-- 本产品仅发布 win-x64：不引用 Avalonia.Desktop（会连带 X11 / macOS / FreeDesktop 后端
+         约 4-5MB 进产物），显式引用 Win32 窗口平台 + Skia 渲染层 + HarfBuzz 文本整形 -->
+    <PackageReference Include="Avalonia.Win32" Version="12.1.2" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.2" />
+    <PackageReference Include="Avalonia.HarfBuzz" Version="12.1.2" />
+    <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Azrng.Core.Json" Version="1.3.1" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Dapper" Version="2.1.79" />
+    <PackageReference Include="Irihi.Ursa" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+    <PackageReference Include="Semi.Avalonia" Version="12.1.0.1" />
+    <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.2.0" />
+  </ItemGroup>
+
+  <!-- 仅 NativeAOT 发布生效：保留依赖注入所需的类型成员，并允许 JSON 反射序列化兜底 -->
+  <ItemGroup Condition="'$(PublishAot)' == 'true'">
+    <TrimmerRootDescriptor Include="IlcRoots.xml" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(PublishAot)' == 'true'">
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ApixPress.Core\ApixPress.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="appsettings.json" />
+    <EmbeddedResource Include="Data\Migrations\*.sql" />
+    <EmbeddedResource Include="Assets\Highlighting\Json.xshd" />
+    <AvaloniaResource Include="Assets\AppIcon.ico" />
+    <AvaloniaResource Include="Assets\AppLogo.png" />
+  </ItemGroup>
+
+  <!-- 发布瘦身：剔除纯诊断用途的原生文件（原生库 pdb、托管 pdb 读取器 DiaSymReader）。
+       两个挂钩各管一条发布链路，缺一不可：
+       - ComputeResolvedFilesToPublishList：文件夹发布/单文件发布共用的清单构建点，直接 Remove；
+         _ComputeFilesToBundle 在非单文件发布时不存在，只挂它会让 pdb 全数留下
+       - _ComputeFilesToBundle 之前 Update 打 ExcludeFromSingleFile 再 Remove：单文件 bundle 的
+         收集发生在该 target，直接 Remove 会被 SDK 重新收集（实测无效） -->
+  <Target Name="RemoveNativeDebugSymbolsFromPublish"
+          AfterTargets="ComputeResolvedFilesToPublishList"
+          Condition="'$(Configuration)' == 'Release'">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+                             Condition="'%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'libSkiaSharp.pdb'
+                                    Or '%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'libHarfBuzzSharp.pdb'
+                                    Or '%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'Microsoft.DiaSymReader.Native.amd64.dll'" />
+    </ItemGroup>
+  </Target>
+  <Target Name="ExcludeNativeDebugSymbolsFromSingleFile"
+          BeforeTargets="_ComputeFilesToBundle"
+          Condition="'$(Configuration)' == 'Release' and '$(PublishSingleFile)' == 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish Update="@(ResolvedFileToPublish)"
+                             Condition="'%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'libSkiaSharp.pdb'
+                                    Or '%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'libHarfBuzzSharp.pdb'
+                                    Or '%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension)' == 'Microsoft.DiaSymReader.Native.amd64.dll'">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)"
+                             Condition="'%(ResolvedFileToPublish.ExcludeFromSingleFile)' == 'true'" />
+    </ItemGroup>
+  </Target>
+
+</Project>

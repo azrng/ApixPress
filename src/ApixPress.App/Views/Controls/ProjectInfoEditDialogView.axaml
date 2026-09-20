@@ -1,0 +1,52 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.ProjectInfoEditDialogView"
+             x:DataType="vm:ProjectInfoEditDialogViewModel"
+             mc:Ignorable="d">
+  <!-- 对齐原型 06 editProjectModal：460 弹窗，名称/简介二选一编辑，表单直铺 + 分隔底栏 -->
+  <Border Classes="ProjectInfoEditDialogCard">
+    <StackPanel>
+      <TextBlock Classes="SectionTitle"
+                 Text="{Binding Title}" />
+
+      <StackPanel Classes="DialogFormStack"
+                  Margin="{StaticResource Pad.Top3}">
+        <StackPanel Classes="DialogFormField">
+          <TextBlock Classes="DialogFormLabel"
+                     Text="{Binding FieldLabel}" />
+          <TextBox IsVisible="{Binding IsNameMode}"
+                   MaxLength="{Binding MaxLength}"
+                   Text="{Binding Value}" />
+          <TextBox IsVisible="{Binding !IsNameMode}"
+                   MaxLength="{Binding MaxLength}"
+                   AcceptsReturn="True"
+                   TextWrapping="Wrap"
+                   MinHeight="96"
+                   VerticalContentAlignment="Top"
+                   Text="{Binding Value}" />
+        </StackPanel>
+
+        <TextBlock Classes="DialogFormHint"
+                   IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                   Text="{Binding ErrorMessage}" />
+      </StackPanel>
+
+      <Border Classes="DialogFooter"
+              Margin="{StaticResource Pad.Top3}">
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="{StaticResource Space.2}">
+          <Button Classes="DialogSecondaryButton"
+                  Content="取消"
+                  Command="{Binding CancelCommand}" />
+          <Button Classes="DialogPrimaryButton"
+                  Content="保存"
+                  Command="{Binding SaveCommand}" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </Border>
+</UserControl>

@@ -7,6 +7,9 @@ namespace ApixPress.App.ViewModels;
 
 public partial class RequestHistoryItemViewModel : ViewModelBase
 {
+    // 大请求体快照全文进 TextBox 会拖慢排版：预览截断，与响应侧展示策略保持一致
+    private const int MaxRequestBodyPreviewCharacters = 100 * 1024;
+
     public required string Id { get; init; }
     public required string Method { get; init; }
     public required string Url { get; init; }
@@ -24,7 +27,7 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
     [ObservableProperty]
     private string sizeText = string.Empty;
 
-    public required RequestSnapshotDto RequestSnapshot { get; init; }
+    public RequestSnapshotDto RequestSnapshot { get; set; } = new();
 
     [ObservableProperty]
     private ResponseSnapshotDto? responseSnapshot;
@@ -33,9 +36,9 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
 
     public string MethodBadgeClass => Method switch
     {
-        "GET" => "Light Tertiary",
-        "POST" => "Light Primary",
-        "PUT" => "Light Warning",
+        "GET" => "Light Success",
+        "POST" => "Light Warning",
+        "PUT" => "Light Primary",
         "DELETE" => "Light Danger",
         "PATCH" => "Light Success",
         _ => "Light Secondary"
@@ -53,6 +56,26 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
 
     public string TimestampText => Timestamp.ToLocalTime().ToString("MM-dd HH:mm");
 
+    public bool HasQueryParameters => RequestSnapshot.QueryParameters.Count > 0;
+    public bool HasPathParameters => RequestSnapshot.PathParameters.Count > 0;
+    public bool HasRequestParameters => HasQueryParameters || HasPathParameters;
+    public bool HasRequestHeaders => RequestSnapshot.Headers.Count > 0;
+    public bool HasRequestBody => !string.IsNullOrWhiteSpace(RequestSnapshot.BodyContent);
+
+    public string RequestBodyDisplayText
+    {
+        get
+        {
+            var body = RequestSnapshot.BodyContent;
+            if (string.IsNullOrEmpty(body) || body.Length <= MaxRequestBodyPreviewCharacters)
+            {
+                return body;
+            }
+
+            return $"{body[..MaxRequestBodyPreviewCharacters]}\n……（快照过长，仅展示前 {MaxRequestBodyPreviewCharacters} 字符）";
+        }
+    }
+
     partial void OnHasResponseChanged(bool value)
     {
         OnPropertyChanged(nameof(StatusBadgeClass));
@@ -65,7 +88,15 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
 
     public void ApplyDetail(RequestHistoryItemDto detail)
     {
+        RequestSnapshot = detail.RequestSnapshot;
         ResponseSnapshot = detail.ResponseSnapshot;
         HasLoadedDetail = true;
+        OnPropertyChanged(nameof(RequestSnapshot));
+        OnPropertyChanged(nameof(HasQueryParameters));
+        OnPropertyChanged(nameof(HasPathParameters));
+        OnPropertyChanged(nameof(HasRequestParameters));
+        OnPropertyChanged(nameof(HasRequestHeaders));
+        OnPropertyChanged(nameof(HasRequestBody));
+        OnPropertyChanged(nameof(RequestBodyDisplayText));
     }
 }

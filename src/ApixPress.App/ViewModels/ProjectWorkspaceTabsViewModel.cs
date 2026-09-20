@@ -1,11 +1,14 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using ApixPress.App.Helpers;
+using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
+using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
 
 namespace ApixPress.App.ViewModels;
@@ -13,8 +16,9 @@ namespace ApixPress.App.ViewModels;
 public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 {
     private readonly Action _selectInterfaceManagementSection;
-    private readonly Action<string> _setStatusMessage;
-    private readonly ObservableCollection<RequestWorkspaceTabViewModel> _visibleWorkspaceTabs = [];
+    private readonly IMessenger _messenger;
+    private readonly IFilePickerService? _filePickerService;
+    private readonly BatchObservableCollection<RequestWorkspaceTabViewModel> _visibleWorkspaceTabs = [];
     private readonly Dictionary<RequestConfigTabViewModel, RequestWorkspaceTabViewModel> _tabByConfig = [];
     private readonly Dictionary<INotifyCollectionChanged, RequestWorkspaceTabViewModel> _tabByConfigCollection = [];
     private int _notificationSuspendCount;
@@ -24,10 +28,12 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
     public ProjectWorkspaceTabsViewModel(
         Action selectInterfaceManagementSection,
-        Action<string> setStatusMessage)
+        IMessenger messenger,
+        IFilePickerService? filePickerService = null)
     {
         _selectInterfaceManagementSection = selectInterfaceManagementSection;
-        _setStatusMessage = setStatusMessage;
+        _messenger = messenger;
+        _filePickerService = filePickerService;
 
         VisibleWorkspaceTabs = new ReadOnlyObservableCollection<RequestWorkspaceTabViewModel>(_visibleWorkspaceTabs);
         WorkspaceTabs.CollectionChanged += OnWorkspaceTabsCollectionChanged;
@@ -45,6 +51,12 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool isWorkspaceTabMenuOpen;
+
+    public void DeactivateWorkspaceTab()
+    {
+        ActiveWorkspaceTab = null;
+        RequestNotifications(stateChanged: true, editorStateChanged: true);
+    }
 
     public RequestWorkspaceTabViewModel ReuseActiveLandingOrCreateWorkspace()
     {
@@ -74,7 +86,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
     public RequestWorkspaceTabViewModel CreateWorkspaceTab(bool activate, bool showInTabStrip = true)
     {
-        var tab = new RequestWorkspaceTabViewModel();
+        var tab = new RequestWorkspaceTabViewModel(_filePickerService);
         tab.ConfigureAsLanding();
         tab.ShowInTabStrip = showInTabStrip;
         AttachWorkspaceTab(tab);
@@ -102,6 +114,26 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         {
             ActivateWorkspaceTab(WorkspaceTabs[0]);
         }
+    }
+
+    public RequestWorkspaceTabViewModel EnsureInterfaceRootWorkspaceTab()
+    {
+        _selectInterfaceManagementSection();
+
+        var tab = FindInterfaceRootWorkspaceTab();
+        if (tab is null)
+        {
+            tab = ActiveWorkspaceTab?.IsLandingTab == true && !ActiveWorkspaceTab.ShowInTabStrip
+                ? ActiveWorkspaceTab
+                : CreateWorkspaceTab(activate: false);
+        }
+
+        tab.ConfigureAsInterfaceRoot();
+        tab.ShowInTabStrip = true;
+        IsWorkspaceTabMenuOpen = false;
+        ActivateWorkspaceTab(tab);
+        RequestNotifications(syncVisibleWorkspaceTabs: true, stateChanged: true, editorStateChanged: true);
+        return tab;
     }
 
     public void ResetToLanding()
@@ -135,7 +167,8 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
     public void ActivateWorkspaceTab(RequestWorkspaceTabViewModel tab)
     {
-        ActiveWorkspaceTab = tab;
+        // 属性赋值会同步触发 ActiveWorkspaceTabChanged 级联（编辑器状态应用、视图切换），是切换卡顿的主要测量点
+        PerfLog.Measure("工作标签·激活切换", () => ActiveWorkspaceTab = tab);
     }
 
     public void RunWithNotificationsSuspended(Action action)
@@ -199,19 +232,20 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         tab.ConfigureAsQuickRequest();
         IsWorkspaceTabMenuOpen = false;
         ActivateWorkspaceTab(tab);
-        _setStatusMessage("快捷请求标签已打开。");
+        _messenger.Send(new StatusMessageRequest("快捷请求标签已打开。"));
         StateChanged?.Invoke();
     }
 
+    /// <summary>打开新建 HTTP 接口标签；传入目录路径时新接口归属该目录，空值落在根目录。</summary>
     [RelayCommand]
-    private void OpenHttpInterfaceWorkspace()
+    private void OpenHttpInterfaceWorkspace(string? folderPath)
     {
         _selectInterfaceManagementSection();
         var tab = ReuseActiveLandingOrCreateWorkspace();
-        tab.ConfigureAsHttpInterface();
+        tab.ConfigureAsHttpInterface(folderPath);
         IsWorkspaceTabMenuOpen = false;
         ActivateWorkspaceTab(tab);
-        _setStatusMessage("HTTP 接口标签已打开。");
+        _messenger.Send(new StatusMessageRequest("HTTP 接口标签已打开。"));
         StateChanged?.Invoke();
     }
 
@@ -224,7 +258,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         landingTab.ShowInTabStrip = true;
         ActivateWorkspaceTab(landingTab);
         IsWorkspaceTabMenuOpen = false;
-        _setStatusMessage("已返回新建页。");
+        _messenger.Send(new StatusMessageRequest("已返回新建页。"));
         StateChanged?.Invoke();
     }
 
@@ -235,7 +269,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         var tab = CreateWorkspaceTab(activate: true, showInTabStrip: true);
         tab.ConfigureAsLanding();
         IsWorkspaceTabMenuOpen = false;
-        _setStatusMessage("已新建一个工作标签。");
+        _messenger.Send(new StatusMessageRequest("已新建一个工作标签。"));
         StateChanged?.Invoke();
     }
 
@@ -273,7 +307,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             .ToList();
         if (tabsToRemove.Count == 0)
         {
-            _setStatusMessage("当前没有可关闭的非固定标签页。");
+            _messenger.Send(new StatusMessageRequest("当前没有可关闭的非固定标签页。"));
             StateChanged?.Invoke();
             return;
         }
@@ -298,9 +332,9 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             EnsureLandingWorkspaceTab();
         }
 
-        _setStatusMessage(skippedUnsavedCount > 0
+        _messenger.Send(new StatusMessageRequest(skippedUnsavedCount > 0
             ? $"有 {skippedUnsavedCount} 个标签存在未保存修改，再次关闭全部将放弃修改。"
-            : WorkspaceTabs.Any(item => item.IsPinned) ? "已关闭全部非固定标签页。" : "已关闭全部标签页。");
+            : WorkspaceTabs.Any(item => item.IsPinned) ? "已关闭全部非固定标签页。" : "已关闭全部标签页。"));
         StateChanged?.Invoke();
     }
 
@@ -320,7 +354,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         if (respectPin && tab.IsPinned)
         {
             IsWorkspaceTabMenuOpen = false;
-            _setStatusMessage("固定标签页请先取消固定后再关闭。");
+            _messenger.Send(new StatusMessageRequest("固定标签页请先取消固定后再关闭。"));
             StateChanged?.Invoke();
             return false;
         }
@@ -329,33 +363,48 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         {
             tab.IsCloseDiscardPending = true;
             IsWorkspaceTabMenuOpen = false;
-            _setStatusMessage($"标签“{tab.HeaderText}”有未保存修改，再次关闭将放弃修改。");
+            _messenger.Send(new StatusMessageRequest($"标签“{tab.HeaderText}”有未保存修改，再次关闭将放弃修改。"));
             StateChanged?.Invoke();
             return false;
         }
 
         IsWorkspaceTabMenuOpen = false;
         var removedIndex = WorkspaceTabs.IndexOf(tab);
-        DetachWorkspaceTab(tab);
-        WorkspaceTabs.Remove(tab);
-
-        if (WorkspaceTabs.Count == 0)
+        // 挂起通知把 Remove 级联（同步可见列表 + StateChanged）合并为收尾的一次，
+        // 中间的每一步不再触发 TabStrip 全量重建与工作台级联刷新
+        PerfLog.Measure("工作标签·关闭全路径", () =>
         {
-            EnsureLandingWorkspaceTab();
-        }
-        else if (ReferenceEquals(ActiveWorkspaceTab, tab))
-        {
-            var nextIndex = Math.Clamp(removedIndex - 1, 0, WorkspaceTabs.Count - 1);
-            ActivateWorkspaceTab(WorkspaceTabs[nextIndex]);
-        }
+            RunWithNotificationsSuspended(() =>
+            {
+                DetachWorkspaceTab(tab);
+                WorkspaceTabs.Remove(tab);
 
-        _setStatusMessage("工作标签已关闭。");
-        StateChanged?.Invoke();
+                if (WorkspaceTabs.Count == 0)
+                {
+                    EnsureLandingWorkspaceTab();
+                    SyncVisibleWorkspaceTabs();
+                }
+                else
+                {
+                    if (ReferenceEquals(ActiveWorkspaceTab, tab))
+                    {
+                        var nextIndex = Math.Clamp(removedIndex - 1, 0, WorkspaceTabs.Count - 1);
+                        ActivateWorkspaceTab(WorkspaceTabs[nextIndex]);
+                    }
+
+                    SyncVisibleWorkspaceTabs();
+                }
+            });
+
+            _messenger.Send(new StatusMessageRequest("工作标签已关闭。"));
+            StateChanged?.Invoke();
+        });
         return true;
     }
 
     partial void OnActiveWorkspaceTabChanged(RequestWorkspaceTabViewModel? oldValue, RequestWorkspaceTabViewModel? newValue)
     {
+        // 激活级联分段计时：定位切到落地/接口标签的 250ms 级卡顿具体在哪一段
         if (oldValue is not null)
         {
             oldValue.IsActive = false;
@@ -364,14 +413,15 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         if (newValue is not null)
         {
             newValue.IsActive = true;
-            _selectInterfaceManagementSection();
-            _setStatusMessage(newValue.IsLandingTab
-                ? "已切换到新建页。"
-                : $"已切换到标签：{newValue.HeaderText}");
+            PerfLog.Measure("标签激活·段1-选择接口分区", _selectInterfaceManagementSection);
+            PerfLog.Measure("标签激活·段2-状态消息", () =>
+                _messenger.Send(new StatusMessageRequest(newValue.IsLandingTab
+                    ? "已切换到新建页。"
+                    : $"已切换到标签：{newValue.HeaderText}")));
         }
 
-        ActiveWorkspaceTabChanged?.Invoke(oldValue, newValue);
-        RequestNotifications(stateChanged: true, editorStateChanged: true);
+        PerfLog.Measure("标签激活·段3-变更事件", () => ActiveWorkspaceTabChanged?.Invoke(oldValue, newValue));
+        PerfLog.Measure("标签激活·段4-通知广播", () => RequestNotifications(stateChanged: true, editorStateChanged: true));
     }
 
     partial void OnIsWorkspaceTabMenuOpenChanged(bool value)
@@ -444,7 +494,16 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         }
 
         tab.IsCloseDiscardPending = false;
-        tab.NotifyDirtyStateChanged();
+        if (IsUserEditableConfigProperty(e.PropertyName))
+        {
+            tab.MarkDirtyFromUserEdit();
+        }
+        else
+        {
+            // 非编辑性写回（联动赋值、状态复位等）不置脏
+            tab.NotifyDirtyStateChanged();
+        }
+
         RequestNotifications(stateChanged: true, editorStateChanged: true);
     }
 
@@ -458,13 +517,52 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         }
 
         tab.IsCloseDiscardPending = false;
-        tab.NotifyDirtyStateChanged();
+        tab.MarkDirtyFromUserEdit();
         RequestNotifications(stateChanged: true, editorStateChanged: true);
     }
 
+    // 与旧签名覆盖的字段清单保持一致：只有这些属性的变化代表用户编辑
+    private static bool IsUserEditableConfigProperty(string? propertyName) =>
+        propertyName is nameof(RequestConfigTabViewModel.RequestName)
+            or nameof(RequestConfigTabViewModel.RequestDescription)
+            or nameof(RequestConfigTabViewModel.RequestBody)
+            or nameof(RequestConfigTabViewModel.SelectedBodyMode)
+            or nameof(RequestConfigTabViewModel.IgnoreSslErrors);
+
     private void SyncVisibleWorkspaceTabs()
     {
-        _visibleWorkspaceTabs.ReplaceWith(WorkspaceTabs.Where(item => !item.IsLandingTab || item.ShowInTabStrip));
+        // 差量同步：Clear+Add 全量重建会触发 TabStrip Reset 级联（选定值回写 → ActiveWorkspaceTab churn
+        // → 工作台视图整体重建），单次代价 300ms+，直接表现为关闭标签卡顿；逐项 Remove/Insert 只产生增量变更
+        PerfLog.Measure("工作标签·差量同步", () =>
+        {
+            var nextVisible = WorkspaceTabs.Where(item => !item.IsLandingTab || item.ShowInTabStrip).ToList();
+            for (var index = _visibleWorkspaceTabs.Count - 1; index >= 0; index--)
+            {
+                if (!nextVisible.Contains(_visibleWorkspaceTabs[index]))
+                {
+                    _visibleWorkspaceTabs.RemoveAt(index);
+                }
+            }
+
+            foreach (var item in nextVisible)
+            {
+                var currentIndex = _visibleWorkspaceTabs.IndexOf(item);
+                var targetIndex = nextVisible.IndexOf(item);
+                if (currentIndex == targetIndex)
+                {
+                    continue;
+                }
+
+                if (currentIndex < 0)
+                {
+                    _visibleWorkspaceTabs.Insert(Math.Min(targetIndex, _visibleWorkspaceTabs.Count), item);
+                }
+                else
+                {
+                    _visibleWorkspaceTabs.Move(currentIndex, targetIndex);
+                }
+            }
+        });
     }
 
     private void CloseOtherWorkspaceTabs(RequestWorkspaceTabViewModel? keepTab)
@@ -500,11 +598,11 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             EnsureLandingWorkspaceTab();
         }
 
-        _setStatusMessage(tabsToRemove.Count == 0
+        _messenger.Send(new StatusMessageRequest(tabsToRemove.Count == 0
             ? "当前没有其它非固定标签页可关闭。"
             : skippedUnsavedCount > 0
                 ? $"有 {skippedUnsavedCount} 个其它标签存在未保存修改，再次关闭其它将放弃修改。"
-                : "已关闭其它非固定标签页。");
+                : "已关闭其它非固定标签页。"));
         StateChanged?.Invoke();
     }
 
@@ -514,6 +612,11 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             .Where(item => item.IsLandingTab)
             .OrderByDescending(item => item.ShowInTabStrip)
             .FirstOrDefault();
+    }
+
+    private RequestWorkspaceTabViewModel? FindInterfaceRootWorkspaceTab()
+    {
+        return WorkspaceTabs.FirstOrDefault(item => item.IsInterfaceRootTab);
     }
 
     private void AttachWorkspaceTab(RequestWorkspaceTabViewModel tab)

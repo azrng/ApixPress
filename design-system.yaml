@@ -20,8 +20,8 @@ meta:
     dependency_injection: "Microsoft.Extensions.DependencyInjection"
   usage:
     read_order:
-      - "进行任何 UI 改动前先阅读本文件"
-      - "然后阅读 AGENTS.md 中的 Avalonia 视图层规则"
+      - "先阅读 AGENTS.md，按根规则命中 UI 子规则"
+      - "命中 ui-AGENTS.md 后再阅读本文件"
       - "然后查看现有 Views、ViewModels、Styles 与 Controls 实现"
     principles:
       - "优先复用，而不是重新创建"
@@ -48,21 +48,33 @@ product:
 
 design_principles:
   - "Fluent Design 为主，保持简洁、克制、可依赖"
-  - "统一使用浅色主题作为默认主题，深色主题仅在项目明确要求时扩展"
+  - "统一使用深色主题作为默认主题（对标 Apifox 桌面端深色风格），浅色主题仅在项目明确要求时维护"
   - "主流程优先，次级信息弱化，危险操作显著区分"
   - "所有用户可见状态必须可解释：成功、失败、为空、加载中"
 
 tokens:
   colors:
+    dark_neutral:
+      app: "#17171A"
+      surface: "#202024"
+      subtle: "#26262B"
+      elevated: "#2B2B32"
+      selected: "#322D4E"
+      border_default: "#36363D"
+      border_subtle: "#2A2A30"
+      border_strong: "#45454E"
+      text_primary: "#E8E8EC"
+      text_secondary: "#A3A3AD"
+      text_tertiary: "#70707A"
     brand:
       50: "#F4F8FF"
       100: "#E8F0FF"
       200: "#C9DDFF"
-      300: "#A7C7FF"
-      400: "#7AA7F8"
-      500: "#4C84F0"
-      600: "#3568D4"
-      700: "#264FB0"
+      300: "#B7A9FF"
+      400: "#9D8BFF"
+      500: "#7C6CF0"
+      600: "#6A59E0"
+      700: "#5947C7"
       800: "#1A387F"
       900: "#122554"
     neutral:
@@ -133,6 +145,12 @@ tokens:
       error_text: "Brush.Status.Error.Text"
       info_bg: "Brush.Status.Info.Background"
       info_text: "Brush.Status.Info.Text"
+    code:
+      plain: "Brush.Code.Plain"
+      key: "Brush.Code.Key"
+      string: "Brush.Code.String"
+      number: "Brush.Code.Number"
+      punctuation: "Brush.Code.Punctuation"
 
   typography:
     font_family:

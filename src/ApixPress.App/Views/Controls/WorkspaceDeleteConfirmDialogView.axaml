@@ -4,41 +4,43 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ApixPress.App.ViewModels"
              x:Class="ApixPress.App.Views.Controls.WorkspaceDeleteConfirmDialogView"
-             x:DataType="vm:MainWindowViewModel"
+             x:DataType="vm:ProjectWorkspaceCatalogViewModel"
              mc:Ignorable="d">
-  <Border Classes="CreateProjectDialogBackdrop"
-          IsVisible="{Binding ShowWorkspaceDeleteConfirmDialog}">
-    <Grid HorizontalAlignment="Center"
-          VerticalAlignment="Center">
-      <Border Classes="QuickRequestSaveDialogCard">
-        <Grid RowDefinitions="Auto,Auto,Auto"
-              RowSpacing="{StaticResource Space.3}">
-          <StackPanel Spacing="2">
-            <TextBlock Classes="DialogTitle"
-                       Text="确认删除" />
-            <TextBlock Classes="CaptionText"
-                       Text="{Binding ActiveProjectTab.Catalog.PendingDeleteTitle, StringFormat='即将删除：{0}'}"
-                       IsVisible="{Binding ActiveProjectTab.Catalog.HasPendingDeleteTarget}" />
-          </StackPanel>
+  <!-- 弹窗 chrome 由 Ursa StandardDialogControl 提供；DataContext 为目录 VM -->
+  <Border Classes="DialogDangerCard">
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+          RowSpacing="{StaticResource Space.3}">
+      <StackPanel Spacing="2">
+        <TextBlock Classes="DialogTitle DialogDangerText"
+                   Text="该操作无法撤销" />
+        <TextBlock Classes="CaptionText"
+                   Text="{Binding PendingDeleteTitle, StringFormat='即将删除：{0}'}"
+                   IsVisible="{Binding HasPendingDeleteTarget}" />
+      </StackPanel>
 
-          <Border Grid.Row="1"
-                  Classes="CreateProjectFormShell">
-            <TextBlock Text="{Binding ActiveProjectTab.Catalog.PendingDeleteDescription}"
-                       TextWrapping="Wrap" />
-          </Border>
+      <TextBlock Grid.Row="1"
+                 Text="{Binding PendingDeleteDescription}"
+                 TextWrapping="Wrap" />
 
-          <StackPanel Grid.Row="2"
-                      Orientation="Horizontal"
-                      HorizontalAlignment="Right"
-                      Spacing="{StaticResource Space.2}">
-            <Button Classes="DialogSecondaryButton"
-                    Content="取消"
-                    Command="{Binding ActiveProjectTab.Catalog.CancelDeleteCommand}" />
-            <Button Classes="DialogPrimaryButton"
-                    Content="确认删除"
-                    Command="{Binding ActiveProjectTab.Catalog.ConfirmDeleteCommand}" />
-          </StackPanel>
-        </Grid>
+      <Border Grid.Row="2" Classes="DialogDangerNotice">
+        <StackPanel Spacing="2">
+          <TextBlock Classes="DialogDangerText" Text="该操作无法恢复" />
+          <TextBlock Classes="CaptionText" Text="将同时删除其下的测试用例与调试配置。" TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Row="3"
+              Classes="DialogFooter">
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="{StaticResource Space.2}">
+          <Button Classes="DialogSecondaryButton"
+                  Content="取消"
+                  Command="{Binding CancelDeleteCommand}" />
+          <Button Classes="DialogDangerButton"
+                  Content="确认删除"
+                  Command="{Binding ConfirmDeleteCommand}" />
+        </StackPanel>
       </Border>
     </Grid>
   </Border>

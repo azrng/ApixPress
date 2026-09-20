@@ -34,17 +34,18 @@ public partial class MainWindowViewModel
     }
 
     [RelayCommand]
-    private async Task SaveHttpCaseAsync()
+    private Task SaveHttpCaseAsync()
     {
         if (ActiveProjectTab is null)
         {
             StatusMessage = "请先打开一个项目标签页。";
-            return;
+            return Task.CompletedTask;
         }
 
-        await ActiveProjectTab.Workflow.SaveHttpCaseAsync();
+        ActiveProjectTab.OpenHttpCaseSaveDialog();
         StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
+        return Task.CompletedTask;
     }
 
     [RelayCommand]
@@ -92,19 +93,6 @@ public partial class MainWindowViewModel
         }
 
         await ActiveProjectTab.LoadHistoryRequestAsync(item);
-        StatusMessage = ActiveProjectTab.StatusMessage;
-        NotifyShellState();
-    }
-
-    [RelayCommand]
-    private async Task SaveHistoryAsCaseAsync(RequestHistoryItemViewModel? item)
-    {
-        if (ActiveProjectTab is null || item is null)
-        {
-            return;
-        }
-
-        await ActiveProjectTab.Workflow.SaveHistoryAsQuickRequestAsync(item);
         StatusMessage = ActiveProjectTab.StatusMessage;
         NotifyShellState();
     }

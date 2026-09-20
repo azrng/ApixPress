@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using System.Text.Json;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels;
 
@@ -99,6 +100,91 @@ public sealed class RequestConfigTabViewModelTests
     }
 
     [Fact]
+    public void ConfigurationEmptyStates_ShouldTrackParameterCollections()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        Assert.True(viewModel.ShowQueryParametersEmptyState);
+        Assert.True(viewModel.ShowHeadersEmptyState);
+
+        viewModel.AddQueryParameterCommand.Execute(null);
+        viewModel.AddHeaderCommand.Execute(null);
+
+        Assert.True(viewModel.HasQueryParameters);
+        Assert.True(viewModel.HasHeaders);
+        Assert.False(viewModel.ShowQueryParametersEmptyState);
+        Assert.False(viewModel.ShowHeadersEmptyState);
+    }
+
+    [Theory]
+    [InlineData(BodyModes.None, true, "不发送请求体")]
+    [InlineData(BodyModes.FormData, false, "multipart/form-data")]
+    [InlineData(BodyModes.FormUrlEncoded, false, "URL 编码")]
+    [InlineData(BodyModes.RawJson, false, "application/json")]
+    public void BodyModeHint_ShouldDescribeSelectedMode(string mode, bool showEmptyState, string hintFragment)
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = mode
+        };
+
+        Assert.Equal(showEmptyState, viewModel.ShowBodyModeEmptyState);
+        Assert.Contains(hintFragment, viewModel.BodyModeHint);
+    }
+
+    [Fact]
+    public void FormatJsonBodyCommand_ShouldIndentJsonAndPreserveChineseText()
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = BodyModes.RawJson,
+            RequestBody = "{\"name\":\"你好\",\"count\":2}"
+        };
+
+        Assert.True(viewModel.CanFormatJsonBody);
+        viewModel.FormatJsonBodyCommand.Execute(null);
+
+        Assert.Contains(Environment.NewLine, viewModel.RequestBody);
+        Assert.Contains("你好", viewModel.RequestBody);
+        using var document = JsonDocument.Parse(viewModel.RequestBody);
+        Assert.Equal("你好", document.RootElement.GetProperty("name").GetString());
+        Assert.Contains("application/json", viewModel.BodyModeHint);
+    }
+
+    [Fact]
+    public void FormatJsonBodyCommand_ShouldKeepInvalidJsonUnchangedAndShowStatus()
+    {
+        const string invalidJson = "{not-json";
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = BodyModes.RawJson,
+            RequestBody = invalidJson
+        };
+
+        viewModel.FormatJsonBodyCommand.Execute(null);
+
+        Assert.Equal(invalidJson, viewModel.RequestBody);
+        Assert.Contains("格式无效", viewModel.BodyModeHint);
+        Assert.Contains("未修改", viewModel.BodyModeHint);
+    }
+
+    [Fact]
+    public void FormatJsonBodyCommand_ShouldOnlyBeAvailableForNonEmptyJsonBody()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        Assert.False(viewModel.CanFormatJsonBody);
+        viewModel.SelectedBodyMode = BodyModes.RawJson;
+        Assert.False(viewModel.CanFormatJsonBody);
+
+        viewModel.RequestBody = "{}";
+        Assert.True(viewModel.CanFormatJsonBody);
+
+        viewModel.SelectedBodyMode = BodyModes.RawText;
+        Assert.False(viewModel.CanFormatJsonBody);
+    }
+
+    [Fact]
     public void ApplySnapshot_ShouldRestoreParameterEnabledState()
     {
         var viewModel = new RequestConfigTabViewModel();
@@ -172,10 +258,10 @@ public sealed class RequestConfigTabViewModelTests
         var viewModel = new RequestConfigTabViewModel();
 
         viewModel.SelectedTabIndex = 0;
-        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
 
         viewModel.SelectedTabIndex = 2;
-        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
     }
 
     [Fact]
@@ -184,7 +270,7 @@ public sealed class RequestConfigTabViewModelTests
         var viewModel = new RequestConfigTabViewModel();
 
         viewModel.SelectedTabIndex = 1;
-        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
 
         viewModel.SelectedBodyMode = BodyModes.RawJson;
         Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
@@ -194,7 +280,7 @@ public sealed class RequestConfigTabViewModelTests
         Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
 
         viewModel.SelectedTabIndex = 2;
-        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
 
         viewModel.Headers.Add(new RequestParameterItemViewModel());
         Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
@@ -209,7 +295,7 @@ public sealed class RequestConfigTabViewModelTests
             SelectedBodyMode = BodyModes.FormData
         };
 
-        Assert.Equal(180, viewModel.ConfigPanelMaxHeight);
+        Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
 
         viewModel.FormFields.Add(new RequestParameterItemViewModel());
 
@@ -234,6 +320,43 @@ public sealed class RequestConfigTabViewModelTests
     }
 
     [Fact]
+    public void GenerateBodyExample_ShouldRestoreImportedJsonTemplate()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+        viewModel.PopulateFromEndpoint(new ApiEndpointDto
+        {
+            RequestBodyMode = BodyModes.RawJson,
+            RequestBodyTemplate = "{\n  \"name\": \"中文\"\n}"
+        });
+
+        viewModel.RequestBody = "{\"name\":\"用户修改\"}";
+
+        Assert.True(viewModel.CanGenerateBodyExample);
+        viewModel.GenerateBodyExampleCommand.Execute(null);
+
+        Assert.Contains("中文", viewModel.RequestBody);
+        Assert.DoesNotContain("用户修改", viewModel.RequestBody);
+    }
+
+    [Fact]
+    public void GenerateBodyExample_ShouldSupportImportedXmlExample()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+        viewModel.PopulateFromEndpoint(new ApiEndpointDto
+        {
+            RequestBodyMode = BodyModes.RawXml,
+            RequestBodyTemplate = "<order><name>中文</name></order>"
+        });
+
+        viewModel.RequestBody = "<order />";
+
+        Assert.True(viewModel.CanGenerateBodyExample);
+        viewModel.GenerateBodyExampleCommand.Execute(null);
+
+        Assert.Equal("<order><name>中文</name></order>", viewModel.RequestBody);
+    }
+
+    [Fact]
     public void PopulateFromEndpoint_ShouldApplyFormBodyModeAndFields()
     {
         var viewModel = new RequestConfigTabViewModel();
@@ -249,6 +372,242 @@ public sealed class RequestConfigTabViewModelTests
         Assert.Equal(2, viewModel.FormFields.Count);
         Assert.Contains(viewModel.FormFields, item => item.Name == "file" && item.Value == string.Empty);
         Assert.Contains(viewModel.FormFields, item => item.Name == "userId" && item.Value == "u-1");
+    }
+
+    [Theory]
+    [InlineData(BodyModes.RawJson, "{\"model\":\"demo\"}", 0, 0, 1)]
+    [InlineData(BodyModes.FormUrlEncoded, "field=1", 0, 0, 1)]
+    [InlineData(BodyModes.FormUrlEncoded, "", 1, 0, 0)]
+    [InlineData(BodyModes.None, "", 2, 0, 0)]
+    [InlineData(BodyModes.None, "", 0, 2, 2)]
+    [InlineData(BodyModes.None, "", 0, 0, 0)]
+    public void ApplySnapshot_ShouldSelectDefaultTabByContent(
+        string bodyMode,
+        string bodyContent,
+        int queryCount,
+        int headerCount,
+        int expectedTabIndex)
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        viewModel.ApplySnapshot(new RequestSnapshotDto
+        {
+            Method = "POST",
+            Url = "https://api.example.com",
+            BodyMode = bodyMode,
+            BodyContent = bodyContent,
+            QueryParameters = Enumerable.Range(0, queryCount)
+                .Select(i => new RequestKeyValueDto { Name = $"q{i}", Value = $"{i}" })
+                .ToList(),
+            Headers = Enumerable.Range(0, headerCount)
+                .Select(i => new RequestKeyValueDto { Name = $"X-H{i}", Value = $"{i}" })
+                .ToList()
+        });
+
+        Assert.Equal(expectedTabIndex, viewModel.SelectedTabIndex);
+    }
+
+    [Fact]
+    public void Reset_ShouldRestoreDefaultParamsTab()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+        viewModel.ApplySnapshot(new RequestSnapshotDto
+        {
+            Method = "POST",
+            BodyMode = BodyModes.RawText,
+            BodyContent = "hello"
+        });
+        Assert.Equal(1, viewModel.SelectedTabIndex);
+
+        viewModel.Reset();
+
+        Assert.Equal(0, viewModel.SelectedTabIndex);
+    }
+
+    [Fact]
+    public void BodyModes_ShouldIncludeBinaryOption()
+    {
+        // 对齐原型 03：Body 七模式（含 Binary）
+        var viewModel = new RequestConfigTabViewModel();
+
+        Assert.Equal(7, viewModel.BodyModeOptions.Count);
+        Assert.Contains(viewModel.BodyModeOptions, option => option.Mode == BodyModes.Binary);
+    }
+
+    [Fact]
+    public void BuildRequestSnapshot_FormDataWithFiles_ShouldCarryFormFieldsAndJsonBody()
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = BodyModes.FormData
+        };
+        viewModel.FormFields.Add(new RequestParameterItemViewModel
+        {
+            Name = "title",
+            Value = "hello"
+        });
+        var fileField = new RequestParameterItemViewModel
+        {
+            Name = "file",
+            FieldType = FormFieldTypes.File
+        };
+        fileField.Files.Add(new FormFieldFileViewModel { Path = @"C:\temp\a.txt", Name = "a.txt", SizeBytes = 12 });
+        viewModel.FormFields.Add(fileField);
+
+        var snapshot = viewModel.BuildRequestSnapshot("endpoint-1", "POST", "/upload");
+
+        Assert.Equal(2, snapshot.FormFields.Count);
+        Assert.Equal(FormFieldTypes.File, snapshot.FormFields[1].FieldType);
+        Assert.Single(snapshot.FormFields[1].Files);
+        // 含文件字段时 BodyContent 落 JSON，执行层按 FormFields 组装 multipart
+        Assert.StartsWith("[", snapshot.BodyContent);
+    }
+
+    [Fact]
+    public void BuildRequestSnapshot_FormUrlEncoded_ShouldExcludeFileFieldsFromLegacyBody()
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = BodyModes.FormUrlEncoded
+        };
+        viewModel.FormFields.Add(new RequestParameterItemViewModel { Name = "a", Value = "1" });
+        var fileField = new RequestParameterItemViewModel { Name = "f", FieldType = FormFieldTypes.File };
+        fileField.Files.Add(new FormFieldFileViewModel { Path = @"C:\a.txt", Name = "a.txt" });
+        viewModel.FormFields.Add(fileField);
+
+        var snapshot = viewModel.BuildRequestSnapshot("e", "POST", "/submit");
+
+        // 残留的 file 字段不进 urlencoded 编码串；FormFields 保留完整编辑态
+        Assert.Equal("a=1", snapshot.BodyContent);
+        Assert.Equal(2, snapshot.FormFields.Count);
+    }
+
+    [Fact]
+    public void ApplySnapshot_ShouldRoundTripFileFieldsThroughSnapshot()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+        var snapshot = new RequestSnapshotDto
+        {
+            Method = "POST",
+            Url = "/upload",
+            BodyMode = BodyModes.FormData,
+            FormFields =
+            [
+                new FormFieldDto { Name = "title", Value = "hi", IsEnabled = false },
+                new FormFieldDto
+                {
+                    Name = "file",
+                    FieldType = FormFieldTypes.File,
+                    Files = [new FormFieldFileDto { Path = @"C:\a.txt", Name = "a.txt", SizeBytes = 9 }]
+                }
+            ]
+        };
+
+        viewModel.ApplySnapshot(snapshot);
+
+        Assert.Equal(2, viewModel.FormFields.Count);
+        Assert.False(viewModel.FormFields[0].IsEnabled);
+        Assert.True(viewModel.FormFields[1].IsFileField);
+        Assert.Equal("a.txt", viewModel.FormFields[1].Files[0].Name);
+        Assert.Equal("9 B", viewModel.FormFields[1].Files[0].SizeText);
+
+        // 回写快照保留完整编辑态（禁用字段与文件引用）
+        var rebuilt = viewModel.BuildRequestSnapshot("e", "POST", "/upload");
+        Assert.Equal(2, rebuilt.FormFields.Count);
+        Assert.False(rebuilt.FormFields[0].IsEnabled);
+        Assert.Single(rebuilt.FormFields[1].Files);
+    }
+
+    [Fact]
+    public void ApplySnapshot_LegacyBodyContent_ShouldParseTextFields()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+
+        viewModel.ApplySnapshot(new RequestSnapshotDto
+        {
+            Method = "POST",
+            Url = "/form",
+            BodyMode = BodyModes.FormData,
+            BodyContent = "a=1&b=2"
+        });
+
+        Assert.Equal(2, viewModel.FormFields.Count);
+        Assert.Equal("a", viewModel.FormFields[0].Name);
+        Assert.Equal("1", viewModel.FormFields[0].Value);
+    }
+
+    [Fact]
+    public void ToggleFormFieldType_ShouldOnlyWorkInFormDataMode()
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = BodyModes.FormUrlEncoded
+        };
+        viewModel.FormFields.Add(new RequestParameterItemViewModel
+        {
+            ParameterType = RequestParameterKind.FormField,
+            Name = "f"
+        });
+
+        viewModel.ToggleFormFieldTypeCommand.Execute(viewModel.FormFields[0]);
+        Assert.Equal(FormFieldTypes.Text, viewModel.FormFields[0].FieldType);
+
+        viewModel.SelectedBodyMode = BodyModes.FormData;
+        viewModel.ToggleFormFieldTypeCommand.Execute(viewModel.FormFields[0]);
+        Assert.Equal(FormFieldTypes.File, viewModel.FormFields[0].FieldType);
+        Assert.True(viewModel.FormFields[0].IsFileField);
+    }
+
+    [Fact]
+    public async Task PickBinaryFile_ShouldFillRequestBodyAndFileState()
+    {
+        var tempFile = System.IO.Path.GetTempFileName();
+        try
+        {
+            await System.IO.File.WriteAllBytesAsync(tempFile, new byte[2048]);
+            var picker = new ViewModelSharedTestDoubles.FakeFilePickerService
+            {
+                PickOpenFilesResult =
+                [
+                    new FormFieldFileDto { Path = tempFile, Name = "demo.bin", SizeBytes = 2048 }
+                ]
+            };
+            var viewModel = new RequestConfigTabViewModel(picker)
+            {
+                SelectedBodyMode = BodyModes.Binary
+            };
+
+            Assert.True(viewModel.ShowBinaryEmptyState);
+
+            await viewModel.PickBinaryFileCommand.ExecuteAsync(null);
+
+            Assert.Equal(tempFile, viewModel.RequestBody);
+            Assert.Equal(System.IO.Path.GetFileName(tempFile), viewModel.BinaryFileName);
+            Assert.Equal("2 KB", viewModel.BinaryFileSizeText);
+            Assert.True(viewModel.HasBinaryFile);
+            Assert.False(viewModel.ShowBinaryEmptyState);
+
+            viewModel.ClearBinaryFileCommand.Execute(null);
+            Assert.True(viewModel.ShowBinaryEmptyState);
+        }
+        finally
+        {
+            System.IO.File.Delete(tempFile);
+        }
+    }
+
+    [Fact]
+    public void SelectDefaultTabByContent_BinaryWithFile_ShouldOpenBodyTab()
+    {
+        var viewModel = new RequestConfigTabViewModel
+        {
+            SelectedBodyMode = BodyModes.Binary,
+            RequestBody = @"C:\temp\a.bin"
+        };
+
+        viewModel.SelectDefaultTabByContent();
+
+        Assert.Equal(1, viewModel.SelectedTabIndex);
     }
 
     private static void AssertResetNotification(NotifyCollectionChangedEventArgs e, ref int count)

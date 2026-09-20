@@ -4,20 +4,6 @@
     <Setter Property="Padding" Value="{StaticResource Pad.5}" />
   </Style>
 
-  <Style Selector="Border.HttpDocumentMethodBadge">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="10,6" />
-  </Style>
-
-  <Style Selector="Border.HttpDocumentStatusBadge">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Padding" Value="10,6" />
-  </Style>
-
   <Style Selector="Border.HttpDocumentUrlCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
@@ -47,20 +33,42 @@
     <Setter Property="Margin" Value="0,0,0,8" />
   </Style>
 
-  <Style Selector="TextBox.HttpDocumentReadonlyCode">
+  <!-- 文档预览只读代码卡：内部承载 ResponseBodyEditor（等宽字体由编辑器挂树时从 token 解析） -->
+  <Style Selector="Border.HttpDocumentPreviewCodeCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
     <Setter Property="MinHeight" Value="180" />
-    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
   </Style>
 
-  <Style Selector="TextBlock.HttpResponsePlaceholderIcon">
-    <Setter Property="FontSize" Value="44" />
+  <!-- 代码卡高度修饰：响应示例给足预览空间，curl 片段较短收拢 -->
+  <Style Selector="Border.HttpDocumentPreviewCodeCard.HttpDocumentCodeCardTall">
+    <Setter Property="MinHeight" Value="220" />
+  </Style>
+
+  <Style Selector="Border.HttpDocumentPreviewCodeCard.HttpDocumentCodeCardLow">
+    <Setter Property="MinHeight" Value="96" />
+  </Style>
+
+  <!-- 请求概览 info-row：标签列 + 值列 + 行分隔线（对齐原型 info-row） -->
+  <Style Selector="Border.HttpDocumentInfoRow">
+    <Setter Property="Padding" Value="0,8" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+
+  <Style Selector="Border.HttpDocumentInfoRow.HttpDocumentInfoRowLast">
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpDocumentInfoLabel">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
-    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBox.HttpDocumentDescriptionInput">
+    <Setter Property="MinHeight" Value="96" />
   </Style>
 
   <Style Selector="Border.HttpResponsePlaceholderHost">
@@ -68,9 +76,42 @@
     <Setter Property="VerticalAlignment" Value="Stretch" />
   </Style>
 
+  <!-- 空状态卡片：下沉底色收拢视觉，避免大片虚空感 -->
+  <Style Selector="Border.HttpResponsePlaceholderCard">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="48,36" />
+    <Setter Property="MaxWidth" Value="560" />
+  </Style>
+
   <Style Selector="StackPanel.HttpResponsePlaceholderContent">
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <!-- 图标圆形底衬，用品牌色弱强调 -->
+  <Style Selector="Border.HttpResponsePlaceholderIcon">
+    <Setter Property="Width" Value="56" />
+    <Setter Property="Height" Value="56" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Border.HttpResponsePlaceholderIcon PathIcon">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpResponsePlaceholderTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextAlignment" Value="Center" />
   </Style>
 
   <Style Selector="TextBlock.HttpResponsePlaceholderText">
@@ -90,13 +131,73 @@
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
-  <Style Selector="ProgressBar.HttpResponseLoadingProgress">
-    <Setter Property="Height" Value="4" />
-  </Style>
-
   <Style Selector="TextBlock.HttpResponseLoadingText">
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextAlignment" Value="Center" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpResponseLoadingHint">
+    <Setter Property="TextAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- 响应 Headers 只读键值表（对齐原型 kv-grid） -->
+  <Style Selector="Border.HttpResponseKvGrid">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseKvRow">
+    <Setter Property="Padding" Value="12,7" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpResponseKvKey">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpResponseKvValue">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <!-- 实际请求面板：URL 卡片与 kv 表头行 -->
+  <Style Selector="Border.ActualRequestUrlCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="12,10" />
+  </Style>
+
+  <Style Selector="SelectableTextBlock.ActualRequestUrlText">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseKvHeaderRow">
+    <Setter Property="Padding" Value="12,6" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpResponseKvHeaderText">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 
   <Style Selector="Button.HttpResponseCancelButton">
@@ -111,19 +212,34 @@
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
 
-  <Style Selector="Border.HttpResponseNoticeInlineCard">
-    <Setter Property="Padding" Value="8,5" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="MinHeight" Value="0" />
+  <Style Selector="Border.HttpResponseNoticeBanner">
+    <Setter Property="BorderThickness" Value="3,1,1,1" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="VerticalAlignment" Value="Top" />
   </Style>
 
-  <Style Selector="Border.HttpResponseNoticeInlineCard TextBlock.SectionTitle">
+  <Style Selector="Border.HttpResponseNoticeBanner.HttpResponseNoticeDanger">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.Background}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Error.Text}" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseNoticeBanner.HttpResponseNoticeDanger TextBlock.HttpResponseNoticeTitle">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Error.Text}" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseNoticeBanner.HttpResponseNoticeWarning">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Warning.Background}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Warning.Text}" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseNoticeBanner.HttpResponseNoticeWarning TextBlock.HttpResponseNoticeTitle">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Warning.Text}" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpResponseNoticeTitle">
     <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
     <Setter Property="FontWeight" Value="SemiBold" />
-  </Style>
-
-  <Style Selector="Border.HttpResponseNoticeInlineCard TextBlock.CaptionText">
-    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
   <Style Selector="TextBox.HttpResponseSearchInput">
@@ -165,6 +281,133 @@
     <Setter Property="Margin" Value="0,0,0,8" />
   </Style>
 
+  <Style Selector="ListBox.HistoryListBox">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="ListBox.HistoryListBox ListBoxItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+  </Style>
+
+  <Style Selector="Border.HistoryListCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <!-- 日期分组标题行（对齐原型 h-group-cap） -->
+  <Style Selector="Grid.HistoryGroupHeaderRow">
+    <Setter Property="Margin" Value="2,4,2,0" />
+  </Style>
+
+  <!-- 历史行悬停操作：默认隐藏，行 hover 显示（对齐原型 h-actions） -->
+  <Style Selector="Button.HistoryRowAction">
+    <Setter Property="Width" Value="22" />
+    <Setter Property="Height" Value="22" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="Opacity" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Grid.HistoryItemRoot:pointerover Button.HistoryRowAction">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
+  <Style Selector="Button.HistoryRowAction:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Button.HistoryRowActionDanger:pointerover">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Danger}" />
+  </Style>
+
+  <!-- 两段式清空按钮：待确认态变红填充（对齐原型 case-op armed） -->
+  <Style Selector="Button.HistoryClearButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="10,4" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+  </Style>
+
+  <Style Selector="Button.HistoryClearButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Button.HistoryClearButton.HistoryClearArmed">
+    <Setter Property="Background" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="ListBox.HistoryListBox ListBoxItem:pointerover Border.HistoryListCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+  </Style>
+
+  <Style Selector="ListBox.HistoryListBox ListBoxItem:selected">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="ListBox.HistoryListBox ListBoxItem:selected Border.HistoryListCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <Style Selector="Border.HistoryRequestDetailCard">
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <!-- 「实际请求」tab 的键值文本：等宽字体，弱化为次级色 -->
+  <Style Selector="TextBlock.HistoryRequestKvValue">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TabControl.HistoryRequestDetailTabs">
+    <Setter Property="MinHeight" Value="148" />
+    <Setter Property="MaxHeight" Value="180" />
+  </Style>
+
+  <Style Selector="TabControl.HistoryRequestDetailTabs TabItem">
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+    <Setter Property="Margin" Value="0,0,8,0" />
+  </Style>
+
+  <Style Selector="Border.HistoryRequestKeyValueRow">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+  </Style>
+
+  <Style Selector="TextBox.HistoryRequestBodyPreview">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="MinHeight" Value="148" />
+    <Setter Property="MaxHeight" Value="180" />
+  </Style>
+
   <Style Selector="Border.QuickRequestHintCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
@@ -192,4 +435,5 @@
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
     <Setter Property="CornerRadius" Value="12,12,0,0" />
   </Style>
+
 </Styles>

@@ -18,12 +18,27 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
     public async Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryAsync(string projectId, int limit, CancellationToken cancellationToken)
     {
         const string sql = """
+                           -- 列表是摘要投影：不取 response_snapshot_json 原文（单条可达 MB 级），
+                           -- 只用 JSON 函数算出 HasResponse/StatusCode/DurationMs/SizeBytes；详情走单条查询
                            select
                                id Id,
                                project_id ProjectId,
                                timestamp Timestamp,
-                               request_snapshot_json RequestSnapshotJson,
-                               response_snapshot_json ResponseSnapshotJson,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.name'),
+                                   json_extract(request_snapshot_json, '$.Name'),
+                                   ''
+                               ) RequestName,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.method'),
+                                   json_extract(request_snapshot_json, '$.Method'),
+                                   ''
+                               ) RequestMethod,
+                               coalesce(
+                                   json_extract(request_snapshot_json, '$.url'),
+                                   json_extract(request_snapshot_json, '$.Url'),
+                                   ''
+                               ) RequestUrl,
                                case
                                    when trim(coalesce(response_snapshot_json, '')) = '' then 0
                                    when json_valid(response_snapshot_json) = 0 then 1
@@ -61,8 +76,8 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await connection.QueryAsync<RequestHistoryEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId, Limit = limit }, cancellationToken: cancellationToken));
+        var items = await Task.Run(async () => await connection.QueryAsync<RequestHistoryEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId, Limit = limit }, cancellationToken: cancellationToken)));
         return items.ToList();
     }
 
@@ -81,8 +96,8 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<RequestHistoryEntity>(
-            new CommandDefinition(sql, new { ProjectId = projectId, Id = id }, cancellationToken: cancellationToken));
+        return await Task.Run(async () => await connection.QueryFirstOrDefaultAsync<RequestHistoryEntity>(
+            new CommandDefinition(sql, new { ProjectId = projectId, Id = id }, cancellationToken: cancellationToken)));
     }
 
     public async Task UpsertAsync(RequestHistoryEntity entity, CancellationToken cancellationToken)
@@ -96,32 +111,42 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken)));
     }
 
     public async Task DeleteAsync(string projectId, string id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "delete from request_history where project_id = @ProjectId and id = @Id",
             new { ProjectId = projectId, Id = id },
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
     }
 
     public async Task ClearAsync(string projectId, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "delete from request_history where project_id = @ProjectId",
             new { ProjectId = projectId },
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
     }
 
     public async Task ClearAllAsync(CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "delete from request_history",
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
+    }
+
+    public async Task<int> DeleteOlderThanAsync(DateTime cutoff, CancellationToken cancellationToken)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        // timestamp 以 UTC ISO-8601 TEXT 存储，按字典序比较与时间序一致
+        return await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
+            "delete from request_history where timestamp < @Cutoff",
+            new { Cutoff = cutoff },
+            cancellationToken: cancellationToken)));
     }
 }

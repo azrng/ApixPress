@@ -3,7 +3,7 @@
              xmlns:semi="https://irihi.tech/semi"
              xmlns:u-semi="https://irihi.tech/ursa/themes/semi"
              x:Class="ApixPress.App.App"
-             RequestedThemeVariant="Light">
+             RequestedThemeVariant="Dark">
 
     <Application.Resources>
         <ResourceDictionary>
@@ -11,13 +11,16 @@
                 <ResourceInclude Source="/Assets/Styles/Colors.axaml" />
                 <ResourceInclude Source="/Assets/Styles/Fonts.axaml" />
                 <ResourceInclude Source="/Assets/Styles/Spacing.axaml" />
+                <ResourceInclude Source="/Assets/Styles/Shadows.axaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 
     <Application.Styles>
         <semi:SemiTheme Locale="zh-CN" />
-        <u-semi:SemiTheme Locale="zh-CN" />
+        <semi:UrsaSemiTheme Locale="zh-CN" />
+        <!-- AvaloniaEdit 必需的控制主题，缺失时 TextEditor 无模板不渲染 -->
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
         <StyleInclude Source="/Assets/Styles/Global.axaml" />
     </Application.Styles>
 </Application>

@@ -166,6 +166,27 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task OpenProjectWorkspace_ShouldBindEnvironmentPanelForDrawer()
+    {
+        var projectService = new FakeProjectWorkspaceService();
+        projectService.SeedProjects(
+        [
+            new("project-1", "订单项目", "订单接口", true)
+        ]);
+        var viewModel = CreateViewModel(projectService);
+        await viewModel.InitializeAsync();
+        var project = viewModel.ProjectPanel.Projects.Single();
+        await viewModel.OpenProjectWorkspaceCommand.ExecuteAsync(project);
+
+        // 环境抽屉（多卡片平铺）依赖 EnvironmentPanel 转发与每个环境的变量集合
+        Assert.Same(viewModel.ActiveProjectTab!.EnvironmentPanel, viewModel.EnvironmentPanel);
+        Assert.True(viewModel.EnvironmentPanel.HasSelectedEnvironment);
+        Assert.Equal("开发", viewModel.EnvironmentPanel.SelectedEnvironment?.Name);
+        Assert.Equal("https://api.demo.local", viewModel.EnvironmentPanel.SelectedEnvironment?.BaseUrl);
+        Assert.NotNull(viewModel.EnvironmentPanel.SelectedEnvironment?.Variables);
+    }
+
+    [Fact]
     public async Task OpenProjectWorkspaceCommand_ShouldActivateProjectTabBeforeInitializationCompletes()
     {
         var projectService = new FakeProjectWorkspaceService();
@@ -301,7 +322,7 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.SettingsCenter.CheckForUpdatesCommand.ExecuteAsync(null);
 
         Assert.Equal(1, updateService.CheckCalls);
-        Assert.Equal(0, updateService.StartCalls);
+        Assert.Equal(0, updateService.PrepareCalls);
         Assert.Equal("1.0.0.0", viewModel.SettingsCenter.LatestAvailableVersion);
         Assert.Equal("当前已是最新版本 1.0.0.0。", viewModel.SettingsCenter.AboutUpdateStatus);
         Assert.Equal(viewModel.SettingsCenter.AboutUpdateStatus, viewModel.StatusMessage);
@@ -309,7 +330,7 @@ public sealed partial class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task CheckForUpdatesCommand_ShouldStartUpdateFlowWhenNewVersionDetected()
+    public async Task CheckForUpdatesCommand_ShouldRunPrepareAndApplyWhenNewVersionDetected()
     {
         var updateService = new FakeApplicationUpdateService
         {
@@ -326,8 +347,35 @@ public sealed partial class MainWindowViewModelTests
         await viewModel.SettingsCenter.CheckForUpdatesCommand.ExecuteAsync(null);
 
         Assert.Equal(1, updateService.CheckCalls);
-        Assert.Equal(1, updateService.StartCalls);
+        Assert.Equal(1, updateService.PrepareCalls);
+        Assert.Equal(1, updateService.ApplyCalls);
         Assert.Equal("1.1.0.0", viewModel.SettingsCenter.LatestAvailableVersion);
+        Assert.False(viewModel.SettingsCenter.IsUpdating);
+        Assert.Contains("即将退出并自动重启", viewModel.SettingsCenter.AboutUpdateStatus);
+    }
+
+    [Fact]
+    public async Task CheckForUpdatesCommand_ShouldAbortWithoutApplyWhenPrepareFails()
+    {
+        var updateService = new FakeApplicationUpdateService
+        {
+            CheckResult = new AppUpdateCheckResultDto
+            {
+                CurrentVersion = "1.0.0.0",
+                LatestVersion = "1.1.0.0",
+                HasUpdate = true
+            },
+            PrepareResult = ResultModel<AppUpdateStagedPackageDto>.Failure("准备更新包失败：网络不可达", "app_update_prepare_failed")
+        };
+        var viewModel = CreateViewModel(applicationUpdateService: updateService);
+        await viewModel.InitializeAsync();
+
+        await viewModel.SettingsCenter.CheckForUpdatesCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, updateService.PrepareCalls);
+        Assert.Equal(0, updateService.ApplyCalls);
+        Assert.False(viewModel.SettingsCenter.IsUpdating);
+        Assert.Contains("准备更新包失败", viewModel.SettingsCenter.AboutUpdateStatus);
     }
 
     [Fact]
@@ -493,22 +541,20 @@ public sealed partial class MainWindowViewModelTests
         viewModel.ShellPanels.ToggleNotificationCenterCommand.Execute(null);
 
         Assert.True(viewModel.ShellPanels.IsNotificationCenterOpen);
-        Assert.False(viewModel.ShellPanels.IsSettingsDialogOpen);
         Assert.False(viewModel.ShellPanels.HasUnreadNotifications);
         Assert.All(viewModel.ShellPanels.Notifications, item => Assert.False(item.IsUnread));
         Assert.Equal("这里展示近期动态和提醒。", viewModel.StatusMessage);
     }
 
     [Fact]
-    public void OpenSettingsDialogCommand_ShouldCloseNotificationCenterAndResetToGeneralSection()
+    public async Task OpenSettingsDialogCommand_ShouldCloseNotificationCenterAndResetToGeneralSection()
     {
         var viewModel = CreateViewModel();
         viewModel.SettingsCenter.ShowAboutSettingsCommand.Execute(null);
         viewModel.ShellPanels.ToggleNotificationCenterCommand.Execute(null);
 
-        viewModel.ShellPanels.OpenSettingsDialogCommand.Execute(null);
+        await viewModel.ShellPanels.OpenSettingsDialogCommand.ExecuteAsync(null);
 
-        Assert.True(viewModel.ShellPanels.IsSettingsDialogOpen);
         Assert.False(viewModel.ShellPanels.IsNotificationCenterOpen);
         Assert.True(viewModel.SettingsCenter.ShowGeneralSettingsSection);
         Assert.False(viewModel.SettingsCenter.ShowAboutSettingsSection);
@@ -600,6 +646,11 @@ public sealed partial class MainWindowViewModelTests
             }));
         }
 
+        public Task<ProjectEnvironmentDto?> ApplyImportedBaseUrlAsync(string projectId, string baseUrl, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<ProjectEnvironmentDto?>(null);
+        }
+
         public Task<IResultModel<bool>> DeleteEnvironmentAsync(string projectId, string environmentId, CancellationToken cancellationToken)
         {
             return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
@@ -608,6 +659,14 @@ public sealed partial class MainWindowViewModelTests
         public Task<IReadOnlyList<EnvironmentVariableDto>> GetVariablesAsync(string environmentId, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyList<EnvironmentVariableDto>>([]);
+        }
+
+        public Task<IReadOnlyDictionary<string, IReadOnlyList<EnvironmentVariableDto>>> GetVariablesByEnvironmentIdsAsync(
+            IEnumerable<string> environmentIds,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IReadOnlyDictionary<string, IReadOnlyList<EnvironmentVariableDto>>>(
+                new Dictionary<string, IReadOnlyList<EnvironmentVariableDto>>(StringComparer.OrdinalIgnoreCase));
         }
 
         public Task<IResultModel<EnvironmentVariableDto>> SaveVariableAsync(EnvironmentVariableDto variable, CancellationToken cancellationToken)

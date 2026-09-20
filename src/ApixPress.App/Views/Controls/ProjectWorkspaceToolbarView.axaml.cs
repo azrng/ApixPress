@@ -1,5 +1,7 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using ApixPress.App.ViewModels;
 
 namespace ApixPress.App.Views.Controls;
@@ -11,36 +13,39 @@ public partial class ProjectWorkspaceToolbarView : UserControl
         InitializeComponent();
     }
 
-    private void OnWorkspaceTabMenuButtonClick(object? sender, RoutedEventArgs e)
+    private void OnEnvironmentManagerButtonClick(object? sender, RoutedEventArgs e)
     {
-        if (sender is not Button button
-            || button.ContextMenu is not ContextMenu contextMenu)
+        // 环境管理走右侧抽屉（多环境平铺编辑，对齐原型 07-environments）
+        if (this.FindAncestorOfType<MainWindow>() is { } mainWindow)
         {
-            return;
-        }
-
-        if (contextMenu.IsOpen)
-        {
-            contextMenu.Close();
-            return;
-        }
-
-        contextMenu.Open(button);
-    }
-
-    private void OnWorkspaceTabMoreContextMenuOpened(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is ProjectTabViewModel viewModel)
-        {
-            viewModel.IsWorkspaceTabMenuOpen = true;
+            mainWindow.OpenEnvironmentDrawer();
         }
     }
 
-    private void OnWorkspaceTabMoreContextMenuClosed(object? sender, RoutedEventArgs e)
+    // 环境菜单项点击：业务由 SelectEnvironmentCommand 承担，这里只负责收起浮层
+    private void OnEnvironmentMenuItemClick(object? sender, RoutedEventArgs e)
     {
-        if (DataContext is ProjectTabViewModel viewModel)
+        // Flyout 内容在 PopupRoot 中编译绑定 $parent 链断裂（命令恒 null），这里手动执行切换命令
+        if (sender is Button { DataContext: ProjectEnvironmentItemViewModel item }
+            && DataContext is ProjectTabViewModel tab
+            && tab.EnvironmentPanel.SelectEnvironmentCommand.CanExecute(item))
         {
-            viewModel.IsWorkspaceTabMenuOpen = false;
+            tab.EnvironmentPanel.SelectEnvironmentCommand.Execute(item);
+        }
+        CloseEnvironmentChipFlyout();
+    }
+
+    private void OnEnvironmentManagerFromChipClick(object? sender, RoutedEventArgs e)
+    {
+        CloseEnvironmentChipFlyout();
+        OnEnvironmentManagerButtonClick(sender, e);
+    }
+
+    private void CloseEnvironmentChipFlyout()
+    {
+        if (this.FindControl<Button>("EnvironmentChipButton")?.Flyout is Flyout flyout && flyout.IsOpen)
+        {
+            flyout.Hide();
         }
     }
 }

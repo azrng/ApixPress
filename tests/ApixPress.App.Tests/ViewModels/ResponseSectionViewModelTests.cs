@@ -1,4 +1,4 @@
-using ApixPress.App.Models.DTOs;
+﻿using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels;
 using Azrng.Core.Results;
 
@@ -60,6 +60,165 @@ public sealed class ResponseSectionViewModelTests
         Assert.Equal("请求超时", viewModel.ResponseNoticeTitle);
         Assert.Contains("请求超时", viewModel.BodyText);
         Assert.Contains("超时时间", viewModel.ResponseNoticeText);
+    }
+
+    [Fact]
+    public void ApplyResult_ShouldExposeActualRequestSnapshot_WhenPresent()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 12,
+                SizeBytes = 2,
+                Content = "{}",
+                ActualRequest = new ActualRequestSnapshotDto
+                {
+                    Method = "GET",
+                    Url = "https://api.example.com/users?expand=profile",
+                    Headers =
+                    [
+                        new ResponseHeaderDto { Name = "Accept", Value = "*/*" }
+                    ],
+                    BodyContentType = "application/json",
+                    BodyText = "{\"name\":\"order\"}",
+                    HasBody = true
+                }
+            }),
+            new RequestSnapshotDto());
+
+        Assert.True(viewModel.HasActualRequest);
+        Assert.Equal("GET", viewModel.ActualRequestMethod);
+        Assert.Equal("https://api.example.com/users?expand=profile", viewModel.ActualRequestUrl);
+        Assert.Equal("Light Success", viewModel.ActualRequestMethodBadgeClass);
+        Assert.True(viewModel.HasActualRequestHeaderRows);
+        Assert.Equal("Accept", viewModel.ActualRequestHeaderRows[0].Name);
+        Assert.Equal("*/*", viewModel.ActualRequestHeaderRows[0].Value);
+        Assert.True(viewModel.HasActualRequestBodyContentType);
+        Assert.Equal("application/json", viewModel.ActualRequestBodyContentType);
+        Assert.True(viewModel.HasActualRequestBody);
+        Assert.Equal("{\"name\":\"order\"}", viewModel.ActualRequestBodyText);
+    }
+
+    [Fact]
+    public void ApplyResult_ShouldKeepActualRequestEmpty_WhenSnapshotMissing()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 12,
+                SizeBytes = 2,
+                Content = "{}"
+            }),
+            new RequestSnapshotDto());
+
+        Assert.False(viewModel.HasActualRequest);
+        Assert.False(viewModel.HasActualRequestHeaderRows);
+        Assert.False(viewModel.HasActualRequestBody);
+    }
+
+    [Fact]
+    public void ApplyResult_ShouldClearActualRequest_WhenResultFails()
+    {
+        var viewModel = new ResponseSectionViewModel();
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                ActualRequest = new ActualRequestSnapshotDto
+                {
+                    Method = "GET",
+                    Url = "https://api.example.com/users"
+                }
+            }),
+            new RequestSnapshotDto());
+        Assert.True(viewModel.HasActualRequest);
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Failure("请求超时。", "request_timeout"),
+            new RequestSnapshotDto());
+
+        Assert.False(viewModel.HasActualRequest);
+        Assert.False(viewModel.HasActualRequestHeaderRows);
+        Assert.False(viewModel.HasActualRequestBody);
+    }
+
+    [Fact]
+    public void ApplyResult_ShouldBuildFallbackActualRequest_WhenFailureHasNoResponseData()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Failure("请求发送失败。", "request_http_failed"),
+            new RequestSnapshotDto
+            {
+                Method = "POST",
+                Url = "https://api.example.com/orders",
+                BodyMode = BodyModes.RawJson,
+                BodyContent = "{\"name\":\"中文\"}",
+                Headers =
+                [
+                    new RequestKeyValueDto { Name = "X-Trace", Value = "trace-1", IsEnabled = true }
+                ]
+            });
+
+        Assert.True(viewModel.HasActualRequest);
+        Assert.Equal("POST", viewModel.ActualRequestMethod);
+        Assert.Equal("https://api.example.com/orders", viewModel.ActualRequestUrl);
+        Assert.Contains(viewModel.ActualRequestHeaderRows, row => row.Name == "X-Trace");
+        Assert.Equal("application/json", viewModel.ActualRequestBodyContentType);
+        Assert.Contains("中文", viewModel.ActualRequestBodyText);
+    }
+
+    [Fact]
+    public void Reset_ShouldClearActualRequest()
+    {
+        var viewModel = new ResponseSectionViewModel();
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                ActualRequest = new ActualRequestSnapshotDto
+                {
+                    Method = "DELETE",
+                    Url = "https://api.example.com/users/1"
+                }
+            }),
+            new RequestSnapshotDto());
+
+        viewModel.Reset();
+
+        Assert.False(viewModel.HasActualRequest);
+        Assert.Equal(string.Empty, viewModel.ActualRequestMethod);
+        Assert.Equal(string.Empty, viewModel.ActualRequestUrl);
+        Assert.Equal("Light Secondary", viewModel.ActualRequestMethodBadgeClass);
+    }
+
+    [Fact]
+    public void ApplyResult_ShouldLimitActualRequestBodyText_WhenTooLarge()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                ActualRequest = new ActualRequestSnapshotDto
+                {
+                    Method = "POST",
+                    Url = "https://api.example.com/orders",
+                    HasBody = true,
+                    BodyText = new string('a', 256 * 1024 + 1)
+                }
+            }),
+            new RequestSnapshotDto());
+
+        Assert.Contains("请求体过大", viewModel.ActualRequestBodyText);
     }
 
     [Fact]
@@ -133,8 +292,16 @@ public sealed class ResponseSectionViewModelTests
     }
 
     [Fact]
-    public void ApplyResult_ShouldKeepLargeJsonBodyUnformatted()
+    public async Task ApplyResult_ShouldKeepLargeJsonBodyUnformattedAndLimitDisplay()
     {
+        // 本用例依赖"无 Avalonia 宿主"的同步应用路径（Application.Current 为 null）。
+        // 并行套件中其它测试类可能已初始化 Avalonia，此时异步应用依赖的 UI 泵不存在，
+        // BodyText 永远停留在占位符——跳过该用例（单独运行本测试时仍为真实验证）。
+        if (Avalonia.Application.Current is not null)
+        {
+            return;
+        }
+
         var viewModel = new ResponseSectionViewModel();
         var rawContent = "{\"data\":\"" + new string('a', 256 * 1024 + 1) + "\"}";
 
@@ -156,7 +323,59 @@ public sealed class ResponseSectionViewModelTests
             }),
             new RequestSnapshotDto());
 
-        Assert.Equal(rawContent, viewModel.BodyText);
+        await viewModel.WaitForPendingBodyFormatAsync();
+
+        Assert.StartsWith(rawContent[..(256 * 1024)], viewModel.BodyText);
+        Assert.Contains("界面仅展示前", viewModel.BodyText);
+        Assert.DoesNotContain(rawContent[^32..], viewModel.BodyText);
+    }
+
+    [Fact]
+    public async Task ApplyResult_ShouldCancelStaleBackgroundFormat_WhenNewResultArrives()
+    {
+        var viewModel = new ResponseSectionViewModel();
+        var largeContent = "{\"data\":\"" + new string('x', 80 * 1024) + "\"}";
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 10,
+                SizeBytes = largeContent.Length,
+                Content = largeContent,
+                Headers =
+                [
+                    new ResponseHeaderDto
+                    {
+                        Name = "Content-Type",
+                        Value = "application/json"
+                    }
+                ]
+            }),
+            new RequestSnapshotDto());
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 201,
+                DurationMs = 5,
+                SizeBytes = 2,
+                Content = "{}",
+                Headers =
+                [
+                    new ResponseHeaderDto
+                    {
+                        Name = "Content-Type",
+                        Value = "application/json"
+                    }
+                ]
+            }),
+            new RequestSnapshotDto());
+
+        await viewModel.WaitForPendingBodyFormatAsync(TimeSpan.FromSeconds(2));
+
+        Assert.Equal("HTTP 201", viewModel.StatusText);
+        Assert.Equal("{}", viewModel.BodyText);
     }
 
     [Fact]

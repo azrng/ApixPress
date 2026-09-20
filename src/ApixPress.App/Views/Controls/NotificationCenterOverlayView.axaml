@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -26,9 +26,10 @@
                 Content="全部已读" />
       </Grid>
 
-      <ItemsControl Grid.Row="1"
-                    ItemsSource="{Binding ShellPanels.Notifications}"
-                    IsVisible="{Binding ShellPanels.HasNotifications}">
+      <ListBox Grid.Row="1"
+               Classes="NotificationItemList"
+               ItemsSource="{Binding ShellPanels.Notifications}"
+               IsVisible="{Binding ShellPanels.HasNotifications}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:NotificationItemViewModel">
             <Border Classes="NotificationItemCard">
@@ -56,7 +57,7 @@
             </Border>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
-      </ItemsControl>
+      </ListBox>
 
       <Border Grid.Row="1"
               Classes="NotificationItemCard"

@@ -70,6 +70,43 @@ public static class ProjectHttpDocumentFormatter
                 .Append('"');
         }
 
+        // multipart 用 -F 表达（文件字段带 @ 路径）；Binary 用 --data-binary 携带文件
+        if (configTab.SelectedBodyMode == BodyModes.FormData)
+        {
+            foreach (var field in configTab.FormFields.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
+            {
+                if (field.FieldType == FormFieldTypes.File)
+                {
+                    foreach (var file in field.Files)
+                    {
+                        builder.Append(" \\\n  --form \"")
+                            .Append(EscapeShellDoubleQuotedValue(field.Name.Trim()))
+                            .Append("=@")
+                            .Append(EscapeShellDoubleQuotedValue(file.Path))
+                            .Append('"');
+                    }
+                }
+                else
+                {
+                    builder.Append(" \\\n  --form \"")
+                        .Append(EscapeShellDoubleQuotedValue(field.Name.Trim()))
+                        .Append('=')
+                        .Append(EscapeShellDoubleQuotedValue((field.Value ?? string.Empty).Trim()))
+                        .Append('"');
+                }
+            }
+
+            return builder.ToString();
+        }
+
+        if (configTab.SelectedBodyMode == BodyModes.Binary && !string.IsNullOrWhiteSpace(configTab.RequestBody))
+        {
+            builder.Append(" \\\n  --data-binary \"@")
+                .Append(EscapeShellDoubleQuotedValue(configTab.RequestBody.Trim()))
+                .Append('"');
+            return builder.ToString();
+        }
+
         var bodyContent = ResolveBodyContent(configTab);
         if (!string.IsNullOrWhiteSpace(bodyContent))
         {
@@ -102,12 +139,34 @@ public static class ProjectHttpDocumentFormatter
                 .Append('"');
         }
 
-        var bodyContent = ResolveBodyContent(configTab);
-        if (!string.IsNullOrWhiteSpace(bodyContent))
+        // wget 无内建 multipart 表达：含文件字段时给出可读提示而非误导性代码；Binary 走 --body-file
+        if (configTab.SelectedBodyMode == BodyModes.FormData
+            && configTab.FormFields.Any(item => item.IsEnabled
+                && item.FieldType == FormFieldTypes.File
+                && item.Files.Count > 0))
         {
-            builder.Append(" \\\n  --body-data=\"")
-                .Append(EscapeShellDoubleQuotedValue(bodyContent))
+            builder.Append(" \\\n  # wget 不支持 multipart 文件上传，请改用 curl 生成的命令");
+            builder.Append(" \\\n  \"")
+                .Append(EscapeShellDoubleQuotedValue(resolvedUrl))
                 .Append('"');
+            return builder.ToString();
+        }
+
+        if (configTab.SelectedBodyMode == BodyModes.Binary && !string.IsNullOrWhiteSpace(configTab.RequestBody))
+        {
+            builder.Append(" \\\n  --body-file=\"")
+                .Append(EscapeShellDoubleQuotedValue(configTab.RequestBody.Trim()))
+                .Append('"');
+        }
+        else
+        {
+            var bodyContent = ResolveBodyContent(configTab);
+            if (!string.IsNullOrWhiteSpace(bodyContent))
+            {
+                builder.Append(" \\\n  --body-data=\"")
+                    .Append(EscapeShellDoubleQuotedValue(bodyContent))
+                    .Append('"');
+            }
         }
 
         builder.Append(" \\\n  \"")
@@ -125,7 +184,6 @@ public static class ProjectHttpDocumentFormatter
     {
         var resolvedUrl = ResolveSnippetUrl(requestUrl, currentBaseUrl, configTab.QueryParameters);
         var headers = configTab.Headers.Where(item => !string.IsNullOrWhiteSpace(item.Name)).ToList();
-        var bodyContent = ResolveBodyContent(configTab);
         var builder = new StringBuilder();
 
         if (headers.Count > 0)
@@ -156,6 +214,47 @@ public static class ProjectHttpDocumentFormatter
             builder.Append(" `\n  -Headers $headers");
         }
 
+        // multipart 走 -Form（PowerShell 6+，文件字段用 Get-Item）；Binary 走 -InFile
+        if (configTab.SelectedBodyMode == BodyModes.FormData
+            && configTab.FormFields.Any(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
+        {
+            builder.Append(" `\n  -Form @{");
+            foreach (var field in configTab.FormFields.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
+            {
+                if (field.FieldType == FormFieldTypes.File)
+                {
+                    foreach (var file in field.Files)
+                    {
+                        builder.Append("\n    \"")
+                            .Append(EscapePowerShellDoubleQuotedValue(field.Name.Trim()))
+                            .Append("\" = (Get-Item \"")
+                            .Append(EscapePowerShellDoubleQuotedValue(file.Path))
+                            .Append("\")");
+                    }
+                }
+                else
+                {
+                    builder.Append("\n    \"")
+                        .Append(EscapePowerShellDoubleQuotedValue(field.Name.Trim()))
+                        .Append("\" = \"")
+                        .Append(EscapePowerShellDoubleQuotedValue((field.Value ?? string.Empty).Trim()))
+                        .Append("\"");
+                }
+            }
+
+            builder.Append("\n  }");
+            return builder.ToString();
+        }
+
+        if (configTab.SelectedBodyMode == BodyModes.Binary && !string.IsNullOrWhiteSpace(configTab.RequestBody))
+        {
+            builder.Append(" `\n  -InFile \"")
+                .Append(EscapePowerShellDoubleQuotedValue(configTab.RequestBody.Trim()))
+                .Append('"');
+            return builder.ToString();
+        }
+
+        var bodyContent = ResolveBodyContent(configTab);
         if (!string.IsNullOrWhiteSpace(bodyContent))
         {
             builder.Append(" `\n  -Body \"")
@@ -209,10 +308,16 @@ public static class ProjectHttpDocumentFormatter
 
     public static string ResolveBodyContent(RequestConfigTabViewModel configTab)
     {
+        // Binary 的请求体是文件路径，正文口径由各生成器以文件参数单独表达，不作为文本正文返回
+        if (configTab.SelectedBodyMode is BodyModes.Binary)
+        {
+            return string.Empty;
+        }
+
         if (configTab.SelectedBodyMode is BodyModes.FormData or BodyModes.FormUrlEncoded)
         {
             return string.Join("&", configTab.FormFields
-                .Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name))
+                .Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name) && item.FieldType != FormFieldTypes.File)
                 .Select(item =>
                     $"{Uri.EscapeDataString(item.Name.Trim())}={Uri.EscapeDataString((item.Value ?? string.Empty).Trim())}"));
         }
@@ -245,6 +350,15 @@ public static class ProjectHttpDocumentFormatter
 
     private static void AppendCSharpContent(StringBuilder builder, RequestConfigTabViewModel configTab, string? contentTypeHeaderValue)
     {
+        // Binary 模式：请求体是文件流而非文本（路径经 EscapeCSharpString 翻倍反斜杠，须放普通字符串而非 verbatim）
+        if (configTab.SelectedBodyMode == BodyModes.Binary && !string.IsNullOrWhiteSpace(configTab.RequestBody))
+        {
+            builder.Append("request.Content = new StreamContent(File.OpenRead(\"")
+                .Append(EscapeCSharpString(configTab.RequestBody.Trim()))
+                .AppendLine("\"));");
+            return;
+        }
+
         if (configTab.SelectedBodyMode is BodyModes.FormUrlEncoded)
         {
             builder.AppendLine("request.Content = new FormUrlEncodedContent(new Dictionary<string, string>");
@@ -267,11 +381,28 @@ public static class ProjectHttpDocumentFormatter
             builder.AppendLine("var formData = new MultipartFormDataContent();");
             foreach (var field in configTab.FormFields.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
             {
-                builder.Append("formData.Add(new StringContent(\"")
-                    .Append(EscapeCSharpString((field.Value ?? string.Empty).Trim()))
-                    .Append("\"), \"")
-                    .Append(EscapeCSharpString(field.Name.Trim()))
-                    .AppendLine("\");");
+                if (field.FieldType == FormFieldTypes.File)
+                {
+                    foreach (var file in field.Files)
+                    {
+                        // 三参 Add 写入 filename 到 Content-Disposition，与服务端上传识别口径一致
+                        builder.Append("formData.Add(new StreamContent(File.OpenRead(\"")
+                            .Append(EscapeCSharpString(file.Path))
+                            .Append("\")), \"")
+                            .Append(EscapeCSharpString(field.Name.Trim()))
+                            .Append("\", \"")
+                            .Append(EscapeCSharpString(file.Name))
+                            .AppendLine("\");");
+                    }
+                }
+                else
+                {
+                    builder.Append("formData.Add(new StringContent(\"")
+                        .Append(EscapeCSharpString((field.Value ?? string.Empty).Trim()))
+                        .Append("\"), \"")
+                        .Append(EscapeCSharpString(field.Name.Trim()))
+                        .AppendLine("\");");
+                }
             }
 
             builder.AppendLine("request.Content = formData;");

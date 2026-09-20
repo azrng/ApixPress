@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using ApixPress.App.Helpers;
 
 namespace ApixPress.App.ViewModels;
 
@@ -18,6 +19,9 @@ public partial class MainWindowViewModel
             _filePickerService,
             _appNotificationService,
             _projectDataExportService,
+            _projectHttpSettingsService,
+            _clipboardService,
+            _dialogService,
             HandleProjectDeletedFromSettingsAsync);
         tab.ShellStateChanged += OnProjectTabShellStateChanged;
         return tab;
@@ -36,8 +40,8 @@ public partial class MainWindowViewModel
             return;
         }
 
-        ActiveProjectTab = tab;
-        IsEnvironmentManagerOpen = false;
+        // 赋值同步触发 ProjectTabHostView 的内容切换（有宿主缓存，正常应毫秒级）
+        PerfLog.Measure("项目标签·激活切换", () => ActiveProjectTab = tab);
     }
 
     private void OnProjectsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -76,7 +80,6 @@ public partial class MainWindowViewModel
             ActiveProjectTab = ProjectTabs.FirstOrDefault();
             if (ActiveProjectTab is null)
             {
-                IsEnvironmentManagerOpen = false;
                 StatusMessage = BrowserStatusText;
             }
         }
@@ -122,7 +125,6 @@ public partial class MainWindowViewModel
 
         if (ActiveProjectTab is null)
         {
-            IsEnvironmentManagerOpen = false;
             StatusMessage = "项目已删除，已返回项目列表。";
         }
         else

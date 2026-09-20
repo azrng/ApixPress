@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels.Base;
@@ -6,19 +6,36 @@ using Azrng.Core.Results;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Xml.Linq;
+using Avalonia.Threading;
 
 namespace ApixPress.App.ViewModels;
 
 public partial class ResponseSectionViewModel : ViewModelBase
 {
     private const int MaxSynchronousFormattedBodyLength = 256 * 1024;
+    private const int MaxSynchronousFormatThreshold = 64 * 1024;
     private const int MaxSearchableBodyLength = 1024 * 1024;
+    // 小正文即时搜索保持零感知延迟；超过该长度（最长 1MB）的循环扫描合并进 250ms 防抖
+    private const int InstantSearchMaxBodyLength = 16 * 1024;
+    private const int MaxDisplayBodyCharacters = 256 * 1024;
+    private const int MaxActualRequestBodyCharacters = 256 * 1024;
+    private const string FormattingBodyPlaceholder = "正在格式化响应正文...";
 
     private static readonly JsonSerializerOptions PrettyJsonOptions = new()
     {
         WriteIndented = true,
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
+
+    private CancellationTokenSource? _formatBodyCancellationTokenSource;
+    private CancellationTokenSource? _bodySearchDebounceCancellationTokenSource;
+    private int _formatBodyGeneration;
+    // 当前提示的严重度：info / warning / danger，用于横幅左侧色条与标题着色
+    private string _noticeSeverity = "info";
+
+    public bool IsNoticeDanger => ShowResponseNotice && _noticeSeverity == "danger";
+
+    public bool IsNoticeWarning => ShowResponseNotice && _noticeSeverity == "warning";
 
     [ObservableProperty]
     private bool hasResponse;
@@ -46,6 +63,46 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     [ObservableProperty]
     private string headersText = string.Empty;
+
+    /// <summary>响应 Headers 只读键值行（对齐原型 kv-grid），每次响应整体替换</summary>
+    public IReadOnlyList<ResponseHeaderRowViewModel> HeaderRows { get; private set; } = [];
+
+    public bool HasHeaderRows => HeaderRows.Count > 0;
+
+    [ObservableProperty]
+    private string actualRequestMethod = string.Empty;
+
+    [ObservableProperty]
+    private string actualRequestUrl = string.Empty;
+
+    [ObservableProperty]
+    private string actualRequestBodyContentType = string.Empty;
+
+    [ObservableProperty]
+    private string actualRequestBodyText = string.Empty;
+
+    /// <summary>实际请求 Header 只读键值行，每次响应整体替换</summary>
+    public IReadOnlyList<ResponseHeaderRowViewModel> ActualRequestHeaderRows { get; private set; } = [];
+
+    public bool HasActualRequestHeaderRows => ActualRequestHeaderRows.Count > 0;
+
+    /// <summary>是否有可展示的实际请求数据；失败结果与旧历史记录没有该数据</summary>
+    public bool HasActualRequest => !string.IsNullOrWhiteSpace(ActualRequestUrl);
+
+    public bool HasActualRequestBody => !string.IsNullOrEmpty(ActualRequestBodyText);
+
+    public bool HasActualRequestBodyContentType => !string.IsNullOrEmpty(ActualRequestBodyContentType);
+
+    /// <summary>方法徽章配色沿用既有 Light* 惯例（GET 绿 / DELETE 红等），对齐用例列表的方法徽章</summary>
+    public string ActualRequestMethodBadgeClass => ActualRequestMethod switch
+    {
+        "GET" => "Light Success",
+        "POST" => "Light Warning",
+        "PUT" => "Light Primary",
+        "DELETE" => "Light Danger",
+        "PATCH" => "Light Success",
+        _ => "Light Secondary"
+    };
 
     [ObservableProperty]
     private bool showResponseNotice;
@@ -99,6 +156,13 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     public void ApplyResult(IResultModel<ResponseSnapshotDto> result, RequestSnapshotDto request)
     {
+        // 大响应时 BodyText 写入与 JSON 格式化是响应区卡顿的主要来源，整段计时
+        PerfLog.Measure("响应·结果渲染", () => ApplyResultCore(result, request));
+    }
+
+    private void ApplyResultCore(IResultModel<ResponseSnapshotDto> result, RequestSnapshotDto request)
+    {
+        CancelPendingBodyFormat();
         IsLoading = false;
         HasResponse = true;
         ShowPlaceholder = false;
@@ -111,6 +175,8 @@ public partial class ResponseSectionViewModel : ViewModelBase
             SizeText = string.Empty;
             BodyText = result.Message;
             HeadersText = string.Empty;
+            SetHeaderRows([]);
+            ApplyActualRequest(result.Data?.ActualRequest ?? BuildFallbackActualRequest(request));
             return;
         }
 
@@ -118,13 +184,79 @@ public partial class ResponseSectionViewModel : ViewModelBase
         StatusText = r.StatusCode is { } code ? $"HTTP {code}" : "请求完成";
         DurationText = $"{r.DurationMs} ms";
         SizeText = FormatResponseSizeText(r);
-        BodyText = BuildDisplayBody(r);
         HeadersText = string.Join(Environment.NewLine, r.Headers.Select(h => $"{h.Name}: {h.Value}"));
+        SetHeaderRows(r.Headers
+            .Select(h => new ResponseHeaderRowViewModel(h.Name, h.Value))
+            .ToArray());
+        ApplyActualRequest(r.ActualRequest);
         ApplyStatusNotice(r.StatusCode);
+
+        if (r.Content is { Length: > MaxSynchronousFormatThreshold })
+        {
+            BodyText = FormattingBodyPlaceholder;
+            _ = FormatBodyInBackgroundAsync(r, ++_formatBodyGeneration);
+        }
+        else
+        {
+            BodyText = BuildDisplayBody(r);
+        }
+    }
+
+    public async Task WaitForPendingBodyFormatAsync(TimeSpan? timeout = null)
+    {
+        var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(5));
+        while (DateTime.UtcNow < deadline)
+        {
+            if (!string.Equals(BodyText, FormattingBodyPlaceholder, StringComparison.Ordinal)
+                || _formatBodyCancellationTokenSource is null)
+            {
+                return;
+            }
+
+            await Task.Delay(20);
+        }
+    }
+
+    private async Task FormatBodyInBackgroundAsync(ResponseSnapshotDto response, int generation)
+    {
+        var cancellationToken = CancellationTokenSourceHelper
+            .Refresh(ref _formatBodyCancellationTokenSource)
+            .Token;
+
+        try
+        {
+            var body = await Task.Run(() => BuildDisplayBody(response), cancellationToken);
+            if (cancellationToken.IsCancellationRequested || generation != _formatBodyGeneration || IsDisposed)
+            {
+                return;
+            }
+
+            void ApplyBody()
+            {
+                if (IsDisposed || generation != _formatBodyGeneration)
+                {
+                    return;
+                }
+
+                BodyText = body;
+            }
+
+            if (Avalonia.Application.Current is null)
+            {
+                ApplyBody();
+                return;
+            }
+
+            await Dispatcher.UIThread.InvokeAsync(ApplyBody);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
     }
 
     public void Reset()
     {
+        CancelPendingBodyFormat();
         IsLoading = false;
         HasResponse = false;
         ShowPlaceholder = true;
@@ -133,6 +265,8 @@ public partial class ResponseSectionViewModel : ViewModelBase
         SizeText = string.Empty;
         BodyText = string.Empty;
         HeadersText = string.Empty;
+        SetHeaderRows([]);
+        ClearActualRequest();
         ClearResponseNotice();
         BodySearchText = string.Empty;
         BodySearchResultText = string.Empty;
@@ -140,6 +274,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     public void BeginLoading(string? loadingText = null)
     {
+        CancelPendingBodyFormat();
         LoadingText = string.IsNullOrWhiteSpace(loadingText)
             ? "正在发送请求..."
             : loadingText.Trim();
@@ -161,6 +296,18 @@ public partial class ResponseSectionViewModel : ViewModelBase
         }
     }
 
+    protected override void DisposeManaged()
+    {
+        CancelPendingBodyFormat();
+        CancellationTokenSourceHelper.CancelAndDispose(ref _bodySearchDebounceCancellationTokenSource);
+    }
+
+    private void CancelPendingBodyFormat()
+    {
+        _formatBodyGeneration++;
+        CancellationTokenSourceHelper.CancelAndDispose(ref _formatBodyCancellationTokenSource);
+    }
+
     partial void OnStatusTextChanged(string value)
     {
         OnPropertyChanged(nameof(StatusBadgeClass));
@@ -176,6 +323,26 @@ public partial class ResponseSectionViewModel : ViewModelBase
         UpdateBodySearchResult();
     }
 
+    private async Task DebounceBodySearchAsync()
+    {
+        var cts = CancellationTokenSourceHelper.Refresh(ref _bodySearchDebounceCancellationTokenSource);
+        try
+        {
+            await Task.Delay(250, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        UpdateBodySearchResult();
+    }
+
     partial void OnBodySearchResultTextChanged(string value)
     {
         OnPropertyChanged(nameof(HasBodySearchMatches));
@@ -184,6 +351,9 @@ public partial class ResponseSectionViewModel : ViewModelBase
     private void ApplyFailureNotice(string? code, string message)
     {
         ShowResponseNotice = true;
+        _noticeSeverity = "danger";
+        OnPropertyChanged(nameof(IsNoticeDanger));
+        OnPropertyChanged(nameof(IsNoticeWarning));
         ResponseNoticeTitle = code switch
         {
             "request_cancelled" => "请求已取消",
@@ -206,6 +376,15 @@ public partial class ResponseSectionViewModel : ViewModelBase
         }
 
         ShowResponseNotice = true;
+        _noticeSeverity = statusCode switch
+        {
+            >= 300 and < 400 => "warning",
+            >= 400 and < 500 => "warning",
+            >= 500 => "danger",
+            _ => "info"
+        };
+        OnPropertyChanged(nameof(IsNoticeDanger));
+        OnPropertyChanged(nameof(IsNoticeWarning));
         ResponseNoticeTitle = statusCode switch
         {
             >= 300 and < 400 => $"重定向响应 HTTP {statusCode}",
@@ -225,6 +404,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
     private void ClearResponseNotice()
     {
         ShowResponseNotice = false;
+        _noticeSeverity = "info";
         ResponseNoticeTitle = string.Empty;
         ResponseNoticeText = string.Empty;
     }
@@ -241,9 +421,121 @@ public partial class ResponseSectionViewModel : ViewModelBase
         };
     }
 
+    private void SetHeaderRows(IReadOnlyList<ResponseHeaderRowViewModel> rows)
+    {
+        HeaderRows = rows;
+        OnPropertyChanged(nameof(HeaderRows));
+        OnPropertyChanged(nameof(HasHeaderRows));
+    }
+
+    private void ApplyActualRequest(ActualRequestSnapshotDto? actualRequest)
+    {
+        if (actualRequest is null)
+        {
+            ClearActualRequest();
+            return;
+        }
+
+        ActualRequestMethod = actualRequest.Method;
+        ActualRequestUrl = actualRequest.Url;
+        ActualRequestBodyContentType = actualRequest.BodyContentType;
+        ActualRequestBodyText = LimitActualRequestBodyText(actualRequest.BodyText);
+        SetActualRequestHeaderRows(actualRequest.Headers
+            .Select(h => new ResponseHeaderRowViewModel(h.Name, h.Value))
+            .ToArray());
+    }
+
+    private static ActualRequestSnapshotDto? BuildFallbackActualRequest(RequestSnapshotDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Method) && string.IsNullOrWhiteSpace(request.Url))
+        {
+            return null;
+        }
+
+        var headers = request.Headers
+            .Where(header => header.IsEnabled && !string.IsNullOrWhiteSpace(header.Name))
+            .Select(header => new ResponseHeaderDto
+            {
+                Name = header.Name,
+                Value = header.Value
+            })
+            .ToList();
+
+        var bodyContentType = request.BodyMode switch
+        {
+            BodyModes.RawJson => "application/json",
+            BodyModes.RawXml => "application/xml",
+            BodyModes.RawText => "text/plain",
+            BodyModes.FormUrlEncoded => "application/x-www-form-urlencoded",
+            BodyModes.FormData => "multipart/form-data",
+            BodyModes.Binary => "application/octet-stream",
+            _ => string.Empty
+        };
+
+        return new ActualRequestSnapshotDto
+        {
+            Method = request.Method.ToUpperInvariant(),
+            Url = request.Url,
+            Headers = headers,
+            BodyContentType = bodyContentType,
+            BodyText = request.BodyMode == BodyModes.Binary
+                ? $"[二进制文件] {request.BodyContent}"
+                : request.BodyContent,
+            HasBody = request.BodyMode != BodyModes.None
+                       && (!string.IsNullOrWhiteSpace(request.BodyContent) || request.FormFields.Count > 0)
+        };
+    }
+
+    private void ClearActualRequest()
+    {
+        ActualRequestMethod = string.Empty;
+        ActualRequestUrl = string.Empty;
+        ActualRequestBodyContentType = string.Empty;
+        ActualRequestBodyText = string.Empty;
+        SetActualRequestHeaderRows([]);
+    }
+
+    private static string LimitActualRequestBodyText(string body)
+    {
+        if (string.IsNullOrEmpty(body) || body.Length <= MaxActualRequestBodyCharacters)
+        {
+            return body;
+        }
+
+        return $"{body[..MaxActualRequestBodyCharacters]}{Environment.NewLine}{Environment.NewLine}[请求体过大，界面仅展示前 {UiFormatHelper.FormatBytes(MaxActualRequestBodyCharacters)}。]";
+    }
+
+    private void SetActualRequestHeaderRows(IReadOnlyList<ResponseHeaderRowViewModel> rows)
+    {
+        ActualRequestHeaderRows = rows;
+        OnPropertyChanged(nameof(ActualRequestHeaderRows));
+        OnPropertyChanged(nameof(HasActualRequestHeaderRows));
+    }
+
+    partial void OnActualRequestUrlChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasActualRequest));
+    }
+
+    partial void OnActualRequestMethodChanged(string value)
+    {
+        OnPropertyChanged(nameof(ActualRequestMethodBadgeClass));
+    }
+
+    partial void OnActualRequestBodyTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasActualRequestBody));
+    }
+
+    partial void OnActualRequestBodyContentTypeChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasActualRequestBodyContentType));
+    }
+
     private void UpdateBodySearchResult()
     {
-        if (string.IsNullOrWhiteSpace(BodySearchText) || string.IsNullOrEmpty(BodyText))
+        if (string.IsNullOrWhiteSpace(BodySearchText) || string.IsNullOrEmpty(BodyText)
+            || string.Equals(BodyText, FormattingBodyPlaceholder, StringComparison.Ordinal))
         {
             BodySearchResultText = string.Empty;
             return;
@@ -255,6 +547,39 @@ public partial class ResponseSectionViewModel : ViewModelBase
             return;
         }
 
+        // 大正文（>16KB）的全文字符合并进 250ms 防抖，避免每键在 UI 线程循环扫描；
+        // 小正文即时搜索保持零感知延迟
+        if (BodyText.Length > InstantSearchMaxBodyLength)
+        {
+            _ = DebounceCountBodySearchMatchesAsync();
+            return;
+        }
+
+        CountBodySearchMatches();
+    }
+
+    private async Task DebounceCountBodySearchMatchesAsync()
+    {
+        var cts = CancellationTokenSourceHelper.Refresh(ref _bodySearchDebounceCancellationTokenSource);
+        try
+        {
+            await Task.Delay(250, cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        CountBodySearchMatches();
+    }
+
+    private void CountBodySearchMatches()
+    {
         var count = 0;
         var startIndex = 0;
         while (startIndex < BodyText.Length)
@@ -282,15 +607,26 @@ public partial class ResponseSectionViewModel : ViewModelBase
         var formattedBody = FormatResponseBody(response);
         if (!response.IsContentTruncated)
         {
-            return formattedBody;
+            return LimitDisplayBody(formattedBody);
         }
 
         var notice = response.SizeBytes > response.CapturedSizeBytes
             ? $"[响应体过大，当前仅展示前 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}，完整响应约 {UiFormatHelper.FormatBytes(response.SizeBytes)}。]"
             : $"[响应体过大，当前仅展示前 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}，完整大小未知。]";
-        return string.IsNullOrWhiteSpace(formattedBody)
+        var bodyWithNotice = string.IsNullOrWhiteSpace(formattedBody)
             ? notice
             : $"{formattedBody}{Environment.NewLine}{Environment.NewLine}{notice}";
+        return LimitDisplayBody(bodyWithNotice);
+    }
+
+    private static string LimitDisplayBody(string body)
+    {
+        if (string.IsNullOrEmpty(body) || body.Length <= MaxDisplayBodyCharacters)
+        {
+            return body;
+        }
+
+        return $"{body[..MaxDisplayBodyCharacters]}{Environment.NewLine}{Environment.NewLine}[界面仅展示前 {UiFormatHelper.FormatBytes(MaxDisplayBodyCharacters)}，避免大文本导致卡顿。]";
     }
 
     private static string FormatResponseSizeText(ResponseSnapshotDto response)

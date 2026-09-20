@@ -31,9 +31,47 @@ public sealed class EnvironmentVariableRepository : IEnvironmentVariableReposito
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await connection.QueryAsync<EnvironmentVariableEntity>(
-            new CommandDefinition(sql, new { EnvironmentId = environmentId }, cancellationToken: cancellationToken));
+        var items = await Task.Run(async () => await connection.QueryAsync<EnvironmentVariableEntity>(
+            new CommandDefinition(sql, new { EnvironmentId = environmentId }, cancellationToken: cancellationToken)));
         return items.ToList();
+    }
+
+    public async Task<IReadOnlyDictionary<string, IReadOnlyList<EnvironmentVariableEntity>>> GetByEnvironmentIdsAsync(
+        IEnumerable<string> environmentIds,
+        CancellationToken cancellationToken)
+    {
+        var ids = environmentIds
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (ids.Length == 0)
+        {
+            return new Dictionary<string, IReadOnlyList<EnvironmentVariableEntity>>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        const string sql = """
+                           select
+                               id Id,
+                               environment_id EnvironmentId,
+                               environment_name EnvironmentName,
+                               key Key,
+                               value Value,
+                               is_enabled IsEnabled
+                           from environment_variables
+                           where environment_id in @EnvironmentIds
+                           order by environment_id, key
+                           """;
+
+        using var connection = _connectionFactory.CreateConnection();
+        var items = await Task.Run(async () => await connection.QueryAsync<EnvironmentVariableEntity>(
+            new CommandDefinition(sql, new { EnvironmentIds = ids }, cancellationToken: cancellationToken)));
+        var result = new Dictionary<string, IReadOnlyList<EnvironmentVariableEntity>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var group in items.GroupBy(item => item.EnvironmentId, StringComparer.OrdinalIgnoreCase))
+        {
+            result[group.Key] = group.ToList();
+        }
+
+        return result;
     }
 
     public async Task UpsertAsync(EnvironmentVariableEntity entity, CancellationToken cancellationToken)
@@ -52,7 +90,7 @@ public sealed class EnvironmentVariableRepository : IEnvironmentVariableReposito
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken));
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken)));
     }
 
     public async Task UpsertRangeAsync(IReadOnlyList<EnvironmentVariableEntity> entities, CancellationToken cancellationToken)
@@ -62,28 +100,35 @@ public sealed class EnvironmentVariableRepository : IEnvironmentVariableReposito
             return;
         }
 
-        const string sql = """
-                           insert into environment_variables (
-                               id, environment_id, environment_name, key, value, is_enabled
-                           ) values (
-                               @Id, @EnvironmentId, @EnvironmentName, @Key, @Value, @IsEnabled
-                           )
-                           on conflict(environment_id, key) do update set
-                               id = excluded.id,
-                               environment_name = excluded.environment_name,
-                               value = excluded.value,
-                               is_enabled = excluded.is_enabled
-                           """;
+        const string insertSql = """
+                                 insert into environment_variables (
+                                     id, environment_id, environment_name, key, value, is_enabled
+                                 ) values (
+                                     @Id, @EnvironmentId, @EnvironmentName, @Key, @Value, @IsEnabled
+                                 )
+                                 """;
 
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-        await connection.ExecuteAsync(new CommandDefinition(
-            sql,
-            entities,
-            transaction,
-            cancellationToken: cancellationToken));
-        transaction.Commit();
+        // 连接打开、事务与提交整体放入线程池：Commit 不阻塞 UI 线程。
+        // 变量按整环境全量保存：先删后插。不能对 (environment_id, key) 做 on conflict 向上插入——
+        // 变量改名时旧行的 id 与新插入行的 id 相同但 key 不同，冲突落在主键 id 上会直接抛
+        // UNIQUE constraint failed: environment_variables.id（改名保存即崩溃）
+        await Task.Run(async () =>
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            await connection.ExecuteAsync(new CommandDefinition(
+                "delete from environment_variables where environment_id = @EnvironmentId",
+                new { EnvironmentId = entities[0].EnvironmentId },
+                transaction,
+                cancellationToken: cancellationToken));
+            await connection.ExecuteAsync(new CommandDefinition(
+                insertSql,
+                entities,
+                transaction,
+                cancellationToken: cancellationToken));
+            transaction.Commit();
+        });
     }
 
     public async Task<IReadOnlyDictionary<string, string>> GetEnabledDictionaryAsync(string environmentId, CancellationToken cancellationToken)
@@ -99,8 +144,8 @@ public sealed class EnvironmentVariableRepository : IEnvironmentVariableReposito
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await connection.QueryAsync<EnvironmentVariableKeyValueRow>(
-            new CommandDefinition(sql, new { EnvironmentId = environmentId }, cancellationToken: cancellationToken));
+        var items = await Task.Run(async () => await connection.QueryAsync<EnvironmentVariableKeyValueRow>(
+            new CommandDefinition(sql, new { EnvironmentId = environmentId }, cancellationToken: cancellationToken)));
         return items
             .GroupBy(item => item.Key, StringComparer.OrdinalIgnoreCase)
             .ToDictionary(group => group.Key, group => group.Last().Value, StringComparer.OrdinalIgnoreCase);
@@ -109,10 +154,10 @@ public sealed class EnvironmentVariableRepository : IEnvironmentVariableReposito
     public async Task DeleteAsync(string id, CancellationToken cancellationToken)
     {
         using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(new CommandDefinition(
+        await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(
             "delete from environment_variables where id = @Id",
             new { Id = id },
-            cancellationToken: cancellationToken));
+            cancellationToken: cancellationToken)));
     }
 
     private sealed class EnvironmentVariableKeyValueRow

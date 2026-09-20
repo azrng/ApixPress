@@ -46,6 +46,96 @@ public sealed partial class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task EnvironmentVariableService_ShouldSwitchActiveEnvironmentBeforeSavingAnotherActiveEnvironment()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var environmentService = new EnvironmentVariableService(new EnvironmentVariableRepository(factory), environmentRepository);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "环境切换项目"
+        }, CancellationToken.None)).Data!;
+
+        var saveResult = await environmentService.SaveEnvironmentAsync(new ProjectEnvironmentDto
+        {
+            ProjectId = project.Id,
+            Name = "测试",
+            BaseUrl = "https://test.example.com",
+            IsActive = true,
+            SortOrder = 2
+        }, CancellationToken.None);
+
+        Assert.True(saveResult.IsSuccess);
+        var environments = await environmentService.GetEnvironmentsAsync(project.Id, CancellationToken.None);
+        Assert.Equal(2, environments.Count);
+        var active = Assert.Single(environments, item => item.IsActive);
+        Assert.Equal("测试", active.Name);
+    }
+
+    [Fact]
+    public async Task EnvironmentVariableService_ShouldFillEmptyActiveEnvironmentBaseUrlFromImport()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var environmentService = new EnvironmentVariableService(new EnvironmentVariableRepository(factory), environmentRepository);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "BaseUrl 填充项目"
+        }, CancellationToken.None)).Data!;
+
+        var applied = await environmentService.ApplyImportedBaseUrlAsync(project.Id, "http://localhost:5000", CancellationToken.None);
+
+        Assert.NotNull(applied);
+        Assert.Equal("http://localhost:5000", applied!.BaseUrl);
+        Assert.True(applied.IsActive);
+        var environments = await environmentService.GetEnvironmentsAsync(project.Id, CancellationToken.None);
+        Assert.Equal("http://localhost:5000", Assert.Single(environments).BaseUrl);
+    }
+
+    [Fact]
+    public async Task EnvironmentVariableService_ShouldNotOverwriteConfiguredBaseUrlOnImport()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var environmentService = new EnvironmentVariableService(new EnvironmentVariableRepository(factory), environmentRepository);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "BaseUrl 保留项目"
+        }, CancellationToken.None)).Data!;
+
+        Assert.Null(await environmentService.ApplyImportedBaseUrlAsync(project.Id, string.Empty, CancellationToken.None));
+        Assert.Null(await environmentService.ApplyImportedBaseUrlAsync(string.Empty, "http://localhost:5000", CancellationToken.None));
+
+        var saveResult = await environmentService.SaveEnvironmentAsync(new ProjectEnvironmentDto
+        {
+            ProjectId = project.Id,
+            Name = "预发",
+            BaseUrl = "https://user-configured.example.com",
+            IsActive = true,
+            SortOrder = 2
+        }, CancellationToken.None);
+        Assert.True(saveResult.IsSuccess);
+
+        Assert.Null(await environmentService.ApplyImportedBaseUrlAsync(project.Id, "http://localhost:5000", CancellationToken.None));
+        var environments = await environmentService.GetEnvironmentsAsync(project.Id, CancellationToken.None);
+        Assert.Equal(2, environments.Count);
+        Assert.Equal("https://user-configured.example.com", Assert.Single(environments, item => item.IsActive).BaseUrl);
+        Assert.Equal(string.Empty, Assert.Single(environments, item => !item.IsActive).BaseUrl);
+    }
+
+    [Fact]
     public async Task RequestCaseService_ShouldPersistAndLoadCaseWithinProject()
     {
         using var factory = new TestSqliteConnectionFactory();
@@ -95,6 +185,55 @@ public sealed partial class WorkspacePersistenceTests
 
         var projectBCases = await caseService.GetCasesAsync(projectB.Id, CancellationToken.None);
         Assert.Empty(projectBCases);
+    }
+
+    [Fact]
+    public async Task RequestCaseService_ShouldDuplicateWithCopySuffixAndDeleteDuplicate()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        var projectService = new ProjectWorkspaceService(projectRepository, environmentRepository);
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Id = "project-1",
+            Name = "用例复制项目"
+        }, CancellationToken.None)).Data!;
+        var serializer = CreateSerializer();
+        var caseRepository = new RequestCaseRepository(factory);
+        var caseService = new RequestCaseService(caseRepository, serializer);
+        var source = (await caseService.SaveAsync(new RequestCaseDto
+        {
+            ProjectId = project.Id,
+            EntryType = "http-case",
+            ParentId = "interface-1",
+            Name = "成功响应",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "POST",
+                Url = "/orders",
+                BodyMode = BodyModes.RawJson,
+                BodyContent = "{\"id\":1}"
+            },
+            UpdatedAt = DateTime.UtcNow
+        }, CancellationToken.None)).Data!;
+
+        var duplicateResult = await caseService.DuplicateAsync(project.Id, source.Id, CancellationToken.None);
+
+        Assert.True(duplicateResult.IsSuccess);
+        var duplicate = Assert.IsType<RequestCaseDto>(duplicateResult.Data);
+        Assert.Equal("成功响应_copy", duplicate.Name);
+        Assert.NotEqual(source.Id, duplicate.Id);
+        Assert.Equal(source.ParentId, duplicate.ParentId);
+
+        var deleteResult = await caseService.DeleteAsync(project.Id, duplicate.Id, CancellationToken.None);
+
+        Assert.True(deleteResult.IsSuccess);
+        var cases = await caseService.GetCasesAsync(project.Id, CancellationToken.None);
+        Assert.Single(cases);
+        Assert.Equal(source.Id, cases[0].Id);
     }
 
     [Fact]
@@ -152,6 +291,47 @@ public sealed partial class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task RequestCaseService_SaveRangeAsync_ShouldRejectCasesWithoutProjectOrName()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var serializer = CreateSerializer();
+        var caseRepository = new RequestCaseRepository(factory);
+        var caseService = new RequestCaseService(caseRepository, serializer);
+
+        var missingProjectResult = await caseService.SaveRangeAsync(
+        [
+            new RequestCaseDto
+            {
+                Name = "缺少项目",
+                RequestSnapshot = new RequestSnapshotDto
+                {
+                    Method = "GET",
+                    Url = "/missing-project"
+                }
+            }
+        ], CancellationToken.None);
+        var missingNameResult = await caseService.SaveRangeAsync(
+        [
+            new RequestCaseDto
+            {
+                ProjectId = "project-1",
+                RequestSnapshot = new RequestSnapshotDto
+                {
+                    Method = "GET",
+                    Url = "/missing-name"
+                }
+            }
+        ], CancellationToken.None);
+
+        Assert.False(missingProjectResult.IsSuccess);
+        Assert.Contains("请先选择项目", missingProjectResult.Message, StringComparison.Ordinal);
+        Assert.False(missingNameResult.IsSuccess);
+        Assert.Contains("请输入用例名称", missingNameResult.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task RequestHistoryRepository_ShouldProjectHistorySummaryFromSqlite()
     {
         using var factory = new TestSqliteConnectionFactory();
@@ -190,7 +370,8 @@ public sealed partial class WorkspacePersistenceTests
         Assert.Equal(201, item.StatusCode);
         Assert.Equal(128, item.DurationMs);
         Assert.Equal(2048, item.SizeBytes);
-        Assert.NotEmpty(item.ResponseSnapshotJson);
+        // 摘要投影不携带响应快照原文（单条可达 MB 级，列表场景不使用），详情走单条查询
+        Assert.Equal(string.Empty, item.ResponseSnapshotJson);
     }
 
     [Fact]

@@ -13,6 +13,9 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     private const string StorageSection = "storage";
     private const string AboutSection = "about";
 
+    // 更新就绪后到关窗的停留时间：给用户看到“即将自动重启”的缓冲，避免窗口瞬间消失又被当成异常退出
+    private const int UpdateRestartDelayMilliseconds = 1500;
+
     private readonly IAppShellSettingsService _appShellSettingsService;
     private readonly IApplicationUpdateService _applicationUpdateService;
     private readonly IApplicationRestartService _applicationRestartService;
@@ -79,7 +82,9 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
         _ => "设置会自动保存到用户数据目录，并在后续请求中生效。"
     };
 
-    public string CheckForUpdatesButtonText => IsCheckingForUpdates ? "检查中..." : "检查更新";
+    public string CheckForUpdatesButtonText => IsCheckingForUpdates
+        ? "检查中..."
+        : IsUpdating ? "更新中..." : "检查更新";
 
     public string ClearSystemDataButtonText => IsClearingSystemData ? "清空中..." : "一键清空系统数据";
 
@@ -150,9 +155,24 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string latestAvailableVersion = "尚未检查";
 
+    [ObservableProperty]
+    private bool isUpdating;
+
+    [ObservableProperty]
+    private double updateProgressPercent;
+
+    [ObservableProperty]
+    private bool isUpdateProgressIndeterminate;
+
+    [ObservableProperty]
+    private string updateStageText = string.Empty;
+
+    private CancellationTokenSource? _updateCancellationTokenSource;
+
     protected override void DisposeManaged()
     {
         CancellationTokenSourceHelper.CancelAndDispose(ref _shellSettingsSaveCancellationTokenSource);
+        CancellationTokenSourceHelper.CancelAndDispose(ref _updateCancellationTokenSource);
     }
 
     public async Task InitializeAsync()
@@ -236,6 +256,12 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     partial void OnIsCheckingForUpdatesChanged(bool value)
     {
         OnPropertyChanged(nameof(CheckForUpdatesButtonText));
+    }
+
+    partial void OnIsUpdatingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CheckForUpdatesButtonText));
+        CancelUpdateCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnIsClearingSystemDataChanged(bool value)
@@ -404,7 +430,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     [RelayCommand]
     private async Task CheckForUpdatesAsync()
     {
-        if (IsCheckingForUpdates || IsDisposed)
+        if (IsCheckingForUpdates || IsUpdating || IsDisposed)
         {
             return;
         }
@@ -444,28 +470,123 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
                 return;
             }
 
-            var startingMessage = $"发现新版本 {checkResult.Data.LatestVersion}，正在启动更新程序...";
+            var startingMessage = $"发现新版本 {checkResult.Data.LatestVersion}，开始下载更新包...";
             PublishStatus(startingMessage);
             AboutUpdateStatus = startingMessage;
 
-            var startResult = await _applicationUpdateService.StartUpdateAsync(checkResult.Data, CancellationToken.None);
-            if (!startResult.IsSuccess)
-            {
-                var startFailedMessage = $"启动更新失败：{startResult.Message}";
-                PublishStatus(startFailedMessage);
-                AboutUpdateStatus = startFailedMessage;
-                return;
-            }
-
-            var startedMessage = $"更新程序已启动，将通过 {UpdateChannelName} 拉取新版本。";
-            PublishStatus(startedMessage);
-            AboutUpdateStatus = startedMessage;
-            _windowHostService.MainWindow?.Close();
+            await RunUpdateFlowAsync(checkResult.Data);
         }
         finally
         {
             IsCheckingForUpdates = false;
         }
+    }
+
+    /// <summary>
+    /// 主进程内执行完整更新：下载→校验→解压→生成替换脚本→退出并自动重启。
+    /// 成功后关闭主窗口，由隐藏脚本等待进程退出后覆盖安装目录并重启新版本。
+    /// </summary>
+    private async Task RunUpdateFlowAsync(AppUpdateCheckResultDto updateInfo)
+    {
+        IsUpdating = true;
+        UpdateProgressPercent = 0;
+        IsUpdateProgressIndeterminate = false;
+        CancellationTokenSourceHelper.CancelAndDispose(ref _updateCancellationTokenSource);
+        _updateCancellationTokenSource = new CancellationTokenSource();
+        var cancellationToken = _updateCancellationTokenSource.Token;
+        var progress = new Progress<AppUpdateProgressDto>(ApplyUpdateProgress);
+
+        try
+        {
+            var prepared = await _applicationUpdateService.PrepareUpdatePackageAsync(updateInfo, progress, cancellationToken);
+            if (!prepared.IsSuccess || prepared.Data is null)
+            {
+                ReportUpdateAborted(prepared.Message);
+                return;
+            }
+
+            var applyingMessage = "更新包已就绪，正在应用更新...";
+            UpdateStageText = applyingMessage;
+            AboutUpdateStatus = applyingMessage;
+            PublishStatus(applyingMessage);
+
+            var applied = await _applicationUpdateService.ApplyStagedUpdateAsync(prepared.Data, cancellationToken);
+            if (!applied.IsSuccess)
+            {
+                ReportUpdateAborted(applied.Message);
+                return;
+            }
+
+            // 脚本已启动，更新进入不可取消阶段；取消按钮随 IsUpdating 复位而禁用
+            IsUpdating = false;
+
+            var readyMessage = $"更新已就绪（{updateInfo.LatestVersion}），即将退出并自动重启...";
+            UpdateStageText = readyMessage;
+            AboutUpdateStatus = readyMessage;
+            PublishStatus(readyMessage);
+
+            // 短暂停留让用户看到完成状态：窗口瞬间消失会再次造成“程序消失”的错觉
+            await Task.Delay(UpdateRestartDelayMilliseconds, CancellationToken.None);
+            _windowHostService.MainWindow?.Close();
+        }
+        finally
+        {
+            IsUpdating = false;
+            CancellationTokenSourceHelper.CancelAndDispose(ref _updateCancellationTokenSource);
+        }
+    }
+
+    /// <summary>取消进行中的更新：中断下载并让服务端清理临时工作区。</summary>
+    [RelayCommand(CanExecute = nameof(CanCancelUpdate))]
+    private void CancelUpdate()
+    {
+        _updateCancellationTokenSource?.Cancel();
+    }
+
+    private bool CanCancelUpdate() => IsUpdating && !IsDisposed;
+
+    /// <summary>更新流程中止时区分“用户取消”与“真实失败”，避免把主动取消当错误弹给用户。</summary>
+    private void ReportUpdateAborted(string serviceMessage)
+    {
+        var isCancelled = _updateCancellationTokenSource is { IsCancellationRequested: true };
+        var message = isCancelled ? "已取消更新。" : serviceMessage;
+        UpdateStageText = string.Empty;
+        UpdateProgressPercent = 0;
+        AboutUpdateStatus = message;
+        PublishStatus(message);
+    }
+
+    private void ApplyUpdateProgress(AppUpdateProgressDto progress)
+    {
+        if (progress.Stage != AppUpdateProgressStage.Downloading)
+        {
+            IsUpdateProgressIndeterminate = false;
+            UpdateStageText = progress.Stage switch
+            {
+                AppUpdateProgressStage.Verifying => "校验安装包哈希...",
+                AppUpdateProgressStage.Extracting => "解压安装包...",
+                _ => "正在准备更新..."
+            };
+            return;
+        }
+
+        if (progress.TotalBytes is { } totalBytes and > 0)
+        {
+            IsUpdateProgressIndeterminate = false;
+            var percent = Math.Round(progress.ReceivedBytes * 100.0 / totalBytes, 1);
+            UpdateProgressPercent = percent;
+            UpdateStageText = $"下载更新包 {percent:0.0}%（{FormatMegabytes(progress.ReceivedBytes)}/{FormatMegabytes(totalBytes)}）";
+            return;
+        }
+
+        // 服务端未返回 Content-Length：进度条退化为不确定态，只展示已下载量
+        IsUpdateProgressIndeterminate = true;
+        UpdateStageText = $"下载更新包 {FormatMegabytes(progress.ReceivedBytes)}";
+    }
+
+    private static string FormatMegabytes(long bytes)
+    {
+        return $"{bytes / 1024.0 / 1024.0:0.0} MB";
     }
 
     private async Task LoadShellSettingsAsync()

@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -11,24 +11,50 @@
         RowDefinitions="Auto,*"
         RowSpacing="{StaticResource Space.3}"
         HorizontalAlignment="Stretch">
-    <u:SelectionList Grid.Row="0"
-                     ItemsSource="{Binding ConfigTab.BodyModeOptions}"
-                     SelectedItem="{Binding ConfigTab.SelectedBodyModeOption}">
-      <u:SelectionList.ItemsPanel>
-        <ItemsPanelTemplate>
-          <StackPanel Orientation="Horizontal" />
-        </ItemsPanelTemplate>
-      </u:SelectionList.ItemsPanel>
-      <u:SelectionList.ItemTemplate>
-        <DataTemplate x:DataType="vm:BodyModeOptionViewModel">
-          <Border Padding="{StaticResource Pad.2}">
-            <TextBlock Text="{Binding DisplayName}" />
-          </Border>
-        </DataTemplate>
-      </u:SelectionList.ItemTemplate>
-    </u:SelectionList>
+    <!-- 对齐原型 body-modes：模式选择与内容类型提示并排一行，编辑器紧随其上移 -->
+    <Grid Grid.Row="0"
+          ColumnDefinitions="Auto,*,Auto"
+          ColumnSpacing="{StaticResource Space.3}">
+      <u:SelectionList Grid.Column="0"
+                       Classes="HttpBodyModeSelector"
+                       ItemsSource="{Binding ConfigTab.BodyModeOptions}"
+                       SelectedItem="{Binding ConfigTab.SelectedBodyModeOption}">
+        <u:SelectionList.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Horizontal" />
+          </ItemsPanelTemplate>
+        </u:SelectionList.ItemsPanel>
+        <u:SelectionList.ItemTemplate>
+          <DataTemplate x:DataType="vm:BodyModeOptionViewModel">
+            <Border Classes="HttpBodyModeOption">
+              <TextBlock Text="{Binding DisplayName}" />
+            </Border>
+          </DataTemplate>
+        </u:SelectionList.ItemTemplate>
+      </u:SelectionList>
+      <TextBlock Grid.Column="1"
+                 Classes="HttpBodyModeHintText"
+                 VerticalAlignment="Center"
+                 TextTrimming="CharacterEllipsis"
+                 Text="{Binding ConfigTab.BodyModeHint}" />
+      <StackPanel Grid.Column="2"
+                  Orientation="Horizontal"
+                  Spacing="{StaticResource Space.2}">
+        <Button Classes="HttpBodyExampleButton"
+                Content="生成示例"
+                ToolTip.Tip="使用导入接口提供的请求体示例"
+                IsVisible="{Binding ConfigTab.CanGenerateBodyExample}"
+                Command="{Binding ConfigTab.GenerateBodyExampleCommand}" />
+        <Button Classes="HttpJsonFormatButton"
+                Content="格式化"
+                ToolTip.Tip="格式化当前 JSON 请求体"
+                IsVisible="{Binding ConfigTab.IsRawJsonBodyMode}"
+                Command="{Binding ConfigTab.FormatJsonBodyCommand}" />
+      </StackPanel>
+    </Grid>
 
     <Grid Grid.Row="1"
+          Classes="HttpBodyContentHost"
           HorizontalAlignment="Stretch"
           VerticalAlignment="Stretch">
       <Grid IsVisible="{Binding ConfigTab.IsBodyModeFormData}"
@@ -36,67 +62,146 @@
             RowSpacing="{StaticResource Space.2}"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch">
-        <Button Grid.Row="0"
-                Classes="AddButton FormDataAddButton"
-                HorizontalAlignment="Right"
-                Content="添加字段"
-                Command="{Binding ConfigTab.AddFormFieldCommand}" />
+        <Border Grid.Row="0" Classes="HttpConfigSectionBar">
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.3}">
+            <TextBlock Classes="CaptionText"
+                       VerticalAlignment="Center"
+                       Text="字段按当前类型编码，取消勾选的字段不会参与请求。" />
+            <Button Grid.Column="1"
+                    Classes="AddButton HttpConfigAddButton"
+                    Content="添加字段"
+                    Command="{Binding ConfigTab.AddFormFieldCommand}" />
+          </Grid>
+        </Border>
 
         <Border Grid.Row="1"
-                Classes="FormDataTableSurface">
+                Classes="HttpConfigTableSurface">
           <Grid RowDefinitions="Auto,*">
+            <!-- 对齐原型 03：启用/参数名/类型/参数值（文件字段展示 chips）+删除 -->
             <Border Grid.Row="0"
-                    Classes="HttpRequestTableHeader FormDataTableHeader">
-              <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
+                    Classes="HttpConfigTableHeader">
+              <Grid ColumnDefinitions="48,2.2*,1.2*,3*,44"
                     ColumnSpacing="{StaticResource Space.3}">
+                <TextBlock Grid.Column="0" Classes="CaptionText" Text="发送" />
                 <TextBlock Grid.Column="1" Classes="CaptionText" Text="字段名" />
-                <TextBlock Grid.Column="2" Classes="CaptionText" Text="字段值" />
-                <TextBlock Grid.Column="3" Classes="CaptionText" Text="类型" />
-                <TextBlock Grid.Column="4" Classes="CaptionText" Text="说明" />
+                <TextBlock Grid.Column="2" Classes="CaptionText" Text="类型" />
+                <TextBlock Grid.Column="3" Classes="CaptionText" Text="字段值" />
               </Grid>
             </Border>
 
             <Grid Grid.Row="1"
                   HorizontalAlignment="Stretch"
                   VerticalAlignment="Stretch">
-              <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                            VerticalScrollBarVisibility="Auto"
-                            IsVisible="{Binding ConfigTab.HasFormFields}">
-                <ItemsControl ItemsSource="{Binding ConfigTab.FormFields}"
+
+                <ListBox Classes="ParameterGridList" IsVisible="{Binding ConfigTab.HasFormFields}" ItemsSource="{Binding ConfigTab.FormFields}"
                               HorizontalAlignment="Stretch">
                   <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
-                      <Border Classes="ParameterRow HttpRequestParameterRow"
+                      <Border Classes="ParameterRow HttpConfigTableRow"
                               HorizontalAlignment="Stretch">
-                        <Grid ColumnDefinitions="32,2.2*,2.2*,96,2.4*,48"
+                        <Grid ColumnDefinitions="48,2.2*,1.2*,3*,44"
                               ColumnSpacing="{StaticResource Space.3}">
                           <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
-                          <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" Watermark="字段名" />
-                          <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" Watermark="字段值" />
-                          <TextBlock Grid.Column="3" Classes="CaptionText" Text="String" VerticalAlignment="Center" />
-                          <TextBox Grid.Column="4" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" Watermark="说明" />
-                          <u:IconButton Grid.Column="5"
+                          <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" PlaceholderText="字段名" />
+                          <!-- 类型 chip：text/file 互切（原型 type-chip），仅 FormData 模式可切换 -->
+                          <Button Grid.Column="2"
+                                  Classes="HttpFieldTypeChip"
+                                  Classes.file="{Binding IsFileField}"
+                                  Content="{Binding FieldTypeDisplayText}"
+                                  VerticalAlignment="Center"
+                                  Command="{Binding $parent[UserControl].((vm:ProjectTabViewModel)DataContext).ConfigTab.ToggleFormFieldTypeCommand}"
+                                  CommandParameter="{Binding}" />
+                          <Panel Grid.Column="3">
+                            <TextBox IsVisible="{Binding !IsFileField}"
+                                     Classes="ParameterInput HttpTableInput"
+                                     Text="{Binding Value}"
+                                     PlaceholderText="字段值" />
+                            <!-- 文件字段：多文件 chip + 添加文件（原型 file-chips/file-add） -->
+                            <StackPanel IsVisible="{Binding IsFileField}"
+                                        Orientation="Horizontal"
+                                        Spacing="{StaticResource Space.2}"
+                                        VerticalAlignment="Center">
+                              <ItemsControl ItemsSource="{Binding Files}">
+                                <ItemsControl.ItemsPanel>
+                                  <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.1}" />
+                                  </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                  <DataTemplate x:DataType="vm:FormFieldFileViewModel">
+                                    <Border Classes="HttpFileChip">
+                                      <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.1}">
+                                        <TextBlock Classes="HttpFileChipName" Text="{Binding Name}" ToolTip.Tip="{Binding Path}" />
+                                        <TextBlock Classes="HttpFileChipSize" Text="{Binding SizeText}" />
+                                        <Button Classes="HttpFileChipRemove"
+                                                Content="✕"
+                                                Command="{Binding $parent[UserControl].((vm:ProjectTabViewModel)DataContext).ConfigTab.RemoveFormFieldFileCommand}"
+                                                CommandParameter="{Binding}" />
+                                      </StackPanel>
+                                    </Border>
+                                  </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                              </ItemsControl>
+                              <Button Classes="HttpFileAddButton"
+                                      Content="＋ 文件"
+                                      Command="{Binding $parent[UserControl].((vm:ProjectTabViewModel)DataContext).ConfigTab.AddFormFieldFilesCommand}"
+                                      CommandParameter="{Binding}" />
+                            </StackPanel>
+                          </Panel>
+                          <u:IconButton Grid.Column="4"
                                         Classes="Danger"
                                         Theme="{DynamicResource BorderlessIconButton}"
                                         Icon="{StaticResource SemiIconDelete}"
-                                        Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
+                                        Command="{Binding $parent[UserControl].((vm:ProjectTabViewModel)DataContext).ConfigTab.RemoveParameterCommand}"
                                         CommandParameter="{Binding}" />
                         </Grid>
                       </Border>
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
-                </ItemsControl>
-              </ScrollViewer>
+                </ListBox>
 
-              <Border Classes="FormDataEmptyState"
+              <Border Classes="HttpConfigEmptyState"
                       IsVisible="{Binding ConfigTab.ShowFormDataEmptyState}">
                 <TextBlock Classes="CaptionText"
-                           Text="暂无字段" />
+                           Text="尚未添加字段" />
               </Border>
             </Grid>
           </Grid>
         </Border>
       </Grid>
+
+      <!-- Binary 模式：已选文件 chip + 换文件/移除 -->
+      <StackPanel IsVisible="{Binding ConfigTab.HasBinaryFile}"
+                  Orientation="Horizontal"
+                  Spacing="{StaticResource Space.2}"
+                  VerticalAlignment="Top"
+                  HorizontalAlignment="Left">
+        <Border Classes="HttpFileChip">
+          <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.1}">
+            <TextBlock Classes="HttpFileChipName" Text="{Binding ConfigTab.BinaryFileName}" ToolTip.Tip="{Binding ConfigTab.RequestBody}" />
+            <TextBlock Classes="HttpFileChipSize" Text="{Binding ConfigTab.BinaryFileSizeText}" />
+            <Button Classes="HttpFileChipRemove"
+                    Content="✕"
+                    Command="{Binding ConfigTab.ClearBinaryFileCommand}" />
+          </StackPanel>
+        </Border>
+        <Button Classes="HttpFileAddButton"
+                Content="更换文件"
+                Command="{Binding ConfigTab.PickBinaryFileCommand}" />
+      </StackPanel>
+
+      <!-- Binary 模式空态：选择文件入口 -->
+      <Border IsVisible="{Binding ConfigTab.ShowBinaryEmptyState}"
+              Classes="HttpConfigEmptyState HttpBodyEmptyState">
+        <StackPanel Spacing="{StaticResource Space.2}">
+          <TextBlock Classes="HttpConfigSectionLabel" Text="未选择文件" />
+          <Button Classes="HttpFileAddButton"
+                  Content="选择文件"
+                  HorizontalAlignment="Center"
+                  Command="{Binding ConfigTab.PickBinaryFileCommand}" />
+          <TextBlock Classes="CaptionText" HorizontalAlignment="Center" Text="文件将以 application/octet-stream 作为请求体发送。" />
+        </StackPanel>
+      </Border>
 
       <Border IsVisible="{Binding ConfigTab.HasRawBodyEditor}"
               Classes="RawEditorCard">
@@ -105,9 +210,17 @@
                  Background="Transparent"
                  TextWrapping="Wrap"
                  VerticalContentAlignment="Top"
-                 Watermark="{Binding ConfigTab.RequestBodyWatermark}"
+                 PlaceholderText="{Binding ConfigTab.RequestBodyWatermark}"
                  Text="{Binding ConfigTab.RequestBody}"
                  FontFamily="{StaticResource Font.Monospace}" />
+      </Border>
+
+      <Border IsVisible="{Binding ConfigTab.ShowBodyModeEmptyState}"
+              Classes="HttpConfigEmptyState HttpBodyEmptyState">
+        <StackPanel Spacing="{StaticResource Space.1}">
+          <TextBlock Classes="HttpConfigSectionLabel" Text="当前请求不包含 Body" />
+          <TextBlock Classes="CaptionText" Text="选择 JSON、XML、Text 或表单类型后，在这里填写请求体。" />
+        </StackPanel>
       </Border>
     </Grid>
   </Grid>

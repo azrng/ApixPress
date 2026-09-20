@@ -1,5 +1,7 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Input;
+using ApixPress.App.Data.Context;
+using ApixPress.App.Helpers;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels;
 using ApixPress.App.Views.Controls;
@@ -13,9 +15,13 @@ public partial class MainWindow : Window
 {
     private readonly MainWindowViewModel _viewModel;
     private readonly IWindowHostService _windowHostService;
+    private readonly DatabaseInitializer _databaseInitializer;
+    private readonly IRequestHistoryRetentionService _historyRetentionService;
     private bool _isCreateProjectDrawerOpen;
     private bool _isEnvironmentDrawerOpen;
     private bool _isUseCasesDrawerOpen;
+
+    private readonly IAppNotificationService _appNotificationService;
 
     public MainWindow()
     {
@@ -26,17 +32,29 @@ public partial class MainWindow : Window
 
         _viewModel = null!;
         _windowHostService = null!;
+        _databaseInitializer = null!;
+        _historyRetentionService = null!;
+        _appNotificationService = null!;
         InitializeComponent();
     }
 
-    public MainWindow(MainWindowViewModel viewModel, IWindowHostService windowHostService)
+    public MainWindow(
+        MainWindowViewModel viewModel,
+        IWindowHostService windowHostService,
+        DatabaseInitializer databaseInitializer,
+        IRequestHistoryRetentionService historyRetentionService,
+        IAppNotificationService appNotificationService)
     {
         _viewModel = viewModel;
         _windowHostService = windowHostService;
+        _databaseInitializer = databaseInitializer;
+        _historyRetentionService = historyRetentionService;
+        _appNotificationService = appNotificationService;
         InitializeComponent();
         DataContext = _viewModel;
         Opened += OnOpened;
         Closed += OnClosed;
+        Closing += OnWindowClosing;
         KeyDown += OnWindowKeyDown;
     }
 
@@ -46,7 +64,10 @@ public partial class MainWindow : Window
         {
             _windowHostService.MainWindow = this;
             _viewModel.UpdateWindowState(WindowState);
-            await _viewModel.InitializeAsync();
+            await PerfLog.MeasureAsync("启动·数据库初始化", () => _databaseInitializer.InitializeAsync());
+            await PerfLog.MeasureAsync("启动·主视图模型初始化", () => _viewModel.InitializeAsync());
+            // 历史保留策略在 DB 就绪后启动：立即清理一次过期记录，之后每 24 小时重复
+            _historyRetentionService.Start();
         });
     }
 
@@ -54,6 +75,7 @@ public partial class MainWindow : Window
     {
         Opened -= OnOpened;
         Closed -= OnClosed;
+        Closing -= OnWindowClosing;
         KeyDown -= OnWindowKeyDown;
 
         if (ReferenceEquals(_windowHostService.MainWindow, this))
@@ -61,7 +83,24 @@ public partial class MainWindow : Window
             _windowHostService.MainWindow = null;
         }
 
+        _historyRetentionService.Stop();
         _viewModel.Dispose();
+    }
+
+    private void OnWindowClosing(object? sender, WindowClosingEventArgs e)
+    {
+        // 更新包下载/应用期间阻止误关窗口：主窗口一关更新进度就没了，提示用户先取消或等待完成
+        if (!_viewModel.ShellPanels.SettingsCenter.IsUpdating)
+        {
+            return;
+        }
+
+        e.Cancel = true;
+        _appNotificationService.Show(
+            "更新进行中",
+            "更新包正在下载或应用，可到设置中心取消更新后再关闭应用。",
+            Avalonia.Controls.Notifications.NotificationType.Warning,
+            System.TimeSpan.FromSeconds(6));
     }
 
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)
@@ -75,7 +114,8 @@ public partial class MainWindow : Window
         _ = RunUiActionAsync(() => _viewModel.SaveCaseCommand.ExecuteAsync(null));
     }
 
-    private void OnOpenUseCasesDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    // 供视图层（如侧栏接口节点的用例计数芯片）调用的抽屉入口
+    internal void OpenUseCasesDrawer()
     {
         if (_isUseCasesDrawerOpen)
         {
@@ -87,7 +127,7 @@ public partial class MainWindow : Window
             _isUseCasesDrawerOpen = true;
             try
             {
-                await Drawer.ShowModal(
+                await OverlayDrawer.ShowStandardAsync(
                     new UseCasesDrawerView(),
                     _viewModel,
                     null,
@@ -121,7 +161,7 @@ public partial class MainWindow : Window
             _isCreateProjectDrawerOpen = true;
             try
             {
-                await Drawer.ShowModal(
+                await OverlayDrawer.ShowStandardAsync(
                     new CreateProjectDrawerView(),
                     _viewModel,
                     null,
@@ -145,6 +185,12 @@ public partial class MainWindow : Window
 
     private void OnOpenEnvironmentDrawer(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
+        OpenEnvironmentDrawer();
+    }
+
+    // 供视图层（环境芯片「管理环境…」入口）调用的抽屉入口
+    internal void OpenEnvironmentDrawer()
+    {
         if (_isEnvironmentDrawerOpen)
         {
             return;
@@ -155,7 +201,7 @@ public partial class MainWindow : Window
             _isEnvironmentDrawerOpen = true;
             try
             {
-                await Drawer.ShowModal(
+                await OverlayDrawer.ShowStandardAsync(
                     new EnvironmentDrawerView(),
                     _viewModel,
                     null,
@@ -164,8 +210,8 @@ public partial class MainWindow : Window
                         Buttons = DialogButton.None,
                         Title = "环境变量",
                         Position = Ursa.Common.Position.Right,
-                        MinWidth = 420,
-                        MaxWidth = 460,
+                        MinWidth = 480,
+                        MaxWidth = 560,
                         CanResize = true,
                         TopLevelHashCode = GetHashCode()
                     });
@@ -186,6 +232,8 @@ public partial class MainWindow : Window
         catch (Exception exception)
         {
             System.Diagnostics.Debug.WriteLine(exception);
+            // 初始化/保存等后台动作失败时给用户可见反馈，不再静默吞掉
+            _appNotificationService.ShowError("操作失败", exception.Message);
         }
     }
 }

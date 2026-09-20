@@ -1,5 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using ApixPress.App.Messages;
+using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
 
@@ -25,8 +28,10 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
     private readonly Func<string, Task> _handleProjectDeletedAsync;
     private readonly ISystemDataService _systemDataService;
     private readonly IProjectWorkspaceService _projectWorkspaceService;
-    private readonly Action<string> _setStatusMessage;
-    private readonly Action _notifyShellState;
+    private readonly IClipboardService _clipboardService;
+    private readonly IDialogService _dialogService;
+    private readonly IMessenger _messenger;
+    private readonly Action<string, string> _applyProjectInfo;
 
     public ProjectSettingsShellViewModel(
         Action showProjectSettingsWorkspace,
@@ -40,8 +45,10 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         Func<string, Task> handleProjectDeletedAsync,
         ISystemDataService systemDataService,
         IProjectWorkspaceService projectWorkspaceService,
-        Action<string> setStatusMessage,
-        Action notifyShellState)
+        IClipboardService clipboardService,
+        IDialogService dialogService,
+        IMessenger messenger,
+        Action<string, string> applyProjectInfo)
     {
         _showProjectSettingsWorkspace = showProjectSettingsWorkspace;
         _dismissImportDialog = dismissImportDialog;
@@ -54,8 +61,10 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         _handleProjectDeletedAsync = handleProjectDeletedAsync;
         _systemDataService = systemDataService;
         _projectWorkspaceService = projectWorkspaceService;
-        _setStatusMessage = setStatusMessage;
-        _notifyShellState = notifyShellState;
+        _clipboardService = clipboardService;
+        _dialogService = dialogService;
+        _messenger = messenger;
+        _applyProjectInfo = applyProjectInfo;
     }
 
     public bool IsOverviewSelected => SelectedSection == Sections.Overview;
@@ -99,6 +108,72 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
     private string projectDangerOperationStatus = ProjectSettingsTexts.DangerOperationStatus;
 
     [RelayCommand]
+    private async Task CopyProjectIdAsync()
+    {
+        var copied = await _clipboardService.CopyTextAsync(_projectId);
+        var message = copied ? ProjectSettingsTexts.ProjectIdCopiedStatus : ProjectSettingsTexts.ProjectIdCopyFailureStatus;
+        _messenger.Send(new StatusMessageRequest(message));
+    }
+
+    /// <summary>打开项目名称编辑弹窗（对齐原型 06 editProjectModal，替代跳转项目管理抽屉）。</summary>
+    [RelayCommand]
+    private async Task OpenRenameProjectDialogAsync()
+    {
+        await OpenProjectInfoEditDialogAsync(isNameMode: true);
+    }
+
+    /// <summary>打开项目简介编辑弹窗。</summary>
+    [RelayCommand]
+    private async Task OpenEditProjectDescriptionDialogAsync()
+    {
+        await OpenProjectInfoEditDialogAsync(isNameMode: false);
+    }
+
+    private async Task OpenProjectInfoEditDialogAsync(bool isNameMode)
+    {
+        var initialValue = isNameMode ? _getProjectName() : _getProjectDescription();
+        var dialog = new ProjectInfoEditDialogViewModel(
+            isNameMode,
+            initialValue,
+            value => SaveProjectInfoAsync(isNameMode, value));
+        await _dialogService.ShowDialogAsync<Views.Controls.ProjectInfoEditDialogView>(dialog);
+    }
+
+    /// <summary>
+    /// 保存项目信息：设置 VM 只持有项目 id 与展示 getter，先读一次当前项目取 IsDefault 等全量口径再回写；
+    /// 返回 null 表示成功（同步本地展示字段并广播 ShellState 刷新首页瓦片/标题栏），否则返回错误文案。
+    /// </summary>
+    private async Task<string?> SaveProjectInfoAsync(bool isNameMode, string value)
+    {
+        var projects = await _projectWorkspaceService.GetProjectsAsync(CancellationToken.None);
+        var current = projects.FirstOrDefault(item =>
+            string.Equals(item.Id, _projectId, StringComparison.OrdinalIgnoreCase));
+        if (current is null)
+        {
+            return "未找到当前项目，请刷新后重试。";
+        }
+
+        var name = isNameMode ? value : current.Name;
+        var description = isNameMode ? current.Description : value;
+        var result = await _projectWorkspaceService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Id = current.Id,
+            Name = name,
+            Description = description,
+            IsDefault = current.IsDefault
+        }, CancellationToken.None);
+
+        if (!result.IsSuccess)
+        {
+            return result.Message;
+        }
+
+        _applyProjectInfo(name, description);
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+        return null;
+    }
+
+    [RelayCommand]
     private void OpenWorkspace()
     {
         ShowOverviewInternal(ProjectSettingsTexts.OverviewDescription);
@@ -117,8 +192,8 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         SelectedSection = Sections.ImportData;
         _dismissImportDialog();
         await _ensureImportedDocumentsLoadedAsync();
-        _setStatusMessage(ProjectSettingsTexts.ImportDescription);
-        _notifyShellState();
+        _messenger.Send(new StatusMessageRequest(ProjectSettingsTexts.ImportDescription));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     [RelayCommand]
@@ -127,8 +202,8 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         _showProjectSettingsWorkspace();
         SelectedSection = Sections.ExportData;
         _dismissImportDialog();
-        _setStatusMessage(ProjectSettingsTexts.ExportDescription);
-        _notifyShellState();
+        _messenger.Send(new StatusMessageRequest(ProjectSettingsTexts.ExportDescription));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     [RelayCommand]
@@ -141,8 +216,8 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
 
         IsClearProjectDataConfirmDialogOpen = true;
         ProjectDangerOperationStatus = ProjectSettingsTexts.ClearProjectDataPendingStatus;
-        _setStatusMessage(ProjectSettingsTexts.ClearProjectDataPendingStatus);
-        _notifyShellState();
+        _messenger.Send(new StatusMessageRequest(ProjectSettingsTexts.ClearProjectDataPendingStatus));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     [RelayCommand]
@@ -150,8 +225,8 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
     {
         IsClearProjectDataConfirmDialogOpen = false;
         ProjectDangerOperationStatus = ProjectSettingsTexts.ClearProjectDataCancelledStatus;
-        _setStatusMessage(ProjectSettingsTexts.ClearProjectDataCancelledStatus);
-        _notifyShellState();
+        _messenger.Send(new StatusMessageRequest(ProjectSettingsTexts.ClearProjectDataCancelledStatus));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     [RelayCommand]
@@ -165,8 +240,8 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         IsClearProjectDataConfirmDialogOpen = false;
         IsProjectDangerOperationBusy = true;
         ProjectDangerOperationStatus = ProjectSettingsTexts.ClearingProjectDataStatus;
-        _setStatusMessage(ProjectSettingsTexts.ClearingProjectDataStatus);
-        _notifyShellState();
+        _messenger.Send(new StatusMessageRequest(ProjectSettingsTexts.ClearingProjectDataStatus));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
         try
         {
             var result = await _systemDataService.ClearProjectAsync(_projectId, CancellationToken.None);
@@ -176,19 +251,19 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
                     ? ProjectSettingsTexts.ClearProjectDataFailureFallback
                     : result.Message;
                 ProjectDangerOperationStatus = failureMessage;
-                _setStatusMessage(failureMessage);
+                _messenger.Send(new StatusMessageRequest(failureMessage));
                 return;
             }
 
             await _reloadAfterProjectDataClearedAsync();
             var successMessage = ProjectSettingsTexts.FormatClearProjectDataSuccess(_getProjectName());
             ProjectDangerOperationStatus = successMessage;
-            _setStatusMessage(successMessage);
+            _messenger.Send(new StatusMessageRequest(successMessage));
         }
         finally
         {
             IsProjectDangerOperationBusy = false;
-            _notifyShellState();
+            _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
         }
     }
 
@@ -202,8 +277,8 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
 
         IsDeleteProjectConfirmDialogOpen = true;
         ProjectDangerOperationStatus = ProjectSettingsTexts.DeleteProjectPendingStatus;
-        _setStatusMessage(ProjectSettingsTexts.DeleteProjectPendingStatus);
-        _notifyShellState();
+        _messenger.Send(new StatusMessageRequest(ProjectSettingsTexts.DeleteProjectPendingStatus));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     [RelayCommand]
@@ -211,8 +286,8 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
     {
         IsDeleteProjectConfirmDialogOpen = false;
         ProjectDangerOperationStatus = ProjectSettingsTexts.DeleteProjectCancelledStatus;
-        _setStatusMessage(ProjectSettingsTexts.DeleteProjectCancelledStatus);
-        _notifyShellState();
+        _messenger.Send(new StatusMessageRequest(ProjectSettingsTexts.DeleteProjectCancelledStatus));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     [RelayCommand]
@@ -226,8 +301,8 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         IsDeleteProjectConfirmDialogOpen = false;
         IsProjectDangerOperationBusy = true;
         ProjectDangerOperationStatus = ProjectSettingsTexts.DeletingProjectStatus;
-        _setStatusMessage(ProjectSettingsTexts.DeletingProjectStatus);
-        _notifyShellState();
+        _messenger.Send(new StatusMessageRequest(ProjectSettingsTexts.DeletingProjectStatus));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
         try
         {
             var result = await _projectWorkspaceService.DeleteAsync(_projectId, CancellationToken.None);
@@ -237,9 +312,9 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
                     ? ProjectSettingsTexts.DeleteProjectFailureFallback
                     : result.Message;
                 ProjectDangerOperationStatus = failureMessage;
-                _setStatusMessage(failureMessage);
+                _messenger.Send(new StatusMessageRequest(failureMessage));
                 IsProjectDangerOperationBusy = false;
-                _notifyShellState();
+                _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
                 return;
             }
 
@@ -250,7 +325,7 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         catch
         {
             IsProjectDangerOperationBusy = false;
-            _notifyShellState();
+            _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             throw;
         }
     }
@@ -291,7 +366,7 @@ public partial class ProjectSettingsShellViewModel : ViewModelBase
         _showProjectSettingsWorkspace();
         SelectedSection = Sections.Overview;
         _dismissImportDialog();
-        _setStatusMessage(statusMessage);
-        _notifyShellState();
+        _messenger.Send(new StatusMessageRequest(statusMessage));
+        _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 }

@@ -1,17 +1,22 @@
+﻿using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Services.Implementations;
+using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
+using Irihi.Avalonia.Shared.Contracts;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 
 namespace ApixPress.App.ViewModels;
 
-public partial class ProjectRequestEditorViewModel : ViewModelBase
+public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogContext
 {
     private const int ResolvedPreviewUrlLengthLimit = 4096;
     private readonly ProjectTabWorkspaceContext _workspaceContext;
+    private readonly IDialogService _dialogService;
+    private readonly IClipboardService _clipboardService;
     private RequestWorkspaceTabViewModel? _subscribedWorkspaceTab;
 
     private string _currentEditorTitle = "新建...";
@@ -23,12 +28,13 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     private bool _isQuickRequestEditor;
     private bool _isHttpInterfaceEditor;
     private bool _isHttpDebugEditorMode;
-    private bool _isHttpDesignEditorMode;
     private bool _isHttpDocumentPreviewMode;
     private RequestEditorContentMode _currentContentMode;
     private bool _showHttpWorkbenchContent;
     private bool _showHttpDocumentPreviewContent;
     private bool _showSaveHttpCaseAction;
+    private bool _isEditingHttpCase;
+    private string _currentHttpCaseContextText = "接口模式";
     private string _currentEditorBaseUrlCaption = string.Empty;
     private bool _hasResolvedRequestPreview;
     private string _resolvedRequestPreviewText = string.Empty;
@@ -39,14 +45,20 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     private string _currentHttpDocumentBodyModeText = "无";
     private string _currentHttpDocumentUrl = string.Empty;
     private string _currentHttpDocumentResponseSummary = "等待调试后生成响应示例";
+    private bool _hasHttpDocumentBodyPreview;
     private string _currentHttpDocumentBodyPreview = "{ }";
     private string _currentHttpDocumentCurlSnippet = string.Empty;
     private bool _canGenerateRequestCode;
     private string _currentResponseValidationResultText = "等待响应";
 
-    internal ProjectRequestEditorViewModel(ProjectTabWorkspaceContext workspaceContext)
+    internal ProjectRequestEditorViewModel(
+        ProjectTabWorkspaceContext workspaceContext,
+        IDialogService dialogService,
+        IClipboardService clipboardService)
     {
         _workspaceContext = workspaceContext;
+        _dialogService = dialogService;
+        _clipboardService = clipboardService;
     }
 
     public RequestConfigTabViewModel ConfigTab => ResolveWorkspaceTabOrFallback().ConfigTab;
@@ -54,34 +66,48 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
 
     public IReadOnlyList<string> HttpMethods { get; } = ["GET", "POST", "PUT", "DELETE", "PATCH"];
 
+    // 方法选择器按语义着色用的样式类名（GET 绿 / POST 橙 / PUT 蓝 / DELETE 红 / PATCH 青）
+    public string MethodColorClass => SelectedMethod?.ToUpperInvariant() switch
+    {
+        "GET" => "HttpMethodGet",
+        "POST" => "HttpMethodPost",
+        "PUT" => "HttpMethodPut",
+        "DELETE" => "HttpMethodDelete",
+        "PATCH" => "HttpMethodPatch",
+        _ => string.Empty
+    };
+
     public string CurrentEditorTitle => _currentEditorTitle;
     public string CurrentEditorDescription => _currentEditorDescription;
     public string CurrentEditorPrimaryActionText => _currentEditorPrimaryActionText;
     public string CurrentEditorUrlWatermark => _currentEditorUrlWatermark;
     public string CurrentHttpInterfaceBaseUrl => _currentHttpInterfaceBaseUrl;
+    // 名称展示与保存口径（ResolveRequestName）一致：用户未命名时直接显示生成名（方法+路径），
+    // 与侧栏树、工作区标签对齐；仅当用户显式输入后 RequestName 才落值
     public string CurrentHttpInterfaceName
     {
-        get => ResolveEditorRequestName("未命名接口", workspace => workspace.IsHttpInterfaceTab);
-        set => SetEditorRequestName(value, "未命名接口");
+        get => ActiveWorkspaceTab?.ResolveRequestName() ?? string.Empty;
+        set => SetEditorRequestName(value);
     }
 
     public string CurrentHttpInterfaceDisplayName => _currentHttpInterfaceDisplayName;
 
     public string CurrentQuickRequestName
     {
-        get => ResolveEditorRequestName("未命名请求", workspace => workspace.IsQuickRequestTab);
-        set => SetEditorRequestName(value, "未命名请求");
+        get => ActiveWorkspaceTab?.ResolveRequestName() ?? string.Empty;
+        set => SetEditorRequestName(value);
     }
 
     public bool IsQuickRequestEditor => _isQuickRequestEditor;
     public bool IsHttpInterfaceEditor => _isHttpInterfaceEditor;
     public bool IsHttpDebugEditorMode => _isHttpDebugEditorMode;
-    public bool IsHttpDesignEditorMode => _isHttpDesignEditorMode;
     public bool IsHttpDocumentPreviewMode => _isHttpDocumentPreviewMode;
     public RequestEditorContentMode CurrentContentMode => _currentContentMode;
     public bool ShowHttpWorkbenchContent => _showHttpWorkbenchContent;
     public bool ShowHttpDocumentPreviewContent => _showHttpDocumentPreviewContent;
     public bool ShowSaveHttpCaseAction => _showSaveHttpCaseAction;
+    public bool IsEditingHttpCase => _isEditingHttpCase;
+    public string CurrentHttpCaseContextText => _currentHttpCaseContextText;
     public string CurrentEditorBaseUrlCaption => _currentEditorBaseUrlCaption;
     public bool HasResolvedRequestPreview => _hasResolvedRequestPreview;
     public string ResolvedRequestPreviewText => _resolvedRequestPreviewText;
@@ -93,6 +119,9 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     public string CurrentHttpDocumentUrl => _currentHttpDocumentUrl;
     public string CurrentHttpDocumentResponseSummary => _currentHttpDocumentResponseSummary;
     public string CurrentHttpDocumentBodyPreview => _currentHttpDocumentBodyPreview;
+
+    /// <summary>是否已有真实响应正文可作响应示例；未调试时展示空态占位</summary>
+    public bool HasHttpDocumentBodyPreview { get; private set; }
     public string CurrentHttpDocumentCurlSnippet => _currentHttpDocumentCurlSnippet;
     public bool CanGenerateRequestCode => _canGenerateRequestCode;
     public string CurrentRequestCodeTitle => RequestCodeTitle;
@@ -132,13 +161,14 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
             }
 
             ActiveWorkspaceTab.RequestUrl = normalizedValue;
-            NotifyStateChanged();
+            // 每键路径：立即只广播廉价绑定，全量重算（URL 变量替换、curl 片段）并入 200ms 防抖
+            NotifyWorkspaceEditorChanged();
         }
     }
 
     public string CurrentInterfaceFolderPath
     {
-        get => ActiveWorkspaceTab?.InterfaceFolderPath ?? "默认模块";
+        get => ActiveWorkspaceTab?.InterfaceFolderPath ?? "根目录";
         set
         {
             if (ActiveWorkspaceTab is null || ActiveWorkspaceTab.InterfaceFolderPath == value)
@@ -162,12 +192,18 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
             }
 
             ActiveWorkspaceTab.HttpCaseName = value;
-            NotifyStateChanged();
+            // 每键路径：立即只广播廉价绑定，全量重算并入 200ms 防抖（与 RequestUrl 一致）
+            NotifyWorkspaceEditorChanged();
         }
     }
 
-    [ObservableProperty]
-    private bool isRequestCodeDialogOpen;
+    /// <summary>弹窗是否处于打开态：控制内容随请求状态的实时刷新与强制收起。</summary>
+    private bool _isRequestCodeDialogOpen;
+
+    /// <summary>生成代码弹窗异步关闭通道：状态失效强制关闭与手动关闭共用。</summary>
+    public event EventHandler<object?>? RequestClose;
+
+    public void Close() => RequestClose?.Invoke(this, null);
 
     [ObservableProperty]
     private string requestCodeTitle = string.Empty;
@@ -191,7 +227,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     private string requestCodeCSharpCommand = string.Empty;
 
     [RelayCommand]
-    private void OpenRequestCodeDialog()
+    private async Task OpenRequestCodeDialogAsync()
     {
         if (!CanGenerateRequestCode)
         {
@@ -201,14 +237,58 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         RefreshRequestCodeDialogContent();
         SelectedRequestCodeLanguage = 0;
         SelectedRequestCodeTab = 0;
-        IsRequestCodeDialogOpen = true;
+        // 内容区保留动态请求信息，同时启用 chrome 关闭钮；底部关闭按钮继续保留
+        _isRequestCodeDialogOpen = true;
+        try
+        {
+            await _dialogService.ShowDialogAsync<Views.Controls.RequestCodeDialogView>(this, showCloseButton: true);
+        }
+        finally
+        {
+            _isRequestCodeDialogOpen = false;
+        }
     }
 
     [RelayCommand]
     private void CloseRequestCodeDialog()
     {
-        IsRequestCodeDialogOpen = false;
+        RequestClose?.Invoke(this, null);
+        RequestCodeCopiedHint = string.Empty;
         ClearRequestCodeDialogContent();
+    }
+
+    /// <summary>底栏复制反馈文案：复制成功/失败后展示，切换语言、页签或关闭时清除。</summary>
+    [ObservableProperty]
+    private string requestCodeCopiedHint = string.Empty;
+
+    /// <summary>复制当前选中语言与页签的生成代码到剪贴板，结果以底栏提示反馈。</summary>
+    [RelayCommand]
+    private async Task CopyRequestCodeAsync()
+    {
+        var code = ResolveCurrentRequestCodeText();
+        if (string.IsNullOrEmpty(code))
+        {
+            return;
+        }
+
+        var copied = await _clipboardService.CopyTextAsync(code);
+        RequestCodeCopiedHint = copied ? "已复制到剪贴板" : "复制失败，请手动选择代码复制。";
+    }
+
+    /// <summary>按当前语言与页签解析复制目标文本，供复制命令与测试共用。</summary>
+    internal string ResolveCurrentRequestCodeText()
+    {
+        if (SelectedRequestCodeLanguage == 1)
+        {
+            return RequestCodeCSharpCommand;
+        }
+
+        return SelectedRequestCodeTab switch
+        {
+            1 => RequestCodeWgetCommand,
+            2 => RequestCodePowerShellCommand,
+            _ => RequestCodeCurlCommand
+        };
     }
 
     [RelayCommand]
@@ -224,18 +304,6 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void ShowHttpDesignEditorMode()
-    {
-        if (ActiveWorkspaceTab is null || !ActiveWorkspaceTab.IsHttpInterfaceTab)
-        {
-            return;
-        }
-
-        ActiveWorkspaceTab.HttpEditorViewIndex = 1;
-        NotifyStateChanged();
-    }
-
-    [RelayCommand]
     private void ShowHttpDocumentPreviewMode()
     {
         if (ActiveWorkspaceTab is null || !ActiveWorkspaceTab.IsHttpInterfaceTab)
@@ -243,7 +311,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
             return;
         }
 
-        ActiveWorkspaceTab.HttpEditorViewIndex = 2;
+        ActiveWorkspaceTab.HttpEditorViewIndex = 1;
         NotifyStateChanged();
     }
 
@@ -267,19 +335,59 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentHttpInterfaceName));
         OnPropertyChanged(nameof(CurrentQuickRequestName));
         RefreshComputedState();
-        if (IsRequestCodeDialogOpen && CanGenerateRequestCode)
-        {
-            RefreshRequestCodeDialogContent();
-        }
-        else if (!CanGenerateRequestCode)
-        {
-            IsRequestCodeDialogOpen = false;
-            ClearRequestCodeDialogContent();
-        }
+        RefreshRequestCodeDialogTail();
         OnPropertyChanged(nameof(SelectedMethod));
+        OnPropertyChanged(nameof(MethodColorClass));
         OnPropertyChanged(nameof(RequestUrl));
         OnPropertyChanged(nameof(CurrentInterfaceFolderPath));
         OnPropertyChanged(nameof(CurrentHttpCaseName));
+        OnPropertyChanged(nameof(IsEditingHttpCase));
+        OnPropertyChanged(nameof(CurrentHttpCaseContextText));
+    }
+
+    /// <summary>生成代码对话框跟随请求状态刷新的尾逻辑，立即刷新与防抖刷新共用。</summary>
+    private void RefreshRequestCodeDialogTail()
+    {
+        if (!CanGenerateRequestCode)
+        {
+            // 生成条件失效时强制收起弹窗（未打开时无订阅者，为空操作）
+            RequestClose?.Invoke(this, null);
+            ClearRequestCodeDialogContent();
+            return;
+        }
+
+        // 仅弹窗打开时跟随请求状态重算，未打开不承担每键生成成本
+        if (_isRequestCodeDialogOpen)
+        {
+            RefreshRequestCodeDialogContent();
+        }
+    }
+
+    /// <summary>
+    /// 编辑态内容变化的轻量刷新：立即广播廉价绑定属性（URL、名称等换绑即时生效），
+    /// 全量重算（预览、curl 片段）合并进 200ms 防抖。用于标签订阅链每键触发的路径，
+    /// 避免与 setter 自身的即时刷新形成每键两次全量重算。
+    /// </summary>
+    public void NotifyWorkspaceEditorChanged()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        EnsureActiveWorkspaceSubscriptions();
+        OnPropertyChanged(nameof(ConfigTab));
+        OnPropertyChanged(nameof(ResponseSection));
+        OnPropertyChanged(nameof(CurrentHttpInterfaceName));
+        OnPropertyChanged(nameof(CurrentQuickRequestName));
+        OnPropertyChanged(nameof(SelectedMethod));
+        OnPropertyChanged(nameof(MethodColorClass));
+        OnPropertyChanged(nameof(RequestUrl));
+        OnPropertyChanged(nameof(CurrentInterfaceFolderPath));
+        OnPropertyChanged(nameof(CurrentHttpCaseName));
+        OnPropertyChanged(nameof(IsEditingHttpCase));
+        OnPropertyChanged(nameof(CurrentHttpCaseContextText));
+        ScheduleComputedStateRefresh();
     }
 
     private RequestWorkspaceTabViewModel? ActiveWorkspaceTab => _workspaceContext.GetActiveWorkspaceTab();
@@ -348,8 +456,60 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         {
             OnPropertyChanged(nameof(CurrentHttpInterfaceName));
             OnPropertyChanged(nameof(CurrentQuickRequestName));
+            // 请求体/名称等每键触发的高频属性：合并 200ms 内的连续刷新，避免每键全量重算预览与 curl 片段
+            ScheduleComputedStateRefresh();
+        }
+        else if (e.PropertyName is not null)
+        {
             RefreshComputedState();
         }
+    }
+
+    private System.Timers.Timer? _computedStateDebounceTimer;
+
+    /// <summary>合并 200ms 内的连续属性变化，停顿后再执行重计算（URL 变量替换、curl 片段等）。</summary>
+    private void ScheduleComputedStateRefresh()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        if (_computedStateDebounceTimer is null)
+        {
+            // 用 System.Timers 而非 DispatcherTimer：不依赖/不隐式初始化 UI Dispatcher；
+            // 到期回调由 OnComputedStateDebounceElapsed 统一 marshal 回 UI 线程
+            var timer = new System.Timers.Timer(200) { AutoReset = false };
+            timer.Elapsed += (_, _) => OnComputedStateDebounceElapsed();
+            _computedStateDebounceTimer = timer;
+        }
+
+        _computedStateDebounceTimer.Stop();
+        _computedStateDebounceTimer.Start();
+    }
+
+    private void OnComputedStateDebounceElapsed()
+    {
+        // System.Timers 到期回调在线程池线程：视图绑定按约定应收到 UI 线程通知，统一 marshal 后再重算；
+        // 单元测试无 Avalonia 运行时（Application.Current 为 null）时保持原线程，与 FormatBodyInBackgroundAsync 的守卫一致
+        if (Avalonia.Application.Current is null)
+        {
+            RunComputedStateRefresh();
+            return;
+        }
+
+        Dispatcher.UIThread.Post(RunComputedStateRefresh);
+    }
+
+    private void RunComputedStateRefresh()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        RefreshComputedState();
+        RefreshRequestCodeDialogTail();
     }
 
     private void OnConfigCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -482,6 +642,12 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(CurrentRequestCodeLanguageTitle));
         OnPropertyChanged(nameof(IsShellRequestCodeLanguageSelected));
         OnPropertyChanged(nameof(IsCSharpRequestCodeLanguageSelected));
+        RequestCodeCopiedHint = string.Empty;
+    }
+
+    partial void OnSelectedRequestCodeTabChanged(int value)
+    {
+        RequestCodeCopiedHint = string.Empty;
     }
 
     private string BuildResolvedRequestPreviewText()
@@ -526,7 +692,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         var workspace = ActiveWorkspaceTab;
         var configTab = ResolveWorkspaceTabOrFallback().ConfigTab;
         var responseSection = ResolveWorkspaceTabOrFallback().ResponseSection;
-        var currentHttpInterfaceName = ResolveEditorRequestName("未命名接口", tab => tab.IsHttpInterfaceTab);
+        var currentHttpInterfaceName = workspace?.ResolveRequestName() ?? string.Empty;
 
         SetComputedProperty(ref _currentEditorTitle, workspace?.EditorTitle ?? "新建...", nameof(CurrentEditorTitle));
         SetComputedProperty(ref _currentEditorDescription, workspace?.EditorDescription ?? "从下方卡片中选择要创建的工作内容。", nameof(CurrentEditorDescription));
@@ -537,12 +703,16 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         SetComputedProperty(ref _isQuickRequestEditor, workspace?.IsQuickRequestTab ?? false, nameof(IsQuickRequestEditor));
         SetComputedProperty(ref _isHttpInterfaceEditor, workspace?.IsHttpInterfaceTab ?? false, nameof(IsHttpInterfaceEditor));
         SetComputedProperty(ref _isHttpDebugEditorMode, workspace?.IsHttpDebugView ?? false, nameof(IsHttpDebugEditorMode));
-        SetComputedProperty(ref _isHttpDesignEditorMode, workspace?.IsHttpDesignView ?? false, nameof(IsHttpDesignEditorMode));
         SetComputedProperty(ref _isHttpDocumentPreviewMode, workspace?.IsHttpDocumentPreviewView ?? false, nameof(IsHttpDocumentPreviewMode));
         SetComputedProperty(ref _currentContentMode, ResolveCurrentContentMode(), nameof(CurrentContentMode));
         SetComputedProperty(ref _showHttpWorkbenchContent, _isHttpInterfaceEditor && !_isHttpDocumentPreviewMode, nameof(ShowHttpWorkbenchContent));
         SetComputedProperty(ref _showHttpDocumentPreviewContent, _isHttpInterfaceEditor && _isHttpDocumentPreviewMode, nameof(ShowHttpDocumentPreviewContent));
         SetComputedProperty(ref _showSaveHttpCaseAction, _isHttpInterfaceEditor, nameof(ShowSaveHttpCaseAction));
+        var isEditingHttpCase = _isHttpInterfaceEditor && !string.IsNullOrWhiteSpace(workspace?.EditingCaseId);
+        SetComputedProperty(ref _isEditingHttpCase, isEditingHttpCase, nameof(IsEditingHttpCase));
+        SetComputedProperty(ref _currentHttpCaseContextText,
+            isEditingHttpCase ? $"用例模式 · {workspace!.HttpCaseName}" : "接口模式",
+            nameof(CurrentHttpCaseContextText));
         SetComputedProperty(ref _currentEditorBaseUrlCaption, ResolveCurrentEditorBaseUrlCaption(), nameof(CurrentEditorBaseUrlCaption));
 
         var resolvedRequestPreviewText = BuildResolvedRequestPreviewText();
@@ -564,7 +734,9 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         SetComputedProperty(ref _currentHttpDocumentResponseSummary, responseSection.HasResponse
             ? _currentResponseValidationResultText
             : "等待调试后生成响应示例", nameof(CurrentHttpDocumentResponseSummary));
-        SetComputedProperty(ref _currentHttpDocumentBodyPreview, responseSection.HasResponse && !string.IsNullOrWhiteSpace(responseSection.BodyText)
+        var hasHttpDocumentBodyPreview = responseSection.HasResponse && !string.IsNullOrWhiteSpace(responseSection.BodyText);
+        SetComputedProperty(ref _hasHttpDocumentBodyPreview, hasHttpDocumentBodyPreview, nameof(HasHttpDocumentBodyPreview));
+        SetComputedProperty(ref _currentHttpDocumentBodyPreview, hasHttpDocumentBodyPreview
             ? responseSection.BodyText
             : "{ }", nameof(CurrentHttpDocumentBodyPreview));
         SetComputedProperty(ref _currentHttpDocumentCurlSnippet, ResolveCurrentHttpDocumentCurlSnippet(), nameof(CurrentHttpDocumentCurlSnippet));
@@ -628,42 +800,22 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
         return responseSection.StatusText;
     }
 
-    private string ResolveEditorRequestName(string fallbackName, Func<RequestWorkspaceTabViewModel, bool> matchEditorType)
-    {
-        if (ActiveWorkspaceTab is null)
-        {
-            return string.Empty;
-        }
-
-        var currentName = ActiveWorkspaceTab.ConfigTab.RequestName?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(currentName))
-        {
-            return fallbackName;
-        }
-
-        return matchEditorType(ActiveWorkspaceTab)
-            && string.Equals(currentName, ActiveWorkspaceTab.ResolveGeneratedRequestName(), StringComparison.Ordinal)
-                ? fallbackName
-                : currentName;
-    }
-
-    private void SetEditorRequestName(string? value, string fallbackName)
+    private void SetEditorRequestName(string? value)
     {
         if (ActiveWorkspaceTab is null)
         {
             return;
         }
 
-        var normalizedValue = string.Equals(value?.Trim(), fallbackName, StringComparison.Ordinal)
-            ? string.Empty
-            : value?.Trim() ?? string.Empty;
+        var normalizedValue = value?.Trim() ?? string.Empty;
         if (ActiveWorkspaceTab.ConfigTab.RequestName == normalizedValue)
         {
             return;
         }
 
         ActiveWorkspaceTab.ConfigTab.RequestName = normalizedValue;
-        NotifyStateChanged();
+        // 接口/请求名输入框每键路径：立即只广播廉价绑定，全量重算并入 200ms 防抖（与 RequestUrl 一致）
+        NotifyWorkspaceEditorChanged();
     }
 
     private RequestEditorContentMode ResolveCurrentContentMode()
@@ -731,6 +883,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase
 
     protected override void DisposeManaged()
     {
+        _computedStateDebounceTimer?.Stop();
+        _computedStateDebounceTimer = null;
         DetachWorkspaceSubscriptions(_subscribedWorkspaceTab);
         _subscribedWorkspaceTab = null;
     }
