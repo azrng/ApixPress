@@ -1,7 +1,7 @@
 ---
 rule_id: doc-agents
-version: 1.75.0
-last_updated: 2026-09-14
+version: 1.85.0
+last_updated: 2026-09-24
 dependencies: [agents-root]
 ---
 
@@ -96,6 +96,8 @@ dependencies: [agents-root]
 - 构建、发布或部署流程
 - 数据库结构、迁移或初始化方式
 - 对外使用方式或接口约定
+
+文档同步是命中上述清单的任务的完成前置条件：置 `DONE` 前先比对本次改动，命中则在同一任务内更新文档，不得跨任务事后补录。
 
 ## 契约生命周期
 

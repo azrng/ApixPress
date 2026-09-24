@@ -1,7 +1,7 @@
 ---
 rule_id: ui-agents
-version: 1.75.0
-last_updated: 2026-09-14
+version: 1.85.0
+last_updated: 2026-09-24
 dependencies: [agents-root]
 ---
 
@@ -38,6 +38,7 @@ dependencies: [agents-root]
   - 仓库已有样式实现：从现有代码反向提炼产品 token 回填 `design-system.yaml`，不强行套用基线值
   - 资料缺失：先向用户询问品牌色、明暗主题、密度等偏好，禁止把基线色默认当作产品主色
 - `meta.status` 为「已定制」后，`use-ai-rule` 重新生成会保留本地 `design-system.yaml` 不覆盖；定制后忘记改状态，下次生成会被基线覆盖
+- `meta.tech_stack` 与界面子规则声明的技术栈不一致（如规则为 Blazor + BootstrapBlazor 而文件仍是 React + Ant Design 基线）时，该文件视为过期基线：框架专属章节（组件主题映射、状态管理、构建环境变量、前端端口）一律不适用，仅可参考与框架无关的色彩 / 间距 token；先按上述定制流程重建或用 `use-ai-rule` 重新生成正确技术栈的基线再开始界面任务，并把不一致作为待确认项提请用户
 - 调整 token 的固定顺序：先改 `design-system.yaml`，再同步文件中声明的实现资源（样式资源 / 主题配置 / 图表主题），最后改界面
 - 语义 token 的命名、分层与「token → 实现资源 → 组件」引用管线属于结构契约：可以改值、增删 token，不得另建平行 token 体系或在界面绕过 token 硬编码
 - 使用 `design-system.yaml` 中定义的设计 token
