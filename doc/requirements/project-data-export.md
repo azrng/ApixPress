@@ -2,8 +2,8 @@
 doc_id: REQ-T063
 doc_type: requirement
 module: project-data
-status: in-review
-last_updated: 2026-09-17
+status: implemented
+last_updated: 2026-09-25
 design_doc: ../design/project-data-export.md
 contract_doc: ../contracts/project-data-export.md
 ---
@@ -18,7 +18,7 @@ contract_doc: ../contracts/project-data-export.md
 
 项目用户可以从项目设置导出当前项目数据，满足迁移备份、接口文档分享和 Git 归档三类场景：
 
-- ApixPress 备份格式：用于恢复项目数据；导出范围可分别选择接口与目录、测试用例、环境变量、请求历史。
+- ApixPress 备份格式：用于恢复项目数据；导出范围可分别选择接口与目录、请求用例、环境变量、请求历史。
 - HTML：导出单个可离线浏览的静态接口文档。
 - Markdown：按接口目录生成 Markdown 文档文件，适合纳入代码仓库。
 
@@ -53,8 +53,8 @@ HTML 和 Markdown 本期只导出接口目录及接口文档，不承担导入�
 - 空数据、取消、写入失败、渲染失败、取消导出均有稳定状态和可测试结果。
 - 现有 ApixPress 备份导入回归测试继续通过，旧备份缺失新增范围字段时按兼容默认值处理。
 
-## 待确认项
+## 待确认项（已于 2026-09-25 确认）
 
-- Markdown 是否确认采用“目标目录 + 索引文件 + 每个接口目录一个 `.md` 文件”，还是改为单个 Markdown 文件。
-- HTML/Markdown 是否需要包含测试用例、环境变量和请求历史；当前设计按原型仅导出接口与目录。
-- 请求历史是否包含响应正文；当前设计按现有历史 DTO 原样保留可用字段，具体脱敏策略需用户确认。
+- Markdown 确认采用“目标目录 + 索引文件 + 每个接口目录一个 `.md` 文件”。
+- HTML/Markdown 附带请求用例示例（只读参考）；备份才显示四项范围。
+- 请求历史导出按现有历史 DTO 原样保留（含响应快照），默认不勾选；环境变量与交付内容不脱敏。

@@ -23,12 +23,18 @@ public sealed class DatabaseInitializerTests
             "select count(1) from sqlite_master where type = 'table' and name = 'project_http_settings'");
         var basicColumnCount = connection.ExecuteScalar<long>(
             "select count(1) from pragma_table_info('project_http_settings') where name in ('basic_username', 'basic_password')");
+        var exportSettingsTableCount = connection.ExecuteScalar<long>(
+            "select count(1) from sqlite_master where type = 'table' and name = 'project_export_settings'");
+        var exportSettingsColumnCount = connection.ExecuteScalar<long>(
+            "select count(1) from pragma_table_info('project_export_settings') where name in ('format', 'include_interfaces', 'include_request_cases', 'include_environments', 'include_request_history', 'last_output_directory')");
 
-        Assert.Equal(6, schemaVersion);
+        Assert.Equal(8, schemaVersion);
         Assert.Equal(0, projectCount);
         Assert.Equal(0, environmentCount);
         Assert.Equal(1, httpSettingsTableCount);
         Assert.Equal(2, basicColumnCount);
+        Assert.Equal(1, exportSettingsTableCount);
+        Assert.Equal(6, exportSettingsColumnCount);
     }
 
     [Fact]
@@ -147,7 +153,7 @@ public sealed class DatabaseInitializerTests
         var basicColumnCount = verificationConnection.ExecuteScalar<long>(
             "select count(1) from pragma_table_info('project_http_settings') where name in ('basic_username', 'basic_password')");
 
-        Assert.Equal(6, schemaVersion);
+        Assert.Equal(8, schemaVersion);
         Assert.Equal(1, httpSettingsTableCount);
         Assert.Equal(2, basicColumnCount);
     }
@@ -190,6 +196,6 @@ public sealed class DatabaseInitializerTests
             "select max(version) from schema_migrations");
 
         Assert.Equal(string.Empty, folderPath);
-        Assert.Equal(6, schemaVersion);
+        Assert.Equal(8, schemaVersion);
     }
 }

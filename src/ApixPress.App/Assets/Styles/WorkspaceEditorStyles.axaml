@@ -39,6 +39,29 @@
     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
   </Style>
 
+  <Style Selector="Border.HttpEditorSaveStateChip">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Success.Background}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Success.Text}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="Padding" Value="8,2" />
+  </Style>
+
+  <Style Selector="Border.HttpEditorSaveStateChip.HttpEditorSaveStateDirty">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Warning.Background}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Warning.Text}" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpEditorSaveStateChipText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Success.Text}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+  </Style>
+
+  <Style Selector="Border.HttpEditorSaveStateChip.HttpEditorSaveStateDirty TextBlock.HttpEditorSaveStateChipText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Warning.Text}" />
+  </Style>
+
   <!-- 接口名输入对齐原型 name-input：撑满模式切换与代码按钮之间的空间 -->
   <Style Selector="TextBox.HttpEditorTitleInput">
     <Setter Property="MinWidth" Value="196" />

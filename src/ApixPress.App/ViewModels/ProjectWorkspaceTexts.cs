@@ -1,3 +1,5 @@
+using ApixPress.App.Models.DTOs;
+
 namespace ApixPress.App.ViewModels;
 
 internal static class ProjectSettingsTexts
@@ -39,13 +41,13 @@ internal static class ProjectSettingsTexts
     public const string ImportFormatName = "OpenAPI / Swagger / Postman";
     public const string ImportFormatDescription = "自动识别 OpenAPI、Swagger 与 Postman Collection JSON 文档";
     public const string ImportPackageCardTitle = "导入项目数据包";
-    public const string ImportPackageCardDescription = "导入 ApixPress 导出的接口与测试用例数据";
+    public const string ImportPackageCardDescription = "导入 ApixPress 导出的接口与请求用例数据";
     public const string ImportPackageFormatName = "ApixPress 项目数据包";
-    public const string ImportPackageFormatDescription = "支持导入 `.apixpkg.json` 文件，并恢复接口与测试用例";
-    public const string ExportDescription = "这里可以导出当前项目中的接口与测试用例。";
-    public const string ExportSubtitle = "将当前项目中的接口和测试用例导出为可复用的项目数据包。";
-    public const string ExportCardTitle = "导出项目数据";
-    public const string ExportCardDescription = "导出当前项目中的接口与测试用例";
+    public const string ImportPackageFormatDescription = "支持导入 `.apixpkg.json` 文件，并恢复接口与请求用例";
+    public const string ExportDescription = "这里可以导出当前项目中的接口与请求用例。";
+    public const string ExportSubtitle = "将当前项目中的接口和请求用例导出为可复用的项目数据包。";
+    public const string ExportCardTitle = "导出数据";
+    public const string ExportCardDescription = "支持导出 ApixPress 备份用于迁移备份，或导出 HTML / Markdown 接口文档用于分享与归档。";
     public const string ExportFormatName = "ApixPress 项目数据包";
     public const string ExportFormatDescription = "导出为可读的 UTF-8 JSON 数据包，扩展名为 .apixpkg.json";
 
@@ -87,6 +89,9 @@ internal static class ImportTexts
     public const string BusyProcessing = "正在处理 Swagger 导入...";
     public const string PackageBusyProcessing = "正在处理项目数据包导入...";
     public const string ExportBusyProcessing = "正在导出当前项目数据...";
+    public const string ExportBackupButtonText = "导出项目数据";
+    public const string ExportHtmlButtonText = "导出 HTML";
+    public const string ExportMarkdownButtonText = "导出 Markdown";
     public const string BusyRefreshResult = "正在刷新导入结果...";
     public const string DefaultStatus = "可导入 OpenAPI、Swagger、Postman 文档或 `.apixpkg.json` 项目数据包。";
     public const string EmptyStateStatus = "当前项目还没有导入 API 文档，可先从文件或 URL 开始导入。";
@@ -147,9 +152,20 @@ internal static class ImportTexts
         return $"项目数据包导入成功：{documentName}";
     }
 
-    public static string FormatExportSuccess(int interfaceCount, int testCaseCount, string fileName)
+    public static string FormatExportSuccess(ProjectDataExportResultDto result)
     {
-        return $"项目数据导出成功：{interfaceCount} 个接口、{testCaseCount} 个测试用例，已保存到 {fileName}";
+        var targetName = Path.GetFileName(result.OutputPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        if (string.IsNullOrWhiteSpace(targetName))
+        {
+            targetName = result.OutputPath;
+        }
+
+        return result.Format switch
+        {
+            ProjectDataExportFormat.Html => $"HTML 文档导出成功：{result.InterfaceCount} 个接口、{result.TestCaseCount} 个请求用例示例，已保存到 {targetName}",
+            ProjectDataExportFormat.Markdown => $"Markdown 文档导出成功：{result.InterfaceCount} 个接口、{result.FileCount} 个文件，已保存到目录 {targetName}",
+            _ => $"项目数据导出成功：{result.InterfaceCount} 个接口、{result.TestCaseCount} 个请求用例、{result.EnvironmentCount} 个环境、{result.HistoryCount} 条请求历史，已保存到 {targetName}"
+        };
     }
 
     public static string FormatRefreshImportedDocumentsSuccess(int count)

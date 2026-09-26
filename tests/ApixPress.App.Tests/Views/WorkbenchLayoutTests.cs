@@ -208,6 +208,73 @@ public sealed class WorkbenchLayoutTests
     }
 
     [Fact]
+    public void ProjectSettings_ShouldExposeIndependentRequestCaseDeliveryActions()
+    {
+        var settings = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "ProjectSettingsWorkspaceView.axaml"));
+
+        Assert.Contains(
+            settings.Descendants().Where(element => element.Name.LocalName == "Button"),
+            element => element.Attribute("Command")?.Value == "{Binding Import.Delivery.OpenImportCommand}");
+        Assert.Contains(
+            settings.Descendants().Where(element => element.Name.LocalName == "Button"),
+            element => element.Attribute("Command")?.Value == "{Binding Import.Delivery.OpenExportCommand}");
+
+        var deliveryDialog = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "RequestCaseDeliveryDialogView.axaml"));
+        Assert.Contains(
+            deliveryDialog.Descendants().Where(element => element.Name.LocalName == "CheckBox"),
+            element => (element.Attribute("IsChecked")?.Value ?? string.Empty).Contains("IsSelected", StringComparison.Ordinal));
+        Assert.Contains(
+            deliveryDialog.Descendants().Where(element => element.Name.LocalName == "ComboBox"),
+            element => (element.Attribute("SelectedItem")?.Value ?? string.Empty).Contains("SelectedAction", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ProjectSettings_ExportCard_ShouldExposeThreeFormatsAndBackupScopes()
+    {
+        var settings = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "ProjectSettingsWorkspaceView.axaml"));
+
+        // 三格式切换按钮，各带格式 token 参数
+        var formatToggles = settings.Descendants()
+            .Where(element => element.Name.LocalName == "ToggleButton"
+                && element.Attribute("Command")?.Value == "{Binding Import.SelectExportFormatCommand}")
+            .ToList();
+        Assert.Equal(3, formatToggles.Count);
+        Assert.Contains(formatToggles, element => element.Attribute("CommandParameter")?.Value == "backup");
+        Assert.Contains(formatToggles, element => element.Attribute("CommandParameter")?.Value == "html");
+        Assert.Contains(formatToggles, element => element.Attribute("CommandParameter")?.Value == "markdown");
+
+        // 备份四项范围勾选只出现在备份面板内
+        var backupPanel = settings.Descendants()
+            .Single(element => element.Name.LocalName == "StackPanel"
+                && element.Attribute("IsVisible")?.Value == "{Binding Import.IsBackupExportFormat}");
+        var scopeFlags = new[]
+        {
+            "Import.ExportIncludeInterfaces",
+            "Import.ExportIncludeRequestCases",
+            "Import.ExportIncludeEnvironments",
+            "Import.ExportIncludeRequestHistory"
+        };
+        foreach (var scopeFlag in scopeFlags)
+        {
+            Assert.Contains(
+                backupPanel.Descendants().Where(element => element.Name.LocalName == "CheckBox"),
+                element => element.Attribute("IsChecked")?.Value == "{Binding " + scopeFlag + "}");
+        }
+
+        // 每个格式面板都有自己的导出按钮，动作文案随格式变化
+        var exportButtons = settings.Descendants()
+            .Where(element => element.Name.LocalName == "Button"
+                && element.Attribute("Command")?.Value == "{Binding Import.ExportProjectDataCommand}")
+            .ToList();
+        Assert.Equal(3, exportButtons.Count);
+        Assert.All(exportButtons, element =>
+            Assert.Equal("{Binding Import.ExportActionButtonText}", element.Attribute("Content")?.Value));
+    }
+
+    [Fact]
     public void ProjectWorkspace_ShouldStretchLoadingHostAndMainGrid()
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "ProjectWorkspaceView.axaml"));
@@ -286,8 +353,8 @@ public sealed class WorkbenchLayoutTests
         var contextGrid = contextBar.Elements()
             .Single(element => element.Name.LocalName == "Grid");
 
-        // T071：模式上下文移到接口名后，上下文栏单行 4 列（模式切换/接口名/上下文 chip/生成代码）
-        Assert.Equal("Auto,*,Auto,Auto", contextGrid.Attribute("ColumnDefinitions")?.Value);
+        // 模式上下文移到接口名后，并追加保存状态 chip，保持单行展示。
+        Assert.Equal("Auto,*,Auto,Auto,Auto", contextGrid.Attribute("ColumnDefinitions")?.Value);
         Assert.Contains(
             contextGrid.Descendants(),
             element => element.Name.LocalName == "TextBox"
@@ -302,12 +369,19 @@ public sealed class WorkbenchLayoutTests
                     && child.Attribute("Text")?.Value == "{Binding Editor.CurrentHttpCaseContextText}"));
         Assert.Contains(
             contextGrid.Descendants(),
+            element => element.Name.LocalName == "Border"
+                && HasClass(element, "HttpEditorSaveStateChip")
+                && element.Attribute("Grid.Column")?.Value == "3"
+                && element.Descendants().Any(child => child.Name.LocalName == "TextBlock"
+                    && child.Attribute("Text")?.Value == "{Binding Editor.CurrentHttpSaveStateText}"));
+        Assert.Contains(
+            contextGrid.Descendants(),
             element => element.Name.LocalName == "Border" && HasClass(element, "HttpEditorModeBar"));
         Assert.Contains(
             contextGrid.Descendants(),
             element => element.Name.LocalName == "Button"
                 && HasClass(element, "HttpCodeIconButton")
-                && element.Attribute("Grid.Column")?.Value == "3");
+                && element.Attribute("Grid.Column")?.Value == "4");
     }
 
     [Fact]
@@ -582,18 +656,24 @@ public sealed class WorkbenchLayoutTests
     }
 
     [Fact]
-    public void SidebarTree_ShouldExposeCaseCountChipInsteadOfCaseNodes()
+    public void SidebarTree_ShouldExposeCaseCountChipAndRequestCaseActions()
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "ProjectWorkspaceSidebarView.axaml"));
         var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceEditorStyles.axaml"));
 
-        // 对齐原型 08：树上无用例节点，接口节点用计数芯片承载用例数（点击开抽屉）
+        // 接口节点继续展示计数芯片，同时请求用例节点通过上下文菜单提供管理动作。
         Assert.Contains(
             document.Descendants(),
             element => HasClass(element, "WorkspaceTreeCaseChip"));
-        Assert.DoesNotContain(
+        Assert.Contains(
             document.Descendants(),
-            element => (element.Attribute("IsVisible")?.Value ?? string.Empty).Contains("IsHttpCaseNode"));
+            element => (element.Attribute("IsVisible")?.Value ?? string.Empty).Contains("IsRequestCaseNode"));
+        Assert.Contains(
+            document.Descendants(),
+            element => (element.Attribute("Command")?.Value ?? string.Empty) == "{Binding RenameCommand}");
+        Assert.Contains(
+            document.Descendants(),
+            element => (element.Attribute("Command")?.Value ?? string.Empty) == "{Binding DuplicateCommand}");
         Assert.DoesNotContain(styles.Descendants(), element => element.Name.LocalName == "Style"
             && (element.Attribute("Selector")?.Value ?? string.Empty).Contains("WorkspaceTreeStatusDot"));
     }

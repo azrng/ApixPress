@@ -302,6 +302,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
 
         // 已加载用例时只更新用例快照。接口本体是用例的父资源，不能因为编辑某个用例而被覆盖。
         var isUpdatingExistingCase = !string.IsNullOrWhiteSpace(workspaceTab.EditingCaseId);
+        var savedParentInterface = false;
         RequestCaseDto? savedInterface = null;
         if (!isUpdatingExistingCase)
         {
@@ -312,6 +313,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             }
 
             _catalog.UpsertCaseItem(savedInterface);
+            savedParentInterface = true;
         }
 
         var parentId = savedInterface?.Id ?? workspaceTab.EditingInterfaceId;
@@ -345,7 +347,10 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             workspaceTab.HttpCaseName = requestName;
             _catalog.UpsertCaseItem(result.Data);
             workspaceTab.MarkCleanState();
-            _hostContext.Messenger.Send(new StatusMessageRequest($"已保存用例「{requestName}」。"));
+            _hostContext.Messenger.Send(new StatusMessageRequest(
+                savedParentInterface
+                    ? $"接口和请求用例「{requestName}」已保存。"
+                    : $"请求用例「{requestName}」已保存。"));
         }
         else
         {

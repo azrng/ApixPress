@@ -35,6 +35,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     private bool _showSaveHttpCaseAction;
     private bool _isEditingHttpCase;
     private string _currentHttpCaseContextText = "接口模式";
+    private string _currentHttpSaveStateText = "已保存";
+    private bool _hasCurrentHttpUnsavedChanges;
     private string _currentEditorBaseUrlCaption = string.Empty;
     private bool _hasResolvedRequestPreview;
     private string _resolvedRequestPreviewText = string.Empty;
@@ -108,6 +110,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     public bool ShowSaveHttpCaseAction => _showSaveHttpCaseAction;
     public bool IsEditingHttpCase => _isEditingHttpCase;
     public string CurrentHttpCaseContextText => _currentHttpCaseContextText;
+    public string CurrentHttpSaveStateText => _currentHttpSaveStateText;
+    public bool HasCurrentHttpUnsavedChanges => _hasCurrentHttpUnsavedChanges;
     public string CurrentEditorBaseUrlCaption => _currentEditorBaseUrlCaption;
     public bool HasResolvedRequestPreview => _hasResolvedRequestPreview;
     public string ResolvedRequestPreviewText => _resolvedRequestPreviewText;
@@ -343,6 +347,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         OnPropertyChanged(nameof(CurrentHttpCaseName));
         OnPropertyChanged(nameof(IsEditingHttpCase));
         OnPropertyChanged(nameof(CurrentHttpCaseContextText));
+        OnPropertyChanged(nameof(CurrentHttpSaveStateText));
+        OnPropertyChanged(nameof(HasCurrentHttpUnsavedChanges));
     }
 
     /// <summary>生成代码对话框跟随请求状态刷新的尾逻辑，立即刷新与防抖刷新共用。</summary>
@@ -387,6 +393,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         OnPropertyChanged(nameof(CurrentHttpCaseName));
         OnPropertyChanged(nameof(IsEditingHttpCase));
         OnPropertyChanged(nameof(CurrentHttpCaseContextText));
+        RefreshHttpSaveState();
         ScheduleComputedStateRefresh();
     }
 
@@ -713,6 +720,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         SetComputedProperty(ref _currentHttpCaseContextText,
             isEditingHttpCase ? $"用例模式 · {workspace!.HttpCaseName}" : "接口模式",
             nameof(CurrentHttpCaseContextText));
+        RefreshHttpSaveState(workspace);
         SetComputedProperty(ref _currentEditorBaseUrlCaption, ResolveCurrentEditorBaseUrlCaption(), nameof(CurrentEditorBaseUrlCaption));
 
         var resolvedRequestPreviewText = BuildResolvedRequestPreviewText();
@@ -741,6 +749,19 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
             : "{ }", nameof(CurrentHttpDocumentBodyPreview));
         SetComputedProperty(ref _currentHttpDocumentCurlSnippet, ResolveCurrentHttpDocumentCurlSnippet(), nameof(CurrentHttpDocumentCurlSnippet));
         SetComputedProperty(ref _canGenerateRequestCode, workspace is not null && !workspace.IsLandingTab, nameof(CanGenerateRequestCode));
+    }
+
+    /// <summary>保存状态属于低成本状态，编辑字段后立即刷新，避免等待预览防抖造成 chip 滞后。</summary>
+    private void RefreshHttpSaveState(RequestWorkspaceTabViewModel? workspace = null)
+    {
+        workspace ??= ActiveWorkspaceTab;
+        var hasCurrentHttpUnsavedChanges = _isHttpInterfaceEditor && workspace?.HasUnsavedChanges == true;
+        SetComputedProperty(ref _currentHttpSaveStateText,
+            hasCurrentHttpUnsavedChanges ? "有未保存修改" : "已保存",
+            nameof(CurrentHttpSaveStateText));
+        SetComputedProperty(ref _hasCurrentHttpUnsavedChanges,
+            hasCurrentHttpUnsavedChanges,
+            nameof(HasCurrentHttpUnsavedChanges));
     }
 
     private string ResolveCurrentEditorBaseUrlCaption()

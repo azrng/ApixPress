@@ -25,7 +25,7 @@
       <Border Grid.Row="2" Classes="DialogDangerNotice">
         <StackPanel Spacing="2">
           <TextBlock Classes="DialogDangerText" Text="该操作无法恢复" />
-          <TextBlock Classes="CaptionText" Text="将同时删除其下的测试用例与调试配置。" TextWrapping="Wrap" />
+          <TextBlock Classes="CaptionText" Text="将同时删除其下的请求用例与调试配置。" TextWrapping="Wrap" />
         </StackPanel>
       </Border>
 

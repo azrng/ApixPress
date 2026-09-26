@@ -45,11 +45,11 @@
                   IsVisible="{Binding Editor.ShowSaveHttpCaseAction}">
             <StackPanel Spacing="{StaticResource Space.2}">
               <TextBlock Classes="CaptionText"
-                         Text="测试用例" />
+                         Text="请求用例" />
               <TextBlock Text="{Binding Editor.CurrentHttpCaseName}"
                          TextTrimming="CharacterEllipsis" />
               <Button Classes="HttpSaveButton"
-                      Content="保存测试用例"
+                      Content="保存请求用例"
                       Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SaveHttpCaseCommand}" />
             </StackPanel>
           </Border>
@@ -83,7 +83,7 @@
               <Border Classes="HttpDocumentInfoRow">
                 <Grid ColumnDefinitions="96,*"
                       ColumnSpacing="{StaticResource Space.3}">
-                  <TextBlock Classes="CaptionText HttpDocumentInfoLabel" Text="接口用例" />
+                  <TextBlock Classes="CaptionText HttpDocumentInfoLabel" Text="请求用例" />
                   <TextBlock Grid.Column="1" Text="{Binding Editor.CurrentHttpCaseName}" TextWrapping="Wrap" />
                 </Grid>
               </Border>

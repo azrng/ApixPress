@@ -25,6 +25,8 @@ public sealed class ProjectEnvironmentRepository : IProjectEnvironmentRepository
                                base_url BaseUrl,
                                is_active IsActive,
                                sort_order SortOrder,
+                               source_project_id SourceProjectId,
+                               source_id SourceId,
                                created_at CreatedAt,
                                updated_at UpdatedAt
                            from project_environments
@@ -48,6 +50,8 @@ public sealed class ProjectEnvironmentRepository : IProjectEnvironmentRepository
                                base_url BaseUrl,
                                is_active IsActive,
                                sort_order SortOrder,
+                               source_project_id SourceProjectId,
+                               source_id SourceId,
                                created_at CreatedAt,
                                updated_at UpdatedAt
                            from project_environments
@@ -70,6 +74,8 @@ public sealed class ProjectEnvironmentRepository : IProjectEnvironmentRepository
                                base_url BaseUrl,
                                is_active IsActive,
                                sort_order SortOrder,
+                               source_project_id SourceProjectId,
+                               source_id SourceId,
                                created_at CreatedAt,
                                updated_at UpdatedAt
                            from project_environments
@@ -86,15 +92,17 @@ public sealed class ProjectEnvironmentRepository : IProjectEnvironmentRepository
     {
         const string sql = """
                            insert into project_environments (
-                               id, project_id, name, base_url, is_active, sort_order, created_at, updated_at
+                               id, project_id, name, base_url, is_active, sort_order, source_project_id, source_id, created_at, updated_at
                            ) values (
-                               @Id, @ProjectId, @Name, @BaseUrl, @IsActive, @SortOrder, @CreatedAt, @UpdatedAt
+                               @Id, @ProjectId, @Name, @BaseUrl, @IsActive, @SortOrder, @SourceProjectId, @SourceId, @CreatedAt, @UpdatedAt
                            )
                            on conflict(id) do update set
                                name = excluded.name,
                                base_url = excluded.base_url,
                                is_active = excluded.is_active,
                                sort_order = excluded.sort_order,
+                               source_project_id = excluded.source_project_id,
+                               source_id = excluded.source_id,
                                updated_at = excluded.updated_at
                            """;
 

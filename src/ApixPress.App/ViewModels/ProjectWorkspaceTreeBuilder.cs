@@ -7,7 +7,9 @@ namespace ApixPress.App.ViewModels;
 public sealed record WorkspaceTreeItemCommands(
     ICommand Delete,
     ICommand CreateSubfolder,
-    ICommand CreateInterfaceInFolder);
+    ICommand CreateInterfaceInFolder,
+    ICommand RenameCase,
+    ICommand DuplicateCase);
 
 public static class ProjectWorkspaceTreeBuilder
 {
@@ -111,7 +113,7 @@ public static class ProjectWorkspaceTreeBuilder
 
         foreach (var interfaceSpec in rootInterfaces.OrderBy(item => item.Item.Name, StringComparer.OrdinalIgnoreCase))
         {
-            interfaceRoot.Children.Add(BuildInterfaceNode(interfaceSpec, commands.Delete, expandAll));
+            interfaceRoot.Children.Add(BuildInterfaceNode(interfaceSpec, commands, expandAll));
         }
 
         return interfaceRoot;
@@ -253,14 +255,13 @@ public static class ProjectWorkspaceTreeBuilder
             .Select(item => BuildFolderNode(item, commands, expandAll)));
         children.AddRange(spec.Interfaces
             .OrderBy(item => item.Item.Name, StringComparer.OrdinalIgnoreCase)
-            .Select(item => BuildInterfaceNode(item, commands.Delete, expandAll)));
+            .Select(item => BuildInterfaceNode(item, commands, expandAll)));
         return children;
     }
 
-    private static ExplorerItemViewModel BuildInterfaceNode(InterfaceNodeSpec spec, ICommand deleteCommand, bool expandAll)
+    private static ExplorerItemViewModel BuildInterfaceNode(InterfaceNodeSpec spec, WorkspaceTreeItemCommands commands, bool expandAll)
     {
-        // 对齐原型 08：树上不列用例节点，接口节点仅以计数芯片提示用例数（点击打开用例抽屉）
-        return new ExplorerItemViewModel
+        var node = new ExplorerItemViewModel
         {
             NodeKey = $"http-interface:{spec.Item.SourceCase.Id}",
             Title = spec.Item.Name,
@@ -268,9 +269,39 @@ public static class ProjectWorkspaceTreeBuilder
             NodeType = ProjectTabRequestEntryTypes.HttpInterface,
             CanLoad = true,
             IsExpanded = expandAll,
-            DeleteCommand = deleteCommand,
+            DeleteCommand = commands.Delete,
             CaseCount = spec.Cases.Count,
             SourceCase = spec.Item.SourceCase
+        };
+
+        // 请求用例作为接口的下一级延迟加载，默认保持接口树收缩，避免大量用例在首次建树时实例化。
+        if (spec.Cases.Count > 0)
+        {
+            node.SetDeferredChildren(() => spec.Cases
+                .OrderByDescending(item => item.UpdatedAt)
+                .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(item => item.Id, StringComparer.OrdinalIgnoreCase)
+                .Select(item => BuildRequestCaseNode(item, commands))
+                .ToList());
+        }
+
+        return node;
+    }
+
+    private static ExplorerItemViewModel BuildRequestCaseNode(RequestCaseItemViewModel item, WorkspaceTreeItemCommands commands)
+    {
+        return new ExplorerItemViewModel
+        {
+            NodeKey = $"http-case:{item.SourceCase.Id}",
+            Title = item.Name,
+            Subtitle = item.RequestUrlText,
+            NodeType = ProjectTabRequestEntryTypes.HttpCase,
+            CanLoad = true,
+            DeleteCommand = commands.Delete,
+            RenameCommand = commands.RenameCase,
+            DuplicateCommand = commands.DuplicateCase,
+            SourceCase = item.SourceCase,
+            SourceCaseItem = item
         };
     }
 

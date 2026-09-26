@@ -37,7 +37,7 @@
     <Border Grid.Row="0"
             Classes="HttpEditorContextBar"
             IsVisible="{Binding Editor.IsHttpInterfaceEditor}">
-      <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+      <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto"
             ColumnSpacing="{StaticResource Space.3}">
         <!-- 视图切换是导航，放左侧与内容对齐（对标 Apifox 调试/文档预览位置） -->
         <Border Grid.Column="0"
@@ -67,7 +67,15 @@
           <TextBlock Classes="HttpEditorContextChipText"
                      Text="{Binding Editor.CurrentHttpCaseContextText}" />
         </Border>
-        <Button Grid.Column="3"
+        <Border Grid.Column="3"
+                Classes="HttpEditorSaveStateChip"
+                Classes.HttpEditorSaveStateDirty="{Binding Editor.HasCurrentHttpUnsavedChanges}"
+                VerticalAlignment="Center"
+                ToolTip.Tip="保存状态">
+          <TextBlock Classes="HttpEditorSaveStateChipText"
+                     Text="{Binding Editor.CurrentHttpSaveStateText}" />
+        </Border>
+        <Button Grid.Column="4"
                 Classes="IconButton HttpCodeIconButton"
                 VerticalAlignment="Center"
                 Command="{Binding Editor.OpenRequestCodeDialogCommand}"

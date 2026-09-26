@@ -46,6 +46,52 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
+    public async Task RequestCaseDelivery_ShouldAutoSelectParentInterfaceWhenCaseIsSelected()
+    {
+        var exportService = new FakeProjectDataExportService
+        {
+            DeliveryOptions = new RequestCaseDeliveryOptionsDto
+            {
+                Interfaces =
+                [
+                    new RequestCaseDeliveryCandidateDto
+                    {
+                        Id = "interface-1", EntryType = "http-interface", Name = "订单接口", Method = "GET", Url = "/orders"
+                    }
+                ],
+                RequestCases =
+                [
+                    new RequestCaseDeliveryCandidateDto
+                    {
+                        Id = "case-1", EntryType = "http-case", ParentId = "interface-1", Name = "成功", Method = "GET", Url = "/orders"
+                    }
+                ],
+                EnvironmentCount = 1,
+                VariableCount = 2
+            }
+        };
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            projectDataExportService: exportService,
+            filePickerService: new FakeFilePickerService
+            {
+                SaveRequestCaseDeliveryFileResult = Path.Combine(Path.GetTempPath(), "request-delivery-test.apixdelivery.json")
+            });
+
+        await viewModel.InitializeAsync();
+        await viewModel.Import.Delivery.OpenExportCommand.ExecuteAsync(null);
+
+        var requestCase = Assert.Single(viewModel.Import.Delivery.RequestCases);
+        var parentInterface = Assert.Single(viewModel.Import.Delivery.Interfaces);
+        requestCase.IsSelected = true;
+
+        Assert.True(parentInterface.IsSelected);
+        Assert.True(parentInterface.IsAutoIncluded);
+        Assert.Equal(1, viewModel.Import.Delivery.SelectedInterfaceCount);
+        Assert.Equal(1, viewModel.Import.Delivery.SelectedRequestCaseCount);
+    }
+
+    [Fact]
     public async Task ShowImportDataCommand_ShouldShowImportedEndpointsInInterfaceCatalog()
     {
         var apiWorkspaceService = new FakeApiWorkspaceService();
@@ -331,9 +377,11 @@ public sealed partial class ProjectTabViewModelTests
         {
             Result = ResultModel<ProjectDataExportResultDto>.Success(new ProjectDataExportResultDto
             {
-                FilePath = @"C:\temp\project-export.apixpkg.json",
+                OutputPath = @"C:\temp\project-export.apixpkg.json",
+                Format = ProjectDataExportFormat.Backup,
                 InterfaceCount = 2,
-                TestCaseCount = 3
+                TestCaseCount = 3,
+                FileCount = 1
             })
         };
         var notificationService = new FakeAppNotificationService();
@@ -351,7 +399,7 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Equal("测试项目", exportService.LastRequest.ProjectName);
         Assert.Equal("用于验证项目设置数据管理", exportService.LastRequest.ProjectDescription);
         Assert.Equal(@"C:\temp\project-export.apixpkg.json", exportService.LastRequest.OutputFilePath);
-        Assert.Equal("项目数据导出成功：2 个接口、3 个测试用例，已保存到 project-export.apixpkg.json", viewModel.StatusMessage);
+        Assert.Equal("项目数据导出成功：2 个接口、3 个请求用例、0 个环境、0 条请求历史，已保存到 project-export.apixpkg.json", viewModel.StatusMessage);
         Assert.True(viewModel.Import.ShowImportStatusSuccess);
         var notification = Assert.Single(notificationService.Notifications);
         Assert.Equal("项目数据导出成功", notification.Title);
@@ -374,6 +422,110 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Null(exportService.LastRequest);
         Assert.Equal("已取消导出项目数据。", viewModel.StatusMessage);
         Assert.True(viewModel.Import.ShowImportStatusInfo);
+    }
+
+    [Fact]
+    public void SelectExportFormatCommand_ShouldSwitchPanelsAndKeepScopeFlags()
+    {
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService());
+
+        Assert.True(viewModel.Import.IsBackupExportFormat);
+        Assert.Equal("导出项目数据", viewModel.Import.ExportActionButtonText);
+        viewModel.Import.ExportIncludeRequestHistory = true;
+
+        viewModel.Import.SelectExportFormatCommand.Execute("markdown");
+
+        Assert.True(viewModel.Import.IsMarkdownExportFormat);
+        Assert.False(viewModel.Import.IsBackupExportFormat);
+        Assert.False(viewModel.Import.IsHtmlExportFormat);
+        Assert.Equal("导出 Markdown", viewModel.Import.ExportActionButtonText);
+        // 切换格式保留四项范围勾选，仅备份面板展示它们
+        Assert.True(viewModel.Import.ExportIncludeRequestHistory);
+
+        viewModel.Import.SelectExportFormatCommand.Execute("html");
+        Assert.True(viewModel.Import.IsHtmlExportFormat);
+        Assert.Equal("导出 HTML", viewModel.Import.ExportActionButtonText);
+    }
+
+    [Fact]
+    public async Task ExportProjectDataCommand_Markdown_ShouldUseDirectoryPickerAndDirectoryRequest()
+    {
+        var parentDirectory = Path.Combine(Path.GetTempPath(), $"md-export-{Guid.NewGuid():N}");
+        var filePickerService = new FakeFilePickerService
+        {
+            PickStorageDirectoryResult = parentDirectory
+        };
+        var exportService = new FakeProjectDataExportService
+        {
+            Result = ResultModel<ProjectDataExportResultDto>.Success(new ProjectDataExportResultDto
+            {
+                OutputPath = Path.Combine(parentDirectory, "测试项目-docs"),
+                Format = ProjectDataExportFormat.Markdown,
+                InterfaceCount = 1,
+                FileCount = 2
+            })
+        };
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            filePickerService: filePickerService,
+            projectDataExportService: exportService);
+
+        await viewModel.InitializeAsync();
+        viewModel.Import.SelectExportFormatCommand.Execute("markdown");
+        await viewModel.Import.ExportProjectDataCommand.ExecuteAsync(null);
+
+        Assert.NotNull(exportService.LastRequest);
+        Assert.Equal(ProjectDataExportFormat.Markdown, exportService.LastRequest!.Format);
+        Assert.Equal(parentDirectory, exportService.LastRequest.OutputDirectoryPath);
+        Assert.Equal(string.Empty, exportService.LastRequest.OutputFilePath);
+        Assert.Contains("Markdown 文档导出成功", viewModel.StatusMessage);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_ShouldRestorePersistedExportPreferences()
+    {
+        var exportService = new FakeProjectDataExportService
+        {
+            LoadSettingsResult = new ProjectDataExportSettingsDto
+            {
+                Format = ProjectDataExportFormats.Html,
+                IncludeInterfaces = true,
+                IncludeRequestCases = false,
+                IncludeEnvironments = true,
+                IncludeRequestHistory = true,
+                LastOutputDirectory = @"C:\temp"
+            }
+        };
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            projectDataExportService: exportService);
+
+        await viewModel.InitializeAsync();
+
+        Assert.True(viewModel.Import.IsHtmlExportFormat);
+        Assert.False(viewModel.Import.ExportIncludeRequestCases);
+        Assert.True(viewModel.Import.ExportIncludeRequestHistory);
+    }
+
+    [Fact]
+    public async Task ExportProjectDataCommand_ShouldSavePreferencesEvenWhenUserCancels()
+    {
+        var filePickerService = new FakeFilePickerService();
+        var exportService = new FakeProjectDataExportService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            filePickerService: filePickerService,
+            projectDataExportService: exportService);
+
+        await viewModel.InitializeAsync();
+        viewModel.Import.SelectExportFormatCommand.Execute("html");
+        viewModel.Import.ExportIncludeRequestCases = false;
+        await viewModel.Import.ExportProjectDataCommand.ExecuteAsync(null);
+
+        // 取消选择器不算失败，但格式与四项范围已经落库
+        Assert.Null(exportService.LastRequest);
+        Assert.Contains(exportService.SavedSettings, saved =>
+            saved.Settings.Format == ProjectDataExportFormats.Html && !saved.Settings.IncludeRequestCases);
     }
 
     [Fact]
@@ -544,9 +696,16 @@ public sealed partial class ProjectTabViewModelTests
         Assert.NotNull(interfaceItem);
 
         await viewModel.Catalog.LoadWorkspaceItem(interfaceItem);
+        Assert.Equal("已保存", viewModel.Editor.CurrentHttpSaveStateText);
+        Assert.False(viewModel.Editor.HasCurrentHttpUnsavedChanges);
         viewModel.Editor.CurrentHttpInterfaceName = "接口 1 已编辑";
+        Assert.True(viewModel.ActiveWorkspaceTab?.HasUnsavedChanges);
+        Assert.Equal("有未保存修改", viewModel.Editor.CurrentHttpSaveStateText);
+        Assert.True(viewModel.Editor.HasCurrentHttpUnsavedChanges);
 
         await viewModel.Workflow.SaveCurrentEditorAsync();
+        Assert.Equal("已保存", viewModel.Editor.CurrentHttpSaveStateText);
+        Assert.False(viewModel.Editor.HasCurrentHttpUnsavedChanges);
 
         var savedInterface = Assert.Single(requestCaseService.Cases, item => item.EntryType == "http-interface");
         Assert.Equal("接口 1 已编辑", savedInterface.Name);
@@ -979,6 +1138,7 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Equal("接口 1 未保存修改", viewModel.VisibleWorkspaceTabs[0].HeaderText);
         Assert.Equal("接口 2", viewModel.VisibleWorkspaceTabs[1].HeaderText);
         Assert.Equal("接口 2", viewModel.ActiveWorkspaceTab?.HeaderText);
+        Assert.Equal("当前标签有未保存修改，已保留原标签并打开新的工作标签。", viewModel.StatusMessage);
     }
 
     [Fact]
@@ -1734,6 +1894,8 @@ public sealed partial class ProjectTabViewModelTests
         viewModel.HttpCaseSave.DraftName = "成功响应";
         await viewModel.HttpCaseSave.ConfirmSaveCommand.ExecuteAsync(null);
 
+        Assert.Equal("接口和请求用例「成功响应」已保存。", viewModel.StatusMessage);
+
         var savedInterface = Assert.Single(requestCaseService.Cases, item => item.EntryType == ProjectTabRequestEntryTypes.HttpInterface);
         var savedCase = Assert.Single(requestCaseService.Cases, item => item.EntryType == ProjectTabRequestEntryTypes.HttpCase);
 
@@ -1743,10 +1905,14 @@ public sealed partial class ProjectTabViewModelTests
         var folderItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "订单 (1)");
         var interfaceItem = FindExplorerItemByTitle(viewModel.Catalog.InterfaceCatalogItems, "创建订单");
 
-        // 对齐原型 08：树上不生成用例节点，接口节点以计数承载用例数
+        // 接口节点默认收缩，用例在展开后作为下一级节点展示，同时保留计数芯片
         Assert.NotNull(folderItem);
         Assert.NotNull(interfaceItem);
-        Assert.Empty(interfaceItem!.Children);
+        Assert.True(interfaceItem!.HasChildren);
+        Assert.False(interfaceItem.IsExpanded);
+        interfaceItem.EnsureChildrenLoaded();
+        var firstCaseNode = Assert.Single(interfaceItem.Children);
+        Assert.Equal("成功响应", firstCaseNode.Title);
         Assert.Equal(1, interfaceItem.CaseCount);
         Assert.True(interfaceItem.HasCases);
 
@@ -1757,7 +1923,63 @@ public sealed partial class ProjectTabViewModelTests
 
         // 导航重建被抑制时，接口节点计数须定向刷新 1 → 2
         Assert.Equal(2, interfaceItem.CaseCount);
+        interfaceItem.EnsureChildrenLoaded();
+        Assert.Equal(2, interfaceItem.Children.Count);
         Assert.Equal(2, requestCaseService.Cases.Count(item => item.EntryType == ProjectTabRequestEntryTypes.HttpCase));
+    }
+
+    [Fact]
+    public async Task SaveExistingHttpCase_ShouldOnlyMentionRequestCaseInStatus()
+    {
+        var requestCaseService = new FakeRequestCaseService();
+        var parentInterface = new RequestCaseDto
+        {
+            Id = "interface-1",
+            ProjectId = "project-1",
+            EntryType = ProjectTabRequestEntryTypes.HttpInterface,
+            Name = "用户接口",
+            GroupName = "用户",
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                EndpointId = "endpoint-1",
+                Method = "GET",
+                Url = "/users",
+                Name = "用户接口"
+            },
+            UpdatedAt = DateTime.UtcNow
+        };
+        var requestCase = new RequestCaseDto
+        {
+            Id = "case-1",
+            ProjectId = "project-1",
+            EntryType = ProjectTabRequestEntryTypes.HttpCase,
+            Name = "成功",
+            GroupName = "用例",
+            ParentId = parentInterface.Id,
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                EndpointId = "endpoint-1",
+                Method = "GET",
+                Url = "/users?id=1",
+                Name = "用户接口"
+            },
+            HasLoadedDetail = true,
+            UpdatedAt = DateTime.UtcNow
+        };
+        requestCaseService.Cases.AddRange([parentInterface, requestCase]);
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestCaseService);
+
+        await viewModel.InitializeAsync();
+        await viewModel.Catalog.LoadSavedRequestAsync(requestCase);
+
+        viewModel.Editor.CurrentHttpCaseName = "异常响应";
+        await viewModel.Workflow.SaveCurrentEditorAsync();
+
+        Assert.Equal("请求用例「异常响应」已保存。", viewModel.StatusMessage);
+        Assert.DoesNotContain("接口和", viewModel.StatusMessage, StringComparison.Ordinal);
+        Assert.Equal(1, requestCaseService.Cases.Count(item => item.EntryType == ProjectTabRequestEntryTypes.HttpInterface));
+        Assert.Equal(1, requestCaseService.Cases.Count(item => item.EntryType == ProjectTabRequestEntryTypes.HttpCase));
+        Assert.Equal("异常响应", Assert.Single(requestCaseService.Cases, item => item.EntryType == ProjectTabRequestEntryTypes.HttpCase).Name);
     }
 
     [Fact]

@@ -144,6 +144,14 @@
                                               IsVisible="{Binding IsFolderNode}"
                                               Command="{Binding CreateInterfaceInFolderCommand}"
                                               CommandParameter="{Binding FolderFullPath}" />
+                                    <MenuItem Header="重命名"
+                                              IsVisible="{Binding IsRequestCaseNode}"
+                                              Command="{Binding RenameCommand}"
+                                              CommandParameter="{Binding SourceCaseItem}" />
+                                    <MenuItem Header="复制"
+                                              IsVisible="{Binding IsRequestCaseNode}"
+                                              Command="{Binding DuplicateCommand}"
+                                              CommandParameter="{Binding SourceCaseItem}" />
                                     <MenuItem Header="删除"
                                               IsEnabled="{Binding CanDelete}"
                                               Command="{Binding DeleteCommand}"

@@ -1,0 +1,170 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ApixPress.App.ViewModels"
+             x:Class="ApixPress.App.Views.Controls.RequestCaseDeliveryDialogView"
+             x:DataType="vm:RequestCaseDeliveryViewModel"
+             mc:Ignorable="d">
+  <Border Classes="ProjectImportDialogCard">
+    <Grid RowDefinitions="Auto,Auto,*"
+          RowSpacing="{StaticResource Space.3}"
+          IsEnabled="{Binding CanEditDialog}">
+      <Border Classes="ProjectImportDialogHeaderCard">
+        <StackPanel Spacing="2">
+          <TextBlock Classes="CaptionText" Text="数据交付" />
+          <TextBlock Text="{Binding DialogTitle}"
+                     FontSize="{StaticResource Font.Size.BodyLarge}"
+                     FontWeight="SemiBold" />
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Row="1"
+              Classes="ProjectImportDialogNoticeCard">
+        <StackPanel Spacing="2">
+          <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" />
+          <TextBlock Classes="CaptionText"
+                     Text="{Binding FileName}"
+                     IsVisible="{Binding IsImportMode}"
+                     TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+      </Border>
+
+      <Grid Grid.Row="2">
+        <Grid IsVisible="{Binding IsExportMode}"
+              RowDefinitions="Auto,Auto,*,Auto"
+              RowSpacing="{StaticResource Space.3}">
+          <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.2}">
+            <Button Classes="DialogSecondaryButton"
+                    Content="全选接口"
+                    Command="{Binding SelectAllInterfacesCommand}" />
+            <Button Classes="DialogSecondaryButton"
+                    Content="全选用例"
+                    Command="{Binding SelectAllRequestCasesCommand}" />
+            <Button Classes="DialogSecondaryButton"
+                    Content="清空选择"
+                    Command="{Binding ClearSelectionCommand}" />
+          </StackPanel>
+
+          <TextBlock Grid.Row="1"
+                     Classes="CaptionText"
+                     Text="{Binding SelectedSummaryText}" />
+
+          <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource Space.3}">
+            <Border Classes="ProjectSettingsBasicCard">
+              <Grid RowDefinitions="Auto,*" RowSpacing="{StaticResource Space.2}">
+                <TextBlock Classes="SectionTitle" Text="接口" />
+                <ScrollViewer Grid.Row="1" MaxHeight="360">
+                  <ItemsControl ItemsSource="{Binding Interfaces}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:RequestCaseDeliveryItemViewModel">
+                        <Border Classes="ProjectSettingsBasicRow">
+                          <CheckBox IsChecked="{Binding IsSelected}">
+                            <StackPanel Spacing="2">
+                              <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                              <TextBlock Classes="CaptionText" Text="{Binding SummaryText}" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                          </CheckBox>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+              </Grid>
+            </Border>
+
+            <Border Grid.Column="1" Classes="ProjectSettingsBasicCard">
+              <Grid RowDefinitions="Auto,*" RowSpacing="{StaticResource Space.2}">
+                <TextBlock Classes="SectionTitle" Text="请求用例" />
+                <ScrollViewer Grid.Row="1" MaxHeight="360">
+                  <ItemsControl ItemsSource="{Binding RequestCases}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:RequestCaseDeliveryItemViewModel">
+                        <Border Classes="ProjectSettingsBasicRow">
+                          <CheckBox IsChecked="{Binding IsSelected}">
+                            <StackPanel Spacing="2">
+                              <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                              <TextBlock Classes="CaptionText" Text="{Binding SummaryText}" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                          </CheckBox>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+              </Grid>
+            </Border>
+          </Grid>
+
+          <StackPanel Grid.Row="3"
+                      Orientation="Horizontal"
+                      HorizontalAlignment="Right"
+                      Spacing="{StaticResource Space.2}">
+            <Button Classes="DialogSecondaryButton" Content="取消" Command="{Binding CloseDialogCommand}" />
+            <Button Classes="DialogPrimaryButton" Content="导出交付包" Command="{Binding ExportCommand}" />
+          </StackPanel>
+        </Grid>
+
+        <Grid IsVisible="{Binding IsImportMode}"
+              RowDefinitions="Auto,* ,Auto"
+              RowSpacing="{StaticResource Space.3}">
+          <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="{StaticResource Space.3}">
+            <TextBlock Text="接口 {Binding Preview.InterfaceCount}" />
+            <TextBlock Grid.Column="1" Text="用例 {Binding Preview.RequestCaseCount}" />
+            <TextBlock Grid.Column="2" Text="环境 {Binding Preview.EnvironmentCount}" />
+            <TextBlock Grid.Column="3" Text="变量 {Binding Preview.VariableCount}" />
+            <TextBlock Grid.Column="4" Text="孤儿 {Binding Preview.OrphanCount}" />
+          </Grid>
+
+          <ScrollViewer Grid.Row="1" MaxHeight="430">
+            <ItemsControl ItemsSource="{Binding PreviewItems}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:RequestCaseDeliveryPreviewItemViewModel">
+                  <Border Classes="ProjectSettingsBasicRow">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource Space.3}">
+                      <TextBlock Classes="CaptionText" Text="{Binding KindText}" VerticalAlignment="Center" />
+                      <StackPanel Grid.Column="1" Spacing="2">
+                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Classes="CaptionText" Text="{Binding Status}" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="{Binding Detail}"
+                                   TextWrapping="Wrap" />
+                      </StackPanel>
+                      <ComboBox Grid.Column="2"
+                                Width="116"
+                                ItemsSource="{Binding ActionOptions}"
+                                SelectedItem="{Binding SelectedAction}">
+                        <ComboBox.ItemTemplate>
+                          <DataTemplate x:DataType="vm:RequestCaseDeliveryActionOption">
+                            <TextBlock Text="{Binding Label}" />
+                          </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                      </ComboBox>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </ScrollViewer>
+
+          <StackPanel Grid.Row="2"
+                      Orientation="Horizontal"
+                      HorizontalAlignment="Right"
+                      Spacing="{StaticResource Space.2}">
+            <Button Classes="DialogSecondaryButton" Content="取消" Command="{Binding CloseDialogCommand}" />
+            <Button Classes="DialogPrimaryButton" Content="执行导入" Command="{Binding ImportCommand}" />
+          </StackPanel>
+        </Grid>
+      </Grid>
+
+      <Border Classes="ProjectImportBusyOverlay" IsVisible="{Binding IsBusy}">
+        <Border Classes="ProjectImportBusyCard" HorizontalAlignment="Center" VerticalAlignment="Center">
+          <StackPanel Spacing="{StaticResource Space.3}">
+            <TextBlock Text="{Binding BusyText}" FontWeight="SemiBold" TextAlignment="Center" />
+            <ProgressBar Classes="ProjectImportBusyProgress" IsIndeterminate="True" />
+          </StackPanel>
+        </Border>
+      </Border>
+    </Grid>
+  </Border>
+</UserControl>

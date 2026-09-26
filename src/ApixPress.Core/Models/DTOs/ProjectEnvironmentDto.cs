@@ -8,6 +8,8 @@ public sealed class ProjectEnvironmentDto
     public string BaseUrl { get; init; } = string.Empty;
     public bool IsActive { get; init; }
     public int SortOrder { get; init; }
+    public string SourceProjectId { get; init; } = string.Empty;
+    public string SourceId { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
 }

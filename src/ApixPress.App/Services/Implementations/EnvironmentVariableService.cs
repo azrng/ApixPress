@@ -58,6 +58,8 @@ public sealed class EnvironmentVariableService : IEnvironmentVariableService, IT
             BaseUrl = normalizedBaseUrl,
             IsActive = environment.IsActive || currentEnvironments.Count == 0 || existing?.IsActive == true,
             SortOrder = existing?.SortOrder ?? environment.SortOrder,
+            SourceProjectId = environment.SourceProjectId,
+            SourceId = environment.SourceId,
             CreatedAt = existing?.CreatedAt ?? DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -258,6 +260,8 @@ public sealed class EnvironmentVariableService : IEnvironmentVariableService, IT
             BaseUrl = entity.BaseUrl,
             IsActive = entity.IsActive,
             SortOrder = entity.SortOrder,
+            SourceProjectId = entity.SourceProjectId,
+            SourceId = entity.SourceId,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt
         };

@@ -15,6 +15,7 @@ namespace ApixPress.App.Services.Implementations;
 public sealed class RequestCaseService : IRequestCaseService, ITransientDependency
 {
     private const string ImportedEndpointKeyPrefix = "swagger-import:";
+    private const string DeliveryEndpointKeyPrefix = "delivery-import:";
     private const string PreservedInterfaceParentIdPrefix = "preserved-interface:";
 
     private readonly IRequestCaseRepository _requestCaseRepository;
@@ -317,7 +318,8 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
 
     private static bool IsImportedInterface(RequestSnapshotDto requestSnapshot)
     {
-        return requestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase);
+        return requestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase)
+               || requestSnapshot.EndpointId.StartsWith(DeliveryEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string BuildImportedEndpointKey(ApiEndpointDto endpoint)
@@ -484,6 +486,8 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             Tags = _serializer.ToObject<List<string>>(entity.TagsJson) ?? [],
             Description = entity.Description,
             RequestSnapshot = _serializer.ToObject<RequestSnapshotDto>(entity.RequestSnapshotJson) ?? new RequestSnapshotDto(),
+            SourceProjectId = entity.SourceProjectId,
+            SourceId = entity.SourceId,
             HasLoadedDetail = true,
             UpdatedAt = entity.UpdatedAt
         };
@@ -502,6 +506,8 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             ParentId = entity.ParentId,
             Tags = _serializer.ToObject<List<string>>(entity.TagsJson) ?? [],
             Description = entity.Description,
+            SourceProjectId = entity.SourceProjectId,
+            SourceId = entity.SourceId,
             RequestSnapshot = new RequestSnapshotDto
             {
                 EndpointId = entity.EndpointId,
@@ -527,6 +533,8 @@ public sealed class RequestCaseService : IRequestCaseService, ITransientDependen
             TagsJson = _serializer.ToJson(dto.Tags),
             Description = dto.Description,
             RequestSnapshotJson = _serializer.ToJson(dto.RequestSnapshot),
+            SourceProjectId = dto.SourceProjectId,
+            SourceId = dto.SourceId,
             UpdatedAt = dto.UpdatedAt
         };
     }

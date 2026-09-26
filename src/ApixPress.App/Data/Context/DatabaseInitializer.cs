@@ -8,7 +8,7 @@ namespace ApixPress.App.Data.Context;
 
 public sealed class DatabaseInitializer : ISingletonDependency
 {
-    private const int CurrentSchemaVersion = 6;
+    private const int CurrentSchemaVersion = 8;
     private const string SchemaMigrationsTable = "schema_migrations";
 
     private readonly IDbConnectionFactory _connectionFactory;
@@ -107,12 +107,17 @@ public sealed class DatabaseInitializer : ISingletonDependency
         EnsureColumn(connection, "request_cases", "entry_type", "TEXT NOT NULL DEFAULT 'quick-request'");
         EnsureColumn(connection, "request_cases", "folder_path", "TEXT NOT NULL DEFAULT ''");
         EnsureColumn(connection, "request_cases", "parent_id", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(connection, "request_cases", "source_project_id", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(connection, "request_cases", "source_id", "TEXT NOT NULL DEFAULT ''");
         EnsureColumn(connection, "request_history", "project_id", "TEXT");
         EnsureColumn(connection, "environment_variables", "environment_id", "TEXT");
         EnsureColumn(connection, "environment_variables", "environment_name", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(connection, "project_environments", "source_project_id", "TEXT NOT NULL DEFAULT ''");
+        EnsureColumn(connection, "project_environments", "source_id", "TEXT NOT NULL DEFAULT ''");
         EnsureProjectHttpSettingsTable(connection);
         EnsureColumn(connection, "project_http_settings", "basic_username", "TEXT NOT NULL DEFAULT ''");
         EnsureColumn(connection, "project_http_settings", "basic_password", "TEXT NOT NULL DEFAULT ''");
+        EnsureProjectExportSettingsTable(connection);
 
         connection.Execute("DROP INDEX IF EXISTS ux_request_cases_group_name;");
         connection.Execute("DROP INDEX IF EXISTS ux_request_cases_project_group_name;");
@@ -129,6 +134,8 @@ public sealed class DatabaseInitializer : ISingletonDependency
         connection.Execute("CREATE INDEX IF NOT EXISTS ix_request_parameters_endpoint_id ON request_parameters(endpoint_id);");
         connection.Execute("CREATE INDEX IF NOT EXISTS ix_request_cases_project_parent_id ON request_cases(project_id, parent_id);");
         connection.Execute("CREATE INDEX IF NOT EXISTS ix_request_cases_project_listing ON request_cases(project_id, entry_type, folder_path, updated_at DESC);");
+        connection.Execute("CREATE INDEX IF NOT EXISTS ix_request_cases_source ON request_cases(source_project_id, source_id);");
+        connection.Execute("CREATE INDEX IF NOT EXISTS ix_project_environments_source ON project_environments(source_project_id, source_id);");
 
         connection.Execute("update request_cases set entry_type = 'quick-request' where ifnull(entry_type, '') = ''");
         connection.Execute("update request_cases set folder_path = '' where folder_path is null");
@@ -145,6 +152,24 @@ public sealed class DatabaseInitializer : ISingletonDependency
                 bearer_token text not null default '',
                 basic_username text not null default '',
                 basic_password text not null default '',
+                updated_at text not null,
+                foreign key(project_id) references projects(id) on delete cascade
+            )
+            """);
+    }
+
+    private static void EnsureProjectExportSettingsTable(IDbConnection connection)
+    {
+        connection.Execute(
+            """
+            create table if not exists project_export_settings (
+                project_id text primary key,
+                format text not null default 'backup',
+                include_interfaces integer not null default 1,
+                include_request_cases integer not null default 1,
+                include_environments integer not null default 1,
+                include_request_history integer not null default 0,
+                last_output_directory text not null default '',
                 updated_at text not null,
                 foreign key(project_id) references projects(id) on delete cascade
             )

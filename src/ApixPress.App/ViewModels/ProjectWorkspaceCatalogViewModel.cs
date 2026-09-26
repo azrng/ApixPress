@@ -18,6 +18,7 @@ namespace ApixPress.App.ViewModels;
 public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogContext
 {
     private const string ImportedEndpointKeyPrefix = "swagger-import:";
+    private const string DeliveryEndpointKeyPrefix = "delivery-import:";
     private const int InterfaceSearchDebounceMilliseconds = 250;
 
     private readonly string _projectId;
@@ -174,6 +175,9 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
         var source = item.SourceCase;
         var openStopwatch = System.Diagnostics.Stopwatch.StartNew();
         _showInterfaceManagementSection();
+        var previousActiveTab = _workspace.ActiveWorkspaceTab;
+        var activeTabHasUnsavedChanges = previousActiveTab is { HasUnsavedChanges: true }
+            && !IsTabStillEditingSource(previousActiveTab, source);
         var targetTab = _workspace.ResolveTabForWorkspaceNavigation(source);
         // 标签已在编辑该用例且有未保存修改时只激活不回填：旧快照覆盖编辑器状态会导致保存出陈旧数据
         if (!IsTabStillEditingSource(targetTab, source) || !targetTab.HasUnsavedChanges)
@@ -185,9 +189,14 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
         _messenger.Send(new StatusMessageRequest(source.EntryType switch
         {
             ProjectTabRequestEntryTypes.HttpInterface => $"已加载 HTTP 接口：{source.Name}",
-            ProjectTabRequestEntryTypes.HttpCase => $"已加载接口用例：{source.Name}",
+            ProjectTabRequestEntryTypes.HttpCase => $"已加载请求用例：{source.Name}",
             _ => $"已加载快捷请求：{source.Name}"
         }));
+        if (activeTabHasUnsavedChanges && !ReferenceEquals(targetTab, previousActiveTab))
+        {
+            // 切换时保留脏标签并打开新标签，明确告知用户没有覆盖未保存内容。
+            _messenger.Send(new StatusMessageRequest("当前标签有未保存修改，已保留原标签并打开新的工作标签。"));
+        }
         _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
         PerfLog.Log("树节点·打开工作区标签", openStopwatch.ElapsedMilliseconds, source.Name);
 
@@ -491,7 +500,9 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
             var treeCommands = new WorkspaceTreeItemCommands(
                 RequestDeleteWorkspaceTreeItemCommand,
                 RequestCreateFolderDialogCommand,
-                _workspace.OpenHttpInterfaceWorkspaceCommand);
+                _workspace.OpenHttpInterfaceWorkspaceCommand,
+                _useCasesPanel.RenameCaseCommand,
+                _useCasesPanel.DuplicateCaseCommand);
             SynchronizeExplorerItems(
                 InterfaceTreeItems,
                 [ProjectWorkspaceTreeBuilder.BuildInterfaceRoot(
@@ -916,7 +927,8 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
 
     private static bool IsImportedInterface(RequestCaseDto requestCase)
     {
-        return requestCase.RequestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase);
+        return requestCase.RequestSnapshot.EndpointId.StartsWith(ImportedEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase)
+               || requestCase.RequestSnapshot.EndpointId.StartsWith(DeliveryEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<RequestCaseDto> EnsureCaseDetailLoadedAsync(ExplorerItemViewModel item)

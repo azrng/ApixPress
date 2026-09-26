@@ -28,6 +28,8 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                                parent_id ParentId,
                                tags_json TagsJson,
                                description Description,
+                               source_project_id SourceProjectId,
+                               source_id SourceId,
                                coalesce(
                                    json_extract(request_snapshot_json, '$.endpointId'),
                                    json_extract(request_snapshot_json, '$.EndpointId'),
@@ -69,6 +71,8 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                                tags_json TagsJson,
                                description Description,
                                request_snapshot_json RequestSnapshotJson,
+                               source_project_id SourceProjectId,
+                               source_id SourceId,
                                coalesce(
                                    json_extract(request_snapshot_json, '$.endpointId'),
                                    json_extract(request_snapshot_json, '$.EndpointId'),
@@ -110,6 +114,8 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                                tags_json TagsJson,
                                description Description,
                                request_snapshot_json RequestSnapshotJson,
+                               source_project_id SourceProjectId,
+                               source_id SourceId,
                                updated_at UpdatedAt
                            from request_cases
                            where project_id = @ProjectId and id = @Id
@@ -125,9 +131,9 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
     {
         const string sql = """
                            insert into request_cases (
-                               id, project_id, entry_type, name, group_name, folder_path, parent_id, tags_json, description, request_snapshot_json, updated_at
+                               id, project_id, entry_type, name, group_name, folder_path, parent_id, tags_json, description, request_snapshot_json, source_project_id, source_id, updated_at
                            ) values (
-                               @Id, @ProjectId, @EntryType, @Name, @GroupName, @FolderPath, @ParentId, @TagsJson, @Description, @RequestSnapshotJson, @UpdatedAt
+                               @Id, @ProjectId, @EntryType, @Name, @GroupName, @FolderPath, @ParentId, @TagsJson, @Description, @RequestSnapshotJson, @SourceProjectId, @SourceId, @UpdatedAt
                            )
                            on conflict(id) do update set
                                project_id = excluded.project_id,
@@ -139,6 +145,8 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                                tags_json = excluded.tags_json,
                                description = excluded.description,
                                request_snapshot_json = excluded.request_snapshot_json,
+                               source_project_id = excluded.source_project_id,
+                               source_id = excluded.source_id,
                                updated_at = excluded.updated_at
                            """;
 
@@ -155,9 +163,9 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
 
         const string sql = """
                            insert into request_cases (
-                               id, project_id, entry_type, name, group_name, folder_path, parent_id, tags_json, description, request_snapshot_json, updated_at
+                               id, project_id, entry_type, name, group_name, folder_path, parent_id, tags_json, description, request_snapshot_json, source_project_id, source_id, updated_at
                            ) values (
-                               @Id, @ProjectId, @EntryType, @Name, @GroupName, @FolderPath, @ParentId, @TagsJson, @Description, @RequestSnapshotJson, @UpdatedAt
+                               @Id, @ProjectId, @EntryType, @Name, @GroupName, @FolderPath, @ParentId, @TagsJson, @Description, @RequestSnapshotJson, @SourceProjectId, @SourceId, @UpdatedAt
                            )
                            on conflict(id) do update set
                                project_id = excluded.project_id,
@@ -169,6 +177,8 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                                tags_json = excluded.tags_json,
                                description = excluded.description,
                                request_snapshot_json = excluded.request_snapshot_json,
+                               source_project_id = excluded.source_project_id,
+                               source_id = excluded.source_id,
                                updated_at = excluded.updated_at
                            """;
 
@@ -237,9 +247,9 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
 
         const string upsertSql = """
                                  insert into request_cases (
-                                     id, project_id, entry_type, name, group_name, folder_path, parent_id, tags_json, description, request_snapshot_json, updated_at
+                                     id, project_id, entry_type, name, group_name, folder_path, parent_id, tags_json, description, request_snapshot_json, source_project_id, source_id, updated_at
                                  ) values (
-                                     @Id, @ProjectId, @EntryType, @Name, @GroupName, @FolderPath, @ParentId, @TagsJson, @Description, @RequestSnapshotJson, @UpdatedAt
+                                     @Id, @ProjectId, @EntryType, @Name, @GroupName, @FolderPath, @ParentId, @TagsJson, @Description, @RequestSnapshotJson, @SourceProjectId, @SourceId, @UpdatedAt
                                  )
                                  on conflict(id) do update set
                                      project_id = excluded.project_id,
@@ -251,6 +261,8 @@ public sealed class RequestCaseRepository : IRequestCaseRepository, ITransientDe
                                      tags_json = excluded.tags_json,
                                      description = excluded.description,
                                      request_snapshot_json = excluded.request_snapshot_json,
+                                     source_project_id = excluded.source_project_id,
+                                     source_id = excluded.source_id,
                                      updated_at = excluded.updated_at
                                  """;
 

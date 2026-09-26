@@ -625,6 +625,10 @@ public static class ViewModelSharedTestDoubles
     {
         public string? PickProjectDataPackageFileResult { get; set; }
         public string? SaveProjectDataExportFileResult { get; set; }
+        public string? SaveHtmlDocumentFileResult { get; set; }
+        public string? PickStorageDirectoryResult { get; set; }
+        public string? PickRequestCaseDeliveryFileResult { get; set; }
+        public string? SaveRequestCaseDeliveryFileResult { get; set; }
         public IReadOnlyList<FormFieldFileDto>? PickOpenFilesResult { get; set; }
 
         public Task<string?> PickSwaggerJsonFileAsync(CancellationToken cancellationToken)
@@ -642,9 +646,24 @@ public static class ViewModelSharedTestDoubles
             return Task.FromResult(SaveProjectDataExportFileResult);
         }
 
+        public Task<string?> SaveHtmlDocumentFileAsync(string suggestedFileName, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(SaveHtmlDocumentFileResult);
+        }
+
+        public Task<string?> PickRequestCaseDeliveryFileAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult(PickRequestCaseDeliveryFileResult);
+        }
+
+        public Task<string?> SaveRequestCaseDeliveryFileAsync(string suggestedFileName, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(SaveRequestCaseDeliveryFileResult);
+        }
+
         public Task<string?> PickStorageDirectoryAsync(CancellationToken cancellationToken)
         {
-            return Task.FromResult<string?>(null);
+            return Task.FromResult(PickStorageDirectoryResult);
         }
 
         public Task<IReadOnlyList<FormFieldFileDto>?> PickOpenFilesAsync(string title, bool allowMultiple, CancellationToken cancellationToken = default)
@@ -669,18 +688,70 @@ public static class ViewModelSharedTestDoubles
     public sealed class FakeProjectDataExportService : IProjectDataExportService
     {
         public ProjectDataExportRequestDto? LastRequest { get; private set; }
+        public RequestCaseDeliveryRequestDto? LastRequestCaseDeliveryRequest { get; private set; }
+        public RequestCaseDeliveryOptionsDto DeliveryOptions { get; set; } = new();
+        public ProjectDataExportSettingsDto? LoadSettingsResult { get; set; }
+        public List<(string ProjectId, ProjectDataExportSettingsDto Settings)> SavedSettings { get; } = [];
 
         public IResultModel<ProjectDataExportResultDto> Result { get; set; } = ResultModel<ProjectDataExportResultDto>.Success(new ProjectDataExportResultDto
         {
-            FilePath = @"C:\temp\project-data.apixpkg.json",
+            OutputPath = @"C:\temp\project-data.apixpkg.json",
+            Format = ProjectDataExportFormat.Backup,
             InterfaceCount = 0,
-            TestCaseCount = 0
+            TestCaseCount = 0,
+            FileCount = 1
         });
 
         public Task<IResultModel<ProjectDataExportResultDto>> ExportAsync(ProjectDataExportRequestDto request, CancellationToken cancellationToken)
         {
             LastRequest = request;
             return Task.FromResult(Result);
+        }
+
+        public Task<IResultModel<ProjectDataExportSettingsDto>> LoadExportSettingsAsync(string projectId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(ResultModel<ProjectDataExportSettingsDto>.Success(
+                LoadSettingsResult ?? new ProjectDataExportSettingsDto()));
+        }
+
+        public Task<IResultModel<bool>> SaveExportSettingsAsync(string projectId, ProjectDataExportSettingsDto settings, CancellationToken cancellationToken)
+        {
+            SavedSettings.Add((projectId, settings));
+            return Task.FromResult(ResultModel<bool>.Success(true));
+        }
+
+        public Task<IResultModel<RequestCaseDeliveryOptionsDto>> GetRequestCaseDeliveryOptionsAsync(string projectId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<RequestCaseDeliveryOptionsDto>>(ResultModel<RequestCaseDeliveryOptionsDto>.Success(DeliveryOptions));
+        }
+
+        public Task<IResultModel<RequestCaseDeliveryResultDto>> ExportRequestCaseDeliveryAsync(RequestCaseDeliveryRequestDto request, CancellationToken cancellationToken)
+        {
+            LastRequestCaseDeliveryRequest = request;
+            return Task.FromResult<IResultModel<RequestCaseDeliveryResultDto>>(ResultModel<RequestCaseDeliveryResultDto>.Success(new RequestCaseDeliveryResultDto
+            {
+                FilePath = request.OutputFilePath
+            }));
+        }
+
+        public Task<IResultModel<RequestCaseDeliveryPreviewDto>> PreviewRequestCaseDeliveryAsync(string projectId, string filePath, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<RequestCaseDeliveryPreviewDto>>(ResultModel<RequestCaseDeliveryPreviewDto>.Success(new RequestCaseDeliveryPreviewDto
+            {
+                FilePath = filePath
+            }));
+        }
+
+        public Task<IResultModel<RequestCaseDeliveryResultDto>> ImportRequestCaseDeliveryAsync(
+            string projectId,
+            string filePath,
+            IReadOnlyList<RequestCaseDeliveryDecisionDto> decisions,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<RequestCaseDeliveryResultDto>>(ResultModel<RequestCaseDeliveryResultDto>.Success(new RequestCaseDeliveryResultDto
+            {
+                FilePath = filePath
+            }));
         }
 
         public IResultModel<ApiImportPreviewDto> PreviewImportResult { get; set; } = ResultModel<ApiImportPreviewDto>.Success(new ApiImportPreviewDto

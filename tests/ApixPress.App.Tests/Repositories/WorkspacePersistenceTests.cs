@@ -46,6 +46,59 @@ public sealed partial class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task RequestCaseDeliveryRepository_ShouldRollbackEnvironmentWhenCaseInsertFails()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectService = new ProjectWorkspaceService(
+            new ProjectWorkspaceRepository(factory),
+            new ProjectEnvironmentRepository(factory));
+        var project = (await projectService.SaveAsync(new ProjectWorkspaceDto
+        {
+            Name = "交付回滚项目"
+        }, CancellationToken.None)).Data!;
+        var repository = new RequestCaseDeliveryRepository(factory);
+        var now = DateTime.UtcNow;
+
+        await Assert.ThrowsAsync<Microsoft.Data.Sqlite.SqliteException>(() => repository.ImportAsync(
+            new RequestCaseDeliveryImportPlan
+            {
+                ProjectId = project.Id,
+                Environments =
+                [
+                    new ProjectEnvironmentEntity
+                    {
+                        Id = "delivery-env", ProjectId = project.Id, Name = "交付环境",
+                        BaseUrl = "https://delivery.example.com", SortOrder = 2,
+                        SourceProjectId = "source-project", SourceId = "source-env", CreatedAt = now, UpdatedAt = now
+                    }
+                ],
+                RequestCases =
+                [
+                    new RequestCaseEntity
+                    {
+                        Id = "delivery-case-1", ProjectId = project.Id, EntryType = "http-case",
+                        Name = "成功", GroupName = "用例", ParentId = "delivery-parent", TagsJson = "[]",
+                        RequestSnapshotJson = "{}", UpdatedAt = now
+                    },
+                    new RequestCaseEntity
+                    {
+                        Id = "delivery-case-2", ProjectId = project.Id, EntryType = "http-case",
+                        Name = "成功", GroupName = "用例", ParentId = "delivery-parent", TagsJson = "[]",
+                        RequestSnapshotJson = "{}", UpdatedAt = now
+                    }
+                ]
+            },
+            CancellationToken.None));
+
+        var environmentRepository = new ProjectEnvironmentRepository(factory);
+        Assert.Null(await environmentRepository.GetByNameAsync(project.Id, "交付环境", CancellationToken.None));
+        var requestCases = await new RequestCaseRepository(factory).GetCasesAsync(project.Id, CancellationToken.None);
+        Assert.Empty(requestCases);
+    }
+
+    [Fact]
     public async Task EnvironmentVariableService_ShouldSwitchActiveEnvironmentBeforeSavingAnotherActiveEnvironment()
     {
         using var factory = new TestSqliteConnectionFactory();

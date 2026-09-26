@@ -20,7 +20,7 @@
           ColumnSpacing="{StaticResource Space.2}">
       <StackPanel Spacing="2">
         <TextBlock Classes="SectionTitle"
-                   Text="接口用例" />
+                   Text="请求用例" />
         <TextBlock Classes="CaptionText"
                    Text="同一接口的多组参数组合；加载用例会回填调试区。" />
       </StackPanel>

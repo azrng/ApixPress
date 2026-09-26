@@ -78,9 +78,9 @@ public sealed class ProjectWorkspaceTreeBuilderTests
     }
 
     [Fact]
-    public void Build_ShouldAttachCaseCountToInterfaceInsteadOfCaseNodes()
+    public void Build_ShouldAttachRequestCasesAsCollapsedInterfaceChildrenAndKeepCaseCount()
     {
-        // 对齐原型 08：树上不列用例节点，接口节点携带用例计数（芯片打开用例抽屉）
+        // 请求用例作为接口下一级节点，接口默认收缩并保留计数芯片作为快速入口。
         var interfaceId = "case-parent";
         var interfaceItem = CreateItem(CreateCase("http-interface", "获取信息", folderPath: string.Empty, id: interfaceId));
         var caseItem = CreateItem(CreateCase("http-case", "成功", folderPath: string.Empty, parentId: interfaceId));
@@ -90,7 +90,15 @@ public sealed class ProjectWorkspaceTreeBuilderTests
         Assert.Equal("获取信息", interfaceNode.Title);
         Assert.Equal(1, interfaceNode.CaseCount);
         Assert.True(interfaceNode.HasCases);
-        Assert.False(interfaceNode.HasChildren);
+        Assert.True(interfaceNode.HasChildren);
+        Assert.False(interfaceNode.IsExpanded);
+        Assert.False(interfaceNode.AreChildrenLoaded);
+
+        interfaceNode.EnsureChildrenLoaded();
+        var caseNode = Assert.Single(interfaceNode.Children);
+        Assert.Equal("http-case", caseNode.NodeType);
+        Assert.Equal("成功", caseNode.Title);
+        Assert.Same(caseItem.SourceCase, caseNode.SourceCase);
     }
 
     [Fact]
@@ -119,7 +127,7 @@ public sealed class ProjectWorkspaceTreeBuilderTests
     }
 
     private static WorkspaceTreeItemCommands CreateCommands() =>
-        new(new FakeCommand(), new FakeCommand(), new FakeCommand());
+        new(new FakeCommand(), new FakeCommand(), new FakeCommand(), new FakeCommand(), new FakeCommand());
 
     private static RequestCaseDto CreateCase(
         string entryType,

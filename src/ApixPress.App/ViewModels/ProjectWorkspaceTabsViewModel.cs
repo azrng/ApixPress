@@ -359,14 +359,11 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             return false;
         }
 
-        if (respectPin && tab.HasUnsavedChanges && !tab.IsCloseDiscardPending)
-        {
-            tab.IsCloseDiscardPending = true;
-            IsWorkspaceTabMenuOpen = false;
-            _messenger.Send(new StatusMessageRequest($"标签“{tab.HeaderText}”有未保存修改，再次关闭将放弃修改。"));
-            StateChanged?.Invoke();
-            return false;
-        }
+        // 单标签关闭直接生效（一键关闭）：未保存修改随关闭放弃并以状态栏提示兜底；
+        // 首击仅提示的二段式在此前反馈中被视为“点击无效”，误触保护交给标签上的未保存圆点。
+        var hadUnsavedChanges = tab.HasUnsavedChanges;
+        var closedTabHeader = tab.HeaderText;
+        tab.IsCloseDiscardPending = false;
 
         IsWorkspaceTabMenuOpen = false;
         var removedIndex = WorkspaceTabs.IndexOf(tab);
@@ -396,7 +393,9 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
                 }
             });
 
-            _messenger.Send(new StatusMessageRequest("工作标签已关闭。"));
+            _messenger.Send(new StatusMessageRequest(hadUnsavedChanges
+                ? $"已关闭标签“{closedTabHeader}”，未保存修改已放弃。"
+                : "工作标签已关闭。"));
             StateChanged?.Invoke();
         });
         return true;
@@ -473,6 +472,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             or nameof(RequestWorkspaceTabViewModel.RequestUrl)
             or nameof(RequestWorkspaceTabViewModel.InterfaceFolderPath)
             or nameof(RequestWorkspaceTabViewModel.HttpCaseName)
+            or nameof(RequestWorkspaceTabViewModel.HasUnsavedChanges)
             or nameof(RequestWorkspaceTabViewModel.EntryType)
             or nameof(RequestWorkspaceTabViewModel.ShowInTabStrip)
             or nameof(RequestWorkspaceTabViewModel.HeaderText))

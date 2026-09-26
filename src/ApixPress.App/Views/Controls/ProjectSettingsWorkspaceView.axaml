@@ -275,6 +275,38 @@
 
                   <Border Classes="ProjectSettingsSectionDivider" />
                   <StackPanel Spacing="2">
+                    <TextBlock Classes="SectionTitle" Text="导入请求用例交付包" />
+                    <TextBlock Classes="CaptionText"
+                               Text="先预览接口、请求用例、环境和变量，再按项选择覆盖、跳过或另存。"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                  <Button Classes="ProjectImportCatalogButton"
+                          Command="{Binding Import.Delivery.OpenImportCommand}">
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="{StaticResource Space.3}">
+                      <Border Width="42"
+                              Height="42"
+                              Classes="ProjectImportFormatIcon">
+                        <TextBlock HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   FontSize="{StaticResource Font.Size.BodyLarge}"
+                                   FontWeight="Bold"
+                                   Text="U" />
+                      </Border>
+                      <StackPanel Grid.Column="1"
+                                  Spacing="2"
+                                  VerticalAlignment="Center">
+                        <TextBlock Text="请求用例交付包"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="导入 .apixdelivery.json，并保留环境配置与变量值"
+                                   TextWrapping="Wrap" />
+                      </StackPanel>
+                    </Grid>
+                  </Button>
+
+                  <Border Classes="ProjectSettingsSectionDivider" />
+                  <StackPanel Spacing="2">
                     <TextBlock Classes="SectionTitle" Text="最近导入" />
                     <TextBlock Classes="CaptionText" Text="当前项目最近导入的 OpenAPI / Swagger / Postman 文档。" />
                   </StackPanel>
@@ -324,8 +356,79 @@
                     <TextBlock Classes="CaptionText"
                                Text="{Binding Summary.ProjectSettingsExportCardDescription}" />
                   </StackPanel>
+
+                  <!-- 对齐原型 09：三格式胶囊切换（.body-mode chips），四项范围仅备份格式显示 -->
+                  <StackPanel Orientation="Horizontal"
+                              Spacing="6">
+                    <ToggleButton Classes="ExportFormatChip"
+                                  Command="{Binding Import.SelectExportFormatCommand}"
+                                  CommandParameter="backup"
+                                  IsChecked="{Binding Import.IsBackupExportFormat, Mode=OneWay}">
+                      <TextBlock Text="ApixPress 备份" />
+                    </ToggleButton>
+                    <ToggleButton Classes="ExportFormatChip"
+                                  Command="{Binding Import.SelectExportFormatCommand}"
+                                  CommandParameter="html"
+                                  IsChecked="{Binding Import.IsHtmlExportFormat, Mode=OneWay}">
+                      <TextBlock Text="HTML" />
+                    </ToggleButton>
+                    <ToggleButton Classes="ExportFormatChip"
+                                  Command="{Binding Import.SelectExportFormatCommand}"
+                                  CommandParameter="markdown"
+                                  IsChecked="{Binding Import.IsMarkdownExportFormat, Mode=OneWay}">
+                      <TextBlock Text="Markdown" />
+                    </ToggleButton>
+                  </StackPanel>
+
+                  <StackPanel Spacing="{StaticResource Space.2}"
+                              IsVisible="{Binding Import.IsBackupExportFormat}">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="{StaticResource Space.3}">
+                      <CheckBox Content="接口与目录"
+                                IsChecked="{Binding Import.ExportIncludeInterfaces}" />
+                      <CheckBox Content="请求用例"
+                                IsChecked="{Binding Import.ExportIncludeRequestCases}" />
+                      <CheckBox Content="环境变量"
+                                IsChecked="{Binding Import.ExportIncludeEnvironments}" />
+                      <CheckBox Content="请求历史"
+                                IsChecked="{Binding Import.ExportIncludeRequestHistory}" />
+                    </StackPanel>
+                    <TextBlock Classes="CaptionText"
+                               Text="导出位置：导出时再次确认；未勾选请求用例的父接口被排除时，对应用例不会导出。" />
+                    <Button Classes="DialogPrimaryButton"
+                            Content="{Binding Import.ExportActionButtonText}"
+                            Command="{Binding Import.ExportProjectDataCommand}" />
+                  </StackPanel>
+
+                  <StackPanel Spacing="{StaticResource Space.2}"
+                              IsVisible="{Binding Import.IsHtmlExportFormat}">
+                    <TextBlock Classes="CaptionText"
+                               Text="将接口目录与接口文档导出为单个静态 HTML 页面（含请求用例示例），适合浏览器浏览与分享。"
+                               TextWrapping="Wrap" />
+                    <Button Classes="DialogPrimaryButton"
+                            Content="{Binding Import.ExportActionButtonText}"
+                            Command="{Binding Import.ExportProjectDataCommand}" />
+                  </StackPanel>
+
+                  <StackPanel Spacing="{StaticResource Space.2}"
+                              IsVisible="{Binding Import.IsMarkdownExportFormat}">
+                    <TextBlock Classes="CaptionText"
+                               Text="将接口目录与接口文档导出为 Markdown 文件（索引 + 每个目录一个 .md，含请求用例示例），适合放入 Git 仓库。"
+                               TextWrapping="Wrap" />
+                    <Button Classes="DialogPrimaryButton"
+                            Content="{Binding Import.ExportActionButtonText}"
+                            Command="{Binding Import.ExportProjectDataCommand}" />
+                  </StackPanel>
+
+                  <Border Classes="ProjectSettingsSectionDivider" />
+                  <StackPanel Spacing="2">
+                    <TextBlock Classes="SectionTitle" Text="导出请求用例交付包" />
+                    <TextBlock Classes="CaptionText"
+                               Text="选择接口或请求用例，自动携带父接口，并导出全部环境和变量。"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
                   <Button Classes="ProjectImportCatalogButton"
-                          Command="{Binding Import.ExportProjectDataCommand}">
+                          Command="{Binding Import.Delivery.OpenExportCommand}">
                     <Grid ColumnDefinitions="Auto,*"
                           ColumnSpacing="{StaticResource Space.3}">
                       <Border Width="42"
@@ -335,15 +438,16 @@
                                    VerticalAlignment="Center"
                                    FontSize="{StaticResource Font.Size.BodyLarge}"
                                    FontWeight="Bold"
-                                   Text="E" />
+                                   Text="D" />
                       </Border>
                       <StackPanel Grid.Column="1"
                                   Spacing="2"
                                   VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Summary.ProjectSettingsExportFormatName}"
+                        <TextBlock Text="请求用例交付包"
                                    FontWeight="SemiBold" />
                         <TextBlock Classes="CaptionText"
-                                   Text="{Binding Summary.ProjectSettingsExportFormatDescription}" />
+                                   Text="导出为 .apixdelivery.json，便于跨项目交付"
+                                   TextWrapping="Wrap" />
                       </StackPanel>
                     </Grid>
                   </Button>

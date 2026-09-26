@@ -44,6 +44,7 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
     private CancellationTokenSource? _importCancellationTokenSource;
     private PendingImportRequest? _pendingImportRequest;
     private bool _hasLoadedImportedDocuments;
+    private string _lastExportOutputDirectory = string.Empty;
     private readonly HashSet<string> _skipPendingConflictKeys = new(StringComparer.OrdinalIgnoreCase);
     private static readonly ImportOperationTextBundle SwaggerImportTextBundle = new(
         "Swagger 导入成功",
@@ -83,10 +84,20 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
         _messenger = messenger;
         _dialogService = dialogService;
 
+        Delivery = new RequestCaseDeliveryViewModel(
+            projectId,
+            filePickerService,
+            projectDataExportService,
+            getProject,
+            messenger,
+            dialogService);
+
         ImportedApiDocuments.CollectionChanged += OnImportedApiDocumentsCollectionChanged;
     }
 
     public BatchObservableCollection<ProjectImportedDocumentItemViewModel> ImportedApiDocuments { get; } = [];
+
+    public RequestCaseDeliveryViewModel Delivery { get; }
 
     public bool IsImportFileMode => SelectedImportDataMode == ImportDataModes.File;
     public bool IsImportUrlMode => SelectedImportDataMode == ImportDataModes.Url;
@@ -189,6 +200,34 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
     [ObservableProperty]
     private string importDataStatusState = ImportStatusStates.Info;
 
+    // ── 导出数据卡片状态：三格式切换 + 备份四项范围（按项目持久化） ──
+
+    /// <summary>当前导出格式 token（backup/html/markdown），随项目偏好恢复。</summary>
+    [ObservableProperty]
+    private string selectedExportFormat = ProjectDataExportFormats.Backup;
+
+    [ObservableProperty]
+    private bool exportIncludeInterfaces = true;
+
+    [ObservableProperty]
+    private bool exportIncludeRequestCases = true;
+
+    [ObservableProperty]
+    private bool exportIncludeEnvironments = true;
+
+    /// <summary>请求历史默认不导出，与原型 09 的默认勾选一致。</summary>
+    [ObservableProperty]
+    private bool exportIncludeRequestHistory;
+
+    public bool IsBackupExportFormat => SelectedExportFormat == ProjectDataExportFormats.Backup;
+    public bool IsHtmlExportFormat => SelectedExportFormat == ProjectDataExportFormats.Html;
+    public bool IsMarkdownExportFormat => SelectedExportFormat == ProjectDataExportFormats.Markdown;
+    public string ExportActionButtonText => IsHtmlExportFormat
+        ? ImportTexts.ExportHtmlButtonText
+        : IsMarkdownExportFormat
+            ? ImportTexts.ExportMarkdownButtonText
+            : ImportTexts.ExportBackupButtonText;
+
     /// <summary>导入主弹窗异步关闭通道（覆盖确认弹窗使用独立上下文，见 ImportOverwriteConfirmDialogViewModel）。</summary>
     public event EventHandler<object?>? RequestClose;
 
@@ -203,6 +242,7 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
         ImportedApiDocuments.CollectionChanged -= OnImportedApiDocumentsCollectionChanged;
         CancellationTokenSourceHelper.CancelAndDispose(ref _importCancellationTokenSource);
         ClearPendingImportConfirmation();
+        Delivery.Dispose();
     }
 
     [RelayCommand]
@@ -510,6 +550,30 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
         }
     }
 
+    /// <summary>切换导出格式；四项范围勾选在格式间保留，仅备份格式使用它们。</summary>
+    [RelayCommand]
+    private void SelectExportFormat(string formatToken)
+    {
+        SelectedExportFormat = ProjectDataExportFormats.ToToken(ProjectDataExportFormats.FromToken(formatToken));
+    }
+
+    /// <summary>打开项目时恢复该项目上次保存的导出偏好；失败时保持默认值，不阻塞工作区。</summary>
+    public async Task LoadExportSettingsAsync()
+    {
+        var result = await _projectDataExportService.LoadExportSettingsAsync(_projectId, CancellationToken.None);
+        if (!result.IsSuccess || result.Data is null)
+        {
+            return;
+        }
+
+        SelectedExportFormat = result.Data.Format;
+        ExportIncludeInterfaces = result.Data.IncludeInterfaces;
+        ExportIncludeRequestCases = result.Data.IncludeRequestCases;
+        ExportIncludeEnvironments = result.Data.IncludeEnvironments;
+        ExportIncludeRequestHistory = result.Data.IncludeRequestHistory;
+        _lastExportOutputDirectory = result.Data.LastOutputDirectory;
+    }
+
     [RelayCommand]
     private async Task ExportProjectDataAsync()
     {
@@ -519,9 +583,27 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
         }
 
         var project = _getProject();
-        var suggestedFileName = BuildSuggestedExportFileName(project.Name);
-        var filePath = await _filePickerService.SaveProjectDataExportFileAsync(suggestedFileName, CancellationToken.None);
-        if (string.IsNullOrWhiteSpace(filePath))
+        var format = ProjectDataExportFormats.FromToken(SelectedExportFormat);
+
+        // 先保存当前偏好（含四项范围），用户取消文件选择也不丢失格式与勾选
+        await SaveExportPreferencesAsync(lastOutputDirectory: null);
+
+        string? targetPath = null;
+        if (format == ProjectDataExportFormat.Markdown)
+        {
+            targetPath = await _filePickerService.PickStorageDirectoryAsync(CancellationToken.None);
+        }
+        else
+        {
+            var suggestedFileName = format == ProjectDataExportFormat.Html
+                ? BuildSuggestedDocumentFileName(project.Name, "html")
+                : BuildSuggestedExportFileName(project.Name);
+            targetPath = format == ProjectDataExportFormat.Html
+                ? await _filePickerService.SaveHtmlDocumentFileAsync(suggestedFileName, CancellationToken.None)
+                : await _filePickerService.SaveProjectDataExportFileAsync(suggestedFileName, CancellationToken.None);
+        }
+
+        if (string.IsNullOrWhiteSpace(targetPath))
         {
             SetImportDataStatus(ImportTexts.ExportCancelledStatus, ImportStatusStates.Info);
             _messenger.Send(new StatusMessageRequest(ImportTexts.ExportCancelledStatus));
@@ -538,7 +620,13 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
                 ProjectId = _projectId,
                 ProjectName = project.Name,
                 ProjectDescription = project.Description,
-                OutputFilePath = filePath
+                Format = format,
+                IncludeInterfaces = ExportIncludeInterfaces,
+                IncludeRequestCases = ExportIncludeRequestCases,
+                IncludeEnvironments = ExportIncludeEnvironments,
+                IncludeRequestHistory = ExportIncludeRequestHistory,
+                OutputFilePath = format == ProjectDataExportFormat.Markdown ? string.Empty : targetPath,
+                OutputDirectoryPath = format == ProjectDataExportFormat.Markdown ? targetPath : string.Empty
             }, cancellationToken);
 
             if (!exportResult.IsSuccess || exportResult.Data is null)
@@ -552,18 +640,18 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
                 return;
             }
 
-            var successMessage = ImportTexts.FormatExportSuccess(
-                exportResult.Data.InterfaceCount,
-                exportResult.Data.TestCaseCount,
-                Path.GetFileName(exportResult.Data.FilePath));
+            // 成功后才记录最近输出位置，取消不覆盖上次位置
+            await SaveExportPreferencesAsync(Path.GetDirectoryName(exportResult.Data.OutputPath) ?? string.Empty);
+
+            var successMessage = ImportTexts.FormatExportSuccess(exportResult.Data);
             SetImportDataStatus(successMessage, ImportStatusStates.Success);
             _messenger.Send(new StatusMessageRequest(successMessage));
             PublishGlobalNotification("项目数据导出成功", successMessage, NotificationType.Success);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            SetImportDataStatus("已取消当前导入操作。", ImportStatusStates.Info);
-            _messenger.Send(new StatusMessageRequest("已取消当前导入操作。"));
+            SetImportDataStatus("已取消当前导出操作。", ImportStatusStates.Info);
+            _messenger.Send(new StatusMessageRequest("已取消当前导出操作。"));
         }
         catch (Exception exception)
         {
@@ -577,6 +665,31 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
         finally
         {
             IsImportDataBusy = false;
+        }
+    }
+
+    private async Task SaveExportPreferencesAsync(string? lastOutputDirectory)
+    {
+        var settings = new ProjectDataExportSettingsDto
+        {
+            Format = SelectedExportFormat,
+            IncludeInterfaces = ExportIncludeInterfaces,
+            IncludeRequestCases = ExportIncludeRequestCases,
+            IncludeEnvironments = ExportIncludeEnvironments,
+            IncludeRequestHistory = ExportIncludeRequestHistory,
+            // 未提供新位置时沿用缓存值，避免导出前保存把上次位置清空
+            LastOutputDirectory = lastOutputDirectory ?? _lastExportOutputDirectory
+        };
+        var result = await _projectDataExportService.SaveExportSettingsAsync(_projectId, settings, CancellationToken.None);
+        if (!result.IsSuccess)
+        {
+            _messenger.Send(new StatusMessageRequest(result.Message ?? "保存导出偏好失败。"));
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(lastOutputDirectory))
+        {
+            _lastExportOutputDirectory = lastOutputDirectory;
         }
     }
 
@@ -594,6 +707,14 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
     {
         OnPropertyChanged(nameof(IsImportFileMode));
         OnPropertyChanged(nameof(IsImportUrlMode));
+    }
+
+    partial void OnSelectedExportFormatChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsBackupExportFormat));
+        OnPropertyChanged(nameof(IsHtmlExportFormat));
+        OnPropertyChanged(nameof(IsMarkdownExportFormat));
+        OnPropertyChanged(nameof(ExportActionButtonText));
     }
 
     partial void OnIsImportDataBusyChanged(bool value)
@@ -862,6 +983,19 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
         }
 
         return $"{safeName}-{DateTime.Now:yyyyMMdd-HHmmss}.apixpkg.json";
+    }
+
+    private static string BuildSuggestedDocumentFileName(string projectName, string extension)
+    {
+        var fallbackName = string.IsNullOrWhiteSpace(projectName) ? "project-data" : projectName.Trim();
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var safeName = new string(fallbackName.Select(character => invalidChars.Contains(character) ? '-' : character).ToArray()).Trim();
+        if (string.IsNullOrWhiteSpace(safeName))
+        {
+            safeName = "project-data";
+        }
+
+        return $"{safeName}-{DateTime.Now:yyyyMMdd-HHmmss}.{extension}";
     }
 
     private sealed class PendingImportRequest

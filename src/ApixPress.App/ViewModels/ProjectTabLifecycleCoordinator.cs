@@ -175,7 +175,8 @@ internal sealed class ProjectTabLifecycleCoordinator
             PerfLog.MeasureAsync("开项目·环境加载",
                 () => _environmentPanel.LoadProjectAsync(_projectId, preferredEnvironmentId)),
             PerfLog.MeasureAsync("开项目·用例加载", () => _useCasesPanel.LoadCasesAsync()),
-            PerfLog.MeasureAsync("开项目·接口树初始化", () => _interfaceRoot.InitializeAsync()));
+            PerfLog.MeasureAsync("开项目·接口树初始化", () => _interfaceRoot.InitializeAsync()),
+            _import.LoadExportSettingsAsync());
         _workspace.EnsureLandingWorkspaceTab();
         _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }

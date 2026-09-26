@@ -12,6 +12,8 @@ public sealed class RequestCaseDto
     public List<string> Tags { get; init; } = [];
     public string Description { get; init; } = string.Empty;
     public RequestSnapshotDto RequestSnapshot { get; init; } = new();
+    public string SourceProjectId { get; init; } = string.Empty;
+    public string SourceId { get; init; } = string.Empty;
     public bool HasLoadedDetail { get; init; } = true;
     public DateTime UpdatedAt { get; init; }
 }

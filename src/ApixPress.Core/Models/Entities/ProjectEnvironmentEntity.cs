@@ -8,6 +8,8 @@ public sealed class ProjectEnvironmentEntity
     public string BaseUrl { get; set; } = string.Empty;
     public bool IsActive { get; set; }
     public int SortOrder { get; set; }
+    public string SourceProjectId { get; set; } = string.Empty;
+    public string SourceId { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

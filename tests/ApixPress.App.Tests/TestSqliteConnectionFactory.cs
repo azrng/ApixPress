@@ -29,6 +29,9 @@ public sealed class TestSqliteConnectionFactory : IDbConnectionFactory, IDisposa
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
         await command.ExecuteNonQueryAsync();
+
+        // 测试库必须走与生产相同的迁移链，确保来源字段和索引与当前 schema 一致。
+        new DatabaseInitializer(this).Initialize();
     }
 
     public void Dispose()

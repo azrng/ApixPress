@@ -87,11 +87,14 @@ public partial class ExplorerItemViewModel : ViewModelBase
         ? RemoveMethodPrefix(DisplayTitle, MethodBadgeText)
         : DisplayTitle;
 
-    public bool ShowMethodBadge => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase);
+    public bool ShowMethodBadge => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase)
+        || IsRequestCaseNode;
 
     public bool ShowLeadingGlyph => !ShowMethodBadge;
 
     public bool IsQuickRequestNode => string.Equals(NodeType, "quick-request", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsRequestCaseNode => string.Equals(NodeType, ProjectTabRequestEntryTypes.HttpCase, StringComparison.OrdinalIgnoreCase);
 
     public string MethodBadgeText => SourceCase?.RequestSnapshot.Method?.ToUpperInvariant()
         ?? Endpoint?.Method?.ToUpperInvariant()
@@ -132,6 +135,12 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public ICommand? DeleteCommand { get; set; }
 
+    /// <summary>请求用例节点的改名命令，直接注入节点以跨 ContextMenu PopupRoot 保持绑定可用。</summary>
+    public ICommand? RenameCommand { get; set; }
+
+    /// <summary>请求用例节点的复制命令，直接注入节点以跨 ContextMenu PopupRoot 保持绑定可用。</summary>
+    public ICommand? DuplicateCommand { get; set; }
+
     /// <summary>在当前目录下新建子目录的命令；仅一级目录节点会携带并展示。</summary>
     public ICommand? CreateSubfolderCommand { get; set; }
 
@@ -157,6 +166,9 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public RequestCaseDto? SourceCase { get; set; }
 
+    /// <summary>树上请求用例节点对应的列表项，用于复用改名和复制命令的参数契约。</summary>
+    public RequestCaseItemViewModel? SourceCaseItem { get; set; }
+
     public ApiEndpointDto? Endpoint { get; set; }
 
     protected override void DisposeManaged()
@@ -174,7 +186,10 @@ public partial class ExplorerItemViewModel : ViewModelBase
         var wasChildrenLoaded = _childrenLoaded;
         var previousChildLoader = _childLoader;
         var previousSourceCase = SourceCase;
+        var previousSourceCaseItem = SourceCaseItem;
         var previousEndpoint = Endpoint;
+        var previousRenameCommand = RenameCommand;
+        var previousDuplicateCommand = DuplicateCommand;
 
         NodeKey = source.NodeKey;
         Title = source.Title;
@@ -184,11 +199,14 @@ public partial class ExplorerItemViewModel : ViewModelBase
         CanLoad = source.CanLoad;
         CaseCount = source.CaseCount;
         DeleteCommand = source.DeleteCommand;
+        RenameCommand = source.RenameCommand;
+        DuplicateCommand = source.DuplicateCommand;
         CreateSubfolderCommand = source.CreateSubfolderCommand;
         CreateInterfaceInFolderCommand = source.CreateInterfaceInFolderCommand;
         FolderFullPath = source.FolderFullPath;
         FolderDepth = source.FolderDepth;
         SourceCase = source.SourceCase;
+        SourceCaseItem = source.SourceCaseItem;
         Endpoint = source.Endpoint;
         _childLoader = source._childLoader;
         if (_childLoader is null)
@@ -206,7 +224,10 @@ public partial class ExplorerItemViewModel : ViewModelBase
         var hasMeaningfulChange = !ReferenceEquals(previousChildLoader, _childLoader)
             || wasChildrenLoaded != _childrenLoaded
             || !ReferenceEquals(previousSourceCase, SourceCase)
-            || !ReferenceEquals(previousEndpoint, Endpoint);
+            || !ReferenceEquals(previousSourceCaseItem, SourceCaseItem)
+            || !ReferenceEquals(previousEndpoint, Endpoint)
+            || !ReferenceEquals(previousRenameCommand, RenameCommand)
+            || !ReferenceEquals(previousDuplicateCommand, DuplicateCommand);
         if (!hasMeaningfulChange)
         {
             return;
@@ -217,8 +238,11 @@ public partial class ExplorerItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(AreChildrenLoaded));
         OnPropertyChanged(nameof(IsClickable));
         OnPropertyChanged(nameof(CanDelete));
+        OnPropertyChanged(nameof(RenameCommand));
+        OnPropertyChanged(nameof(DuplicateCommand));
         OnPropertyChanged(nameof(MethodBadgeText));
         OnPropertyChanged(nameof(MethodBadgeClass));
+        OnPropertyChanged(nameof(IsRequestCaseNode));
         OnPropertyChanged(nameof(HasChildrenCount));
         OnPropertyChanged(nameof(ChildrenCountSuffix));
         OnPropertyChanged(nameof(SidebarDisplayText));
@@ -296,6 +320,7 @@ public partial class ExplorerItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowMethodBadge));
         OnPropertyChanged(nameof(ShowLeadingGlyph));
         OnPropertyChanged(nameof(IsQuickRequestNode));
+        OnPropertyChanged(nameof(IsRequestCaseNode));
         OnPropertyChanged(nameof(IsFolderNode));
         OnPropertyChanged(nameof(CanCreateSubfolder));
         OnPropertyChanged(nameof(NodeGlyph));

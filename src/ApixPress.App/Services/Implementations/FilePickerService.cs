@@ -88,6 +88,82 @@ public sealed class FilePickerService : IFilePickerService, ITransientDependency
         return file?.TryGetLocalPath();
     }
 
+    public async Task<string?> SaveHtmlDocumentFileAsync(string suggestedFileName, CancellationToken cancellationToken)
+    {
+        if (_windowHostService.MainWindow is null)
+        {
+            return null;
+        }
+
+        var file = await _windowHostService.MainWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "导出 HTML 接口文档",
+            SuggestedFileName = suggestedFileName,
+            ShowOverwritePrompt = true,
+            DefaultExtension = "html",
+            FileTypeChoices =
+            [
+                new FilePickerFileType("HTML 文档")
+                {
+                    Patterns = ["*.html"]
+                }
+            ]
+        });
+
+        cancellationToken.ThrowIfCancellationRequested();
+        return file?.TryGetLocalPath();
+    }
+
+    public async Task<string?> PickRequestCaseDeliveryFileAsync(CancellationToken cancellationToken)
+    {
+        if (_windowHostService.MainWindow is null)
+        {
+            return null;
+        }
+
+        var files = await _windowHostService.MainWindow.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "选择请求用例交付包",
+            AllowMultiple = false,
+            FileTypeFilter =
+            [
+                new FilePickerFileType("ApixPress 请求用例交付包")
+                {
+                    Patterns = ["*.apixdelivery.json"]
+                }
+            ]
+        });
+
+        cancellationToken.ThrowIfCancellationRequested();
+        return files.FirstOrDefault() is { } file ? file.TryGetLocalPath() : null;
+    }
+
+    public async Task<string?> SaveRequestCaseDeliveryFileAsync(string suggestedFileName, CancellationToken cancellationToken)
+    {
+        if (_windowHostService.MainWindow is null)
+        {
+            return null;
+        }
+
+        var file = await _windowHostService.MainWindow.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "导出请求用例交付包",
+            SuggestedFileName = suggestedFileName,
+            ShowOverwritePrompt = true,
+            DefaultExtension = "apixdelivery.json",
+            FileTypeChoices =
+            [
+                new FilePickerFileType("ApixPress 请求用例交付包")
+                {
+                    Patterns = ["*.apixdelivery.json"]
+                }
+            ]
+        });
+
+        cancellationToken.ThrowIfCancellationRequested();
+        return file?.TryGetLocalPath();
+    }
+
     public async Task<string?> PickStorageDirectoryAsync(CancellationToken cancellationToken)
     {
         if (_windowHostService.MainWindow is null)

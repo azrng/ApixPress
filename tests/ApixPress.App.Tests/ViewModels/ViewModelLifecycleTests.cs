@@ -26,7 +26,7 @@ public sealed class ViewModelLifecycleTests
     }
 
     [Fact]
-    public void CloseWorkspaceTabCommand_ShouldRequireSecondClose_WhenTabHasUnsavedChanges()
+    public void CloseWorkspaceTabCommand_ShouldCloseImmediately_WhenTabHasUnsavedChanges()
     {
         var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, new CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger());
         var tab = viewModel.CreateWorkspaceTab(activate: true, showInTabStrip: true);
@@ -35,12 +35,8 @@ public sealed class ViewModelLifecycleTests
         tab.RequestUrl = "https://demo.local/orders";
         viewModel.CloseWorkspaceTabCommand.Execute(tab);
 
+        // 一键关闭：脏标签首次执行即关闭并放弃未保存修改（状态栏提示兜底）
         Assert.True(tab.HasUnsavedChanges);
-        Assert.True(tab.IsCloseDiscardPending);
-        Assert.Contains(tab, viewModel.WorkspaceTabs);
-
-        viewModel.CloseWorkspaceTabCommand.Execute(tab);
-
         Assert.DoesNotContain(tab, viewModel.WorkspaceTabs);
     }
 
