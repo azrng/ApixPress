@@ -480,6 +480,42 @@ public sealed class WorkbenchLayoutTests
             element => element.Name.LocalName == "ScrollViewer" && element.Parent?.Name.LocalName == "UserControl");
     }
 
+    [Fact]
+    public void MainWindow_StatusBar_ShouldHostStatusMessageChannel()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "MainWindow.axaml"));
+
+        // StatusMessage 通道的宿主：底部状态栏必须存在并绑定消息，否则保存/校验反馈全部不可见
+        var statusBar = document.Descendants()
+            .Single(element => element.Name.LocalName == "Border" && HasClass(element, "MainStatusBar"));
+        Assert.Equal("2", statusBar.Attribute("Grid.Row")?.Value);
+
+        var messageText = statusBar.Descendants()
+            .Single(element => element.Name.LocalName == "TextBlock");
+        Assert.Equal("{Binding StatusMessage}", messageText.Attribute("Text")?.Value);
+
+        // 弹窗宿主横跨标题栏/内容/状态栏三行，防止状态栏行裁剪弹窗
+        var dialogHost = document.Descendants()
+            .Single(element => element.Name.LocalName == "OverlayDialogHost");
+        Assert.Equal("3", dialogHost.Attribute("Grid.RowSpan")?.Value);
+    }
+
+    [Fact]
+    public void DialogInteraction_AssistantShouldBeWiredIntoDialogServiceAndDangerConfirmExcluded()
+    {
+        // 弹层键盘交互（ESC/初始焦点/Enter 提交）必须在 DialogService 统一挂载，而非逐弹窗实现
+        var dialogServiceSource = File.ReadAllText(FindSourceFile(
+            "src", "ApixPress.App", "Services", "Implementations", "DialogService.cs"));
+        Assert.Contains("DialogInteractionAssistant.Attach", dialogServiceSource);
+
+        // 覆盖确认是破坏性操作：内容标 DialogNoDefaultSubmit 禁用 Enter 默认提交
+        var overwriteConfirm = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "ImportOverwriteConfirmDialogView.axaml"));
+        Assert.Contains(
+            overwriteConfirm.Descendants(),
+            element => HasClass(element, "DialogNoDefaultSubmit"));
+    }
+
     private static bool HasClass(XElement element, string className)
     {
         return (element.Attribute("Classes")?.Value ?? string.Empty)

@@ -76,7 +76,7 @@ internal sealed class ProjectTabComposition : DisposableObject
 
         public ProjectTabComposition Build()
         {
-            var environmentPanel = new EnvironmentPanelViewModel(_environmentVariableService);
+            var environmentPanel = new EnvironmentPanelViewModel(_environmentVariableService, Messenger);
             var historyPanel = new RequestHistoryPanelViewModel(_requestHistoryService);
             _ensureRequestHistoryLoadedAsync = historyPanel.EnsureHistoryLoadedAsync;
             var workspace = CreateWorkspace();

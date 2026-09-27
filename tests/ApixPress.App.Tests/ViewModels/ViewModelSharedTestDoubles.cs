@@ -12,6 +12,10 @@ public static class ViewModelSharedTestDoubles
 {
     public sealed class FakeEnvironmentVariableService : IEnvironmentVariableService
     {
+        public bool ShouldFailEnvironmentSave { get; set; }
+
+        public string EnvironmentSaveFailureMessage { get; set; } = "环境写入被拒绝（模拟）";
+
         public Task<IReadOnlyList<ProjectEnvironmentDto>> GetEnvironmentsAsync(string projectId, CancellationToken cancellationToken)
         {
             IReadOnlyList<ProjectEnvironmentDto> environments =
@@ -31,6 +35,12 @@ public static class ViewModelSharedTestDoubles
 
         public Task<IResultModel<ProjectEnvironmentDto>> SaveEnvironmentAsync(ProjectEnvironmentDto environment, CancellationToken cancellationToken)
         {
+            if (ShouldFailEnvironmentSave)
+            {
+                return Task.FromResult<IResultModel<ProjectEnvironmentDto>>(
+                    ResultModel<ProjectEnvironmentDto>.Failure(EnvironmentSaveFailureMessage, "environment_save_failed"));
+            }
+
             return Task.FromResult<IResultModel<ProjectEnvironmentDto>>(ResultModel<ProjectEnvironmentDto>.Success(environment));
         }
 
@@ -123,6 +133,9 @@ public static class ViewModelSharedTestDoubles
         public TaskCompletionSource<bool>? DetailLoadGate { get; set; }
         public int GetCasesCallCount { get; private set; }
         public int GetDetailCallCount { get; private set; }
+        public bool ShouldFailSave { get; set; }
+
+        public string SaveFailureMessage { get; set; } = "用例写入被拒绝（模拟）";
 
         public Task<IReadOnlyList<RequestCaseDto>> GetCasesAsync(string projectId, CancellationToken cancellationToken)
         {
@@ -179,6 +192,12 @@ public static class ViewModelSharedTestDoubles
 
         public Task<IResultModel<RequestCaseDto>> SaveAsync(RequestCaseDto requestCase, CancellationToken cancellationToken)
         {
+            if (ShouldFailSave)
+            {
+                return Task.FromResult<IResultModel<RequestCaseDto>>(
+                    ResultModel<RequestCaseDto>.Failure(SaveFailureMessage, "case_save_failed"));
+            }
+
             var id = string.IsNullOrWhiteSpace(requestCase.Id) ? Guid.NewGuid().ToString("N") : requestCase.Id;
             var saved = CloneFullCase(requestCase);
             saved = new RequestCaseDto

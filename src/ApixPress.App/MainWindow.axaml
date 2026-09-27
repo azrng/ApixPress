@@ -20,7 +20,7 @@
         ExtendClientAreaToDecorationsHint="True"
         Icon="/Assets/AppIcon.ico"
         Title="ApixPress">
-  <Grid RowDefinitions="Auto,*">
+  <Grid RowDefinitions="Auto,*,Auto">
     <views:MainWindowTitleBarView Grid.Row="0" />
 
     <Grid Grid.Row="1">
@@ -34,8 +34,16 @@
       <views:NotificationCenterOverlayView />
     </Grid>
 
-    <!-- 弹窗宿主必须横跨标题栏与内容两行：宿主是 ClipToBounds 的 Canvas，
+    <!-- 底部状态栏：承载保存/校验/发送等操作反馈（StatusMessage 通道此前无任何可见宿主） -->
+    <Border Grid.Row="2"
+            Classes="MainStatusBar">
+      <TextBlock Classes="MainStatusBarText"
+                 Text="{Binding StatusMessage}"
+                 TextTrimming="CharacterEllipsis" />
+    </Border>
+
+    <!-- 弹窗宿主必须横跨标题栏、内容与状态栏三行：宿主是 ClipToBounds 的 Canvas，
          若默认落进 Row 0（47px 标题栏行），弹窗会被裁剪成只剩顶部一条残影 -->
-    <u:OverlayDialogHost Grid.Row="0" Grid.RowSpan="2" />
+    <u:OverlayDialogHost Grid.Row="0" Grid.RowSpan="3" />
   </Grid>
 </Window>

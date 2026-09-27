@@ -28,6 +28,7 @@
                      TextTrimming="CharacterEllipsis" />
         </Border>
         <TextBox Grid.Column="2"
+                 x:Name="RequestUrlInput"
                  Classes="HttpRequestPathInput"
                  PlaceholderText="{Binding Editor.CurrentEditorUrlWatermark}"
                  Text="{Binding Editor.RequestUrl}" />

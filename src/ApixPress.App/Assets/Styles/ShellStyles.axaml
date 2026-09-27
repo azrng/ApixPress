@@ -750,4 +750,19 @@
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Foreground" Value="#FFFFFF" />
   </Style>
+
+  <!-- 底部状态栏：保存/校验/发送等操作反馈的常驻宿主（对齐原型 .proto-statusbar） -->
+  <Style Selector="Border.MainStatusBar">
+    <Setter Property="MinHeight" Value="26" />
+    <Setter Property="Padding" Value="14,0" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+  </Style>
+
+  <Style Selector="TextBlock.MainStatusBarText">
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+  </Style>
 </Styles>

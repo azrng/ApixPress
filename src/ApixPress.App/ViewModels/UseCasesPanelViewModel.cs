@@ -185,6 +185,11 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         {
             UpsertCaseItem(result.Data);
         }
+        else
+        {
+            // 此前失败分支静默返回，用户无从得知保存未生效；经状态栏给出原因
+            _messenger?.Send(new StatusMessageRequest($"保存用例「{dto.Name}」失败：{result.Message}"));
+        }
     }
 
     [RelayCommand]

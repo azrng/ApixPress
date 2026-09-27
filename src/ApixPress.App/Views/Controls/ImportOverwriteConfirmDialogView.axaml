@@ -7,8 +7,9 @@
              x:Class="ApixPress.App.Views.Controls.ImportOverwriteConfirmDialogView"
              x:DataType="vm:ImportOverwriteConfirmDialogViewModel"
              mc:Ignorable="d">
-  <!-- 弹窗 chrome 由 Ursa StandardDialogControl 提供；DataContext 为覆盖确认独立上下文，经 Import 访问导入数据 -->
-  <Border Classes="QuickRequestSaveDialogCard">
+  <!-- 弹窗 chrome 由 Ursa StandardDialogControl 提供；DataContext 为覆盖确认独立上下文，经 Import 访问导入数据；
+       DialogNoDefaultSubmit：覆盖是破坏性操作，禁用 Enter 默认提交，避免误触（ESC 关闭不受影响） -->
+  <Border Classes="QuickRequestSaveDialogCard DialogNoDefaultSubmit">
     <Grid RowDefinitions="Auto,Auto,Auto,Auto"
           RowSpacing="{StaticResource Space.3}">
       <StackPanel Spacing="2">

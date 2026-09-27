@@ -49,6 +49,9 @@ public sealed class DialogService : IDialogService
             TopLevelHashCode = _windowHostService.MainWindow?.GetHashCode()
         };
 
-        return await OverlayDialog.ShowStandardAsync(new TView(), dataContext, null, options);
+        var view = new TView();
+        // 统一弹层键盘交互：ESC 关闭、初始焦点、Enter 主按钮提交
+        DialogInteractionAssistant.Attach(view);
+        return await OverlayDialog.ShowStandardAsync(view, dataContext, null, options);
     }
 }

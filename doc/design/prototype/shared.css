@@ -963,6 +963,32 @@ body {
 }
 .proto-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* ===== 底部状态栏：操作反馈常驻可见（与 toast 文案同步），右侧显示当前环境 ===== */
+.proto-statusbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  height: 26px; display: flex; align-items: center; justify-content: space-between;
+  padding: 0 14px; box-sizing: border-box;
+  background: rgba(13, 13, 15, .92);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 11px; color: var(--text-tertiary);
+}
+.proto-status-msg {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.proto-status-env { flex: none; margin-left: 16px; opacity: .9; }
+
+/* 按钮内快捷键小标注（发送按钮 Ctrl+Enter） */
+.btn-kbd {
+  display: inline-block; margin-left: 7px; padding: 1px 5px;
+  font-family: var(--font); font-size: 10px; line-height: 1.5;
+  color: rgba(255, 255, 255, .72);
+  background: rgba(255, 255, 255, .10);
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 4px;
+  vertical-align: 1px;
+}
+button.loading .btn-kbd { display: none; }
+
 /* ===== 新建标签页：快捷创建卡片 ===== */
 .create-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
 .create-cards { display: flex; gap: 16px; }

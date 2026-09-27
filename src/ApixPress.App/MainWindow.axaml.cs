@@ -1,5 +1,6 @@
 ﻿using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using ApixPress.App.Data.Context;
 using ApixPress.App.Helpers;
 using ApixPress.App.Services.Interfaces;
@@ -55,7 +56,8 @@ public partial class MainWindow : Window
         Opened += OnOpened;
         Closed += OnClosed;
         Closing += OnWindowClosing;
-        KeyDown += OnWindowKeyDown;
+        // Tunnel 注册：焦点落在 AvaloniaEdit / 内嵌控件时仍先于它们拿到快捷键
+        AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Tunnel);
     }
 
     private void OnOpened(object? sender, System.EventArgs e)
@@ -76,7 +78,7 @@ public partial class MainWindow : Window
         Opened -= OnOpened;
         Closed -= OnClosed;
         Closing -= OnWindowClosing;
-        KeyDown -= OnWindowKeyDown;
+        RemoveHandler(KeyDownEvent, OnWindowKeyDown);
 
         if (ReferenceEquals(_windowHostService.MainWindow, this))
         {
@@ -105,13 +107,38 @@ public partial class MainWindow : Window
 
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Handled || e.Key != Key.S || !e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        if (e.Handled)
         {
             return;
         }
 
-        e.Handled = true;
-        _ = RunUiActionAsync(() => _viewModel.SaveCaseCommand.ExecuteAsync(null));
+        var modifiers = e.KeyModifiers;
+        if (modifiers.HasFlag(KeyModifiers.Control) && modifiers.HasFlag(KeyModifiers.Shift))
+        {
+            return;
+        }
+
+        switch (e.Key)
+        {
+            case Key.S when modifiers.HasFlag(KeyModifiers.Control):
+                e.Handled = true;
+                _ = RunUiActionAsync(() => _viewModel.SaveCaseCommand.ExecuteAsync(null));
+                break;
+            case Key.Enter when modifiers.HasFlag(KeyModifiers.Control):
+                // 发送中连按不重发：按钮 UI 已按 IsLoading 禁用，这里保持同一语义
+                if (_viewModel.ActiveProjectTab?.ResponseSection.IsLoading is not true)
+                {
+                    e.Handled = true;
+                    _ = RunUiActionAsync(() => _viewModel.SendRequestCommand.ExecuteAsync(null));
+                }
+
+                break;
+            case Key.W when modifiers.HasFlag(KeyModifiers.Control):
+                // 对齐标签右键菜单标注的 Ctrl+W（此前只是菜单展示文本，按键无效）
+                e.Handled = true;
+                _viewModel.ActiveProjectTab?.Workspace.CloseCurrentWorkspaceFromMenuCommand.Execute(null);
+                break;
+        }
     }
 
     // 供视图层（如侧栏接口节点的用例计数芯片）调用的抽屉入口
@@ -127,8 +154,10 @@ public partial class MainWindow : Window
             _isUseCasesDrawerOpen = true;
             try
             {
+                var drawer = new UseCasesDrawerView();
+                DialogInteractionAssistant.Attach(drawer);
                 await OverlayDrawer.ShowStandardAsync(
-                    new UseCasesDrawerView(),
+                    drawer,
                     _viewModel,
                     null,
                     new DrawerOptions
@@ -161,8 +190,10 @@ public partial class MainWindow : Window
             _isCreateProjectDrawerOpen = true;
             try
             {
+                var drawer = new CreateProjectDrawerView();
+                DialogInteractionAssistant.Attach(drawer);
                 await OverlayDrawer.ShowStandardAsync(
-                    new CreateProjectDrawerView(),
+                    drawer,
                     _viewModel,
                     null,
                     new DrawerOptions
@@ -201,8 +232,10 @@ public partial class MainWindow : Window
             _isEnvironmentDrawerOpen = true;
             try
             {
+                var drawer = new EnvironmentDrawerView();
+                DialogInteractionAssistant.Attach(drawer);
                 await OverlayDrawer.ShowStandardAsync(
-                    new EnvironmentDrawerView(),
+                    drawer,
                     _viewModel,
                     null,
                     new DrawerOptions

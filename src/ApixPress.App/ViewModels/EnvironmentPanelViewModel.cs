@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using ApixPress.App.Helpers;
+using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -11,6 +13,7 @@ namespace ApixPress.App.ViewModels;
 public partial class EnvironmentPanelViewModel : ViewModelBase
 {
     private readonly IEnvironmentVariableService _environmentVariableService;
+    private readonly IMessenger? _messenger;
     private CancellationTokenSource? _loadProjectCancellationTokenSource;
     private CancellationTokenSource? _activateEnvironmentCancellationTokenSource;
     private string _currentProjectId = string.Empty;
@@ -18,9 +21,12 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
 
     public event Action<ProjectEnvironmentItemViewModel?>? SelectedEnvironmentChanged;
 
-    public EnvironmentPanelViewModel(IEnvironmentVariableService environmentVariableService)
+    public EnvironmentPanelViewModel(
+        IEnvironmentVariableService environmentVariableService,
+        IMessenger? messenger = null)
     {
         _environmentVariableService = environmentVariableService;
+        _messenger = messenger;
     }
 
     public BatchObservableCollection<ProjectEnvironmentItemViewModel> Environments { get; } = [];
@@ -193,23 +199,45 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     [RelayCommand]
     private async Task SaveAllEnvironmentsAsync()
     {
+        var failedCount = 0;
+        var lastFailure = string.Empty;
         foreach (var item in Environments.ToList())
         {
-            await SaveEnvironmentCoreAsync(item);
+            if (!await SaveEnvironmentCoreAsync(item))
+            {
+                failedCount++;
+                lastFailure = item.Name;
+            }
+        }
+
+        if (failedCount > 0)
+        {
+            _messenger?.Send(new StatusMessageRequest(
+                failedCount == Environments.Count
+                    ? $"环境保存全部失败（{failedCount} 个），请检查后重试。"
+                    : $"环境保存完成，{failedCount} 个失败（如「{lastFailure}」），请检查后重新保存。"));
+        }
+        else
+        {
+            _messenger?.Send(new StatusMessageRequest($"已保存全部环境（{Environments.Count} 个）。"));
         }
     }
 
     [RelayCommand]
     private async Task SaveEnvironmentAsync(ProjectEnvironmentItemViewModel? item)
     {
-        await SaveEnvironmentCoreAsync(item);
+        if (await SaveEnvironmentCoreAsync(item) && item is not null)
+        {
+            _messenger?.Send(new StatusMessageRequest($"环境「{item.Name}」已保存。"));
+        }
     }
 
-    private async Task SaveEnvironmentCoreAsync(ProjectEnvironmentItemViewModel? item)
+    /// <summary>保存单个环境与其变量；返回是否全部成功，失败时经状态栏反馈原因。</summary>
+    private async Task<bool> SaveEnvironmentCoreAsync(ProjectEnvironmentItemViewModel? item)
     {
         if (item is null || string.IsNullOrWhiteSpace(_currentProjectId))
         {
-            return;
+            return false;
         }
 
         var saveResult = await _environmentVariableService.SaveEnvironmentAsync(new ProjectEnvironmentDto
@@ -224,7 +252,8 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
 
         if (!saveResult.IsSuccess || saveResult.Data is null)
         {
-            return;
+            _messenger?.Send(new StatusMessageRequest($"环境「{item.Name}」保存失败：{saveResult.Message}"));
+            return false;
         }
 
         var variablesResult = await _environmentVariableService.SaveVariablesAsync(
@@ -241,11 +270,13 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
             CancellationToken.None);
         if (!variablesResult.IsSuccess || variablesResult.Data is null)
         {
-            return;
+            _messenger?.Send(new StatusMessageRequest($"环境「{item.Name}」的变量保存失败：{variablesResult.Message}"));
+            return false;
         }
 
         ApplySavedEnvironment(item, saveResult.Data);
         ApplySavedVariables(item, variablesResult.Data);
+        return true;
     }
 
     [RelayCommand]

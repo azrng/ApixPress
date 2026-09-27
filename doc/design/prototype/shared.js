@@ -24,8 +24,34 @@
     }
     el.textContent = msg;
     el.classList.add("show");
+    updateStatusBar(msg);
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function () { el.classList.remove("show"); }, 2200);
+  }
+
+  /* 底部状态栏：承载操作反馈（与 toast 同步），右侧显示当前环境 */
+  function injectStatusBar() {
+    if (document.querySelector(".proto-statusbar")) return;
+    var bar = document.createElement("footer");
+    bar.className = "proto-statusbar";
+    var msg = document.createElement("span");
+    msg.className = "proto-status-msg";
+    msg.textContent = "就绪";
+    var env = document.createElement("span");
+    env.className = "proto-status-env";
+    env.textContent = "未选择环境";
+    bar.appendChild(msg);
+    bar.appendChild(env);
+    document.body.appendChild(bar);
+    try {
+      var saved = JSON.parse(sessionStorage.getItem("apixpress-prototype-env") || "null");
+      if (saved && saved.name) env.textContent = "环境：" + saved.name;
+    } catch (ignore) { }
+  }
+
+  function updateStatusBar(text) {
+    var el = document.querySelector(".proto-status-msg");
+    if (el) el.textContent = text;
   }
 
   /* Body 模式 → 内容类型提示文案（与 body-modes 同行展示） */
@@ -85,6 +111,9 @@
       var chipName = envSwitch.querySelector(".env-chip-name");
       if (chipName) chipName.textContent = name;
     });
+
+    var statusEnv = document.querySelector(".proto-status-env");
+    if (statusEnv) statusEnv.textContent = "环境：" + name;
 
     document.querySelectorAll(".env-chip-name").forEach(function (el) { el.textContent = name; });
     var legacyChipName = document.getElementById("envChipName");
@@ -171,6 +200,45 @@
     applyEnvironmentState(name, resolvedBaseUrl);
   };
 
+  /* 弹层键盘交互：ESC 关闭最上层弹层；输入框内 Enter 触发主按钮（.no-default-submit 层不启用） */
+  function topOpenLayer() {
+    var layers = document.querySelectorAll(".drawer-layer.open, .modal-wrap.open");
+    return layers.length ? layers[layers.length - 1] : null;
+  }
+
+  function focusFirstInput(layer) {
+    var input = layer.querySelector("input:not([readonly]):not([disabled]), textarea:not([readonly]):not([disabled])");
+    if (input) {
+      input.focus();
+      if (input.select) input.select();
+    }
+  }
+
+  document.addEventListener("keydown", function (e) {
+    var layer = topOpenLayer();
+    if (!layer) return;
+
+    if (e.key === "Escape") {
+      closeLayer(layer);
+      e.preventDefault();
+      return;
+    }
+
+    if (e.key === "Enter" && !layer.classList.contains("no-default-submit")) {
+      var target = e.target;
+      var inSingleLineInput = target && target.tagName === "INPUT";
+      if (inSingleLineInput) {
+        var primary = layer.querySelector(".btn-primary:not([disabled])");
+        if (primary) {
+          primary.click();
+          e.preventDefault();
+        }
+      }
+    }
+  });
+
+  injectStatusBar();
+
   restoreEnvironmentState();
   restoreProjectState();
   splitWorkspaceTabs();
@@ -236,7 +304,7 @@
     if (t.classList.contains("modal-wrap")) { closeLayer(t); return; }
     if (t.classList.contains("overlay-dim")) { closeLayer(t.closest(".drawer-layer, .modal-wrap")); return; }
 
-    /* 打开层（可携带说明文案） */
+    /* 打开层（可携带说明文案）；打开后聚焦第一个输入框方便直接打字 */
     var opener = t.closest("[data-open]");
     if (opener) {
       var layer = document.querySelector(opener.getAttribute("data-open"));
@@ -249,6 +317,7 @@
           if (textEl) textEl.textContent = msg;
         }
         layer.classList.add("open");
+        focusFirstInput(layer);
       }
       return;
     }
