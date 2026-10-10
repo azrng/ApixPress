@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.ViewModels.Base;
+using System.Windows.Input;
 
 namespace ApixPress.App.ViewModels;
 
@@ -28,6 +29,10 @@ public partial class ProjectWorkspaceItemViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool isDefault;
+
+    // 首页项目卡右键菜单命令：直接注入行项以跨 ContextMenu PopupRoot 保持绑定可用
+    public ICommand? OpenProjectCommand { get; set; }
+    public ICommand? OpenProjectSettingsCommand { get; set; }
 
     public string DisplayName => IsDefault ? $"{Name}（默认）" : Name;
     public string SummaryText => string.IsNullOrWhiteSpace(Description) ? "暂无备注信息，可进入项目详情继续完善说明。" : Description;

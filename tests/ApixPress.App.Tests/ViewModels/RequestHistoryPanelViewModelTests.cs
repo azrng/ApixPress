@@ -178,4 +178,48 @@ public sealed class RequestHistoryPanelViewModelTests
     {
         return Assert.IsType<HistoryDateGroupHeaderViewModel>(displayItem).Count;
     }
+
+    [Fact]
+    public async Task LoadHistory_WhenServiceThrows_ShouldShowErrorStateInsteadOfEmptyText()
+    {
+        var service = new ViewModelSharedTestDoubles.FakeRequestHistoryService
+        {
+            ShouldThrowHistoryError = true
+        };
+        var viewModel = new RequestHistoryPanelViewModel(service);
+        viewModel.SetProjectContext("proj-1");
+
+        await viewModel.LoadHistoryAsync();
+
+        // 加载失败必须与“还没有发送记录”空态区分：错误态开启且文案带原因
+        Assert.True(viewModel.HasHistoryLoadError);
+        Assert.Contains("请求历史加载失败", viewModel.HistoryLoadErrorText);
+        Assert.Contains("数据库暂时不可用", viewModel.HistoryLoadErrorText);
+        Assert.False(viewModel.HasHistory);
+        // 空态文案随之隐藏，错误块独占列表区
+        Assert.False(viewModel.ShowHistoryEmptyText);
+    }
+
+    [Fact]
+    public async Task LoadHistoryCommand_AfterFailure_ShouldRetryAndClearErrorState()
+    {
+        var service = new ViewModelSharedTestDoubles.FakeRequestHistoryService
+        {
+            ShouldThrowHistoryError = true
+        };
+        service.Items.Add(CreateDto("hist-1", DateTime.UtcNow));
+        var viewModel = new RequestHistoryPanelViewModel(service);
+        viewModel.SetProjectContext("proj-1");
+        await viewModel.LoadHistoryAsync();
+        Assert.True(viewModel.HasHistoryLoadError);
+
+        // 重试入口存在且恢复后错误态清除、列表正常展示
+        service.ShouldThrowHistoryError = false;
+        await viewModel.LoadHistoryCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.HasHistoryLoadError);
+        Assert.Equal(string.Empty, viewModel.HistoryLoadErrorText);
+        Assert.Single(viewModel.HistoryItems);
+        Assert.True(viewModel.HasHistory);
+    }
 }

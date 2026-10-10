@@ -94,6 +94,8 @@ public partial class ProjectTabViewModel : ViewModelBase,
         Summary = _composition.Summary;
         _lifecycle = _composition.Lifecycle;
         _composition.Attach();
+        // 历史行右键「重新发送」命令注入（本 VM 的重发命令带行项参数）；删除用历史面板自身命令
+        HistoryPanel.SetRowCommands(ResendHistoryRequestCommand);
     }
 
     public ProjectWorkspaceItemViewModel Project { get; }
@@ -132,6 +134,16 @@ public partial class ProjectTabViewModel : ViewModelBase,
     public ResponseSectionViewModel ResponseSection => ActiveWorkspaceTab?.ResponseSection ?? _fallbackWorkspaceTab.ResponseSection;
 
     public string ProjectId => Project.Id;
+
+    /// <summary>标题栏项目标签右键菜单「关闭项目标签」命令（由 MainWindowViewModel 注入），跨 ContextMenu PopupRoot 保持绑定可用。</summary>
+    public System.Windows.Input.ICommand? ContextCloseTabCommand { get; set; }
+
+    /// <summary>标题栏项目标签右键菜单「关闭其它项目标签」命令（由 MainWindowViewModel 注入）。</summary>
+    public System.Windows.Input.ICommand? ContextCloseOtherTabsCommand { get; set; }
+
+    /// <summary>标题栏项目标签右键菜单「关闭全部项目标签」命令（由 MainWindowViewModel 注入）。</summary>
+    public System.Windows.Input.ICommand? ContextCloseAllTabsCommand { get; set; }
+
     [ObservableProperty]
     private bool isActive;
 

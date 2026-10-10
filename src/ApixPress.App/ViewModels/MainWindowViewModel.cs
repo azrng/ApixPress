@@ -199,6 +199,9 @@ public partial class MainWindowViewModel : ViewModelBase, IDialogContext
         ProjectPanel = construction.ProjectPanel;
         ShellPanels = construction.ShellPanels;
 
+        // 首页项目卡右键菜单命令注入（打开项目 / 打开项目设置），行项跨 ContextMenu PopupRoot 保持绑定可用
+        ProjectPanel.SetProjectCardCommands(OpenProjectWorkspaceCommand, OpenProjectSettingsCommand);
+
         AttachShellEventHandlers();
     }
 

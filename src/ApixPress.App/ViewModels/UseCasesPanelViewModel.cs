@@ -464,7 +464,7 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         }
     }
 
-    private static RequestCaseItemViewModel CreateRequestCaseItem(RequestCaseDto requestCase)
+    private RequestCaseItemViewModel CreateRequestCaseItem(RequestCaseDto requestCase)
     {
         return new RequestCaseItemViewModel
         {
@@ -474,7 +474,12 @@ public partial class UseCasesPanelViewModel : ViewModelBase
             TagsText = string.Join(", ", requestCase.Tags),
             Description = requestCase.Description,
             UpdatedAt = requestCase.UpdatedAt.ToLocalTime(),
-            SourceCase = requestCase
+            SourceCase = requestCase,
+            // 右键菜单命令直接挂行项（与卡片行内按钮同一批命令），跨 ContextMenu PopupRoot 保持绑定可用
+            LoadCommand = LoadCaseCommand,
+            RenameCommand = RenameCaseCommand,
+            DuplicateCommand = DuplicateCaseCommand,
+            DeleteCommand = RequestDeleteCaseCommand
         };
     }
 

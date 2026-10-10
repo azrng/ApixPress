@@ -24,6 +24,10 @@ public partial class MainWindowViewModel
             _dialogService,
             HandleProjectDeletedFromSettingsAsync);
         tab.ShellStateChanged += OnProjectTabShellStateChanged;
+        // 标题栏项目标签右键菜单命令注入（关闭当前/其它/全部），行项跨 ContextMenu PopupRoot 保持绑定可用
+        tab.ContextCloseTabCommand = CloseProjectTabCommand;
+        tab.ContextCloseOtherTabsCommand = CloseOtherProjectTabsCommand;
+        tab.ContextCloseAllTabsCommand = CloseAllProjectTabsCommand;
         return tab;
     }
 

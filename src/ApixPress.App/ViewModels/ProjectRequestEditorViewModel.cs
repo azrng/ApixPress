@@ -1,6 +1,8 @@
 ﻿using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Messaging;
+using ApixPress.App.Messages;
 using ApixPress.App.Services.Implementations;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -17,6 +19,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     private readonly ProjectTabWorkspaceContext _workspaceContext;
     private readonly IDialogService _dialogService;
     private readonly IClipboardService _clipboardService;
+    private readonly IMessenger? _messenger;
     private RequestWorkspaceTabViewModel? _subscribedWorkspaceTab;
 
     private string _currentEditorTitle = "新建...";
@@ -56,11 +59,13 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     internal ProjectRequestEditorViewModel(
         ProjectTabWorkspaceContext workspaceContext,
         IDialogService dialogService,
-        IClipboardService clipboardService)
+        IClipboardService clipboardService,
+        IMessenger? messenger = null)
     {
         _workspaceContext = workspaceContext;
         _dialogService = dialogService;
         _clipboardService = clipboardService;
+        _messenger = messenger;
     }
 
     public RequestConfigTabViewModel ConfigTab => ResolveWorkspaceTabOrFallback().ConfigTab;
@@ -293,6 +298,67 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
             2 => RequestCodePowerShellCommand,
             _ => RequestCodeCurlCommand
         };
+    }
+
+    /// <summary>复制响应正文到剪贴板：CommandParameter 传入目标响应区（工作台当前标签或历史详情所选记录）。</summary>
+    [RelayCommand]
+    private async Task CopyResponseBodyAsync(ResponseSectionViewModel? responseSection)
+    {
+        await CopyResponseTextAsync(
+            responseSection?.CopyableBodyText,
+            emptyHint: "当前没有可复制的响应正文。",
+            successHint: "响应正文已复制到剪贴板。");
+    }
+
+    /// <summary>复制响应 Headers（“名称: 值”逐行文本）到剪贴板。</summary>
+    [RelayCommand]
+    private async Task CopyResponseHeadersAsync(ResponseSectionViewModel? responseSection)
+    {
+        await CopyResponseTextAsync(
+            responseSection?.HeadersText,
+            emptyHint: "当前响应没有可复制的 Headers。",
+            successHint: "响应 Headers 已复制到剪贴板。");
+    }
+
+    /// <summary>按当前编辑器状态生成 cURL 命令并复制到剪贴板（与生成代码弹窗同一构建逻辑）。</summary>
+    [RelayCommand]
+    private async Task CopyCurrentRequestCurlAsync()
+    {
+        if (!CanGenerateRequestCode)
+        {
+            _messenger?.Send(new StatusMessageRequest("请先打开一个 HTTP 接口或快捷请求标签，再复制 cURL。"));
+            return;
+        }
+
+        string curlCommand;
+        try
+        {
+            curlCommand = ProjectHttpDocumentFormatter.BuildCurlSnippet(
+                SelectedMethod, RequestUrl, CurrentHttpInterfaceBaseUrl, ConfigTab);
+        }
+        catch (Exception exception)
+        {
+            _messenger?.Send(new StatusMessageRequest($"生成 cURL 命令失败：{exception.Message}"));
+            return;
+        }
+
+        await CopyResponseTextAsync(curlCommand,
+            emptyHint: "cURL 命令为空，未复制。",
+            successHint: "cURL 命令已复制到剪贴板。");
+    }
+
+    /// <summary>复制文本并通过状态栏反馈结果：内容为空提示不可复制，剪贴板写入失败提示手动复制。</summary>
+    private async Task CopyResponseTextAsync(string? text, string emptyHint, string successHint)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            _messenger?.Send(new StatusMessageRequest(emptyHint));
+            return;
+        }
+
+        var copied = await _clipboardService.CopyTextAsync(text);
+        _messenger?.Send(new StatusMessageRequest(
+            copied ? successHint : "复制失败，请在正文或 Headers 中手动选择文本复制。"));
     }
 
     [RelayCommand]

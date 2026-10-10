@@ -483,9 +483,17 @@ public static class ViewModelSharedTestDoubles
         public int GetHistoryCallCount { get; private set; }
         public int GetDetailCallCount { get; private set; }
 
+        /// <summary>打开后 GetHistoryAsync 抛异常，用于验证列表加载失败的错误态与重试。</summary>
+        public bool ShouldThrowHistoryError { get; set; }
+
         public Task<IReadOnlyList<RequestHistoryItemDto>> GetHistoryAsync(string projectId, CancellationToken cancellationToken)
         {
             GetHistoryCallCount++;
+            if (ShouldThrowHistoryError)
+            {
+                throw new InvalidOperationException("数据库暂时不可用");
+            }
+
             return Task.FromResult<IReadOnlyList<RequestHistoryItemDto>>(Items.Select(item => new RequestHistoryItemDto
             {
                 Id = item.Id,

@@ -69,6 +69,37 @@
 
       <Border Grid.Row="2"
               Classes="PanelCard HttpResponseCard">
+        <!-- 响应区右键：复制响应 Body / Headers / cURL（DataContext 即 ProjectTabViewModel，纯路径绑定） -->
+        <Border.ContextMenu>
+          <ContextMenu Classes="WorkspaceTabContextMenu">
+            <MenuItem Classes="WorkspaceTabContextMenuItem"
+                      Header="复制响应 Body"
+                      Command="{Binding Editor.CopyResponseBodyCommand}"
+                      CommandParameter="{Binding ResponseSection}">
+              <MenuItem.Icon>
+                <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                           Text="&#xE7C3;" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Classes="WorkspaceTabContextMenuItem"
+                      Header="复制 Headers"
+                      Command="{Binding Editor.CopyResponseHeadersCommand}"
+                      CommandParameter="{Binding ResponseSection}">
+              <MenuItem.Icon>
+                <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                           Text="&#xE8FD;" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Classes="WorkspaceTabContextMenuItem"
+                      Header="复制 cURL"
+                      Command="{Binding Editor.CopyCurrentRequestCurlCommand}">
+              <MenuItem.Icon>
+                <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                           Text="&#xE756;" />
+              </MenuItem.Icon>
+            </MenuItem>
+          </ContextMenu>
+        </Border.ContextMenu>
         <Grid RowDefinitions="Auto,Auto,*"
               RowSpacing="{StaticResource Space.2}">
           <Grid Grid.Row="0"
@@ -78,7 +109,7 @@
                        Classes="SectionTitle"
                        Text="返回响应" />
             <Grid Grid.Column="2"
-                  ColumnDefinitions="Auto,Auto,Auto,Auto,Auto"
+                  ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
                   ColumnSpacing="{StaticResource Space.2}"
                   HorizontalAlignment="Right"
                   IsVisible="{Binding ResponseSection.HasResponse}">
@@ -101,10 +132,44 @@
                          Classes="CaptionText"
                          VerticalAlignment="Center"
                          Text="{Binding ResponseSection.SizeText}" />
+              <!-- 响应复制菜单：DataContext 路径绑定（MenuFlyout 内 $parent 查找会断链，禁止使用） -->
+              <Button Grid.Column="5"
+                      Classes="HttpResponseCopyButton"
+                      ToolTip.Tip="复制响应内容">
+                <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                           Text="&#xE8C8;" />
+                <Button.Flyout>
+                  <MenuFlyout Placement="BottomEdgeAlignedRight">
+                    <MenuItem Header="复制响应 Body"
+                              Command="{Binding Editor.CopyResponseBodyCommand}"
+                              CommandParameter="{Binding ResponseSection}">
+                      <MenuItem.Icon>
+                        <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   Text="&#xE7C3;" />
+                      </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="复制 Headers"
+                              Command="{Binding Editor.CopyResponseHeadersCommand}"
+                              CommandParameter="{Binding ResponseSection}">
+                      <MenuItem.Icon>
+                        <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   Text="&#xE8FD;" />
+                      </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="复制 cURL"
+                              Command="{Binding Editor.CopyCurrentRequestCurlCommand}">
+                      <MenuItem.Icon>
+                        <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                   Text="&#xE756;" />
+                      </MenuItem.Icon>
+                    </MenuItem>
+                  </MenuFlyout>
+                </Button.Flyout>
+              </Button>
             </Grid>
           </Grid>
 
-          <!-- 响应状态提示横幅：独占一行，按严重度着色左侧色条 -->
+          <!-- 响应状态提示横幅：独占一行，按严重度着色左侧色条；失败/5xx 提供一键重试，错误文本可选中复制 -->
           <Border Grid.Row="1"
                   Classes="HttpResponseNoticeCard HttpResponseNoticeBanner"
                   Classes.HttpResponseNoticeDanger="{Binding ResponseSection.IsNoticeDanger}"
@@ -114,10 +179,14 @@
                         Spacing="{StaticResource Space.2}">
               <TextBlock Classes="HttpResponseNoticeTitle"
                          Text="{Binding ResponseSection.ResponseNoticeTitle}" />
-              <TextBlock Classes="CaptionText"
-                         VerticalAlignment="Center"
-                         Text="{Binding ResponseSection.ResponseNoticeText}"
-                         TextTrimming="CharacterEllipsis" />
+              <SelectableTextBlock Classes="CaptionText HttpResponseNoticeText"
+                                   VerticalAlignment="Center"
+                                   Text="{Binding ResponseSection.ResponseNoticeText}"
+                                   TextTrimming="CharacterEllipsis" />
+              <Button Classes="HttpResponseNoticeRetryButton"
+                      Content="重试"
+                      IsVisible="{Binding ResponseSection.CanRetryRequest}"
+                      Command="{Binding SendRequestCommand}" />
             </StackPanel>
           </Border>
 

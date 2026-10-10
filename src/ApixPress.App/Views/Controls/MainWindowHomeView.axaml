@@ -144,6 +144,30 @@
                 <Button Classes="HomeProjectTileButton"
                         Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).OpenProjectWorkspaceCommand}"
                         CommandParameter="{Binding}">
+                  <!-- 右键菜单：打开项目 / 打开项目设置（注入式命令，跨 PopupRoot 绑定可用） -->
+                  <Button.ContextMenu>
+                    <ContextMenu Classes="WorkspaceTabContextMenu"
+                                 DataContext="{Binding}">
+                      <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                Header="打开项目"
+                                Command="{Binding OpenProjectCommand}"
+                                CommandParameter="{Binding}">
+                        <MenuItem.Icon>
+                          <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                                     Text="&#xE8E5;" />
+                        </MenuItem.Icon>
+                      </MenuItem>
+                      <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                Header="打开项目设置"
+                                Command="{Binding OpenProjectSettingsCommand}"
+                                CommandParameter="{Binding}">
+                        <MenuItem.Icon>
+                          <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                                     Text="&#xE713;" />
+                        </MenuItem.Icon>
+                      </MenuItem>
+                    </ContextMenu>
+                  </Button.ContextMenu>
                   <Border Classes="HomeProjectTileCard">
                       <Grid RowDefinitions="Auto,*,Auto"
                             RowSpacing="{StaticResource Space.3}">

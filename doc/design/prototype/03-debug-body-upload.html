@@ -253,7 +253,7 @@
       </div>
 
       <!-- 返回响应：发送中 → 成功 / 已取消 -->
-      <div class="card resp-card">
+      <div class="card resp-card" data-context-menu="resp">
         <div class="resp-head">
           <span class="resp-title">返回响应</span>
           <span class="resp-spacer"></span>
@@ -262,6 +262,14 @@
             <span class="status-badge ok">HTTP 200</span>
             <span class="metric">1 412 ms</span>
             <span class="metric">182 B</span>
+            <div class="resp-copy-wrap">
+              <button class="resp-copy" title="复制响应内容"><i class="ri-file-copy-line"></i></button>
+              <div class="resp-copy-menu">
+                <button class="resp-copy-item" data-copy-toast="响应正文已复制到剪贴板（演示）"><i class="ri-file-text-line"></i>复制响应 Body</button>
+                <button class="resp-copy-item" data-copy-toast="响应 Headers 已复制到剪贴板（演示）"><i class="ri-clipboard-line"></i>复制 Headers</button>
+                <button class="resp-copy-item" data-copy-toast="cURL 命令已复制到剪贴板（演示）"><i class="ri-terminal-box-line"></i>复制 cURL</button>
+              </div>
+            </div>
           </span>
         </div>
         <div class="resp-tabs" data-tabs="resp">

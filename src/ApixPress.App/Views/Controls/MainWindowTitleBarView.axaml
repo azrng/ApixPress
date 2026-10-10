@@ -57,6 +57,28 @@
                   <DataTemplate x:DataType="vm:ProjectTabViewModel">
                     <Border Classes="WorkspaceTabItemShell WorkspaceTabCapsule"
                             Tag="{Binding IsActive}">
+                      <!-- 右键菜单：关闭当前/其它/全部项目标签（注入式命令，跨 PopupRoot 绑定可用） -->
+                      <Border.ContextMenu>
+                        <ContextMenu Classes="WorkspaceTabContextMenu"
+                                     DataContext="{Binding}">
+                          <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                    Header="关闭项目标签"
+                                    Command="{Binding ContextCloseTabCommand}"
+                                    CommandParameter="{Binding}">
+                            <MenuItem.Icon>
+                              <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                                         Text="&#xE711;" />
+                            </MenuItem.Icon>
+                          </MenuItem>
+                          <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                    Header="关闭其它项目标签"
+                                    Command="{Binding ContextCloseOtherTabsCommand}"
+                                    CommandParameter="{Binding}" />
+                          <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                    Header="关闭全部项目标签"
+                                    Command="{Binding ContextCloseAllTabsCommand}" />
+                        </ContextMenu>
+                      </Border.ContextMenu>
                       <Grid ColumnDefinitions="*,Auto"
                             ColumnSpacing="{StaticResource Space.1}">
                         <Button Grid.Column="0"

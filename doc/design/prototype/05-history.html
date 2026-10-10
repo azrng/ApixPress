@@ -53,34 +53,39 @@
       <div class="search-box"><span><i class="ri-search-line"></i></span><input placeholder="搜索方法、URL 或状态码"></div>
       <div class="history-list" id="historyList">
         <div class="h-group-cap"><span>今天</span><span>4</span></div>
-        <div class="h-item selected">
+        <div class="h-item selected" data-context-menu="history">
           <div class="h-actions"><button class="resend" title="重新发送">↻</button><button class="del" title="删除">🗑</button></div>
           <div class="h-line1"><span class="badge post">POST</span><span class="h-url">https://echo.apifox.com/status/404</span></div>
           <div class="h-line2"><span class="status-mini warn">404</span><span>09-12 11:48</span><span style="margin-left:auto;">88 ms</span></div>
         </div>
-        <div class="h-item">
+        <div class="h-item" data-context-menu="history">
           <div class="h-actions"><button class="resend" title="重新发送">↻</button><button class="del" title="删除">🗑</button></div>
           <div class="h-line1"><span class="badge get">GET</span><span class="h-url">https://echo.apifox.com/get</span></div>
           <div class="h-line2"><span class="status-mini ok">200</span><span>09-12 10:56</span><span style="margin-left:auto;">144 ms</span></div>
         </div>
-        <div class="h-item">
+        <div class="h-item" data-context-menu="history">
           <div class="h-actions"><button class="resend" title="重新发送">↻</button><button class="del" title="删除">🗑</button></div>
           <div class="h-line1"><span class="badge post">POST</span><span class="h-url">https://echo.apifox.com/post</span></div>
           <div class="h-line2"><span class="status-mini ok">200</span><span>09-12 10:36</span><span style="margin-left:auto;">110 ms</span></div>
         </div>
-        <div class="h-item">
+        <div class="h-item" data-context-menu="history">
           <div class="h-actions"><button class="resend" title="重新发送">↻</button><button class="del" title="删除">🗑</button></div>
           <div class="h-line1"><span class="badge get">GET</span><span class="h-url">https://echo.apifox.com/</span></div>
           <div class="h-line2"><span class="status-mini ok">200</span><span>09-12 10:34</span><span style="margin-left:auto;">189 ms</span></div>
         </div>
         <div class="h-group-cap"><span>昨天</span><span>1</span></div>
-        <div class="h-item">
+        <div class="h-item" data-context-menu="history">
           <div class="h-actions"><button class="resend" title="重新发送">↻</button><button class="del" title="删除">🗑</button></div>
           <div class="h-line1"><span class="badge get">GET</span><span class="h-url">/api/Group/GetGroupList</span></div>
           <div class="h-line2"><span class="status-mini err">超时</span><span>09-11 22:17</span><span style="margin-left:auto;">30 000 ms</span></div>
         </div>
       </div>
       <div class="cell-empty" id="historyEmpty" style="display:none;">还没有发送记录</div>
+      <!-- 加载失败态：与空态文案区分，错误原因可选中复制 + 一键重试（默认隐藏，演示时移除 display:none） -->
+      <div class="cell-error" id="historyError" style="display:none;">
+        <span>请求历史加载失败：数据库暂时不可用</span>
+        <button class="retry-link" data-toast="正在重新加载请求历史（演示）"><i class="ri-refresh-line"></i>重试</button>
+      </div>
     </div>
 
     <div class="main">
@@ -109,11 +114,18 @@
         </div>
       </div>
 
-      <div class="card resp-card">
+      <div class="card resp-card" data-context-menu="resp-history">
         <div class="resp-head">
           <span class="resp-title">所选请求的响应</span>
           <span class="resp-spacer"></span>
           <span style="font-size:12px;color:var(--text-tertiary);">开发</span>
+          <div class="resp-copy-wrap">
+            <button class="resp-copy" title="复制响应内容"><i class="ri-file-copy-line"></i></button>
+            <div class="resp-copy-menu">
+              <button class="resp-copy-item" data-copy-toast="响应正文已复制到剪贴板（演示）"><i class="ri-file-text-line"></i>复制响应 Body</button>
+              <button class="resp-copy-item" data-copy-toast="响应 Headers 已复制到剪贴板（演示）"><i class="ri-clipboard-line"></i>复制 Headers</button>
+            </div>
+          </div>
         </div>
         <div class="resp-tabs" data-tabs="resp">
           <span class="sub-tab active" data-v="Body">Body</span>

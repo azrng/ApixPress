@@ -253,6 +253,24 @@
       });
     }
 
+    /* 响应复制菜单：点击外部收起 */
+    if (!t.closest(".resp-copy-wrap")) {
+      document.querySelectorAll(".resp-copy-wrap.open").forEach(function (el) {
+        el.classList.remove("open");
+      });
+    }
+    var copyToggle = t.closest(".resp-copy");
+    if (copyToggle) {
+      copyToggle.closest(".resp-copy-wrap").classList.toggle("open");
+      return;
+    }
+    var copyItem = t.closest(".resp-copy-item");
+    if (copyItem) {
+      copyItem.closest(".resp-copy-wrap").classList.remove("open");
+      toast(copyItem.getAttribute("data-copy-toast") || "已复制（演示）");
+      return;
+    }
+
     /* 环境下拉：展开/收起 */
     var envChip = t.closest(".env-chip");
     if (envChip && envChip.closest(".env-switch")) {
@@ -407,6 +425,85 @@
     caseRow.appendChild(t);
     children.appendChild(caseRow);
   };
+
+  /* 右键菜单（演示）：[data-context-menu="类型"] 弹出预置菜单，项点击 toast 反馈 */
+  var contextMenuTypes = {
+    "history": [
+      { label: "重新发送", icon: "ri-refresh-line", toast: "正在重新发送该条请求（演示）" },
+      { label: "删除", icon: "ri-delete-bin-line", toast: "已删除该条历史（演示）", danger: true }
+    ],
+    "case": [
+      { label: "加载", icon: "ri-file-copy-line", toast: "已加载该用例到编辑器（演示）" },
+      { label: "改名", icon: "ri-file-text-line", toast: "已打开用例改名（演示）" },
+      { label: "复制", icon: "ri-clipboard-line", toast: "已复制该用例（演示）" },
+      { label: "删除", icon: "ri-delete-bin-line", toast: "已删除该用例（演示）", danger: true }
+    ],
+    "project": [
+      { label: "打开项目", icon: "ri-folder-line", toast: "正在打开项目（演示）" },
+      { label: "打开项目设置", icon: "ri-settings-line", toast: "已打开项目设置（演示）" }
+    ],
+    "project-tab": [
+      { label: "关闭项目标签", icon: "ri-delete-bin-line", toast: "已关闭该项目标签（演示）" },
+      { label: "关闭其它项目标签", icon: "ri-delete-bin-line", toast: "已关闭其它项目标签（演示）" },
+      { label: "关闭全部项目标签", icon: "ri-delete-bin-line", toast: "已关闭全部项目标签（演示）" }
+    ],
+    "resp": [
+      { label: "复制响应 Body", icon: "ri-file-text-line", toast: "响应正文已复制到剪贴板（演示）" },
+      { label: "复制 Headers", icon: "ri-clipboard-line", toast: "响应 Headers 已复制到剪贴板（演示）" },
+      { label: "复制 cURL", icon: "ri-terminal-box-line", toast: "cURL 命令已复制到剪贴板（演示）" }
+    ],
+    "resp-history": [
+      { label: "复制响应 Body", icon: "ri-file-text-line", toast: "响应正文已复制到剪贴板（演示）" },
+      { label: "复制 Headers", icon: "ri-clipboard-line", toast: "响应 Headers 已复制到剪贴板（演示）" }
+    ]
+  };
+
+  var contextMenuEl = null;
+
+  function closeContextMenu() {
+    if (contextMenuEl) contextMenuEl.classList.remove("open");
+  }
+
+  function openContextMenu(type, x, y) {
+    var items = contextMenuTypes[type];
+    if (!items) return;
+    if (!contextMenuEl) {
+      contextMenuEl = document.createElement("div");
+      contextMenuEl.className = "proto-context-menu";
+      document.body.appendChild(contextMenuEl);
+    }
+    contextMenuEl.innerHTML = "";
+    items.forEach(function (item) {
+      var button = document.createElement("button");
+      button.className = "proto-context-item" + (item.danger ? " danger" : "");
+      button.innerHTML = '<i class="' + item.icon + '"></i>' + item.label;
+      button.addEventListener("click", function () {
+        closeContextMenu();
+        toast(item.toast);
+      });
+      contextMenuEl.appendChild(button);
+    });
+    contextMenuEl.classList.add("open");
+    // 靠近右/下边缘时向内翻转，避免菜单被视口裁掉
+    var rect = contextMenuEl.getBoundingClientRect();
+    contextMenuEl.style.left = Math.min(x, window.innerWidth - rect.width - 8) + "px";
+    contextMenuEl.style.top = Math.min(y, window.innerHeight - rect.height - 8) + "px";
+  }
+
+  document.addEventListener("contextmenu", function (e) {
+    var target = e.target.closest("[data-context-menu]");
+    if (!target) return;
+    e.preventDefault();
+    openContextMenu(target.getAttribute("data-context-menu"), e.clientX, e.clientY);
+  });
+
+  document.addEventListener("click", function (e) {
+    if (contextMenuEl && !e.target.closest(".proto-context-menu")) closeContextMenu();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") closeContextMenu();
+  });
 
   window.protoToast = toast;
 })();

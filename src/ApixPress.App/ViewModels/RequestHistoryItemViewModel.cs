@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
+using System.Windows.Input;
 
 namespace ApixPress.App.ViewModels;
 
@@ -14,6 +15,12 @@ public partial class RequestHistoryItemViewModel : ViewModelBase
     public required string Method { get; init; }
     public required string Url { get; init; }
     public required DateTime Timestamp { get; init; }
+
+    /// <summary>右键菜单「重新发送」命令，直接注入行项以跨 ContextMenu PopupRoot 保持绑定可用。</summary>
+    public ICommand? ResendCommand { get; set; }
+
+    /// <summary>右键菜单「删除」命令，直接注入行项以跨 ContextMenu PopupRoot 保持绑定可用。</summary>
+    public ICommand? DeleteCommand { get; set; }
 
     [ObservableProperty]
     private bool hasResponse;

@@ -191,9 +191,33 @@
 
       <Border Grid.Row="2"
               Classes="PanelCard ResponsePanelCard">
+        <!-- 响应区右键：复制所选历史的响应 Body / Headers（历史记录无编辑器状态，不提供 cURL） -->
+        <Border.ContextMenu>
+          <ContextMenu Classes="WorkspaceTabContextMenu">
+            <MenuItem Classes="WorkspaceTabContextMenuItem"
+                      Header="复制响应 Body"
+                      Command="{Binding Editor.CopyResponseBodyCommand}"
+                      CommandParameter="{Binding HistoryPanel.SelectedResponseSection}">
+              <MenuItem.Icon>
+                <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                           Text="&#xE7C3;" />
+              </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Classes="WorkspaceTabContextMenuItem"
+                      Header="复制 Headers"
+                      Command="{Binding Editor.CopyResponseHeadersCommand}"
+                      CommandParameter="{Binding HistoryPanel.SelectedResponseSection}">
+              <MenuItem.Icon>
+                <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                           Text="&#xE8FD;" />
+              </MenuItem.Icon>
+            </MenuItem>
+          </ContextMenu>
+        </Border.ContextMenu>
         <DockPanel>
           <Grid DockPanel.Dock="Top"
-                ColumnDefinitions="*,Auto"
+                ColumnDefinitions="*,Auto,Auto"
+                ColumnSpacing="{StaticResource Space.2}"
                 Margin="{StaticResource Pad.Bottom3}">
             <TextBlock Classes="SectionTitle"
                        Text="所选请求的响应" />
@@ -201,6 +225,34 @@
                        Classes="CaptionText"
                        Text="{Binding Summary.CurrentEnvironmentLabel}"
                        VerticalAlignment="Center" />
+            <!-- 历史详情响应复制：CommandParameter 指向所选记录的响应区；历史记录无编辑器状态，不提供 cURL 项 -->
+            <Button Grid.Column="2"
+                    Classes="HttpResponseCopyButton"
+                    ToolTip.Tip="复制响应内容"
+                    IsVisible="{Binding HistoryPanel.SelectedResponseSection.HasResponse}">
+              <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                         Text="&#xE8C8;" />
+              <Button.Flyout>
+                <MenuFlyout Placement="BottomEdgeAlignedRight">
+                  <MenuItem Header="复制响应 Body"
+                            Command="{Binding Editor.CopyResponseBodyCommand}"
+                            CommandParameter="{Binding HistoryPanel.SelectedResponseSection}">
+                    <MenuItem.Icon>
+                      <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                 Text="&#xE7C3;" />
+                    </MenuItem.Icon>
+                  </MenuItem>
+                  <MenuItem Header="复制 Headers"
+                            Command="{Binding Editor.CopyResponseHeadersCommand}"
+                            CommandParameter="{Binding HistoryPanel.SelectedResponseSection}">
+                    <MenuItem.Icon>
+                      <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                                 Text="&#xE8FD;" />
+                    </MenuItem.Icon>
+                  </MenuItem>
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
           </Grid>
 
           <StackPanel IsVisible="{Binding HistoryPanel.SelectedResponseSection.ShowPlaceholder}"
@@ -227,7 +279,7 @@
                          Text="{Binding HistoryPanel.SelectedResponseSection.SizeText}" />
             </Grid>
 
-            <!-- 异常响应横幅：404/5xx/超时 等（与调试页一致） -->
+            <!-- 异常响应横幅：404/5xx/超时 等（与调试页一致）；失败/5xx 可重发该条历史，错误文本可选中复制 -->
             <Border Grid.Row="1"
                     Classes="HttpResponseNoticeCard HttpResponseNoticeBanner"
                     Classes.HttpResponseNoticeDanger="{Binding HistoryPanel.SelectedResponseSection.IsNoticeDanger}"
@@ -237,10 +289,15 @@
                           Spacing="{StaticResource Space.2}">
                 <TextBlock Classes="HttpResponseNoticeTitle"
                            Text="{Binding HistoryPanel.SelectedResponseSection.ResponseNoticeTitle}" />
-                <TextBlock Classes="CaptionText"
-                           VerticalAlignment="Center"
-                           Text="{Binding HistoryPanel.SelectedResponseSection.ResponseNoticeText}"
-                           TextTrimming="CharacterEllipsis" />
+                <SelectableTextBlock Classes="CaptionText HttpResponseNoticeText"
+                                     VerticalAlignment="Center"
+                                     Text="{Binding HistoryPanel.SelectedResponseSection.ResponseNoticeText}"
+                                     TextTrimming="CharacterEllipsis" />
+                <Button Classes="HttpResponseNoticeRetryButton"
+                        Content="重试"
+                        IsVisible="{Binding HistoryPanel.SelectedResponseSection.CanRetryRequest}"
+                        Command="{Binding ResendHistoryRequestCommand}"
+                        CommandParameter="{Binding HistoryPanel.SelectedHistoryItem}" />
               </StackPanel>
             </Border>
 

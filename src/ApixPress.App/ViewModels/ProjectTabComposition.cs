@@ -83,7 +83,7 @@ internal sealed class ProjectTabComposition : DisposableObject
             var useCasesPanel = new UseCasesPanelViewModel(_requestCaseService, workspace, _hostContext.DialogService, Messenger);
             var workspaceContext = CreateWorkspaceContext(workspace, environmentPanel, historyPanel);
             var shell = CreateShell(workspaceContext);
-            var editor = new ProjectRequestEditorViewModel(workspaceContext, _hostContext.DialogService, _clipboardService);
+            var editor = new ProjectRequestEditorViewModel(workspaceContext, _hostContext.DialogService, _clipboardService, Messenger);
             ProjectInterfaceRootWorkspaceViewModel? interfaceRoot = null;
             var catalog = CreateCatalog(
                 useCasesPanel,

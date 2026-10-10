@@ -543,4 +543,82 @@ public sealed class ResponseSectionViewModelTests
         Assert.Contains("image/png", viewModel.BodyText);
         Assert.Equal("5 MB", viewModel.SizeText);
     }
+
+    [Fact]
+    public void CanRetryRequest_ShouldBeTrue_WhenRequestFailsAtTransportLevel()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Failure("请求超时。", "request_timeout"),
+            new RequestSnapshotDto());
+
+        Assert.True(viewModel.ShowResponseNotice);
+        Assert.True(viewModel.CanRetryRequest);
+    }
+
+    [Fact]
+    public void CanRetryRequest_ShouldBeTrueFor5xx_AndFalseFor4xx()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto { StatusCode = 500, DurationMs = 10 }),
+            new RequestSnapshotDto());
+        Assert.True(viewModel.CanRetryRequest);
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto { StatusCode = 404, DurationMs = 10 }),
+            new RequestSnapshotDto());
+        Assert.False(viewModel.CanRetryRequest);
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto { StatusCode = 200, DurationMs = 10 }),
+            new RequestSnapshotDto());
+        Assert.False(viewModel.CanRetryRequest);
+    }
+
+    [Fact]
+    public void CanRetryRequest_ShouldBeClearedByBeginLoadingAndReset()
+    {
+        var viewModel = new ResponseSectionViewModel();
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Failure("请求失败。", "request_send_failed"),
+            new RequestSnapshotDto());
+        Assert.True(viewModel.CanRetryRequest);
+
+        // 重试点击后进入发送态：横幅保留但重试入口收起
+        viewModel.BeginLoading();
+        Assert.False(viewModel.CanRetryRequest);
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Failure("请求失败。", "request_send_failed"),
+            new RequestSnapshotDto());
+        Assert.True(viewModel.CanRetryRequest);
+
+        viewModel.Reset();
+        Assert.False(viewModel.CanRetryRequest);
+    }
+
+    [Fact]
+    public void CopyableBodyText_ShouldBeEmptyWhileFormatting_AndKeepFailureMessageCopyable()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        // 失败结果：正文是错误信息，应可整体复制
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Failure("连接被对方重置。", "request_http_failed"),
+            new RequestSnapshotDto());
+        Assert.Equal(viewModel.BodyText, viewModel.CopyableBodyText);
+
+        // 大正文后台格式化期间：界面文本是占位符，没有可复制内容
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                Content = "{\"data\":\"" + new string('x', 128 * 1024) + "\"}"
+            }),
+            new RequestSnapshotDto());
+        Assert.Equal(string.Empty, viewModel.CopyableBodyText);
+    }
 }

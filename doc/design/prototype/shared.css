@@ -48,6 +48,11 @@
 .ri-settings-line:before { content: "\f0ee"; }
 .ri-notification-3-line:before { content: "\ef94"; }
 .ri-attachment-line:before { content: "\ea86"; }
+.ri-file-copy-line:before { content: "\ecd5"; }
+.ri-file-text-line:before { content: "\ed0f"; }
+.ri-clipboard-line:before { content: "\eb91"; }
+.ri-terminal-box-line:before { content: "\f1f6"; }
+.ri-refresh-line:before { content: "\f064"; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   /* 氛围背景：品牌微光 + 青色辅光 + 细点阵网格，贴合深色工作台语境 */
@@ -521,7 +526,76 @@ body {
 .notice .n-title { font-size: 13px; font-weight: 600; }
 .notice.danger .n-title { color: var(--err); }
 .notice.warning .n-title { color: var(--warn); }
-.notice .n-text { font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.notice .n-text { font-size: 12px; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 auto; min-width: 0; }
+/* 失败横幅内的重试按钮：行尾描边小按钮，随横幅严重度着色 */
+.notice .n-retry {
+  margin-left: auto; flex: none;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: var(--r-md); font-size: 12px; cursor: pointer;
+  background: transparent; border: 1px solid var(--border-default); color: var(--text-secondary);
+  font-family: var(--font);
+}
+.notice .n-retry:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.notice.danger .n-retry { border-color: rgba(248,113,113,.45); color: var(--err); }
+.notice.danger .n-retry:hover { background: rgba(248,113,113,.12); }
+
+/* 响应复制菜单：响应头部右侧图标按钮 + 下拉（复制 Body / Headers / cURL） */
+.resp-copy-wrap { position: relative; display: inline-flex; }
+.resp-copy {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: var(--r-md); padding: 0;
+  background: transparent; border: 1px solid var(--border-default);
+  color: var(--text-secondary); cursor: pointer; font-size: 14px;
+}
+.resp-copy:hover { border-color: var(--border-focus); color: var(--text-primary); }
+.resp-copy-menu {
+  display: none; position: absolute; top: 31px; right: 0; z-index: 40;
+  min-width: 156px; padding: 4px;
+  background: var(--bg-elevated); border: 1px solid var(--border-default);
+  border-radius: var(--r-md); box-shadow: 0 8px 24px rgba(0,0,0,.45);
+}
+.resp-copy-wrap.open .resp-copy-menu { display: block; }
+.resp-copy-item {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 7px 10px; border: 0; border-radius: var(--r-sm); background: transparent;
+  color: var(--text-secondary); font-size: 12px; cursor: pointer; text-align: left;
+  font-family: var(--font);
+}
+.resp-copy-item i { font-size: 14px; }
+.resp-copy-item:hover { background: var(--bg-selected); color: var(--text-primary); }
+
+/* 历史列表加载失败态：与空态文案区分，提供重试入口 */
+.cell-error {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 16px 8px; font-size: 12px; color: var(--err);
+}
+.cell-error .retry-link {
+  display: inline-flex; align-items: center; gap: 4px; flex: none;
+  font-size: 12px; color: var(--text-secondary);
+  background: transparent; border: 1px solid var(--border-default);
+  border-radius: var(--r-md); padding: 3px 10px; cursor: pointer;
+  font-family: var(--font);
+}
+.cell-error .retry-link:hover { color: var(--text-primary); border-color: var(--border-focus); }
+
+/* ── 右键菜单（演示）：data-context-menu 目标元素弹出预置菜单 ── */
+.proto-context-menu {
+  position: fixed; z-index: 90; display: none;
+  min-width: 168px; padding: 4px;
+  background: var(--bg-elevated); border: 1px solid var(--border-default);
+  border-radius: var(--r-md); box-shadow: 0 8px 24px rgba(0,0,0,.5);
+}
+.proto-context-menu.open { display: block; }
+.proto-context-item {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 7px 10px; border: 0; border-radius: var(--r-sm); background: transparent;
+  color: var(--text-secondary); font-size: 12px; cursor: pointer; text-align: left;
+  font-family: var(--font);
+}
+.proto-context-item i { font-size: 14px; }
+.proto-context-item:hover { background: var(--bg-selected); color: var(--text-primary); }
+.proto-context-item.danger { color: var(--err); }
+.proto-context-item.danger:hover { background: rgba(248,113,113,.12); }
 
 .resp-tabs { display: flex; gap: 16px; margin-top: 10px; border-bottom: 1px solid var(--border-subtle); }
 .resp-body {

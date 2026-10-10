@@ -134,6 +134,44 @@ public partial class MainWindowViewModel
         NotifyShellState();
     }
 
+    /// <summary>首页项目卡右键「打开项目设置」：打开项目工作区后直达设置页，编辑信息/删除项目等入口都在设置页内。</summary>
+    [RelayCommand]
+    private async Task OpenProjectSettingsAsync(ProjectWorkspaceItemViewModel? project)
+    {
+        if (project is null)
+        {
+            return;
+        }
+
+        await OpenProjectWorkspaceAsync(project);
+        ActiveProjectTab?.Shell.ShowProjectSettingsSection();
+    }
+
+    /// <summary>项目标签右键「关闭其它项目标签」：保留当前标签，关闭其余项目标签。</summary>
+    [RelayCommand]
+    private void CloseOtherProjectTabs(ProjectTabViewModel? tab)
+    {
+        if (tab is null)
+        {
+            return;
+        }
+
+        foreach (var other in ProjectTabs.Where(item => !ReferenceEquals(item, tab)).ToArray())
+        {
+            CloseProjectTab(other);
+        }
+    }
+
+    /// <summary>项目标签右键「关闭全部项目标签」：关闭后回到首页。</summary>
+    [RelayCommand]
+    private void CloseAllProjectTabs()
+    {
+        foreach (var tab in ProjectTabs.ToArray())
+        {
+            CloseProjectTab(tab);
+        }
+    }
+
     /// <summary>打开「新建项目」弹窗；弹窗关闭后按结果恢复状态栏文案（成功文案由 OnProjectCreated 设置）。</summary>
     [RelayCommand]
     private async Task OpenCreateProjectDialogAsync()

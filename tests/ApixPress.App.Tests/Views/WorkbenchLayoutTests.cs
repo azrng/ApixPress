@@ -516,6 +516,205 @@ public sealed class WorkbenchLayoutTests
             element => HasClass(element, "DialogNoDefaultSubmit"));
     }
 
+    [Theory]
+    [InlineData("HttpInterfaceWorkbenchView.axaml")]
+    [InlineData("QuickRequestWorkbenchView.axaml")]
+    public void WorkbenchResponseCopyMenu_ShouldOfferBodyHeadersAndCurl(string fileName)
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
+
+        // 响应头部行尾复制按钮 + MenuFlyout 三项；Command 必须走 DataContext 路径（Flyout 内 $parent 查找断链）
+        var copyButton = document.Descendants()
+            .Single(element => element.Name.LocalName == "Button" && HasClass(element, "HttpResponseCopyButton"));
+        Assert.Equal("{Binding ResponseSection.HasResponse}", copyButton.Parent?.Attribute("IsVisible")?.Value);
+
+        var menuItems = copyButton.Descendants()
+            .Where(element => element.Name.LocalName == "MenuItem")
+            .ToArray();
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "复制响应 Body"
+            && item.Attribute("Command")?.Value == "{Binding Editor.CopyResponseBodyCommand}"
+            && item.Attribute("CommandParameter")?.Value == "{Binding ResponseSection}");
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "复制 Headers"
+            && item.Attribute("Command")?.Value == "{Binding Editor.CopyResponseHeadersCommand}"
+            && item.Attribute("CommandParameter")?.Value == "{Binding ResponseSection}");
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "复制 cURL"
+            && item.Attribute("Command")?.Value == "{Binding Editor.CopyCurrentRequestCurlCommand}");
+    }
+
+    [Theory]
+    [InlineData("HttpInterfaceWorkbenchView.axaml")]
+    [InlineData("QuickRequestWorkbenchView.axaml")]
+    public void WorkbenchFailureBanner_ShouldOfferRetryAndSelectableErrorText(string fileName)
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
+        var banner = document.Descendants()
+            .Single(element => HasClass(element, "HttpResponseNoticeBanner"));
+
+        // 错误文本必须可选中复制（SelectableTextBlock），失败/5xx 横幅挂重试按钮
+        var noticeText = banner.Descendants()
+            .Single(element => element.Name.LocalName == "SelectableTextBlock" && HasClass(element, "HttpResponseNoticeText"));
+        Assert.Equal("{Binding ResponseSection.ResponseNoticeText}", noticeText.Attribute("Text")?.Value);
+
+        var retryButton = banner.Descendants()
+            .Single(element => element.Name.LocalName == "Button" && HasClass(element, "HttpResponseNoticeRetryButton"));
+        Assert.Equal("{Binding ResponseSection.CanRetryRequest}", retryButton.Attribute("IsVisible")?.Value);
+        Assert.Equal("{Binding SendRequestCommand}", retryButton.Attribute("Command")?.Value);
+    }
+
+    [Fact]
+    public void HistoryDetailView_ResponseCopyAndBannerRetry_ShouldTargetSelectedHistory()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "RequestHistoryDetailView.axaml"));
+
+        // 历史详情的复制目标必须是所选记录的响应区，且不提供依赖编辑器状态的 cURL 项
+        var copyButton = document.Descendants()
+            .Single(element => element.Name.LocalName == "Button" && HasClass(element, "HttpResponseCopyButton"));
+        var menuItems = copyButton.Descendants()
+            .Where(element => element.Name.LocalName == "MenuItem")
+            .ToArray();
+        Assert.All(menuItems, item => Assert.Equal("{Binding HistoryPanel.SelectedResponseSection}", item.Attribute("CommandParameter")?.Value));
+        Assert.DoesNotContain(menuItems, item => item.Attribute("Header")?.Value?.Contains("cURL") == true);
+
+        // 横幅重试 = 重发该条历史记录
+        var retryButton = document.Descendants()
+            .Single(element => element.Name.LocalName == "Button" && HasClass(element, "HttpResponseNoticeRetryButton"));
+        Assert.Equal("{Binding ResendHistoryRequestCommand}", retryButton.Attribute("Command")?.Value);
+        Assert.Equal("{Binding HistoryPanel.SelectedHistoryItem}", retryButton.Attribute("CommandParameter")?.Value);
+    }
+
+    [Fact]
+    public void SidebarHistorySection_ShouldDistinguishLoadErrorFromEmptyState()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "ProjectWorkspaceSidebarView.axaml"));
+
+        // 加载失败错误块：错误文本可选中复制 + 重试走 LoadHistoryCommand
+        var errorCard = document.Descendants()
+            .Single(element => element.Name.LocalName == "StackPanel" && HasClass(element, "HistoryLoadErrorCard"));
+        Assert.Equal("{Binding HistoryPanel.HasHistoryLoadError}", errorCard.Attribute("IsVisible")?.Value);
+
+        var errorText = errorCard.Descendants()
+            .Single(element => element.Name.LocalName == "SelectableTextBlock");
+        Assert.Equal("{Binding HistoryPanel.HistoryLoadErrorText}", errorText.Attribute("Text")?.Value);
+
+        var retryButton = errorCard.Descendants()
+            .Single(element => element.Name.LocalName == "Button" && HasClass(element, "HistoryRetryButton"));
+        Assert.Equal("{Binding HistoryPanel.LoadHistoryCommand}", retryButton.Attribute("Command")?.Value);
+    }
+
+    [Fact]
+    public void SidebarHistoryRow_ContextMenu_ShouldReuseRowActionCommands()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "ProjectWorkspaceSidebarView.axaml"));
+        var historyTemplate = document.Descendants()
+            .Single(element => element.Name.LocalName == "Border" && HasClass(element, "HistoryItemCard"));
+
+        // 右键菜单与行内悬停按钮同一批命令：注入式（行项 ResendCommand/DeleteCommand），不允许 $parent 查找
+        var menuItems = historyTemplate.Descendants()
+            .Where(element => element.Name.LocalName == "MenuItem")
+            .ToArray();
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "重新发送"
+            && item.Attribute("Command")?.Value == "{Binding ResendCommand}"
+            && item.Attribute("CommandParameter")?.Value == "{Binding}");
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "删除"
+            && item.Attribute("Command")?.Value == "{Binding DeleteCommand}"
+            && item.Attribute("CommandParameter")?.Value == "{Binding}");
+    }
+
+    [Fact]
+    public void UseCasesDrawer_CaseCard_ContextMenu_ShouldOfferCardActions()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "UseCasesDrawerView.axaml"));
+        var caseCard = document.Descendants()
+            .Single(element => element.Name.LocalName == "Border" && HasClass(element, "CaseCard"));
+
+        // 右键四项与行内按钮同一批命令（注入式）
+        var menuItems = caseCard.Descendants()
+            .Where(element => element.Name.LocalName == "MenuItem")
+            .ToArray();
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "加载"
+            && item.Attribute("Command")?.Value == "{Binding LoadCommand}");
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "改名"
+            && item.Attribute("Command")?.Value == "{Binding RenameCommand}");
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "复制"
+            && item.Attribute("Command")?.Value == "{Binding DuplicateCommand}");
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "删除"
+            && item.Attribute("Command")?.Value == "{Binding DeleteCommand}");
+    }
+
+    [Fact]
+    public void HomeProjectTile_ContextMenu_ShouldOfferOpenAndSettings()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "MainWindowHomeView.axaml"));
+        var tile = document.Descendants()
+            .Single(element => element.Name.LocalName == "Button" && HasClass(element, "HomeProjectTileButton"));
+
+        var menuItems = tile.Descendants()
+            .Where(element => element.Name.LocalName == "MenuItem")
+            .ToArray();
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "打开项目"
+            && item.Attribute("Command")?.Value == "{Binding OpenProjectCommand}"
+            && item.Attribute("CommandParameter")?.Value == "{Binding}");
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "打开项目设置"
+            && item.Attribute("Command")?.Value == "{Binding OpenProjectSettingsCommand}"
+            && item.Attribute("CommandParameter")?.Value == "{Binding}");
+    }
+
+    [Fact]
+    public void MainWindowProjectTab_ContextMenu_ShouldOfferCloseVariants()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "MainWindowTitleBarView.axaml"));
+        var tabCapsule = document.Descendants()
+            .Single(element => element.Name.LocalName == "Border" && HasClass(element, "WorkspaceTabCapsule"));
+
+        var menuItems = tabCapsule.Descendants()
+            .Where(element => element.Name.LocalName == "MenuItem")
+            .ToArray();
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "关闭项目标签"
+            && item.Attribute("Command")?.Value == "{Binding ContextCloseTabCommand}"
+            && item.Attribute("CommandParameter")?.Value == "{Binding}");
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "关闭其它项目标签"
+            && item.Attribute("Command")?.Value == "{Binding ContextCloseOtherTabsCommand}");
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "关闭全部项目标签"
+            && item.Attribute("Command")?.Value == "{Binding ContextCloseAllTabsCommand}");
+    }
+
+    [Theory]
+    [InlineData("HttpInterfaceWorkbenchView.axaml")]
+    [InlineData("QuickRequestWorkbenchView.axaml")]
+    public void WorkbenchResponseCard_ContextMenu_ShouldOfferCopyActions(string fileName)
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
+        var responseCard = document.Descendants()
+            .Single(element => HasClass(element, "HttpResponseCard"));
+
+        // 响应区右键与头部复制菜单同源（Editor 命令 + ResponseSection 参数，纯路径绑定）
+        var menuItems = responseCard.Descendants()
+            .Where(element => element.Name.LocalName == "MenuItem"
+                && element.Parent is { } parent && parent.Name.LocalName == "ContextMenu")
+            .ToArray();
+        Assert.Equal(3, menuItems.Length);
+        Assert.All(menuItems, item => Assert.StartsWith("{Binding Editor.", item.Attribute("Command")?.Value ?? string.Empty));
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "复制响应 Body"
+            && item.Attribute("CommandParameter")?.Value == "{Binding ResponseSection}");
+        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "复制 cURL");
+    }
+
+    [Fact]
+    public void HistoryDetailView_ResponseCard_ContextMenu_ShouldTargetSelectedHistory()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "RequestHistoryDetailView.axaml"));
+        var responseCard = document.Descendants()
+            .Single(element => HasClass(element, "ResponsePanelCard"));
+
+        var menuItems = responseCard.Descendants()
+            .Where(element => element.Name.LocalName == "MenuItem"
+                && element.Parent is { } parent && parent.Name.LocalName == "ContextMenu")
+            .ToArray();
+        Assert.Equal(2, menuItems.Length);
+        Assert.All(menuItems, item => Assert.Equal("{Binding HistoryPanel.SelectedResponseSection}", item.Attribute("CommandParameter")?.Value));
+        Assert.DoesNotContain(menuItems, item => item.Attribute("Header")?.Value?.Contains("cURL") == true);
+    }
+
     private static bool HasClass(XElement element, string className)
     {
         return (element.Attribute("Classes")?.Value ?? string.Empty)

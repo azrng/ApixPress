@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Helpers;
@@ -15,6 +16,8 @@ public partial class ProjectPanelViewModel : ViewModelBase
     private CancellationTokenSource? _searchDebounceCancellationTokenSource;
     private bool _isUpdatingSelection;
     private List<ProjectWorkspaceItemViewModel> _allProjects = [];
+    private ICommand? _openProjectCardCommand;
+    private ICommand? _openProjectSettingsCardCommand;
 
     public event Action<ProjectWorkspaceItemViewModel?>? SelectedProjectChanged;
     public event Action? ProjectCreated;
@@ -64,7 +67,9 @@ public partial class ProjectPanelViewModel : ViewModelBase
                 Id = project.Id,
                 Name = project.Name,
                 Description = project.Description,
-                IsDefault = project.IsDefault
+                IsDefault = project.IsDefault,
+                OpenProjectCommand = _openProjectCardCommand,
+                OpenProjectSettingsCommand = _openProjectSettingsCardCommand
             }).ToList();
 
             Projects.ReplaceWith(_allProjects);
@@ -319,14 +324,23 @@ public partial class ProjectPanelViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasAnyProjects));
     }
 
-    private static ProjectWorkspaceItemViewModel CreateProjectItem(ProjectWorkspaceDto project)
+    /// <summary>注入首页项目卡右键菜单命令（打开项目 / 打开项目设置），行项跨 ContextMenu PopupRoot 保持绑定可用。</summary>
+    public void SetProjectCardCommands(ICommand openProjectCommand, ICommand openProjectSettingsCommand)
+    {
+        _openProjectCardCommand = openProjectCommand;
+        _openProjectSettingsCardCommand = openProjectSettingsCommand;
+    }
+
+    private ProjectWorkspaceItemViewModel CreateProjectItem(ProjectWorkspaceDto project)
     {
         return new ProjectWorkspaceItemViewModel
         {
             Id = project.Id,
             Name = project.Name,
             Description = project.Description,
-            IsDefault = project.IsDefault
+            IsDefault = project.IsDefault,
+            OpenProjectCommand = _openProjectCardCommand,
+            OpenProjectSettingsCommand = _openProjectSettingsCardCommand
         };
     }
 }

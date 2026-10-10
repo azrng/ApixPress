@@ -242,6 +242,79 @@
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
+  <!-- 响应复制菜单按钮：响应头部行尾的紧凑图标按钮（MenuFlyout 由视图内联提供） -->
+  <Style Selector="Button.HttpResponseCopyButton">
+    <Setter Property="Width" Value="26" />
+    <Setter Property="Height" Value="26" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
+  <Style Selector="Button.HttpResponseCopyButton:pointerover /template/ ContentPresenter">
+    <Setter Property="TextElement.Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Button.HttpResponseCopyButton:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <!-- 失败横幅内重试按钮：描边小按钮，danger 横幅下随错误色着色 -->
+  <Style Selector="Button.HttpResponseNoticeRetryButton">
+    <Setter Property="MinHeight" Value="24" />
+    <Setter Property="Padding" Value="{StaticResource Pad.1}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseNoticeBanner.HttpResponseNoticeDanger Button.HttpResponseNoticeRetryButton">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Status.Error.Text}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Error.Text}" />
+  </Style>
+
+  <Style Selector="Border.HttpResponseNoticeBanner.HttpResponseNoticeDanger Button.HttpResponseNoticeRetryButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.Background}" />
+  </Style>
+
+  <!-- 历史列表加载失败态：错误说明可换行可选中，配重试入口 -->
+  <Style Selector="StackPanel.HistoryLoadErrorCard">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="{StaticResource Pad.4}" />
+  </Style>
+
+  <Style Selector="SelectableTextBlock.HistoryLoadErrorText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Error.Text}" />
+    <Setter Property="TextAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.HistoryRetryButton">
+    <Setter Property="MinHeight" Value="26" />
+    <Setter Property="Padding" Value="{StaticResource Pad.1}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+  </Style>
+
+  <Style Selector="Button.HistoryRetryButton:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
   <Style Selector="TextBox.HttpResponseSearchInput">
     <Setter Property="Width" Value="132" />
     <Setter Property="MinHeight" Value="28" />

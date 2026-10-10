@@ -107,6 +107,10 @@ public partial class ResponseSectionViewModel : ViewModelBase
     [ObservableProperty]
     private bool showResponseNotice;
 
+    /// <summary>失败结果（网络/超时/取消）或 5xx 服务端错误时为 true：横幅显示「重试」按钮一键重发。</summary>
+    [ObservableProperty]
+    private bool canRetryRequest;
+
     [ObservableProperty]
     private string responseNoticeTitle = string.Empty;
 
@@ -123,6 +127,12 @@ public partial class ResponseSectionViewModel : ViewModelBase
     private int selectedResponseTab;
 
     public bool HasBodySearchMatches => !string.IsNullOrWhiteSpace(BodySearchResultText);
+
+    /// <summary>复制命令的正文来源：格式化占位符期间没有可复制内容，其余（含失败时的错误正文）直接复制界面文本。</summary>
+    public string CopyableBodyText =>
+        string.Equals(BodyText, FormattingBodyPlaceholder, StringComparison.Ordinal) ? string.Empty : BodyText;
+
+    public bool HasCopyableHeaders => !string.IsNullOrWhiteSpace(HeadersText);
 
     public string StatusBadgeClass
     {
@@ -279,6 +289,8 @@ public partial class ResponseSectionViewModel : ViewModelBase
             ? "正在发送请求..."
             : loadingText.Trim();
         IsLoading = true;
+        // 正在发送时收起重试入口，避免叠加重复请求；结果到达后由 ApplyResult 重新定状态
+        CanRetryRequest = false;
 
         if (!HasResponse)
         {
@@ -351,6 +363,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
     private void ApplyFailureNotice(string? code, string message)
     {
         ShowResponseNotice = true;
+        CanRetryRequest = true;
         _noticeSeverity = "danger";
         OnPropertyChanged(nameof(IsNoticeDanger));
         OnPropertyChanged(nameof(IsNoticeWarning));
@@ -376,6 +389,8 @@ public partial class ResponseSectionViewModel : ViewModelBase
         }
 
         ShowResponseNotice = true;
+        // 5xx（网关/服务端故障）与 transport 级失败一样提供重试；3xx/4xx 是请求本身的问题，重发无意义
+        CanRetryRequest = statusCode >= 500;
         _noticeSeverity = statusCode switch
         {
             >= 300 and < 400 => "warning",
@@ -404,6 +419,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
     private void ClearResponseNotice()
     {
         ShowResponseNotice = false;
+        CanRetryRequest = false;
         _noticeSeverity = "info";
         ResponseNoticeTitle = string.Empty;
         ResponseNoticeText = string.Empty;

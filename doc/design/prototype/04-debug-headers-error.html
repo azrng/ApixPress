@@ -217,7 +217,7 @@
       </div>
 
       <!-- 返回响应：异常 -->
-      <div class="card resp-card">
+      <div class="card resp-card" data-context-menu="resp">
         <div class="resp-head">
           <span class="resp-title">返回响应</span>
           <span class="resp-spacer"></span>
@@ -225,11 +225,20 @@
           <span class="status-badge err">HTTP 500</span>
           <span class="metric">3 042 ms</span>
           <span class="metric">214 B</span>
+          <div class="resp-copy-wrap">
+            <button class="resp-copy" title="复制响应内容"><i class="ri-file-copy-line"></i></button>
+            <div class="resp-copy-menu">
+              <button class="resp-copy-item" data-copy-toast="响应正文已复制到剪贴板（演示）"><i class="ri-file-text-line"></i>复制响应 Body</button>
+              <button class="resp-copy-item" data-copy-toast="响应 Headers 已复制到剪贴板（演示）"><i class="ri-clipboard-line"></i>复制 Headers</button>
+              <button class="resp-copy-item" data-copy-toast="cURL 命令已复制到剪贴板（演示）"><i class="ri-terminal-box-line"></i>复制 cURL</button>
+            </div>
+          </div>
         </div>
-        <!-- 500 响应横幅：独占一行 + 红色左侧色条 -->
+        <!-- 500 响应横幅：独占一行 + 红色左侧色条；服务端错误提供一键重试 -->
         <div class="notice danger">
           <span class="n-title">服务器错误 HTTP 500</span>
           <span class="n-text">服务器在处理请求时发生异常，可结合响应体中的 traceId 排查服务端日志。</span>
+          <button class="n-retry" data-toast="正在重新发送请求（演示）"><i class="ri-refresh-line"></i>重试</button>
         </div>
         <div class="resp-tabs" data-tabs="resp">
           <span class="sub-tab" data-v="Body">Body</span>

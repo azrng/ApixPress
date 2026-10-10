@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels.Base;
+using System.Windows.Input;
 
 namespace ApixPress.App.ViewModels;
 
@@ -27,6 +28,12 @@ public partial class RequestCaseItemViewModel : ViewModelBase
     // 用例抽屉内：该卡片是否被选中加载
     [ObservableProperty]
     private bool isSelected;
+
+    // 右键菜单命令组：直接注入行项以跨 ContextMenu PopupRoot 保持绑定可用（与接口树 ExplorerItem 同模式）
+    public ICommand? LoadCommand { get; set; }
+    public ICommand? RenameCommand { get; set; }
+    public ICommand? DuplicateCommand { get; set; }
+    public ICommand? DeleteCommand { get; set; }
 
     public RequestCaseDto SourceCase { get; set; } = new();
 

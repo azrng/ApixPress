@@ -357,7 +357,18 @@
         <Grid Grid.Row="2">
           <TextBlock Classes="CaptionText"
                      Text="{Binding HistoryPanel.HistoryEmptyStateText}"
-                     IsVisible="{Binding !HistoryPanel.HasVisibleHistory}" />
+                     IsVisible="{Binding HistoryPanel.ShowHistoryEmptyText}" />
+          <!-- 加载失败态：与空态文案区分，错误原因可选中复制 + 一键重试 -->
+          <StackPanel Classes="HistoryLoadErrorCard"
+                      Spacing="{StaticResource Space.2}"
+                      IsVisible="{Binding HistoryPanel.HasHistoryLoadError}">
+            <SelectableTextBlock Classes="CaptionText HistoryLoadErrorText"
+                                 Text="{Binding HistoryPanel.HistoryLoadErrorText}"
+                                 TextWrapping="Wrap" />
+            <Button Classes="HistoryRetryButton"
+                    Content="重试"
+                    Command="{Binding HistoryPanel.LoadHistoryCommand}" />
+          </StackPanel>
           <!-- 分组扁平列表：日期分组行 + 记录行混排（对齐原型 h-group-cap / h-item） -->
           <ListBox ItemsSource="{Binding HistoryPanel.HistoryDisplayItems}"
                    SelectedItem="{Binding HistoryPanel.SelectedHistoryItem, Mode=TwoWay}"
@@ -377,6 +388,30 @@
               </DataTemplate>
               <DataTemplate x:DataType="vm:RequestHistoryItemViewModel">
                 <Border Classes="HistoryItemCard">
+                  <!-- 右键菜单：与行内悬停按钮同一批命令（注入式，跨 PopupRoot 绑定可用） -->
+                  <Border.ContextMenu>
+                    <ContextMenu Classes="WorkspaceTabContextMenu"
+                                 DataContext="{Binding}">
+                      <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                Header="重新发送"
+                                Command="{Binding ResendCommand}"
+                                CommandParameter="{Binding}">
+                        <MenuItem.Icon>
+                          <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                                     Text="&#xE72C;" />
+                        </MenuItem.Icon>
+                      </MenuItem>
+                      <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                Header="删除"
+                                Command="{Binding DeleteCommand}"
+                                CommandParameter="{Binding}">
+                        <MenuItem.Icon>
+                          <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                                     Text="&#xE74D;" />
+                        </MenuItem.Icon>
+                      </MenuItem>
+                    </ContextMenu>
+                  </Border.ContextMenu>
                   <Grid Classes="HistoryItemRoot"
                         RowDefinitions="Auto,Auto"
                         RowSpacing="{StaticResource Space.1}">

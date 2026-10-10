@@ -5,6 +5,7 @@ using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
 using Azrng.Core.Results;
+using System.Windows.Input;
 
 namespace ApixPress.App.ViewModels;
 
@@ -18,6 +19,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     private CancellationTokenSource? _searchDebounceCancellationTokenSource;
     private string _currentProjectId = string.Empty;
     private bool _hasLoadedHistory;
+    private ICommand? _resendRowCommand;
 
     public BatchObservableCollection<RequestHistoryItemViewModel> HistoryItems { get; } = [];
     public BatchObservableCollection<RequestHistoryItemViewModel> VisibleHistoryItems { get; } = [];
@@ -28,6 +30,10 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     public bool HasHistory => HistoryItems.Count > 0;
     public bool HasVisibleHistory => VisibleHistoryItems.Count > 0;
     public bool HasSearchText => !string.IsNullOrWhiteSpace(SearchText);
+
+    /// <summary>空态文案的展示条件：没有可见记录且不是加载失败——失败态由错误块独占，不与“还没有发送记录”共存。</summary>
+    public bool ShowHistoryEmptyText => !HasVisibleHistory && !HasHistoryLoadError;
+
     public bool ShowHistoryEmptyState => !HasHistory;
     public bool ShowHistorySearchEmptyState => HasHistory && HasSearchText && !HasVisibleHistory;
     public string HistoryEmptyStateText => HasSearchText ? "没有匹配的请求历史" : "还没有发送记录";
@@ -40,6 +46,14 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool isHistoryLoading;
+
+    /// <summary>历史列表加载失败（区别于空态）：侧栏显示错误原因与「重试」入口。</summary>
+    [ObservableProperty]
+    private bool hasHistoryLoadError;
+
+    /// <summary>加载失败的错误说明（含底层原因），空态文案不承载错误信息。</summary>
+    [ObservableProperty]
+    private string historyLoadErrorText = string.Empty;
 
     [ObservableProperty]
     private RequestHistoryItemViewModel? selectedHistoryItem;
@@ -87,6 +101,8 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         await LoadHistoryAsync();
     }
 
+    /// <summary>加载（含失败后的重试）请求历史列表；结果经 HasHistoryLoadError 与空态区分展示。</summary>
+    [RelayCommand]
     public async Task LoadHistoryAsync()
     {
         if (IsDisposed)
@@ -108,10 +124,19 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
             var history = await _requestHistoryService.GetHistoryAsync(_currentProjectId, cancellationToken);
             HistoryItems.ReplaceWith(history.Select(CreateHistoryItem));
             _hasLoadedHistory = true;
+            HasHistoryLoadError = false;
+            HistoryLoadErrorText = string.Empty;
             RefreshVisibleHistoryItems();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+        }
+        catch (Exception exception)
+        {
+            // 加载失败不能伪装成“还没有发送记录”空态：保留错误说明供侧栏区分展示，_hasLoadedHistory 保持 false 让下次进入自动重试
+            HasHistoryLoadError = true;
+            HistoryLoadErrorText = $"请求历史加载失败：{exception.Message}";
+            RefreshVisibleHistoryItems();
         }
         finally
         {
@@ -459,7 +484,13 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasVisibleHistory));
         OnPropertyChanged(nameof(ShowHistoryEmptyState));
         OnPropertyChanged(nameof(ShowHistorySearchEmptyState));
+        OnPropertyChanged(nameof(ShowHistoryEmptyText));
         OnPropertyChanged(nameof(HistoryEmptyStateText));
+    }
+
+    partial void OnHasHistoryLoadErrorChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowHistoryEmptyText));
     }
 
     private static bool MatchesSearch(RequestHistoryItemViewModel item, string keyword)
@@ -476,7 +507,13 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
             && value.Contains(keyword, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static RequestHistoryItemViewModel CreateHistoryItem(RequestHistoryItemDto item)
+    /// <summary>注入历史行右键「重新发送」命令（来自宿主 ProjectTabViewModel）；行内删除直接用本面板命令。</summary>
+    public void SetRowCommands(ICommand resendCommand)
+    {
+        _resendRowCommand = resendCommand;
+    }
+
+    private RequestHistoryItemViewModel CreateHistoryItem(RequestHistoryItemDto item)
     {
         var snapshot = item.RequestSnapshot;
         return new RequestHistoryItemViewModel
@@ -490,7 +527,9 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
             DurationText = item.DurationMs > 0 ? $"{item.DurationMs}ms" : "-",
             SizeText = item.SizeBytes > 0 ? UiFormatHelper.FormatBytes(item.SizeBytes) : "-",
             RequestSnapshot = snapshot,
-            ResponseSnapshot = null
+            ResponseSnapshot = null,
+            ResendCommand = _resendRowCommand,
+            DeleteCommand = DeleteHistoryItemCommand
         };
     }
 
