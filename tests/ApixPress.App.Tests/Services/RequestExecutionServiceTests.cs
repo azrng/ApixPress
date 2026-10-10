@@ -11,6 +11,39 @@ namespace ApixPress.App.Tests.Services;
 public sealed class RequestExecutionServiceTests
 {
     [Fact]
+    public void GetOrCreateHttpClient_ShouldUseInfiniteTimeout_WhenGlobalTimeoutIsZero()
+    {
+        var client = RequestExecutionService.GetOrCreateHttpClient(
+            ignoreSslErrors: false,
+            allowAutoRedirect: true,
+            timeoutMilliseconds: 0);
+
+        Assert.Equal(Timeout.InfiniteTimeSpan, client.Timeout);
+    }
+
+    [Fact]
+    public void GetOrCreateHttpClient_ShouldKeepConfiguredTimeout_WhenTimeoutIsPositive()
+    {
+        var client = RequestExecutionService.GetOrCreateHttpClient(
+            ignoreSslErrors: false,
+            allowAutoRedirect: true,
+            timeoutMilliseconds: 45_000);
+
+        Assert.Equal(TimeSpan.FromMilliseconds(45_000), client.Timeout);
+    }
+
+    [Fact]
+    public void GetOrCreateHttpClient_ShouldKeepFallback_WhenTimeoutIsNegative()
+    {
+        var client = RequestExecutionService.GetOrCreateHttpClient(
+            ignoreSslErrors: false,
+            allowAutoRedirect: true,
+            timeoutMilliseconds: -1);
+
+        Assert.Equal(TimeSpan.FromSeconds(120), client.Timeout);
+    }
+
+    [Fact]
     public void BuildUrl_ShouldReplaceVariablesAndAppendParameters()
     {
         var request = new RequestSnapshotDto

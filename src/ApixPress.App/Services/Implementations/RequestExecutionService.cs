@@ -627,7 +627,8 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         }
     }
 
-    private static HttpClient GetOrCreateHttpClient(bool ignoreSslErrors, bool allowAutoRedirect, int timeoutMilliseconds)
+    /// <summary>根据全局设置创建或复用 HTTP 客户端。</summary>
+    internal static HttpClient GetOrCreateHttpClient(bool ignoreSslErrors, bool allowAutoRedirect, int timeoutMilliseconds)
     {
         CleanupExpiredClientsIfNeeded();
 
@@ -649,10 +650,13 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             }
 
             var client = new HttpClient(handler, disposeHandler: true);
-            // 未配置或非法超时兜底为 120 秒，避免请求无限挂起；显式超时上限 10 分钟
-            client.Timeout = key.TimeoutMilliseconds <= 0
-                ? TimeSpan.FromSeconds(120)
-                : TimeSpan.FromMilliseconds(Math.Min(key.TimeoutMilliseconds, 600_000));
+            // 全局设置以 0 明确表示不限时；负数仍视为非法值并使用 120 秒兜底。
+            client.Timeout = key.TimeoutMilliseconds switch
+            {
+                0 => Timeout.InfiniteTimeSpan,
+                < 0 => TimeSpan.FromSeconds(120),
+                _ => TimeSpan.FromMilliseconds(Math.Min(key.TimeoutMilliseconds, 600_000))
+            };
             return new SharedHttpClientEntry(client);
         });
 

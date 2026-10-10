@@ -203,8 +203,14 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
 
     public void ApplySavedRequest(RequestCaseDto source, RequestCaseDto? parentInterface = null)
     {
+        var isSameRequest = IsSameSavedRequest(source);
         RunWithBulkStateMutation(() =>
         {
+            if (!isSameRequest)
+            {
+                ResponseSection.Reset();
+            }
+
             switch (source.EntryType)
             {
                 case WorkspaceEntryTypes.HttpInterface:
@@ -253,6 +259,21 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         });
 
         MarkCleanState();
+    }
+
+    private bool IsSameSavedRequest(RequestCaseDto source)
+    {
+        return source.EntryType switch
+        {
+            ProjectTabRequestEntryTypes.HttpInterface => IsHttpInterfaceTab
+                && string.IsNullOrWhiteSpace(EditingCaseId)
+                && string.Equals(EditingInterfaceId, source.Id, StringComparison.OrdinalIgnoreCase),
+            ProjectTabRequestEntryTypes.HttpCase => IsHttpInterfaceTab
+                && string.Equals(EditingCaseId, source.Id, StringComparison.OrdinalIgnoreCase),
+            ProjectTabRequestEntryTypes.QuickRequest => IsQuickRequestTab
+                && string.Equals(EditingQuickRequestId, source.Id, StringComparison.OrdinalIgnoreCase),
+            _ => false
+        };
     }
 
     public void ApplySnapshot(RequestSnapshotDto snapshot)
