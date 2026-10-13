@@ -353,6 +353,10 @@
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
+  <Style Selector="StackPanel.HomeMetricRow > TextBlock">
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
   <Style Selector="TextBlock.HomeContentTabText">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="FontWeight" Value="Medium" />

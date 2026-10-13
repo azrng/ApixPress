@@ -1,7 +1,7 @@
 ---
 rule_id: agents-root
-version: 1.88.0
-last_updated: 2026-10-09
+version: 1.94.0
+last_updated: 2026-10-12
 dependencies: []
 ---
 
@@ -103,4 +103,4 @@ dependencies: []
 - 发现前提矛盾或更优思路、需要自行判断常规细节，或需要同步过程进展时：读取 `collaboration-AGENTS.md` 的「坦率反馈与过程沟通」
 - 实际修改、`TASK.md` 维护、验证、交付、提交、回退、重复问题回顾或规则效果反馈：读取 `collaboration-AGENTS.md` 的对应章节
 - 检测到其他 AI 会话并行操作同一工作区（`TASK.md` 出现非本会话条目、文件被会话外修改或输出目录被运行实例锁定）时：读取 `collaboration-AGENTS.md` 的「并行会话隔离」
-- 只有用户明确要求提交时才可执行 `git commit`；“开始开发”“完成实现”“交付收口”等指令不等同于提交授权
+- 提交、推送与暂缓：读取 `collaboration-AGENTS.md`「Git、验证与交付」——验证通过后默认提交本任务改动（不自动推送）；用户明确要求暂缓或禁止提交时不提交。“开始开发”“完成实现”“交付收口”等指令不等同于推送授权

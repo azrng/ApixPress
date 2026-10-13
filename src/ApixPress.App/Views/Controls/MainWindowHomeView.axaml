@@ -18,7 +18,8 @@
           <Grid ColumnDefinitions="*"
                 ColumnSpacing="{StaticResource Space.4}">
             <StackPanel Spacing="{StaticResource Space.2}">
-              <StackPanel Orientation="Horizontal"
+              <StackPanel Classes="HomeMetricRow"
+                          Orientation="Horizontal"
                           Spacing="{StaticResource Space.2}">
                 <TextBlock Classes="PageTitle"
                            Text="项目首页" />
