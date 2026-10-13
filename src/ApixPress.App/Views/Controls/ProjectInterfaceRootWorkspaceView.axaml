@@ -196,77 +196,122 @@
               <Border Grid.Row="2"
                       Classes="InterfaceRootTableSurface">
                 <Grid RowDefinitions="Auto,*">
-                  <Border Classes="InterfaceRootTableHeader">
-                    <Grid ColumnDefinitions="32,2.2*,82,2.4*,1.5*,90,110"
-                          ColumnSpacing="{StaticResource Space.3}">
-                      <TextBlock Grid.Column="1" Classes="CaptionText" Text="接口名称" />
-                      <TextBlock Grid.Column="2" Classes="CaptionText" Text="请求类型" />
-                      <TextBlock Grid.Column="3" Classes="CaptionText" Text="接口路径" />
-                      <TextBlock Grid.Column="4" Classes="CaptionText" Text="接口分组" />
-                      <TextBlock Grid.Column="5" Classes="CaptionText" Text="接口状态" />
-                      <TextBlock Grid.Column="6" Classes="CaptionText" Text="标签" />
-                    </Grid>
-                  </Border>
-
-                  <!-- ListBox 自带虚拟化面板：接口多时只物化可视行，避免全量构建行容器 -->
-                  <ListBox Grid.Row="1"
-                           Classes="InterfaceRootTableRows"
-                           HorizontalAlignment="Stretch"
-                           IsVisible="{Binding InterfaceRoot.HasHttpInterfaces}"
-                           ItemsSource="{Binding InterfaceRoot.HttpInterfaces}">
-                    <ListBox.ItemTemplate>
-                      <DataTemplate x:DataType="vm:ProjectHttpInterfaceOverviewItemViewModel">
-                        <Button Classes="InterfaceRootTableRowButton"
-                                HorizontalAlignment="Stretch"
-                                Command="{Binding OpenCommand}">
-                          <Grid ColumnDefinitions="32,2.2*,82,2.4*,1.5*,90,110"
-                                ColumnSpacing="{StaticResource Space.3}">
-                            <TextBlock Grid.Column="1"
-                                       Text="{Binding Name}"
-                                       TextTrimming="CharacterEllipsis" />
-                            <TextBlock Grid.Column="2"
-                                       Classes="InterfaceRootMethodText"
-                                       Classes.HttpMethodGet="{Binding IsGetMethod}"
-                                       Classes.HttpMethodPost="{Binding IsPostMethod}"
-                                       Classes.HttpMethodPut="{Binding IsPutMethod}"
-                                       Classes.HttpMethodDelete="{Binding IsDeleteMethod}"
-                                       Classes.HttpMethodPatch="{Binding IsPatchMethod}"
-                                       Text="{Binding Method}" />
-                            <TextBlock Grid.Column="3"
-                                       Text="{Binding Path}"
-                                       TextTrimming="CharacterEllipsis" />
-                            <TextBlock Grid.Column="4"
-                                       Text="{Binding GroupPath}"
-                                       TextTrimming="CharacterEllipsis" />
-                            <StackPanel Grid.Column="5"
-                                        Orientation="Horizontal"
-                                        Spacing="{StaticResource Space.1}">
-                              <Border Classes="InterfaceRootStatusDot" />
-                              <TextBlock Text="{Binding StatusText}" />
-                            </StackPanel>
-                            <Border Grid.Column="6"
-                                    Classes="InterfaceRootTag">
-                              <TextBlock Text="{Binding TagText}"
+                  <TableView Grid.Row="1"
+                             Classes="InterfaceRootTableRows"
+                             HorizontalAlignment="Stretch"
+                             IsVisible="{Binding InterfaceRoot.HasHttpInterfaces}"
+                             ItemsSource="{Binding InterfaceRoot.HttpInterfaces}">
+                    <TableView.Columns>
+                      <TableViewColumn Header="接口名称"
+                                       Width="2.2*"
+                                       HorizontalContentAlignment="Stretch">
+                        <TableViewColumn.CellTemplate>
+                          <DataTemplate x:DataType="vm:ProjectHttpInterfaceOverviewItemViewModel">
+                            <Button Classes="InterfaceRootTableRowButton"
+                                    IsTabStop="True"
+                                    Command="{Binding OpenCommand}">
+                              <TextBlock Text="{Binding Name}"
                                          TextTrimming="CharacterEllipsis" />
-                            </Border>
-                          </Grid>
-                        </Button>
-                      </DataTemplate>
-                    </ListBox.ItemTemplate>
-                  </ListBox>
+                            </Button>
+                          </DataTemplate>
+                        </TableViewColumn.CellTemplate>
+                      </TableViewColumn>
+                      <TableViewColumn Header="请求类型"
+                                       Width="82"
+                                       HorizontalContentAlignment="Stretch">
+                        <TableViewColumn.CellTemplate>
+                          <DataTemplate x:DataType="vm:ProjectHttpInterfaceOverviewItemViewModel">
+                            <Button Classes="InterfaceRootTableRowButton"
+                                    IsTabStop="False"
+                                    Command="{Binding OpenCommand}">
+                              <TextBlock Classes="InterfaceRootMethodText"
+                                         Classes.HttpMethodGet="{Binding IsGetMethod}"
+                                         Classes.HttpMethodPost="{Binding IsPostMethod}"
+                                         Classes.HttpMethodPut="{Binding IsPutMethod}"
+                                         Classes.HttpMethodDelete="{Binding IsDeleteMethod}"
+                                         Classes.HttpMethodPatch="{Binding IsPatchMethod}"
+                                         Text="{Binding Method}" />
+                            </Button>
+                          </DataTemplate>
+                        </TableViewColumn.CellTemplate>
+                      </TableViewColumn>
+                      <TableViewColumn Header="接口路径"
+                                       Width="2.4*"
+                                       HorizontalContentAlignment="Stretch">
+                        <TableViewColumn.CellTemplate>
+                          <DataTemplate x:DataType="vm:ProjectHttpInterfaceOverviewItemViewModel">
+                            <Button Classes="InterfaceRootTableRowButton"
+                                    IsTabStop="False"
+                                    Command="{Binding OpenCommand}">
+                              <TextBlock Text="{Binding Path}"
+                                         TextTrimming="CharacterEllipsis" />
+                            </Button>
+                          </DataTemplate>
+                        </TableViewColumn.CellTemplate>
+                      </TableViewColumn>
+                      <TableViewColumn Header="接口分组"
+                                       Width="1.5*"
+                                       HorizontalContentAlignment="Stretch">
+                        <TableViewColumn.CellTemplate>
+                          <DataTemplate x:DataType="vm:ProjectHttpInterfaceOverviewItemViewModel">
+                            <Button Classes="InterfaceRootTableRowButton"
+                                    IsTabStop="False"
+                                    Command="{Binding OpenCommand}">
+                              <TextBlock Text="{Binding GroupPath}"
+                                         TextTrimming="CharacterEllipsis" />
+                            </Button>
+                          </DataTemplate>
+                        </TableViewColumn.CellTemplate>
+                      </TableViewColumn>
+                      <TableViewColumn Header="接口状态"
+                                       Width="90"
+                                       HorizontalContentAlignment="Stretch">
+                        <TableViewColumn.CellTemplate>
+                          <DataTemplate x:DataType="vm:ProjectHttpInterfaceOverviewItemViewModel">
+                            <Button Classes="InterfaceRootTableRowButton"
+                                    IsTabStop="False"
+                                    Command="{Binding OpenCommand}">
+                              <StackPanel Orientation="Horizontal"
+                                          Spacing="{StaticResource Space.1}"
+                                          VerticalAlignment="Center">
+                                <Border Classes="InterfaceRootStatusDot" />
+                                <TextBlock Text="{Binding StatusText}" />
+                              </StackPanel>
+                            </Button>
+                          </DataTemplate>
+                        </TableViewColumn.CellTemplate>
+                      </TableViewColumn>
+                      <TableViewColumn Header="标签"
+                                       Width="110"
+                                       HorizontalContentAlignment="Stretch">
+                        <TableViewColumn.CellTemplate>
+                          <DataTemplate x:DataType="vm:ProjectHttpInterfaceOverviewItemViewModel">
+                            <Button Classes="InterfaceRootTableRowButton"
+                                    IsTabStop="False"
+                                    Command="{Binding OpenCommand}">
+                              <Border Classes="InterfaceRootTag">
+                                <TextBlock Text="{Binding TagText}"
+                                           TextTrimming="CharacterEllipsis" />
+                              </Border>
+                            </Button>
+                          </DataTemplate>
+                        </TableViewColumn.CellTemplate>
+                      </TableViewColumn>
+                    </TableView.Columns>
+                  </TableView>
 
-                    <Border Grid.Row="1"
-                            Classes="InterfaceRootEmptyState"
-                            IsVisible="{Binding InterfaceRoot.ShowHttpInterfacesEmptyState}">
-                      <StackPanel Spacing="{StaticResource Space.2}"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center">
-                        <TextBlock Classes="SectionTitle"
-                                   Text="{Binding InterfaceRoot.HttpInterfacesEmptyText}" />
-                        <TextBlock Classes="CaptionText"
-                                   Text="保存 HTTP 接口后会显示在这里。" />
-                      </StackPanel>
-                    </Border>
+                  <Border Grid.Row="1"
+                          Classes="InterfaceRootEmptyState"
+                          IsVisible="{Binding InterfaceRoot.ShowHttpInterfacesEmptyState}">
+                    <StackPanel Spacing="{StaticResource Space.2}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
+                      <TextBlock Classes="SectionTitle"
+                                 Text="{Binding InterfaceRoot.HttpInterfacesEmptyText}" />
+                      <TextBlock Classes="CaptionText"
+                                 Text="保存 HTTP 接口后会显示在这里。" />
+                    </StackPanel>
+                  </Border>
                 </Grid>
               </Border>
             </Grid>

@@ -1145,14 +1145,6 @@
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
-  <Style Selector="Border.InterfaceRootTableHeader">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
-    <Setter Property="BorderThickness" Value="0,0,0,1" />
-    <Setter Property="Padding" Value="12,8" />
-    <Setter Property="HorizontalAlignment" Value="Stretch" />
-  </Style>
-
   <Style Selector="Border.InterfaceRootEmptyState">
     <Setter Property="MinHeight" Value="180" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
@@ -1162,39 +1154,47 @@
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
-  <Style Selector="Button.InterfaceRootTableRowButton">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
-    <Setter Property="BorderThickness" Value="0,0,0,1" />
-    <Setter Property="CornerRadius" Value="0" />
-    <Setter Property="Padding" Value="12,9" />
-    <Setter Property="HorizontalAlignment" Value="Stretch" />
-    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-  </Style>
-
-  <!-- 全部接口表格：虚拟化 ListBox 的统一视觉（去默认边框/背景/选中与悬停高亮，行内 Button 自带 hover） -->
-  <Style Selector="ListBox.InterfaceRootTableRows">
+  <!-- 全部接口表格：沿用 TableView 行容器，并让每个单元格保持整格可点击 -->
+  <Style Selector="TableView.InterfaceRootTableRows">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
   </Style>
-  <Style Selector="ListBox.InterfaceRootTableRows ListBoxItem">
+  <Style Selector="TableView.InterfaceRootTableRows TableViewRow">
     <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
     <Setter Property="Padding" Value="0" />
     <Setter Property="MinHeight" Value="0" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
   </Style>
-  <Style Selector="ListBox.InterfaceRootTableRows ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+  <Style Selector="TableView.InterfaceRootTableRows TableViewCell">
+    <Setter Property="Padding" Value="0" />
+  </Style>
+  <Style Selector="TableView.InterfaceRootTableRows TableViewRow:pointerover /template/ Border#BackgroundBorder">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+  <Style Selector="TableView.InterfaceRootTableRows TableViewRow:selected /template/ Border#BackgroundBorder">
     <Setter Property="Background" Value="Transparent" />
   </Style>
-  <Style Selector="ListBox.InterfaceRootTableRows ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="Transparent" />
+  <Style Selector="TableView.InterfaceRootTableRows TableViewRow:selected:pointerover /template/ Border#BackgroundBorder">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
   </Style>
 
-  <Style Selector="Button.InterfaceRootTableRowButton:pointerover">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  <Style Selector="Button.InterfaceRootTableRowButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Padding" Value="12,9" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+  </Style>
+
+  <Style Selector="Button.InterfaceRootTableRowButton:pointerover, Button.InterfaceRootTableRowButton:pressed">
+    <Setter Property="Background" Value="Transparent" />
   </Style>
 
   <Style Selector="TextBlock.InterfaceRootMethodText">

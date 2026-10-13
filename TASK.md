@@ -34,9 +34,9 @@
 
 | 任务 ID | 任务名称 | 任务状态 | 最近更新时间 |
 | ------- | -------- | -------- | ------------ |
+| T086 | Avalonia 12.1.4 与接口总览 TableView | Avalonia/Avalonia.Win32/Avalonia.Skia/Avalonia.HarfBuzz 升至 12.1.4；接口总览改用 TableView，保留打开命令、搜索、空态、方法颜色、整行悬停和单一键盘停靠点；复用 Semi.Avalonia 12.1.0.1，不新增依赖。全解决方案构建 0 错误、1 条既有 xUnit2013 警告；未运行测试或启动 GUI。开源调研：Avalonia.Controls.DataGrid 12.1.2 与 Semi.Avalonia.DataGrid 12.1.0.1 可作为可编辑参数表候选；TreeDataGrid 仓库已归档；AvaloniaEdit 保持现用 | DONE | 2026-10-13 |
 | T085 | 首页统计文案与数值对齐 | 为统计行增加局部垂直居中样式，保留数值强调；应用项目构建 0 警告、0 错误；未重启当前运行实例做 GUI 截图验证 | DONE | 2026-10-10 |
 | T084 | 修复全局请求不限时设置 | 修复 0 毫秒超时映射为 120 秒的问题；0 使用 `Timeout.InfiniteTimeSpan`，正数仍按毫秒转换且保留 10 分钟上限，负数继续使用 120 秒兜底。请求执行服务定向测试 26/26 通过；应用和测试项目独立输出构建 0 错误、1 条既有 xUnit2013 警告 | DONE | 2026-10-10 |
 | T083 | 切换接口后清空旧响应 | 不同接口/用例加载时清空旧响应，同一来源重新加载时保留；新增两个回归测试。定向测试 2/2 通过；独立输出目录构建应用与测试项目成功，0 错误、1 条既有 xUnit2013 警告；桌面真机未验 | DONE | 2026-10-10 |
 | T076 | 请求用例基础链路（UC-01～UC-06） | 已完成：统一请求用例文案与范围；新接口保存请求用例自动保存父接口；编辑器显示接口/用例模式和即时保存状态；接口树下一级请求用例默认收缩；请求用例加载、改名、复制、删除；响应仅进入请求历史。定向回归 123/123、完整测试 349/349、`dotnet build ApixPress.slnx --no-restore` 0 警告 0 错误。桌面真机因 CUA 认证令牌不可用未执行 | DONE | 2026-09-24 |
-| T070 | Postman Collection 导入 | 已支持自动识别 Postman Collection v2/v2.1 JSON，导入文件夹、请求、查询/路径参数、请求头、Bearer/API Key/Basic 认证、raw/form-data/urlencoded/file/graphql 请求体；已用 `AIProvder.postman.json` 验证 3 个请求。定向测试 3/3、完整测试 344/344、Release win-x64 应用项目构建 0 警告 0 错误；GUI 真机未验 | DONE | 2026-09-17 |
 ---
