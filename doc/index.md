@@ -12,6 +12,8 @@ last_updated: 2026-10-14
 - 设计：[`design/index.md`](design/index.md)
 - UI 重设计需求：[`requirements/ui/overall-redesign.md`](requirements/ui/overall-redesign.md)
 - UI 重设计方案：[`design/ui/overall-redesign.md`](design/ui/overall-redesign.md)
+- UI 整体视觉统一需求：[`requirements/ui/overall-ui-refresh.md`](requirements/ui/overall-ui-refresh.md)
+- UI 整体视觉统一方案：[`design/ui/overall-ui-refresh.md`](design/ui/overall-ui-refresh.md)
 - 契约：[`contracts/project-data-export.md`](contracts/project-data-export.md)
 - 请求用例交付需求：[`requirements/project-data/request-case-delivery.md`](requirements/project-data/request-case-delivery.md)
 - 请求用例交付设计：[`design/project-data/request-case-delivery.md`](design/project-data/request-case-delivery.md)
