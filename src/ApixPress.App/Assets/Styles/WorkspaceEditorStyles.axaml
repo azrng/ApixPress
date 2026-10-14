@@ -1037,7 +1037,6 @@
   </Style>
 
   <Style Selector="Border.InterfaceRootAuthWorkbench">
-    <Setter Property="MaxWidth" Value="1120" />
     <Setter Property="VerticalAlignment" Value="Top" />
   </Style>
 
