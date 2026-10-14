@@ -9,15 +9,18 @@
              mc:Ignorable="d">
   <!-- 弹窗 chrome 由 Ursa StandardDialogControl 提供；DataContext 为覆盖确认独立上下文，经 Import 访问导入数据；
        DialogNoDefaultSubmit：覆盖是破坏性操作，禁用 Enter 默认提交，避免误触（ESC 关闭不受影响） -->
-  <Border Classes="QuickRequestSaveDialogCard DialogNoDefaultSubmit">
+  <Border Classes="ImportOverwriteConfirmDialogCard DialogNoDefaultSubmit">
     <Grid RowDefinitions="Auto,Auto,Auto,Auto"
           RowSpacing="{StaticResource Space.3}">
       <StackPanel Spacing="2">
+        <TextBlock Classes="SectionTitle"
+                   Text="处理同名接口" />
         <TextBlock Classes="CaptionText"
                    Text="{Binding Import.PendingImportOverwriteTitle, StringFormat='导入文档：{0}'}"
                    IsVisible="{Binding Import.HasPendingImportPreview}" />
         <TextBlock Classes="CaptionText ImportConflictWarning"
-                   Text="覆盖后无法自动恢复，请确认同名接口可以更新。"
+                   Text="覆盖会更新同路径接口定义；已保存的请求用例会保留。"
+                   IsVisible="{Binding Import.IsOverwriteImportSelected}"
                    TextWrapping="Wrap" />
       </StackPanel>
 
@@ -27,11 +30,12 @@
                    Text="{Binding Import.PendingImportOverwriteSummary}"
                    TextWrapping="Wrap" />
 
-        <!-- 同名接口清单（对齐原型覆盖确认：method + 路径逐行列出） -->
+        <TextBlock Classes="SectionTitle"
+                   Text="同名接口清单"
+                   IsVisible="{Binding Import.HasImportConflicts}" />
         <Border Classes="ImportConflictListCard"
                 IsVisible="{Binding Import.HasImportConflicts}">
-          <ScrollViewer MaxHeight="220"
-                        HorizontalScrollBarVisibility="Disabled">
+          <ScrollViewer Classes="ImportConflictListViewport">
             <ItemsControl ItemsSource="{Binding Import.PendingImportConflicts}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="models:ApiImportConflictDto">
@@ -44,6 +48,7 @@
                                   Spacing="1">
                         <TextBlock Classes="ImportConflictPath"
                                    Text="{Binding Path}"
+                                   ToolTip.Tip="{Binding Path}"
                                    TextTrimming="CharacterEllipsis" />
                         <TextBlock Classes="CaptionText ImportConflictExisting"
                                    Text="{Binding ExistingDocumentName, StringFormat='现有：{0}'}"
@@ -59,7 +64,7 @@
       </StackPanel>
 
       <StackPanel Grid.Row="2" Spacing="{StaticResource Space.2}">
-        <TextBlock Classes="CaptionText" Text="导入处理方式" />
+        <TextBlock Classes="CaptionText" Text="选择处理方式" />
         <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource Space.2}">
           <ToggleButton Grid.Column="0"
                         Classes="ImportResolutionChoice"
@@ -90,7 +95,12 @@
                 Content="取消"
                 Command="{Binding CancelCommand}" />
         <Button Classes="DialogPrimaryButton"
-                Content="确认更新"
+                Content="覆盖并导入"
+                IsVisible="{Binding Import.IsOverwriteImportSelected}"
+                Command="{Binding ConfirmCommand}" />
+        <Button Classes="DialogPrimaryButton"
+                Content="跳过重复项并导入"
+                IsVisible="{Binding Import.SkipSameNameInterfaces}"
                 Command="{Binding ConfirmCommand}" />
       </StackPanel>
     </Grid>

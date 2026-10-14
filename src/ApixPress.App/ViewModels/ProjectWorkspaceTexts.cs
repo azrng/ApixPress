@@ -182,8 +182,8 @@ internal static class ImportTexts
     public static string FormatPendingOverwriteSummary(int newEndpointCount, int conflictCount)
     {
         return newEndpointCount > 0
-            ? $"本次将新增 {newEndpointCount} 个接口，并更新 {conflictCount} 个同路径接口，已保存用例会保留。"
-            : $"本次导入将更新当前项目中 {conflictCount} 个同路径接口，已保存用例会保留。";
+            ? $"预检结果：新增 {newEndpointCount} 个接口，发现 {conflictCount} 个同名接口；已保存用例会保留。"
+            : $"预检结果：发现 {conflictCount} 个同名接口；已保存用例会保留。";
     }
 
     public static string FormatAdditionalConflictItems(int remainingCount)

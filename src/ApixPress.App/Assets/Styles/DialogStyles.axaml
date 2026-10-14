@@ -4,6 +4,11 @@
     <Setter Property="Width" Value="460" />
   </Style>
 
+  <Style Selector="Border.ImportOverwriteConfirmDialogCard">
+    <Setter Property="Width" Value="700" />
+    <Setter Property="MaxHeight" Value="620" />
+  </Style>
+
   <!-- 项目信息编辑弹窗（对齐原型 06 editProjectModal 宽 460） -->
   <Style Selector="Border.ProjectInfoEditDialogCard">
     <Setter Property="Width" Value="460" />
@@ -344,7 +349,7 @@
   </Style>
 
   <Style Selector="Border.ProjectImportDialogCard">
-    <Setter Property="Width" Value="760" />
+    <Setter Property="Width" Value="860" />
   </Style>
 
   <Style Selector="Border.ProjectImportDialogHeaderCard">
@@ -637,6 +642,11 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+  </Style>
+
+  <Style Selector="ScrollViewer.ImportConflictListViewport">
+    <Setter Property="MaxHeight" Value="270" />
+    <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
   </Style>
 
   <Style Selector="Border.ImportConflictRow">
