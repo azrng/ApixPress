@@ -30,18 +30,13 @@
                   Classes.InterfaceRootTabButtonSelected="{Binding InterfaceRoot.IsAllInterfacesSelected}"
                   Command="{Binding InterfaceRoot.ShowAllInterfacesCommand}"
                   Content="全部接口" />
-          <TextBlock Grid.Column="2"
-                     Classes="CaptionText"
-                     HorizontalAlignment="Right"
-                     VerticalAlignment="Center"
-                     Text="{Binding InterfaceRoot.StatusText}" />
         </Grid>
 
         <Grid Grid.Row="1"
               Margin="{StaticResource Pad.Top3}">
           <Border Classes="InterfaceRootWorkbenchSurface InterfaceRootAuthWorkbench"
                   IsVisible="{Binding InterfaceRoot.IsAuthSelected}">
-            <Grid RowDefinitions="Auto,*,Auto">
+            <Grid RowDefinitions="Auto,Auto,Auto">
               <Grid Classes="InterfaceRootWorkbenchHeader"
                     ColumnDefinitions="*,Auto"
                     ColumnSpacing="{StaticResource Space.3}">

@@ -1038,6 +1038,7 @@
 
   <Style Selector="Border.InterfaceRootAuthWorkbench">
     <Setter Property="MinHeight" Value="260" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
   <Style Selector="Grid.InterfaceRootWorkbenchHeader">
