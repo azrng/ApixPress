@@ -351,6 +351,11 @@
     <Setter Property="Padding" Value="0" />
   </Style>
 
+  <Style Selector="Grid.HomeContentContainer">
+    <Setter Property="MaxWidth" Value="1760" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+
   <Style Selector="StackPanel.HomeMetricRow > TextBlock">
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>

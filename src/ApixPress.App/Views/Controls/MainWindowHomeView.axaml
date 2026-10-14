@@ -12,27 +12,25 @@
              mc:Ignorable="d">
   <ScrollViewer IsVisible="{Binding IsHomeTabActive}"
                 HorizontalScrollBarVisibility="Disabled">
-    <Grid Margin="{StaticResource Pad.4}"
+    <Grid Classes="HomeContentContainer"
+          Margin="{StaticResource Pad.4}"
           RowDefinitions="Auto,*"
           RowSpacing="{StaticResource Space.3}">
         <Border Classes="HomeContentHeaderCard">
           <Grid RowDefinitions="Auto,Auto"
                 RowSpacing="{StaticResource Space.2}">
-            <Grid ColumnDefinitions="*,Auto,*"
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto"
                   ColumnSpacing="{StaticResource Space.4}">
-              <StackPanel Classes="HomeMetricRow"
-                          Orientation="Horizontal"
-                          VerticalAlignment="Center">
-                <TextBlock Classes="PageTitle"
-                           Text="项目首页" />
-              </StackPanel>
+              <TextBlock Classes="PageTitle"
+                         Text="项目首页"
+                         VerticalAlignment="Center" />
               <TextBox Grid.Column="1"
                        Width="260"
                        Classes="ToolbarSearchBox"
                        PlaceholderText="搜索项目名称或备注"
                        VerticalAlignment="Center"
                        Text="{Binding ProjectPanel.SearchText}" />
-              <Button Grid.Column="2"
+              <Button Grid.Column="3"
                       Classes="PrimaryButton HomeCreateProjectButton"
                       Content="+ 新建项目"
                       HorizontalAlignment="Right"
@@ -103,7 +101,7 @@
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                   <controls:AdaptiveTilePanel MinItemWidth="250"
-                                              ItemHeight="112"
+                                              ItemHeight="136"
                                               Gap="{StaticResource Space.3}"
                                               MaxColumns="4" />
                 </ItemsPanelTemplate>
@@ -143,8 +141,9 @@
                     </ContextMenu>
                   </Button.ContextMenu>
                   <Border Classes="HomeProjectTileCard">
-                      <Grid RowDefinitions="Auto,Auto"
-                            RowSpacing="{StaticResource Space.2}">
+                      <Grid Classes="HomeProjectTileContent"
+                            RowDefinitions="Auto,Auto"
+                            RowSpacing="{StaticResource Space.3}">
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto"
                               ColumnSpacing="{StaticResource Space.3}">
                           <Border Classes="HomeProjectTileIcon">
@@ -183,8 +182,9 @@
 
                         <TextBlock Grid.Row="1"
                                    Classes="HomeProjectTileSummary"
-                                   Text="{Binding SummaryText}"
-                                   ToolTip.Tip="{Binding SummaryText}"
+                                   Text="{Binding Description}"
+                                   ToolTip.Tip="{Binding Description}"
+                                   IsVisible="{Binding HasDescription}"
                                    TextWrapping="NoWrap"
                                    TextTrimming="CharacterEllipsis"
                                    MaxLines="1" />

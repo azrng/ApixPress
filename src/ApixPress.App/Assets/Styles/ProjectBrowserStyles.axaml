@@ -176,6 +176,10 @@
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
+  <Style Selector="Grid.HomeProjectTileContent">
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
   <Style Selector="Ellipse.HomeProjectDragGripDot">
     <Setter Property="Width" Value="{StaticResource Space.1}" />
     <Setter Property="Height" Value="{StaticResource Space.1}" />

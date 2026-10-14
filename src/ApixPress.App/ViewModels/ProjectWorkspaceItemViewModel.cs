@@ -23,7 +23,7 @@ public partial class ProjectWorkspaceItemViewModel : ViewModelBase
     public ICommand? OpenProjectSettingsCommand { get; set; }
 
     public string DisplayName => IsDefault ? $"{Name}（默认）" : Name;
-    public string SummaryText => string.IsNullOrWhiteSpace(Description) ? "无备注" : Description;
+    public bool HasDescription => !string.IsNullOrWhiteSpace(Description);
     public string CategoryText => "HTTP";
     public string AvatarText => string.IsNullOrWhiteSpace(Name) ? "A" : Name[..1].ToUpperInvariant();
 
@@ -35,7 +35,7 @@ public partial class ProjectWorkspaceItemViewModel : ViewModelBase
 
     partial void OnDescriptionChanged(string value)
     {
-        OnPropertyChanged(nameof(SummaryText));
+        OnPropertyChanged(nameof(HasDescription));
     }
 
     partial void OnIsDefaultChanged(bool value)
