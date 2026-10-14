@@ -25,6 +25,9 @@ public partial class UseCasesPanelViewModel : ViewModelBase
 
     public event Action<RequestSnapshotDto>? CaseApplied;
 
+    /// <summary>用例集合变更后的目录分类；空集合表示全量刷新。</summary>
+    public event Action<IReadOnlyCollection<string>>? RequestCasesChanged;
+
     public UseCasesPanelViewModel(
         IRequestCaseService requestCaseService,
         ProjectWorkspaceTabsViewModel? workspace = null,
@@ -104,6 +107,7 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         SubscribeActiveWorkspaceTab(null);
         _loadRequestCaseAsync = null;
         CaseApplied = null;
+        RequestCasesChanged = null;
     }
 
     public void SetProjectContext(string projectId)
@@ -117,6 +121,7 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         _currentProjectId = string.Empty;
         RequestCases.Clear();
         SelectedRequestCase = null;
+        NotifyRequestCasesChanged();
     }
 
     /// <summary>注入工作区用例加载入口，复用目录加载的标签复用、详情加载和请求回填逻辑。</summary>
@@ -136,6 +141,7 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         try
         {
             RequestCases.Clear();
+            NotifyRequestCasesChanged();
             if (string.IsNullOrWhiteSpace(_currentProjectId))
             {
                 return;
@@ -143,6 +149,7 @@ public partial class UseCasesPanelViewModel : ViewModelBase
 
             var cases = await _requestCaseService.GetCasesAsync(_currentProjectId, cancellationToken);
             RequestCases.ReplaceWith(cases.Select(CreateRequestCaseItem));
+            NotifyRequestCasesChanged();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -366,12 +373,19 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         }
 
         var upsertIds = upserts.Select(item => item.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var affectedEntryTypes = RequestCases
+            .Where(item => upsertIds.Contains(item.Id))
+            .Select(item => item.SourceCase.EntryType)
+            .Concat(upserts.Select(item => item.EntryType))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
         var merged = RequestCases
             .Where(item => !upsertIds.Contains(item.Id))
             .Concat(upserts.Select(CreateRequestCaseItem))
             .ToList();
         merged.Sort((left, right) => CompareRequestCaseItems(left, right));
         RequestCases.ReplaceWith(merged);
+        NotifyRequestCasesChanged(affectedEntryTypes);
     }
 
     public void RemoveCases(IEnumerable<string> ids)
@@ -384,6 +398,11 @@ public partial class UseCasesPanelViewModel : ViewModelBase
             return;
         }
 
+        var affectedEntryTypes = RequestCases
+            .Where(item => targetIds.Contains(item.Id))
+            .Select(item => item.SourceCase.EntryType)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
         var retained = RequestCases
             .Where(item => !targetIds.Contains(item.Id))
             .ToList();
@@ -393,6 +412,12 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         }
 
         RequestCases.ReplaceWith(retained);
+        NotifyRequestCasesChanged(affectedEntryTypes);
+    }
+
+    private void NotifyRequestCasesChanged(IReadOnlyCollection<string>? entryTypes = null)
+    {
+        RequestCasesChanged?.Invoke(entryTypes ?? Array.Empty<string>());
     }
 
     private void RefreshSelectableCaseItems()

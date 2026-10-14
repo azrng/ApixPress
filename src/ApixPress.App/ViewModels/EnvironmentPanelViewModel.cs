@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -18,6 +19,7 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     private CancellationTokenSource? _activateEnvironmentCancellationTokenSource;
     private string _currentProjectId = string.Empty;
     private bool _isUpdatingSelection;
+    private ProjectEnvironmentItemViewModel? _observedSelectedEnvironment;
 
     public event Action<ProjectEnvironmentItemViewModel?>? SelectedEnvironmentChanged;
 
@@ -47,6 +49,12 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
     {
         CancellationTokenSourceHelper.CancelAndDispose(ref _loadProjectCancellationTokenSource);
         CancellationTokenSourceHelper.CancelAndDispose(ref _activateEnvironmentCancellationTokenSource);
+        if (_observedSelectedEnvironment is not null)
+        {
+            _observedSelectedEnvironment.PropertyChanged -= OnSelectedEnvironmentPropertyChanged;
+            _observedSelectedEnvironment = null;
+        }
+
         SelectedEnvironmentChanged = null;
     }
 
@@ -452,6 +460,20 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
 
     partial void OnSelectedEnvironmentChanged(ProjectEnvironmentItemViewModel? value)
     {
+        if (!ReferenceEquals(_observedSelectedEnvironment, value))
+        {
+            if (_observedSelectedEnvironment is not null)
+            {
+                _observedSelectedEnvironment.PropertyChanged -= OnSelectedEnvironmentPropertyChanged;
+            }
+
+            _observedSelectedEnvironment = value;
+            if (!IsDisposed && _observedSelectedEnvironment is not null)
+            {
+                _observedSelectedEnvironment.PropertyChanged += OnSelectedEnvironmentPropertyChanged;
+            }
+        }
+
         if (IsDisposed)
         {
             return;
@@ -466,6 +488,18 @@ public partial class EnvironmentPanelViewModel : ViewModelBase
 
         var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _activateEnvironmentCancellationTokenSource).Token;
         _ = ActivateEnvironmentSelectionAsync(value, cancellationToken);
+    }
+
+    private void OnSelectedEnvironmentPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (!ReferenceEquals(sender, SelectedEnvironment)
+            || e.PropertyName != nameof(ProjectEnvironmentItemViewModel.Name))
+        {
+            return;
+        }
+
+        NotifySelectionState();
+        _messenger?.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
     private void UpdateSelectionFlags(ProjectEnvironmentItemViewModel? selected)

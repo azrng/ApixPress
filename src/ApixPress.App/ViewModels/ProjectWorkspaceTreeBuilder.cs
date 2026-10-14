@@ -271,7 +271,8 @@ public static class ProjectWorkspaceTreeBuilder
             IsExpanded = expandAll,
             DeleteCommand = commands.Delete,
             CaseCount = spec.Cases.Count,
-            SourceCase = spec.Item.SourceCase
+            SourceCase = spec.Item.SourceCase,
+            SourceCaseItem = spec.Item
         };
 
         // 请求用例作为接口的下一级延迟加载，默认保持接口树收缩，避免大量用例在首次建树时实例化。
@@ -315,7 +316,8 @@ public static class ProjectWorkspaceTreeBuilder
             NodeType = ProjectTabRequestEntryTypes.QuickRequest,
             CanLoad = true,
             DeleteCommand = deleteCommand,
-            SourceCase = item.SourceCase
+            SourceCase = item.SourceCase,
+            SourceCaseItem = item
         };
     }
 

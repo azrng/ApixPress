@@ -71,48 +71,6 @@
           <Border Classes="CaseCard"
                   Classes.CaseCardSelected="{Binding IsSelected}"
                   Margin="0,0,0,8">
-            <!-- 右键菜单：与卡片行内按钮同一批命令（注入式，跨 PopupRoot 绑定可用） -->
-            <Border.ContextMenu>
-              <ContextMenu Classes="WorkspaceTabContextMenu"
-                           DataContext="{Binding}">
-                <MenuItem Classes="WorkspaceTabContextMenuItem"
-                          Header="加载"
-                          Command="{Binding LoadCommand}"
-                          CommandParameter="{Binding}">
-                  <MenuItem.Icon>
-                    <TextBlock Classes="WorkspaceTabContextMenuIcon"
-                               Text="&#xE8E5;" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Classes="WorkspaceTabContextMenuItem"
-                          Header="改名"
-                          Command="{Binding RenameCommand}"
-                          CommandParameter="{Binding}">
-                  <MenuItem.Icon>
-                    <TextBlock Classes="WorkspaceTabContextMenuIcon"
-                               Text="&#xE8AC;" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Classes="WorkspaceTabContextMenuItem"
-                          Header="复制"
-                          Command="{Binding DuplicateCommand}"
-                          CommandParameter="{Binding}">
-                  <MenuItem.Icon>
-                    <TextBlock Classes="WorkspaceTabContextMenuIcon"
-                               Text="&#xE8C8;" />
-                  </MenuItem.Icon>
-                </MenuItem>
-                <MenuItem Classes="WorkspaceTabContextMenuItem"
-                          Header="删除"
-                          Command="{Binding DeleteCommand}"
-                          CommandParameter="{Binding}">
-                  <MenuItem.Icon>
-                    <TextBlock Classes="WorkspaceTabContextMenuIcon"
-                               Text="&#xE74D;" />
-                  </MenuItem.Icon>
-                </MenuItem>
-              </ContextMenu>
-            </Border.ContextMenu>
             <StackPanel Spacing="{StaticResource Space.2}">
               <!-- 第一行：名称 + 已加载标识 -->
               <Grid ColumnDefinitions="Auto,*,Auto"
@@ -151,20 +109,43 @@
                             Spacing="{StaticResource Space.1}">
                   <Button Classes="CaseCardOp"
                           Content="加载"
-                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.LoadCaseCommand}"
+                          Command="{Binding LoadCommand}"
                           CommandParameter="{Binding}" />
                   <Button Classes="CaseCardOp"
-                          Content="改名"
-                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.RenameCaseCommand}"
-                          CommandParameter="{Binding}" />
-                  <Button Classes="CaseCardOp"
-                          Content="复制"
-                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.DuplicateCaseCommand}"
-                          CommandParameter="{Binding}" />
-                  <Button Classes="CaseCardOp"
-                          Content="删除"
-                          Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).UseCasesPanel.RequestDeleteCaseCommand}"
-                          CommandParameter="{Binding}" />
+                          Content="更多">
+                    <Button.Flyout>
+                      <MenuFlyout Placement="BottomEdgeAlignedRight">
+                        <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                  Header="改名"
+                                  Command="{Binding RenameCommand}"
+                                  CommandParameter="{Binding}">
+                          <MenuItem.Icon>
+                            <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                                       Text="&#xE8AC;" />
+                          </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                  Header="复制"
+                                  Command="{Binding DuplicateCommand}"
+                                  CommandParameter="{Binding}">
+                          <MenuItem.Icon>
+                            <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                                       Text="&#xE8C8;" />
+                          </MenuItem.Icon>
+                        </MenuItem>
+                        <Separator />
+                        <MenuItem Classes="WorkspaceTabContextMenuItem"
+                                  Header="删除"
+                                  Command="{Binding DeleteCommand}"
+                                  CommandParameter="{Binding}">
+                          <MenuItem.Icon>
+                            <TextBlock Classes="WorkspaceTabContextMenuIcon"
+                                       Text="&#xE74D;" />
+                          </MenuItem.Icon>
+                        </MenuItem>
+                      </MenuFlyout>
+                    </Button.Flyout>
+                  </Button>
                 </StackPanel>
               </Grid>
             </StackPanel>

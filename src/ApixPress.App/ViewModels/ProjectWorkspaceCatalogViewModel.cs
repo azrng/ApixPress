@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -59,7 +58,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
         _reloadImportedDocumentsAsync = reloadImportedDocumentsAsync;
         _dialogService = dialogService;
 
-        _useCasesPanel.RequestCases.CollectionChanged += OnSavedRequestsCollectionChanged;
+        _useCasesPanel.RequestCasesChanged += OnRequestCasesChanged;
     }
 
     public ObservableCollection<ExplorerItemViewModel> InterfaceTreeItems { get; } = [];
@@ -137,7 +136,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
     protected override void DisposeManaged()
     {
         CancellationTokenSourceHelper.CancelAndDispose(ref _interfaceSearchDebounceCancellationTokenSource);
-        _useCasesPanel.RequestCases.CollectionChanged -= OnSavedRequestsCollectionChanged;
+        _useCasesPanel.RequestCasesChanged -= OnRequestCasesChanged;
         DisposeExplorerItems(InterfaceTreeItems);
         DisposeExplorerItems(QuickRequestTreeItems);
         InterfaceTreeItems.Clear();
@@ -472,9 +471,13 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
         RequestWorkspaceNavigationRebuild(rebuildQuickRequestNavigation: false);
     }
 
-    private void OnSavedRequestsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    private void OnRequestCasesChanged(IReadOnlyCollection<string> entryTypes)
     {
-        var (rebuildInterfaceNavigation, rebuildQuickRequestNavigation) = ResolveWorkspaceNavigationRebuildScope(e);
+        var rebuildAllNavigation = entryTypes.Count == 0;
+        var rebuildQuickRequestNavigation = rebuildAllNavigation
+            || entryTypes.Any(type => string.Equals(type, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase));
+        var rebuildInterfaceNavigation = rebuildAllNavigation
+            || entryTypes.Any(type => !string.Equals(type, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase));
         RequestWorkspaceNavigationRebuild(rebuildInterfaceNavigation, rebuildQuickRequestNavigation);
         NotifySavedRequestStateChanged();
         _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
@@ -731,48 +734,6 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
         RequestWorkspaceNavigationRebuild(rebuildInterfaceNavigation, rebuildQuickRequestNavigation);
     }
 
-    private static (bool RebuildInterfaceNavigation, bool RebuildQuickRequestNavigation) ResolveWorkspaceNavigationRebuildScope(NotifyCollectionChangedEventArgs e)
-    {
-        if (e.Action is NotifyCollectionChangedAction.Reset or NotifyCollectionChangedAction.Move or NotifyCollectionChangedAction.Replace)
-        {
-            return (true, true);
-        }
-
-        var changedItems = EnumerateChangedRequestCases(e).ToList();
-        if (changedItems.Count == 0)
-        {
-            return (true, true);
-        }
-
-        var rebuildQuickRequestNavigation = changedItems.Any(IsQuickRequestCaseItem);
-        var rebuildInterfaceNavigation = changedItems.Any(item => !IsQuickRequestCaseItem(item));
-        return (rebuildInterfaceNavigation, rebuildQuickRequestNavigation);
-    }
-
-    private static IEnumerable<RequestCaseItemViewModel> EnumerateChangedRequestCases(NotifyCollectionChangedEventArgs e)
-    {
-        if (e.OldItems is not null)
-        {
-            foreach (var item in e.OldItems.OfType<RequestCaseItemViewModel>())
-            {
-                yield return item;
-            }
-        }
-
-        if (e.NewItems is not null)
-        {
-            foreach (var item in e.NewItems.OfType<RequestCaseItemViewModel>())
-            {
-                yield return item;
-            }
-        }
-    }
-
-    private static bool IsQuickRequestCaseItem(RequestCaseItemViewModel item)
-    {
-        return string.Equals(item.SourceCase.EntryType, ProjectTabRequestEntryTypes.QuickRequest, StringComparison.OrdinalIgnoreCase);
-    }
-
     private void ApplyImportedInterfaceSyncResult(ImportedHttpInterfaceSyncResultDto syncResult)
     {
         if (syncResult.UpsertedCases.Count == 0 && syncResult.DeletedCaseIds.Count == 0)
@@ -944,12 +905,19 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
             return requestCase;
         }
 
+        if (item.SourceCaseItem?.SourceCase is { HasLoadedDetail: true } cachedDetail)
+        {
+            item.SourceCase = cachedDetail;
+            return cachedDetail;
+        }
+
         var detail = await _requestCaseService.GetDetailAsync(_projectId, requestCase.Id, CancellationToken.None);
         if (detail is null)
         {
             return requestCase;
         }
 
+        item.SourceCaseItem?.ApplyDetail(detail);
         item.SourceCase = detail;
         return detail;
     }
