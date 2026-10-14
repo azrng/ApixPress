@@ -191,22 +191,22 @@
         </Border>
 
         <Border Grid.Row="2"
-                Classes="HttpResponsePlaceholderHost"
+                Classes="HttpResponsePlaceholderHost HttpResponsePlaceholderCard"
                 IsVisible="{Binding ResponseSection.ShowPlaceholder}">
-          <Border Classes="HttpResponsePlaceholderCard">
-            <StackPanel Classes="HttpResponsePlaceholderContent"
-                        Spacing="{StaticResource Space.3}">
-              <Border Classes="HttpResponsePlaceholderIcon">
-                <PathIcon Data="{StaticResource SemiIconCloudStroked}"
-                          Width="26"
-                          Height="26" />
-              </Border>
-              <TextBlock Classes="HttpResponsePlaceholderTitle"
-                         Text="点击“发送”按钮获取返回结果" />
-              <TextBlock Classes="SubtleText HttpResponsePlaceholderText"
-                         Text="支持查看 Body 与 Headers、搜索响应内容、自动格式化 JSON" />
-            </StackPanel>
-          </Border>
+          <StackPanel Classes="HttpResponsePlaceholderContent"
+                      Spacing="{StaticResource Space.3}">
+            <Border Classes="HttpResponsePlaceholderIcon">
+              <PathIcon Data="{StaticResource SemiIconCloudStroked}"
+                        Width="26"
+                        Height="26"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+            </Border>
+            <TextBlock Classes="HttpResponsePlaceholderTitle"
+                       Text="等待响应" />
+            <TextBlock Classes="HttpResponsePlaceholderText"
+                       Text="当前请求尚未返回数据" />
+          </StackPanel>
         </Border>
 
         <Grid Grid.Row="2"

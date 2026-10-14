@@ -76,15 +76,15 @@
     <Setter Property="VerticalAlignment" Value="Stretch" />
   </Style>
 
-  <!-- 空状态卡片：下沉底色收拢视觉，避免大片虚空感 -->
+  <!-- 空状态直接落在响应区域中，避免卡片套卡片 -->
   <Style Selector="Border.HttpResponsePlaceholderCard">
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="Padding" Value="48,36" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="0" />
+    <Setter Property="Padding" Value="0" />
     <Setter Property="MaxWidth" Value="560" />
   </Style>
 
@@ -93,12 +93,12 @@
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
-  <!-- 图标圆形底衬，用品牌色弱强调 -->
+  <!-- 小型图标底衬，用品牌色弱强调 -->
   <Style Selector="Border.HttpResponsePlaceholderIcon">
-    <Setter Property="Width" Value="56" />
-    <Setter Property="Height" Value="56" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="Width" Value="44" />
+    <Setter Property="Height" Value="44" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="HorizontalAlignment" Value="Center" />
   </Style>
 
@@ -115,6 +115,8 @@
   </Style>
 
   <Style Selector="TextBlock.HttpResponsePlaceholderText">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="TextAlignment" Value="Center" />
   </Style>

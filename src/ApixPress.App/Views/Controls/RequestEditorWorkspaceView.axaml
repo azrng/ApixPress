@@ -7,9 +7,9 @@
              x:Class="ApixPress.App.Views.Controls.RequestEditorWorkspaceView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
-  <!-- 对齐原型：上下文栏与工作区卡片紧贴（无行距），URL 行并入工作区配置卡片 -->
+  <!-- 上下文栏与工作区保持轻间距，URL 行继续并入请求配置区 -->
   <Grid RowDefinitions="Auto,*"
-        RowSpacing="0"
+        RowSpacing="{StaticResource Space.2}"
         MinHeight="0"
         ClipToBounds="True">
     <!-- 快捷请求：名称 + 生成代码 -->

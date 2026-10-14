@@ -711,12 +711,21 @@
   <Style Selector="Button.HttpSaveButton">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="Padding" Value="14,7" />
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="MinWidth" Value="78" />
     <Setter Property="MinHeight" Value="34" />
+  </Style>
+
+  <Style Selector="Button.HttpSaveButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+
+  <Style Selector="Button.HttpSaveButton:focus">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
   </Style>
 
   <!-- 子标签对齐原型 sub-tab：选中保持主文字色 + 紫色下划线，分隔线横贯卡片 -->
