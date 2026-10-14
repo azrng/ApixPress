@@ -46,6 +46,40 @@ public sealed partial class WorkspacePersistenceTests
     }
 
     [Fact]
+    public async Task ProjectWorkspaceService_ShouldPersistCustomProjectOrder()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        var projectRepository = new ProjectWorkspaceRepository(factory);
+        var service = new ProjectWorkspaceService(projectRepository, new ProjectEnvironmentRepository(factory));
+        var first = (await service.SaveAsync(new ProjectWorkspaceDto { Name = "项目一" }, CancellationToken.None)).Data!;
+        var second = (await service.SaveAsync(new ProjectWorkspaceDto { Name = "项目二" }, CancellationToken.None)).Data!;
+        var third = (await service.SaveAsync(new ProjectWorkspaceDto { Name = "项目三" }, CancellationToken.None)).Data!;
+
+        var reorderResult = await service.SetProjectOrderAsync(
+            [third.Id, first.Id, second.Id],
+            CancellationToken.None);
+
+        Assert.True(reorderResult.IsSuccess);
+        Assert.Equal(
+            new[] { third.Id, first.Id, second.Id },
+            (await service.GetProjectsAsync(CancellationToken.None)).Select(item => item.Id));
+
+        var updateResult = await service.SaveAsync(new ProjectWorkspaceDto
+        {
+            Id = first.Id,
+            Name = "项目一更新",
+            Description = "更新项目信息"
+        }, CancellationToken.None);
+
+        Assert.True(updateResult.IsSuccess);
+        Assert.Equal(
+            new[] { third.Id, first.Id, second.Id },
+            (await service.GetProjectsAsync(CancellationToken.None)).Select(item => item.Id));
+    }
+
+    [Fact]
     public async Task RequestCaseDeliveryRepository_ShouldRollbackEnvironmentWhenCaseInsertFails()
     {
         using var factory = new TestSqliteConnectionFactory();

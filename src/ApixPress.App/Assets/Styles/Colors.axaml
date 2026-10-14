@@ -6,7 +6,7 @@
   <SolidColorBrush x:Key="Brush.Background.Surface" Color="#202024" />
   <SolidColorBrush x:Key="Brush.Background.Subtle" Color="#26262B" />
   <SolidColorBrush x:Key="Brush.Background.Elevated" Color="#2B2B32" />
-  <SolidColorBrush x:Key="Brush.Background.Selected" Color="#322D4E" />
+  <SolidColorBrush x:Key="Brush.Background.Selected" Color="#17383B" />
   <SolidColorBrush x:Key="Brush.Background.Disabled" Color="#232327" />
   <SolidColorBrush x:Key="Brush.Background.Overlay" Color="#88000000" />
 
@@ -14,7 +14,7 @@
   <SolidColorBrush x:Key="Brush.Border.Default" Color="#36363D" />
   <SolidColorBrush x:Key="Brush.Border.Subtle" Color="#2A2A30" />
   <SolidColorBrush x:Key="Brush.Border.Strong" Color="#45454E" />
-  <SolidColorBrush x:Key="Brush.Border.Focus" Color="#7C6CF0" />
+  <SolidColorBrush x:Key="Brush.Border.Focus" Color="#2FB6C5" />
   <SolidColorBrush x:Key="Brush.Border.Danger" Color="#E5484D" />
 
   <!-- Text -->
@@ -22,7 +22,7 @@
   <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#A3A3AD" />
   <SolidColorBrush x:Key="Brush.Text.Tertiary" Color="#70707A" />
   <SolidColorBrush x:Key="Brush.Text.Inverse" Color="#FFFFFF" />
-  <SolidColorBrush x:Key="Brush.Text.Link" Color="#9D8BFF" />
+  <SolidColorBrush x:Key="Brush.Text.Link" Color="#78DAE2" />
   <SolidColorBrush x:Key="Brush.Text.Danger" Color="#FF7A7D" />
 
   <!-- Status -->
@@ -36,9 +36,8 @@
   <SolidColorBrush x:Key="Brush.Status.Error.Text" Color="#F87171" />
 
   <!-- Brand / accent -->
-  <SolidColorBrush x:Key="Brush.Brand.Primary" Color="#7C6CF0" />
-  <SolidColorBrush x:Key="Brush.Brand.Primary.Strong" Color="#6A59E0" />
-  <SolidColorBrush x:Key="Brush.Accent.Violet" Color="#9D8BFF" />
+  <SolidColorBrush x:Key="Brush.Brand.Primary" Color="#2FB6C5" />
+  <SolidColorBrush x:Key="Brush.Brand.Primary.Strong" Color="#228F9C" />
 
   <!-- HTTP method badges（Apifox 惯例：GET 绿 / POST 橙 / PUT 蓝 / DELETE 红 / PATCH 青） -->
   <SolidColorBrush x:Key="Brush.Method.Get" Color="#4ADE80" />
@@ -72,5 +71,5 @@
   <Thickness x:Key="ToolTipBorderThemeThickness">1</Thickness>
   <Color x:Key="SystemChromeMediumColor">#26262B</Color>
   <Color x:Key="SystemBaseLowColor">#36363D</Color>
-  <Color x:Key="SystemAccentColor">#7C6CF0</Color>
+  <Color x:Key="SystemAccentColor">#2FB6C5</Color>
 </ResourceDictionary>

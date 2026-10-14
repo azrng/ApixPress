@@ -11,6 +11,8 @@ public interface IProjectWorkspaceService
 
     Task<IResultModel<ProjectWorkspaceDto>> SaveAsync(ProjectWorkspaceDto project, CancellationToken cancellationToken);
 
+    Task<IResultModel<bool>> SetProjectOrderAsync(IReadOnlyList<string> projectIds, CancellationToken cancellationToken);
+
     Task<IResultModel<ProjectWorkspaceDto>> SetDefaultAsync(string projectId, CancellationToken cancellationToken);
 
     Task<IResultModel<bool>> DeleteAsync(string projectId, CancellationToken cancellationToken);

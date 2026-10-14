@@ -23,10 +23,11 @@ public sealed class ProjectWorkspaceRepository : IProjectWorkspaceRepository, IT
                                name Name,
                                description Description,
                                is_default IsDefault,
+                               sort_order SortOrder,
                                created_at CreatedAt,
                                updated_at UpdatedAt
                            from projects
-                           order by is_default desc, updated_at desc, name
+                           order by sort_order, is_default desc, name
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
@@ -43,6 +44,7 @@ public sealed class ProjectWorkspaceRepository : IProjectWorkspaceRepository, IT
                                name Name,
                                description Description,
                                is_default IsDefault,
+                               sort_order SortOrder,
                                created_at CreatedAt,
                                updated_at UpdatedAt
                            from projects
@@ -63,6 +65,7 @@ public sealed class ProjectWorkspaceRepository : IProjectWorkspaceRepository, IT
                                name Name,
                                description Description,
                                is_default IsDefault,
+                               sort_order SortOrder,
                                created_at CreatedAt,
                                updated_at UpdatedAt
                            from projects
@@ -79,9 +82,9 @@ public sealed class ProjectWorkspaceRepository : IProjectWorkspaceRepository, IT
     {
         const string sql = """
                            insert into projects (
-                               id, name, description, is_default, created_at, updated_at
+                               id, name, description, is_default, sort_order, created_at, updated_at
                            ) values (
-                               @Id, @Name, @Description, @IsDefault, @CreatedAt, @UpdatedAt
+                               @Id, @Name, @Description, @IsDefault, @SortOrder, @CreatedAt, @UpdatedAt
                            )
                            on conflict(id) do update set
                                name = excluded.name,
@@ -92,6 +95,37 @@ public sealed class ProjectWorkspaceRepository : IProjectWorkspaceRepository, IT
 
         using var connection = _connectionFactory.CreateConnection();
         await Task.Run(async () => await connection.ExecuteAsync(new CommandDefinition(sql, entity, cancellationToken: cancellationToken)));
+    }
+
+    public async Task SetProjectOrderAsync(IReadOnlyList<string> projectIds, CancellationToken cancellationToken)
+    {
+        await Task.Run(async () =>
+        {
+            using var connection = _connectionFactory.CreateConnection();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+
+            var currentIds = (await connection.QueryAsync<string>(new CommandDefinition(
+                "select id from projects",
+                transaction: transaction,
+                cancellationToken: cancellationToken))).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var requestedIds = projectIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
+            if (requestedIds.Count != projectIds.Count || !currentIds.SetEquals(requestedIds))
+            {
+                throw new InvalidOperationException("项目列表已变化，无法保存当前排序。");
+            }
+
+            for (var index = 0; index < projectIds.Count; index++)
+            {
+                await connection.ExecuteAsync(new CommandDefinition(
+                    "update projects set sort_order = @SortOrder where id = @Id",
+                    new { Id = projectIds[index], SortOrder = index + 1 },
+                    transaction,
+                    cancellationToken: cancellationToken));
+            }
+
+            transaction.Commit();
+        }, cancellationToken);
     }
 
     public async Task SetDefaultAsync(string id, CancellationToken cancellationToken)

@@ -47,9 +47,51 @@ public sealed class ProjectPanelViewModelTests
         Assert.Equal("新项目 3", viewModel.Creation.DraftProjectName);
     }
 
+    [Fact]
+    public async Task MoveProjectAsync_ShouldUpdateDisplayedAndPersistedOrder()
+    {
+        var service = new FakeProjectWorkspaceService();
+        service.SeedProjects(
+        [
+            new("project-1", "项目一", "", true),
+            new("project-2", "项目二", "", false),
+            new("project-3", "项目三", "", false)
+        ]);
+        var viewModel = new ProjectPanelViewModel(service);
+        await viewModel.LoadProjectsAsync();
+
+        await viewModel.MoveProjectAsync("project-1", "project-3");
+
+        var expectedOrder = new[] { "project-2", "project-3", "project-1" };
+        Assert.Equal(expectedOrder, viewModel.Projects.Select(item => item.Id));
+        Assert.Equal(expectedOrder, (await service.GetProjectsAsync(CancellationToken.None)).Select(item => item.Id));
+    }
+
+    [Fact]
+    public async Task MoveProjectAsync_ShouldRestoreOrderWhenPersistenceFails()
+    {
+        var service = new FakeProjectWorkspaceService { ShouldFailProjectOrder = true };
+        service.SeedProjects(
+        [
+            new("project-1", "项目一", "", true),
+            new("project-2", "项目二", "", false),
+            new("project-3", "项目三", "", false)
+        ]);
+        var viewModel = new ProjectPanelViewModel(service);
+        await viewModel.LoadProjectsAsync();
+
+        await viewModel.MoveProjectAsync("project-1", "project-3");
+
+        Assert.Equal(new[] { "project-1", "project-2", "project-3" }, viewModel.Projects.Select(item => item.Id));
+        Assert.Equal("项目顺序保存失败，已恢复原顺序。", viewModel.SortErrorMessage);
+        Assert.True(viewModel.CanReorderProjects);
+    }
+
     private sealed class FakeProjectWorkspaceService : IProjectWorkspaceService
     {
         private readonly List<ProjectWorkspaceDto> _projects = [];
+
+        public bool ShouldFailProjectOrder { get; set; }
 
         public void SeedProjects(IEnumerable<(string Id, string Name, string Description, bool IsDefault)> projects)
         {
@@ -114,6 +156,25 @@ public sealed class ProjectPanelViewModelTests
             return Task.FromResult<IResultModel<ProjectWorkspaceDto>>(selected is null
                 ? ResultModel<ProjectWorkspaceDto>.Failure("项目不存在")
                 : ResultModel<ProjectWorkspaceDto>.Success(CloneProject(selected)));
+        }
+
+        public Task<IResultModel<bool>> SetProjectOrderAsync(IReadOnlyList<string> projectIds, CancellationToken cancellationToken)
+        {
+            if (ShouldFailProjectOrder)
+            {
+                return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Failure("项目顺序保存失败"));
+            }
+
+            var projectsById = _projects.ToDictionary(item => item.Id, StringComparer.OrdinalIgnoreCase);
+            if (projectIds.Count != projectsById.Count || projectIds.Any(id => !projectsById.ContainsKey(id)))
+            {
+                return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Failure("项目列表已变化"));
+            }
+
+            var ordered = projectIds.Select(id => projectsById[id]).ToList();
+            _projects.Clear();
+            _projects.AddRange(ordered);
+            return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
         }
 
         public Task<IResultModel<bool>> DeleteAsync(string projectId, CancellationToken cancellationToken)

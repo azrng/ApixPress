@@ -38,6 +38,16 @@ public partial class ProjectPanelViewModel : ViewModelBase
     [ObservableProperty]
     private string searchText = string.Empty;
 
+    [ObservableProperty]
+    private string sortErrorMessage = string.Empty;
+
+    [ObservableProperty]
+    private bool isSavingProjectOrder;
+
+    public bool CanReorderProjects => string.IsNullOrWhiteSpace(SearchText) && !IsSavingProjectOrder;
+
+    public bool HasSortError => !string.IsNullOrWhiteSpace(SortErrorMessage);
+
     public bool HasSelectedProject => SelectedProject is not null;
     public bool HasProjects => FilteredProjects.Count > 0;
     public bool HasAnyProjects => Projects.Count > 0;
@@ -104,6 +114,56 @@ public partial class ProjectPanelViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasSelectedProject));
         OnPropertyChanged(nameof(HasProjects));
         OnPropertyChanged(nameof(HasAnyProjects));
+    }
+
+    public async Task MoveProjectAsync(string sourceProjectId, string targetProjectId)
+    {
+        if (!CanReorderProjects)
+        {
+            return;
+        }
+
+        var sourceIndex = _allProjects.FindIndex(item => string.Equals(item.Id, sourceProjectId, StringComparison.OrdinalIgnoreCase));
+        var targetIndex = _allProjects.FindIndex(item => string.Equals(item.Id, targetProjectId, StringComparison.OrdinalIgnoreCase));
+        if (sourceIndex < 0 || targetIndex < 0 || sourceIndex == targetIndex)
+        {
+            return;
+        }
+
+        var originalOrder = _allProjects.ToList();
+        var reordered = originalOrder.ToList();
+        var movingProject = reordered[sourceIndex];
+        reordered.RemoveAt(sourceIndex);
+        reordered.Insert(targetIndex, movingProject);
+        _allProjects = reordered;
+        Projects.ReplaceWith(reordered);
+        FilteredProjects.ReplaceWith(reordered);
+        SortErrorMessage = string.Empty;
+        IsSavingProjectOrder = true;
+
+        try
+        {
+            var result = await _projectWorkspaceService.SetProjectOrderAsync(
+                reordered.Select(item => item.Id).ToList(),
+                CancellationToken.None);
+            if (result.IsSuccess)
+            {
+                return;
+            }
+        }
+        catch (Exception)
+        {
+            // 保存失败时恢复内存顺序，并在首页显示简短反馈。
+        }
+        finally
+        {
+            IsSavingProjectOrder = false;
+        }
+
+        _allProjects = originalOrder;
+        Projects.ReplaceWith(originalOrder);
+        RefreshFilteredProjects();
+        SortErrorMessage = "项目顺序保存失败，已恢复原顺序。";
     }
 
     private async Task<bool> CreateProjectAsync(string projectName, string projectDescription)
@@ -249,7 +309,19 @@ public partial class ProjectPanelViewModel : ViewModelBase
 
     partial void OnSearchTextChanged(string value)
     {
+        OnPropertyChanged(nameof(CanReorderProjects));
+        SortErrorMessage = string.Empty;
         _ = DebounceSearchAsync();
+    }
+
+    partial void OnIsSavingProjectOrderChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanReorderProjects));
+    }
+
+    partial void OnSortErrorMessageChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasSortError));
     }
 
     private async Task DebounceSearchAsync()

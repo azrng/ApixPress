@@ -35,7 +35,7 @@
 
   <!-- 选中项文字用品牌紫强调，呼应 Apifox 风格 -->
   <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected TextBlock.ProjectWorkspaceNavText">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
@@ -94,6 +94,6 @@
   </Style>
 
   <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected Border.ProjectWorkspaceNavIcon Path">
-    <Setter Property="Fill" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="Fill" Value="{DynamicResource Brush.Brand.Primary}" />
   </Style>
 </Styles>

@@ -526,7 +526,7 @@
   <Style Selector="TextBlock.EnvCardActiveChipText">
     <Setter Property="FontSize" Value="11" />
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
   </Style>
 
   <Style Selector="TextBox.EnvCellInput">
@@ -618,7 +618,7 @@
   <Style Selector="TextBlock.CaseCardLoadedChipText">
     <Setter Property="FontSize" Value="11" />
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
   </Style>
 
   <Style Selector="Button.CaseCardOp">

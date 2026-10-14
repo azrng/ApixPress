@@ -12,6 +12,8 @@ public interface IProjectWorkspaceRepository
 
     Task UpsertAsync(ProjectWorkspaceEntity entity, CancellationToken cancellationToken);
 
+    Task SetProjectOrderAsync(IReadOnlyList<string> projectIds, CancellationToken cancellationToken);
+
     Task SetDefaultAsync(string id, CancellationToken cancellationToken);
 
     Task DeleteAsync(string id, CancellationToken cancellationToken);

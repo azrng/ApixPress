@@ -50,12 +50,14 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService, ITransie
             ? null
             : await _projectWorkspaceRepository.GetByIdAsync(project.Id, cancellationToken);
         var currentProjects = await _projectWorkspaceRepository.GetProjectsAsync(cancellationToken);
+        var nextSortOrder = currentProjects.Count == 0 ? 1 : currentProjects.Max(item => item.SortOrder) + 1;
         var entity = new ProjectWorkspaceEntity
         {
             Id = string.IsNullOrWhiteSpace(project.Id) ? Guid.NewGuid().ToString("N") : project.Id,
             Name = project.Name,
             Description = project.Description,
             IsDefault = project.IsDefault || currentProjects.Count == 0 || existing?.IsDefault == true,
+            SortOrder = existing?.SortOrder ?? nextSortOrder,
             CreatedAt = existing?.CreatedAt ?? DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -85,6 +87,20 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService, ITransie
         }
 
         return ResultModel<ProjectWorkspaceDto>.Success(ToDto(entity));
+    }
+
+    public async Task<IResultModel<bool>> SetProjectOrderAsync(IReadOnlyList<string> projectIds, CancellationToken cancellationToken)
+    {
+        var projects = await _projectWorkspaceRepository.GetProjectsAsync(cancellationToken);
+        var currentIds = projects.Select(item => item.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var requestedIds = projectIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (requestedIds.Count != projectIds.Count || !currentIds.SetEquals(requestedIds))
+        {
+            return ResultModel<bool>.Failure("项目列表已变化，请刷新后再调整顺序。", "project_order_changed");
+        }
+
+        await _projectWorkspaceRepository.SetProjectOrderAsync(projectIds, cancellationToken);
+        return ResultModel<bool>.Success(true);
     }
 
     public async Task<IResultModel<ProjectWorkspaceDto>> SetDefaultAsync(string projectId, CancellationToken cancellationToken)
@@ -127,6 +143,7 @@ public sealed class ProjectWorkspaceService : IProjectWorkspaceService, ITransie
             Name = entity.Name,
             Description = entity.Description,
             IsDefault = entity.IsDefault,
+            SortOrder = entity.SortOrder,
             CreatedAt = entity.CreatedAt,
             UpdatedAt = entity.UpdatedAt
         };

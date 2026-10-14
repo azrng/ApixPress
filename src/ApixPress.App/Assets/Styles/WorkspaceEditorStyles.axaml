@@ -323,7 +323,7 @@
   </Style>
 
   <Style Selector="TextBlock.WorkspaceLandingChoiceImportIcon">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
   </Style>
 
   <Style Selector="TextBlock.WorkspaceLandingChoiceTitle">
@@ -538,7 +538,7 @@
   <Style Selector="Button.WorkspaceTreeCaseChip:pointerover /template/ ContentPresenter">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
   </Style>
 
   <Style Selector="TextBlock.WorkspaceTreeSubtitleText">
@@ -699,7 +699,7 @@
   </Style>
 
   <Style Selector="Path.HttpSpinnerViolet">
-    <Setter Property="Stroke" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Brand.Primary}" />
     <Setter Property="StrokeThickness" Value="3" />
   </Style>
 
@@ -895,8 +895,8 @@
   </Style>
 
   <Style Selector="Button.HttpFieldTypeChip.file">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Brand.Primary}" />
   </Style>
 
   <!-- 对齐原型 03 file-chip：文件名（mono 省略）+ 大小 + 移除 -->
@@ -906,14 +906,14 @@
     <Setter Property="MaxWidth" Value="220" />
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Brand.Primary}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
   </Style>
 
   <Style Selector="TextBlock.HttpFileChipName">
     <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
     <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
   </Style>

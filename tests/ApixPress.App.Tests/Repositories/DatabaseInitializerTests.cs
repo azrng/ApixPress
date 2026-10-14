@@ -27,14 +27,17 @@ public sealed class DatabaseInitializerTests
             "select count(1) from sqlite_master where type = 'table' and name = 'project_export_settings'");
         var exportSettingsColumnCount = connection.ExecuteScalar<long>(
             "select count(1) from pragma_table_info('project_export_settings') where name in ('format', 'include_interfaces', 'include_request_cases', 'include_environments', 'include_request_history', 'last_output_directory')");
+        var projectSortOrderColumnCount = connection.ExecuteScalar<long>(
+            "select count(1) from pragma_table_info('projects') where name = 'sort_order'");
 
-        Assert.Equal(8, schemaVersion);
+        Assert.Equal(9, schemaVersion);
         Assert.Equal(0, projectCount);
         Assert.Equal(0, environmentCount);
         Assert.Equal(1, httpSettingsTableCount);
         Assert.Equal(2, basicColumnCount);
         Assert.Equal(1, exportSettingsTableCount);
         Assert.Equal(6, exportSettingsColumnCount);
+        Assert.Equal(1, projectSortOrderColumnCount);
     }
 
     [Fact]
@@ -153,9 +156,41 @@ public sealed class DatabaseInitializerTests
         var basicColumnCount = verificationConnection.ExecuteScalar<long>(
             "select count(1) from pragma_table_info('project_http_settings') where name in ('basic_username', 'basic_password')");
 
-        Assert.Equal(8, schemaVersion);
+        Assert.Equal(9, schemaVersion);
         Assert.Equal(1, httpSettingsTableCount);
         Assert.Equal(2, basicColumnCount);
+    }
+
+    [Fact]
+    public async Task Initialize_ShouldPreserveLegacyProjectOrderWhenAddingSortOrder()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+
+        using (var connection = factory.CreateConnection())
+        {
+            connection.Open();
+            connection.Execute(
+                """
+                insert into projects (id, name, description, is_default, created_at, updated_at, sort_order)
+                values
+                    ('project-default', '默认项目', '', 1, '2026-01-01', '2026-01-01', 0),
+                    ('project-new', '较新项目', '', 0, '2026-01-01', '2026-03-01', 0),
+                    ('project-old', '较早项目', '', 0, '2026-01-01', '2026-01-02', 0);
+
+                alter table projects drop column sort_order;
+                delete from schema_migrations where version = 9;
+                """);
+        }
+
+        new DatabaseInitializer(factory).Initialize();
+
+        using var verificationConnection = factory.CreateConnection();
+        verificationConnection.Open();
+        var orderedIds = verificationConnection.Query<string>(
+            "select id from projects order by sort_order").ToArray();
+
+        Assert.Equal(new[] { "project-default", "project-new", "project-old" }, orderedIds);
     }
 
     [Fact]
@@ -184,6 +219,7 @@ public sealed class DatabaseInitializerTests
                 """);
             // 删除全部已应用的新版本记录，把版本回退到 3，强制最新迁移重跑（模拟从版本 3 升级）
             connection.Execute("delete from schema_migrations where version >= 4");
+            connection.Execute("alter table projects drop column sort_order");
         }
 
         initializer.Initialize();
@@ -196,6 +232,6 @@ public sealed class DatabaseInitializerTests
             "select max(version) from schema_migrations");
 
         Assert.Equal(string.Empty, folderPath);
-        Assert.Equal(8, schemaVersion);
+        Assert.Equal(9, schemaVersion);
     }
 }

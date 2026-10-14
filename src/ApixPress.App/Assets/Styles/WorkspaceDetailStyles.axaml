@@ -103,7 +103,7 @@
   </Style>
 
   <Style Selector="Border.HttpResponsePlaceholderIcon PathIcon">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Accent.Violet}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
   </Style>
 
   <Style Selector="TextBlock.HttpResponsePlaceholderTitle">

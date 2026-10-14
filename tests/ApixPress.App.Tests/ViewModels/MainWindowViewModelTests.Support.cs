@@ -125,6 +125,11 @@ public sealed partial class MainWindowViewModelTests
                 : ResultModel<ProjectWorkspaceDto>.Success(CloneProject(selected)));
         }
 
+        public Task<IResultModel<bool>> SetProjectOrderAsync(IReadOnlyList<string> projectIds, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
+        }
+
         public Task<IResultModel<bool>> DeleteAsync(string projectId, CancellationToken cancellationToken)
         {
             RemoveProject(projectId);

@@ -11,7 +11,7 @@ public partial class ProjectWorkspaceItemViewModel : ViewModelBase
     // 项目图标渐变配色（对标 Apifox 多彩项目图标），按名称稳定取模分配
     private static readonly (Color From, Color To)[] AvatarGradients =
     [
-        (Color.Parse("#7C6CF0"), Color.Parse("#5B8DEF")),
+        (Color.Parse("#35B8C7"), Color.Parse("#228F9C")),
         (Color.Parse("#2DD4BF"), Color.Parse("#22A06B")),
         (Color.Parse("#F472B6"), Color.Parse("#C2418C")),
         (Color.Parse("#F59E0B"), Color.Parse("#D97706")),

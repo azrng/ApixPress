@@ -131,34 +131,52 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0" />
-    <Setter Property="Margin" Value="0,0,10,10" />
-    <Setter Property="Width" Value="334" />
-    <Setter Property="Height" Value="214" />
-    <Setter Property="MinWidth" Value="334" />
-    <Setter Property="MinHeight" Value="214" />
-    <Setter Property="MaxWidth" Value="334" />
-    <Setter Property="MaxHeight" Value="214" />
-    <Setter Property="HorizontalAlignment" Value="Left" />
-    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="VerticalAlignment" Value="Stretch" />
   </Style>
 
   <Style Selector="Border.HomeProjectTileCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.4}" />
-    <Setter Property="Width" Value="334" />
-    <Setter Property="Height" Value="214" />
-    <Setter Property="MinWidth" Value="334" />
-    <Setter Property="MinHeight" Value="214" />
-    <Setter Property="MaxWidth" Value="334" />
-    <Setter Property="MaxHeight" Value="214" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
 
   <Style Selector="Button.HomeProjectTileButton:pointerover Border.HomeProjectTileCard">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
     <Setter Property="BoxShadow" Value="{StaticResource Shadow.Brand.Soft}" />
+  </Style>
+
+  <Style Selector="Button.HomeProjectTileButton.HomeProjectTileDropTarget Border.HomeProjectTileCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Brand.Primary}" />
+  </Style>
+
+  <Style Selector="Border.HomeProjectDragHandle">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="Width" Value="28" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Border.HomeProjectDragHandle:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <Style Selector="TextBlock.HomeProjectDragHandleIcon">
+    <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
   <Style Selector="Border.HomeProjectTileIcon">
@@ -173,16 +191,6 @@
     <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-  </Style>
-
-  <Style Selector="StackPanel.HomeProjectTileHeaderText">
-    <Setter Property="MinHeight" Value="42" />
-  </Style>
-
-  <Style Selector="TextBlock.HomeProjectTileHint">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
-    <Setter Property="LineHeight" Value="16" />
-    <Setter Property="MinHeight" Value="32" />
   </Style>
 
   <Style Selector="TextBlock.HomeProjectTileSummary">
@@ -205,8 +213,8 @@
 
   <Style Selector="Border.HomeProjectTileEntry">
     <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="Padding" Value="8,6" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.2},{StaticResource Pad.1}" />
   </Style>
 
   <Style Selector="Border.SideRail">

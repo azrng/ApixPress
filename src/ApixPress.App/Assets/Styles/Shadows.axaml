@@ -19,7 +19,7 @@
   <!-- 右侧抽屉：投影朝左（负 X 偏移，BoxShadow 只接受纯数值，不能带 px） -->
   <BoxShadows x:Key="Shadow.Drawer.Left">-24 0 48 0 #0F172A28</BoxShadows>
   <BoxShadows x:Key="Shadow.Overlay">0 16 40 0 #140F172A</BoxShadows>
-  <BoxShadows x:Key="Shadow.Brand.Soft">0 12 28 0 #4C84F014</BoxShadows>
-  <BoxShadows x:Key="Shadow.Brand">0 18 36 0 #4C84F022</BoxShadows>
-  <BoxShadows x:Key="Shadow.Brand.Tight">0 8 18 0 #4C84F020</BoxShadows>
+  <BoxShadows x:Key="Shadow.Brand.Soft">0 12 28 0 #382FB6C5</BoxShadows>
+  <BoxShadows x:Key="Shadow.Brand">0 18 36 0 #4C2FB6C5</BoxShadows>
+  <BoxShadows x:Key="Shadow.Brand.Tight">0 8 18 0 #302FB6C5</BoxShadows>
 </ResourceDictionary>

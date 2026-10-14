@@ -623,6 +623,11 @@ public static class ViewModelSharedTestDoubles
             return Task.FromResult<IResultModel<ProjectWorkspaceDto>>(ResultModel<ProjectWorkspaceDto>.Failure("未实现"));
         }
 
+        public Task<IResultModel<bool>> SetProjectOrderAsync(IReadOnlyList<string> projectIds, CancellationToken cancellationToken)
+        {
+            return Task.FromResult<IResultModel<bool>>(ResultModel<bool>.Success(true));
+        }
+
         public Task<IResultModel<bool>> DeleteAsync(string projectId, CancellationToken cancellationToken)
         {
             DeleteCallCount++;
