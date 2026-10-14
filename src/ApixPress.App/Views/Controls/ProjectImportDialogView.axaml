@@ -115,9 +115,25 @@
                          Text="{Binding UrlModeTitle}" />
               <TextBlock Classes="CaptionText"
                          Text="{Binding UrlDescription}" />
-              <TextBox Classes="SectionInput DialogInput"
-                       PlaceholderText="{Binding UrlWatermark}"
-                       Text="{Binding ImportUrl}" />
+              <AutoCompleteBox Classes="ProjectImportUrlInput"
+                                ItemsSource="{Binding RecentImportUrls}"
+                                MinimumPrefixLength="0"
+                                IsTextCompletionEnabled="False"
+                                IsDropDownOpen="{Binding IsImportUrlHistoryOpen, Mode=TwoWay}"
+                                SearchText="{Binding ImportUrlHistorySearchText, Mode=TwoWay}"
+                                PlaceholderText="{Binding UrlWatermark}"
+                                Text="{Binding ImportUrl, Mode=TwoWay}">
+                <AutoCompleteBox.InnerRightContent>
+                  <Button Classes="IconButton"
+                          ToolTip.Tip="{Binding ImportUrlHistoryTooltip}"
+                          Focusable="False"
+                          IsVisible="{Binding HasRecentImportUrls}"
+                          Command="{Binding OpenRecentImportUrlsCommand}">
+                    <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                               Text="&#xE70D;" />
+                  </Button>
+                </AutoCompleteBox.InnerRightContent>
+              </AutoCompleteBox>
               <StackPanel Orientation="Horizontal"
                           HorizontalAlignment="Right"
                           Spacing="{StaticResource Space.2}">

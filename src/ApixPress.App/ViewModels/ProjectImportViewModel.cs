@@ -97,6 +97,16 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
 
     public BatchObservableCollection<ProjectImportedDocumentItemViewModel> ImportedApiDocuments { get; } = [];
 
+    public IReadOnlyList<string> RecentImportUrls => ImportedApiDocuments
+        .Where(document => document.SourceTypeText == ImportTexts.SourceTypeUrl)
+        .Select(document => document.SourceValueText)
+        .Where(url => !string.IsNullOrWhiteSpace(url) && url != "-")
+        .Distinct(StringComparer.Ordinal)
+        .Take(10)
+        .ToArray();
+
+    public bool HasRecentImportUrls => RecentImportUrls.Count > 0;
+
     public RequestCaseDeliveryViewModel Delivery { get; }
 
     public bool IsImportFileMode => SelectedImportDataMode == ImportDataModes.File;
@@ -177,6 +187,7 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
     public string UrlDescription => ImportTexts.UrlDescription;
     public string UrlWatermark => ImportTexts.UrlWatermark;
     public string ImportUrlButtonText => ImportTexts.ImportUrlButton;
+    public string ImportUrlHistoryTooltip => ImportTexts.UrlHistoryTooltip;
     public string BusyOverlayDescription => ImportTexts.BusyOverlayDescription;
 
     [ObservableProperty]
@@ -187,6 +198,12 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
 
     [ObservableProperty]
     private string importUrl = string.Empty;
+
+    [ObservableProperty]
+    private string importUrlHistorySearchText = string.Empty;
+
+    [ObservableProperty]
+    private bool isImportUrlHistoryOpen;
 
     [ObservableProperty]
     private bool isImportDataBusy;
@@ -304,6 +321,24 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
     private void ShowImportUrlMode()
     {
         SelectedImportDataMode = ImportDataModes.Url;
+    }
+
+    [RelayCommand]
+    private void OpenRecentImportUrls()
+    {
+        if (!HasRecentImportUrls)
+        {
+            return;
+        }
+
+        if (IsImportUrlHistoryOpen)
+        {
+            IsImportUrlHistoryOpen = false;
+            return;
+        }
+
+        ImportUrlHistorySearchText = string.Empty;
+        IsImportUrlHistoryOpen = true;
     }
 
     [RelayCommand]
@@ -753,6 +788,8 @@ public partial class ProjectImportViewModel : ViewModelBase, IDialogContext
         OnPropertyChanged(nameof(HasImportedApiDocuments));
         OnPropertyChanged(nameof(ShowImportedApiDocumentsEmptyState));
         OnPropertyChanged(nameof(ImportedApiDocumentCountText));
+        OnPropertyChanged(nameof(RecentImportUrls));
+        OnPropertyChanged(nameof(HasRecentImportUrls));
     }
 
     private static string BuildImportConflictKey(string method, string path)

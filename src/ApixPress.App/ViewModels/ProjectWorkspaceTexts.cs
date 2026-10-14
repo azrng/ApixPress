@@ -85,6 +85,7 @@ internal static class ImportTexts
     public const string UrlDescription = "输入可直接访问的 OpenAPI / Swagger 文档地址。";
     public const string UrlWatermark = "https://example.com/swagger/v1/swagger.json";
     public const string ImportUrlButton = "导入 URL";
+    public const string UrlHistoryTooltip = "选择之前成功导入的 URL";
     public const string BusyOverlayDescription = "导入期间会暂时锁定当前对话框，完成后会自动展示结果。";
     public const string BusyProcessing = "正在处理 Swagger 导入...";
     public const string PackageBusyProcessing = "正在处理项目数据包导入...";
