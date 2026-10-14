@@ -1,5 +1,7 @@
 <Project>
   <PropertyGroup>
+    <!-- 隔离构建产物不能重新作为源码参与下一次编译。 -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/artifacts/**</DefaultItemExcludes>
     <ApixPressVersionFile Condition="'$(ApixPressVersionFile)' == ''">$(MSBuildThisFileDirectory)VERSION</ApixPressVersionFile>
     <ApixPressLegacyVersion Condition="'$(ApixPressLegacyVersion)' == '' and Exists('$(ApixPressVersionFile)')">$([System.String]::Copy($([System.IO.File]::ReadAllText('$(ApixPressVersionFile)'))).Trim())</ApixPressLegacyVersion>
     <ApixPressLegacyVersionIsExplicit Condition="'$(ApixPressLegacyVersion)' != ''">$([System.Text.RegularExpressions.Regex]::IsMatch('$(ApixPressLegacyVersion)', '^\d+\.\d+\.\d+(?:\.\d+)?$'))</ApixPressLegacyVersionIsExplicit>

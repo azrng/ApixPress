@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="using:ApixPress.App.ViewModels"
+             xmlns:views="using:ApixPress.App.Views.Controls"
              x:Class="ApixPress.App.Views.Controls.HttpInterfaceBodyTabView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
@@ -205,14 +206,8 @@
 
       <Border IsVisible="{Binding ConfigTab.HasRawBodyEditor}"
               Classes="RawEditorCard">
-        <TextBox AcceptsReturn="True"
-                 BorderThickness="0"
-                 Background="Transparent"
-                 TextWrapping="Wrap"
-                 VerticalContentAlignment="Top"
-                 PlaceholderText="{Binding ConfigTab.RequestBodyWatermark}"
-                 Text="{Binding ConfigTab.RequestBody}"
-                 FontFamily="{StaticResource Font.Monospace}" />
+        <views:RequestBodyEditor Text="{Binding ConfigTab.RequestBody, Mode=TwoWay}"
+                                 PlaceholderText="{Binding ConfigTab.RequestBodyWatermark}" />
       </Border>
 
       <Border IsVisible="{Binding ConfigTab.ShowBodyModeEmptyState}"

@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Messaging;
 using ApixPress.App.Messages;
+using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Implementations;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
@@ -21,6 +22,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     private readonly IClipboardService _clipboardService;
     private readonly IMessenger? _messenger;
     private RequestWorkspaceTabViewModel? _subscribedWorkspaceTab;
+    private bool _snapshotRefreshPending;
 
     private string _currentEditorTitle = "新建...";
     private string _currentEditorDescription = "从下方卡片中选择要创建的工作内容。";
@@ -399,6 +401,13 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
 
     public void NotifyStateChanged()
     {
+        if (IsDisposed || DeferSnapshotRefresh())
+        {
+            return;
+        }
+
+        _computedStateDebounceTimer?.Stop();
+        _snapshotRefreshPending = false;
         EnsureActiveWorkspaceSubscriptions();
         OnPropertyChanged(nameof(ConfigTab));
         OnPropertyChanged(nameof(ResponseSection));
@@ -442,8 +451,15 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     /// </summary>
     public void NotifyWorkspaceEditorChanged()
     {
-        if (IsDisposed)
+        if (IsDisposed || DeferSnapshotRefresh())
         {
+            return;
+        }
+
+        if (_snapshotRefreshPending)
+        {
+            // 回填结束立即发布完整状态，用户输入仍走原有防抖。
+            NotifyStateChanged();
             return;
         }
 
@@ -464,6 +480,17 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     }
 
     private RequestWorkspaceTabViewModel? ActiveWorkspaceTab => _workspaceContext.GetActiveWorkspaceTab();
+
+    private bool DeferSnapshotRefresh()
+    {
+        if (ActiveWorkspaceTab?.IsApplyingState != true)
+        {
+            return false;
+        }
+
+        _snapshotRefreshPending = true;
+        return true;
+    }
 
     private RequestWorkspaceTabViewModel ResolveWorkspaceTabOrFallback()
     {
@@ -515,7 +542,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
 
     private void OnConfigTabPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (IsDisposed)
+        if (IsDisposed || DeferSnapshotRefresh())
         {
             return;
         }
@@ -587,7 +614,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
 
     private void OnConfigCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        if (IsDisposed)
+        if (IsDisposed || DeferSnapshotRefresh())
         {
             return;
         }
@@ -597,7 +624,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
 
     private void OnResponseSectionPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (IsDisposed)
+        if (IsDisposed || DeferSnapshotRefresh())
         {
             return;
         }
@@ -750,7 +777,20 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
 
         try
         {
-            var snapshot = workspace.BuildSnapshot();
+            // URL 预览只需要路径与查询参数，不能为它序列化整份表单或复制请求正文。
+            var snapshot = new RequestSnapshotDto
+            {
+                Method = workspace.SelectedMethod,
+                Url = workspace.RequestUrl,
+                QueryParameters = workspace.ConfigTab.QueryParameters.Select(item => new RequestKeyValueDto
+                {
+                    Name = item.Name, Value = item.Value, IsEnabled = item.IsEnabled
+                }).ToList(),
+                PathParameters = workspace.ConfigTab.PathParameters.Select(item => new RequestKeyValueDto
+                {
+                    Name = item.Name, Value = item.Value, IsEnabled = item.IsEnabled
+                }).ToList()
+            };
             var finalUrl = RequestExecutionService.BuildUrl(snapshot, baseUrl, variables);
             return $"发送预览：{snapshot.Method.ToUpperInvariant()} {finalUrl}";
         }
@@ -803,7 +843,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         SetComputedProperty(ref _currentHttpDocumentBodyModeText, configTab.HasBodyContent
             ? (configTab.SelectedBodyModeOption?.DisplayName ?? configTab.SelectedBodyMode)
             : "无", nameof(CurrentHttpDocumentBodyModeText));
-        SetComputedProperty(ref _currentHttpDocumentUrl, ResolveCurrentHttpDocumentUrl(), nameof(CurrentHttpDocumentUrl));
+        SetComputedProperty(ref _currentHttpDocumentUrl, _isHttpDocumentPreviewMode ? ResolveCurrentHttpDocumentUrl() : string.Empty, nameof(CurrentHttpDocumentUrl));
         SetComputedProperty(ref _currentResponseValidationResultText, ResolveCurrentResponseValidationResultText(responseSection), nameof(CurrentResponseValidationResultText));
         SetComputedProperty(ref _currentHttpDocumentResponseSummary, responseSection.HasResponse
             ? _currentResponseValidationResultText
@@ -813,7 +853,8 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
         SetComputedProperty(ref _currentHttpDocumentBodyPreview, hasHttpDocumentBodyPreview
             ? responseSection.BodyText
             : "{ }", nameof(CurrentHttpDocumentBodyPreview));
-        SetComputedProperty(ref _currentHttpDocumentCurlSnippet, ResolveCurrentHttpDocumentCurlSnippet(), nameof(CurrentHttpDocumentCurlSnippet));
+        // 文档未打开时不拼接整份正文；切换到预览会立即以当前完整状态生成。
+        SetComputedProperty(ref _currentHttpDocumentCurlSnippet, _isHttpDocumentPreviewMode ? ResolveCurrentHttpDocumentCurlSnippet() : string.Empty, nameof(CurrentHttpDocumentCurlSnippet));
         SetComputedProperty(ref _canGenerateRequestCode, workspace is not null && !workspace.IsLandingTab, nameof(CanGenerateRequestCode));
     }
 
@@ -971,6 +1012,7 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     protected override void DisposeManaged()
     {
         _computedStateDebounceTimer?.Stop();
+        _computedStateDebounceTimer?.Dispose();
         _computedStateDebounceTimer = null;
         DetachWorkspaceSubscriptions(_subscribedWorkspaceTab);
         _subscribedWorkspaceTab = null;

@@ -131,6 +131,7 @@ public static class ViewModelSharedTestDoubles
 
         public List<RequestCaseDto> Cases { get; } = [];
         public TaskCompletionSource<bool>? DetailLoadGate { get; set; }
+        public CancellationToken LastDetailCancellationToken { get; private set; }
         public int GetCasesCallCount { get; private set; }
         public int GetDetailCallCount { get; private set; }
         public bool ShouldFailSave { get; set; }
@@ -179,6 +180,7 @@ public static class ViewModelSharedTestDoubles
 
         public async Task<RequestCaseDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
         {
+            LastDetailCancellationToken = cancellationToken;
             GetDetailCallCount++;
             if (DetailLoadGate is not null)
             {

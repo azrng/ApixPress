@@ -223,7 +223,13 @@
                 <Border Classes="HttpResponseBodyCard"
                         Margin="{StaticResource Pad.Top2}">
                   <!-- AvaloniaEdit 只读查看器：大响应仅排版可视区，替代整页 Run 构建的 SelectableTextBlock -->
-                  <views:ResponseBodyEditor Text="{Binding ResponseSection.BodyText}" />
+                  <ContentControl x:Name="ResponseBodyHost">
+                    <ContentControl.ContentTemplate>
+                      <DataTemplate x:DataType="vm:ProjectTabViewModel">
+                        <views:ResponseBodyEditor Text="{Binding ResponseSection.BodyText}" />
+                      </DataTemplate>
+                    </ContentControl.ContentTemplate>
+                  </ContentControl>
                 </Border>
               </TabItem>
               <TabItem Header="Headers">
@@ -257,7 +263,13 @@
                 </Border>
               </TabItem>
               <TabItem Header="实际请求">
-                <views:ActualRequestPanelView DataContext="{Binding ResponseSection}" />
+                <ContentControl x:Name="ActualRequestHost">
+                  <ContentControl.ContentTemplate>
+                    <DataTemplate x:DataType="vm:ProjectTabViewModel">
+                      <views:ActualRequestPanelView DataContext="{Binding ResponseSection}" />
+                    </DataTemplate>
+                  </ContentControl.ContentTemplate>
+                </ContentControl>
               </TabItem>
             </TabControl>
           </Grid>

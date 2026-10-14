@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="using:ApixPress.App.ViewModels"
+             xmlns:views="using:ApixPress.App.Views.Controls"
              x:Class="ApixPress.App.Views.Controls.ActualRequestPanelView"
              x:DataType="vm:ResponseSectionViewModel"
              mc:Ignorable="d">
@@ -92,18 +93,19 @@
                        Text="{Binding ActualRequestBodyContentType}" />
           </StackPanel>
           <Border Classes="HttpResponseBodyCard">
-            <ScrollViewer MaxHeight="360"
-                          HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Disabled">
-              <StackPanel>
-                <SelectableTextBlock Classes="HttpResponseBodyViewer"
-                                     IsVisible="{Binding HasActualRequestBody}"
-                                     Text="{Binding ActualRequestBodyText}" />
+            <Grid MaxHeight="360">
+                <ContentControl Content="{Binding}"
+                                IsVisible="{Binding HasActualRequestBody}">
+                  <ContentControl.ContentTemplate>
+                    <DataTemplate x:DataType="vm:ResponseSectionViewModel">
+                      <views:ResponseBodyEditor Text="{Binding ActualRequestBodyText}" />
+                    </DataTemplate>
+                  </ContentControl.ContentTemplate>
+                </ContentControl>
                 <TextBlock IsVisible="{Binding !HasActualRequestBody}"
                            Classes="SubtleText"
                            Text="（空）" />
-              </StackPanel>
-            </ScrollViewer>
+            </Grid>
           </Border>
         </StackPanel>
 

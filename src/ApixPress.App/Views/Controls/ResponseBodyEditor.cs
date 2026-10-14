@@ -69,7 +69,11 @@ public class ResponseBodyEditor : TextEditor
         base.OnPropertyChanged(change);
         if (change.Property == TextProperty)
         {
-            Document.Text = change.NewValue as string ?? string.Empty;
+            var text = change.NewValue as string ?? string.Empty;
+            if (!string.Equals(Document.Text, text, StringComparison.Ordinal))
+            {
+                Document.Text = text;
+            }
         }
     }
 

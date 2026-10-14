@@ -1739,8 +1739,9 @@ public sealed partial class ProjectTabViewModelTests
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
 
-        viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
+        viewModel.Workspace.OpenHttpInterfaceWorkspaceCommand.Execute(null);
         viewModel.Editor.RequestUrl = "https://demo.local/orders";
+        viewModel.Editor.ShowHttpDocumentPreviewModeCommand.Execute(null);
 
         Assert.DoesNotContain("status=open", viewModel.Editor.CurrentHttpDocumentCurlSnippet);
 

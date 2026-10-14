@@ -36,6 +36,9 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     public RequestConfigTabViewModel ConfigTab { get; }
     public ResponseSectionViewModel ResponseSection { get; }
 
+    /// <summary>快照回填期间不计算中间态预览，由最终工作区通知统一刷新。</summary>
+    internal bool IsApplyingState => _bulkStateMutationDepth > 0;
+
     [ObservableProperty]
     private string id = Guid.NewGuid().ToString("N");
 

@@ -34,6 +34,9 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
     private int _navigationRebuildSuspendCount;
     private bool _interfaceNavigationRebuildPending;
     private bool _quickRequestNavigationRebuildPending;
+    private CancellationTokenSource? _detailLoadCancellationTokenSource;
+    private RequestWorkspaceTabViewModel? _detailLoadTargetTab;
+    private string _detailLoadRequestId = string.Empty;
 
     public ProjectWorkspaceCatalogViewModel(
         string projectId,
@@ -59,6 +62,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
         _dialogService = dialogService;
 
         _useCasesPanel.RequestCasesChanged += OnRequestCasesChanged;
+        _workspace.PropertyChanged += OnWorkspacePropertyChanged;
     }
 
     public ObservableCollection<ExplorerItemViewModel> InterfaceTreeItems { get; } = [];
@@ -135,6 +139,8 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
 
     protected override void DisposeManaged()
     {
+        CancelPendingDetailLoad();
+        _workspace.PropertyChanged -= OnWorkspacePropertyChanged;
         CancellationTokenSourceHelper.CancelAndDispose(ref _interfaceSearchDebounceCancellationTokenSource);
         _useCasesPanel.RequestCasesChanged -= OnRequestCasesChanged;
         DisposeExplorerItems(InterfaceTreeItems);
@@ -147,13 +153,14 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
 
     public async Task LoadWorkspaceItem(ExplorerItemViewModel? item)
     {
-        if (item is null)
+        if (item is null || IsDisposed)
         {
             return;
         }
 
         if (string.Equals(item.NodeType, "interface-root", StringComparison.OrdinalIgnoreCase))
         {
+            CancelPendingDetailLoad();
             await _openInterfaceRootWorkspaceAsync();
             return;
         }
@@ -171,15 +178,26 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
             return;
         }
 
-        var source = item.SourceCase;
+        // 已加载的共享详情优先于树节点摘要，避免重新应用空参数后再回填一遍。
+        var source = item.SourceCaseItem?.SourceCase is { HasLoadedDetail: true } cachedDetail
+            ? cachedDetail
+            : item.SourceCase;
+        item.SourceCase = source;
         var openStopwatch = System.Diagnostics.Stopwatch.StartNew();
         _showInterfaceManagementSection();
         var previousActiveTab = _workspace.ActiveWorkspaceTab;
         var activeTabHasUnsavedChanges = previousActiveTab is { HasUnsavedChanges: true }
             && !IsTabStillEditingSource(previousActiveTab, source);
         var targetTab = _workspace.ResolveTabForWorkspaceNavigation(source);
+        var hasPendingDetail = _detailLoadCancellationTokenSource is not null
+            && ReferenceEquals(_detailLoadTargetTab, targetTab)
+            && string.Equals(_detailLoadRequestId, source.Id, StringComparison.OrdinalIgnoreCase);
+        if (!hasPendingDetail)
+        {
+            CancelPendingDetailLoad();
+        }
         // 标签已在编辑该用例且有未保存修改时只激活不回填：旧快照覆盖编辑器状态会导致保存出陈旧数据
-        if (!IsTabStillEditingSource(targetTab, source) || !targetTab.HasUnsavedChanges)
+        if (!hasPendingDetail && (!IsTabStillEditingSource(targetTab, source) || !targetTab.HasUnsavedChanges))
         {
             ApplyWorkspaceItemToTab(targetTab, source);
         }
@@ -201,10 +219,18 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
 
         if (source.HasLoadedDetail)
         {
+            PerfLog.Log("树节点·详情就绪", openStopwatch.ElapsedMilliseconds);
             return;
         }
 
-        _ = LoadWorkspaceItemDetailAsync(item, targetTab, source);
+        if (!hasPendingDetail)
+        {
+            var cancellation = new CancellationTokenSource();
+            _detailLoadCancellationTokenSource = cancellation;
+            _detailLoadTargetTab = targetTab;
+            _detailLoadRequestId = source.Id;
+            _ = LoadWorkspaceItemDetailAsync(item, targetTab, source, cancellation, openStopwatch);
+        }
     }
 
     public Task OpenHttpInterfaceAsync(RequestCaseDto source)
@@ -854,25 +880,75 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
     private async Task LoadWorkspaceItemDetailAsync(
         ExplorerItemViewModel item,
         RequestWorkspaceTabViewModel targetTab,
-        RequestCaseDto source)
+        RequestCaseDto source,
+        CancellationTokenSource cancellation,
+        System.Diagnostics.Stopwatch openStopwatch)
     {
+        var cancellationToken = cancellation.Token;
         try
         {
             await Task.Yield();
-            var detail = await EnsureCaseDetailLoadedAsync(item);
+            var detail = await EnsureCaseDetailLoadedAsync(item, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (IsDisposed || !_workspace.WorkspaceTabs.Contains(targetTab))
+            {
+                return;
+            }
+
             if (string.Equals(detail.Id, source.Id, StringComparison.OrdinalIgnoreCase)
                 && IsTabStillEditingSource(targetTab, source)
                 && !targetTab.HasUnsavedChanges)
             {
                 ApplyWorkspaceItemToTab(targetTab, detail);
+                PerfLog.Log("树节点·详情就绪", openStopwatch.ElapsedMilliseconds);
                 _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             }
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // 切换、关闭或释放工作区时的主动取消不属于加载失败。
+        }
         catch (Exception exception)
         {
+            if (IsDisposed || cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
             _messenger.Send(new StatusMessageRequest($"加载接口详情失败：{exception.Message}"));
             _messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
         }
+        finally
+        {
+            if (ReferenceEquals(_detailLoadCancellationTokenSource, cancellation))
+            {
+                _detailLoadCancellationTokenSource = null;
+                _detailLoadTargetTab = null;
+                _detailLoadRequestId = string.Empty;
+            }
+
+            cancellation.Dispose();
+        }
+    }
+
+    private void OnWorkspacePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ProjectWorkspaceTabsViewModel.ActiveWorkspaceTab)
+            && _detailLoadTargetTab is not null
+            && !ReferenceEquals(_workspace.ActiveWorkspaceTab, _detailLoadTargetTab))
+        {
+            CancelPendingDetailLoad();
+        }
+    }
+
+    private void CancelPendingDetailLoad()
+    {
+        var cancellation = _detailLoadCancellationTokenSource;
+        _detailLoadCancellationTokenSource = null;
+        _detailLoadTargetTab = null;
+        _detailLoadRequestId = string.Empty;
+        // CTS 由异步任务结束时释放，防止旧任务访问已释放的 Token。
+        cancellation?.Cancel();
     }
 
     private string ResolveLatestCaseName(string interfaceId)
@@ -892,8 +968,9 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
                || requestCase.RequestSnapshot.EndpointId.StartsWith(DeliveryEndpointKeyPrefix, StringComparison.OrdinalIgnoreCase);
     }
 
-    private async Task<RequestCaseDto> EnsureCaseDetailLoadedAsync(ExplorerItemViewModel item)
+    private async Task<RequestCaseDto> EnsureCaseDetailLoadedAsync(ExplorerItemViewModel item, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var requestCase = item.SourceCase;
         if (requestCase is null)
         {
@@ -911,7 +988,8 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
             return cachedDetail;
         }
 
-        var detail = await _requestCaseService.GetDetailAsync(_projectId, requestCase.Id, CancellationToken.None);
+        var detail = await _requestCaseService.GetDetailAsync(_projectId, requestCase.Id, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         if (detail is null)
         {
             return requestCase;

@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Threading;
 using ApixPress.App.ViewModels;
+using ApixPress.App.Helpers;
 
 namespace ApixPress.App.Views.Controls;
 
@@ -15,22 +16,13 @@ public partial class RequestEditorWorkspaceView : UserControl
         InitializeComponent();
         DataContextChanged += (_, _) =>
         {
-            _viewModel = DataContext as ProjectTabViewModel;
             Unsubscribe();
+            _viewModel = DataContext as ProjectTabViewModel;
             EnsureSubscribed();
         };
         AttachedToVisualTree += (_, _) => EnsureSubscribed();
         DetachedFromVisualTree += (_, _) => Unsubscribe();
     }
-
-    /// <summary>编辑器属性名 -> 工作台宿主。首次可见才实例化对应工作台。</summary>
-    private static (string PropertyName, ContentControl Host, Func<Control> Factory)[] ResolveHosts(
-        RequestEditorWorkspaceView view) =>
-    [
-        ("IsQuickRequestEditor", view.QuickRequestWorkbenchHost, () => new QuickRequestWorkbenchView()),
-        ("ShowHttpWorkbenchContent", view.HttpWorkbenchHost, () => new HttpInterfaceWorkbenchView()),
-        ("ShowHttpDocumentPreviewContent", view.HttpDocumentHost, () => new HttpDocumentWorkspaceView())
-    ];
 
     private void EnsureSubscribed()
     {
@@ -72,29 +64,22 @@ public partial class RequestEditorWorkspaceView : UserControl
             return;
         }
 
-        foreach (var (propertyName2, host, factory) in ResolveHosts(this))
+        if (propertyName is null or nameof(ProjectRequestEditorViewModel.IsQuickRequestEditor)
+            && _viewModel.Editor.IsQuickRequestEditor && QuickRequestWorkbenchHost.Content is null)
         {
-            if (host.Content is not null)
-            {
-                continue;
-            }
+            QuickRequestWorkbenchHost.Content = PerfLog.Measure("右侧工作台·快捷请求创建", () => new QuickRequestWorkbenchView());
+        }
 
-            var visible = propertyName2 switch
-            {
-                "IsQuickRequestEditor" => _viewModel.Editor.IsQuickRequestEditor,
-                "ShowHttpWorkbenchContent" => _viewModel.Editor.ShowHttpWorkbenchContent,
-                _ => _viewModel.Editor.ShowHttpDocumentPreviewContent
-            };
+        if (propertyName is null or nameof(ProjectRequestEditorViewModel.ShowHttpWorkbenchContent)
+            && _viewModel.Editor.ShowHttpWorkbenchContent && HttpWorkbenchHost.Content is null)
+        {
+            HttpWorkbenchHost.Content = PerfLog.Measure("右侧工作台·HTTP 创建", () => new HttpInterfaceWorkbenchView());
+        }
 
-            if (!visible)
-            {
-                continue;
-            }
-
-            if (propertyName is null || propertyName == propertyName2)
-            {
-                host.Content = factory();
-            }
+        if (propertyName is null or nameof(ProjectRequestEditorViewModel.ShowHttpDocumentPreviewContent)
+            && _viewModel.Editor.ShowHttpDocumentPreviewContent && HttpDocumentHost.Content is null)
+        {
+            HttpDocumentHost.Content = PerfLog.Measure("右侧工作台·文档创建", () => new HttpDocumentWorkspaceView());
         }
     }
 }

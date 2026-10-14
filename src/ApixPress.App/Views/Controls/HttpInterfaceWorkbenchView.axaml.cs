@@ -8,6 +8,7 @@ public partial class HttpInterfaceWorkbenchView : UserControl
 {
     private ProjectTabViewModel? _viewModel;
     private RequestConfigTabViewModel? _configTab;
+    private ResponseSectionViewModel? _responseSection;
     private HttpInterfaceParamsTabView? _paramsTabView;
     private HttpInterfaceBodyTabView? _bodyTabView;
     private HttpInterfaceHeadersTabView? _headersTabView;
@@ -22,6 +23,7 @@ public partial class HttpInterfaceWorkbenchView : UserControl
         {
             Subscribe();
             UpdateHostedContent();
+            UpdateResponseContent();
         };
         DetachedFromVisualTree += (_, _) => Unsubscribe();
     }
@@ -29,6 +31,8 @@ public partial class HttpInterfaceWorkbenchView : UserControl
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         Unsubscribe();
+        ResponseBodyHost.Content = null;
+        ActualRequestHost.Content = null;
 
         _viewModel = DataContext as ProjectTabViewModel;
         if (_viewModel is null)
@@ -40,6 +44,7 @@ public partial class HttpInterfaceWorkbenchView : UserControl
         UpdateCachedViewDataContexts();
         Subscribe();
         UpdateHostedContent();
+        UpdateResponseContent();
     }
 
     private void Subscribe()
@@ -51,6 +56,7 @@ public partial class HttpInterfaceWorkbenchView : UserControl
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         WireConfigTab(_viewModel.ConfigTab);
+        WireResponseSection(_viewModel.ResponseSection);
         _isSubscribed = true;
     }
 
@@ -62,6 +68,7 @@ public partial class HttpInterfaceWorkbenchView : UserControl
         }
 
         WireConfigTab(null);
+        WireResponseSection(null);
         _isSubscribed = false;
     }
 
@@ -72,6 +79,59 @@ public partial class HttpInterfaceWorkbenchView : UserControl
         {
             WireConfigTab(_viewModel?.ConfigTab);
             UpdateHostedContent();
+        }
+
+        if (e.PropertyName == nameof(ProjectTabViewModel.ResponseSection)
+            || string.IsNullOrWhiteSpace(e.PropertyName))
+        {
+            WireResponseSection(_viewModel?.ResponseSection);
+            UpdateResponseContent();
+        }
+    }
+
+    private void WireResponseSection(ResponseSectionViewModel? responseSection)
+    {
+        if (ReferenceEquals(_responseSection, responseSection))
+        {
+            return;
+        }
+
+        if (_responseSection is not null)
+        {
+            _responseSection.PropertyChanged -= OnResponsePropertyChanged;
+        }
+
+        _responseSection = responseSection;
+        if (_responseSection is not null)
+        {
+            _responseSection.PropertyChanged += OnResponsePropertyChanged;
+        }
+    }
+
+    private void OnResponsePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ResponseSectionViewModel.HasResponse)
+            or nameof(ResponseSectionViewModel.SelectedResponseTab) or null or "")
+        {
+            UpdateResponseContent();
+        }
+    }
+
+    private void UpdateResponseContent()
+    {
+        if (_responseSection?.HasResponse != true || _viewModel is null)
+        {
+            return;
+        }
+
+        // 首次点击接口只创建请求配置与响应空态，重量级内容等到真正被查看时才实例化。
+        if (_responseSection.SelectedResponseTab == 0)
+        {
+            ResponseBodyHost.Content = _viewModel;
+        }
+        else if (_responseSection.SelectedResponseTab == 2)
+        {
+            ActualRequestHost.Content = _viewModel;
         }
     }
 
@@ -129,6 +189,8 @@ public partial class HttpInterfaceWorkbenchView : UserControl
 
     private void ClearCachedViews()
     {
+        ResponseBodyHost.Content = null;
+        ActualRequestHost.Content = null;
         ConfigTabContentHost.Children.Clear();
         _currentSelectedTabIndex = null;
         _paramsTabView = null;
