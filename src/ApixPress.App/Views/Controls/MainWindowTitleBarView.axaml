@@ -39,11 +39,7 @@
               <ToggleButton Classes="WorkspaceTabButton HomeTabButton"
                             Command="{Binding ActivateHomeTabCommand}"
                             IsChecked="{Binding IsHomeTabActive, Mode=OneWay}">
-                <StackPanel Orientation="Horizontal"
-                            Spacing="{StaticResource Space.1}">
-                  <TextBlock Text="首页" />
-                  <u:Badge Header="{Binding ProjectPanel.Projects.Count}" />
-                </StackPanel>
+                <TextBlock Text="首页" />
               </ToggleButton>
 
               <ItemsControl ItemsSource="{Binding ProjectTabs}">

@@ -230,9 +230,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDialogContext
     public string CurrentProjectName => ActiveProjectTab?.Project.Name ?? "项目列表";
     public string CurrentProjectSummary => ActiveProjectTab?.Summary.ProjectSummary ?? "在首页选择项目后，会以新的标签页打开快捷请求工作区。";
     public string CurrentEnvironmentLabel => ActiveProjectTab?.Summary.CurrentEnvironmentLabel ?? "未选择环境";
-    public string BrowserStatusText => ProjectPanel.HasProjects
-        ? "选择一个项目会在顶部新开标签页，并保留首页列表。"
-        : "当前还没有项目，请先创建一个项目。";
+    public string BrowserStatusText => string.Empty;
     public string RuntimeStackText { get; } = ".NET 10 / Avalonia 12 / Ursa 2";
     public string WindowMaximizeGlyph => IsWindowMaximized ? "\u2750" : "\u25A1";
 

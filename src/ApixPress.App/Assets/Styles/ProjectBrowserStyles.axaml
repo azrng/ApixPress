@@ -171,12 +171,15 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
   </Style>
 
-  <Style Selector="TextBlock.HomeProjectDragHandleIcon">
-    <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-    <Setter Property="FontSize" Value="14" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  <Style Selector="Grid.HomeProjectDragGrip">
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Ellipse.HomeProjectDragGripDot">
+    <Setter Property="Width" Value="{StaticResource Space.1}" />
+    <Setter Property="Height" Value="{StaticResource Space.1}" />
+    <Setter Property="Fill" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 
   <Style Selector="Border.HomeProjectTileIcon">
@@ -196,7 +199,6 @@
   <Style Selector="TextBlock.HomeProjectTileSummary">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="LineHeight" Value="20" />
-    <Setter Property="MinHeight" Value="40" />
   </Style>
 
   <Style Selector="Border.HomeProjectTileTag">
@@ -209,12 +211,6 @@
 
   <Style Selector="Border.HomeProjectTileTagMuted">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-  </Style>
-
-  <Style Selector="Border.HomeProjectTileEntry">
-    <Setter Property="Background" Value="{DynamicResource Brush.Status.Info.Background}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.2},{StaticResource Pad.1}" />
   </Style>
 
   <Style Selector="Border.SideRail">

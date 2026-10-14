@@ -13,44 +13,29 @@
   <ScrollViewer IsVisible="{Binding IsHomeTabActive}"
                 HorizontalScrollBarVisibility="Disabled">
     <Grid Margin="{StaticResource Pad.4}"
-          RowDefinitions="Auto,Auto,*"
-          RowSpacing="{StaticResource Space.4}">
+          RowDefinitions="Auto,*"
+          RowSpacing="{StaticResource Space.3}">
         <Border Classes="HomeContentHeaderCard">
-          <Grid ColumnDefinitions="*"
-                ColumnSpacing="{StaticResource Space.4}">
-            <StackPanel Spacing="{StaticResource Space.2}">
-              <StackPanel Classes="HomeMetricRow"
-                          Orientation="Horizontal"
-                          Spacing="{StaticResource Space.2}">
-                <TextBlock Classes="PageTitle"
-                           Text="项目首页" />
-                <u:Badge Header="本地工作区" />
-              </StackPanel>
-              <StackPanel Orientation="Horizontal"
-                          Spacing="{StaticResource Space.2}">
-                <TextBlock Classes="CaptionText HomeMetricValue"
-                           Text="{Binding ProjectPanel.Projects.Count}" />
-                <TextBlock Classes="CaptionText"
-                           Text="个项目" />
-              </StackPanel>
-            </StackPanel>
-          </Grid>
-        </Border>
-
-        <Border Grid.Row="1"
-                Classes="HomeContentToolbarCard">
           <Grid RowDefinitions="Auto,Auto"
                 RowSpacing="{StaticResource Space.2}">
-            <Grid ColumnDefinitions="*,Auto"
-                  ColumnSpacing="{StaticResource Space.3}">
-              <TextBox Grid.Column="0"
-                       Width="240"
+            <Grid ColumnDefinitions="*,Auto,*"
+                  ColumnSpacing="{StaticResource Space.4}">
+              <StackPanel Classes="HomeMetricRow"
+                          Orientation="Horizontal"
+                          VerticalAlignment="Center">
+                <TextBlock Classes="PageTitle"
+                           Text="项目首页" />
+              </StackPanel>
+              <TextBox Grid.Column="1"
+                       Width="260"
                        Classes="ToolbarSearchBox"
                        PlaceholderText="搜索项目名称或备注"
+                       VerticalAlignment="Center"
                        Text="{Binding ProjectPanel.SearchText}" />
-              <Button Grid.Column="1"
+              <Button Grid.Column="2"
                       Classes="PrimaryButton HomeCreateProjectButton"
                       Content="+ 新建项目"
+                      HorizontalAlignment="Right"
                       Command="{Binding OpenCreateProjectDialogCommand}" />
             </Grid>
             <TextBlock Grid.Row="1"
@@ -60,7 +45,7 @@
           </Grid>
         </Border>
 
-        <Border Grid.Row="2"
+        <Border Grid.Row="1"
                 Classes="HomeContentBodyCard">
           <Grid>
             <Border Classes="HomeBodyEmptyCard"
@@ -118,7 +103,7 @@
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                   <controls:AdaptiveTilePanel MinItemWidth="250"
-                                              ItemHeight="184"
+                                              ItemHeight="112"
                                               Gap="{StaticResource Space.3}"
                                               MaxColumns="4" />
                 </ItemsPanelTemplate>
@@ -126,6 +111,7 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:ProjectWorkspaceItemViewModel">
                 <Button Classes="HomeProjectTileButton"
+                        ToolTip.Tip="打开项目"
                         input:DragDrop.AllowDrop="True"
                         input:DragDrop.DragOver="OnProjectTileDragOver"
                         input:DragDrop.DragLeave="OnProjectTileDragLeave"
@@ -157,12 +143,11 @@
                     </ContextMenu>
                   </Button.ContextMenu>
                   <Border Classes="HomeProjectTileCard">
-                      <Grid RowDefinitions="Auto,*,Auto"
-                            RowSpacing="{StaticResource Space.3}">
+                      <Grid RowDefinitions="Auto,Auto"
+                            RowSpacing="{StaticResource Space.2}">
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto"
                               ColumnSpacing="{StaticResource Space.3}">
-                          <Border Classes="HomeProjectTileIcon"
-                                  Background="{Binding AvatarBrush}">
+                          <Border Classes="HomeProjectTileIcon">
                             <TextBlock Classes="ProjectAvatarText"
                                        Text="{Binding AvatarText}" />
                           </Border>
@@ -181,30 +166,28 @@
                                   IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ProjectPanel.CanReorderProjects}"
                                   ToolTip.Tip="拖拽调整项目顺序"
                                   PointerPressed="OnProjectDragHandlePointerPressed">
-                            <TextBlock Classes="HomeProjectDragHandleIcon"
-                                       Text="&#xE76E;" />
+                            <Grid Classes="HomeProjectDragGrip"
+                                  RowDefinitions="Auto,Auto,Auto"
+                                  ColumnDefinitions="Auto,Auto"
+                                  RowSpacing="{StaticResource Space.1}"
+                                  ColumnSpacing="{StaticResource Space.1}">
+                              <Ellipse Classes="HomeProjectDragGripDot" Grid.Row="0" Grid.Column="0" />
+                              <Ellipse Classes="HomeProjectDragGripDot" Grid.Row="0" Grid.Column="1" />
+                              <Ellipse Classes="HomeProjectDragGripDot" Grid.Row="1" Grid.Column="0" />
+                              <Ellipse Classes="HomeProjectDragGripDot" Grid.Row="1" Grid.Column="1" />
+                              <Ellipse Classes="HomeProjectDragGripDot" Grid.Row="2" Grid.Column="0" />
+                              <Ellipse Classes="HomeProjectDragGripDot" Grid.Row="2" Grid.Column="1" />
+                            </Grid>
                           </Border>
                         </Grid>
 
                         <TextBlock Grid.Row="1"
                                    Classes="HomeProjectTileSummary"
                                    Text="{Binding SummaryText}"
-                                   TextWrapping="Wrap"
-                                   MaxLines="2" />
-
-                        <Grid Grid.Row="2"
-                              ColumnDefinitions="*">
-                          <Border HorizontalAlignment="Right"
-                                  Classes="HomeProjectTileEntry">
-                            <StackPanel Orientation="Horizontal"
-                                        Spacing="6">
-                              <TextBlock Classes="CaptionText"
-                                         Text="打开项目" />
-                              <TextBlock Classes="CaptionText"
-                                         Text="→" />
-                            </StackPanel>
-                          </Border>
-                        </Grid>
+                                   ToolTip.Tip="{Binding SummaryText}"
+                                   TextWrapping="NoWrap"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxLines="1" />
                       </Grid>
                     </Border>
                   </Button>
