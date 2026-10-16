@@ -65,9 +65,6 @@
             VerticalAlignment="Stretch">
         <Border Grid.Row="0" Classes="HttpConfigSectionBar">
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.3}">
-            <TextBlock Classes="CaptionText"
-                       VerticalAlignment="Center"
-                       Text="字段按当前类型编码，取消勾选的字段不会参与请求。" />
             <Button Grid.Column="1"
                     Classes="AddButton HttpConfigAddButton"
                     Content="添加字段"
