@@ -96,24 +96,26 @@
             </Border>
           </Grid>
 
-          <StackPanel Grid.Row="3"
-                      Orientation="Horizontal"
-                      HorizontalAlignment="Right"
-                      Spacing="{StaticResource Space.2}">
-            <Button Classes="DialogSecondaryButton" Content="取消" Command="{Binding CloseDialogCommand}" />
-            <Button Classes="DialogPrimaryButton" Content="导出交付包" Command="{Binding ExportCommand}" />
-          </StackPanel>
+          <Border Grid.Row="3"
+                  Classes="DialogFooter">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="{StaticResource Space.2}">
+              <Button Classes="DialogSecondaryButton" Content="取消" Command="{Binding CloseDialogCommand}" />
+              <Button Classes="DialogPrimaryButton" Content="导出交付包" Command="{Binding ExportCommand}" />
+            </StackPanel>
+          </Border>
         </Grid>
 
         <Grid IsVisible="{Binding IsImportMode}"
               RowDefinitions="Auto,* ,Auto"
               RowSpacing="{StaticResource Space.3}">
           <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="{StaticResource Space.3}">
-            <TextBlock Text="接口 {Binding Preview.InterfaceCount}" />
-            <TextBlock Grid.Column="1" Text="用例 {Binding Preview.RequestCaseCount}" />
-            <TextBlock Grid.Column="2" Text="环境 {Binding Preview.EnvironmentCount}" />
-            <TextBlock Grid.Column="3" Text="变量 {Binding Preview.VariableCount}" />
-            <TextBlock Grid.Column="4" Text="孤儿 {Binding Preview.OrphanCount}" />
+            <TextBlock Text="{Binding Preview.InterfaceCount, StringFormat='接口 {0}'}" />
+            <TextBlock Grid.Column="1" Text="{Binding Preview.RequestCaseCount, StringFormat='用例 {0}'}" />
+            <TextBlock Grid.Column="2" Text="{Binding Preview.EnvironmentCount, StringFormat='环境 {0}'}" />
+            <TextBlock Grid.Column="3" Text="{Binding Preview.VariableCount, StringFormat='变量 {0}'}" />
+            <TextBlock Grid.Column="4" Text="{Binding Preview.OrphanCount, StringFormat='孤儿 {0}'}" />
           </Grid>
 
           <ScrollViewer Grid.Row="1" MaxHeight="430">
@@ -147,13 +149,15 @@
             </ItemsControl>
           </ScrollViewer>
 
-          <StackPanel Grid.Row="2"
-                      Orientation="Horizontal"
-                      HorizontalAlignment="Right"
-                      Spacing="{StaticResource Space.2}">
-            <Button Classes="DialogSecondaryButton" Content="取消" Command="{Binding CloseDialogCommand}" />
-            <Button Classes="DialogPrimaryButton" Content="执行导入" Command="{Binding ImportCommand}" />
-          </StackPanel>
+          <Border Grid.Row="2"
+                  Classes="DialogFooter">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="{StaticResource Space.2}">
+              <Button Classes="DialogSecondaryButton" Content="取消" Command="{Binding CloseDialogCommand}" />
+              <Button Classes="DialogPrimaryButton" Content="执行导入" Command="{Binding ImportCommand}" />
+            </StackPanel>
+          </Border>
         </Grid>
       </Grid>
 

@@ -802,6 +802,7 @@ public sealed class WorkbenchLayoutTests
     [InlineData("QuickRequestSaveDialogView.axaml")]
     [InlineData("HttpCaseSaveDialogView.axaml")]
     [InlineData("WorkspaceCreateFolderDialogView.axaml")]
+    [InlineData("CreateProjectDialogView.axaml")]
     public void SmallFormDialogs_ShouldLayFormDirectlyWithSeparatedFooter(string fileName)
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));

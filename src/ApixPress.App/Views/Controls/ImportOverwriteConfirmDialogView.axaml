@@ -87,22 +87,24 @@
         </Grid>
       </StackPanel>
 
-      <StackPanel Grid.Row="3"
-                  Orientation="Horizontal"
-                  HorizontalAlignment="Right"
-                  Spacing="{StaticResource Space.2}">
-        <Button Classes="DialogSecondaryButton"
-                Content="取消"
-                Command="{Binding CancelCommand}" />
-        <Button Classes="DialogPrimaryButton"
-                Content="覆盖并导入"
-                IsVisible="{Binding Import.IsOverwriteImportSelected}"
-                Command="{Binding ConfirmCommand}" />
-        <Button Classes="DialogPrimaryButton"
-                Content="跳过重复项并导入"
-                IsVisible="{Binding Import.SkipSameNameInterfaces}"
-                Command="{Binding ConfirmCommand}" />
-      </StackPanel>
+      <Border Grid.Row="3"
+              Classes="DialogFooter">
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="{StaticResource Space.2}">
+          <Button Classes="DialogSecondaryButton"
+                  Content="取消"
+                  Command="{Binding CancelCommand}" />
+          <Button Classes="DialogPrimaryButton"
+                  Content="覆盖并导入"
+                  IsVisible="{Binding Import.IsOverwriteImportSelected}"
+                  Command="{Binding ConfirmCommand}" />
+          <Button Classes="DialogPrimaryButton"
+                  Content="跳过重复项并导入"
+                  IsVisible="{Binding Import.SkipSameNameInterfaces}"
+                  Command="{Binding ConfirmCommand}" />
+        </StackPanel>
+      </Border>
     </Grid>
   </Border>
 </UserControl>

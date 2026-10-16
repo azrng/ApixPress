@@ -356,7 +356,7 @@
               <Button Classes="DialogSecondaryButton"
                       Content="稍后重启"
                       Command="{Binding ShellPanels.SettingsCenter.DismissSystemDataRestartPromptCommand}" />
-              <Button Classes="DialogDangerButton"
+              <Button Classes="DialogPrimaryButton"
                       Content="{Binding ShellPanels.SettingsCenter.RestartApplicationButtonText}"
                       Command="{Binding ShellPanels.SettingsCenter.RestartApplicationCommand}" />
             </StackPanel>

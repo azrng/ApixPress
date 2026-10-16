@@ -10,20 +10,20 @@
   <!-- 弹窗 chrome（遮罩/标题/关闭钮）由 Ursa StandardDialogControl 提供，内容只保留表单与按钮区 -->
   <Border Classes="CreateProjectDialogCard">
     <Grid RowDefinitions="Auto,Auto"
-          RowSpacing="{StaticResource Space.4}">
-      <!-- 表单：名称 + 备注，紧凑两行 -->
+          RowSpacing="{StaticResource Space.3}">
+      <!-- 表单：名称 + 备注，标准 DialogForm 结构（对齐原型 modal-body + modal-foot 分隔底栏） -->
       <StackPanel Grid.Row="0"
-                  Spacing="{StaticResource Space.3}">
-        <StackPanel Spacing="6">
-          <TextBlock Classes="CaptionText"
+                  Classes="DialogFormStack">
+        <StackPanel Classes="DialogFormField">
+          <TextBlock Classes="DialogFormLabel"
                      Text="项目名称" />
           <TextBox Classes="SectionInput DialogInput"
                    PlaceholderText="例如：订单中心"
                    Text="{Binding ProjectPanel.Creation.DraftProjectName}" />
         </StackPanel>
 
-        <StackPanel Spacing="6">
-          <TextBlock Classes="CaptionText"
+        <StackPanel Classes="DialogFormField">
+          <TextBlock Classes="DialogFormLabel"
                      Text="备注（可选）" />
           <TextBox Classes="SectionInput DialogInput"
                    AcceptsReturn="True"
@@ -33,23 +33,25 @@
                    Text="{Binding ProjectPanel.Creation.DraftProjectDescription}" />
         </StackPanel>
 
-        <TextBlock Classes="CaptionText"
+        <TextBlock Classes="DialogFormHint"
                    Text="创建后会自动生成一个空的「开发」环境，并打开项目工作台。"
                    TextWrapping="Wrap" />
       </StackPanel>
 
-      <!-- 底部按钮 -->
-      <StackPanel Grid.Row="1"
-                  Orientation="Horizontal"
-                  HorizontalAlignment="Right"
-                  Spacing="{StaticResource Space.2}">
-        <Button Classes="DialogSecondaryButton"
-                Content="取消"
-                Command="{Binding CloseCreateProjectDialogCommand}" />
-        <Button Classes="DialogPrimaryButton"
-                Content="创建项目"
-                Command="{Binding ProjectPanel.Creation.CreateProjectCommand}" />
-      </StackPanel>
+      <!-- 底部按钮：带分隔线底栏，与其他表单弹窗一致 -->
+      <Border Grid.Row="1"
+              Classes="DialogFooter">
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="{StaticResource Space.2}">
+          <Button Classes="DialogSecondaryButton"
+                  Content="取消"
+                  Command="{Binding CloseCreateProjectDialogCommand}" />
+          <Button Classes="DialogPrimaryButton"
+                  Content="创建项目"
+                  Command="{Binding ProjectPanel.Creation.CreateProjectCommand}" />
+        </StackPanel>
+      </Border>
     </Grid>
   </Border>
 </UserControl>

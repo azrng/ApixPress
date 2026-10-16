@@ -517,7 +517,7 @@
 
   <Style Selector="Border.EnvCardActiveChip">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
-    <Setter Property="BorderBrush" Value="#667C6CF0" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
     <Setter Property="Padding" Value="7,1" />
@@ -609,7 +609,7 @@
 
   <Style Selector="Border.CaseCardLoadedChip">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
-    <Setter Property="BorderBrush" Value="#667C6CF0" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
     <Setter Property="Padding" Value="7,1" />

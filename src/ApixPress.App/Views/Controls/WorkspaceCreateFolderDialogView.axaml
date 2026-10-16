@@ -19,7 +19,7 @@
         <StackPanel Classes="DialogFormField">
           <TextBlock Classes="DialogFormLabel"
                      Text="目录名称" />
-          <TextBox Classes="SectionInput"
+          <TextBox Classes="SectionInput DialogInput"
                    PlaceholderText="请输入目录名称"
                    Text="{Binding FolderNameInput, Mode=TwoWay}" />
         </StackPanel>
