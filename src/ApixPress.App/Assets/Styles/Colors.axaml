@@ -38,6 +38,11 @@
   <!-- Brand / accent -->
   <SolidColorBrush x:Key="Brush.Brand.Primary" Color="#2FB6C5" />
   <SolidColorBrush x:Key="Brush.Brand.Primary.Strong" Color="#228F9C" />
+  <!-- 品牌渐变（design-system brand.gradient，首页空状态徽章等品牌高亮场景） -->
+  <LinearGradientBrush x:Key="Brush.Brand.Gradient" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#51C8D4" Offset="0" />
+    <GradientStop Color="#228F9C" Offset="1" />
+  </LinearGradientBrush>
 
   <!-- HTTP method badges（Apifox 惯例：GET 绿 / POST 橙 / PUT 蓝 / DELETE 红 / PATCH 青） -->
   <SolidColorBrush x:Key="Brush.Method.Get" Color="#4ADE80" />

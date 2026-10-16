@@ -77,6 +77,7 @@ tokens:
       700: "#1D727C"
       800: "#18535B"
       900: "#10383D"
+      gradient: "linear-gradient(135deg, #51C8D4, #228F9C)"
     neutral:
       0: "#FFFFFF"
       50: "#F8FAFC"
@@ -205,6 +206,7 @@ tokens:
     brand_soft: "0 12 28 0 #382FB6C5"
     brand: "0 18 36 0 #4C2FB6C5"
     brand_tight: "0 8 18 0 #302FB6C5"
+    brand_ring: "0 0 0 8 #1A2FB6C5, 0 12 28 0 #382FB6C5"
 
   motion:
     duration:

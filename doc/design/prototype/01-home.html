@@ -6,8 +6,16 @@
 <title>ApixPress 原型 · 01 项目首页</title>
 <link rel="stylesheet" href="shared.css">
 </head>
-<body>
+<body data-home-state="projects">
 
+<!-- 原型状态预览切换（审查用，应用不含此导航） -->
+<div class="proto-nav">
+  <span class="label">预览状态</span>
+  <a class="current" data-home-state="projects">有项目</a>
+  <a data-home-state="no-projects">空状态 · 还没有项目</a>
+  <a data-home-state="no-match">空状态 · 搜索无结果</a>
+  <span class="pos">T096 空状态美化审查</span>
+</div>
 
 <!-- ═══════════════ 项目首页（可交互） ═══════════════ -->
 <div class="window">
@@ -87,6 +95,30 @@
         </div>
       </div>
     </div>
+
+    <!-- 空状态：还没有项目（首次使用，唯一主 CTA） -->
+    <div class="placeholder-wrap home-empty" id="homeEmpty">
+      <div class="placeholder-card home-empty-card">
+        <div class="home-empty-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2.2 2.5H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M12 10.8v4.4M9.8 13h4.4"/></svg>
+        </div>
+        <div class="home-empty-title">还没有项目</div>
+        <div class="home-empty-hint">创建第一个项目后，就可以在这里直接筛选、浏览并打开项目工作区。</div>
+        <button class="btn btn-primary" style="min-width:128px;" data-open="#newProjectModal">＋ 新建项目</button>
+      </div>
+    </div>
+
+    <!-- 空状态：搜索无结果（次级视觉层级 + 次要按钮） -->
+    <div class="placeholder-wrap home-empty" id="homeSearchEmpty">
+      <div class="placeholder-card home-empty-card home-search-card">
+        <div class="home-search-icon">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M15.6 15.6L20 20"/></svg>
+        </div>
+        <div class="home-empty-title">没有找到匹配项目</div>
+        <div class="home-empty-hint">可以换一个关键词继续搜索，或者直接新建一个项目。</div>
+        <button class="btn btn-ghost" data-open="#newProjectModal">新建项目</button>
+      </div>
+    </div>
   </div>
 
   <!-- 新建项目弹窗 -->
@@ -142,9 +174,10 @@
 
 <script src="shared.js"></script>
 <script>
-  // 搜索过滤：按名称与备注匹配，实时更新可见计数
+  // 搜索过滤：按名称与备注匹配，实时更新可见计数（空状态预览下不过滤）
   var searchInput = document.getElementById("homeSearch");
   searchInput.addEventListener("input", function () {
+    if (document.body.getAttribute("data-home-state") !== "projects") return;
     var kw = this.value.trim().toLowerCase();
     var visible = 0;
     document.querySelectorAll("#homeTiles .tile").forEach(function (tile) {
@@ -153,6 +186,22 @@
       if (hit) visible++;
     });
     document.querySelector("#homeMetric b:nth-of-type(2)").textContent = visible;
+  });
+
+  // 空状态预览切换（原型演示）：projects / no-projects / no-match
+  document.querySelectorAll("[data-home-state]").forEach(function (link) {
+    link.addEventListener("click", function () {
+      var state = this.getAttribute("data-home-state");
+      document.body.setAttribute("data-home-state", state);
+      document.querySelectorAll("[data-home-state]").forEach(function (a) {
+        a.classList.toggle("current", a === link);
+      });
+      var count = state === "projects" ? "3" : "0";
+      var metricValues = document.querySelectorAll("#homeMetric b");
+      metricValues[0].textContent = count;
+      metricValues[1].textContent = count;
+      searchInput.value = "";
+    });
   });
 
   // 新建项目：校验名称 → 关闭弹窗 → 进入新项目工作台（原型不落数据）

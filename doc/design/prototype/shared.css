@@ -691,6 +691,35 @@ body {
 .tile:hover .tile-open { color: var(--accent); border-color: var(--border-focus); }
 .default-badge { font-size: 11px; color: var(--accent); background: var(--bg-selected); padding: 2px 8px; border-radius: var(--r-pill); font-weight: 600; }
 
+/* 首页空状态（还没有项目 / 搜索无结果）：复用 placeholder-card 体系，在页面正文垂直居中 */
+.placeholder-wrap.home-empty { padding: 20px 0 32px; }
+.home-empty-card { padding: 44px 56px 40px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.home-empty-icon {
+  width: 64px; height: 64px; margin: 0 auto 16px; border-radius: var(--r-pill);
+  background: linear-gradient(135deg, #7C6CF0, #5B8DEF);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 8px rgba(124,108,240,.10), 0 12px 28px rgba(124,108,240,.22);
+}
+.home-empty-icon svg { width: 30px; height: 30px; stroke: #fff; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.home-empty-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+.home-empty-hint { font-size: 12.5px; color: var(--text-tertiary); max-width: 340px; line-height: 1.65; margin-bottom: 18px; }
+/* 搜索无结果：视觉层级低于首次使用空状态，扁平小徽章 + 次要按钮 */
+.home-search-icon {
+  width: 48px; height: 48px; margin: 0 auto 14px; border-radius: var(--r-pill);
+  background: var(--bg-subtle);
+  display: flex; align-items: center; justify-content: center;
+}
+.home-search-icon svg { width: 22px; height: 22px; stroke: var(--text-tertiary); fill: none; stroke-width: 1.7; stroke-linecap: round; }
+.home-search-card .home-empty-title { font-size: 15px; }
+.home-search-card .home-empty-hint { margin-bottom: 14px; }
+
+/* 空状态预览切换（原型演示专用，应用不含此切换） */
+#homeEmpty, #homeSearchEmpty { display: none; }
+body[data-home-state="no-projects"] #homeTiles,
+body[data-home-state="no-match"] #homeTiles { display: none; }
+body[data-home-state="no-projects"] #homeEmpty { display: flex; }
+body[data-home-state="no-match"] #homeSearchEmpty { display: flex; }
+
 /* ===== 请求历史 ===== */
 .history-list { display: flex; flex-direction: column; gap: 6px; overflow: auto; }
 /* 日期分组标题 */

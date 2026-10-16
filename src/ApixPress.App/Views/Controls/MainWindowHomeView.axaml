@@ -49,50 +49,46 @@
             <Border Classes="HomeBodyEmptyCard"
                     IsVisible="{Binding ShowProjectListEmptyState}">
               <Border Classes="HomeBodyEmptySurface">
-                <Grid ColumnDefinitions="*,Auto"
-                      ColumnSpacing="{StaticResource Space.6}">
-                  <StackPanel Spacing="{StaticResource Space.2}"
-                              VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal"
-                                Spacing="{StaticResource Space.2}">
-                      <u:Badge Header="项目列表" />
-                      <u:Badge Header="0 个项目" Classes="Light Secondary" />
-                    </StackPanel>
-                    <TextBlock Classes="PageTitle"
-                               Text="还没有项目" />
-                    <TextBlock Classes="CaptionText HomeBodyEmptyDescription"
-                               Text="创建第一个项目后，就可以在这里直接筛选、浏览并打开项目工作区。"
-                               TextWrapping="Wrap" />
-                  </StackPanel>
-                  <Button Grid.Column="1"
-                          Classes="PrimaryButton HomeCreateProjectButton"
+                <StackPanel Classes="HomeEmptyStack"
+                            Spacing="{StaticResource Space.3}">
+                  <Border Classes="HomeEmptyMedallion">
+                    <!-- 对齐原型 01：白色描边「文件夹 + 加号」图标 -->
+                    <Path Classes="HomeEmptyMedallionIcon"
+                          Data="M3,7 A2,2 0 0 1 5,5 L9,5 L11.2,7.5 L19,7.5 A2,2 0 0 1 21,9.5 L21,17 A2,2 0 0 1 19,19 L5,19 A2,2 0 0 1 3,17 Z M12,10.8 L12,15.2 M9.8,13 L14.2,13" />
+                  </Border>
+                  <TextBlock Classes="HomeEmptyTitle"
+                             Text="还没有项目" />
+                  <TextBlock Classes="CaptionText HomeBodyEmptyDescription"
+                             Text="创建第一个项目后，就可以在这里直接筛选、浏览并打开项目工作区。"
+                             TextWrapping="Wrap" />
+                  <Button Classes="PrimaryButton HomeCreateProjectButton"
                           Content="+ 新建项目"
-                          VerticalAlignment="Center"
+                          HorizontalAlignment="Center"
                           Command="{Binding OpenCreateProjectDialogCommand}" />
-                </Grid>
+                </StackPanel>
               </Border>
             </Border>
 
             <Border Classes="HomeBodyEmptyCard"
                     IsVisible="{Binding ShowProjectSearchEmptyState}">
               <Border Classes="HomeBodyEmptySurface">
-                <Grid ColumnDefinitions="*,Auto"
-                      ColumnSpacing="{StaticResource Space.6}">
-                  <StackPanel Spacing="{StaticResource Space.2}"
-                              VerticalAlignment="Center">
-                    <u:Badge Header="搜索结果" />
-                    <TextBlock Classes="PageTitle"
-                               Text="没有找到匹配项目" />
-                    <TextBlock Classes="CaptionText HomeBodyEmptyDescription"
-                               Text="可以换一个关键词继续搜索，或者直接新建一个项目。"
-                               TextWrapping="Wrap" />
-                  </StackPanel>
-                  <Button Grid.Column="1"
-                          Classes="SecondaryButton HomeSidebarCreateButton"
+                <StackPanel Classes="HomeEmptyStack"
+                            Spacing="{StaticResource Space.3}">
+                  <Border Classes="HomeEmptySearchMedallion">
+                    <!-- 对齐原型 01：放大镜图标，搜索无结果用次级视觉层级 -->
+                    <Path Classes="HomeEmptySearchIcon"
+                          Data="M4.5,11 A6.5,6.5 0 1 0 17.5,11 A6.5,6.5 0 1 0 4.5,11 M15.6,15.6 L20,20" />
+                  </Border>
+                  <TextBlock Classes="HomeEmptyTitle HomeEmptySearchTitle"
+                             Text="没有找到匹配项目" />
+                  <TextBlock Classes="CaptionText HomeBodyEmptyDescription"
+                             Text="可以换一个关键词继续搜索，或者直接新建一个项目。"
+                             TextWrapping="Wrap" />
+                  <Button Classes="SecondaryButton HomeCreateProjectButton"
                           Content="新建项目"
-                          VerticalAlignment="Center"
+                          HorizontalAlignment="Center"
                           Command="{Binding OpenCreateProjectDialogCommand}" />
-                </Grid>
+                </StackPanel>
               </Border>
             </Border>
 

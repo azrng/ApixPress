@@ -660,6 +660,45 @@ public sealed class WorkbenchLayoutTests
     }
 
     [Fact]
+    public void HomeEmptyStates_ShouldCenterHeroCardsWithBrandMedallion()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "MainWindowHomeView.axaml"));
+        var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceShellStyles.axaml"));
+
+        // T096 对齐原型 01：空状态卡片必须在正文区垂直居中，不允许回到顶部贴条
+        var emptyCardStyle = styles.Descendants().Single(element => element.Name.LocalName == "Style"
+            && element.Attribute("Selector")?.Value == "Border.HomeBodyEmptyCard");
+        Assert.Equal("Center", emptyCardStyle.Elements()
+            .Single(element => element.Name.LocalName == "Setter"
+                && element.Attribute("Property")?.Value == "VerticalAlignment")
+            .Attribute("Value")?.Value);
+
+        // 还没有项目：品牌渐变徽章 + 标题 + 唯一主 CTA
+        var listEmpty = document.Descendants().Single(element => element.Name.LocalName == "Border"
+            && HasClass(element, "HomeBodyEmptyCard")
+            && element.Attribute("IsVisible")?.Value == "{Binding ShowProjectListEmptyState}");
+        Assert.Contains(listEmpty.Descendants(), element => HasClass(element, "HomeEmptyMedallion"));
+        Assert.Contains(listEmpty.Descendants(), element => element.Name.LocalName == "TextBlock"
+            && HasClass(element, "HomeEmptyTitle")
+            && element.Attribute("Text")?.Value == "还没有项目");
+        Assert.Contains(listEmpty.Descendants(), element => element.Name.LocalName == "Button"
+            && HasClass(element, "PrimaryButton")
+            && (element.Attribute("Command")?.Value ?? string.Empty).Contains("OpenCreateProjectDialogCommand"));
+        Assert.DoesNotContain(listEmpty.Descendants(), element => element.Name.LocalName == "Badge");
+
+        // 搜索无结果：扁平小徽章 + 次要按钮，视觉层级低于首用状态
+        var searchEmpty = document.Descendants().Single(element => element.Name.LocalName == "Border"
+            && HasClass(element, "HomeBodyEmptyCard")
+            && element.Attribute("IsVisible")?.Value == "{Binding ShowProjectSearchEmptyState}");
+        Assert.Contains(searchEmpty.Descendants(), element => HasClass(element, "HomeEmptySearchMedallion"));
+        Assert.Contains(searchEmpty.Descendants(), element => element.Name.LocalName == "TextBlock"
+            && HasClass(element, "HomeEmptyTitle")
+            && element.Attribute("Text")?.Value == "没有找到匹配项目");
+        Assert.Contains(searchEmpty.Descendants(), element => element.Name.LocalName == "Button"
+            && HasClass(element, "SecondaryButton"));
+    }
+
+    [Fact]
     public void MainWindowProjectTab_ContextMenu_ShouldOfferCloseVariants()
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "MainWindowTitleBarView.axaml"));

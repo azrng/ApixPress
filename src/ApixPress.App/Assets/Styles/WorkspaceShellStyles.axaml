@@ -400,8 +400,8 @@
 
   <Style Selector="Border.HomeBodyEmptyCard">
     <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Padding" Value="{StaticResource Pad.7}" />
-    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="Padding" Value="{StaticResource Pad.6}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
   <Style Selector="Border.HomeBodyEmptySurface">
@@ -409,14 +409,71 @@
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.6}" />
-    <Setter Property="MaxWidth" Value="760" />
+    <Setter Property="Padding" Value="{StaticResource Pad.7}" />
+    <Setter Property="MaxWidth" Value="520" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="BoxShadow" Value="{StaticResource Shadow.Panel.Raised}" />
   </Style>
 
+  <!-- 首页空状态（对齐原型 01：居中欢迎卡片，品牌徽章 + 标题 + 说明 + 主操作） -->
+  <Style Selector="StackPanel.HomeEmptyStack">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Border.HomeEmptyMedallion">
+    <Setter Property="Width" Value="64" />
+    <Setter Property="Height" Value="64" />
+    <Setter Property="Background" Value="{StaticResource Brush.Brand.Gradient}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Brand.Ring}" />
+  </Style>
+
+  <Style Selector="Path.HomeEmptyMedallionIcon">
+    <Setter Property="Width" Value="30" />
+    <Setter Property="Height" Value="30" />
+    <Setter Property="Stretch" Value="Uniform" />
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="StrokeThickness" Value="1.7" />
+    <Setter Property="StrokeJoin" Value="Round" />
+    <Setter Property="StrokeLineCap" Value="Round" />
+  </Style>
+
+  <!-- 搜索无结果状态：扁平小徽章，视觉层级低于首次使用 -->
+  <Style Selector="Border.HomeEmptySearchMedallion">
+    <Setter Property="Width" Value="48" />
+    <Setter Property="Height" Value="48" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Sm}" />
+  </Style>
+
+  <Style Selector="Path.HomeEmptySearchIcon">
+    <Setter Property="Width" Value="22" />
+    <Setter Property="Height" Value="22" />
+    <Setter Property="Stretch" Value="Uniform" />
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="StrokeThickness" Value="1.7" />
+    <Setter Property="StrokeLineCap" Value="Round" />
+  </Style>
+
+  <Style Selector="TextBlock.HomeEmptyTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.TitleSmall}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="TextAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.HomeEmptyTitle.HomeEmptySearchTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+  </Style>
+
   <Style Selector="TextBlock.HomeBodyEmptyDescription">
-    <Setter Property="MaxWidth" Value="500" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="MaxWidth" Value="360" />
     <Setter Property="LineHeight" Value="20" />
+    <Setter Property="TextAlignment" Value="Center" />
   </Style>
 </Styles>
