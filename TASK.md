@@ -6,6 +6,7 @@
 
 | ID | 任务名称 | 任务目标 | 当前阶段 | 负责人 | 状态 | 优先级 | 最近更新时间 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| T100 | 清理弹窗审查确认的死代码 | 删除 T098 审查确认的死代码：CreateProjectDrawerView 视图对 + 无订阅者 handler 与守卫字段、DialogStyles 20 个旧环境管理死样式（EnvironmentManager 三件套 + EnvDrawer/EnvCard/EnvDeleteStrip 全系）；CaseCard 系列有活引用保留。删除前逐项 grep 零引用复核；-t:Rebuild 全量构建 0 错误、守卫测试 61 通过、应用启动冒烟存活 | 阶段 3 | ZCode | DOING | P2 | 2026-10-16 |
 | T089 | ApixPress 整体 UI 视觉统一设计 | 完成全局界面审视与阶段 0 方案，统一主窗口、首页、请求工作区、列表/设置、抽屉与弹窗的视觉层级和状态规范；本阶段仅产出需求与设计文档，待用户确认后再实现 | 阶段 0 | Codex | DOING | P1 | 2026-10-14 |
 
 ## 最近完成任务
