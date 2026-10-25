@@ -10,27 +10,28 @@
              x:Class="ApixPress.App.Views.Controls.MainWindowHomeView"
              x:DataType="vm:MainWindowViewModel"
              mc:Ignorable="d">
-  <ScrollViewer IsVisible="{Binding IsHomeTabActive}"
+  <ScrollViewer Classes="HomeScrollViewer"
+                IsVisible="{Binding IsHomeTabActive}"
                 HorizontalScrollBarVisibility="Disabled">
     <Grid Classes="HomeContentContainer"
-          Margin="{StaticResource Pad.4}"
-          RowDefinitions="Auto,*"
+          Margin="{StaticResource Pad.6}"
+          RowDefinitions="Auto,Auto"
           RowSpacing="{StaticResource Space.3}">
         <Border Classes="HomeContentHeaderCard">
           <Grid RowDefinitions="Auto,Auto"
                 RowSpacing="{StaticResource Space.2}">
-            <Grid ColumnDefinitions="Auto,Auto,*,Auto"
+            <Grid ColumnDefinitions="*,Auto,Auto"
                   ColumnSpacing="{StaticResource Space.4}">
-              <TextBlock Classes="PageTitle"
+              <TextBlock Classes="PageTitle HomePageTitle"
                          Text="项目首页"
                          VerticalAlignment="Center" />
               <TextBox Grid.Column="1"
-                       Width="260"
-                       Classes="ToolbarSearchBox"
+                       Classes="ToolbarSearchBox HomeSearchBox"
+                       AutomationProperties.Name="搜索项目名称或备注"
                        PlaceholderText="搜索项目名称或备注"
                        VerticalAlignment="Center"
                        Text="{Binding ProjectPanel.SearchText}" />
-              <Button Grid.Column="3"
+              <Button Grid.Column="2"
                       Classes="PrimaryButton HomeCreateProjectButton"
                       Content="+ 新建项目"
                       HorizontalAlignment="Right"
@@ -59,11 +60,10 @@
                   <TextBlock Classes="HomeEmptyTitle"
                              Text="还没有项目" />
                   <TextBlock Classes="CaptionText HomeBodyEmptyDescription"
-                             Text="创建第一个项目后，就可以在这里直接筛选、浏览并打开项目工作区。"
+                             Text="创建第一个项目，开始整理接口、配置环境和调试请求。"
                              TextWrapping="Wrap" />
-                  <Button Classes="PrimaryButton HomeCreateProjectButton"
-                          Content="+ 新建项目"
-                          HorizontalAlignment="Center"
+                  <Button Classes="SecondaryButton HomeCreateProjectButton HomeEmptyAction"
+                          Content="创建第一个项目 →"
                           Command="{Binding OpenCreateProjectDialogCommand}" />
                 </StackPanel>
               </Border>
@@ -84,9 +84,8 @@
                   <TextBlock Classes="CaptionText HomeBodyEmptyDescription"
                              Text="可以换一个关键词继续搜索，或者直接新建一个项目。"
                              TextWrapping="Wrap" />
-                  <Button Classes="SecondaryButton HomeCreateProjectButton"
+                  <Button Classes="SecondaryButton HomeCreateProjectButton HomeEmptyAction"
                           Content="新建项目"
-                          HorizontalAlignment="Center"
                           Command="{Binding OpenCreateProjectDialogCommand}" />
                 </StackPanel>
               </Border>
@@ -97,7 +96,7 @@
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                   <controls:AdaptiveTilePanel MinItemWidth="250"
-                                              ItemHeight="136"
+                                              ItemHeight="{StaticResource Size.Home.Card.Height}"
                                               Gap="{StaticResource Space.3}"
                                               MaxColumns="4" />
                 </ItemsPanelTemplate>

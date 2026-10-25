@@ -670,20 +670,20 @@ public sealed class WorkbenchLayoutTests
     }
 
     [Fact]
-    public void HomeEmptyStates_ShouldCenterHeroCardsWithBrandMedallion()
+    public void HomeEmptyStates_ShouldAlignAtProjectListStartWithBrandMedallion()
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "MainWindowHomeView.axaml"));
         var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceShellStyles.axaml"));
 
-        // T096 对齐原型 01：空状态卡片必须在正文区垂直居中，不允许回到顶部贴条
+        // 用户明确要求无项目时靠上左对齐，防止重新回到窗口中央。
         var emptyCardStyle = styles.Descendants().Single(element => element.Name.LocalName == "Style"
             && element.Attribute("Selector")?.Value == "Border.HomeBodyEmptyCard");
-        Assert.Equal("Center", emptyCardStyle.Elements()
+        Assert.Equal("Top", emptyCardStyle.Elements()
             .Single(element => element.Name.LocalName == "Setter"
                 && element.Attribute("Property")?.Value == "VerticalAlignment")
             .Attribute("Value")?.Value);
 
-        // 还没有项目：品牌渐变徽章 + 标题 + 唯一主 CTA
+        // 还没有项目：保留徽章与标题，创建入口降为次级，顶部新建仍是主操作。
         var listEmpty = document.Descendants().Single(element => element.Name.LocalName == "Border"
             && HasClass(element, "HomeBodyEmptyCard")
             && element.Attribute("IsVisible")?.Value == "{Binding ShowProjectListEmptyState}");
@@ -692,7 +692,7 @@ public sealed class WorkbenchLayoutTests
             && HasClass(element, "HomeEmptyTitle")
             && element.Attribute("Text")?.Value == "还没有项目");
         Assert.Contains(listEmpty.Descendants(), element => element.Name.LocalName == "Button"
-            && HasClass(element, "PrimaryButton")
+            && HasClass(element, "SecondaryButton")
             && (element.Attribute("Command")?.Value ?? string.Empty).Contains("OpenCreateProjectDialogCommand"));
         Assert.DoesNotContain(listEmpty.Descendants(), element => element.Name.LocalName == "Badge");
 

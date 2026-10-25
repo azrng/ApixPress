@@ -352,8 +352,7 @@
   </Style>
 
   <Style Selector="Grid.HomeContentContainer">
-    <Setter Property="MaxWidth" Value="1760" />
-    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
   </Style>
 
   <Style Selector="StackPanel.HomeMetricRow > TextBlock">
@@ -391,7 +390,8 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="0" />
-    <Setter Property="MinHeight" Value="560" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="VerticalAlignment" Value="Top" />
   </Style>
 
   <Style Selector="TextBlock.HomeSortErrorText">
@@ -400,34 +400,35 @@
 
   <Style Selector="Border.HomeBodyEmptyCard">
     <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Padding" Value="{StaticResource Pad.6}" />
-    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
   </Style>
 
   <Style Selector="Border.HomeBodyEmptySurface">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="{StaticResource Pad.7}" />
-    <Setter Property="MaxWidth" Value="520" />
-    <Setter Property="HorizontalAlignment" Value="Center" />
-    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Panel.Raised}" />
+    <Setter Property="MaxWidth" Value="{StaticResource Size.Home.Empty.MaxWidth}" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="BoxShadow" Value="{StaticResource Shadow.None}" />
   </Style>
 
-  <!-- 首页空状态（对齐原型 01：居中欢迎卡片，品牌徽章 + 标题 + 说明 + 主操作） -->
+  <!-- 首页空状态按用户要求沿项目列表起点靠上左对齐。 -->
   <Style Selector="StackPanel.HomeEmptyStack">
-    <Setter Property="HorizontalAlignment" Value="Center" />
-    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="VerticalAlignment" Value="Top" />
   </Style>
 
   <Style Selector="Border.HomeEmptyMedallion">
-    <Setter Property="Width" Value="64" />
-    <Setter Property="Height" Value="64" />
+    <Setter Property="Width" Value="{StaticResource Size.Home.Medallion}" />
+    <Setter Property="Height" Value="{StaticResource Size.Home.Medallion}" />
     <Setter Property="Background" Value="{StaticResource Brush.Brand.Gradient}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
-    <Setter Property="HorizontalAlignment" Value="Center" />
-    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Brand.Ring}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Brand.Soft}" />
   </Style>
 
   <Style Selector="Path.HomeEmptyMedallionIcon">
@@ -445,8 +446,8 @@
     <Setter Property="Width" Value="48" />
     <Setter Property="Height" Value="48" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
-    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
     <Setter Property="BoxShadow" Value="{StaticResource Shadow.Sm}" />
   </Style>
 
@@ -463,7 +464,7 @@
     <Setter Property="FontSize" Value="{StaticResource Font.Size.TitleSmall}" />
     <Setter Property="FontWeight" Value="SemiBold" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-    <Setter Property="TextAlignment" Value="Center" />
+    <Setter Property="TextAlignment" Value="Left" />
   </Style>
 
   <Style Selector="TextBlock.HomeEmptyTitle.HomeEmptySearchTitle">
@@ -471,9 +472,22 @@
   </Style>
 
   <Style Selector="TextBlock.HomeBodyEmptyDescription">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="MaxWidth" Value="360" />
     <Setter Property="LineHeight" Value="20" />
-    <Setter Property="TextAlignment" Value="Center" />
+    <Setter Property="TextAlignment" Value="Left" />
+  </Style>
+  <Style Selector="ScrollViewer.HomeScrollViewer">
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Top" />
+  </Style>
+  <Style Selector="TextBlock.HomePageTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Home.Title}" />
+  </Style>
+  <Style Selector="TextBox.HomeSearchBox">
+    <Setter Property="Width" Value="{StaticResource Size.Home.Search.Width}" />
+  </Style>
+  <Style Selector="Button.HomeEmptyAction">
+    <Setter Property="HorizontalAlignment" Value="Left" />
   </Style>
 </Styles>

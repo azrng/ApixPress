@@ -2,30 +2,40 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!-- 深色主题（对标 Apifox 桌面端深色风格），键名与 design-system.yaml semantic 映射保持一致 -->
   <!-- Background -->
-  <SolidColorBrush x:Key="Brush.Background.App" Color="#17171A" />
-  <SolidColorBrush x:Key="Brush.Background.Surface" Color="#202024" />
-  <SolidColorBrush x:Key="Brush.Background.Subtle" Color="#26262B" />
-  <SolidColorBrush x:Key="Brush.Background.Elevated" Color="#2B2B32" />
-  <SolidColorBrush x:Key="Brush.Background.Selected" Color="#17383B" />
+  <SolidColorBrush x:Key="Brush.Background.App" Color="#16191F" />
+  <SolidColorBrush x:Key="Brush.Background.Surface" Color="#20252D" />
+  <SolidColorBrush x:Key="Brush.Background.Subtle" Color="#29313B" />
+  <SolidColorBrush x:Key="Brush.Background.Elevated" Color="#323C48" />
+  <SolidColorBrush x:Key="Brush.Background.Selected" Color="#173B40" />
   <SolidColorBrush x:Key="Brush.Background.Disabled" Color="#232327" />
   <SolidColorBrush x:Key="Brush.Background.Overlay" Color="#88000000" />
 
   <!-- Border -->
-  <SolidColorBrush x:Key="Brush.Border.Default" Color="#36363D" />
-  <SolidColorBrush x:Key="Brush.Border.Subtle" Color="#2A2A30" />
-  <SolidColorBrush x:Key="Brush.Border.Strong" Color="#45454E" />
+  <SolidColorBrush x:Key="Brush.Border.Default" Color="#394451" />
+  <SolidColorBrush x:Key="Brush.Border.Subtle" Color="#2C3540" />
+  <SolidColorBrush x:Key="Brush.Border.Strong" Color="#566575" />
   <SolidColorBrush x:Key="Brush.Border.Focus" Color="#2FB6C5" />
   <SolidColorBrush x:Key="Brush.Border.Danger" Color="#E5484D" />
 
   <!-- Text -->
-  <SolidColorBrush x:Key="Brush.Text.Primary" Color="#E8E8EC" />
-  <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#A3A3AD" />
-  <SolidColorBrush x:Key="Brush.Text.Tertiary" Color="#70707A" />
+  <SolidColorBrush x:Key="Brush.Text.Primary" Color="#EDF2F7" />
+  <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#B0BAC7" />
+  <SolidColorBrush x:Key="Brush.Text.Tertiary" Color="#9EABBB" />
   <SolidColorBrush x:Key="Brush.Text.Inverse" Color="#FFFFFF" />
   <SolidColorBrush x:Key="Brush.Text.Link" Color="#78DAE2" />
   <SolidColorBrush x:Key="Brush.Text.Danger" Color="#FF7A7D" />
 
-  <!-- Status -->
+  <!-- 品牌按钮使用深色文字，普通反白文字仍保留原有语义。 -->
+  <SolidColorBrush x:Key="Brush.Text.OnBrand" Color="#102024" />
+  <SolidColorBrush x:Key="Brush.Brand.Hover" Color="#51C8D4" />
+  <SolidColorBrush x:Key="Brush.Danger.Button" Color="#C9363E" />
+  <SolidColorBrush x:Key="Brush.Danger.Button.Hover" Color="#B52D35" />
+  <SolidColorBrush x:Key="Brush.Project.Avatar.Teal" Color="#173B40" />
+  <SolidColorBrush x:Key="Brush.Project.Avatar.Amber" Color="#4A3520" />
+  <SolidColorBrush x:Key="Brush.Project.Avatar.Blue" Color="#243D54" />
+  <SolidColorBrush x:Key="Brush.Project.Avatar.Rose" Color="#4A2D40" />
+
+  <!-- 状态语义 -->
   <SolidColorBrush x:Key="Brush.Status.Info.Background" Color="#1F2A45" />
   <SolidColorBrush x:Key="Brush.Status.Info.Text" Color="#82ABFF" />
   <SolidColorBrush x:Key="Brush.Status.Success.Background" Color="#1B2F26" />
@@ -50,31 +60,69 @@
   <SolidColorBrush x:Key="Brush.Method.Put" Color="#4C9AF0" />
   <SolidColorBrush x:Key="Brush.Method.Delete" Color="#F87171" />
   <SolidColorBrush x:Key="Brush.Method.Patch" Color="#2DD4BF" />
-  <SolidColorBrush x:Key="Brush.Method.Default" Color="#A3A3AD" />
+  <SolidColorBrush x:Key="Brush.Method.Default" Color="#B0BAC7" />
 
   <!-- HTTP status badges (solid for compact chips) -->
   <SolidColorBrush x:Key="Brush.StatusCode.2xx" Color="#4ADE80" />
-  <SolidColorBrush x:Key="Brush.StatusCode.3xx" Color="#A3A3AD" />
+  <SolidColorBrush x:Key="Brush.StatusCode.3xx" Color="#B0BAC7" />
   <SolidColorBrush x:Key="Brush.StatusCode.4xx" Color="#FBBF24" />
   <SolidColorBrush x:Key="Brush.StatusCode.5xx" Color="#F87171" />
-  <SolidColorBrush x:Key="Brush.StatusCode.Error" Color="#A3A3AD" />
+  <SolidColorBrush x:Key="Brush.StatusCode.Error" Color="#B0BAC7" />
 
   <!-- 代码高亮（JSON 语法分色，与高保真原型一致） -->
   <SolidColorBrush x:Key="Brush.Code.Plain" Color="#C9CDD6" />
   <SolidColorBrush x:Key="Brush.Code.Key" Color="#9D8BFF" />
   <SolidColorBrush x:Key="Brush.Code.String" Color="#7EC699" />
   <SolidColorBrush x:Key="Brush.Code.Number" Color="#E5B567" />
-  <SolidColorBrush x:Key="Brush.Code.Punctuation" Color="#70707A" />
+  <SolidColorBrush x:Key="Brush.Code.Punctuation" Color="#9EABBB" />
 
   <!-- AvaloniaEdit 主题兼容层：其 Fluent 主题用 StaticResource 急切解析以下 key，
        应用只有 Semi 主题缺这些定义，缺失会在 ResponseBodyEditor 模板应用时直接崩溃。
        注意 System* 三项在 Fluent 契约里是 Color（包装字典以 <Color="{DynamicResource...}"> 消费），
        定义成 Brush 会在运行时 InvalidCastException；取值统一走本文件深色调色板。 -->
-  <SolidColorBrush x:Key="ToolTipBackground" Color="#2B2B32" />
-  <SolidColorBrush x:Key="ToolTipForeground" Color="#E8E8EC" />
-  <SolidColorBrush x:Key="ToolTipBorderBrush" Color="#45454E" />
+  <SolidColorBrush x:Key="ToolTipBackground" Color="#323C48" />
+  <SolidColorBrush x:Key="ToolTipForeground" Color="#EDF2F7" />
+  <SolidColorBrush x:Key="ToolTipBorderBrush" Color="#566575" />
   <Thickness x:Key="ToolTipBorderThemeThickness">1</Thickness>
-  <Color x:Key="SystemChromeMediumColor">#26262B</Color>
-  <Color x:Key="SystemBaseLowColor">#36363D</Color>
+  <Color x:Key="SystemChromeMediumColor">#29313B</Color>
+  <Color x:Key="SystemBaseLowColor">#394451</Color>
   <Color x:Key="SystemAccentColor">#2FB6C5</Color>
+  <!-- Semi / Ursa 控件的主题适配，保持所有状态与业务样式同源。 -->
+  <StaticResource x:Key="SemiColorPrimary" ResourceKey="Brush.Brand.Primary" />
+  <StaticResource x:Key="SemiColorPrimaryPointerover" ResourceKey="Brush.Brand.Hover" />
+  <StaticResource x:Key="SemiColorPrimaryActive" ResourceKey="Brush.Brand.Primary.Strong" />
+  <StaticResource x:Key="SemiColorPrimaryLight" ResourceKey="Brush.Background.Selected" />
+  <StaticResource x:Key="SemiColorPrimaryLightPointerover" ResourceKey="Brush.Background.Selected" />
+  <StaticResource x:Key="SemiColorPrimaryLightActive" ResourceKey="Brush.Background.Selected" />
+  <StaticResource x:Key="CheckBoxCheckedDefaultBackground" ResourceKey="Brush.Brand.Primary" />
+  <StaticResource x:Key="CheckBoxCheckedDefaultBorderBrush" ResourceKey="Brush.Brand.Primary" />
+  <StaticResource x:Key="CheckBoxCheckedPointeroverBackground" ResourceKey="Brush.Brand.Hover" />
+  <StaticResource x:Key="CheckBoxCheckedPointeroverBorderBrush" ResourceKey="Brush.Brand.Hover" />
+  <StaticResource x:Key="CheckBoxCheckedPressedBackground" ResourceKey="Brush.Brand.Primary.Strong" />
+  <StaticResource x:Key="CheckBoxCheckedPressedBorderBrush" ResourceKey="Brush.Brand.Primary.Strong" />
+  <StaticResource x:Key="CheckBoxGlyphFill" ResourceKey="Brush.Text.OnBrand" />
+  <StaticResource x:Key="ToggleSwitchContainerCheckedDefaultBackground" ResourceKey="Brush.Brand.Primary" />
+  <StaticResource x:Key="ToggleSwitchContainerCheckedPointeroverBackground" ResourceKey="Brush.Brand.Hover" />
+  <StaticResource x:Key="ToggleSwitchContainerCheckedPressedBackground" ResourceKey="Brush.Brand.Primary.Strong" />
+  <StaticResource x:Key="RadioButtonCheckIconDefaultBackground" ResourceKey="Brush.Brand.Primary" />
+  <StaticResource x:Key="RadioButtonCheckIconPointeroverBackground" ResourceKey="Brush.Brand.Hover" />
+  <StaticResource x:Key="RadioButtonCheckIconPressedBackground" ResourceKey="Brush.Brand.Primary.Strong" />
+  <StaticResource x:Key="RadioButtonCheckIconDefaultBorderBrush" ResourceKey="Brush.Brand.Primary" />
+  <StaticResource x:Key="RadioButtonCheckIconPointeroverBorderBrush" ResourceKey="Brush.Brand.Hover" />
+  <StaticResource x:Key="RadioButtonCheckIconPressedBorderBrush" ResourceKey="Brush.Brand.Primary.Strong" />
+  <StaticResource x:Key="RadioButtonCheckGlyphFill" ResourceKey="Brush.Text.OnBrand" />
+  <StaticResource x:Key="TextBoxFocusBorderBrush" ResourceKey="Brush.Border.Focus" />
+  <StaticResource x:Key="TextBoxSelectionBackground" ResourceKey="Brush.Brand.Primary" />
+  <StaticResource x:Key="TextBoxSelectionForeground" ResourceKey="Brush.Text.OnBrand" />
+  <StaticResource x:Key="TextBoxPlaceholderForeground" ResourceKey="Brush.Text.Tertiary" />
+  <StaticResource x:Key="TextBoxForeground" ResourceKey="Brush.Text.Primary" />
+  <StaticResource x:Key="ComboBoxSelectorFocusBorderBrush" ResourceKey="Brush.Border.Focus" />
+  <StaticResource x:Key="LoadingIconForeground" ResourceKey="Brush.Brand.Primary" />
+  <StaticResource x:Key="TabItemLinePipeSelectedBackground" ResourceKey="Brush.Brand.Primary" />
+  <StaticResource x:Key="TabItemButtonHeaderSelectedForeground" ResourceKey="Brush.Brand.Primary" />
+  <StaticResource x:Key="TabItemButtonHeaderSelectedBackground" ResourceKey="Brush.Background.Selected" />
+  <StaticResource x:Key="TabItemIconSelectedForeground" ResourceKey="Brush.Brand.Primary" />
+  <StaticResource x:Key="DialogBackground" ResourceKey="Brush.Background.Elevated" />
+  <StaticResource x:Key="DrawerBackground" ResourceKey="Brush.Background.Elevated" />
+  <StaticResource x:Key="OverlayDialogMaskBrush" ResourceKey="Brush.Background.Overlay" />
 </ResourceDictionary>

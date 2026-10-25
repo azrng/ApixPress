@@ -135,9 +135,9 @@
   </Style>
 
   <Style Selector="Border.ProjectSettingsInfoCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
@@ -145,7 +145,7 @@
   <Style Selector="Border.ProjectSettingsSidebarCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
@@ -423,10 +423,10 @@
 
   <!-- 用例卡片（对齐原型 case-card） -->
   <Style Selector="Border.CaseCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="Padding" Value="12,10" />
   </Style>
 
@@ -435,7 +435,7 @@
   </Style>
 
   <Style Selector="Border.CaseCard.CaseCardSelected">
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Brand.Primary}" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
   </Style>
 

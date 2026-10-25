@@ -1,19 +1,19 @@
 # Avalonia 桌面端设计系统唯一事实来源
 # 面向人和 AI 共同使用：可读、可解析、非可执行、易于比对
-# 技术栈：.NET 10 + Avalonia 11 + Ursa.Avalonia + CommunityToolkit.Mvvm
+# 技术栈：.NET 10 + Avalonia 12.1.4 + Ursa.Avalonia + CommunityToolkit.Mvvm
 
 meta:
   name: "Avalonia 桌面端设计系统"
-  version: "3.0.0"
-  status: "启用中"
+  version: "3.1.0"
+  status: "已定制"
   platform: "Desktop"
   owners:
     - "design"
     - "desktop"
   tech_stack:
     runtime: ".NET 10"
-    ui_framework: "Avalonia 11+"
-    component_library: "Ursa.Avalonia"
+    ui_framework: "Avalonia 12.1.4"
+    component_library: "Semi.Avalonia 12.1.0.1 + Ursa.Avalonia 2.2.0"
     mvvm: "CommunityToolkit.Mvvm"
     data_access: "Dapper + SQLite / PostgreSQL（按项目选择）"
     messaging: "IMessenger"
@@ -44,6 +44,7 @@ product:
     - "主框架、列表页、表单页、详情页、对话框风格保持统一"
   motion_goal:
     - "动效用于强化导航和状态反馈，不做喧宾夺主的装饰"
+    - "首页空状态靠上、与项目列表左对齐，不在窗口中央悬浮"
     - "页面切换、对话框出现、加载占位采用轻量 Fluent 风格过渡"
 
 design_principles:
@@ -55,17 +56,17 @@ design_principles:
 tokens:
   colors:
     dark_neutral:
-      app: "#17171A"
-      surface: "#202024"
-      subtle: "#26262B"
-      elevated: "#2B2B32"
-      selected: "#17383B"
-      border_default: "#36363D"
-      border_subtle: "#2A2A30"
-      border_strong: "#45454E"
-      text_primary: "#E8E8EC"
-      text_secondary: "#A3A3AD"
-      text_tertiary: "#70707A"
+      app: "#16191F"
+      surface: "#20252D"
+      subtle: "#29313B"
+      elevated: "#323C48"
+      selected: "#173B40"
+      border_default: "#394451"
+      border_subtle: "#2C3540"
+      border_strong: "#566575"
+      text_primary: "#EDF2F7"
+      text_secondary: "#B0BAC7"
+      text_tertiary: "#9EABBB"
     brand:
       50: "#ECFBFC"
       100: "#D5F4F6"
@@ -77,7 +78,17 @@ tokens:
       700: "#1D727C"
       800: "#18535B"
       900: "#10383D"
+      on_primary: "#102024"
+      hover: "#51C8D4"
       gradient: "linear-gradient(135deg, #51C8D4, #228F9C)"
+    project_avatar:
+      teal: "#173B40"
+      amber: "#4A3520"
+      blue: "#243D54"
+      rose: "#4A2D40"
+    danger_button:
+      background: "#C9363E"
+      hover: "#B52D35"
     neutral:
       0: "#FFFFFF"
       50: "#F8FAFC"
@@ -122,6 +133,7 @@ tokens:
       secondary: "Brush.Text.Secondary"
       tertiary: "Brush.Text.Tertiary"
       inverse: "Brush.Text.Inverse"
+      on_brand: "Brush.Text.OnBrand"
       link: "Brush.Text.Link"
       danger: "Brush.Text.Danger"
     background:
@@ -166,6 +178,7 @@ tokens:
       title: 20
       title_large: 24
       hero: 30
+      home_title: 28
     font_weight:
       regular: 400
       medium: 500
@@ -192,9 +205,9 @@ tokens:
   radius:
     xs: 2
     sm: 4
-    md: 6
-    lg: 8
-    xl: 12
+    md: 8
+    lg: 12
+    xl: 16
     "2xl": 16
     pill: 999
 
@@ -212,7 +225,7 @@ tokens:
     duration:
       fast: "120ms"
       base: "180ms"
-      slow: "260ms"
+      slow: "220ms"
     easing:
       standard: "cubic-bezier(0.2, 0, 0, 1)"
       entrance: "cubic-bezier(0.16, 1, 0.3, 1)"
@@ -246,6 +259,11 @@ resources:
     - "禁止在控件属性中直接硬编码十六进制颜色、Margin、Padding、CornerRadius"
 
 layout:
+  home:
+    empty_max_width: 560
+    medallion_size: 52
+    project_card_height: 156
+    search_width: 260
   shell:
     app_min_width: 1280
     app_min_height: 800

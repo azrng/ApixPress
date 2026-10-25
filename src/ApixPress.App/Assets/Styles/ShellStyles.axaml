@@ -26,8 +26,8 @@
   <Style Selector="Border.PanelCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
@@ -79,10 +79,11 @@
   </Style>
 
   <Style Selector="Button.PrimaryButton">
-    <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.OnBrand}" />
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
   <Style Selector="Button.SecondaryButton">
@@ -215,7 +216,7 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>
 
@@ -579,10 +580,10 @@
   </Style>
 
   <Style Selector="Border.SettingsPageSection">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderThickness" Value="0,0,0,1" />
+    <Setter Property="CornerRadius" Value="0" />
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
   </Style>
 
@@ -746,8 +747,8 @@
   </Style>
 
   <Style Selector="Button.DialogPrimaryButton">
-    <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.OnBrand}" />
     <Setter Property="Padding" Value="16,12" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="FontWeight" Value="SemiBold" />
@@ -755,7 +756,7 @@
   </Style>
 
   <Style Selector="Button.DialogDangerButton">
-    <Setter Property="Background" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Danger.Button}" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
     <Setter Property="Padding" Value="16,12" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
@@ -764,7 +765,7 @@
   </Style>
 
   <Style Selector="Button.DialogDangerButton:pointerover">
-    <Setter Property="Background" Value="{DynamicResource Brush.Text.Danger}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Danger.Button.Hover}" />
   </Style>
 
   <Style Selector="Border.SettingsDangerConfirmCard">
@@ -839,6 +840,28 @@
   <Style Selector="TextBlock.MainStatusBarText">
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+  <!-- 轻量颜色过渡用于操作反馈，不改变控件尺寸或列表排版。 -->
+  <Style Selector="Button.PrimaryButton, Button.SecondaryButton, Button.DialogPrimaryButton, Button.DialogSecondaryButton, Button.HttpSendButton, Button.HttpSaveButton, Button.ProjectWorkspaceNavButton">
+    <Setter Property="Transitions">
+      <Transitions>
+        <BrushTransition Property="Background" Duration="{StaticResource Duration.Fast}" />
+        <BrushTransition Property="BorderBrush" Duration="{StaticResource Duration.Fast}" />
+      </Transitions>
+    </Setter>
+  </Style>
+  <Style Selector="Button.PrimaryButton:pointerover, Button.DialogPrimaryButton:pointerover, Button.HttpSendButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Brand.Hover}" />
+  </Style>
+  <Style Selector="Button.PrimaryButton:pressed, Button.DialogPrimaryButton:pressed, Button.HttpSendButton:pressed">
+    <Setter Property="Background" Value="{DynamicResource Brush.Brand.Primary}" />
+  </Style>
+  <Style Selector="Button.PrimaryButton:focus-visible, Button.DialogPrimaryButton:focus-visible, Button.HttpSendButton:focus-visible, Button.HttpSaveButton:focus-visible">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+  <Style Selector="Button.PrimaryButton:disabled, Button.DialogPrimaryButton:disabled, Button.HttpSendButton:disabled">
+    <Setter Property="Opacity" Value="0.5" />
   </Style>
 </Styles>

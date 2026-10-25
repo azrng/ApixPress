@@ -9,16 +9,16 @@
   <Style Selector="Border.HttpEditorModeBar">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="Padding" Value="0" />
   </Style>
 
   <!-- 上下文栏对齐原型 ctx-bar：完整圆角卡片，接口编辑与快捷请求共用 -->
   <Style Selector="Border.HttpEditorContextBar, Border.HttpQuickContextBar">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
     <Setter Property="Padding" Value="{StaticResource Pad.2}" />
   </Style>
@@ -27,8 +27,8 @@
   <Style Selector="Border.HttpEditorContextChip">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="Padding" Value="8,2" />
     <Setter Property="MaxWidth" Value="220" />
   </Style>
@@ -81,10 +81,10 @@
   </Style>
 
   <Style Selector="ToggleButton.HttpEditorModeButton:checked">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
   </Style>
 
   <Style Selector="TextBox.HttpInterfaceNameInput">
@@ -583,7 +583,8 @@
     <Setter Property="ClipToBounds" Value="True" />
   </Style>
 
-  <Style Selector="ComboBox.HttpMethodSelector">
+  <!-- 动态方法类会替换固定类，基础样式也须匹配实际方法类。 -->
+  <Style Selector="ComboBox.HttpMethodSelector, ComboBox.HttpMethodGet, ComboBox.HttpMethodPost, ComboBox.HttpMethodPut, ComboBox.HttpMethodDelete, ComboBox.HttpMethodPatch">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
@@ -595,32 +596,32 @@
   </Style>
 
   <!-- 方法名按语义着色：GET 绿 / POST 橙 / PUT 蓝 / DELETE 红 / PATCH 青 -->
-  <Style Selector="ComboBox.HttpMethodSelector.HttpMethodGet">
+  <Style Selector="ComboBox.HttpMethodGet">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Get}" />
   </Style>
 
-  <Style Selector="ComboBox.HttpMethodSelector.HttpMethodPost">
+  <Style Selector="ComboBox.HttpMethodPost">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Post}" />
   </Style>
 
-  <Style Selector="ComboBox.HttpMethodSelector.HttpMethodPut">
+  <Style Selector="ComboBox.HttpMethodPut">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Put}" />
   </Style>
 
-  <Style Selector="ComboBox.HttpMethodSelector.HttpMethodDelete">
+  <Style Selector="ComboBox.HttpMethodDelete">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Delete}" />
   </Style>
 
-  <Style Selector="ComboBox.HttpMethodSelector.HttpMethodPatch">
+  <Style Selector="ComboBox.HttpMethodPatch">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Patch}" />
   </Style>
 
-  <Style Selector="ComboBox.HttpMethodSelector /template/ ContentPresenter#PART_ContentPresenter">
+  <Style Selector="ComboBox.HttpMethodSelector /template/ ContentPresenter#ContentPresenter, ComboBox.HttpMethodGet /template/ ContentPresenter#ContentPresenter, ComboBox.HttpMethodPost /template/ ContentPresenter#ContentPresenter, ComboBox.HttpMethodPut /template/ ContentPresenter#ContentPresenter, ComboBox.HttpMethodDelete /template/ ContentPresenter#ContentPresenter, ComboBox.HttpMethodPatch /template/ ContentPresenter#ContentPresenter">
     <Setter Property="Margin" Value="0,0,10,0" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
-  <Style Selector="ComboBox.HttpMethodSelector /template/ PathIcon">
+  <Style Selector="ComboBox.HttpMethodSelector /template/ PathIcon, ComboBox.HttpMethodGet /template/ PathIcon, ComboBox.HttpMethodPost /template/ PathIcon, ComboBox.HttpMethodPut /template/ PathIcon, ComboBox.HttpMethodDelete /template/ PathIcon, ComboBox.HttpMethodPatch /template/ PathIcon">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="Width" Value="11" />
     <Setter Property="Height" Value="11" />
@@ -652,7 +653,7 @@
   <!-- 发送是主操作：主色填充、加宽加高，与次级“保存”拉开层级 -->
   <Style Selector="Button.HttpSendButton">
     <Setter Property="Background" Value="{DynamicResource Brush.Brand.Primary}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.OnBrand}" />
     <Setter Property="Padding" Value="18,7" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="FontWeight" Value="SemiBold" />
@@ -681,7 +682,7 @@
   <Style Selector="Path.HttpSpinner">
     <Setter Property="Data" Value="M 7,1 A 6,6 0 1 1 1,7" />
     <Setter Property="Stretch" Value="None" />
-    <Setter Property="Stroke" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Text.OnBrand}" />
     <Setter Property="StrokeThickness" Value="2" />
     <Setter Property="RenderTransform">
       <RotateTransform />
@@ -1183,23 +1184,23 @@
   </Style>
 
   <Style Selector="TextBlock.InterfaceRootMethodText.HttpMethodGet">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Success.Text}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Get}" />
   </Style>
 
   <Style Selector="TextBlock.InterfaceRootMethodText.HttpMethodPost">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Post}" />
   </Style>
 
   <Style Selector="TextBlock.InterfaceRootMethodText.HttpMethodPut">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Warning.Text}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Put}" />
   </Style>
 
   <Style Selector="TextBlock.InterfaceRootMethodText.HttpMethodDelete">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Danger.Text}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Delete}" />
   </Style>
 
   <Style Selector="TextBlock.InterfaceRootMethodText.HttpMethodPatch">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Patch}" />
   </Style>
 
   <Style Selector="Border.InterfaceRootStatusDot">
@@ -1216,5 +1217,21 @@
     <Setter Property="Padding" Value="9,3" />
     <Setter Property="HorizontalAlignment" Value="Left" />
     <Setter Property="MaxWidth" Value="128" />
+  </Style>
+  <!-- 方法下拉的选中项沿用同一组方法色，不受主题默认文字颜色覆盖。 -->
+  <Style Selector="ComboBox.HttpMethodGet /template/ ContentPresenter#ContentPresenter TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Get}" />
+  </Style>
+  <Style Selector="ComboBox.HttpMethodPost /template/ ContentPresenter#ContentPresenter TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Post}" />
+  </Style>
+  <Style Selector="ComboBox.HttpMethodPut /template/ ContentPresenter#ContentPresenter TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Put}" />
+  </Style>
+  <Style Selector="ComboBox.HttpMethodDelete /template/ ContentPresenter#ContentPresenter TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Delete}" />
+  </Style>
+  <Style Selector="ComboBox.HttpMethodPatch /template/ ContentPresenter#ContentPresenter TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Patch}" />
   </Style>
 </Styles>

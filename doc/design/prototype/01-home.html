@@ -14,14 +14,14 @@
   <a class="current" data-home-state="projects">有项目</a>
   <a data-home-state="no-projects">空状态 · 还没有项目</a>
   <a data-home-state="no-match">空状态 · 搜索无结果</a>
-  <span class="pos">T096 空状态美化审查</span>
+  <span class="pos">T089 整体美化 · 首页</span>
 </div>
 
 <!-- ═══════════════ 项目首页（可交互） ═══════════════ -->
 <div class="window">
   <div class="titlebar">
     <div class="logo"><span class="logo-mark">A</span>ApixPress</div>
-    <div class="tb-tab active" data-tab-scope="directory">首页 <span class="n">3</span></div>
+    <div class="tb-tab active" data-tab-scope="directory">首页</div>
     <button class="tb-plus" data-href="11-new-tab.html" title="新建">＋</button>
     <div class="tb-spacer"></div>
     <button class="tb-icon" data-toast="已刷新项目列表（演示）">⟳</button>
@@ -30,81 +30,75 @@
     <div class="tb-sep"></div>
     <button class="tb-icon">—</button><button class="tb-icon">▢</button><button class="tb-icon">✕</button>
   </div>
-  <div class="page">
+  <div class="page home-page">
     <div class="card home-header">
+      <div class="home-eyebrow">本地工作区</div>
       <div class="page-title-row">
         <span class="page-title">项目首页</span>
-        <span class="chip">本地工作区</span>
       </div>
-      <div class="page-sub">本地 API 工作区：筛选、浏览项目卡片，并以标签页打开工作台。</div>
+      <div class="page-sub">接口、环境与用例，都从这里开始。</div>
       <div class="metric-line" id="homeMetric">
-        项目 <b>3</b> <span>·</span> 当前可见 <b>3</b> <span>·</span> 已打开标签 <b>0</b>
+        共 <b>3</b> 个项目 <span>·</span> 当前显示 <b>3</b> 个
       </div>
     </div>
 
     <div class="card toolbar">
       <span class="cap">项目列表</span>
-      <span class="hint">搜索项目名称或备注，点击卡片后在顶部以新标签页进入工作区。</span>
-      <div class="search-box" style="width:240px;flex:none;"><span><i class="ri-search-line"></i></span><input id="homeSearch" placeholder="搜索项目…"></div>
-      <button class="btn btn-ghost" style="min-width:auto;" data-href="09-import-export.html">导入项目</button>
-      <button class="btn btn-primary" style="min-width:auto;padding:0 18px;" data-open="#newProjectModal">＋ 新建项目</button>
+      <div class="home-project-actions">
+        <div class="search-box" style="width:240px;flex:none;"><span><i class="ri-search-line" aria-hidden="true"></i></span><input id="homeSearch" placeholder="搜索项目名称或备注" aria-label="搜索项目名称或备注"></div>
+        <button class="btn btn-primary" data-open="#newProjectModal">＋ 新建项目</button>
+      </div>
     </div>
 
     <div class="tiles" id="homeTiles">
-      <div class="tile" data-context-menu="project" data-href="02-debug-params.html">
+      <div class="tile" data-context-menu="project" data-href="02-debug-params.html" role="link" tabindex="0" aria-label="打开 example 项目" onkeydown="if(event.key==='Enter'){this.click();}">
         <div class="tile-head">
           <div class="tile-icon g2">E</div>
           <div style="flex:1;min-width:0;">
             <div class="tile-name">example</div>
-            <div class="tile-hint">点击后在顶部打开独立工作标签</div>
           </div>
           <span class="default-badge">默认</span>
         </div>
-        <div class="tile-summary">暂无备注信息，可进入项目详情继续完善说明。</div>
+        <div class="tile-summary">本地 API 调试与接口验证。</div>
         <div class="tile-foot">
-          <span class="name">example（默认）</span>
           <span class="tile-open">打开项目 →</span>
         </div>
       </div>
-      <div class="tile" data-context-menu="project" data-href="02-debug-params.html">
+      <div class="tile" data-context-menu="project" data-href="02-debug-params.html" role="link" tabindex="0" aria-label="打开 apifox 项目" onkeydown="if(event.key==='Enter'){this.click();}">
         <div class="tile-head">
           <div class="tile-icon g3">A</div>
           <div style="flex:1;min-width:0;">
             <div class="tile-name">apifox</div>
-            <div class="tile-hint">点击后在顶部打开独立工作标签</div>
           </div>
         </div>
-        <div class="tile-summary">暂无备注信息，可进入项目详情继续完善说明。</div>
+        <div class="tile-summary">导入接口文档，验证请求与响应。</div>
         <div class="tile-foot">
-          <span class="name">apifox</span>
           <span class="tile-open">打开项目 →</span>
         </div>
       </div>
-      <div class="tile" data-context-menu="project" data-href="02-debug-params.html">
+      <div class="tile" data-context-menu="project" data-href="02-debug-params.html" role="link" tabindex="0" aria-label="打开 bbb 项目" onkeydown="if(event.key==='Enter'){this.click();}">
         <div class="tile-head">
           <div class="tile-icon g4">B</div>
           <div style="flex:1;min-width:0;">
             <div class="tile-name">bbb</div>
-            <div class="tile-hint">点击后在顶部打开独立工作标签</div>
           </div>
         </div>
-        <div class="tile-summary">暂无备注信息，可进入项目详情继续完善说明。</div>
+        <div class="tile-summary">保存环境配置与常用请求用例。</div>
         <div class="tile-foot">
-          <span class="name">bbb</span>
           <span class="tile-open">打开项目 →</span>
         </div>
       </div>
     </div>
 
-    <!-- 空状态：还没有项目（首次使用，唯一主 CTA） -->
+    <!-- 空状态位于项目列表起点，与标题和列表左对齐，不在窗口中央悬浮。 -->
     <div class="placeholder-wrap home-empty" id="homeEmpty">
       <div class="placeholder-card home-empty-card">
         <div class="home-empty-icon">
           <svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2.2 2.5H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M12 10.8v4.4M9.8 13h4.4"/></svg>
         </div>
         <div class="home-empty-title">还没有项目</div>
-        <div class="home-empty-hint">创建第一个项目后，就可以在这里直接筛选、浏览并打开项目工作区。</div>
-        <button class="btn btn-primary" style="min-width:128px;" data-open="#newProjectModal">＋ 新建项目</button>
+        <div class="home-empty-hint">创建第一个项目，开始整理接口、配置环境和调试请求。</div>
+        <button class="btn btn-ghost" data-open="#newProjectModal">创建第一个项目 →</button>
       </div>
     </div>
 
@@ -174,10 +168,10 @@
 
 <script src="shared.js"></script>
 <script>
-  // 搜索过滤：按名称与备注匹配，实时更新可见计数（空状态预览下不过滤）
+  // 搜索过滤：无匹配时复用靠上左对齐的空状态，继续输入可返回项目列表。
   var searchInput = document.getElementById("homeSearch");
   searchInput.addEventListener("input", function () {
-    if (document.body.getAttribute("data-home-state") !== "projects") return;
+    if (document.body.getAttribute("data-home-state") === "no-projects") return;
     var kw = this.value.trim().toLowerCase();
     var visible = 0;
     document.querySelectorAll("#homeTiles .tile").forEach(function (tile) {
@@ -186,6 +180,7 @@
       if (hit) visible++;
     });
     document.querySelector("#homeMetric b:nth-of-type(2)").textContent = visible;
+    document.body.setAttribute("data-home-state", kw && visible === 0 ? "no-match" : "projects");
   });
 
   // 空状态预览切换（原型演示）：projects / no-projects / no-match

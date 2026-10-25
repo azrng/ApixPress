@@ -2,7 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Style Selector="Border.ProjectWorkspaceSidebarCard">
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="BorderThickness" Value="0" />
   </Style>
 
   <Style Selector="Border.ProjectSidebarSectionCard">
@@ -257,7 +258,7 @@
   <Style Selector="Border.ProjectWorkspaceMetaCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
   </Style>

@@ -4,8 +4,8 @@
   <Style Selector="Border.ProjectWorkspaceNavigationRail">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="0,12" />
   </Style>
 
@@ -33,7 +33,7 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
   </Style>
 
-  <!-- 选中项文字用品牌紫强调，呼应 Apifox 风格 -->
+  <!-- 选中项文字沿用青色品牌，与侧栏和主操作保持一致。 -->
   <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected TextBlock.ProjectWorkspaceNavText">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
     <Setter Property="FontWeight" Value="SemiBold" />
@@ -69,7 +69,7 @@
   </Style>
 
   <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected TextBlock.ProjectWorkspaceNavText">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
   </Style>
 
   <Style Selector="u|NavMenu.ProjectWorkspaceNavMenu u|NavMenuItem:selected TextBlock.ProjectWorkspaceNavText">
@@ -79,7 +79,7 @@
   <Style Selector="Border.ProjectWorkspaceNavIcon">
     <Setter Property="Width" Value="36" />
     <Setter Property="Height" Value="36" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Background" Value="Transparent" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="VerticalAlignment" Value="Center" />
@@ -90,7 +90,7 @@
   </Style>
 
   <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected Border.ProjectWorkspaceNavIcon">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+    <Setter Property="Background" Value="Transparent" />
   </Style>
 
   <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected Border.ProjectWorkspaceNavIcon Path">

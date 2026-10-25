@@ -26,7 +26,7 @@
       <b style="color:var(--accent);">左侧功能栏</b>（接口管理 / 请求历史 / 项目设置）均可点击跳转；
       环境芯片下拉、抽屉与弹窗等交互均可操作。所有页面共享
       <span style="font-family:var(--mono);color:var(--accent);">shared.css</span> 中的设计 token，
-      与 <span style="font-family:var(--mono);color:var(--accent);">Colors.axaml</span> 保持一致。
+      本轮为青灰层次与交互反馈的视觉提案，确认后同步到 Avalonia 资源；首页空状态已按反馈改为靠上左对齐。
     </div>
     <div class="ov-legend">
       <span class="ov-tag keep">v1 迁移：来自原单文件原型，内容保持并微调</span>
@@ -110,10 +110,10 @@
       <div class="ov-card" style="cursor:default;">
         <div class="ov-card-head"><span class="ov-no">§</span><span class="ov-name">设计 token 速览</span></div>
         <div class="token-grid" style="margin-top:4px;">
-          <div class="token-item"><span class="token-swatch" style="background:#17171A;"></span><span><span class="tn">App 背景</span><br><span class="tv">#17171A</span></span></div>
-          <div class="token-item"><span class="token-swatch" style="background:#202024;"></span><span><span class="tn">Surface</span><br><span class="tv">#202024</span></span></div>
-          <div class="token-item"><span class="token-swatch" style="background:#2B2B32;"></span><span><span class="tn">Elevated</span><br><span class="tv">#2B2B32</span></span></div>
-          <div class="token-item"><span class="token-swatch" style="background:#7C6CF0;"></span><span><span class="tn">品牌主色</span><br><span class="tv">#7C6CF0</span></span></div>
+          <div class="token-item"><span class="token-swatch" style="background:var(--bg-app);"></span><span><span class="tn">App 背景</span><br><span class="tv">#16191F</span></span></div>
+          <div class="token-item"><span class="token-swatch" style="background:var(--bg-surface);"></span><span><span class="tn">Surface</span><br><span class="tv">#20252D</span></span></div>
+          <div class="token-item"><span class="token-swatch" style="background:var(--bg-elevated);"></span><span><span class="tn">Elevated</span><br><span class="tv">#323C48</span></span></div>
+          <div class="token-item"><span class="token-swatch" style="background:var(--brand);"></span><span><span class="tn">品牌主色</span><br><span class="tv">#2FB6C5</span></span></div>
           <div class="token-item"><span class="token-swatch" style="background:#4ADE80;"></span><span><span class="tn">GET / 成功</span><br><span class="tv">#4ADE80</span></span></div>
           <div class="token-item"><span class="token-swatch" style="background:#F59E0B;"></span><span><span class="tn">POST</span><br><span class="tv">#F59E0B</span></span></div>
           <div class="token-item"><span class="token-swatch" style="background:#4C9AF0;"></span><span><span class="tn">PUT</span><br><span class="tv">#4C9AF0</span></span></div>

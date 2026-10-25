@@ -1,6 +1,12 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:u="https://irihi.tech/ursa">  <Style Selector="Border.ProjectGridHost">
+        xmlns:converters="using:ApixPress.App.Views.Converters"
+        xmlns:vm="using:ApixPress.App.ViewModels"
+        xmlns:u="https://irihi.tech/ursa">
+  <Styles.Resources>
+    <converters:ProjectAvatarBrushConverter x:Key="ProjectAvatarBrush" />
+  </Styles.Resources>
+  <Style Selector="Border.ProjectGridHost">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
@@ -139,15 +145,16 @@
 
   <Style Selector="Border.HomeProjectTileCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
-    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.5}" />
   </Style>
 
   <Style Selector="Button.HomeProjectTileButton:pointerover Border.HomeProjectTileCard">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Brand.Soft}" />
+    <Setter Property="BoxShadow" Value="{StaticResource Shadow.Sm}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
   </Style>
 
   <Style Selector="Button.HomeProjectTileButton.HomeProjectTileDropTarget Border.HomeProjectTileCard">
@@ -186,10 +193,10 @@
     <Setter Property="Fill" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 
-  <Style Selector="Border.HomeProjectTileIcon">
+  <Style Selector="Border.HomeProjectTileIcon" x:DataType="vm:ProjectWorkspaceItemViewModel">
     <Setter Property="Width" Value="42" />
     <Setter Property="Height" Value="42" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="Background" Value="{Binding Id, Converter={StaticResource ProjectAvatarBrush}}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="HorizontalAlignment" Value="Left" />
   </Style>
