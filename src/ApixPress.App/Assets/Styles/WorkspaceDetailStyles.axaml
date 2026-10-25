@@ -373,6 +373,52 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
   </Style>
 
+  <Style Selector="StackPanel.HistoryEmptyState">
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="{StaticResource Pad.4}" />
+    <Setter Property="MaxWidth" Value="236" />
+  </Style>
+
+  <Style Selector="StackPanel.HistorySearchEmptyState">
+    <Setter Property="MaxWidth" Value="244" />
+  </Style>
+
+  <Style Selector="Border.HistoryEmptyIcon">
+    <Setter Property="Width" Value="40" />
+    <Setter Property="Height" Value="40" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.HistoryEmptyIconGlyph">
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+  </Style>
+
+  <Style Selector="TextBlock.HistoryEmptyTitle">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="TextAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.HistoryEmptyDescription">
+    <Setter Property="MaxWidth" Value="236" />
+    <Setter Property="TextAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="Button.HistoryEmptyAction">
+    <Setter Property="MinWidth" Value="92" />
+    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+
   <Style Selector="Border.HistoryListCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />

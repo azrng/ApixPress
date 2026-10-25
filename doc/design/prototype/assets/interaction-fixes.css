@@ -10,3 +10,22 @@
 .interaction-tab-menu summary { cursor: pointer; padding: 6px; }
 .interaction-tab-menu .menu { position: absolute; right: 0; top: 100%; z-index: 90; width: 260px; background: var(--bg-elevated); border: 1px solid var(--border-default); padding: 8px; border-radius: var(--r-md); }
 .interaction-tab-menu button { width: 100%; text-align: left; margin: 4px 0; }
+
+/* 请求历史空状态：在侧栏内解释原因并提供下一步操作。 */
+.history-state {
+  flex: 1; min-height: 180px; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8px; padding: 20px 12px;
+  color: var(--text-secondary); text-align: center;
+}
+.history-state[hidden], #historySearchBox[hidden], #clearHistory[hidden],
+.h-item[hidden], .h-group-cap[hidden] { display: none !important; }
+.history-state-icon {
+  width: 40px; height: 40px; display: grid; place-items: center;
+  border-radius: var(--r-lg); background: var(--bg-selected); color: var(--accent); font-size: 18px;
+}
+.history-state strong { color: var(--text-primary); font-size: 13px; }
+.history-state > span:not(.history-state-icon) {
+  max-width: 210px; color: var(--text-tertiary); font-size: 12px; line-height: 1.5;
+}
+.history-state .btn { height: 28px; min-width: auto; margin-top: 3px; padding: 0 12px; font-size: 12px; }
+.history-state-search { min-height: 140px; }

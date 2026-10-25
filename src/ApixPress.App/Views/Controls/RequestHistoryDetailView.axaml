@@ -28,7 +28,7 @@
           <TextBlock Classes="SectionTitle"
                      Text="请求历史详情" />
           <TextBlock Classes="CaptionText"
-                     Text="选择左侧历史记录可查看请求参数和响应；继续请求会打开可编辑的快捷请求。" />
+                     Text="选择左侧历史记录查看请求参数和响应；继续请求会按地址类型打开可编辑的请求标签。" />
         </StackPanel>
         <Button Grid.Column="1"
                 Classes="SecondaryButton"

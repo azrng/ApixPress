@@ -328,16 +328,17 @@
                        Text="选择记录查看请求详情，并可继续发送。" />
           </StackPanel>
           <!-- 两段式清空：第一次点击进入待确认态（3 秒自动还原），再点执行 -->
-          <Button Grid.Column="1"
-                  Classes="HistoryClearButton"
-                  Content="清空"
-                  IsVisible="{Binding !HistoryPanel.IsClearHistoryArmed}"
-                  Command="{Binding HistoryPanel.ArmClearHistoryCommand}" />
-          <Button Grid.Column="1"
-                  Classes="HistoryClearButton HistoryClearArmed"
-                  Content="确认清空"
-                  IsVisible="{Binding HistoryPanel.IsClearHistoryArmed}"
-                  Command="{Binding HistoryPanel.ClearHistoryCommand}" />
+          <Grid Grid.Column="1"
+                IsVisible="{Binding HistoryPanel.HasHistory}">
+            <Button Classes="HistoryClearButton"
+                    Content="清空"
+                    IsVisible="{Binding !HistoryPanel.IsClearHistoryArmed}"
+                    Command="{Binding HistoryPanel.ArmClearHistoryCommand}" />
+            <Button Classes="HistoryClearButton HistoryClearArmed"
+                    Content="确认清空"
+                    IsVisible="{Binding HistoryPanel.IsClearHistoryArmed}"
+                    Command="{Binding HistoryPanel.ClearHistoryCommand}" />
+          </Grid>
         </Grid>
 
         <TextBox Grid.Row="1"
@@ -355,9 +356,40 @@
         </TextBox>
 
         <Grid Grid.Row="2">
-          <TextBlock Classes="CaptionText"
-                     Text="{Binding HistoryPanel.HistoryEmptyStateText}"
-                     IsVisible="{Binding HistoryPanel.ShowHistoryEmptyText}" />
+          <StackPanel Classes="HistoryEmptyState"
+                      Spacing="{StaticResource Space.2}"
+                      IsVisible="{Binding HistoryPanel.ShowHistoryEmptyState}">
+            <Border Classes="HistoryEmptyIcon">
+              <TextBlock Classes="HistoryEmptyIconGlyph"
+                         FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                         Text="&#xE823;" />
+            </Border>
+            <TextBlock Classes="HistoryEmptyTitle"
+                       Text="还没有请求历史" />
+            <TextBlock Classes="CaptionText HistoryEmptyDescription"
+                       Text="发送请求后，记录会自动保存在这里。"
+                       TextWrapping="Wrap" />
+            <Button Classes="PrimaryButton HistoryEmptyAction"
+                    Content="新建请求"
+                    Command="{Binding Workspace.OpenQuickRequestWorkspaceCommand}" />
+          </StackPanel>
+          <StackPanel Classes="HistoryEmptyState HistorySearchEmptyState"
+                      Spacing="{StaticResource Space.2}"
+                      IsVisible="{Binding HistoryPanel.ShowHistorySearchEmptyState}">
+            <Border Classes="HistoryEmptyIcon">
+              <TextBlock Classes="HistoryEmptyIconGlyph"
+                         FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"
+                         Text="&#xE721;" />
+            </Border>
+            <TextBlock Classes="HistoryEmptyTitle"
+                       Text="没有匹配的请求历史" />
+            <TextBlock Classes="CaptionText HistoryEmptyDescription"
+                       Text="换个方法、URL 或状态码试试。"
+                       TextWrapping="Wrap" />
+            <Button Classes="SecondaryButton HistoryEmptyAction"
+                    Content="清除搜索"
+                    Command="{Binding HistoryPanel.ClearSearchCommand}" />
+          </StackPanel>
           <!-- 加载失败态：与空态文案区分，错误原因可选中复制 + 一键重试 -->
           <StackPanel Classes="HistoryLoadErrorCard"
                       Spacing="{StaticResource Space.2}"

@@ -34,8 +34,9 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     /// <summary>空态文案的展示条件：没有可见记录且不是加载失败——失败态由错误块独占，不与“还没有发送记录”共存。</summary>
     public bool ShowHistoryEmptyText => !HasVisibleHistory && !HasHistoryLoadError;
 
-    public bool ShowHistoryEmptyState => !HasHistory;
-    public bool ShowHistorySearchEmptyState => HasHistory && HasSearchText && !HasVisibleHistory;
+    public bool ShowHistoryEmptyState => _hasLoadedHistory && !HasHistory && !IsHistoryLoading && !HasHistoryLoadError;
+    public bool ShowHistorySearchEmptyState => _hasLoadedHistory && HasHistory && HasSearchText
+        && !HasVisibleHistory && !IsHistoryLoading && !HasHistoryLoadError;
     public string HistoryEmptyStateText => HasSearchText ? "没有匹配的请求历史" : "还没有发送记录";
     public bool HasSelectedHistory => SelectedHistoryItem is not null;
 
@@ -267,7 +268,22 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(HasSearchText));
         OnPropertyChanged(nameof(HistoryEmptyStateText));
+        OnPropertyChanged(nameof(ShowHistorySearchEmptyState));
         _ = DebounceSearchAsync();
+    }
+
+    [RelayCommand]
+    private void ClearSearch()
+    {
+        SearchText = string.Empty;
+        CancellationTokenSourceHelper.CancelAndDispose(ref _searchDebounceCancellationTokenSource);
+        RefreshVisibleHistoryItems();
+    }
+
+    partial void OnIsHistoryLoadingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowHistoryEmptyState));
+        OnPropertyChanged(nameof(ShowHistorySearchEmptyState));
     }
 
     private async Task DebounceSearchAsync()
@@ -491,6 +507,8 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     partial void OnHasHistoryLoadErrorChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowHistoryEmptyText));
+        OnPropertyChanged(nameof(ShowHistoryEmptyState));
+        OnPropertyChanged(nameof(ShowHistorySearchEmptyState));
     }
 
     private static bool MatchesSearch(RequestHistoryItemViewModel item, string keyword)

@@ -49,9 +49,9 @@
     <div class="sidebar">
       <div class="side-head">
         <span class="side-title">请求历史</span>
-        <button class="btn btn-ghost" id="clearHistory" style="height:28px;min-width:auto;padding:0 12px;font-size:12px;">清空</button>
+        <button class="btn btn-ghost" id="clearHistory" hidden style="height:28px;min-width:auto;padding:0 12px;font-size:12px;">清空</button>
       </div>
-      <div class="search-box"><span><i class="ri-search-line"></i></span><input placeholder="搜索方法、URL 或状态码"></div>
+      <div class="search-box" id="historySearchBox"><span><i class="ri-search-line"></i></span><input id="historySearch" aria-label="搜索请求历史" placeholder="搜索方法、URL 或状态码"></div>
       <div class="history-list" id="historyList">
         <div class="h-group-cap"><span>今天</span><span>4</span></div>
         <div class="h-item selected" data-context-menu="history">
@@ -81,7 +81,18 @@
           <div class="h-line2"><span class="status-mini err">超时</span><span>09-11 22:17</span><span style="margin-left:auto;">30 000 ms</span></div>
         </div>
       </div>
-      <div class="cell-empty" id="historyEmpty" style="display:none;">还没有发送记录</div>
+      <div class="history-state" id="historyEmpty" hidden>
+        <span class="history-state-icon"><i class="ri-history-line"></i></span>
+        <strong>还没有请求历史</strong>
+        <span>发送请求后，记录会自动保存在这里。</span>
+        <button class="btn btn-primary" data-href="13-quick-request.html"><i class="ri-add-line"></i>新建请求</button>
+      </div>
+      <div class="history-state history-state-search" id="historyNoMatch" hidden>
+        <span class="history-state-icon"><i class="ri-search-line"></i></span>
+        <strong>没有匹配的请求</strong>
+        <span>换个方法、URL 或状态码试试。</span>
+        <button class="btn btn-ghost" id="clearHistorySearch">清除搜索</button>
+      </div>
       <!-- 加载失败态：与空态文案区分，错误原因可选中复制 + 一键重试（默认隐藏，演示时移除 display:none） -->
       <div class="cell-error" id="historyError" style="display:none;">
         <span>请求历史加载失败：数据库暂时不可用</span>
@@ -93,9 +104,9 @@
       <div class="card" style="padding:12px 16px; display:flex; align-items:center; gap:12px;">
         <div style="flex:1;">
           <div class="section-title">请求历史详情</div>
-          <div class="section-hint" style="margin-top:3px;">选择左侧历史记录可查看请求参数和响应；继续请求会打开可编辑的快捷请求。</div>
+          <div class="section-hint" style="margin-top:3px;">选择左侧历史记录查看请求参数和响应；继续请求会按地址类型打开可编辑的请求标签。</div>
         </div>
-        <button class="btn btn-ghost" data-toast="已打开可编辑的快捷请求（演示）">继续请求</button>
+        <button class="btn btn-ghost" data-toast="已按地址类型打开可编辑请求标签（演示）">继续请求</button>
       </div>
 
       <div class="card" style="padding:12px 16px;">
@@ -175,9 +186,43 @@
 <script src="shared.js"></script>
 <script>
   function syncHistoryEmpty() {
-    var hasItems = document.querySelectorAll("#historyList .h-item").length > 0;
-    document.getElementById("historyEmpty").style.display = hasItems ? "none" : "block";
-    document.getElementById("clearHistory").disabled = !hasItems;
+    var items = Array.from(document.querySelectorAll("#historyList .h-item"));
+    var query = historySearch.value.trim().toLowerCase();
+    var visibleCount = 0;
+    var currentGroup = null;
+    var currentGroupCount = 0;
+
+    Array.from(document.getElementById("historyList").children).forEach(function (row) {
+      if (row.classList.contains("h-group-cap")) {
+        if (currentGroup) {
+          currentGroup.lastElementChild.textContent = currentGroupCount;
+          currentGroup.hidden = currentGroupCount === 0;
+        }
+        currentGroup = row;
+        currentGroupCount = 0;
+        return;
+      }
+
+      if (!row.classList.contains("h-item")) return;
+      var matches = !query || row.textContent.toLowerCase().includes(query);
+      row.hidden = !matches;
+      if (matches) {
+        visibleCount++;
+        currentGroupCount++;
+      }
+    });
+
+    if (currentGroup) {
+      currentGroup.lastElementChild.textContent = currentGroupCount;
+      currentGroup.hidden = currentGroupCount === 0;
+    }
+
+    var hasItems = items.length > 0;
+    document.getElementById("historyEmpty").hidden = hasItems;
+    document.getElementById("historyNoMatch").hidden = !hasItems || visibleCount > 0;
+    historySearchBox.hidden = !hasItems;
+    clearBtn.hidden = !hasItems;
+    document.getElementById("historyList").style.display = visibleCount > 0 ? "flex" : "none";
   }
 
   // 历史行悬停操作：重发 / 删除
@@ -199,6 +244,9 @@
   var clearBtn = document.getElementById("clearHistory");
   var clearArmed = false;
   var clearTimer = null;
+  var historySearch = document.getElementById('historySearch');
+  var historySearchBox = document.getElementById('historySearchBox');
+  var clearHistorySearch = document.getElementById('clearHistorySearch');
   clearBtn.addEventListener("click", function () {
     if (!clearArmed) {
       clearArmed = true;
@@ -220,6 +268,12 @@
     clearBtn.style.color = "";
     clearBtn.style.borderColor = "";
   }
+  historySearch.addEventListener("input", syncHistoryEmpty);
+  clearHistorySearch.addEventListener("click", function () {
+    historySearch.value = "";
+    syncHistoryEmpty();
+    historySearch.focus();
+  });
   syncHistoryEmpty();
 </script>
 <script src="assets/interaction-fixes.js"></script>
