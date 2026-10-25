@@ -101,10 +101,15 @@
     <div class="main">
       <div class="card" style="padding:2px 12px 0; margin-top:0;">
         <div class="url-row" style="padding:12px 0 0;">
-          <div class="url-shell">
-            <span class="method-select get" data-toast="切换请求方法（演示）">GET <span class="caret">▼</span></span>
-            <input class="path-input" id="urlInput" placeholder="输入 http 或 https 起始的完整 URL">
-          </div>
+          <span class="url-fixed">完整 URL</span>
+          <input class="path-input" id="urlInput" list="urlCandidates" placeholder="输入 http 或 https 起始的完整 URL">
+          <datalist id="urlCandidates">
+            <option value="https://echo.apifox.com/"></option>
+            <option value="https://echo.apifox.com/get"></option>
+            <option value="https://echo.apifox.com/headers"></option>
+            <option value="https://echo.apifox.com/delay/2"></option>
+            <option value="https://echo.apifox.com/status/404"></option>
+          </datalist>
           <button class="btn btn-primary" id="sendBtn">发送<kbd class="btn-kbd">Ctrl+Enter</kbd></button>
           <button class="btn btn-ghost" data-open="#saveQuickModal">保存</button>
           <button class="btn btn-ghost" data-toast="已保存为 HTTP 接口（演示）">保存为接口</button>
@@ -157,6 +162,7 @@
         <div class="resp-head">
           <span class="resp-title">返回响应</span>
           <span class="resp-spacer"></span>
+          <input class="resp-search" placeholder="搜索响应">
         </div>
         <div class="resp-tabs" data-tabs="resp">
           <span class="sub-tab active" data-v="Body">Body</span>
@@ -185,9 +191,13 @@
           <input class="form-input" id="quickName" placeholder="例如：Echo 探活">
         </div>
         <div class="form-row">
+          <span class="form-label">保存 URL</span>
+          <input class="form-input" id="quickSaveUrl" readonly placeholder="先填写 URL">
+        </div>
+        <div class="form-row">
           <span class="form-label">保存位置</span>
           <input class="form-input" value="example · 快捷请求" readonly style="color:var(--text-secondary);">
-          <span class="form-hint" id="quickUrlHint">保存后出现在侧栏「快捷请求」分组。</span>
+          <span class="form-hint" id="quickUrlHint">另存为（Ctrl+Shift+S）创建独立副本；保存（Ctrl+S）直接更新当前项。</span>
         </div>
       </div>
       <div class="modal-foot">
@@ -200,22 +210,30 @@
 
 <script src="shared.js"></script>
 <script>
-  // 发送：URL 为空给校验提示；有 URL 则模拟请求
+  // 发送：URL 为空给校验提示；进行中按钮变「取消」，点击取消请求（同标签并发保护，其他标签可继续发送）
   var sendBtn = document.getElementById("sendBtn");
   var sendHTML = sendBtn.innerHTML;
+  var sendTimer = null;
   sendBtn.addEventListener("click", function () {
-    if (sendBtn.classList.contains("loading")) return;
+    if (sendBtn.classList.contains("loading")) {
+      clearTimeout(sendTimer); sendTimer = null;
+      sendBtn.classList.remove("loading");
+      sendBtn.innerHTML = sendHTML;
+      protoToast("请求已取消（演示：不写入历史）");
+      return;
+    }
     var url = document.getElementById("urlInput").value.trim();
     if (!url) { protoToast("请先输入 http 或 https 起始的完整 URL"); return; }
     sendBtn.classList.add("loading");
-    sendBtn.innerHTML = '<span class="spinner"></span>发送中…';
-    setTimeout(function () {
+    sendBtn.innerHTML = '<span class="spinner"></span>取消';
+    sendTimer = setTimeout(function () {
+      sendTimer = null;
       sendBtn.classList.remove("loading");
       sendBtn.innerHTML = sendHTML;
       document.getElementById("respEmpty").innerHTML =
         '<div class="resp-body" style="flex:1; margin-top:0;"><span class="j-punc">{</span> <span class="j-punc">"success":</span> <span class="j-num">true</span><span class="j-punc">,</span> <span class="j-punc">"message":</span> <span class="j-str">"操作成功"</span> <span class="j-punc">}</span></div>';
       protoToast("HTTP 200 · 88 ms（演示响应）");
-    }, 900);
+    }, 2500);
   });
 
   // 添加参数行 / 删除行
@@ -235,11 +253,17 @@
     if (del) del.closest(".table-row").remove();
   });
 
-  // 保存快捷请求：校验名称 → 关闭弹窗 → 提示
+  // 保存快捷请求：弹窗打开时回填当前 URL；校验名称 → 关闭弹窗 → 提示
+  var saveModal = document.getElementById("saveQuickModal");
+  document.querySelectorAll('[data-open="#saveQuickModal"]').forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      document.getElementById("quickSaveUrl").value = document.getElementById("urlInput").value.trim();
+    });
+  });
   document.getElementById("quickSaveBtn").addEventListener("click", function () {
     var name = document.getElementById("quickName").value.trim();
     if (!name) { protoToast("请先填写请求名称"); return; }
-    document.getElementById("saveQuickModal").classList.remove("open");
+    saveModal.classList.remove("open");
     protoToast("快捷请求「" + name + "」已保存（演示）");
   });
 </script>

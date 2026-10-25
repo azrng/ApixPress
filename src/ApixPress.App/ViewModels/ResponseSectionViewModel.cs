@@ -97,12 +97,12 @@ public partial class ResponseSectionViewModel : ViewModelBase
     /// <summary>方法徽章配色沿用既有 Light* 惯例（GET 绿 / DELETE 红等），对齐用例列表的方法徽章</summary>
     public string ActualRequestMethodBadgeClass => ActualRequestMethod switch
     {
-        "GET" => "Light Success",
-        "POST" => "Light Warning",
-        "PUT" => "Light Primary",
-        "DELETE" => "Light Danger",
-        "PATCH" => "Light Success",
-        _ => "Light Secondary"
+        "GET" => "HttpMethodTextLabel HttpMethodGet",
+        "POST" => "HttpMethodTextLabel HttpMethodPost",
+        "PUT" => "HttpMethodTextLabel HttpMethodPut",
+        "DELETE" => "HttpMethodTextLabel HttpMethodDelete",
+        "PATCH" => "HttpMethodTextLabel HttpMethodPatch",
+        _ => "HttpMethodTextLabel HttpMethodOther"
     };
 
     [ObservableProperty]

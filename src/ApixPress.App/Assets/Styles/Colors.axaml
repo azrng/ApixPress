@@ -2,38 +2,52 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!-- 深色主题（对标 Apifox 桌面端深色风格），键名与 design-system.yaml semantic 映射保持一致 -->
   <!-- Background -->
-  <SolidColorBrush x:Key="Brush.Background.App" Color="#16191F" />
-  <SolidColorBrush x:Key="Brush.Background.Surface" Color="#20252D" />
-  <SolidColorBrush x:Key="Brush.Background.Subtle" Color="#29313B" />
-  <SolidColorBrush x:Key="Brush.Background.Elevated" Color="#323C48" />
-  <SolidColorBrush x:Key="Brush.Background.Selected" Color="#173B40" />
+  <SolidColorBrush x:Key="Brush.Background.App" Color="#11171D" />
+  <SolidColorBrush x:Key="Brush.Background.Chrome" Color="#171E25" />
+  <SolidColorBrush x:Key="Brush.Background.Surface" Color="#1A222B" />
+  <SolidColorBrush x:Key="Brush.Background.Subtle" Color="#232D37" />
+  <SolidColorBrush x:Key="Brush.Background.Elevated" Color="#2B3642" />
+  <SolidColorBrush x:Key="Brush.Background.Input" Color="#151D24" />
+  <SolidColorBrush x:Key="Brush.Background.TableHeader" Color="#202832" />
+  <SolidColorBrush x:Key="Brush.Background.CodeEditor" Color="#131A20" />
+  <SolidColorBrush x:Key="Brush.Background.Selected" Color="#2A2748" />
   <SolidColorBrush x:Key="Brush.Background.Disabled" Color="#232327" />
   <SolidColorBrush x:Key="Brush.Background.Overlay" Color="#88000000" />
 
   <!-- Border -->
-  <SolidColorBrush x:Key="Brush.Border.Default" Color="#394451" />
-  <SolidColorBrush x:Key="Brush.Border.Subtle" Color="#2C3540" />
-  <SolidColorBrush x:Key="Brush.Border.Strong" Color="#566575" />
-  <SolidColorBrush x:Key="Brush.Border.Focus" Color="#2FB6C5" />
+  <SolidColorBrush x:Key="Brush.Border.Default" Color="#394754" />
+  <SolidColorBrush x:Key="Brush.Border.Subtle" Color="#2A3540" />
+  <SolidColorBrush x:Key="Brush.Border.Chrome" Color="#2B3742" />
+  <SolidColorBrush x:Key="Brush.Border.Table" Color="#2E3A45" />
+  <SolidColorBrush x:Key="Brush.Border.CodeEditor" Color="#2D3944" />
+  <SolidColorBrush x:Key="Brush.Border.Strong" Color="#526171" />
+  <SolidColorBrush x:Key="Brush.Border.Focus" Color="#44E7D4" />
   <SolidColorBrush x:Key="Brush.Border.Danger" Color="#E5484D" />
 
   <!-- Text -->
-  <SolidColorBrush x:Key="Brush.Text.Primary" Color="#EDF2F7" />
-  <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#B0BAC7" />
-  <SolidColorBrush x:Key="Brush.Text.Tertiary" Color="#9EABBB" />
+  <SolidColorBrush x:Key="Brush.Text.Primary" Color="#F0F5F8" />
+  <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#AEBCC9" />
+  <SolidColorBrush x:Key="Brush.Text.Tertiary" Color="#8A9BAA" />
   <SolidColorBrush x:Key="Brush.Text.Inverse" Color="#FFFFFF" />
-  <SolidColorBrush x:Key="Brush.Text.Link" Color="#78DAE2" />
+  <SolidColorBrush x:Key="Brush.Text.Link" Color="#44E7D4" />
   <SolidColorBrush x:Key="Brush.Text.Danger" Color="#FF7A7D" />
 
   <!-- 品牌按钮使用深色文字，普通反白文字仍保留原有语义。 -->
-  <SolidColorBrush x:Key="Brush.Text.OnBrand" Color="#102024" />
-  <SolidColorBrush x:Key="Brush.Brand.Hover" Color="#51C8D4" />
+  <SolidColorBrush x:Key="Brush.Text.OnBrand" Color="#08201E" />
+  <SolidColorBrush x:Key="Brush.Selection.Primary" Color="#A797FF" />
+  <SolidColorBrush x:Key="Brush.Selection.Hover" Color="#BDB2FF" />
+  <SolidColorBrush x:Key="Brush.Selection.Text" Color="#E6E2FF" />
+  <SolidColorBrush x:Key="Brush.Selection.Border" Color="#6BA797FF" />
+  <SolidColorBrush x:Key="Brush.Brand.Subtle.Background" Color="#8C123B3C" />
+  <SolidColorBrush x:Key="Brush.Brand.Subtle.Border" Color="#3844E7D4" />
+  <SolidColorBrush x:Key="Brush.Brand.Subtle.Text" Color="#81F1E4" />
+  <SolidColorBrush x:Key="Brush.Brand.Hover" Color="#6BF0E2" />
   <SolidColorBrush x:Key="Brush.Danger.Button" Color="#C9363E" />
   <SolidColorBrush x:Key="Brush.Danger.Button.Hover" Color="#B52D35" />
-  <SolidColorBrush x:Key="Brush.Project.Avatar.Teal" Color="#173B40" />
+  <SolidColorBrush x:Key="Brush.Project.Avatar.Teal" Color="#123B3C" />
   <SolidColorBrush x:Key="Brush.Project.Avatar.Amber" Color="#4A3520" />
-  <SolidColorBrush x:Key="Brush.Project.Avatar.Blue" Color="#243D54" />
-  <SolidColorBrush x:Key="Brush.Project.Avatar.Rose" Color="#4A2D40" />
+  <SolidColorBrush x:Key="Brush.Project.Avatar.Blue" Color="#263553" />
+  <SolidColorBrush x:Key="Brush.Project.Avatar.Rose" Color="#342947" />
 
   <!-- 状态语义 -->
   <SolidColorBrush x:Key="Brush.Status.Info.Background" Color="#1F2A45" />
@@ -44,49 +58,51 @@
   <SolidColorBrush x:Key="Brush.Status.Warning.Text" Color="#FBBF24" />
   <SolidColorBrush x:Key="Brush.Status.Error.Background" Color="#3A1D20" />
   <SolidColorBrush x:Key="Brush.Status.Error.Text" Color="#F87171" />
+  <SolidColorBrush x:Key="Brush.Status.Error.Subtle.Background" Color="#264B2329" />
+  <SolidColorBrush x:Key="Brush.Border.Danger.Subtle" Color="#38FF737C" />
 
   <!-- Brand / accent -->
-  <SolidColorBrush x:Key="Brush.Brand.Primary" Color="#2FB6C5" />
-  <SolidColorBrush x:Key="Brush.Brand.Primary.Strong" Color="#228F9C" />
+  <SolidColorBrush x:Key="Brush.Brand.Primary" Color="#44E7D4" />
+  <SolidColorBrush x:Key="Brush.Brand.Primary.Strong" Color="#22C7B8" />
   <!-- 品牌渐变（design-system brand.gradient，首页空状态徽章等品牌高亮场景） -->
   <LinearGradientBrush x:Key="Brush.Brand.Gradient" StartPoint="0,0" EndPoint="1,1">
-    <GradientStop Color="#51C8D4" Offset="0" />
-    <GradientStop Color="#228F9C" Offset="1" />
+    <GradientStop Color="#44E7D4" Offset="0" />
+    <GradientStop Color="#22C7B8" Offset="1" />
   </LinearGradientBrush>
 
-  <!-- HTTP method badges（Apifox 惯例：GET 绿 / POST 橙 / PUT 蓝 / DELETE 红 / PATCH 青） -->
-  <SolidColorBrush x:Key="Brush.Method.Get" Color="#4ADE80" />
-  <SolidColorBrush x:Key="Brush.Method.Post" Color="#F59E0B" />
+  <!-- HTTP 方法颜色与原型中的纯色文字标签一致。 -->
+  <SolidColorBrush x:Key="Brush.Method.Get" Color="#56D99A" />
+  <SolidColorBrush x:Key="Brush.Method.Post" Color="#F3BD60" />
   <SolidColorBrush x:Key="Brush.Method.Put" Color="#4C9AF0" />
-  <SolidColorBrush x:Key="Brush.Method.Delete" Color="#F87171" />
-  <SolidColorBrush x:Key="Brush.Method.Patch" Color="#2DD4BF" />
-  <SolidColorBrush x:Key="Brush.Method.Default" Color="#B0BAC7" />
+  <SolidColorBrush x:Key="Brush.Method.Delete" Color="#FF737C" />
+  <SolidColorBrush x:Key="Brush.Method.Patch" Color="#44E7D4" />
+  <SolidColorBrush x:Key="Brush.Method.Default" Color="#AEBCC9" />
 
   <!-- HTTP status badges (solid for compact chips) -->
   <SolidColorBrush x:Key="Brush.StatusCode.2xx" Color="#4ADE80" />
-  <SolidColorBrush x:Key="Brush.StatusCode.3xx" Color="#B0BAC7" />
+  <SolidColorBrush x:Key="Brush.StatusCode.3xx" Color="#AEBCC9" />
   <SolidColorBrush x:Key="Brush.StatusCode.4xx" Color="#FBBF24" />
   <SolidColorBrush x:Key="Brush.StatusCode.5xx" Color="#F87171" />
-  <SolidColorBrush x:Key="Brush.StatusCode.Error" Color="#B0BAC7" />
+  <SolidColorBrush x:Key="Brush.StatusCode.Error" Color="#AEBCC9" />
 
   <!-- 代码高亮（JSON 语法分色，与高保真原型一致） -->
-  <SolidColorBrush x:Key="Brush.Code.Plain" Color="#C9CDD6" />
-  <SolidColorBrush x:Key="Brush.Code.Key" Color="#9D8BFF" />
-  <SolidColorBrush x:Key="Brush.Code.String" Color="#7EC699" />
+  <SolidColorBrush x:Key="Brush.Code.Plain" Color="#CAD5DE" />
+  <SolidColorBrush x:Key="Brush.Code.Key" Color="#85B7FF" />
+  <SolidColorBrush x:Key="Brush.Code.String" Color="#8CE0B2" />
   <SolidColorBrush x:Key="Brush.Code.Number" Color="#E5B567" />
-  <SolidColorBrush x:Key="Brush.Code.Punctuation" Color="#9EABBB" />
+  <SolidColorBrush x:Key="Brush.Code.Punctuation" Color="#8A9BAA" />
 
   <!-- AvaloniaEdit 主题兼容层：其 Fluent 主题用 StaticResource 急切解析以下 key，
        应用只有 Semi 主题缺这些定义，缺失会在 ResponseBodyEditor 模板应用时直接崩溃。
        注意 System* 三项在 Fluent 契约里是 Color（包装字典以 <Color="{DynamicResource...}"> 消费），
        定义成 Brush 会在运行时 InvalidCastException；取值统一走本文件深色调色板。 -->
-  <SolidColorBrush x:Key="ToolTipBackground" Color="#323C48" />
-  <SolidColorBrush x:Key="ToolTipForeground" Color="#EDF2F7" />
-  <SolidColorBrush x:Key="ToolTipBorderBrush" Color="#566575" />
+  <SolidColorBrush x:Key="ToolTipBackground" Color="#2B3642" />
+  <SolidColorBrush x:Key="ToolTipForeground" Color="#F0F5F8" />
+  <SolidColorBrush x:Key="ToolTipBorderBrush" Color="#526171" />
   <Thickness x:Key="ToolTipBorderThemeThickness">1</Thickness>
-  <Color x:Key="SystemChromeMediumColor">#29313B</Color>
-  <Color x:Key="SystemBaseLowColor">#394451</Color>
-  <Color x:Key="SystemAccentColor">#2FB6C5</Color>
+  <Color x:Key="SystemChromeMediumColor">#232D37</Color>
+  <Color x:Key="SystemBaseLowColor">#394754</Color>
+  <Color x:Key="SystemAccentColor">#44E7D4</Color>
   <!-- Semi / Ursa 控件的主题适配，保持所有状态与业务样式同源。 -->
   <StaticResource x:Key="SemiColorPrimary" ResourceKey="Brush.Brand.Primary" />
   <StaticResource x:Key="SemiColorPrimaryPointerover" ResourceKey="Brush.Brand.Hover" />
@@ -118,10 +134,10 @@
   <StaticResource x:Key="TextBoxForeground" ResourceKey="Brush.Text.Primary" />
   <StaticResource x:Key="ComboBoxSelectorFocusBorderBrush" ResourceKey="Brush.Border.Focus" />
   <StaticResource x:Key="LoadingIconForeground" ResourceKey="Brush.Brand.Primary" />
-  <StaticResource x:Key="TabItemLinePipeSelectedBackground" ResourceKey="Brush.Brand.Primary" />
-  <StaticResource x:Key="TabItemButtonHeaderSelectedForeground" ResourceKey="Brush.Brand.Primary" />
+  <StaticResource x:Key="TabItemLinePipeSelectedBackground" ResourceKey="Brush.Selection.Primary" />
+  <StaticResource x:Key="TabItemButtonHeaderSelectedForeground" ResourceKey="Brush.Selection.Primary" />
   <StaticResource x:Key="TabItemButtonHeaderSelectedBackground" ResourceKey="Brush.Background.Selected" />
-  <StaticResource x:Key="TabItemIconSelectedForeground" ResourceKey="Brush.Brand.Primary" />
+  <StaticResource x:Key="TabItemIconSelectedForeground" ResourceKey="Brush.Selection.Primary" />
   <StaticResource x:Key="DialogBackground" ResourceKey="Brush.Background.Elevated" />
   <StaticResource x:Key="DrawerBackground" ResourceKey="Brush.Background.Elevated" />
   <StaticResource x:Key="OverlayDialogMaskBrush" ResourceKey="Brush.Background.Overlay" />

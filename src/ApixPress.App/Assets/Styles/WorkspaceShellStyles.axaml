@@ -27,8 +27,12 @@
   </Style>
 
   <Style Selector="Border.WorkspaceTabCapsule[Tag=True]">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Border}" />
+  </Style>
+
+  <Style Selector="Border.WorkspaceTabCapsule[Tag=True] Button.WorkspaceTabButton">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Selection.Text}" />
   </Style>
 
   <Style Selector="ToggleButton.WorkspaceTabButton">
@@ -62,7 +66,13 @@
   <Style Selector="ToggleButton.WorkspaceTabButton:checked">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="Transparent" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Selection.Text}" />
+  </Style>
+
+  <Style Selector="ToggleButton.WorkspaceTabButton.HomeTabButton:checked">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Border}" />
+    <Setter Property="BorderThickness" Value="1" />
   </Style>
 
   <Style Selector="ToggleButton.WorkspaceTabButton:checked /template/ ContentPresenter#PART_ContentPresenter">
@@ -71,16 +81,35 @@
     <Setter Property="BorderThickness" Value="0" />
   </Style>
 
+  <Style Selector="ToggleButton.WorkspaceTabButton.HomeTabButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Border}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
+
   <Style Selector="ToggleButton.WorkspaceTabButton:checked:pointerover">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
 
+  <Style Selector="ToggleButton.WorkspaceTabButton.HomeTabButton:checked:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Border}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Selection.Text}" />
+  </Style>
+
   <Style Selector="ToggleButton.WorkspaceTabButton:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="ToggleButton.WorkspaceTabButton.HomeTabButton:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Border}" />
+    <Setter Property="BorderThickness" Value="1" />
   </Style>
 
   <Style Selector="ToggleButton.WorkspaceTabButton:pressed">

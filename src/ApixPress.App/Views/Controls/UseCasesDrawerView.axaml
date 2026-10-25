@@ -34,8 +34,8 @@
     <Grid Grid.Row="1"
           ColumnDefinitions="Auto,*,Auto"
           ColumnSpacing="{StaticResource Space.2}">
-      <u:Badge Header="{Binding UseCasesPanel.CurrentInterfaceMethod}"
-               iri:ClassHelper.Classes="{Binding UseCasesPanel.CurrentInterfaceMethodBadgeClass}" />
+      <TextBlock Text="{Binding UseCasesPanel.CurrentInterfaceMethod}"
+                 iri:ClassHelper.Classes="{Binding UseCasesPanel.CurrentInterfaceMethodBadgeClass}" />
       <TextBlock Grid.Column="1"
                  VerticalAlignment="Center"
                  Text="{Binding UseCasesPanel.CurrentInterfaceName}"
@@ -75,8 +75,8 @@
               <!-- 第一行：名称 + 已加载标识 -->
               <Grid ColumnDefinitions="Auto,*,Auto"
                     ColumnSpacing="{StaticResource Space.2}">
-                <u:Badge Header="{Binding Method}"
-                         iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
+                <TextBlock Text="{Binding Method}"
+                           iri:ClassHelper.Classes="{Binding MethodBadgeClass}" />
                 <TextBlock Classes="CaseCardName"
                            Grid.Column="1"
                            Text="{Binding Name}"

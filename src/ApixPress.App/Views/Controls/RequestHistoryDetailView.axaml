@@ -46,9 +46,9 @@
               IsVisible="{Binding HistoryPanel.HasSelectedHistory}">
           <Grid ColumnDefinitions="Auto,*,Auto"
                 ColumnSpacing="{StaticResource Space.2}">
-            <u:Badge Grid.Column="0"
-                     Header="{Binding HistoryPanel.SelectedHistoryItem.Method}"
-                     iri:ClassHelper.Classes="{Binding HistoryPanel.SelectedHistoryItem.MethodBadgeClass}" />
+            <TextBlock Grid.Column="0"
+                       Text="{Binding HistoryPanel.SelectedHistoryItem.Method}"
+                       iri:ClassHelper.Classes="{Binding HistoryPanel.SelectedHistoryItem.MethodBadgeClass}" />
             <TextBlock Grid.Column="1"
                        Text="{Binding HistoryPanel.SelectedHistoryItem.Url}"
                        TextTrimming="CharacterEllipsis"
@@ -306,14 +306,15 @@
                         SelectedIndex="{Binding HistoryPanel.SelectedResponseSection.SelectedResponseTab}">
               <TabItem Header="Body">
                 <!-- 大响应体不换行（改由横向滚动查看），避免 MB 级文本 Wrap 全文排版卡顿 -->
-                <TextBox AcceptsReturn="True"
-                         BorderThickness="0"
-                         Background="Transparent"
-                         IsReadOnly="True"
-                         TextWrapping="NoWrap"
-                         VerticalContentAlignment="Top"
-                         Text="{Binding HistoryPanel.SelectedResponseSection.BodyText}"
-                         FontFamily="{StaticResource Font.Monospace}" />
+                <Border Classes="HistoryResponseBodyCard">
+                  <TextBox Classes="HistoryResponseBodyText"
+                           AcceptsReturn="True"
+                           IsReadOnly="True"
+                           TextWrapping="NoWrap"
+                           VerticalContentAlignment="Top"
+                           Text="{Binding HistoryPanel.SelectedResponseSection.BodyText}"
+                           FontFamily="{StaticResource Font.Monospace}" />
+                </Border>
               </TabItem>
               <TabItem Header="Headers">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"

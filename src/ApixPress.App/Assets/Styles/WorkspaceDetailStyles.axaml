@@ -419,9 +419,9 @@
     <Setter Property="HorizontalAlignment" Value="Center" />
   </Style>
 
-  <Style Selector="Border.HistoryListCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+  <Style Selector="Border.HistoryItemCard">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="{StaticResource Pad.3}" />
@@ -492,8 +492,8 @@
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
-  <Style Selector="ListBox.HistoryListBox ListBoxItem:pointerover Border.HistoryListCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+  <Style Selector="ListBox.HistoryListBox ListBoxItem:pointerover Border.HistoryItemCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
   </Style>
 
@@ -502,9 +502,9 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
 
-  <Style Selector="ListBox.HistoryListBox ListBoxItem:selected Border.HistoryListCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  <Style Selector="ListBox.HistoryListBox ListBoxItem:selected Border.HistoryItemCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Border}" />
   </Style>
 
   <Style Selector="Border.HistoryRequestDetailCard">
@@ -543,6 +543,23 @@
     <Setter Property="MaxHeight" Value="180" />
   </Style>
 
+  <Style Selector="Border.HistoryResponseBodyCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.CodeEditor}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.CodeEditor}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+    <Setter Property="ClipToBounds" Value="True" />
+  </Style>
+
+  <Style Selector="TextBox.HistoryResponseBodyText">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.CodeEditor}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Code.Plain}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
   <Style Selector="Border.QuickRequestHintCard">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
@@ -561,6 +578,7 @@
     <Setter Property="MinHeight" Value="180" />
     <Setter Property="MaxHeight" Value="340" />
     <Setter Property="ClipToBounds" Value="True" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
   </Style>
 
   <Style Selector="Border.ProjectWorkspaceSettingsHeader">

@@ -171,7 +171,7 @@
                                        TextWrapping="Wrap" />
                           </StackPanel>
                           <Button Grid.Column="1"
-                                  Classes="DialogDangerButton"
+                                  Classes="DialogDangerOutlineButton"
                                   Content="{Binding Settings.ClearProjectDataButtonText}"
                                   IsEnabled="{Binding Settings.CanRunProjectDangerOperation}"
                                   Command="{Binding Settings.RequestClearProjectDataCommand}" />
@@ -227,6 +227,7 @@
                               Classes="ProjectImportFormatIcon">
                         <TextBlock HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
+                                   Classes="ProjectImportFormatGlyph"
                                    FontSize="{StaticResource Font.Size.BodyLarge}"
                                    FontWeight="Bold"
                                    Text="S" />
@@ -234,7 +235,8 @@
                       <StackPanel Grid.Column="1"
                                   Spacing="2"
                                   VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Summary.ProjectSettingsImportFormatName}"
+                        <TextBlock Classes="ProjectImportActionTitle"
+                                   Text="{Binding Summary.ProjectSettingsImportFormatName}"
                                    FontWeight="SemiBold" />
                         <TextBlock Classes="CaptionText"
                                    Text="{Binding Summary.ProjectSettingsImportFormatDescription}" />
@@ -258,6 +260,7 @@
                               Classes="ProjectImportFormatIcon">
                         <TextBlock HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
+                                   Classes="ProjectImportFormatGlyph"
                                    FontSize="{StaticResource Font.Size.BodyLarge}"
                                    FontWeight="Bold"
                                    Text="P" />
@@ -265,7 +268,8 @@
                       <StackPanel Grid.Column="1"
                                   Spacing="2"
                                   VerticalAlignment="Center">
-                        <TextBlock Text="{Binding Summary.ProjectSettingsImportPackageFormatName}"
+                        <TextBlock Classes="ProjectImportActionTitle"
+                                   Text="{Binding Summary.ProjectSettingsImportPackageFormatName}"
                                    FontWeight="SemiBold" />
                         <TextBlock Classes="CaptionText"
                                    Text="{Binding Summary.ProjectSettingsImportPackageFormatDescription}" />
@@ -289,6 +293,7 @@
                               Classes="ProjectImportFormatIcon">
                         <TextBlock HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
+                                   Classes="ProjectImportFormatGlyph"
                                    FontSize="{StaticResource Font.Size.BodyLarge}"
                                    FontWeight="Bold"
                                    Text="U" />
@@ -296,7 +301,8 @@
                       <StackPanel Grid.Column="1"
                                   Spacing="2"
                                   VerticalAlignment="Center">
-                        <TextBlock Text="请求用例交付包"
+                        <TextBlock Classes="ProjectImportActionTitle"
+                                   Text="请求用例交付包"
                                    FontWeight="SemiBold" />
                         <TextBlock Classes="CaptionText"
                                    Text="导入 .apixdelivery.json，并保留环境配置与变量值"
@@ -357,9 +363,11 @@
                                Text="{Binding Summary.ProjectSettingsExportCardDescription}" />
                   </StackPanel>
 
-                  <!-- 对齐原型 09：三格式胶囊切换（.body-mode chips），四项范围仅备份格式显示 -->
-                  <StackPanel Orientation="Horizontal"
-                              Spacing="6">
+                  <!-- 对齐原型 09：统一底轨的三格式分段切换，四项范围仅备份格式显示 -->
+                  <Border Classes="ExportFormatSelectorTrack"
+                          HorizontalAlignment="Left">
+                    <StackPanel Orientation="Horizontal"
+                                Spacing="2">
                     <ToggleButton Classes="ExportFormatChip"
                                   Command="{Binding Import.SelectExportFormatCommand}"
                                   CommandParameter="backup"
@@ -378,7 +386,8 @@
                                   IsChecked="{Binding Import.IsMarkdownExportFormat, Mode=OneWay}">
                       <TextBlock Text="Markdown" />
                     </ToggleButton>
-                  </StackPanel>
+                    </StackPanel>
+                  </Border>
 
                   <StackPanel Spacing="{StaticResource Space.2}"
                               IsVisible="{Binding Import.IsBackupExportFormat}">
@@ -436,6 +445,7 @@
                               Classes="ProjectImportFormatIcon">
                         <TextBlock HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
+                                   Classes="ProjectImportFormatGlyph"
                                    FontSize="{StaticResource Font.Size.BodyLarge}"
                                    FontWeight="Bold"
                                    Text="D" />
@@ -443,7 +453,8 @@
                       <StackPanel Grid.Column="1"
                                   Spacing="2"
                                   VerticalAlignment="Center">
-                        <TextBlock Text="请求用例交付包"
+                        <TextBlock Classes="ProjectImportActionTitle"
+                                   Text="请求用例交付包"
                                    FontWeight="SemiBold" />
                         <TextBlock Classes="CaptionText"
                                    Text="导出为 .apixdelivery.json，便于跨项目交付"

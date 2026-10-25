@@ -102,12 +102,12 @@ public partial class ExplorerItemViewModel : ViewModelBase
 
     public string MethodBadgeClass => MethodBadgeText switch
     {
-        "GET" => "Light Success",
-        "POST" => "Light Warning",
-        "PUT" => "Light Primary",
-        "DELETE" => "Light Danger",
-        "PATCH" => "Light Secondary",
-        _ => "Light Secondary"
+        "GET" => "HttpMethodTextLabel HttpMethodGet",
+        "POST" => "HttpMethodTextLabel HttpMethodPost",
+        "PUT" => "HttpMethodTextLabel HttpMethodPut",
+        "DELETE" => "HttpMethodTextLabel HttpMethodDelete",
+        "PATCH" => "HttpMethodTextLabel HttpMethodPatch",
+        _ => "HttpMethodTextLabel HttpMethodOther"
     };
 
     private static string RemoveMethodPrefix(string title, string method)

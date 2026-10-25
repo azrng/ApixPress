@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11171D">
+  <title>ApixPress · 跨页面配色原型</title>
+  <link rel="stylesheet" href="assets/15-global-palette.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html" aria-label="返回 ApixPress 原型总览">
+        <span class="brand-mark">A</span><span>ApixPress</span>
+      </a>
+      <span class="top-divider" aria-hidden="true"></span>
+      <span class="top-context">视觉提案 / 15 · 跨页面配色</span>
+      <span class="top-spacer"></span>
+      <a class="back-link" href="index.html">返回原型总览 ↗</a>
+      <span class="proto-label">仅原型 · 待确认</span>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <div class="eyebrow">COLOR DIRECTION · ELECTRIC CYAN</div>
+        <h1 id="page-title">深色不变，让青色更有能量。</h1>
+        <p>保留熟悉的石墨深色工作区，用更明亮的电光青承接主操作；蓝紫色只标记当前选中项和少数焦点。正文继续使用高对比度浅色，长时间查看也清楚。</p>
+      </div>
+      <div class="hero-note"><b>配色分工</b><br>电光青用于发送、创建、键盘焦点与可操作链接；蓝紫用于当前导航、选中记录和需要暂时聚焦的对象。成功、警告、错误维持各自的语义色。</div>
+    </section>
+
+    <section class="panel palette-panel" aria-labelledby="palette-title">
+      <div class="panel-head">
+        <h2 class="panel-title" id="palette-title">提议色板</h2>
+        <span class="panel-caption">深色表面保持克制；亮色只承担清晰、可解释的功能</span>
+      </div>
+      <div class="swatches" aria-label="配色 token 预览">
+        <div class="swatch"><div class="swatch-color" style="background:#11171D"></div><div class="swatch-label"><span>应用底色</span><code>#11171D</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#1A222B"></div><div class="swatch-label"><span>面板</span><code>#1A222B</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#232D37"></div><div class="swatch-label"><span>次级表面</span><code>#232D37</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#F0F5F8"></div><div class="swatch-label"><span>正文</span><code>#F0F5F8</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#AEBCC9"></div><div class="swatch-label"><span>次级文字</span><code>#AEBCC9</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#44E7D4"></div><div class="swatch-label"><span>电光青</span><code>#44E7D4</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#123B3C"></div><div class="swatch-label"><span>青色浅底</span><code>#123B3C</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#A797FF"></div><div class="swatch-label"><span>蓝紫重点</span><code>#A797FF</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#2A2748"></div><div class="swatch-label"><span>选中底色</span><code>#2A2748</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#394754"></div><div class="swatch-label"><span>分隔边框</span><code>#394754</code></div></div>
+      </div>
+      <div class="contrast-grid" aria-label="关键文字对比度">
+        <div class="contrast-item"><span class="contrast-sample" style="color:#F0F5F8;background:#11171D">Aa</span><span class="contrast-copy"><strong>正文 / 应用底色</strong><span>#F0F5F8 / #11171D</span></span><span class="contrast-ratio">16.43:1</span></div>
+        <div class="contrast-item"><span class="contrast-sample" style="color:#AEBCC9;background:#1A222B">Aa</span><span class="contrast-copy"><strong>次级文字 / 面板</strong><span>#AEBCC9 / #1A222B</span></span><span class="contrast-ratio">8.29:1</span></div>
+        <div class="contrast-item"><span class="contrast-sample" style="color:#08201E;background:#44E7D4">Aa</span><span class="contrast-copy"><strong>主按钮文字 / 电光青</strong><span>#08201E / #44E7D4</span></span><span class="contrast-ratio">11.03:1</span></div>
+        <div class="contrast-item"><span class="contrast-sample" style="color:#E6E2FF;background:#2A2748">Aa</span><span class="contrast-copy"><strong>选中项文字 / 蓝紫底</strong><span>#E6E2FF / #2A2748</span></span><span class="contrast-ratio">11.26:1</span></div>
+      </div>
+    </section>
+
+    <div class="preview-heading">
+      <div><div class="eyebrow">SAME TOKENS · FOUR SCREENS</div><h2>四个常用页面，共用一套强调色规则</h2></div>
+      <p class="preview-hint">蓝紫只落在选中态；主操作与焦点始终由电光青承接</p>
+    </div>
+
+    <section class="preview-grid" aria-label="首页、请求工作区、请求历史和设置页面配色预览">
+      <article class="panel preview-card" aria-labelledby="home-preview-title">
+        <div class="preview-meta"><span class="preview-number">01</span><span class="preview-name" id="home-preview-title">项目首页</span><span class="preview-hint">入口轻快，操作突出</span></div>
+        <div class="mini-window">
+          <div class="mini-top"><span class="mini-brand"><span class="mini-mark">A</span>ApixPress</span><span class="mini-tab active">首页</span><span class="mini-tab">example</span><span class="mini-grow"></span><span class="mini-icon" aria-label="设置"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4"/></svg></span></div>
+          <div class="mini-body mini-home">
+            <div class="mini-eyebrow">本地工作区</div><div class="mini-page-title">项目首页</div><div class="mini-sub">接口、环境与用例，都从这里开始。</div>
+            <div class="mini-toolbar"><span class="mini-section">项目列表</span><span class="mini-grow"></span><div class="mini-input"><svg class="icon" viewBox="0 0 16 16"><circle cx="6.8" cy="6.8" r="4.4"/><path d="m10 10 3.5 3.5"/></svg>搜索项目名称或备注</div><button class="btn-primary" type="button">＋ 新建项目</button></div>
+            <div class="project-grid">
+              <div class="project-card selected"><div class="project-line"><span class="project-icon">E</span><span class="project-title">example</span><span class="default-tag">默认</span></div><div class="project-desc">本地 API 调试与接口验证。</div><div class="project-foot"><span>最近打开 · 今天</span><span class="open-link">打开项目 →</span></div></div>
+              <div class="project-card"><div class="project-line"><span class="project-icon">A</span><span class="project-title">apifox</span></div><div class="project-desc">导入接口文档，验证请求与响应。</div><div class="project-foot"><span>3 个接口</span><span class="open-link">打开项目 →</span></div></div>
+              <div class="project-card"><div class="project-line"><span class="project-icon">B</span><span class="project-title">sandbox</span></div><div class="project-desc">保存环境配置与常用请求用例。</div><div class="project-foot"><span>6 个接口</span><span class="open-link">打开项目 →</span></div></div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel preview-card" aria-labelledby="workspace-preview-title">
+        <div class="preview-meta"><span class="preview-number">02</span><span class="preview-name" id="workspace-preview-title">请求工作区</span><span class="preview-hint">高密度区域保留清楚层级</span></div>
+        <div class="mini-window">
+          <div class="mini-top"><span class="mini-brand"><span class="mini-mark">A</span>ApixPress</span><span class="mini-tab">首页</span><span class="mini-tab">example</span><span class="mini-tab active">获取班级信息</span><span class="mini-grow"></span><span class="env"><i class="env-dot"></i>开发</span></div>
+          <div class="mini-body workspace">
+            <div class="rail" aria-label="功能导航"><span class="rail-btn active" title="接口管理"><svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h8"/></svg></span><span class="rail-btn" title="请求历史"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l2.5 1.5"/></svg></span><span class="rail-btn" title="项目设置"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4"/></svg></span></div>
+            <div class="tree"><div class="tree-head"><span>接口管理</span><span style="color:var(--cyan)">＋</span></div><div class="tree-search"><svg class="icon" viewBox="0 0 16 16"><circle cx="6.8" cy="6.8" r="4.4"/><path d="m10 10 3.5 3.5"/></svg>搜索接口</div><div class="tree-group">⌄　接口</div><div class="tree-row">▸　Group</div><div class="tree-row selected"><span class="method">GET</span><span>获取班级信息</span></div><div class="tree-row"><span class="method post">POST</span><span>创建班级</span></div><div class="tree-group">⌄　快捷请求</div><div class="tree-row tree-muted">↗　Echo 探活</div></div>
+            <div class="workspace-main"><div class="workspace-title"><span>获取班级信息</span><span class="crumb">/ Group</span></div><div class="urlbar"><span class="url-method">GET</span><span class="url-path">{{baseUrl}}/api/Group/GetGroupList</span><button class="btn-primary" type="button">发送</button></div><div class="work-tabs"><span class="active">Params</span><span>Body</span><span>Headers</span><span>用例</span></div><div class="params"><div class="param-row head"><span>参数名</span><span>参数值</span><span>说明</span></div><div class="param-row"><span>page</span><span class="param-value">1</span><span class="tree-muted">页码</span></div><div class="param-row"><span>pageSize</span><span class="param-value">20</span><span class="tree-muted">每页条数</span></div></div><div class="response-bar"><strong>返回响应</strong><span class="status-ok">200 OK</span><span class="response-time">184 ms</span><span class="detail-grow"></span><span class="tree-muted">Body　Headers</span></div><div class="code-panel">{<br>　<span class="code-key">"success"</span>: <span class="code-string">true</span>,<br>　<span class="code-key">"data"</span>: [ ... ]<br>}</div></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel preview-card" aria-labelledby="history-preview-title">
+        <div class="preview-meta"><span class="preview-number">03</span><span class="preview-name" id="history-preview-title">请求历史</span><span class="preview-hint">当前记录用蓝紫轻量标识</span></div>
+        <div class="mini-window">
+          <div class="mini-top"><span class="mini-brand"><span class="mini-mark">A</span>ApixPress</span><span class="mini-tab">首页</span><span class="mini-tab active">example</span><span class="mini-grow"></span><span class="env"><i class="env-dot"></i>开发</span></div>
+          <div class="mini-body history-shell">
+            <div class="rail" aria-label="功能导航"><span class="rail-btn" title="接口管理"><svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h8"/></svg></span><span class="rail-btn active" title="请求历史"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l2.5 1.5"/></svg></span><span class="rail-btn" title="项目设置"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4"/></svg></span></div>
+            <div class="history-list"><div class="history-title"><span>请求历史</span><span style="color:var(--text-3);font-weight:400">清空</span></div><div class="history-search"><svg class="icon" viewBox="0 0 16 16"><circle cx="6.8" cy="6.8" r="4.4"/><path d="m10 10 3.5 3.5"/></svg>搜索方法、URL 或状态码</div><div class="day-label"><span>今天</span><span>4</span></div><div class="history-item selected"><div class="project-line"><span class="method post">POST</span><span class="status-pill">404</span></div><div class="history-url">https://echo.apifox.com/status/404</div><div class="history-meta"><span class="status-error">未找到</span><span>11:48</span><span class="detail-grow"></span><span>88 ms</span></div></div><div class="history-item"><div class="project-line"><span class="method">GET</span><span class="status-ok">200</span></div><div class="history-url">https://echo.apifox.com/get</div><div class="history-meta"><span>成功</span><span>10:56</span><span class="detail-grow"></span><span>144 ms</span></div></div><div class="history-item"><div class="project-line"><span class="method post">POST</span><span class="status-ok">200</span></div><div class="history-url">https://echo.apifox.com/post</div><div class="history-meta"><span>成功</span><span>10:36</span><span class="detail-grow"></span><span>110 ms</span></div></div><div class="day-label"><span>昨天</span><span>1</span></div></div>
+            <div class="history-detail"><div class="detail-head"><span class="detail-title">请求历史详情</span><span class="detail-grow"></span><button class="btn-secondary" type="button">重新发送</button><button class="btn-primary" type="button">继续请求</button></div><div class="detail-url">POST　https://echo.apifox.com/status/404</div><div class="detail-tags"><span class="detail-tag">page=2</span><span class="detail-tag">4 Headers</span><span class="detail-tag">Body 未设置</span></div><div class="error-banner"><span class="error-icon">!</span><span>404 Not Found</span><span class="detail-grow"></span><span>响应状态</span></div><div class="response-bar"><strong>响应内容</strong><span class="response-time">JSON</span></div><div class="code-panel">{<br>　<span class="code-key">"error"</span>: <span class="code-string">"resource_not_found"</span><br>}</div></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel preview-card" aria-labelledby="settings-preview-title">
+        <div class="preview-meta"><span class="preview-number">04</span><span class="preview-name" id="settings-preview-title">项目设置</span><span class="preview-hint">选中分组与危险操作各守语义</span></div>
+        <div class="mini-window">
+          <div class="mini-top"><span class="mini-brand"><span class="mini-mark">A</span>ApixPress</span><span class="mini-tab">首页</span><span class="mini-tab active">example</span><span class="mini-grow"></span><span class="env"><i class="env-dot"></i>开发</span></div>
+          <div class="mini-body settings-shell">
+            <div class="rail"><span class="rail-btn"><svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h8"/></svg></span><span class="rail-btn"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l2.5 1.5"/></svg></span><span class="rail-btn active"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4"/></svg></span></div>
+            <div class="settings-nav"><div class="settings-nav-title">项目设置</div><div class="settings-nav-cap">通用</div><div class="settings-nav-row active">基本设置</div><div class="settings-nav-cap">数据</div><div class="settings-nav-row">导入数据</div><div class="settings-nav-row">导出数据</div></div>
+            <div class="settings-main"><div class="settings-head"><div><h3>基本信息</h3><p>维护当前项目名称、项目 ID 和简介。</p></div></div><div class="settings-card"><div class="settings-field"><span class="field-name">项目名称</span><span class="field-value">example</span><span class="link-action">编辑</span></div><div class="settings-field"><span class="field-name">项目 ID</span><span class="field-value mono">9494334d7a8f48b4ac617c40e65f9180</span><span class="link-action">复制</span></div><div class="settings-field"><span class="field-name">简介</span><span class="field-value">本地 API 调试与接口验证。</span><span class="link-action">编辑</span></div></div><div class="danger-box"><span class="danger-copy"><strong>危险操作</strong><span>删除或清空会影响当前项目数据。</span></span><button class="btn-danger-outline" type="button">清空项目数据</button></div></div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <footer class="review-footer"><span><b>原型范围：</b>首页、请求工作区、请求历史、项目设置。只展示配色变化，沿用现有页面结构。</span><span><span class="accent-copy">电光青 = 主操作 / 焦点</span>　·　<span class="focus-copy">蓝紫 = 当前选中 / 重点</span>　·　正文对比度均高于 WCAG AA</span></footer>
+  </main>
+</body>
+</html>

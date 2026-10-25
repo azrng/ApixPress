@@ -68,12 +68,12 @@ public partial class UseCasesPanelViewModel : ViewModelBase
         : string.Empty;
     public string CurrentInterfaceMethodBadgeClass => CurrentInterfaceMethod switch
     {
-        "GET" => "Light Success",
-        "POST" => "Light Warning",
-        "PUT" => "Light Primary",
-        "DELETE" => "Light Danger",
-        "PATCH" => "Light Success",
-        _ => "Light Secondary"
+        "GET" => "HttpMethodTextLabel HttpMethodGet",
+        "POST" => "HttpMethodTextLabel HttpMethodPost",
+        "PUT" => "HttpMethodTextLabel HttpMethodPut",
+        "DELETE" => "HttpMethodTextLabel HttpMethodDelete",
+        "PATCH" => "HttpMethodTextLabel HttpMethodPatch",
+        _ => "HttpMethodTextLabel HttpMethodOther"
     };
     public string CurrentInterfaceCaseCountText => $"共 {CurrentInterfaceCaseItems.Count} 个用例";
     public string CurrentInterfaceCaseEmptyStateText => HasCurrentHttpInterface

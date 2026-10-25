@@ -152,9 +152,12 @@
                                        Text="{Binding Name}"
                                        TextTrimming="CharacterEllipsis" />
                           </StackPanel>
-                          <u:Badge Grid.Column="2"
-                                   Header="默认"
-                                   IsVisible="{Binding IsDefault}" />
+                          <Border Grid.Column="2"
+                                  Classes="HomeProjectDefaultTag"
+                                  IsVisible="{Binding IsDefault}">
+                            <TextBlock Classes="HomeProjectDefaultTagText"
+                                       Text="默认" />
+                          </Border>
                           <Border Grid.Column="3"
                                   Classes="HomeProjectDragHandle"
                                   IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ProjectPanel.CanReorderProjects}"

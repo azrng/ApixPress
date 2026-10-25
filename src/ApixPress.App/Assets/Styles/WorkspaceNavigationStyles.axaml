@@ -2,8 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:u="https://irihi.tech/ursa">
   <Style Selector="Border.ProjectWorkspaceNavigationRail">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Chrome}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Chrome}" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
     <Setter Property="Padding" Value="0,12" />
@@ -33,9 +33,9 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
   </Style>
 
-  <!-- 选中项文字沿用青色品牌，与侧栏和主操作保持一致。 -->
+  <!-- 选中项使用蓝紫强调，与青色主操作保持区分。 -->
   <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected TextBlock.ProjectWorkspaceNavText">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Selection.Primary}" />
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
 
@@ -69,11 +69,11 @@
   </Style>
 
   <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected TextBlock.ProjectWorkspaceNavText">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Selection.Primary}" />
   </Style>
 
   <Style Selector="u|NavMenu.ProjectWorkspaceNavMenu u|NavMenuItem:selected TextBlock.ProjectWorkspaceNavText">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Selection.Text}" />
   </Style>
 
   <Style Selector="Border.ProjectWorkspaceNavIcon">
@@ -85,15 +85,23 @@
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
 
+  <Style Selector="Path.ProjectWorkspaceNavIconPath">
+    <Setter Property="Fill" Value="{DynamicResource Brush.Text.Secondary}" />
+  </Style>
+
   <Style Selector="u|NavMenu.ProjectWorkspaceNavMenu u|NavMenuItem:selected Border.ProjectWorkspaceNavIcon">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
+  </Style>
+
+  <Style Selector="u|NavMenu.ProjectWorkspaceNavMenu u|NavMenuItem:selected Path.ProjectWorkspaceNavIconPath">
+    <Setter Property="Fill" Value="{DynamicResource Brush.Selection.Primary}" />
   </Style>
 
   <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected Border.ProjectWorkspaceNavIcon">
     <Setter Property="Background" Value="Transparent" />
   </Style>
 
-  <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected Border.ProjectWorkspaceNavIcon Path">
-    <Setter Property="Fill" Value="{DynamicResource Brush.Brand.Primary}" />
+  <Style Selector="Button.ProjectWorkspaceNavButton.ProjectWorkspaceNavButtonSelected Path.ProjectWorkspaceNavIconPath">
+    <Setter Property="Fill" Value="{DynamicResource Brush.Selection.Primary}" />
   </Style>
 </Styles>

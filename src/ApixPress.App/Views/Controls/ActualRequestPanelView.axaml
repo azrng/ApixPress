@@ -32,9 +32,9 @@
           <Border Classes="ActualRequestUrlCard">
             <StackPanel Orientation="Horizontal"
                         Spacing="{StaticResource Space.3}">
-              <u:Badge VerticalAlignment="Center"
-                       Header="{Binding ActualRequestMethod}"
-                       iri:ClassHelper.Classes="{Binding ActualRequestMethodBadgeClass}" />
+               <TextBlock VerticalAlignment="Center"
+                          Text="{Binding ActualRequestMethod}"
+                          iri:ClassHelper.Classes="{Binding ActualRequestMethodBadgeClass}" />
               <SelectableTextBlock Classes="ActualRequestUrlText"
                                    Text="{Binding ActualRequestUrl}" />
             </StackPanel>

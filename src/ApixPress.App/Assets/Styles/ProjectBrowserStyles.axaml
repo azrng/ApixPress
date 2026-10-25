@@ -224,6 +224,20 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
   </Style>
 
+  <Style Selector="Border.HomeProjectDefaultTag">
+    <Setter Property="Background" Value="{DynamicResource Brush.Brand.Subtle.Background}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Brand.Subtle.Border}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="Padding" Value="5,1" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <Style Selector="TextBlock.HomeProjectDefaultTagText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Subtle.Text}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+  </Style>
+
   <Style Selector="Border.SideRail">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
@@ -261,8 +275,8 @@
   </Style>
 
   <Style Selector="Border.RawEditorCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.CodeEditor}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.CodeEditor}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="Padding" Value="{StaticResource Pad.2}" />
@@ -276,24 +290,48 @@
   </Style>
 
   <Style Selector="ListBox.FlatListBox ListBoxItem:selected">
-    <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Selection.Text}" />
   </Style>
 
   <!-- Request History Styles -->
   <Style Selector="Border.HistoryItemCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="Padding" Value="{StaticResource Pad.2}" />
   </Style>
 
   <Style Selector="Border.HistoryItemCard:pointerover">
-    <Setter Property="Background" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
   </Style>
 
   <!-- Method badges -->
+  <Style Selector="TextBlock.HttpMethodTextLabel">
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Default}" />
+  </Style>
+
+  <Style Selector="TextBlock.HttpMethodTextLabel.HttpMethodGet">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Get}" />
+  </Style>
+  <Style Selector="TextBlock.HttpMethodTextLabel.HttpMethodPost">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Post}" />
+  </Style>
+  <Style Selector="TextBlock.HttpMethodTextLabel.HttpMethodPut">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Put}" />
+  </Style>
+  <Style Selector="TextBlock.HttpMethodTextLabel.HttpMethodDelete">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Delete}" />
+  </Style>
+  <Style Selector="TextBlock.HttpMethodTextLabel.HttpMethodPatch">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Method.Patch}" />
+  </Style>
+
   <Style Selector="Border.MethodBadge_GET">
     <Setter Property="Background" Value="{DynamicResource Brush.Method.Get}" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
@@ -494,7 +532,7 @@
 
   <Style Selector="TabControl.ConfigTabControl TabItem:selected">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Primary}" />
     <Setter Property="BorderThickness" Value="0,0,0,2" />
   </Style>
 
@@ -516,12 +554,12 @@
   </Style>
 
   <Style Selector="ListBox.BodyTypeSelector ListBoxItem:selected">
-    <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="Foreground" Value="White" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Selection.Text}" />
   </Style>
 
   <Style Selector="ListBox.BodyTypeSelector ListBoxItem:pointerover:selected">
-    <Setter Property="Background" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
   </Style>
 
   <Style Selector="ListBox.BodyTypeSelector ListBoxItem:pointerover">

@@ -42,12 +42,12 @@ public partial class RequestCaseItemViewModel : ViewModelBase
     public string RequestUrlText => SourceCase.RequestSnapshot.Url;
     public string MethodBadgeClass => Method switch
     {
-        "GET" => "Light Success",
-        "POST" => "Light Warning",
-        "PUT" => "Light Primary",
-        "DELETE" => "Light Danger",
-        "PATCH" => "Light Success",
-        _ => "Light Secondary"
+        "GET" => "HttpMethodTextLabel HttpMethodGet",
+        "POST" => "HttpMethodTextLabel HttpMethodPost",
+        "PUT" => "HttpMethodTextLabel HttpMethodPut",
+        "DELETE" => "HttpMethodTextLabel HttpMethodDelete",
+        "PATCH" => "HttpMethodTextLabel HttpMethodPatch",
+        _ => "HttpMethodTextLabel HttpMethodOther"
     };
 
     partial void OnUpdatedAtChanged(DateTime value)

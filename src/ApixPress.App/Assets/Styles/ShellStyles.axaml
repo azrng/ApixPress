@@ -32,8 +32,8 @@
   </Style>
 
   <Style Selector="Border.TopBarCard">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Chrome}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Chrome}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
     <Setter Property="Padding" Value="12,3" />
   </Style>
@@ -388,7 +388,7 @@
 
   <Style Selector="TabControl.ResponseTabs TabItem:selected">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Primary}" />
     <Setter Property="BorderThickness" Value="0,0,0,2" />
   </Style>
 
@@ -574,8 +574,8 @@
   </Style>
 
   <Style Selector="ToggleButton.SettingsNavButton:checked">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Primary}" />
     <Setter Property="BorderThickness" Value="1" />
   </Style>
 
@@ -588,13 +588,19 @@
   </Style>
 
   <Style Selector="Border.SettingsDangerSection">
-    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.Background}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.Subtle.Background}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Danger.Subtle}" />
   </Style>
 
   <Style Selector="TextBlock.SettingsGroupTitle">
     <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
     <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+
+  <Style Selector="TextBlock.SettingsSubsectionTitle">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
 
   <Style Selector="NumericUpDown.SettingsNumberInput">
@@ -768,6 +774,21 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Danger.Button.Hover}" />
   </Style>
 
+  <Style Selector="Button.DialogDangerOutlineButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Danger}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="16,12" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="MinWidth" Value="112" />
+  </Style>
+
+  <Style Selector="Button.DialogDangerOutlineButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.Background}" />
+  </Style>
+
   <Style Selector="Border.SettingsDangerConfirmCard">
     <Setter Property="Width" Value="460" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
@@ -825,7 +846,7 @@
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.Title}" />
     <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
   </Style>
 
   <!-- 底部状态栏：保存/校验/发送等操作反馈的常驻宿主（对齐原型 .proto-statusbar） -->

@@ -49,10 +49,13 @@
 
           <ScrollViewer Grid.Row="1">
             <StackPanel>
-              <Grid RowDefinitions="Auto,Auto"
+              <Grid RowDefinitions="Auto,Auto,Auto"
                     IsVisible="{Binding ShellPanels.SettingsCenter.ShowGeneralSettingsSection}"
                     RowSpacing="{StaticResource Space.4}">
-                <Border Classes="SettingsPageSection">
+                <TextBlock Classes="SettingsSubsectionTitle"
+                           Text="请求行为" />
+                <Border Grid.Row="1"
+                        Classes="SettingsPageSection">
                   <Grid ColumnDefinitions="*,Auto"
                         ColumnSpacing="{StaticResource Space.4}">
                     <StackPanel Spacing="4">
@@ -70,7 +73,7 @@
                   </Grid>
                 </Border>
 
-                <StackPanel Grid.Row="1"
+                <StackPanel Grid.Row="2"
                             Spacing="{StaticResource Space.3}">
                   <Border Classes="SettingsPageSection">
                     <Grid ColumnDefinitions="*,Auto"
@@ -111,6 +114,8 @@
                                     IsChecked="{Binding ShellPanels.SettingsCenter.SendNoCacheHeader}" />
                     </Grid>
                   </Border>
+                  <TextBlock Classes="SettingsSubsectionTitle"
+                             Text="诊断与更新" />
                   <Border Classes="SettingsPageSection">
                     <Grid ColumnDefinitions="*,Auto"
                           ColumnSpacing="{StaticResource Space.4}">

@@ -88,10 +88,10 @@
   <!-- 4 应用设置 -->
   <div class="dialog-sample">
     <div class="cap"><span class="sample-no">4</span><span class="sample-title">应用设置</span><span class="sample-desc">标题栏「⚙」触发；关于、存储与全局行为设置，属于应用级而非项目级。</span></div>
-    <div class="modal" style="width:560px;">
+    <div class="modal settings-dialog" style="width:560px;">
       <div class="modal-head"><span class="modal-title">应用设置</span><button class="drawer-close">✕</button></div>
       <div class="modal-body">
-        <div class="form-section">请求</div>
+        <div class="form-section settings-subsection-title">请求行为</div>
         <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px; flex-wrap:wrap;">
           <span class="info-label">请求超时时间</span>
           <span class="info-value" style="display:flex; align-items:center; gap:8px;">
@@ -108,6 +108,22 @@
           <span class="info-label">自动跟随重定向</span>
           <span class="info-value" style="display:flex; align-items:center; gap:8px;"><span class="checkbox on"></span>启用</span>
           <span class="form-hint" style="flex-basis:100%;">收到 3xx 响应时自动请求新地址，关闭后直接返回 3xx 响应。</span>
+        </div>
+        <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px; flex-wrap:wrap;">
+          <span class="info-label">发送无缓存头</span>
+          <span class="info-value" style="display:flex; align-items:center; gap:8px;"><span class="checkbox"></span>关闭</span>
+          <span class="form-hint" style="flex-basis:100%;">开启后会自动补充 no-cache / no-store 请求头。</span>
+        </div>
+        <div class="form-section settings-subsection-title">诊断与更新</div>
+        <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px; flex-wrap:wrap;">
+          <span class="info-label">详细日志（Verbose Logging）</span>
+          <span class="info-value" style="display:flex; align-items:center; gap:8px;"><span class="checkbox"></span>关闭</span>
+          <span class="form-hint" style="flex-basis:100%;">当前先保存为本地偏好项，后续会继续扩展到更完整的调试输出。</span>
+        </div>
+        <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px; flex-wrap:wrap;">
+          <span class="info-label">新版本提醒</span>
+          <span class="info-value" style="display:flex; align-items:center; gap:8px;"><span class="checkbox on"></span>启用</span>
+          <span class="form-hint" style="flex-basis:100%;">开启后，应用启动时会自动检查更新；发现新版本时会在右上角和通知中心提醒。</span>
         </div>
         <div class="form-section">数据</div>
         <div class="info-row" style="border:1px solid var(--border-subtle); border-radius:var(--r-md); padding:10px 12px;">

@@ -82,8 +82,8 @@
 
   <Style Selector="ToggleButton.HttpEditorModeButton:checked">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Selection.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Primary}" />
     <Setter Property="BorderThickness" Value="0" />
   </Style>
 
@@ -157,7 +157,7 @@
 
   <Style Selector="TabControl.QuickRequestInlineTabs TabItem:selected">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Primary}" />
     <Setter Property="BorderThickness" Value="0,0,0,2" />
   </Style>
 
@@ -404,7 +404,7 @@
 
   <Style Selector="ListBox.InterfaceFlatTree ListBoxItem:selected Button.WorkspaceTreeNodeButton">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Selection.Text}" />
   </Style>
 
   <Style Selector="Grid.WorkspaceTreeRow">
@@ -575,7 +575,7 @@
   </Style>
 
   <Style Selector="Border.HttpRequestUrlShell">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Input}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
@@ -636,7 +636,7 @@
 
   <Style Selector="Border.HttpBaseUrlPrefixCard">
     <Setter Property="Margin" Value="0" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Input}" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="Padding" Value="8,4" />
     <Setter Property="MinHeight" Value="30" />
@@ -665,7 +665,7 @@
   <Style Selector="Button.HttpCancelButton">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Danger}" />
-    <Setter Property="BorderBrush" Value="#66F87171" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Danger}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="Padding" Value="14,7" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
@@ -673,7 +673,7 @@
   </Style>
 
   <Style Selector="Button.HttpCancelButton:pointerover">
-    <Setter Property="Background" Value="#14F87171" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Status.Error.Background}" />
   </Style>
 
   <!-- 保存动作组：保存接口 + 保存用例两枚独立 ghost 按钮（对齐 HttpSaveButton 基础样式） -->
@@ -747,7 +747,7 @@
 
   <Style Selector="TabControl.HttpRequestTabs TabItem:selected">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Primary}" />
     <Setter Property="BorderThickness" Value="0,0,0,2" />
   </Style>
 
@@ -821,8 +821,8 @@
   </Style>
 
   <Style Selector="Border.HttpConfigTableSurface">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Surface}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Table}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
     <Setter Property="MinHeight" Value="112" />
@@ -830,20 +830,20 @@
   </Style>
 
   <Style Selector="Border.HttpConfigTableHeader">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.TableHeader}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Chrome}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
     <Setter Property="Padding" Value="{StaticResource Pad.2}" />
   </Style>
 
   <Style Selector="Border.HttpConfigTableRow">
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Chrome}" />
     <Setter Property="BorderThickness" Value="0,0,0,1" />
     <Setter Property="Padding" Value="{StaticResource Pad.2}" />
   </Style>
 
   <Style Selector="Border.HttpConfigEmptyState">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
     <Setter Property="Padding" Value="{StaticResource Pad.4}" />
     <Setter Property="MinHeight" Value="80" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
@@ -867,6 +867,37 @@
 
   <Style Selector="Border.HttpBodyModeOption">
     <Setter Property="Padding" Value="10,3" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+  </Style>
+
+  <Style Selector="u|SelectionList.HttpBodyModeSelector u|SelectionListItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="u|SelectionList.HttpBodyModeSelector u|SelectionListItem:selected">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="u|SelectionList.HttpBodyModeSelector u|SelectionListItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+  </Style>
+
+  <Style Selector="u|SelectionList.HttpBodyModeSelector u|SelectionListItem:selected Border.HttpBodyModeOption">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Border}" />
+  </Style>
+
+  <Style Selector="u|SelectionList.HttpBodyModeSelector u|SelectionListItem:selected Border.HttpBodyModeOption TextBlock">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Selection.Text}" />
   </Style>
 
   <Style Selector="Border.HttpBodyModeOption TextBlock">
@@ -980,6 +1011,7 @@
   <Style Selector="Border.HttpResponseCard">
     <Setter Property="MinHeight" Value="260" />
     <Setter Property="ClipToBounds" Value="True" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
   </Style>
 
   <!-- 响应体对齐原型 resp-body：卡片内嵌一块应用底色的代码框 -->
@@ -1023,8 +1055,8 @@
   </Style>
 
   <Style Selector="Button.InterfaceRootTabButton.InterfaceRootTabButtonSelected">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Selection.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Selection.Primary}" />
   </Style>
 
   <Style Selector="Border.InterfaceRootWorkbenchSurface">
@@ -1158,10 +1190,10 @@
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
   </Style>
   <Style Selector="TableView.InterfaceRootTableRows TableViewRow:selected /template/ Border#BackgroundBorder">
-    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
   </Style>
   <Style Selector="TableView.InterfaceRootTableRows TableViewRow:selected:pointerover /template/ Border#BackgroundBorder">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
   </Style>
 
   <Style Selector="Button.InterfaceRootTableRowButton">
