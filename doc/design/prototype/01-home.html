@@ -123,6 +123,7 @@
         <div class="form-row">
           <span class="form-label">项目名称 <span style="color:var(--err);">*</span></span>
           <input class="form-input" id="npName" placeholder="例如：订单中心">
+          <div class="form-hint" id="npError" role="alert" style="color:var(--err);" hidden></div>
         </div>
         <div class="form-row">
           <span class="form-label">备注（可选）</span>
@@ -199,15 +200,31 @@
     });
   });
 
-  // 新建项目：校验名称 → 关闭弹窗 → 进入新项目工作台（原型不落数据）
+  // 新建项目：校验必填与重名；失败时保留输入并在名称下方说明原因。
   document.getElementById("npCreate").addEventListener("click", function () {
     var name = document.getElementById("npName").value.trim();
-    if (!name) { protoToast("请先填写项目名称"); return; }
+    var error = document.getElementById("npError");
+    if (!name) {
+      error.textContent = "请先填写项目名称。";
+      error.hidden = false;
+      return;
+    }
+    var duplicate = Array.from(document.querySelectorAll("#homeTiles .tile-name"))
+      .some(function (tileName) { return tileName.textContent.trim() === name; });
+    if (duplicate) {
+      error.textContent = "项目名称已存在，请修改后重试。";
+      error.hidden = false;
+      return;
+    }
+    error.hidden = true;
     document.getElementById("newProjectModal").classList.remove("open");
     try {
       sessionStorage.setItem("apixpress-prototype-project", JSON.stringify({ name: name, remark: document.getElementById("npRemark").value.trim() }));
     } catch (ignore) { }
     location.href = "02-debug-params.html?project=" + encodeURIComponent(name);
+  });
+  document.getElementById("npName").addEventListener("input", function () {
+    document.getElementById("npError").hidden = true;
   });
 </script>
 </body>

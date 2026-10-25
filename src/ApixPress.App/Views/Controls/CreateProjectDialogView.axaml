@@ -20,6 +20,10 @@
           <TextBox Classes="SectionInput DialogInput"
                    PlaceholderText="例如：订单中心"
                    Text="{Binding ProjectPanel.Creation.DraftProjectName}" />
+          <TextBlock Classes="DialogFormError"
+                     IsVisible="{Binding ProjectPanel.Creation.ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                     Text="{Binding ProjectPanel.Creation.ErrorMessage}"
+                     TextWrapping="Wrap" />
         </StackPanel>
 
         <StackPanel Classes="DialogFormField">

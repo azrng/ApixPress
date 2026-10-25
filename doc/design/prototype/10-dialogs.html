@@ -13,13 +13,14 @@
 
   <!-- 1 新建项目 -->
   <div class="dialog-sample">
-    <div class="cap"><span class="sample-no">1</span><span class="sample-title">新建项目</span><span class="sample-desc">首页「＋ 新建项目」触发；名称必填，备注可选。</span></div>
+    <div class="cap"><span class="sample-no">1</span><span class="sample-title">新建项目 · 名称重复错误态</span><span class="sample-desc">创建失败时保留已输入名称，并在名称字段下方显示原因，修改后可重试。</span></div>
     <div class="modal" style="width:480px;">
       <div class="modal-head"><span class="modal-title">新建项目</span><button class="drawer-close">✕</button></div>
       <div class="modal-body">
         <div class="form-row">
           <span class="form-label">项目名称 <span style="color:var(--err);">*</span></span>
-          <input class="form-input" placeholder="例如：订单中心" value="订单中心">
+          <input class="form-input" placeholder="例如：订单中心" value="example">
+          <div class="form-hint" role="alert" style="color:var(--err);">项目名称已存在，请修改后重试。</div>
         </div>
         <div class="form-row">
           <span class="form-label">备注（可选）</span>

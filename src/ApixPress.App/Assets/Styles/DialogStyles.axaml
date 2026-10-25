@@ -34,6 +34,11 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
   </Style>
 
+  <Style Selector="TextBlock.DialogFormError">
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Error.Text}" />
+  </Style>
+
   <Style Selector="Border.DialogFooter">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />
     <Setter Property="BorderThickness" Value="0,1,0,0" />

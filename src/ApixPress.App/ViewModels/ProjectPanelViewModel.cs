@@ -6,6 +6,7 @@ using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
+using Azrng.Core.Results;
 
 namespace ApixPress.App.ViewModels;
 
@@ -166,18 +167,29 @@ public partial class ProjectPanelViewModel : ViewModelBase
         SortErrorMessage = "项目顺序保存失败，已恢复原顺序。";
     }
 
-    private async Task<bool> CreateProjectAsync(string projectName, string projectDescription)
+    private async Task<string?> CreateProjectAsync(string projectName, string projectDescription)
     {
-        var result = await _projectWorkspaceService.SaveAsync(new ProjectWorkspaceDto
+        IResultModel<ProjectWorkspaceDto> result;
+        try
         {
-            Name = projectName,
-            Description = projectDescription,
-            IsDefault = Projects.Count == 0
-        }, CancellationToken.None);
+            result = await _projectWorkspaceService.SaveAsync(new ProjectWorkspaceDto
+            {
+                Name = projectName,
+                Description = projectDescription,
+                IsDefault = Projects.Count == 0
+            }, CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            CrashLog.Write(exception, "新建项目");
+            return "项目创建失败，请稍后重试。";
+        }
 
         if (!result.IsSuccess || result.Data is null)
         {
-            return false;
+            return string.IsNullOrWhiteSpace(result.Message)
+                ? "项目创建失败，请稍后重试。"
+                : result.Message;
         }
 
         var created = CreateProjectItem(result.Data);
@@ -191,7 +203,7 @@ public partial class ProjectPanelViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasProjects));
         OnPropertyChanged(nameof(HasAnyProjects));
         ProjectCreated?.Invoke();
-        return true;
+        return null;
     }
 
     [RelayCommand]
