@@ -5,17 +5,18 @@ namespace ApixPress.App.ViewModels;
 
 public partial class MainWindowViewModel
 {
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task SendRequestAsync()
     {
-        if (ActiveProjectTab is null)
+        var project = ActiveProjectTab;
+        if (project is null)
         {
             StatusMessage = "请先打开一个项目标签页。";
             return;
         }
 
-        await ActiveProjectTab.Workflow.SendRequestAsync();
-        StatusMessage = ActiveProjectTab.StatusMessage;
+        await project.Workflow.SendRequestAsync();
+        if (ReferenceEquals(ActiveProjectTab, project)) StatusMessage = project.StatusMessage;
         NotifyShellState();
     }
 

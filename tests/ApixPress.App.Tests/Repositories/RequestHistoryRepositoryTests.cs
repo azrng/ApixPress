@@ -6,6 +6,29 @@ namespace ApixPress.App.Tests.Repositories;
 
 public sealed class RequestHistoryRepositoryTests
 {
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task GetHistoryAsync_ShouldReadMixedNullAndIntegerStatusCodes(bool failureFirst)
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        await factory.InitializeAsync();
+        var projectId = await CreateProjectAsync(factory);
+        var repository = new RequestHistoryRepository(factory);
+        var success = CreateEntity(projectId, "success", DateTime.UtcNow.AddSeconds(failureFirst ? -1 : 1));
+        success.ResponseSnapshotJson = "{\"statusCode\":200,\"durationMs\":12}";
+        var failure = CreateEntity(projectId, "failure", DateTime.UtcNow);
+        failure.ResponseSnapshotJson = "{\"errorMessage\":\"连接失败\"}";
+        await repository.UpsertAsync(success, CancellationToken.None);
+        await repository.UpsertAsync(failure, CancellationToken.None);
+
+        var rows = await repository.GetHistoryAsync(projectId, 10, CancellationToken.None);
+
+        Assert.Equal(2, rows.Count);
+        Assert.Equal(200, rows.Single(row => row.Id == "success").StatusCode);
+        Assert.Null(rows.Single(row => row.Id == "failure").StatusCode);
+    }
+
     [Fact]
     public async Task DeleteOlderThanAsync_ShouldRemoveOnlyExpiredRows()
     {

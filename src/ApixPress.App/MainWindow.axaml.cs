@@ -114,6 +114,17 @@ public partial class MainWindow : Window
         var modifiers = e.KeyModifiers;
         if (modifiers.HasFlag(KeyModifiers.Control) && modifiers.HasFlag(KeyModifiers.Shift))
         {
+            if (e.Key == Key.T)
+            {
+                var restore = _viewModel.ActiveProjectTab?.Workspace.RestoreClosedWorkspaceTabCommand;
+                if (restore?.CanExecute(null) == true) restore.Execute(null);
+                e.Handled = true;
+            }
+            else if (e.Key == Key.S)
+            {
+                _viewModel.ActiveProjectTab?.Workflow.SaveQuickRequestAsCommand.Execute(null);
+                e.Handled = true;
+            }
             return;
         }
 
@@ -141,7 +152,7 @@ public partial class MainWindow : Window
     }
 
     // 供视图层（如侧栏接口节点的用例计数芯片）调用的抽屉入口
-    internal void OpenUseCasesDrawer()
+    internal void OpenUseCasesDrawer(ExplorerItemViewModel? source = null)
     {
         if (_isUseCasesDrawerOpen)
         {
@@ -153,6 +164,10 @@ public partial class MainWindow : Window
             _isUseCasesDrawerOpen = true;
             try
             {
+                if (source is not null && _viewModel.ActiveProjectTab is { } project)
+                {
+                    await project.Catalog.LoadWorkspaceItem(source);
+                }
                 var drawer = new UseCasesDrawerView();
                 DialogInteractionAssistant.Attach(drawer);
                 await OverlayDrawer.ShowStandardAsync(

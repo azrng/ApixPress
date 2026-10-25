@@ -62,6 +62,34 @@ public class ResponseBodyEditor : TextEditor
         Background = Brushes.Transparent;
         BorderThickness = new Thickness(0);
         SyntaxHighlighting = LoadJsonHighlighting();
+        TextArea.TextView.LineTransformers.Add(new ResponseSearchHighlighter(this));
+    }
+
+    public static readonly StyledProperty<IReadOnlyList<int>> SearchMatchOffsetsProperty =
+        AvaloniaProperty.Register<ResponseBodyEditor, IReadOnlyList<int>>(nameof(SearchMatchOffsets), Array.Empty<int>());
+
+    public IReadOnlyList<int> SearchMatchOffsets
+    {
+        get => GetValue(SearchMatchOffsetsProperty);
+        set => SetValue(SearchMatchOffsetsProperty, value);
+    }
+
+    public static readonly StyledProperty<int> SearchMatchLengthProperty =
+        AvaloniaProperty.Register<ResponseBodyEditor, int>(nameof(SearchMatchLength));
+
+    public int SearchMatchLength
+    {
+        get => GetValue(SearchMatchLengthProperty);
+        set => SetValue(SearchMatchLengthProperty, value);
+    }
+
+    public static readonly StyledProperty<int> CurrentSearchMatchOffsetProperty =
+        AvaloniaProperty.Register<ResponseBodyEditor, int>(nameof(CurrentSearchMatchOffset), -1);
+
+    public int CurrentSearchMatchOffset
+    {
+        get => GetValue(CurrentSearchMatchOffsetProperty);
+        set => SetValue(CurrentSearchMatchOffsetProperty, value);
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -73,6 +101,16 @@ public class ResponseBodyEditor : TextEditor
             if (!string.Equals(Document.Text, text, StringComparison.Ordinal))
             {
                 Document.Text = text;
+            }
+        }
+        if (change.Property == TextProperty || change.Property == SearchMatchOffsetsProperty
+            || change.Property == SearchMatchLengthProperty || change.Property == CurrentSearchMatchOffsetProperty)
+        {
+            TextArea.TextView.Redraw();
+            if (CurrentSearchMatchOffset >= 0 && SearchMatchLength > 0 && CurrentSearchMatchOffset + SearchMatchLength <= Document.TextLength)
+            {
+                Select(CurrentSearchMatchOffset, SearchMatchLength);
+                ScrollToLine(Document.GetLineByOffset(CurrentSearchMatchOffset).LineNumber);
             }
         }
     }

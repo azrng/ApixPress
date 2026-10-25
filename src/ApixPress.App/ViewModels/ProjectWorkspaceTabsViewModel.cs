@@ -18,6 +18,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
     private readonly Action _selectInterfaceManagementSection;
     private readonly IMessenger _messenger;
     private readonly IFilePickerService? _filePickerService;
+    private readonly LinkedList<(RequestWorkspaceTabViewModel Tab, int Index)> _closedWorkspaceTabs = [];
     private readonly BatchObservableCollection<RequestWorkspaceTabViewModel> _visibleWorkspaceTabs = [];
     private readonly Dictionary<RequestConfigTabViewModel, RequestWorkspaceTabViewModel> _tabByConfig = [];
     private readonly Dictionary<INotifyCollectionChanged, RequestWorkspaceTabViewModel> _tabByConfigCollection = [];
@@ -138,6 +139,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
     public void ResetToLanding()
     {
+        ClearClosedWorkspaceTabs();
         IsWorkspaceTabMenuOpen = false;
         foreach (var tab in WorkspaceTabs.ToList())
         {
@@ -187,6 +189,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
 
     protected override void DisposeManaged()
     {
+        ClearClosedWorkspaceTabs();
         WorkspaceTabs.CollectionChanged -= OnWorkspaceTabsCollectionChanged;
 
         foreach (var tab in WorkspaceTabs.ToList())
@@ -212,6 +215,22 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         {
             return;
         }
+
+        // 已删除资源不可通过撤销关闭复活，连同之前关闭的同源标签一起释放。
+        for (var node = _closedWorkspaceTabs.First; node is not null;)
+        {
+            var next = node.Next;
+            var closed = node.Value.Tab;
+            if (deletedIds.Contains(closed.EditingQuickRequestId)
+                || deletedIds.Contains(closed.EditingInterfaceId)
+                || deletedIds.Contains(closed.EditingCaseId))
+            {
+                closed.Dispose();
+                _closedWorkspaceTabs.Remove(node);
+            }
+            node = next;
+        }
+        RestoreClosedWorkspaceTabCommand.NotifyCanExecuteChanged();
 
         var tabsToClose = WorkspaceTabs
             .Where(tab => deletedIds.Contains(tab.EditingQuickRequestId)
@@ -322,7 +341,8 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
                 continue;
             }
 
-            DetachWorkspaceTab(tab);
+            RememberClosedWorkspaceTab(tab);
+            DetachWorkspaceTab(tab, dispose: false);
             WorkspaceTabs.Remove(tab);
         }
 
@@ -359,8 +379,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             return false;
         }
 
-        // 单标签关闭直接生效（一键关闭）：未保存修改随关闭放弃并以状态栏提示兜底；
-        // 首击仅提示的二段式在此前反馈中被视为“点击无效”，误触保护交给标签上的未保存圆点。
+        // 保持一键关闭，最近十个标签留在当前项目会话内，允许恢复未保存内容。
         var hadUnsavedChanges = tab.HasUnsavedChanges;
         var closedTabHeader = tab.HeaderText;
         tab.IsCloseDiscardPending = false;
@@ -373,7 +392,11 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         {
             RunWithNotificationsSuspended(() =>
             {
-                DetachWorkspaceTab(tab);
+                if (respectPin)
+                {
+                    RememberClosedWorkspaceTab(tab);
+                }
+                DetachWorkspaceTab(tab, dispose: !respectPin);
                 WorkspaceTabs.Remove(tab);
 
                 if (WorkspaceTabs.Count == 0)
@@ -394,8 +417,8 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
             });
 
             _messenger.Send(new StatusMessageRequest(hadUnsavedChanges
-                ? $"已关闭标签“{closedTabHeader}”，未保存修改已放弃。"
-                : "工作标签已关闭。"));
+                ? $"已关闭标签“{closedTabHeader}”，可按 Ctrl+Shift+T 恢复未保存内容。"
+                : "工作标签已关闭，可按 Ctrl+Shift+T 恢复。"));
             StateChanged?.Invoke();
         });
         return true;
@@ -585,7 +608,8 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
                 continue;
             }
 
-            DetachWorkspaceTab(tab);
+            RememberClosedWorkspaceTab(tab);
+            DetachWorkspaceTab(tab, dispose: false);
             WorkspaceTabs.Remove(tab);
         }
 
@@ -637,7 +661,7 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         _tabByConfigCollection[tab.ConfigTab.FormFields] = tab;
     }
 
-    private void DetachWorkspaceTab(RequestWorkspaceTabViewModel tab)
+    private void DetachWorkspaceTab(RequestWorkspaceTabViewModel tab, bool dispose = true)
     {
         tab.CloseRequested = null;
         tab.CloseOtherRequested = null;
@@ -653,7 +677,48 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
         _tabByConfigCollection.Remove(tab.ConfigTab.PathParameters);
         _tabByConfigCollection.Remove(tab.ConfigTab.Headers);
         _tabByConfigCollection.Remove(tab.ConfigTab.FormFields);
-        tab.Dispose();
+        if (dispose)
+        {
+            tab.Dispose();
+        }
+    }
+
+    private bool CanRestoreClosedWorkspaceTab() => _closedWorkspaceTabs.Count > 0 && !IsDisposed;
+
+    /// <summary>恢复当前项目最近关闭的标签，连同未保存配置和响应一起还原。</summary>
+    [RelayCommand(CanExecute = nameof(CanRestoreClosedWorkspaceTab))]
+    private void RestoreClosedWorkspaceTab()
+    {
+        if (!CanRestoreClosedWorkspaceTab()) return;
+        if (_closedWorkspaceTabs.Last is not { } last) return;
+        var closed = last.Value;
+        _closedWorkspaceTabs.RemoveLast();
+        closed.Tab.IsCloseDiscardPending = false;
+        AttachWorkspaceTab(closed.Tab);
+        WorkspaceTabs.Insert(Math.Min(closed.Index, WorkspaceTabs.Count), closed.Tab);
+        _selectInterfaceManagementSection();
+        ActivateWorkspaceTab(closed.Tab);
+        RestoreClosedWorkspaceTabCommand.NotifyCanExecuteChanged();
+        _messenger.Send(new StatusMessageRequest($"已恢复标签“{closed.Tab.HeaderText}”。"));
+        StateChanged?.Invoke();
+    }
+
+    private void RememberClosedWorkspaceTab(RequestWorkspaceTabViewModel tab)
+    {
+        _closedWorkspaceTabs.AddLast((tab, WorkspaceTabs.IndexOf(tab)));
+        if (_closedWorkspaceTabs.Count > 10 && _closedWorkspaceTabs.First is { } oldest)
+        {
+            oldest.Value.Tab.Dispose();
+            _closedWorkspaceTabs.RemoveFirst();
+        }
+        RestoreClosedWorkspaceTabCommand.NotifyCanExecuteChanged();
+    }
+
+    private void ClearClosedWorkspaceTabs()
+    {
+        foreach (var closed in _closedWorkspaceTabs) closed.Tab.Dispose();
+        _closedWorkspaceTabs.Clear();
+        RestoreClosedWorkspaceTabCommand.NotifyCanExecuteChanged();
     }
 
     private void RequestNotifications(

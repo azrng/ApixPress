@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using ApixPress.App.Helpers;
+using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels.Base;
 using Azrng.Core.Results;
@@ -126,7 +127,32 @@ public partial class ResponseSectionViewModel : ViewModelBase
     [ObservableProperty]
     private int selectedResponseTab;
 
-    public bool HasBodySearchMatches => !string.IsNullOrWhiteSpace(BodySearchResultText);
+    /// <summary>当前展示正文中所有匹配的字符偏移，供查看器高亮。</summary>
+    public IReadOnlyList<int> BodySearchMatchOffsets { get; private set; } = [];
+
+    public bool HasBodySearchMatches => BodySearchMatchOffsets.Count > 0;
+
+    public int CurrentBodySearchMatchOffset => _bodySearchMatchIndex >= 0 && _bodySearchMatchIndex < BodySearchMatchOffsets.Count
+        ? BodySearchMatchOffsets[_bodySearchMatchIndex] : -1;
+
+    private int _bodySearchMatchIndex = -1;
+
+    /// <summary>定位下一个匹配，末尾回到第一个。</summary>
+    [RelayCommand(CanExecute = nameof(HasBodySearchMatches))]
+    private void NextBodySearchMatch() => MoveBodySearchMatch(1);
+
+    /// <summary>定位上一个匹配，开头回到最后一个。</summary>
+    [RelayCommand(CanExecute = nameof(HasBodySearchMatches))]
+    private void PreviousBodySearchMatch() => MoveBodySearchMatch(-1);
+
+    private void MoveBodySearchMatch(int step)
+    {
+        if (!HasBodySearchMatches) return;
+        _bodySearchMatchIndex = (_bodySearchMatchIndex + step + BodySearchMatchOffsets.Count) % BodySearchMatchOffsets.Count;
+        SelectedResponseTab = 0;
+        BodySearchResultText = $"{_bodySearchMatchIndex + 1} / {BodySearchMatchOffsets.Count}";
+        OnPropertyChanged(nameof(CurrentBodySearchMatchOffset));
+    }
 
     /// <summary>复制命令的正文来源：格式化占位符期间没有可复制内容，其余（含失败时的错误正文）直接复制界面文本。</summary>
     public string CopyableBodyText =>
@@ -177,13 +203,14 @@ public partial class ResponseSectionViewModel : ViewModelBase
         HasResponse = true;
         ShowPlaceholder = false;
 
-        if (!result.IsSuccess || result.Data is null)
+        if (!result.IsSuccess || result.Data is null || !string.IsNullOrWhiteSpace(result.Data.ErrorMessage))
         {
-            ApplyFailureNotice(result.Code, result.Message);
+            var error = !string.IsNullOrWhiteSpace(result.Data?.ErrorMessage) ? result.Data.ErrorMessage : result.Message;
+            ApplyFailureNotice(result.Code, error);
             StatusText = ResponseNoticeTitle;
             DurationText = string.Empty;
             SizeText = string.Empty;
-            BodyText = result.Message;
+            BodyText = error;
             HeadersText = string.Empty;
             SetHeaderRows([]);
             ApplyActualRequest(result.Data?.ActualRequest ?? BuildFallbackActualRequest(request));
@@ -550,6 +577,8 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     private void UpdateBodySearchResult()
     {
+        CancellationTokenSourceHelper.CancelAndDispose(ref _bodySearchDebounceCancellationTokenSource);
+        SetBodySearchMatches([]);
         if (string.IsNullOrWhiteSpace(BodySearchText) || string.IsNullOrEmpty(BodyText)
             || string.Equals(BodyText, FormattingBodyPlaceholder, StringComparison.Ordinal))
         {
@@ -596,7 +625,8 @@ public partial class ResponseSectionViewModel : ViewModelBase
 
     private void CountBodySearchMatches()
     {
-        var count = 0;
+        if (string.IsNullOrWhiteSpace(BodySearchText)) return;
+        var matches = new List<int>();
         var startIndex = 0;
         while (startIndex < BodyText.Length)
         {
@@ -606,11 +636,25 @@ public partial class ResponseSectionViewModel : ViewModelBase
                 break;
             }
 
-            count++;
+            matches.Add(index);
             startIndex = index + Math.Max(BodySearchText.Length, 1);
         }
 
-        BodySearchResultText = count == 0 ? "未找到匹配" : $"{count} 处匹配";
+        SetBodySearchMatches(matches);
+        BodySearchResultText = matches.Count == 0 ? "未找到匹配" : $"1 / {matches.Count}";
+        if (matches.Count > 0) SelectedResponseTab = 0;
+    }
+
+    private void SetBodySearchMatches(IReadOnlyList<int> matches)
+    {
+        BodySearchMatchOffsets = matches;
+        _bodySearchMatchIndex = matches.Count > 0 ? 0 : -1;
+        BodySearchResultText = string.Empty;
+        OnPropertyChanged(nameof(BodySearchMatchOffsets));
+        OnPropertyChanged(nameof(CurrentBodySearchMatchOffset));
+        OnPropertyChanged(nameof(HasBodySearchMatches));
+        NextBodySearchMatchCommand.NotifyCanExecuteChanged();
+        PreviousBodySearchMatchCommand.NotifyCanExecuteChanged();
     }
 
     private static string BuildDisplayBody(ResponseSnapshotDto response)

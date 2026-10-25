@@ -1,0 +1,12 @@
+/* 交互修复原型：沿用当前品牌 token，不改变工作台布局。 */
+.interaction-error { color: var(--err); font-size: 12px; margin: 8px 0; }
+.interaction-invalid { outline: 1px solid var(--err); }
+.interaction-search-nav { display: inline-flex; align-items: center; gap: 4px; }
+.interaction-search-nav button { padding: 4px 8px; }
+.interaction-match { background: var(--bg-selected); color: var(--accent); }
+.interaction-current { outline: 1px solid var(--accent); }
+.h-item:focus-within .h-actions, .h-item.active .h-actions { opacity: 1; visibility: visible; }
+.interaction-tab-menu { position: relative; margin-left: auto; }
+.interaction-tab-menu summary { cursor: pointer; padding: 6px; }
+.interaction-tab-menu .menu { position: absolute; right: 0; top: 100%; z-index: 90; width: 260px; background: var(--bg-elevated); border: 1px solid var(--border-default); padding: 8px; border-radius: var(--r-md); }
+.interaction-tab-menu button { width: 100%; text-align: left; margin: 4px 0; }

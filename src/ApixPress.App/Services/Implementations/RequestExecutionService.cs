@@ -170,7 +170,7 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             IsSuccess = false,
             Code = code,
             Message = message,
-            Data = new ResponseSnapshotDto { ActualRequest = actualRequest }
+            Data = new ResponseSnapshotDto { ActualRequest = actualRequest, ErrorMessage = message }
         };
     }
 

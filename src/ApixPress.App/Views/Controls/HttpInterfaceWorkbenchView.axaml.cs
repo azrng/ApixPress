@@ -1,3 +1,4 @@
+using Avalonia.Input;
 using System.ComponentModel;
 using Avalonia.Controls;
 using ApixPress.App.ViewModels;
@@ -241,5 +242,14 @@ public partial class HttpInterfaceWorkbenchView : UserControl
             DataContext = _viewModel
         };
         return _headersTabView;
+    }
+    private void OnResponseSearchKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || DataContext is not ProjectTabViewModel viewModel) return;
+        var command = e.KeyModifiers.HasFlag(KeyModifiers.Shift)
+            ? viewModel.ResponseSection.PreviousBodySearchMatchCommand
+            : viewModel.ResponseSection.NextBodySearchMatchCommand;
+        if (command.CanExecute(null)) command.Execute(null);
+        e.Handled = true;
     }
 }

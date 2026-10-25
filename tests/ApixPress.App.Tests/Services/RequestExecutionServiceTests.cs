@@ -287,6 +287,7 @@ public sealed class RequestExecutionServiceTests
         Assert.NotNull(result.Data);
         Assert.Equal("https://api.example.com/orders", result.Data!.ActualRequest!.Url);
         Assert.Contains("中文", result.Data.ActualRequest.BodyText);
+        Assert.Contains("网络不可达", result.Data.ErrorMessage);
     }
 
     [Fact]

@@ -245,7 +245,7 @@
   </Style>
 
   <!-- 响应复制菜单按钮：响应头部行尾的紧凑图标按钮（MenuFlyout 由视图内联提供） -->
-  <Style Selector="Button.HttpResponseCopyButton">
+  <Style Selector="Button.HttpResponseCopyButton, Button.HttpResponseSearchNavigationButton">
     <Setter Property="Width" Value="26" />
     <Setter Property="Height" Value="26" />
     <Setter Property="Padding" Value="0" />
@@ -258,11 +258,11 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 
-  <Style Selector="Button.HttpResponseCopyButton:pointerover /template/ ContentPresenter">
+  <Style Selector="Button.HttpResponseCopyButton:pointerover /template/ ContentPresenter, Button.HttpResponseSearchNavigationButton:pointerover /template/ ContentPresenter">
     <Setter Property="TextElement.Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
 
-  <Style Selector="Button.HttpResponseCopyButton:pointerover">
+  <Style Selector="Button.HttpResponseCopyButton:pointerover, Button.HttpResponseSearchNavigationButton:pointerover">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
   </Style>
 
@@ -396,6 +396,14 @@
   </Style>
 
   <Style Selector="Grid.HistoryItemRoot:pointerover Button.HistoryRowAction">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
+  <Style Selector="Grid.HistoryItemRoot:focus-within Button.HistoryRowAction">
+    <Setter Property="Opacity" Value="1" />
+  </Style>
+
+  <Style Selector="ListBoxItem:selected Button.HistoryRowAction">
     <Setter Property="Opacity" Value="1" />
   </Style>
 

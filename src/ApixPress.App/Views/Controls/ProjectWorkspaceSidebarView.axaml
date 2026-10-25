@@ -425,7 +425,7 @@
                                  TextTrimming="CharacterEllipsis" />
                       <!-- 行悬停操作：重新发送 / 删除 -->
                       <Button Grid.Column="2"
-                              Classes="HistoryRowAction"
+                              Classes="HistoryRowAction" AutomationProperties.Name="重新发送历史请求"
                               ToolTip.Tip="重新发送"
                               Command="{Binding $parent[ListBox].((vm:ProjectTabViewModel)DataContext).ResendHistoryRequestCommand}"
                               CommandParameter="{Binding}">
@@ -433,7 +433,7 @@
                                    Text="&#xE72C;" />
                       </Button>
                       <Button Grid.Column="3"
-                              Classes="HistoryRowAction HistoryRowActionDanger"
+                              Classes="HistoryRowAction HistoryRowActionDanger" AutomationProperties.Name="删除历史记录"
                               ToolTip.Tip="删除"
                               Command="{Binding $parent[ListBox].((vm:ProjectTabViewModel)DataContext).HistoryPanel.DeleteHistoryItemCommand}"
                               CommandParameter="{Binding}">

@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using ApixPress.App.ViewModels;
 
 namespace ApixPress.App.Views.Controls;
 
@@ -16,7 +17,8 @@ public partial class ProjectWorkspaceSidebarView : UserControl
     {
         if (this.FindAncestorOfType<MainWindow>() is { } mainWindow)
         {
-            mainWindow.OpenUseCasesDrawer();
+            e.Handled = true;
+            mainWindow.OpenUseCasesDrawer((sender as Control)?.DataContext as ExplorerItemViewModel);
         }
     }
 }

@@ -7,7 +7,7 @@ namespace ApixPress.App.Tests.ViewModels;
 public sealed class ViewModelLifecycleTests
 {
     [Fact]
-    public void CloseWorkspaceTabCommand_ShouldDisposeRemovedWorkspaceTab()
+    public void WorkspaceDispose_ShouldDisposeRetainedClosedWorkspaceTab()
     {
         var viewModel = new ProjectWorkspaceTabsViewModel(() => { }, new CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger());
         var tab = viewModel.CreateWorkspaceTab(activate: true, showInTabStrip: true);
@@ -17,6 +17,8 @@ public sealed class ViewModelLifecycleTests
         Assert.Equal("初始请求", tab.HeaderText);
 
         viewModel.CloseWorkspaceTabCommand.Execute(tab);
+
+        viewModel.Dispose();
 
         var headerBeforeMutation = tab.HeaderText;
         tab.ConfigTab.RequestName = "释放后请求";
@@ -35,7 +37,7 @@ public sealed class ViewModelLifecycleTests
         tab.RequestUrl = "https://demo.local/orders";
         viewModel.CloseWorkspaceTabCommand.Execute(tab);
 
-        // 一键关闭：脏标签首次执行即关闭并放弃未保存修改（状态栏提示兜底）
+        // 一键关闭后保留恢复记录，未保存内容仍然可恢复。
         Assert.True(tab.HasUnsavedChanges);
         Assert.DoesNotContain(tab, viewModel.WorkspaceTabs);
     }

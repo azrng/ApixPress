@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ApixPress.App.ViewModels"
+             xmlns:views="using:ApixPress.App.Views.Controls"
              x:Class="ApixPress.App.Views.Controls.QuickRequestSaveDialogView"
              x:DataType="vm:ProjectQuickRequestSaveViewModel"
              mc:Ignorable="d">
@@ -20,8 +21,11 @@
           <TextBlock Classes="DialogFormLabel"
                      Text="快捷请求名称" />
           <TextBox Classes="SectionInput DialogInput"
+                   views:ValidationFocusBehavior.HasError="{Binding HasNameError}"
+                   AutomationProperties.Name="快捷请求名称"
                    PlaceholderText="请输入保存名称"
                    Text="{Binding DraftName}" />
+          <TextBlock Classes="CaptionText DialogDangerText" Text="{Binding NameError}" IsVisible="{Binding HasNameError}" />
         </StackPanel>
         <!-- 对齐原型 13 saveQuickModal：只读展示保存位置 -->
         <StackPanel Classes="DialogFormField">

@@ -11,13 +11,20 @@ internal static class CancellationTokenSourceHelper
 
     public static void CancelAndDispose(ref CancellationTokenSource? cancellationTokenSource)
     {
-        if (cancellationTokenSource is null)
+        // 先移交字段所有权：Cancel 会同步运行回调，回调可能清空字段或替换为新请求令牌。
+        var previous = Interlocked.Exchange(ref cancellationTokenSource, null);
+        if (previous is null)
         {
             return;
         }
 
-        cancellationTokenSource.Cancel();
-        cancellationTokenSource.Dispose();
-        cancellationTokenSource = null;
+        try
+        {
+            previous.Cancel();
+        }
+        finally
+        {
+            previous.Dispose();
+        }
     }
 }

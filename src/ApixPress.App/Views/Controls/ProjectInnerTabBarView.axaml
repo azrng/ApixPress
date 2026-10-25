@@ -56,6 +56,7 @@
                                MaxWidth="180"
                                VerticalAlignment="Center"
                                Text="{Binding HeaderText}"
+                                ToolTip.Tip="{Binding HeaderText}"
                                TextTrimming="CharacterEllipsis" />
                     <TextBlock Grid.Column="1"
                                Classes="ProjectWorkspaceUnsavedGlyph"
@@ -80,7 +81,6 @@
       </Border>
 
       <Grid Grid.Column="1"
-            Width="60"
             Height="22"
             HorizontalAlignment="Left"
             VerticalAlignment="Center">
@@ -100,6 +100,10 @@
                            DataContext="{Binding}"
                            Opened="OnWorkspaceTabMoreContextMenuOpened"
                            Closed="OnWorkspaceTabMoreContextMenuClosed">
+                <MenuItem Header="恢复关闭的标签"
+                          Command="{Binding Workspace.RestoreClosedWorkspaceTabCommand}"
+                          InputGesture="Ctrl+Shift+T" />
+                <Separator />
                 <MenuItem Classes="WorkspaceTabContextMenuItem"
                           Header="关闭当前标签页"
                           IsEnabled="{Binding ActiveWorkspaceTab.CanCloseFromTab}"
@@ -118,6 +122,21 @@
                           Command="{Binding Workspace.CloseAllWorkspaceTabsCommand}" />
               </ContextMenu>
             </Button.ContextMenu>
+          </Button>
+          <Button Classes="HttpSaveButton" Content="所有标签" AutomationProperties.Name="所有已打开的标签">
+            <Button.Flyout>
+              <Flyout Placement="BottomEdgeAlignedRight">
+                <ListBox Classes="NotificationItemList"
+                         ItemsSource="{Binding Workspace.VisibleWorkspaceTabs}"
+                         SelectedItem="{Binding Workspace.ActiveWorkspaceTab, Mode=TwoWay}">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:RequestWorkspaceTabViewModel">
+                      <TextBlock Text="{Binding HeaderText}" ToolTip.Tip="{Binding HeaderText}" />
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+              </Flyout>
+            </Button.Flyout>
           </Button>
         </StackPanel>
       </Grid>

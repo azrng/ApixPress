@@ -36,6 +36,13 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     public RequestConfigTabViewModel ConfigTab { get; }
     public ResponseSectionViewModel ResponseSection { get; }
 
+    /// <summary>请求地址的就地校验提示，编辑地址后清除。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasUrlValidationError))]
+    private string urlValidationMessage = string.Empty;
+
+    public bool HasUrlValidationError => !string.IsNullOrEmpty(UrlValidationMessage);
+
     /// <summary>快照回填期间不计算中间态预览，由最终工作区通知统一刷新。</summary>
     internal bool IsApplyingState => _bulkStateMutationDepth > 0;
 
@@ -61,7 +68,10 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     private string sourceEndpointId = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSavedQuickRequest))]
     private string editingQuickRequestId = string.Empty;
+
+    public bool HasSavedQuickRequest => !string.IsNullOrWhiteSpace(EditingQuickRequestId);
 
     [ObservableProperty]
     private string editingInterfaceId = string.Empty;
@@ -69,7 +79,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     [ObservableProperty]
     private string editingCaseId = string.Empty;
 
-    /// <summary>当前绑定的快捷请求上次保存时的名称；改名后再保存应存为新用例而非静默覆盖。</summary>
+    /// <summary>当前绑定的快捷请求上次保存时的名称。</summary>
     [ObservableProperty]
     private string? savedQuickRequestName;
 
@@ -447,6 +457,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
 
     partial void OnRequestUrlChanged(string value)
     {
+        UrlValidationMessage = string.Empty;
         IsCloseDiscardPending = false;
         RequestTabHeaderUpdate();
         MarkDirtyFromUserEdit();

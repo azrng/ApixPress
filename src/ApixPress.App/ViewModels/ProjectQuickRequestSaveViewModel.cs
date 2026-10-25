@@ -11,12 +11,13 @@ namespace ApixPress.App.ViewModels;
 public partial class ProjectQuickRequestSaveViewModel : ViewModelBase, IDialogContext
 {
     private readonly ProjectTabWorkspaceContext _workspaceContext;
-    private readonly Func<RequestWorkspaceTabViewModel, string?, Task<bool>> _saveQuickRequestAsync;
+    private readonly Func<RequestWorkspaceTabViewModel, string?, bool, Task<bool>> _saveQuickRequestAsync;
+    private bool _saveAsNew;
     private readonly ProjectTabHostContext _hostContext;
 
     internal ProjectQuickRequestSaveViewModel(
         ProjectTabWorkspaceContext workspaceContext,
-        Func<RequestWorkspaceTabViewModel, string?, Task<bool>> saveQuickRequestAsync,
+        Func<RequestWorkspaceTabViewModel, string?, bool, Task<bool>> saveQuickRequestAsync,
         ProjectTabHostContext hostContext)
     {
         _workspaceContext = workspaceContext;
@@ -30,6 +31,15 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase, IDialogCo
     [ObservableProperty]
     private string draftDescription = string.Empty;
 
+    /// <summary>名称校验失败时直接在输入框附近显示提示。</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNameError))]
+    private string nameError = string.Empty;
+
+    public bool HasNameError => !string.IsNullOrEmpty(NameError);
+
+    partial void OnDraftNameChanged(string value) => NameError = string.Empty;
+
     /// <summary>弹窗异步关闭通道：取消/保存成功都会经此关闭 Ursa 弹窗。</summary>
     public event EventHandler<object?>? RequestClose;
 
@@ -41,6 +51,8 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase, IDialogCo
     /// <summary>预填草稿并打开「保存快捷请求」弹窗；调用方为同步上下文，弹窗生命周期异步等待。</summary>
     public void OpenDialogFor(RequestWorkspaceTabViewModel workspaceTab)
     {
+        NameError = string.Empty;
+        _saveAsNew = !string.IsNullOrWhiteSpace(workspaceTab.EditingQuickRequestId);
         var fallbackName = string.IsNullOrWhiteSpace(workspaceTab.ConfigTab.RequestName)
             ? workspaceTab.ResolveRequestName()
             : workspaceTab.ConfigTab.RequestName.Trim();
@@ -52,7 +64,7 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase, IDialogCo
 
     private async Task ShowDialogAsync()
     {
-        await _hostContext.DialogService.ShowDialogAsync<Views.Controls.QuickRequestSaveDialogView>(this, "保存快捷请求");
+        await _hostContext.DialogService.ShowDialogAsync<Views.Controls.QuickRequestSaveDialogView>(this, _saveAsNew ? "快捷请求另存为" : "保存快捷请求");
     }
 
     [RelayCommand]
@@ -65,6 +77,7 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase, IDialogCo
     [RelayCommand]
     private async Task ConfirmSaveAsync()
     {
+        NameError = string.Empty;
         var workspaceTab = _workspaceContext.GetActiveWorkspaceTab();
         if (workspaceTab is null || !workspaceTab.IsQuickRequestTab)
         {
@@ -74,13 +87,14 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase, IDialogCo
 
         if (string.IsNullOrWhiteSpace(DraftName))
         {
+            NameError = "请输入快捷请求名称。";
             _hostContext.Messenger.Send(new StatusMessageRequest("请输入快捷请求名称。"));
             return;
         }
 
         workspaceTab.ConfigTab.RequestName = DraftName.Trim();
         workspaceTab.ConfigTab.RequestDescription = DraftDescription.Trim();
-        var isSaved = await _saveQuickRequestAsync(workspaceTab, workspaceTab.ConfigTab.RequestName);
+        var isSaved = await _saveQuickRequestAsync(workspaceTab, workspaceTab.ConfigTab.RequestName, _saveAsNew);
         if (isSaved)
         {
             RequestClose?.Invoke(this, DialogResult.OK);

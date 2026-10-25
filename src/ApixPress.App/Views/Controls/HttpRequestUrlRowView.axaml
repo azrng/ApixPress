@@ -4,10 +4,12 @@
              xmlns:iri="https://irihi.tech/shared"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ApixPress.App.ViewModels"
+             xmlns:views="using:ApixPress.App.Views.Controls"
              x:Class="ApixPress.App.Views.Controls.HttpRequestUrlRowView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
   <!-- 请求动作行：方法 + BaseUrl + 路径 + 发送/发送中 + 取消 + 保存/保存用例（用户决策：caret 下拉交互繁琐，平铺两按钮） -->
+  <StackPanel>
   <Grid Classes="HttpRequestUrlRow"
         ColumnDefinitions="*,Auto,Auto,Auto"
         ColumnSpacing="{StaticResource Space.2}">
@@ -29,6 +31,8 @@
         </Border>
         <TextBox Grid.Column="2"
                  x:Name="RequestUrlInput"
+                  views:ValidationFocusBehavior.HasError="{Binding Workspace.ActiveWorkspaceTab.HasUrlValidationError}"
+                  AutomationProperties.Name="请求地址"
                  Classes="HttpRequestPathInput"
                  PlaceholderText="{Binding Editor.CurrentEditorUrlWatermark}"
                  Text="{Binding Editor.RequestUrl}" />
@@ -80,9 +84,17 @@
               Command="{Binding SaveHttpCaseCommand}"
               IsVisible="{Binding Editor.ShowSaveHttpCaseAction}" />
       <Button Classes="HttpSaveButton"
+              Content="另存为"
+              Command="{Binding Workflow.SaveQuickRequestAsCommand}"
+              IsVisible="{Binding Workspace.ActiveWorkspaceTab.HasSavedQuickRequest}" />
+      <Button Classes="HttpSaveButton"
               Content="保存为接口"
               Command="{Binding Workflow.SaveQuickRequestAsInterfaceCommand}"
               IsVisible="{Binding Editor.IsQuickRequestEditor}" />
     </StackPanel>
   </Grid>
+  <TextBlock Classes="CaptionText DialogDangerText"
+             Text="{Binding Workspace.ActiveWorkspaceTab.UrlValidationMessage}"
+             IsVisible="{Binding Workspace.ActiveWorkspaceTab.HasUrlValidationError}" />
+  </StackPanel>
 </UserControl>

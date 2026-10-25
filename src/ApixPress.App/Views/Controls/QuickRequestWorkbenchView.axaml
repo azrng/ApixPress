@@ -115,12 +115,18 @@
                 IsVisible="{Binding ResponseSection.HasResponse}">
             <TextBox Grid.Column="0"
                      Classes="SectionInput HttpResponseSearchInput"
-                     PlaceholderText="搜索响应"
+                     PlaceholderText="搜索当前展示正文"
+                        KeyDown="OnResponseSearchKeyDown"
+                        AutomationProperties.Name="搜索当前展示正文"
                      Text="{Binding ResponseSection.BodySearchText, UpdateSourceTrigger=PropertyChanged}" />
-            <TextBlock Grid.Column="1"
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{StaticResource Space.1}">
+                  <TextBlock
                        Classes="CaptionText"
                        VerticalAlignment="Center"
                        Text="{Binding ResponseSection.BodySearchResultText}" />
+                  <Button Classes="HttpResponseSearchNavigationButton" Content="↑" Command="{Binding ResponseSection.PreviousBodySearchMatchCommand}" ToolTip.Tip="上一个匹配（Shift+Enter）" AutomationProperties.Name="上一个匹配" />
+                  <Button Classes="HttpResponseSearchNavigationButton" Content="↓" Command="{Binding ResponseSection.NextBodySearchMatchCommand}" ToolTip.Tip="下一个匹配（Enter）" AutomationProperties.Name="下一个匹配" />
+                </StackPanel>
             <u:Badge Grid.Column="2"
                      Header="{Binding ResponseSection.StatusText}"
                      iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
@@ -219,7 +225,10 @@
               <Border Classes="HttpResponseBodyCard"
                       Margin="{StaticResource Pad.Top2}">
                 <!-- AvaloniaEdit 只读查看器：大响应仅排版可视区，替代整页 Run 构建的 SelectableTextBlock -->
-                <views:ResponseBodyEditor Text="{Binding ResponseSection.BodyText}" />
+                <views:ResponseBodyEditor Text="{Binding ResponseSection.BodyText}"
+                                                  SearchMatchOffsets="{Binding ResponseSection.BodySearchMatchOffsets}"
+                                                  SearchMatchLength="{Binding ResponseSection.BodySearchText.Length}"
+                                                  CurrentSearchMatchOffset="{Binding ResponseSection.CurrentBodySearchMatchOffset}" />
               </Border>
             </TabItem>
             <TabItem Header="Headers">

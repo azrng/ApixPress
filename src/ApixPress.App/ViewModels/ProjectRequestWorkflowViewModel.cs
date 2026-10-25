@@ -5,6 +5,7 @@ using ApixPress.App.Messages;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.ViewModels.Base;
+using System.Collections.Concurrent;
 
 namespace ApixPress.App.ViewModels;
 
@@ -22,7 +23,8 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
     private readonly ProjectTabWorkspaceContext _workspaceContext;
     private readonly Action<RequestWorkspaceTabViewModel> _openQuickRequestSaveDialog;
     private readonly ProjectTabHostContext _hostContext;
-    private CancellationTokenSource? _sendRequestCancellationTokenSource;
+    private readonly ConcurrentDictionary<RequestWorkspaceTabViewModel, CancellationTokenSource> _requestCancellationByTab = new();
+    private CancellationTokenSource? _lifetimeCancellationTokenSource = new();
 
     internal ProjectRequestWorkflowViewModel(
         string projectId,
@@ -54,7 +56,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
 
     protected override void DisposeManaged()
     {
-        CancellationTokenSourceHelper.CancelAndDispose(ref _sendRequestCancellationTokenSource);
+        CancellationTokenSourceHelper.CancelAndDispose(ref _lifetimeCancellationTokenSource);
     }
 
     public async Task SendRequestAsync()
@@ -73,8 +75,12 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             return;
         }
 
+        // 命令允许跨标签并发，同一标签仍只允许一个在途请求。
+        if (workspaceTab.ResponseSection.IsLoading) return;
+
         if (string.IsNullOrWhiteSpace(workspaceTab.RequestUrl))
         {
+            workspaceTab.UrlValidationMessage = "请输入请求地址。";
             _hostContext.Messenger.Send(new StatusMessageRequest("请输入请求地址。"));
             _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return;
@@ -82,17 +88,25 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
 
         if (workspaceTab.IsQuickRequestTab && !HasAbsoluteHttpUrl(workspaceTab.RequestUrl))
         {
+            workspaceTab.UrlValidationMessage = "请输入 http:// 或 https:// 开头的完整地址。";
             _hostContext.Messenger.Send(new StatusMessageRequest("快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。"));
             _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return;
         }
 
+        var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
+            _lifetimeCancellationTokenSource?.Token ?? CancellationToken.None);
+        if (!_requestCancellationByTab.TryAdd(workspaceTab, cancellationTokenSource))
+        {
+            cancellationTokenSource.Dispose();
+            return;
+        }
+        var cancellationToken = cancellationTokenSource.Token;
         _hostContext.Messenger.Send(new BusyStateChangedMessage(true));
+        workspaceTab.UrlValidationMessage = string.Empty;
         workspaceTab.ResponseSection.BeginLoading(workspaceTab.IsHttpInterfaceTab
             ? "正在发送 HTTP 接口请求..."
             : "正在发送快捷请求...");
-        var cancellationTokenSource = CancellationTokenSourceHelper.Refresh(ref _sendRequestCancellationTokenSource);
-        var cancellationToken = cancellationTokenSource.Token;
         try
         {
             var snapshot = BuildRequestSnapshotForSend(workspaceTab);
@@ -101,15 +115,15 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             snapshot.EnvironmentId = environment.Id;
             snapshot.EnvironmentName = environment.Name;
             var result = await _requestExecutionService.SendAsync(snapshot, environment, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
             workspaceTab.ResponseSection.ApplyResult(result, snapshot);
 
-            if (result.IsSuccess || result.Data is not null)
+            // 无 HTTP 响应的网络失败同样保留请求和错误，方便追溯与重发。
+            var historyResponse = result.Data ?? new ResponseSnapshotDto { ErrorMessage = result.Message };
+            var historyResult = await _requestHistoryService.AddAsync(_projectId, snapshot, historyResponse, cancellationToken);
+            if (historyResult.IsSuccess && historyResult.Data is not null)
             {
-                var historyResult = await _requestHistoryService.AddAsync(_projectId, snapshot, result.Data, cancellationToken);
-                if (historyResult.IsSuccess && historyResult.Data is not null)
-                {
-                    _historyPanel.PrependHistoryItem(historyResult.Data);
-                }
+                _historyPanel.PrependHistoryItem(historyResult.Data);
             }
 
             _hostContext.Messenger.Send(new StatusMessageRequest(result.IsSuccess
@@ -125,13 +139,9 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             workspaceTab.ResponseSection.EndLoading();
             var wasCancelled = cancellationToken.IsCancellationRequested;
 
-            if (ReferenceEquals(_sendRequestCancellationTokenSource, cancellationTokenSource))
-            {
-                _sendRequestCancellationTokenSource.Dispose();
-                _sendRequestCancellationTokenSource = null;
-            }
-
-            _hostContext.Messenger.Send(new BusyStateChangedMessage(false));
+            _requestCancellationByTab.TryRemove(workspaceTab, out _);
+            cancellationTokenSource.Dispose();
+            _hostContext.Messenger.Send(new BusyStateChangedMessage(!_requestCancellationByTab.IsEmpty));
             if (wasCancelled)
             {
                 _hostContext.Messenger.Send(new StatusMessageRequest("已取消当前请求。"));
@@ -143,13 +153,14 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
 
     public void CancelRequest()
     {
-        if (IsDisposed || _sendRequestCancellationTokenSource is null)
+        if (IsDisposed || _workspaceContext.GetActiveWorkspaceTab() is not { } tab
+            || !_requestCancellationByTab.TryGetValue(tab, out var cancellationTokenSource))
         {
             return;
         }
 
         // 仅触发取消；状态文案由 SendRequestAsync 的 finally 统一发出。
-        _sendRequestCancellationTokenSource.Cancel();
+        cancellationTokenSource.Cancel();
     }
 
     public async Task SaveCurrentEditorAsync()
@@ -184,13 +195,34 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
 
         if (!HasAbsoluteHttpUrl(workspaceTab.RequestUrl))
         {
+            workspaceTab.UrlValidationMessage = "请输入 http:// 或 https:// 开头的完整地址。";
             _hostContext.Messenger.Send(new StatusMessageRequest("快捷请求仅支持完整地址，请输入 http:// 或 https:// 开头的 URL。"));
             _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
             return;
         }
 
+        if (!string.IsNullOrWhiteSpace(workspaceTab.EditingQuickRequestId))
+        {
+            await SaveQuickRequestAsync(workspaceTab);
+            return;
+        }
+
         _openQuickRequestSaveDialog(workspaceTab);
         _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+    }
+
+    /// <summary>将当前快捷请求另存为独立记录，保留原请求。</summary>
+    [RelayCommand]
+    private void SaveQuickRequestAs()
+    {
+        var tab = _workspaceContext.GetActiveWorkspaceTab();
+        if (tab is not { IsQuickRequestTab: true }) return;
+        if (!HasAbsoluteHttpUrl(tab.RequestUrl))
+        {
+            tab.UrlValidationMessage = "请输入 http:// 或 https:// 开头的完整地址。";
+            return;
+        }
+        _openQuickRequestSaveDialog(tab);
     }
 
     [RelayCommand]
@@ -222,7 +254,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
     }
 
-    public async Task<bool> SaveQuickRequestAsync(RequestWorkspaceTabViewModel workspaceTab, string? requestNameOverride = null)
+    public async Task<bool> SaveQuickRequestAsync(RequestWorkspaceTabViewModel workspaceTab, string? requestNameOverride = null, bool saveAsNew = false)
     {
         if (!HasAbsoluteHttpUrl(workspaceTab.RequestUrl))
         {
@@ -234,15 +266,11 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         var requestName = string.IsNullOrWhiteSpace(requestNameOverride)
             ? workspaceTab.ResolveRequestName()
             : requestNameOverride.Trim();
-        // 名称相对上次保存发生变化时按新用例入库：改个名字就静默覆盖旧用例不符合“保存不同用例”的预期
-        var savedName = workspaceTab.SavedQuickRequestName;
-        var savesAsNewCase = !string.IsNullOrEmpty(workspaceTab.EditingQuickRequestId)
-            && !string.IsNullOrWhiteSpace(savedName)
-            && !string.Equals(savedName, requestName, StringComparison.Ordinal);
+        // 更新与另存由明确操作区分，名称变化不再隐式决定新建还是覆盖。
         var snapshot = workspaceTab.BuildSnapshot(requestName);
         var result = await _requestCaseService.SaveAsync(new RequestCaseDto
         {
-            Id = savesAsNewCase ? string.Empty : workspaceTab.EditingQuickRequestId,
+            Id = saveAsNew ? string.Empty : workspaceTab.EditingQuickRequestId,
             ProjectId = _projectId,
             EntryType = ProjectTabRequestEntryTypes.QuickRequest,
             Name = requestName,

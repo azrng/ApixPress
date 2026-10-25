@@ -245,7 +245,7 @@ public sealed class ResponseSectionViewModelTests
 
         viewModel.BodySearchText = "order";
 
-        Assert.Equal("2 处匹配", viewModel.BodySearchResultText);
+        Assert.Equal("1 / 2", viewModel.BodySearchResultText);
         Assert.True(viewModel.HasBodySearchMatches);
     }
 
@@ -260,7 +260,7 @@ public sealed class ResponseSectionViewModelTests
         viewModel.BodySearchText = "a";
 
         Assert.Equal("正文较大，已跳过全文搜索", viewModel.BodySearchResultText);
-        Assert.True(viewModel.HasBodySearchMatches);
+        Assert.False(viewModel.HasBodySearchMatches);
     }
 
     [Fact]

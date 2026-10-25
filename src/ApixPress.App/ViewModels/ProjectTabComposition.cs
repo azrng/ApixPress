@@ -279,7 +279,7 @@ internal sealed class ProjectTabComposition : DisposableObject
         {
             var quickRequestSave = new ProjectQuickRequestSaveViewModel(
                 workspaceContext,
-                (workspaceTab, requestNameOverride) => _workflowViewModel?.SaveQuickRequestAsync(workspaceTab, requestNameOverride) ?? Task.FromResult(false),
+                (workspaceTab, requestNameOverride, saveAsNew) => _workflowViewModel?.SaveQuickRequestAsync(workspaceTab, requestNameOverride, saveAsNew) ?? Task.FromResult(false),
                 _hostContext);
             _quickRequestSaveViewModel = quickRequestSave;
             return quickRequestSave;

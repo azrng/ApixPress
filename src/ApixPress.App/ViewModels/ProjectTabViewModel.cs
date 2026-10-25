@@ -198,7 +198,7 @@ public partial class ProjectTabViewModel : ViewModelBase,
         return _lifecycle.SaveCurrentEnvironmentAsync(Summary.CurrentEnvironmentLabel);
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task SendRequestAsync()
     {
         await Workflow.SendRequestAsync();

@@ -1077,6 +1077,19 @@ public sealed partial class ProjectTabViewModelTests
         {
             DataContext = viewModel
         });
+        var responseSearchException = Record.Exception(() =>
+        {
+            var editor = new ResponseBodyEditor
+            {
+                Text = "order order",
+                SearchMatchOffsets = new[] { 0, 6 },
+                SearchMatchLength = 5,
+                CurrentSearchMatchOffset = 6
+            };
+            editor.Measure(new Size(800, 300));
+            editor.Arrange(new Rect(0, 0, 800, 300));
+            Assert.Equal("order", editor.SelectedText);
+        });
         // 项目信息编辑弹窗（名称/简介二选一）实例化冒烟，防止 StaticResource 缺失在运行期才暴露
         var projectInfoEditDialogException = Record.Exception(() => new ApixPress.App.Views.Controls.ProjectInfoEditDialogView
         {
@@ -1093,6 +1106,7 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Null(deleteConfirmDialogException);
         Assert.Null(requestCaseDeleteConfirmDialogException);
         Assert.Null(bodyTabException);
+        Assert.Null(responseSearchException);
     }
 
     private static void EnsureAvaloniaInitialized()

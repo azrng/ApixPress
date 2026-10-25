@@ -76,9 +76,37 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
-        var items = await Task.Run(async () => await connection.QueryAsync<RequestHistoryEntity>(
+        var items = await Task.Run(async () => await connection.QueryAsync<HistorySummaryRow>(
             new CommandDefinition(sql, new { ProjectId = projectId, Limit = limit }, cancellationToken: cancellationToken)));
-        return items.ToList();
+        return items.Select(row => new RequestHistoryEntity
+        {
+            Id = row.Id,
+            ProjectId = row.ProjectId,
+            Timestamp = row.Timestamp,
+            RequestName = row.RequestName,
+            RequestMethod = row.RequestMethod,
+            RequestUrl = row.RequestUrl,
+            HasResponse = row.HasResponse,
+            StatusCode = row.StatusCode is { } code ? checked((int)code) : null,
+            DurationMs = row.DurationMs,
+            SizeBytes = row.SizeBytes
+        }).ToList();
+    }
+
+    // SQLite INTEGER 实际返回 Int64。首行状态为空时 Dapper 无法推断后续值的 Int32 转换，
+    // 投影先按数据库整数类型读取，再显式转为领域状态码，避免依赖行顺序与映射缓存。
+    private sealed class HistorySummaryRow
+    {
+        public string Id { get; set; } = string.Empty;
+        public string ProjectId { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
+        public string RequestName { get; set; } = string.Empty;
+        public string RequestMethod { get; set; } = string.Empty;
+        public string RequestUrl { get; set; } = string.Empty;
+        public bool HasResponse { get; set; }
+        public long? StatusCode { get; set; }
+        public long DurationMs { get; set; }
+        public long SizeBytes { get; set; }
     }
 
     public async Task<RequestHistoryEntity?> GetByIdAsync(string projectId, string id, CancellationToken cancellationToken)
