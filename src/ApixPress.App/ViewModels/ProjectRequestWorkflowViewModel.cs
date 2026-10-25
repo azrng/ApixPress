@@ -97,6 +97,9 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
         {
             var snapshot = BuildRequestSnapshotForSend(workspaceTab);
             var environment = BuildExecutionEnvironment();
+            // 历史快照补记发送时环境上下文，供"继续请求/重发"回切环境；不影响发送语义
+            snapshot.EnvironmentId = environment.Id;
+            snapshot.EnvironmentName = environment.Name;
             var result = await _requestExecutionService.SendAsync(snapshot, environment, cancellationToken);
             workspaceTab.ResponseSection.ApplyResult(result, snapshot);
 
@@ -444,7 +447,7 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             : workspaceTab.HttpCaseName.Trim();
     }
 
-    private static bool HasAbsoluteHttpUrl(string? value)
+    internal static bool HasAbsoluteHttpUrl(string? value)
     {
         if (!Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri))
         {

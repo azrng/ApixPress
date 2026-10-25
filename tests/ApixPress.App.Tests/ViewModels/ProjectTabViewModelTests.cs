@@ -4,6 +4,7 @@ using Avalonia.Controls.Notifications;
 using ApixPress.App;
 using FakeRequestCaseService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeRequestCaseService;
 using FakeAppNotificationService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeAppNotificationService;
+using FakeEnvironmentVariableService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeEnvironmentVariableService;
 using FakeFilePickerService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeFilePickerService;
 using FakeProjectDataExportService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectDataExportService;
 using FakeProjectHttpSettingsService = ApixPress.App.Tests.ViewModels.ViewModelSharedTestDoubles.FakeProjectHttpSettingsService;
@@ -1339,6 +1340,102 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Equal("https://demo.local/orders", viewModel.Editor.RequestUrl);
         Assert.True(viewModel.ResponseSection.HasResponse);
         Assert.Contains("\"items\":[]", viewModel.ResponseSection.BodyText);
+    }
+
+    [Fact]
+    public async Task SendRequestCommand_ShouldRecordEnvironmentInHistorySnapshot()
+    {
+        var requestExecutionService = new FakeRequestExecutionService();
+        var requestHistoryService = new FakeRequestHistoryService();
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            requestHistoryService: requestHistoryService,
+            requestExecutionService: requestExecutionService);
+        await viewModel.InitializeAsync();
+
+        viewModel.Workspace.OpenQuickRequestWorkspaceCommand.Execute(null);
+        viewModel.Editor.RequestUrl = "https://demo.local/orders";
+        await viewModel.SendRequestCommand.ExecuteAsync(null);
+
+        var recorded = Assert.Single(requestHistoryService.Items);
+        Assert.Equal("env-1", recorded.RequestSnapshot.EnvironmentId);
+        Assert.Equal("开发", recorded.RequestSnapshot.EnvironmentName);
+    }
+
+    [Fact]
+    public async Task LoadHistoryRequestAsync_RelativeUrl_ShouldOpenHttpInterfaceTabAndRestoreEnvironment()
+    {
+        var environmentService = new FakeEnvironmentVariableService();
+        environmentService.SeededEnvironments.Add(new ProjectEnvironmentDto
+        {
+            Id = "env-2",
+            Name = "测试",
+            BaseUrl = "https://test.demo.local",
+            IsActive = false,
+            SortOrder = 2
+        });
+        var requestHistoryService = new FakeRequestHistoryService();
+        requestHistoryService.Items.Add(new RequestHistoryItemDto
+        {
+            Id = "history-1",
+            Timestamp = new DateTime(2026, 10, 25, 10, 0, 0, DateTimeKind.Utc),
+            HasResponse = true,
+            StatusCode = 200,
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "/api/iam/menu-tree",
+                EnvironmentId = "env-2",
+                EnvironmentName = "测试"
+            },
+            ResponseSnapshot = new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                Content = "{\"code\":0}"
+            }
+        });
+        var viewModel = CreateViewModel(
+            new FakeApiWorkspaceService(),
+            requestHistoryService: requestHistoryService,
+            environmentService: environmentService);
+        await viewModel.InitializeAsync();
+        await viewModel.Shell.ShowRequestHistoryCommand.ExecuteAsync(null);
+
+        var historyItem = Assert.Single(viewModel.RequestHistory);
+        await viewModel.LoadHistoryRequestAsync(historyItem);
+
+        var tab = viewModel.ActiveWorkspaceTab;
+        Assert.NotNull(tab);
+        Assert.True(tab!.IsHttpInterfaceTab);
+        Assert.Equal("/api/iam/menu-tree", viewModel.Editor.RequestUrl);
+        Assert.Equal("env-2", viewModel.EnvironmentPanel.SelectedEnvironment?.Id);
+        Assert.True(viewModel.ResponseSection.HasResponse);
+    }
+
+    [Fact]
+    public async Task LoadHistoryRequestAsync_RelativeUrlWithoutEnvironment_ShouldKeepCurrentEnvironment()
+    {
+        var requestHistoryService = new FakeRequestHistoryService();
+        requestHistoryService.Items.Add(new RequestHistoryItemDto
+        {
+            Id = "history-1",
+            Timestamp = new DateTime(2026, 10, 25, 10, 0, 0, DateTimeKind.Utc),
+            RequestSnapshot = new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "/api/users"
+            }
+        });
+        var viewModel = CreateViewModel(new FakeApiWorkspaceService(), requestHistoryService: requestHistoryService);
+        await viewModel.InitializeAsync();
+        await viewModel.Shell.ShowRequestHistoryCommand.ExecuteAsync(null);
+
+        var historyItem = Assert.Single(viewModel.RequestHistory);
+        await viewModel.LoadHistoryRequestAsync(historyItem);
+
+        Assert.True(viewModel.ActiveWorkspaceTab?.IsHttpInterfaceTab);
+        Assert.Equal("/api/users", viewModel.Editor.RequestUrl);
+        Assert.Equal("env-1", viewModel.EnvironmentPanel.SelectedEnvironment?.Id);
     }
 
     [Fact]

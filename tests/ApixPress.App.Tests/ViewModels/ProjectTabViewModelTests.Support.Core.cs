@@ -31,7 +31,8 @@ public sealed partial class ProjectTabViewModelTests
         FakeProjectHttpSettingsService? projectHttpSettingsService = null,
         ViewModelSharedTestDoubles.FakeClipboardService? clipboardService = null,
         Func<string, Task>? handleProjectDeletedAsync = null,
-        ViewModelSharedTestDoubles.FakeDialogService? dialogService = null)
+        ViewModelSharedTestDoubles.FakeDialogService? dialogService = null,
+        FakeEnvironmentVariableService? environmentService = null)
     {
         return new ProjectTabViewModel(
             new ProjectWorkspaceItemViewModel
@@ -45,7 +46,7 @@ public sealed partial class ProjectTabViewModelTests
             requestHistoryService ?? new FakeRequestHistoryService(),
             systemDataService ?? new FakeSystemDataService(),
             projectWorkspaceService ?? new FakeProjectWorkspaceService(),
-            new FakeEnvironmentVariableService(),
+            environmentService ?? new FakeEnvironmentVariableService(),
             apiWorkspaceService,
             filePickerService ?? new FakeFilePickerService(),
             appNotificationService ?? new FakeAppNotificationService(),

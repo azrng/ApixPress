@@ -113,24 +113,61 @@ internal sealed class ProjectTabLifecycleCoordinator
             return;
         }
 
-        var targetTab = _hostContext.GetActiveWorkspaceTab()?.IsLandingTab == true
-            ? _hostContext.GetActiveWorkspaceTab()
-            : _workspace.FindFirstQuickRequestTab() ?? _workspace.CreateWorkspaceTab(activate: false);
-
-        targetTab ??= _workspace.CreateWorkspaceTab(activate: false);
-        targetTab.ConfigureAsQuickRequest();
-        targetTab.ApplySnapshot(detail.RequestSnapshot);
-        if (detail.ResponseSnapshot is not null)
+        var snapshot = detail.RequestSnapshot;
+        // 相对路径请求依赖环境 BaseUrl 拼接，快捷请求又强制完整地址；改开 HTTP 接口标签承载，
+        // 并回切记录时的环境。旧快照未记录环境（EnvironmentId 为空）时保持当前环境不动。
+        var openAsHttpInterface = !ProjectRequestWorkflowViewModel.HasAbsoluteHttpUrl(snapshot.Url);
+        if (openAsHttpInterface)
         {
-            targetTab.ResponseSection.ApplyResult(Azrng.Core.Results.ResultModel<ResponseSnapshotDto>.Success(detail.ResponseSnapshot), detail.RequestSnapshot);
+            RestoreRecordedEnvironment(snapshot.EnvironmentId);
         }
 
-        // ActivateWorkspaceTab 会切回接口管理分区；载入后直接进入可编辑的快捷请求工作区。
+        var targetTab = openAsHttpInterface
+            ? _workspace.ReuseActiveLandingOrCreateWorkspace()
+            : _hostContext.GetActiveWorkspaceTab()?.IsLandingTab == true
+                ? _hostContext.GetActiveWorkspaceTab()
+                : _workspace.FindFirstQuickRequestTab() ?? _workspace.CreateWorkspaceTab(activate: false);
+
+        targetTab ??= _workspace.CreateWorkspaceTab(activate: false);
+        if (openAsHttpInterface)
+        {
+            targetTab.ConfigureAsHttpInterface();
+        }
+        else
+        {
+            targetTab.ConfigureAsQuickRequest();
+        }
+
+        targetTab.ApplySnapshot(snapshot);
+        if (detail.ResponseSnapshot is not null)
+        {
+            targetTab.ResponseSection.ApplyResult(Azrng.Core.Results.ResultModel<ResponseSnapshotDto>.Success(detail.ResponseSnapshot), snapshot);
+        }
+
+        // ActivateWorkspaceTab 会切回接口管理分区；载入后直接进入可编辑的请求工作区。
         _workspace.ActivateWorkspaceTab(targetTab);
         _shell.SelectInterfaceManagementSection();
         _hostContext.Messenger.Send(new StatusMessageRequest($"已加载历史请求：{item.Method} {item.Url}"));
         _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(
             WorkspaceStateChangeFlags.EditorState | WorkspaceStateChangeFlags.ShellState));
+    }
+
+    /// <summary>把当前环境切回历史记录发送时的环境；与环境下拉选择同路径，赋值即触发激活与状态提示。</summary>
+    private void RestoreRecordedEnvironment(string environmentId)
+    {
+        if (string.IsNullOrWhiteSpace(environmentId))
+        {
+            return;
+        }
+
+        var recorded = _environmentPanel.Environments.FirstOrDefault(item =>
+            string.Equals(item.Id, environmentId, StringComparison.OrdinalIgnoreCase));
+        if (recorded is null || ReferenceEquals(recorded, _environmentPanel.SelectedEnvironment))
+        {
+            return;
+        }
+
+        _environmentPanel.SelectedEnvironment = recorded;
     }
 
     public void OnSelectedEnvironmentChanged(ProjectEnvironmentItemViewModel? environment)

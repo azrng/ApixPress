@@ -16,20 +16,33 @@ public static class ViewModelSharedTestDoubles
 
         public string EnvironmentSaveFailureMessage { get; set; } = "环境写入被拒绝（模拟）";
 
+        /// <summary>种子环境列表，默认与原硬编码一致（单个激活的 env-1）；用例可追加环境验证多环境选择。</summary>
+        public List<ProjectEnvironmentDto> SeededEnvironments { get; } =
+        [
+            new ProjectEnvironmentDto
+            {
+                Id = "env-1",
+                Name = "开发",
+                BaseUrl = "https://api.demo.local",
+                IsActive = true,
+                SortOrder = 1
+            }
+        ];
+
         public Task<IReadOnlyList<ProjectEnvironmentDto>> GetEnvironmentsAsync(string projectId, CancellationToken cancellationToken)
         {
-            IReadOnlyList<ProjectEnvironmentDto> environments =
-            [
-                new ProjectEnvironmentDto
+            // ProjectId 不入种子，按调用方项目回填，保持原硬编码行为
+            IReadOnlyList<ProjectEnvironmentDto> environments = SeededEnvironments
+                .Select(environment => new ProjectEnvironmentDto
                 {
-                    Id = "env-1",
+                    Id = environment.Id,
                     ProjectId = projectId,
-                    Name = "开发",
-                    BaseUrl = "https://api.demo.local",
-                    IsActive = true,
-                    SortOrder = 1
-                }
-            ];
+                    Name = environment.Name,
+                    BaseUrl = environment.BaseUrl,
+                    IsActive = environment.IsActive,
+                    SortOrder = environment.SortOrder
+                })
+                .ToList();
             return Task.FromResult(environments);
         }
 
