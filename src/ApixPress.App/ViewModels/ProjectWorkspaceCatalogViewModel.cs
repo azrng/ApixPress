@@ -115,7 +115,7 @@ public partial class ProjectWorkspaceCatalogViewModel : ViewModelBase, IDialogCo
     }
 
     [ObservableProperty]
-    private bool isInterfaceCatalogExpanded;
+    private bool isInterfaceCatalogExpanded = true;
 
     [ObservableProperty]
     private bool isQuickRequestCatalogExpanded = true;

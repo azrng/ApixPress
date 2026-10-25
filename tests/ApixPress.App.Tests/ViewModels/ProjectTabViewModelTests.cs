@@ -218,13 +218,13 @@ public sealed partial class ProjectTabViewModelTests
     }
 
     [Fact]
-    public async Task InterfaceCatalog_ShouldBeCollapsedByDefault()
+    public async Task InterfaceCatalog_ShouldBeExpandedByDefault()
     {
         var viewModel = CreateViewModel(new FakeApiWorkspaceService());
 
         await viewModel.InitializeAsync();
 
-        Assert.False(viewModel.Catalog.IsInterfaceCatalogExpanded);
+        Assert.True(viewModel.Catalog.IsInterfaceCatalogExpanded);
     }
 
     [Fact]
