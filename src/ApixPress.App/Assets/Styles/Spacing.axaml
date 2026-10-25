@@ -3,6 +3,8 @@
                     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
   <sys:TimeSpan x:Key="Duration.Fast">0:0:0.12</sys:TimeSpan>
   <sys:TimeSpan x:Key="Duration.Base">0:0:0.18</sys:TimeSpan>
+  <x:Double x:Key="Size.Http.WaitingCard.Width">456</x:Double>
+  <x:Double x:Key="Size.Http.WaitingIcon">36</x:Double>
   <x:Double x:Key="Size.Home.Empty.MaxWidth">560</x:Double>
   <x:Double x:Key="Size.Home.Medallion">52</x:Double>
   <x:Double x:Key="Size.Home.Card.Height">156</x:Double>

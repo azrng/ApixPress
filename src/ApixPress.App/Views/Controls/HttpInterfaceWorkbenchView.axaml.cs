@@ -252,4 +252,18 @@ public partial class HttpInterfaceWorkbenchView : UserControl
         if (command.CanExecute(null)) command.Execute(null);
         e.Handled = true;
     }
+
+    private void OnWorkbenchKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter
+            || e.KeyModifiers != KeyModifiers.Control
+            || DataContext is not ProjectTabViewModel viewModel
+            || !viewModel.SendRequestCommand.CanExecute(null))
+        {
+            return;
+        }
+
+        viewModel.SendRequestCommand.Execute(null);
+        e.Handled = true;
+    }
 }

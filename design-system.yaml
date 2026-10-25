@@ -276,6 +276,9 @@ layout:
     card_gap: 16
     form_column_gap: 16
     form_row_gap: 12
+    http_response:
+      waiting_card_width: 456
+      waiting_icon_size: 36
   responsive_rules:
     - "宽度低于 compact_width 时，次级面板优先折叠或转为抽屉"
     - "表格列过多时优先启用横向滚动，不强行压缩到不可读"

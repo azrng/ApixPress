@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Win32" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.4" />
+    <PackageReference Include="Avalonia.HarfBuzz" Version="12.1.4" />
+    <PackageReference Include="Semi.Avalonia" Version="12.1.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="..\..\..\..\..\src\ApixPress.App\Assets\Styles\Colors.axaml" Link="Assets\Styles\Colors.axaml" />
+    <AvaloniaResource Include="..\..\..\..\..\src\ApixPress.App\Assets\Styles\Fonts.axaml" Link="Assets\Styles\Fonts.axaml" />
+    <AvaloniaResource Include="..\..\..\..\..\src\ApixPress.App\Assets\Styles\Spacing.axaml" Link="Assets\Styles\Spacing.axaml" />
+  </ItemGroup>
+</Project>

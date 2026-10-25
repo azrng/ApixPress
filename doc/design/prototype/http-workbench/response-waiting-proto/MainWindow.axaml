@@ -1,0 +1,275 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="ApixPress.ResponseWaitingPrototype.MainWindow"
+        Title="ApixPress · HTTP 工作台响应等待态原型"
+        Width="1280"
+        Height="800"
+        MinWidth="1120"
+        MinHeight="700"
+        WindowState="Normal"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource Brush.Background.App}"
+        FontFamily="{StaticResource Font.Default}"
+        FontSize="{StaticResource Font.Size.Body}"
+        WindowDecorations="Full">
+  <Window.Styles>
+    <Style Selector="TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource Brush.Text.Primary}" />
+    </Style>
+
+    <Style Selector="Border.SurfaceCard">
+      <Setter Property="Background" Value="{StaticResource Brush.Background.Surface}" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
+    </Style>
+
+    <Style Selector="Button.PrimaryButton">
+      <Setter Property="MinWidth" Value="88" />
+      <Setter Property="Height" Value="34" />
+      <Setter Property="Padding" Value="{StaticResource Pad.Horizontal3}" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+      <Setter Property="Background" Value="{StaticResource Brush.Brand.Primary}" />
+      <Setter Property="BorderBrush" Value="{StaticResource Brush.Brand.Primary}" />
+      <Setter Property="Foreground" Value="{StaticResource Brush.Text.OnBrand}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+
+    <Style Selector="Button.SecondaryButton">
+      <Setter Property="Height" Value="34" />
+      <Setter Property="Padding" Value="{StaticResource Pad.Horizontal3}" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="{StaticResource Brush.Border.Default}" />
+      <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}" />
+    </Style>
+
+    <Style Selector="Border.InputSurface">
+      <Setter Property="Background" Value="{StaticResource Brush.Background.App}" />
+      <Setter Property="BorderBrush" Value="{StaticResource Brush.Border.Default}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    </Style>
+
+    <Style Selector="TextBlock.SectionHint">
+      <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+      <Setter Property="Foreground" Value="{StaticResource Brush.Text.Secondary}" />
+    </Style>
+
+    <Style Selector="TextBlock.MutedText">
+      <Setter Property="Foreground" Value="{StaticResource Brush.Text.Tertiary}" />
+    </Style>
+  </Window.Styles>
+
+  <Grid RowDefinitions="42,*">
+    <Border Grid.Row="0"
+            Background="{StaticResource Brush.Background.Surface}"
+            BorderBrush="{StaticResource Brush.Border.Subtle}"
+            BorderThickness="0,0,0,1"
+            Padding="{StaticResource Pad.Horizontal3}">
+      <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto"
+            ColumnSpacing="{StaticResource Space.3}">
+        <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.2}" VerticalAlignment="Center">
+          <Border Width="24" Height="24" CornerRadius="{StaticResource Radius.Sm}" Background="{StaticResource Brush.Brand.Primary}">
+            <TextBlock Text="A" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" Foreground="{StaticResource Brush.Text.OnBrand}" />
+          </Border>
+          <TextBlock Text="ApixPress" VerticalAlignment="Center" FontSize="{StaticResource Font.Size.BodyLarge}" FontWeight="SemiBold" />
+        </StackPanel>
+        <Border Grid.Column="1" Background="{StaticResource Brush.Background.Selected}" CornerRadius="{StaticResource Radius.Md}" Padding="{StaticResource Pad.2}" VerticalAlignment="Center">
+          <TextBlock Text="文件服务" Foreground="{StaticResource Brush.Text.Primary}" FontSize="{StaticResource Font.Size.BodySmall}" />
+        </Border>
+        <TextBlock Grid.Column="2" Text="＋" VerticalAlignment="Center" Foreground="{StaticResource Brush.Text.Secondary}" />
+        <Border Grid.Column="4" Background="{StaticResource Brush.Background.Subtle}" BorderBrush="{StaticResource Brush.Border.Default}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="{StaticResource Pad.2}" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.2}">
+            <Ellipse Width="7" Height="7" Fill="{StaticResource Brush.Status.Success.Text}" VerticalAlignment="Center" />
+            <TextBlock Text="开发环境" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="{StaticResource Font.Size.BodySmall}" />
+            <TextBlock Text="⌄" Foreground="{StaticResource Brush.Text.Tertiary}" />
+          </StackPanel>
+        </Border>
+        <Button Grid.Column="5" Classes="SecondaryButton" Content="⚙" MinWidth="34" Padding="0" />
+        <Button Grid.Column="6" Classes="SecondaryButton" Content="♧" MinWidth="34" Padding="0" />
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1" ColumnDefinitions="84,280,*">
+      <Border Grid.Column="0" Background="{StaticResource Brush.Background.Surface}" Padding="{StaticResource Pad.2}">
+        <StackPanel Spacing="{StaticResource Space.3}">
+          <Border Background="{StaticResource Brush.Background.Selected}" CornerRadius="{StaticResource Radius.Lg}" Padding="{StaticResource Pad.2}">
+            <StackPanel Spacing="{StaticResource Space.1}">
+              <TextBlock Text="▤" HorizontalAlignment="Center" FontSize="{StaticResource Font.Size.TitleSmall}" Foreground="{StaticResource Brush.Brand.Primary}" />
+              <TextBlock Text="接口管理" HorizontalAlignment="Center" FontSize="{StaticResource Font.Size.Caption}" Foreground="{StaticResource Brush.Brand.Primary}" />
+            </StackPanel>
+          </Border>
+          <StackPanel Spacing="{StaticResource Space.1}" Margin="{StaticResource Pad.Top2}">
+            <TextBlock Text="◷" HorizontalAlignment="Center" FontSize="{StaticResource Font.Size.TitleSmall}" Foreground="{StaticResource Brush.Text.Secondary}" />
+            <TextBlock Text="请求历史" HorizontalAlignment="Center" FontSize="{StaticResource Font.Size.Caption}" Foreground="{StaticResource Brush.Text.Secondary}" />
+          </StackPanel>
+          <StackPanel Spacing="{StaticResource Space.1}">
+            <TextBlock Text="⚙" HorizontalAlignment="Center" FontSize="{StaticResource Font.Size.TitleSmall}" Foreground="{StaticResource Brush.Text.Secondary}" />
+            <TextBlock Text="项目设置" HorizontalAlignment="Center" FontSize="{StaticResource Font.Size.Caption}" Foreground="{StaticResource Brush.Text.Secondary}" />
+          </StackPanel>
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Column="1" Background="{StaticResource Brush.Background.Surface}" Padding="{StaticResource Pad.3}" Margin="{StaticResource Pad.Left1}">
+        <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource Space.3}">
+          <TextBlock Text="接口管理" FontSize="{StaticResource Font.Size.TitleSmall}" FontWeight="SemiBold" />
+          <Border Grid.Row="1" Classes="InputSurface" Padding="{StaticResource Pad.2}">
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.2}">
+              <TextBlock Text="⌕" Foreground="{StaticResource Brush.Text.Tertiary}" />
+              <TextBlock Text="搜索接口" Classes="MutedText" FontSize="{StaticResource Font.Size.BodySmall}" />
+            </StackPanel>
+          </Border>
+          <StackPanel Grid.Row="2" Spacing="{StaticResource Space.2}">
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.2}" Margin="{StaticResource Pad.Top2}">
+              <TextBlock Text="›" Foreground="{StaticResource Brush.Text.Tertiary}" />
+              <TextBlock Text="▤" Foreground="{StaticResource Brush.Text.Secondary}" />
+              <TextBlock Text="接口" FontWeight="SemiBold" />
+            </StackPanel>
+            <Border Background="{StaticResource Brush.Background.Selected}" CornerRadius="{StaticResource Radius.Md}" Padding="{StaticResource Pad.2}" Margin="{StaticResource Pad.Left4}">
+              <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.2}">
+                <Border Background="{StaticResource Brush.Method.Get}" CornerRadius="{StaticResource Radius.Sm}" Padding="{StaticResource Pad.Right1}">
+                  <TextBlock Text="GET" Foreground="{StaticResource Brush.Background.App}" FontSize="{StaticResource Font.Size.Caption}" FontWeight="Bold" />
+                </Border>
+                <TextBlock Text="用户详情" FontSize="{StaticResource Font.Size.BodySmall}" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+          <Border Grid.Row="3" BorderBrush="{StaticResource Brush.Border.Subtle}" BorderThickness="0,1,0,0" Padding="{StaticResource Pad.Top3}">
+            <StackPanel Spacing="{StaticResource Space.2}">
+              <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.2}">
+                <TextBlock Text="⌄" Foreground="{StaticResource Brush.Text.Tertiary}" />
+                <TextBlock Text="ϟ" Foreground="{StaticResource Brush.Brand.Primary}" />
+                <TextBlock Text="快捷请求" FontSize="{StaticResource Font.Size.BodySmall}" FontWeight="SemiBold" />
+              </StackPanel>
+              <Button Classes="SecondaryButton" Content="＋ 新建" HorizontalAlignment="Stretch" />
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
+
+      <Grid Grid.Column="2" RowDefinitions="40,50,*" Margin="{StaticResource Pad.WorkbenchSafeArea}">
+        <Border Grid.Row="0" BorderBrush="{StaticResource Brush.Border.Subtle}" BorderThickness="0,0,0,1" Padding="{StaticResource Pad.2}">
+          <Grid ColumnDefinitions="Auto,*,Auto">
+            <Border Background="{StaticResource Brush.Background.Selected}" BorderBrush="{StaticResource Brush.Brand.Primary}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="{StaticResource Pad.2}" VerticalAlignment="Center">
+              <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.2}">
+                <TextBlock Text="新建 HTTP 接口" FontSize="{StaticResource Font.Size.BodySmall}" />
+                <Ellipse Width="5" Height="5" Fill="{StaticResource Brush.Brand.Primary}" VerticalAlignment="Center" />
+                <TextBlock Text="×" Foreground="{StaticResource Brush.Text.Tertiary}" />
+              </StackPanel>
+            </Border>
+            <TextBlock Grid.Column="2" Text="＋    ⋯" Foreground="{StaticResource Brush.Text.Secondary}" VerticalAlignment="Center" />
+          </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="{StaticResource Space.2}">
+          <Border Background="{StaticResource Brush.Background.Selected}" CornerRadius="{StaticResource Radius.Md}" Padding="{StaticResource Pad.2}">
+            <TextBlock Text="调试" Foreground="{StaticResource Brush.Brand.Primary}" FontSize="{StaticResource Font.Size.BodySmall}" />
+          </Border>
+          <Border Grid.Column="1" Background="{StaticResource Brush.Background.Subtle}" CornerRadius="{StaticResource Radius.Md}" Padding="{StaticResource Pad.2}">
+            <TextBlock Text="文档预览" Foreground="{StaticResource Brush.Text.Secondary}" FontSize="{StaticResource Font.Size.BodySmall}" />
+          </Border>
+          <Border Grid.Column="2" Classes="InputSurface" Padding="{StaticResource Pad.2}">
+            <TextBlock Text="新建 HTTP 接口" FontSize="{StaticResource Font.Size.BodySmall}" />
+          </Border>
+          <Border Grid.Column="3" Background="{StaticResource Brush.Background.Subtle}" BorderBrush="{StaticResource Brush.Border.Default}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="{StaticResource Pad.2}">
+            <TextBlock Text="接口模式" Classes="SectionHint" />
+          </Border>
+          <Border Grid.Column="4" Background="{StaticResource Brush.Status.Warning.Background}" BorderBrush="{StaticResource Brush.Status.Warning.Text}" BorderThickness="1" CornerRadius="{StaticResource Radius.Pill}" Padding="{StaticResource Pad.2}">
+            <TextBlock Text="未保存修改" Foreground="{StaticResource Brush.Status.Warning.Text}" FontSize="{StaticResource Font.Size.Caption}" />
+          </Border>
+        </Grid>
+
+        <Grid Grid.Row="2" RowDefinitions="272,6,*" RowSpacing="{StaticResource Space.1}" Margin="{StaticResource Pad.Top2}">
+          <Border Grid.Row="0" Classes="SurfaceCard" Padding="{StaticResource Pad.3}">
+            <Grid RowDefinitions="40,36,*" RowSpacing="{StaticResource Space.2}">
+              <Grid ColumnDefinitions="56,160,*,88,64,92" ColumnSpacing="{StaticResource Space.2}">
+                <Border Background="{StaticResource Brush.Background.App}" BorderBrush="{StaticResource Brush.Border.Default}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}" Padding="{StaticResource Pad.2}">
+                  <TextBlock Text="GET  ⌄" Foreground="{StaticResource Brush.Method.Get}" VerticalAlignment="Center" FontSize="{StaticResource Font.Size.BodySmall}" FontWeight="SemiBold" />
+                </Border>
+                <Border Grid.Column="1" Background="{StaticResource Brush.Background.Subtle}" CornerRadius="{StaticResource Radius.Md}" Padding="{StaticResource Pad.2}">
+                  <TextBlock Text="Base URL" Foreground="{StaticResource Brush.Text.Secondary}" VerticalAlignment="Center" FontSize="{StaticResource Font.Size.BodySmall}" />
+                </Border>
+                <Border Grid.Column="2" Classes="InputSurface" Padding="{StaticResource Pad.2}">
+                  <TextBlock Text="接口路径，以 / 起始" Classes="MutedText" VerticalAlignment="Center" FontSize="{StaticResource Font.Size.BodySmall}" />
+                </Border>
+                <Button Grid.Column="3" Classes="PrimaryButton" Content="发送" />
+                <Button Grid.Column="4" Classes="SecondaryButton" Content="保存" />
+                <Button Grid.Column="5" Classes="SecondaryButton" Content="保存用例" />
+              </Grid>
+
+              <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,*" ColumnSpacing="{StaticResource Space.4}" VerticalAlignment="Bottom">
+                <StackPanel Spacing="{StaticResource Space.1}">
+                  <TextBlock Text="Params" FontWeight="SemiBold" Foreground="{StaticResource Brush.Brand.Primary}" />
+                  <Border Height="2" Background="{StaticResource Brush.Brand.Primary}" />
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="Body" Foreground="{StaticResource Brush.Text.Secondary}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="2" Text="Headers" Foreground="{StaticResource Brush.Text.Secondary}" VerticalAlignment="Center" />
+                <Button Grid.Column="3" Classes="SecondaryButton" Content="＋ 添加参数" HorizontalAlignment="Right" MinWidth="92" />
+              </Grid>
+
+              <Border Grid.Row="2" Background="{StaticResource Brush.Background.Subtle}" BorderBrush="{StaticResource Brush.Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Md}">
+                <Grid RowDefinitions="36,*">
+                  <Border Background="{StaticResource Brush.Background.Elevated}" Padding="{StaticResource Pad.2}">
+                    <Grid ColumnDefinitions="42,*,*,*">
+                      <CheckBox IsChecked="False" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="1" Text="参数名" VerticalAlignment="Center" FontSize="{StaticResource Font.Size.BodySmall}" />
+                      <TextBlock Grid.Column="2" Text="参数值" VerticalAlignment="Center" FontSize="{StaticResource Font.Size.BodySmall}" />
+                      <TextBlock Grid.Column="3" Text="说明（可选）" VerticalAlignment="Center" FontSize="{StaticResource Font.Size.BodySmall}" />
+                    </Grid>
+                  </Border>
+                  <TextBlock Grid.Row="1" Text="尚未添加 Query 参数" Classes="MutedText" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="{StaticResource Font.Size.BodySmall}" />
+                </Grid>
+              </Border>
+            </Grid>
+          </Border>
+
+          <GridSplitter Grid.Row="1" Height="6" Background="Transparent" HorizontalAlignment="Stretch" />
+
+          <Border Grid.Row="2" Classes="SurfaceCard" Padding="{StaticResource Pad.3}">
+            <Grid RowDefinitions="Auto,*" RowSpacing="{StaticResource Space.3}">
+              <Grid ColumnDefinitions="Auto,*">
+                <TextBlock Text="返回响应" FontSize="{StaticResource Font.Size.BodyLarge}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="准备好后点击「发送」开始调试" Classes="SectionHint" VerticalAlignment="Center" HorizontalAlignment="Right" />
+              </Grid>
+
+              <Border Grid.Row="1"
+                      Width="{StaticResource Size.Http.WaitingCard.Width}"
+                      HorizontalAlignment="Left"
+                      VerticalAlignment="Top"
+                      Background="{StaticResource Brush.Background.Subtle}"
+                      BorderBrush="{StaticResource Brush.Border.Default}"
+                      BorderThickness="1"
+                      CornerRadius="{StaticResource Radius.Lg}"
+                      Padding="{StaticResource Pad.3}">
+                <Grid ColumnDefinitions="36,*,Auto" ColumnSpacing="{StaticResource Space.3}">
+                  <Border Width="{StaticResource Size.Http.WaitingIcon}"
+                          Height="{StaticResource Size.Http.WaitingIcon}"
+                          Background="{StaticResource Brush.Background.Selected}"
+                          CornerRadius="{StaticResource Radius.Md}">
+                    <Path Width="20"
+                          Height="20"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          Stretch="Uniform"
+                          Stroke="{StaticResource Brush.Brand.Primary}"
+                          StrokeThickness="1.6"
+                          Fill="Transparent"
+                          Data="M12,2 C15,4.5 16.5,8.5 16.5,12.5 L16.5,16 L7.5,16 L7.5,12.5 C7.5,8.5 9,4.5 12,2 M7.5,13 L4.5,16.5 L7.5,16 M16.5,13 L19.5,16.5 L16.5,16 M10.5,16 L10.5,19.5 L12,21.5 L13.5,19.5 L13.5,16 M12,7 L12,10" />
+                  </Border>
+                  <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="{StaticResource Space.1}">
+                    <TextBlock Text="等待响应" FontWeight="SemiBold" FontSize="{StaticResource Font.Size.Body}" />
+                    <TextBlock Text="填写接口路径后点击「发送」，响应结果会显示在这里。"
+                               Classes="SectionHint"
+                               TextWrapping="Wrap" />
+                  </StackPanel>
+                  <Border Grid.Column="2" Background="{StaticResource Brush.Background.App}" BorderBrush="{StaticResource Brush.Border.Subtle}" BorderThickness="1" CornerRadius="{StaticResource Radius.Sm}" Padding="{StaticResource Pad.2}" VerticalAlignment="Center">
+                    <TextBlock Text="Ctrl + Enter" FontFamily="{StaticResource Font.Monospace}" FontSize="{StaticResource Font.Size.Caption}" Foreground="{StaticResource Brush.Text.Secondary}" />
+                  </Border>
+                </Grid>
+              </Border>
+            </Grid>
+          </Border>
+        </Grid>
+      </Grid>
+    </Grid>
+  </Grid>
+</Window>

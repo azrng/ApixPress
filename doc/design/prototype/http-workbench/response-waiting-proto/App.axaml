@@ -1,0 +1,30 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:semi="https://irihi.tech/semi"
+             x:Class="ApixPress.ResponseWaitingPrototype.App"
+             RequestedThemeVariant="Dark">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="/Assets/Styles/Colors.axaml" />
+        <ResourceInclude Source="/Assets/Styles/Fonts.axaml" />
+        <ResourceInclude Source="/Assets/Styles/Spacing.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+      <x:Double x:Key="Size.Shell.Rail">84</x:Double>
+      <x:Double x:Key="Size.Shell.Sidebar">280</x:Double>
+      <x:Double x:Key="Size.Window.TopBar">42</x:Double>
+      <x:Double x:Key="Size.Workbench.TabStrip">40</x:Double>
+      <x:Double x:Key="Size.Workbench.ContextBar">50</x:Double>
+      <x:Double x:Key="Size.Http.ConfigPanel">272</x:Double>
+      <x:Double x:Key="Size.Http.WaitingCard.Width">456</x:Double>
+      <x:Double x:Key="Size.Http.WaitingIcon">36</x:Double>
+      <Thickness x:Key="Pad.Left1">4,0,0,0</Thickness>
+      <Thickness x:Key="Pad.Left4">16,0,0,0</Thickness>
+      <Thickness x:Key="Pad.WorkbenchSafeArea">10,0,28,10</Thickness>
+      <Thickness x:Key="Pad.Horizontal3">12,0</Thickness>
+    </ResourceDictionary>
+  </Application.Resources>
+  <Application.Styles>
+    <semi:SemiTheme Locale="zh-CN" />
+  </Application.Styles>
+</Application>
