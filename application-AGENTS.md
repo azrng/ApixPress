@@ -1,7 +1,7 @@
 ---
 rule_id: application-agents
-version: 1.94.0
-last_updated: 2026-10-12
+version: 2.5.4
+last_updated: 2026-10-24
 dependencies: [agents-root]
 ---
 

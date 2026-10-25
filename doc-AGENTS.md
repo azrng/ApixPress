@@ -1,7 +1,7 @@
 ---
 rule_id: doc-agents
-version: 1.94.0
-last_updated: 2026-10-12
+version: 2.5.4
+last_updated: 2026-10-24
 dependencies: [agents-root]
 ---
 
@@ -44,11 +44,12 @@ dependencies: [agents-root]
 | 需求追溯 | 关联 `REQ-` 编号、明确本次设计覆盖的范围和未覆盖项，不重复粘贴需求正文 |
 | 契约引用（如涉及） | 关联已有 `CON-` 及最终事实来源，或关联阶段 0 创建的契约草案；不在设计文档中复制完整字段结构 |
 | 技术设计 | 模块职责、数据流向、状态变化、技术决策和依赖边界 |
-| 界面原型 | 每个页面的 ASCII 线框图，含关键状态（loading / empty / error） |
+| 界面原型 | 每个页面的 ASCII 线框图，含关键状态（loading / empty / error）；原型列出的页面是原型阶段的输入范围 |
 | 交互与异常 | 操作流程、状态流转、边界场景、错误处理方式和验证方式 |
 
 **门控规则**：
 - 用户明确确认对应的需求文档和设计文档后，才允许进入阶段 1
+- 例外：用户显式声明「试验 / POC」模式时，需求与设计文档不强制先行，按根 `AGENTS.md`「试验 / POC 模式」执行；转正式功能前必须回补
 - AI 在此阶段只输出文档内容，不写任何实现代码
 
 ### 设计自检清单
@@ -130,7 +131,7 @@ doc/
 │   ├── index.md                     # 设计索引
 │   ├── architecture.md              # 跨模块架构设计
 │   ├── <module>/<feature>.md        # 功能设计
-│   └── prototype/                   # 可选：高保真界面原型（HTML）
+│   └── prototype/                   # 界面原型目录，按 prototype-workflow.md 启用原型时创建
 └── contracts/
     ├── <module>.md                  # 可选的跨模块契约索引
     └── <module>/<feature>.md        # 新契约草案或契约补充说明
@@ -142,7 +143,7 @@ doc/
 - `doc/design/index.md`：维护设计文档导航和整体设计状态
 - `doc/design/architecture.md`：只记录跨模块架构、公共数据流、公共技术决策和跨模块约束
 - `doc/design/<module>/<feature>.md`：只描述对应需求的实现方案、模块职责、数据流、状态、交互、异常和技术决策；通过需求 ID 引用需求，不重复粘贴完整需求
-- `doc/design/prototype/`：可选目录，仅当界面原型需要升级为高保真原型时才创建；存放 HTML 高保真图，按 `<module>/<feature>.html` 与功能设计文档对应，并在对应设计文档中互相链接；默认仍使用设计文档内的 ASCII 线框图，不强制生成高保真图
+- `doc/design/prototype/`：按 prototype-workflow.md 规则启用原型时必建，「可选」仅指新功能是否启用原型专项，不指存量原型可滞后——已存在的原型文件必须与实现保持同步，任何界面变更先改原型再改实现；未启用时仍使用设计文档内的 ASCII 线框图；存放 HTML 交互原型（桌面/移动端复杂交互可用最小可运行原型），按 `<module>/<feature>.html` 与功能设计文档对应，并在对应设计文档中互相链接；原型确认后归档保留，目录内不得混入真实业务代码或真实接口调用。共享样式与静态资源放 `prototype/assets/`，页面以相对路径引用，不在每个页面内联重复
 - `doc/contracts/<module>.md`：仅在需要给多个模块提供契约索引或补充说明时使用；`doc/contracts/<module>/<feature>.md` 用于阶段 0 的新契约草案。DTO、Schema、公开接口定义仍以代码或共享 Schema 为最终事实来源
 - 新文档在 YAML front matter 中至少标注 `doc_id`、`doc_type`、`module`、`status`、`last_updated` 和关联文档路径；需求文档使用 `REQ-` ID，设计文档使用 `DES-` ID，契约草案使用 `CON-` ID
 - `status` 统一使用 `draft`、`in-review`、`approved`、`superseded`；只有对应需求、设计和新增契约草案均为 `approved` 时，才允许进入阶段 1。已批准文档发生业务或技术变更时，先改为 `in-review`，确认后再恢复为 `approved`
