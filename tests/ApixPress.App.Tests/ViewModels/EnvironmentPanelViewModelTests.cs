@@ -13,7 +13,7 @@ public sealed class EnvironmentPanelViewModelTests
         viewModel.Environments.Add(environment);
 
         Assert.False(environment.HasVariables);
-        Assert.Contains("暂无变量", environment.VariableCountText);
+        Assert.Contains("变量 0", environment.VariableCountText);
 
         environment.Variables.Add(new EnvironmentVariableItemViewModel
         {
@@ -23,12 +23,12 @@ public sealed class EnvironmentPanelViewModelTests
         });
 
         Assert.True(environment.HasVariables);
-        Assert.Contains("1 个变量", environment.VariableCountText);
+        Assert.Contains("变量 1", environment.VariableCountText);
 
         environment.Variables.Clear();
 
         Assert.False(environment.HasVariables);
-        Assert.Contains("暂无变量", environment.VariableCountText);
+        Assert.Contains("变量 0", environment.VariableCountText);
     }
 
     [Fact]

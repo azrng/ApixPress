@@ -427,18 +427,28 @@ public sealed class WorkbenchLayoutTests
     }
 
     [Fact]
-    public void EnvironmentManager_ShouldUseDrawerWithEnvCardsAndInlineDeleteStrip()
+    public void EnvironmentManager_ShouldUseDrawerWithLayeredEnvCardsAndSinglePrimarySave()
     {
-        // 环境管理已迁移为右侧抽屉（多环境卡片平铺，对齐原型 07）：EnvironmentDrawerView
+        // 环境管理抽屉（对齐确认原型 07）：激活卡品牌分层、环境名标题式就地编辑、逐卡轻按钮保存，唯一主按钮为全局保存
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "EnvironmentDrawerView.axaml"));
 
-        // 卡片式环境列表：每张卡片含激活徽章、逐卡新增变量、单卡保存与全局保存
+        // 激活分层：环境卡容器 + 标题式环境名 + 激活徽章
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Border"
-            && HasClass(element, "PanelCard"));
+            && HasClass(element, "EnvironmentCard"));
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "TextBox"
+            && HasClass(element, "EnvironmentNameInput"));
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Border"
-            && HasClass(element, "EnvMenuActiveChip"));
+            && HasClass(element, "EnvCardActiveChip"));
+        // 逐卡操作：设为激活 / 新增变量 / 轻按钮保存本环境
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Button"
+            && element.Attribute("Content")?.Value == "设为激活"
+            && element.Attribute("Command")?.Value?.Contains("SelectEnvironmentCommand") == true);
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Button"
             && element.Attribute("Command")?.Value?.Contains("AddVariableCommand") == true);
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Button"
+            && HasClass(element, "EnvCardGhostButton")
+            && element.Attribute("Command")?.Value?.Contains("SaveEnvironmentCommand") == true);
+        // 唯一主按钮：全局保存
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Button"
             && element.Attribute("Command")?.Value?.Contains("SaveAllEnvironmentsCommand") == true);
     }

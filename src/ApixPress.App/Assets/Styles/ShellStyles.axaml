@@ -210,6 +210,82 @@
     <Setter Property="Padding" Value="0" />
   </Style>
 
+  <!-- 环境卡容器（对齐原型 07：非激活卡深底下沉，激活卡选中底 + 品牌描边） -->
+  <Style Selector="Border.EnvironmentCard">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Xl}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.3}" />
+  </Style>
+
+  <Style Selector="Border.EnvironmentCard.env-active">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <!-- 激活卡头部品牌圆点 -->
+  <Style Selector="Border.EnvActiveDot">
+    <Setter Property="Width" Value="8" />
+    <Setter Property="Height" Value="8" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Brand.Primary}" />
+  </Style>
+
+  <!-- 环境名标题式输入框：透明底、hover 显边框、聚焦进入编辑 -->
+  <Style Selector="TextBox.EnvironmentNameInput">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Body}" />
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
+    <Setter Property="MinHeight" Value="0" />
+  </Style>
+
+  <Style Selector="TextBox.EnvironmentNameInput:pointerover">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+  </Style>
+
+  <Style Selector="TextBox.EnvironmentNameInput:focus">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
+  </Style>
+
+  <!-- 激活徽章：选中底 + 品牌描边胶囊（描边区别于环境卡自身的选中底） -->
+  <Style Selector="Border.EnvCardActiveChip">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="Padding" Value="7,1" />
+  </Style>
+
+  <!-- 卡内轻按钮（设为激活 / 新增变量 / 保存本环境）：透明底描边，hover 品牌反馈 -->
+  <Style Selector="Button.EnvCardGhostButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="Height" Value="26" />
+    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+  </Style>
+
+  <Style Selector="Button.EnvCardGhostButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+  </Style>
+
+  <!-- 变量行：行距走 Pad.Top2（8px 顶部距），与卡内 StackPanel 节奏一致 -->
+  <Style Selector="Grid.EnvironmentVariableRow">
+    <Setter Property="Margin" Value="{StaticResource Pad.Top2}" />
+  </Style>
+
   <Style Selector="Separator.EnvMenuSeparator">
     <Setter Property="Background" Value="{DynamicResource Brush.Border.Subtle}" />
   </Style>

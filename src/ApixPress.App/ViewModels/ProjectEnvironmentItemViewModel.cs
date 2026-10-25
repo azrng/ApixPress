@@ -39,9 +39,8 @@ public partial class ProjectEnvironmentItemViewModel : ViewModelBase
 
     public bool HasVariables => Variables.Count > 0;
 
-    public string VariableCountText => HasVariables
-        ? $"{Variables.Count} 个变量 · 发送时自动替换 {{{{变量名}}}}"
-        : "暂无变量 · 发送时自动替换 {{变量名}}";
+    // 变量小节标题（对齐原型 07）：“变量 N”；{{变量名}} 替换规则由抽屉顶行提示承担
+    public string VariableCountText => $"变量 {Variables.Count}";
 
     public string DisplayName => IsActive ? $"{Name}（当前）" : Name;
     public string CompactDisplayName => Name;

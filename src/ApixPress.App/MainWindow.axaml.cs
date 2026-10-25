@@ -204,7 +204,7 @@ public partial class MainWindow : Window
                     new DrawerOptions
                     {
                         Buttons = DialogButton.None,
-                        Title = "环境变量",
+                        Title = "环境管理",
                         Position = Ursa.Common.Position.Right,
                         MinWidth = 480,
                         MaxWidth = 560,
