@@ -432,6 +432,9 @@ body {
 .table-row.header { background: var(--bg-subtle); font-size: 12px; color: var(--text-secondary); padding: 8px 10px; }
 .table-row + .table-row { border-top: 1px solid var(--border-subtle); }
 .table-row.files { grid-template-columns: 56px 2.4fr 76px 2.8fr 44px; }
+/* form-data 表头行内嵌「添加字段」：去掉独立区块条，主操作由表头行承载（原型 03） */
+.table-row.files.header.header-has-add { position: relative; }
+.header-add { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); height: 24px; padding: 0 10px; }
 .cell-input {
   height: 28px; background: transparent; border: 1px solid transparent;
   border-radius: var(--r-sm); color: var(--text-primary); padding: 0 8px; font-size: 13px;

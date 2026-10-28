@@ -183,19 +183,13 @@
           <div data-tabs-panel="bd" data-v="raw"><div class="cell-empty">原始文本编辑器。</div></div>
           <div data-tabs-panel="bd" data-v="binary"><div class="cell-empty">选择单个文件作为请求体。</div></div>
 
-          <!-- form-data 面板 -->
+          <!-- form-data 面板：不设独立区块条，「添加字段」内嵌表头右端 -->
           <div data-tabs-panel="bd" data-v="form-data" class="on">
-            <div class="section-head">
-              <div>
-                <div class="section-title">form-data 参数</div>
-                <div class="section-hint">文本与文件字段混排；同一文件字段可选择多个文件，随 multipart 一次性上传。点击「类型」可切换 text / file。</div>
-              </div>
-              <button class="btn-add" id="addFd">添加参数</button>
-            </div>
             <div class="table" id="fdTable">
-              <div class="table-row files header">
+              <div class="table-row files header header-has-add">
                 <span class="th-check"><span class="checkbox on"></span>启用</span>
-                <span>参数名</span><span>类型</span><span>参数值</span><span></span>
+                <span>字段名</span><span>类型</span><span>字段值</span><span></span>
+                <button class="btn-add header-add" id="addFd">添加字段</button>
               </div>
               <!-- 文本字段 -->
               <div class="table-row files">
