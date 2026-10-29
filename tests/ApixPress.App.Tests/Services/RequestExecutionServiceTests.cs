@@ -142,6 +142,95 @@ public sealed class RequestExecutionServiceTests
         Assert.DoesNotContain("X-Disabled", handler.HeaderNames);
     }
 
+    [Theory]
+    [InlineData(true, "max-age=60")]
+    [InlineData(false, "no-store, no-cache")]
+    public async Task SendAsync_ShouldOnlyUseAutomaticCacheControlWhenNoEnabledHeaderExists(bool enabled, string expected)
+    {
+        var handler = new CapturingHttpMessageHandler();
+        using var client = new HttpClient(handler);
+        var service = new RequestExecutionService(
+            new ViewModelSharedTestDoubles.FakeEnvironmentVariableService(),
+            new FakeAppShellSettingsService { Settings = new AppShellSettingsDto { SendNoCacheHeader = true } },
+            serializer: null!,
+            (_, _, _) => client);
+
+        var result = await service.SendAsync(
+            new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "https://api.example.com/users",
+                Headers = [new RequestKeyValueDto { Name = "cache-control", Value = "max-age=60", IsEnabled = enabled }]
+            },
+            new ProjectEnvironmentDto { Id = "env-1" },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        var header = Assert.Single(result.Data!.ActualRequest!.Headers,
+            item => string.Equals(item.Name, "Cache-Control", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(expected, header.Value);
+    }
+
+    [Theory]
+    [InlineData("Content-Encoding")]
+    [InlineData("invalid header")]
+    public async Task SendAsync_ShouldNotCreateBodyForContentOrInvalidHeader_WhenBodyIsAbsent(string name)
+    {
+        var handler = new CapturingHttpMessageHandler();
+        using var client = new HttpClient(handler);
+        var service = new RequestExecutionService(
+            new ViewModelSharedTestDoubles.FakeEnvironmentVariableService(),
+            new FakeAppShellSettingsService(),
+            serializer: null!,
+            (_, _, _) => client);
+
+        var result = await service.SendAsync(
+            new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "https://api.example.com/users",
+                Headers =
+                [
+                    new RequestKeyValueDto { Name = name, Value = "gzip", IsEnabled = true },
+                    new RequestKeyValueDto { Name = "Content-Type", Value = "application/json", IsEnabled = true }
+                ]
+            },
+            new ProjectEnvironmentDto { Id = "env-1" },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(handler.LastRequest!.Content);
+        Assert.False(result.Data!.ActualRequest!.HasBody);
+        Assert.DoesNotContain(result.Data.ActualRequest.Headers, header => header.Name == "Content-Type");
+    }
+
+    [Fact]
+    public async Task SendAsync_ShouldKeepExplicitContentHeaders_WhenBodyExists()
+    {
+        var handler = new CapturingHttpMessageHandler();
+        using var client = new HttpClient(handler);
+        var service = new RequestExecutionService(
+            new ViewModelSharedTestDoubles.FakeEnvironmentVariableService(),
+            new FakeAppShellSettingsService(),
+            serializer: null!,
+            (_, _, _) => client);
+
+        var result = await service.SendAsync(
+            new RequestSnapshotDto
+            {
+                Method = "POST",
+                Url = "https://api.example.com/users",
+                BodyMode = BodyModes.RawText,
+                BodyContent = "test",
+                Headers = [new RequestKeyValueDto { Name = "Content-Language", Value = "zh-CN", IsEnabled = true }]
+            },
+            new ProjectEnvironmentDto { Id = "env-1" },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Contains(result.Data!.ActualRequest!.Headers, header => header.Name == "Content-Language" && header.Value == "zh-CN");
+    }
+
     [Fact]
     public async Task SendAsync_ShouldCaptureActualRequestSnapshot()
     {
@@ -616,8 +705,10 @@ public sealed class RequestExecutionServiceTests
 
     private sealed class FakeAppShellSettingsService : IAppShellSettingsService
     {
+        public AppShellSettingsDto Settings { get; init; } = new();
+
         public Task<IResultModel<AppShellSettingsDto>> LoadAsync(CancellationToken cancellationToken) =>
-            Task.FromResult<IResultModel<AppShellSettingsDto>>(ResultModel<AppShellSettingsDto>.Success(new AppShellSettingsDto()));
+            Task.FromResult<IResultModel<AppShellSettingsDto>>(ResultModel<AppShellSettingsDto>.Success(Settings));
 
         public Task<IResultModel<AppShellSettingsDto>> SaveAsync(AppShellSettingsDto settings, CancellationToken cancellationToken) =>
             Task.FromResult<IResultModel<AppShellSettingsDto>>(ResultModel<AppShellSettingsDto>.Success(settings));

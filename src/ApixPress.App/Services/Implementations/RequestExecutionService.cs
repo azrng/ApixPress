@@ -84,15 +84,6 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
                 shellSettings.RequestTimeoutMilliseconds);
             using var message = new HttpRequestMessage(new HttpMethod(request.Method), finalUrl);
 
-            if (shellSettings.SendNoCacheHeader && !message.Headers.Contains("Cache-Control"))
-            {
-                message.Headers.CacheControl = new CacheControlHeaderValue
-                {
-                    NoCache = true,
-                    NoStore = true
-                };
-            }
-
             message.Content = BuildHttpContent(request, activeVariables);
 
             foreach (var header in request.Headers.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
@@ -115,9 +106,19 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
                 }
                 if (!message.Headers.TryAddWithoutValidation(header.Name, value))
                 {
-                    message.Content ??= new StringContent(string.Empty);
-                    message.Content.Headers.TryAddWithoutValidation(header.Name, value);
+                    // 无请求体时内容头无处承载；无效头也不能因此生成空请求体。
+                    message.Content?.Headers.TryAddWithoutValidation(header.Name, value);
                 }
+            }
+
+            // 显式缓存策略优先，禁用的头不会阻止自动值。
+            if (shellSettings.SendNoCacheHeader && !message.Headers.Contains("Cache-Control"))
+            {
+                message.Headers.CacheControl = new CacheControlHeaderValue
+                {
+                    NoCache = true,
+                    NoStore = true
+                };
             }
 
             actualRequest = CaptureActualRequest(request, message, finalUrl, activeVariables);
