@@ -98,6 +98,21 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             foreach (var header in request.Headers.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
             {
                 var value = ReplaceVariables(header.Value, activeVariables);
+                // Content-Type 必须覆盖而非追加：TryAddWithoutValidation 会向内容头追加第二条值，
+                // 线上变成重复头（值被逗号拼接），服务端解析媒体类型失败直接拒收（如 IdentityServer 400 invalid_request）。
+                // multipart 的 boundary 只在 body 模式生成的自动值里，显式头没有 boundary，覆盖会破坏分片，故忽略；
+                // 无请求体时内容头没有承载对象，同样忽略。
+                if (string.Equals(header.Name, "Content-Type", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (message.Content is not null
+                        && request.BodyMode != BodyModes.FormData
+                        && !string.IsNullOrWhiteSpace(value))
+                    {
+                        message.Content.Headers.Remove("Content-Type");
+                        message.Content.Headers.TryAddWithoutValidation("Content-Type", value);
+                    }
+                    continue;
+                }
                 if (!message.Headers.TryAddWithoutValidation(header.Name, value))
                 {
                     message.Content ??= new StringContent(string.Empty);

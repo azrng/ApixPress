@@ -182,6 +182,107 @@ public sealed class RequestExecutionServiceTests
     }
 
     [Fact]
+    public async Task SendAsync_ShouldOverrideAutoContentType_WhenExplicitContentTypeHeaderExists()
+    {
+        var handler = new CapturingHttpMessageHandler();
+        using var client = new HttpClient(handler);
+        var service = new RequestExecutionService(
+            new ViewModelSharedTestDoubles.FakeEnvironmentVariableService(),
+            new FakeAppShellSettingsService(),
+            serializer: null!,
+            (_, _, _) => client);
+
+        var result = await service.SendAsync(
+            new RequestSnapshotDto
+            {
+                Method = "POST",
+                Url = "https://api.example.com/connect/token",
+                BodyMode = BodyModes.FormUrlEncoded,
+                BodyContent = "client_id=sea-fe&scope=synyiiam",
+                Headers =
+                [
+                    new RequestKeyValueDto { Name = "Content-Type", Value = "application/x-www-form-urlencoded", IsEnabled = true }
+                ]
+            },
+            new ProjectEnvironmentDto { Id = "env-1" },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        // 显式 Content-Type 只能覆盖自动值，不允许追加成重复头（服务端会因媒体类型不可解析拒收）
+        var contentTypeHeader = Assert.Single(
+            result.Data!.ActualRequest!.Headers,
+            header => header.Name == "Content-Type");
+        Assert.Equal("application/x-www-form-urlencoded", contentTypeHeader.Value);
+    }
+
+    [Fact]
+    public async Task SendAsync_ShouldKeepMultipartBoundaryContentType_InFormDataMode()
+    {
+        var handler = new CapturingHttpMessageHandler();
+        using var client = new HttpClient(handler);
+        var service = new RequestExecutionService(
+            new ViewModelSharedTestDoubles.FakeEnvironmentVariableService(),
+            new FakeAppShellSettingsService(),
+            serializer: null!,
+            (_, _, _) => client);
+
+        var result = await service.SendAsync(
+            new RequestSnapshotDto
+            {
+                Method = "POST",
+                Url = "https://api.example.com/upload",
+                BodyMode = BodyModes.FormData,
+                FormFields =
+                [
+                    new FormFieldDto { Name = "remark", Value = "附件说明", FieldType = FormFieldTypes.Text, IsEnabled = true }
+                ],
+                Headers =
+                [
+                    new RequestKeyValueDto { Name = "Content-Type", Value = "multipart/form-data", IsEnabled = true }
+                ]
+            },
+            new ProjectEnvironmentDto { Id = "env-1" },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        // multipart 的 boundary 只在自动值里，显式头没有 boundary，必须保留自动值否则分片无法解析
+        var contentTypeHeader = Assert.Single(
+            result.Data!.ActualRequest!.Headers,
+            header => header.Name == "Content-Type");
+        Assert.StartsWith("multipart/form-data; boundary=", contentTypeHeader.Value);
+    }
+
+    [Fact]
+    public async Task SendAsync_ShouldSkipExplicitContentType_WhenBodyModeIsNone()
+    {
+        var handler = new CapturingHttpMessageHandler();
+        using var client = new HttpClient(handler);
+        var service = new RequestExecutionService(
+            new ViewModelSharedTestDoubles.FakeEnvironmentVariableService(),
+            new FakeAppShellSettingsService(),
+            serializer: null!,
+            (_, _, _) => client);
+
+        var result = await service.SendAsync(
+            new RequestSnapshotDto
+            {
+                Method = "GET",
+                Url = "https://api.example.com/users",
+                Headers =
+                [
+                    new RequestKeyValueDto { Name = "Content-Type", Value = "application/json", IsEnabled = true }
+                ]
+            },
+            new ProjectEnvironmentDto { Id = "env-1" },
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        // 无请求体时内容头没有承载对象，不凭空造空请求体
+        Assert.Null(handler.LastRequest!.Content);
+        Assert.DoesNotContain(result.Data!.ActualRequest!.Headers, header => header.Name == "Content-Type");
+    }
+
+    [Fact]
     public async Task SendAsync_ShouldRejectOversizedTextRequestBodyBeforeTransport()
     {
         var handler = new CapturingHttpMessageHandler();
