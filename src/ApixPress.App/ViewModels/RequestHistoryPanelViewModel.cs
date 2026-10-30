@@ -239,12 +239,23 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
             cancellationToken.ThrowIfCancellationRequested();
 
             var knownIds = HistoryItems.Select(item => item.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var appended = new List<RequestHistoryItemViewModel>();
             foreach (var item in page.Items)
             {
                 if (knownIds.Add(item.Id))
                 {
-                    HistoryItems.Add(CreateHistoryItem(item));
+                    appended.Add(CreateHistoryItem(item));
                 }
+            }
+
+            if (appended.Count > 0)
+            {
+                // 先物化合并列表再 ReplaceWith：单次 Reset 替代逐条 Add，
+                // 避免一页 50 条触发 50 次集合广播（HistoryItems 订阅者会发 ShellState 消息）；
+                // ReplaceWith 会先清空再枚举参数，不能直接传延迟求值的 Concat
+                var merged = HistoryItems.ToList();
+                merged.AddRange(appended);
+                HistoryItems.ReplaceWith(merged);
             }
 
             if (page.Items.Count > 0)

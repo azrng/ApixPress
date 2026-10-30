@@ -587,6 +587,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     protected override void DisposeManaged()
     {
         QueryParameters.CollectionChanged -= OnQueryParametersCollectionChanged;
+        PathParameters.CollectionChanged -= OnPathParametersCollectionChanged;
         Headers.CollectionChanged -= OnHeadersCollectionChanged;
         FormFields.CollectionChanged -= OnFormFieldsCollectionChanged;
 
@@ -596,6 +597,13 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         }
 
         _subscribedQueryParameterItems.Clear();
+
+        foreach (var item in _subscribedPathParameterItems)
+        {
+            item.PropertyChanged -= OnPathParameterItemPropertyChanged;
+        }
+
+        _subscribedPathParameterItems.Clear();
     }
 
     private void ReplaceParameters(IEnumerable<RequestParameterDto> parameters)
