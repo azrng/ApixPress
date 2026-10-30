@@ -164,40 +164,69 @@
           <div class="url-shell">
             <span class="method-select get" data-toast="切换请求方法（演示）">GET <span class="caret">▼</span></span>
             <span class="base-chip">http://localhost:5050</span>
-            <input class="path-input" value="/api/Group/GetGroupList">
+            <input class="path-input" id="requestPath" value="/api/Group/{groupId}/Students/{studentId}">
           </div>
           <button class="btn btn-primary" id="sendBtn">发送<kbd class="btn-kbd">Ctrl+Enter</kbd></button>
           <button class="btn btn-ghost" data-toast="已保存接口（演示）">保存</button>
           <button class="btn btn-ghost" data-open="#saveCaseModal">保存用例</button>
         </div>
 
-        <!-- 请求配置 Tabs -->
+        <!-- 请求配置 Tabs：Params=路径参数，Query=查询参数，分 Tab 编辑 -->
         <div class="sub-tabs" data-tabs="cfg" style="margin-top:10px;">
-          <span class="sub-tab active" data-v="Params">Params <span class="cnt">1</span></span>
+          <span class="sub-tab active" data-v="Params">Params <span class="cnt">2</span></span>
+          <span class="sub-tab" data-v="Query">Query <span class="cnt">1</span></span>
           <span class="sub-tab" data-v="Body">Body</span>
           <span class="sub-tab" data-v="Headers">Headers</span>
         </div>
 
-        <!-- Params 面板 -->
+        <!-- Params 面板：仅路径参数 -->
         <div data-tabs-panel="cfg" data-v="Params" class="on">
-          <div class="section-head">
-            <div>
-              <div class="section-title">Query 参数</div>
-              <div class="section-hint">追加到 URL；取消勾选的参数不会参与请求。</div>
+          <div class="params-scroll">
+            <div class="section-head path-params-head">
+              <div>
+                <div class="section-title">Path 参数</div>
+                <div class="section-hint">从 URL 模板自动识别；每个参数都必须填写，发送时按单个路径段编码。</div>
+              </div>
             </div>
-            <button class="btn-add" id="addParam">添加参数</button>
+            <div class="table path-parameter-table" id="pathParameterTable">
+              <div class="table-row header">
+                <span>参数名</span><span>参数值</span>
+              </div>
+              <div class="table-row path-parameter-row">
+                <span class="path-parameter-name">groupId</span>
+                <span><input class="cell-input path-parameter-value" value="1" aria-label="groupId 路径参数值"></span>
+              </div>
+              <div class="table-row path-parameter-row">
+                <span class="path-parameter-name">studentId</span>
+                <span><input class="cell-input path-parameter-value" value="42" aria-label="studentId 路径参数值"></span>
+              </div>
+            </div>
+            <div class="path-parameter-empty" id="pathParameterEmpty" hidden>URL 模板中没有路径参数；使用 {id} 表示路由参数。</div>
           </div>
-          <div class="table" id="paramTable">
-            <div class="table-row header">
-              <span class="th-check"><span class="checkbox on"></span>启用</span>
-              <span>参数名</span><span>参数值</span><span>说明（可选）</span><span></span>
+        </div>
+
+        <!-- Query 面板：仅查询参数 -->
+        <div data-tabs-panel="cfg" data-v="Query">
+          <div class="params-scroll">
+            <div class="section-head query-params-head">
+              <div>
+                <div class="section-title">Query 参数</div>
+                <div class="section-hint">追加到 URL；取消勾选的参数不会参与请求。</div>
+              </div>
+              <button class="btn-add" id="addParam">添加参数</button>
             </div>
-            <div class="table-row">
-              <span><span class="checkbox on"></span></span>
-              <span><input class="cell-input" value="groupId"></span>
-              <span><input class="cell-input" value="1"></span>
-              <span><input class="cell-input" placeholder="说明"></span>
-              <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
+            <div class="table" id="paramTable">
+              <div class="table-row header">
+                <span class="th-check"><span class="checkbox on"></span>启用</span>
+                <span>参数名</span><span>参数值</span><span>说明（可选）</span><span></span>
+              </div>
+              <div class="table-row">
+                <span><span class="checkbox on"></span></span>
+                <span><input class="cell-input" value="include"></span>
+                <span><input class="cell-input" value="students"></span>
+                <span><input class="cell-input" placeholder="说明"></span>
+                <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
+              </div>
             </div>
           </div>
         </div>
@@ -363,6 +392,19 @@ var json = await http.GetStringAsync(
   var sendBtnHTML = sendBtn.innerHTML;
   sendBtn.addEventListener("click", function () {
     if (sendBtn.classList.contains("loading")) return;
+    var missingPathRows = Array.from(document.querySelectorAll(".path-parameter-row"))
+      .filter(function (row) { return !row.querySelector(".path-parameter-value").value.trim(); });
+    document.querySelectorAll(".path-parameter-value").forEach(function (input) {
+      input.classList.remove("interaction-invalid");
+    });
+    if (missingPathRows.length > 0) {
+      missingPathRows.forEach(function (row) { row.querySelector(".path-parameter-value").classList.add("interaction-invalid"); });
+      missingPathRows[0].querySelector(".path-parameter-value").focus();
+      protoToast("请填写路径参数：" + missingPathRows.map(function (row) {
+        return row.querySelector(".path-parameter-name").textContent;
+      }).join("、"));
+      return;
+    }
     sendBtn.classList.add("loading");
     sendBtn.innerHTML = '<span class="spinner"></span>发送中…';
     setTimeout(function () {
@@ -389,6 +431,41 @@ var json = await http.GetStringAsync(
       if (rows.length > 1) del.closest(".table-row").remove();
       else protoToast("至少保留一行参数");
     }
+  });
+
+  // 路由占位符变化时同步参数行；已有同名值保留，新占位符先留空。
+  var requestPath = document.getElementById("requestPath");
+  requestPath.addEventListener("input", function () {
+    var previous = {};
+    document.querySelectorAll(".path-parameter-row").forEach(function (row) {
+      previous[row.querySelector(".path-parameter-name").textContent] = row.querySelector(".path-parameter-value").value;
+    });
+    var routePath = requestPath.value.split(/[?#]/, 1)[0];
+    var names = Array.from(routePath.matchAll(/(?<!\{)\{([^{}]+)\}(?!\})|:([A-Za-z_][A-Za-z0-9_]*)/g))
+      .map(function (match) { return match[1] || match[2]; })
+      .filter(function (name, index, all) { return all.indexOf(name) === index; });
+    var table = document.getElementById("pathParameterTable");
+    table.querySelectorAll(".path-parameter-row").forEach(function (row) { row.remove(); });
+    names.forEach(function (name) {
+      var row = document.createElement("div");
+      row.className = "table-row path-parameter-row";
+      var label = document.createElement("span");
+      label.className = "path-parameter-name";
+      label.textContent = name;
+      var valueCell = document.createElement("span");
+      var value = document.createElement("input");
+      value.className = "cell-input path-parameter-value";
+      value.setAttribute("aria-label", name + " 路径参数值");
+      value.placeholder = "必填，可用 {{环境变量}}";
+      value.value = previous[name] || "";
+      valueCell.appendChild(value);
+      row.appendChild(label);
+      row.appendChild(valueCell);
+      table.appendChild(row);
+    });
+    var empty = document.getElementById("pathParameterEmpty");
+    if (empty) empty.hidden = names.length > 0;
+    table.hidden = names.length === 0;
   });
 
   // 复制生成代码

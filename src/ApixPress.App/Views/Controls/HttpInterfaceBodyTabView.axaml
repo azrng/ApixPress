@@ -14,15 +14,20 @@
         HorizontalAlignment="Stretch">
     <!-- 对齐原型 body-modes：模式选择与内容类型提示并排一行，编辑器紧随其上移 -->
     <Grid Grid.Row="0"
-          ColumnDefinitions="Auto,*,Auto"
+          ColumnDefinitions="*,Auto"
+          RowDefinitions="Auto,Auto"
+          RowSpacing="{StaticResource Space.2}"
           ColumnSpacing="{StaticResource Space.3}">
-      <u:SelectionList Grid.Column="0"
+      <u:SelectionList Grid.Row="0"
+                       Grid.Column="0"
+                       Grid.ColumnSpan="2"
                        Classes="HttpBodyModeSelector"
+                       HorizontalAlignment="Stretch"
                        ItemsSource="{Binding ConfigTab.BodyModeOptions}"
                        SelectedItem="{Binding ConfigTab.SelectedBodyModeOption}">
         <u:SelectionList.ItemsPanel>
           <ItemsPanelTemplate>
-            <StackPanel Orientation="Horizontal" />
+            <WrapPanel Orientation="Horizontal" />
           </ItemsPanelTemplate>
         </u:SelectionList.ItemsPanel>
         <u:SelectionList.ItemTemplate>
@@ -33,12 +38,15 @@
           </DataTemplate>
         </u:SelectionList.ItemTemplate>
       </u:SelectionList>
-      <TextBlock Grid.Column="1"
+      <TextBlock Grid.Row="1"
+                 Grid.Column="0"
                  Classes="HttpBodyModeHintText"
                  VerticalAlignment="Center"
+                 MinWidth="0"
                  TextTrimming="CharacterEllipsis"
                  Text="{Binding ConfigTab.BodyModeHint}" />
-      <StackPanel Grid.Column="2"
+      <StackPanel Grid.Row="1"
+                  Grid.Column="1"
                   Orientation="Horizontal"
                   Spacing="{StaticResource Space.2}">
         <Button Classes="HttpBodyExampleButton"
@@ -116,13 +124,15 @@
                                      PlaceholderText="字段值" />
                             <!-- 文件字段：多文件 chip + 添加文件（原型 file-chips/file-add） -->
                             <StackPanel IsVisible="{Binding IsFileField}"
-                                        Orientation="Horizontal"
                                         Spacing="{StaticResource Space.2}"
                                         VerticalAlignment="Center">
-                              <ItemsControl ItemsSource="{Binding Files}">
+                              <ItemsControl ItemsSource="{Binding Files}"
+                                            HorizontalAlignment="Stretch">
                                 <ItemsControl.ItemsPanel>
                                   <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.1}" />
+                                    <WrapPanel Orientation="Horizontal"
+                                               ItemSpacing="{StaticResource Space.1}"
+                                               LineSpacing="{StaticResource Space.1}" />
                                   </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
@@ -142,6 +152,7 @@
                               </ItemsControl>
                               <Button Classes="HttpFileAddButton"
                                       Content="＋ 文件"
+                                      HorizontalAlignment="Left"
                                       Command="{Binding $parent[UserControl].((vm:ProjectTabViewModel)DataContext).ConfigTab.AddFormFieldFilesCommand}"
                                       CommandParameter="{Binding}" />
                             </StackPanel>
@@ -169,9 +180,10 @@
       </Grid>
 
       <!-- Binary 模式：已选文件 chip + 换文件/移除 -->
-      <StackPanel IsVisible="{Binding ConfigTab.HasBinaryFile}"
+      <WrapPanel IsVisible="{Binding ConfigTab.HasBinaryFile}"
                   Orientation="Horizontal"
-                  Spacing="{StaticResource Space.2}"
+                  ItemSpacing="{StaticResource Space.2}"
+                  LineSpacing="{StaticResource Space.2}"
                   VerticalAlignment="Top"
                   HorizontalAlignment="Left">
         <Border Classes="HttpFileChip">
@@ -186,7 +198,7 @@
         <Button Classes="HttpFileAddButton"
                 Content="更换文件"
                 Command="{Binding ConfigTab.PickBinaryFileCommand}" />
-      </StackPanel>
+      </WrapPanel>
 
       <!-- Binary 模式空态：选择文件入口 -->
       <Border IsVisible="{Binding ConfigTab.ShowBinaryEmptyState}"

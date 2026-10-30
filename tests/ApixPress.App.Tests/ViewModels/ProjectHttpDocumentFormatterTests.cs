@@ -16,6 +16,66 @@ public sealed class ProjectHttpDocumentFormatterTests
     }
 
     [Fact]
+    public void GeneratedSnippets_ShouldSkipDisabledHeadersAndEscapeShellExpansion()
+    {
+        var config = CreateConfig(BodyModes.RawText, vm =>
+        {
+            vm.RequestBody = "$(echo bad) `cmd` $token";
+            vm.Headers.Add(new RequestParameterItemViewModel { Name = "X-Off", Value = "secret", IsEnabled = false });
+            vm.Headers.Add(new RequestParameterItemViewModel { Name = "X-On", Value = "ok", IsEnabled = true });
+        });
+        var curl = ProjectHttpDocumentFormatter.BuildCurlSnippet("POST", "https://example.com", "", config);
+        var wget = ProjectHttpDocumentFormatter.BuildWgetSnippet("POST", "https://example.com", "", config);
+        var ps = ProjectHttpDocumentFormatter.BuildPowerShellSnippet("POST", "https://example.com", "", config);
+        var cs = ProjectHttpDocumentFormatter.BuildCSharpHttpClientSnippet("POST", "https://example.com", "", config);
+        foreach (var snippet in new[] { curl, wget, ps, cs })
+        {
+            Assert.DoesNotContain("X-Off", snippet);
+            Assert.Contains("X-On", snippet);
+        }
+        Assert.Contains("\\$(echo bad) \\`cmd\\` \\$token", curl);
+        Assert.Contains("\\$(echo bad) \\`cmd\\` \\$token", wget);
+        Assert.Contains("`$(echo bad) ``cmd`` `$token", ps);
+    }
+
+    [Fact]
+    public void GeneratedSnippets_ShouldResolvePathParametersAndKeepQueryAndFragment()
+    {
+        var config = CreateConfig(BodyModes.None, vm =>
+        {
+            vm.PathParameters.Add(new RequestParameterItemViewModel { Name = "teamId", Value = "group/a b" });
+            vm.QueryParameters.Add(new RequestParameterItemViewModel { Name = "expand", Value = "profile" });
+        });
+
+        var curl = ProjectHttpDocumentFormatter.BuildCurlSnippet(
+            "GET",
+            "/teams/:teamId?existing=1#details",
+            "https://api.example.com",
+            config);
+
+        Assert.Contains("https://api.example.com/teams/group%2Fa%20b?existing=1&expand=profile#details", curl);
+    }
+
+    [Fact]
+    public void BuildCSharpSnippet_ShouldApplyContentHeadersAfterContentCreation()
+    {
+        var config = CreateConfig(BodyModes.FormUrlEncoded, vm =>
+        {
+            vm.FormFields.Add(new RequestParameterItemViewModel { Name = "id", Value = "1" });
+            vm.FormFields.Add(new RequestParameterItemViewModel { Name = "id", Value = "2" });
+            vm.Headers.Add(new RequestParameterItemViewModel { Name = "Content-Type", Value = "application/custom; charset=utf-8" });
+            vm.Headers.Add(new RequestParameterItemViewModel { Name = "Content-Language", Value = "zh-CN" });
+        });
+        var cs = ProjectHttpDocumentFormatter.BuildCSharpHttpClientSnippet("POST", "https://example.com", "", config);
+        Assert.Contains("new(\"id\", \"1\")", cs);
+        Assert.Contains("new(\"id\", \"2\")", cs);
+        Assert.Contains("request.Content.Headers.Remove(\"Content-Type\")", cs);
+        Assert.Contains("application/custom; charset=utf-8", cs);
+        Assert.Contains("request.Content?.Headers.TryAddWithoutValidation(\"Content-Language\", \"zh-CN\")", cs);
+        Assert.True(cs.IndexOf("request.Content =", StringComparison.Ordinal) < cs.IndexOf("Content-Language", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void BuildCurlSnippet_FormDataWithFileField_ShouldUseFormUploadSyntax()
     {
         var configTab = CreateConfig(BodyModes.FormData, vm =>

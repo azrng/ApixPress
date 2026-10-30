@@ -7,6 +7,16 @@ public interface IRequestHistoryService
 {
     Task<IReadOnlyList<RequestHistoryItemDto>> GetHistoryAsync(string projectId, CancellationToken cancellationToken);
 
+    Task<RequestHistoryPageDto> GetHistoryPageAsync(
+        string projectId,
+        DateTime? beforeTimestamp,
+        string? beforeId,
+        CancellationToken cancellationToken);
+
+    /// <summary>读取用于备份的完整历史记录。</summary>
+    Task<IReadOnlyList<RequestHistoryItemDto>> GetAllHistoryAsync(string projectId, CancellationToken cancellationToken);
+
+    /// <summary>将备份中的历史记录导入目标项目。</summary>
     Task<RequestHistoryItemDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken);
 
     Task<IResultModel<RequestHistoryItemDto>> AddAsync(string projectId, RequestSnapshotDto request, ResponseSnapshotDto? response, CancellationToken cancellationToken);

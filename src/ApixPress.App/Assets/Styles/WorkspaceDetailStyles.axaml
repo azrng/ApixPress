@@ -373,6 +373,36 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
   </Style>
 
+  <Style Selector="Border.HistoryPaginationFooter">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+    <Setter Property="Padding" Value="{StaticResource Pad.2}" />
+  </Style>
+
+  <Style Selector="StackPanel.HistoryPaginationFooterContent">
+    <Setter Property="Spacing" Value="{StaticResource Space.1}" />
+  </Style>
+
+  <Style Selector="TextBlock.HistoryPaginationStatus">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.BodySmall}" />
+  </Style>
+
+  <Style Selector="TextBlock.HistoryPaginationScopeHint">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+  </Style>
+
+  <Style Selector="SelectableTextBlock.HistoryPaginationError">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Error.Text}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+  </Style>
+
+  <Style Selector="Button.HistoryLoadMoreButton">
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="MinHeight" Value="30" />
+  </Style>
+
   <Style Selector="StackPanel.HistoryEmptyState">
     <Setter Property="HorizontalAlignment" Value="Center" />
     <Setter Property="VerticalAlignment" Value="Center" />

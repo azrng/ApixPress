@@ -1,4 +1,5 @@
 using System.Text;
+using ApixPress.App.Helpers;
 using ApixPress.App.Models.DTOs;
 
 namespace ApixPress.App.ViewModels;
@@ -8,6 +9,15 @@ public static class ProjectHttpDocumentFormatter
     public static string BuildUrl(
         string requestUrl,
         string currentBaseUrl,
+        IEnumerable<RequestParameterItemViewModel> queryParameters)
+    {
+        return BuildUrl(requestUrl, currentBaseUrl, [], queryParameters);
+    }
+
+    public static string BuildUrl(
+        string requestUrl,
+        string currentBaseUrl,
+        IEnumerable<RequestParameterItemViewModel> pathParameters,
         IEnumerable<RequestParameterItemViewModel> queryParameters)
     {
         var path = requestUrl.Trim();
@@ -31,19 +41,30 @@ public static class ProjectHttpDocumentFormatter
             resolvedUrl = $"{currentBaseUrl.TrimEnd('/')}/{path.TrimStart('/')}";
         }
 
-        var queryString = string.Join("&", queryParameters
-            .Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name))
-            .Select(item =>
-                $"{Uri.EscapeDataString(item.Name.Trim())}={Uri.EscapeDataString((item.Value ?? string.Empty).Trim())}"));
+        resolvedUrl = RequestPathParameterTemplate.ReplaceValues(
+            resolvedUrl,
+            pathParameters.Select(item => (item.Name, (string?)item.Value)));
 
-        if (string.IsNullOrWhiteSpace(queryString))
+        var queryPairs = queryParameters
+            .Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name))
+            .Select(item => $"{Uri.EscapeDataString(item.Name.Trim())}={Uri.EscapeDataString((item.Value ?? string.Empty).Trim())}")
+            .ToList();
+
+        if (queryPairs.Count == 0)
         {
             return resolvedUrl;
         }
 
-        return resolvedUrl.Contains('?', StringComparison.Ordinal)
-            ? $"{resolvedUrl}&{queryString}"
-            : $"{resolvedUrl}?{queryString}";
+        var fragmentStart = resolvedUrl.IndexOf('#');
+        var fragment = fragmentStart >= 0 ? resolvedUrl[fragmentStart..] : string.Empty;
+        var urlWithoutFragment = fragmentStart >= 0 ? resolvedUrl[..fragmentStart] : resolvedUrl;
+        var queryStart = urlWithoutFragment.IndexOf('?');
+        var separator = queryStart < 0
+            ? "?"
+            : queryStart == urlWithoutFragment.Length - 1 || urlWithoutFragment.EndsWith('&')
+                ? string.Empty
+                : "&";
+        return $"{urlWithoutFragment}{separator}{string.Join("&", queryPairs)}{fragment}";
     }
 
     public static string BuildCurlSnippet(
@@ -52,7 +73,7 @@ public static class ProjectHttpDocumentFormatter
         string currentBaseUrl,
         RequestConfigTabViewModel configTab)
     {
-        var resolvedUrl = ResolveSnippetUrl(requestUrl, currentBaseUrl, configTab.QueryParameters);
+        var resolvedUrl = ResolveSnippetUrl(requestUrl, currentBaseUrl, configTab);
 
         var builder = new StringBuilder();
         builder.Append("curl --request ")
@@ -61,7 +82,7 @@ public static class ProjectHttpDocumentFormatter
             .Append(EscapeShellDoubleQuotedValue(resolvedUrl))
             .Append('"');
 
-        foreach (var header in configTab.Headers.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
+        foreach (var header in configTab.Headers.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
         {
             builder.Append(" \\\n  --header \"")
                 .Append(EscapeShellDoubleQuotedValue(header.Name.Trim()))
@@ -124,13 +145,13 @@ public static class ProjectHttpDocumentFormatter
         string currentBaseUrl,
         RequestConfigTabViewModel configTab)
     {
-        var resolvedUrl = ResolveSnippetUrl(requestUrl, currentBaseUrl, configTab.QueryParameters);
+        var resolvedUrl = ResolveSnippetUrl(requestUrl, currentBaseUrl, configTab);
         var builder = new StringBuilder();
         builder.Append("wget --method=")
             .Append(method)
             .Append(" \\\n  -O -");
 
-        foreach (var header in configTab.Headers.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
+        foreach (var header in configTab.Headers.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
         {
             builder.Append(" \\\n  --header=\"")
                 .Append(EscapeShellDoubleQuotedValue(header.Name.Trim()))
@@ -182,8 +203,8 @@ public static class ProjectHttpDocumentFormatter
         string currentBaseUrl,
         RequestConfigTabViewModel configTab)
     {
-        var resolvedUrl = ResolveSnippetUrl(requestUrl, currentBaseUrl, configTab.QueryParameters);
-        var headers = configTab.Headers.Where(item => !string.IsNullOrWhiteSpace(item.Name)).ToList();
+        var resolvedUrl = ResolveSnippetUrl(requestUrl, currentBaseUrl, configTab);
+        var headers = configTab.Headers.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)).ToList();
         var builder = new StringBuilder();
 
         if (headers.Count > 0)
@@ -271,8 +292,10 @@ public static class ProjectHttpDocumentFormatter
         string currentBaseUrl,
         RequestConfigTabViewModel configTab)
     {
-        var resolvedUrl = ResolveSnippetUrl(requestUrl, currentBaseUrl, configTab.QueryParameters);
+        var resolvedUrl = ResolveSnippetUrl(requestUrl, currentBaseUrl, configTab);
         var builder = new StringBuilder();
+        builder.AppendLine("using System.Collections.Generic;");
+        builder.AppendLine("using System.IO;");
         builder.AppendLine("using System.Net.Http;");
         builder.AppendLine("using System.Text;");
         builder.AppendLine();
@@ -283,21 +306,37 @@ public static class ProjectHttpDocumentFormatter
             .Append(EscapeCSharpString(resolvedUrl))
             .AppendLine("\");");
 
-        var contentTypeHeader = configTab.Headers
-            .FirstOrDefault(item => string.Equals(item.Name?.Trim(), "Content-Type", StringComparison.OrdinalIgnoreCase));
+        AppendCSharpContent(builder, configTab);
 
         foreach (var header in configTab.Headers.Where(item =>
-                     !string.IsNullOrWhiteSpace(item.Name)
-                     && !string.Equals(item.Name.Trim(), "Content-Type", StringComparison.OrdinalIgnoreCase)))
+                     item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
         {
-            builder.Append("request.Headers.TryAddWithoutValidation(\"")
+            if (string.Equals(header.Name.Trim(), "Content-Type", StringComparison.OrdinalIgnoreCase))
+            {
+                if (configTab.SelectedBodyMode != BodyModes.FormData && !string.IsNullOrWhiteSpace(header.Value))
+                {
+                    builder.AppendLine("if (request.Content != null)");
+                    builder.AppendLine("{");
+                    builder.AppendLine("    request.Content.Headers.Remove(\"Content-Type\");");
+                    builder.Append("    request.Content.Headers.TryAddWithoutValidation(\"Content-Type\", \"")
+                        .Append(EscapeCSharpString(header.Value.Trim()))
+                        .AppendLine("\");");
+                    builder.AppendLine("}");
+                }
+                continue;
+            }
+
+            builder.Append("if (!request.Headers.TryAddWithoutValidation(\"")
+                .Append(EscapeCSharpString(header.Name.Trim()))
+                .Append("\", \"")
+                .Append(EscapeCSharpString((header.Value ?? string.Empty).Trim()))
+                .AppendLine("\"))");
+            builder.Append("    request.Content?.Headers.TryAddWithoutValidation(\"")
                 .Append(EscapeCSharpString(header.Name.Trim()))
                 .Append("\", \"")
                 .Append(EscapeCSharpString((header.Value ?? string.Empty).Trim()))
                 .AppendLine("\");");
         }
-
-        AppendCSharpContent(builder, configTab, contentTypeHeader?.Value);
 
         builder.AppendLine();
         builder.AppendLine("using var response = await httpClient.SendAsync(request);");
@@ -328,9 +367,9 @@ public static class ProjectHttpDocumentFormatter
     private static string ResolveSnippetUrl(
         string requestUrl,
         string currentBaseUrl,
-        IEnumerable<RequestParameterItemViewModel> queryParameters)
+        RequestConfigTabViewModel configTab)
     {
-        var url = BuildUrl(requestUrl, currentBaseUrl, queryParameters);
+        var url = BuildUrl(requestUrl, currentBaseUrl, configTab.PathParameters, configTab.QueryParameters);
         return url.StartsWith("未配置", StringComparison.OrdinalIgnoreCase)
             ? requestUrl.Trim()
             : url;
@@ -339,16 +378,19 @@ public static class ProjectHttpDocumentFormatter
     private static string EscapeShellDoubleQuotedValue(string value)
     {
         return value.Replace("\\", "\\\\", StringComparison.Ordinal)
-            .Replace("\"", "\\\"", StringComparison.Ordinal);
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("$", "\\$", StringComparison.Ordinal)
+            .Replace("`", "\\`", StringComparison.Ordinal);
     }
 
     private static string EscapePowerShellDoubleQuotedValue(string value)
     {
         return value.Replace("`", "``", StringComparison.Ordinal)
-            .Replace("\"", "`\"", StringComparison.Ordinal);
+            .Replace("\"", "`\"", StringComparison.Ordinal)
+            .Replace("$", "`$", StringComparison.Ordinal);
     }
 
-    private static void AppendCSharpContent(StringBuilder builder, RequestConfigTabViewModel configTab, string? contentTypeHeaderValue)
+    private static void AppendCSharpContent(StringBuilder builder, RequestConfigTabViewModel configTab)
     {
         // Binary 模式：请求体是文件流而非文本（路径经 EscapeCSharpString 翻倍反斜杠，须放普通字符串而非 verbatim）
         if (configTab.SelectedBodyMode == BodyModes.Binary && !string.IsNullOrWhiteSpace(configTab.RequestBody))
@@ -356,20 +398,25 @@ public static class ProjectHttpDocumentFormatter
             builder.Append("request.Content = new StreamContent(File.OpenRead(\"")
                 .Append(EscapeCSharpString(configTab.RequestBody.Trim()))
                 .AppendLine("\"));");
+            builder.AppendLine("request.Content.Headers.TryAddWithoutValidation(\"Content-Type\", \"application/octet-stream\");");
             return;
         }
 
         if (configTab.SelectedBodyMode is BodyModes.FormUrlEncoded)
         {
-            builder.AppendLine("request.Content = new FormUrlEncodedContent(new Dictionary<string, string>");
-            builder.AppendLine("{");
-            foreach (var field in configTab.FormFields.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
+            if (!configTab.FormFields.Any(item => item.IsEnabled && item.FieldType != FormFieldTypes.File && !string.IsNullOrWhiteSpace(item.Name)))
             {
-                builder.Append("    [\"")
+                return;
+            }
+            builder.AppendLine("request.Content = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>");
+            builder.AppendLine("{");
+            foreach (var field in configTab.FormFields.Where(item => item.IsEnabled && item.FieldType != FormFieldTypes.File && !string.IsNullOrWhiteSpace(item.Name)))
+            {
+                builder.Append("    new(\"")
                     .Append(EscapeCSharpString(field.Name.Trim()))
-                    .Append("\"] = \"")
+                    .Append("\", \"")
                     .Append(EscapeCSharpString((field.Value ?? string.Empty).Trim()))
-                    .AppendLine("\",");
+                    .AppendLine("\"),");
             }
 
             builder.AppendLine("});");
@@ -378,6 +425,10 @@ public static class ProjectHttpDocumentFormatter
 
         if (configTab.SelectedBodyMode is BodyModes.FormData)
         {
+            if (!configTab.FormFields.Any(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
+            {
+                return;
+            }
             builder.AppendLine("var formData = new MultipartFormDataContent();");
             foreach (var field in configTab.FormFields.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
             {
@@ -415,9 +466,12 @@ public static class ProjectHttpDocumentFormatter
             return;
         }
 
-        var mediaType = string.IsNullOrWhiteSpace(contentTypeHeaderValue)
-            ? "application/json"
-            : contentTypeHeaderValue.Trim();
+        var mediaType = configTab.SelectedBodyMode switch
+        {
+            BodyModes.RawJson => "application/json",
+            BodyModes.RawXml => "application/xml",
+            _ => "text/plain"
+        };
 
         builder.Append("request.Content = new StringContent(\"")
             .Append(EscapeCSharpString(bodyContent))

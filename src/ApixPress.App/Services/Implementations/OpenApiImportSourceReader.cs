@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Headers;
-using System.Text;
 
 namespace ApixPress.App.Services.Implementations;
 
@@ -80,13 +79,27 @@ internal sealed class OpenApiImportSourceReader
             throw new InvalidOperationException("Swagger 文档超过 20MB 限制。");
         }
 
-        var document = await response.Content.ReadAsStringAsync(timeoutCts.Token);
-        if (Encoding.UTF8.GetByteCount(document) > MaxSwaggerFileSizeBytes)
+        return await ReadLimitedDocumentAsync(response.Content, timeoutCts.Token);
+    }
+
+    internal static async Task<string> ReadLimitedDocumentAsync(HttpContent content, CancellationToken cancellationToken)
+    {
+        await using var source = await content.ReadAsStreamAsync(cancellationToken);
+        using var buffer = new MemoryStream();
+        var chunk = new byte[81920];
+        int count;
+        while ((count = await source.ReadAsync(chunk, cancellationToken)) > 0)
         {
-            throw new InvalidOperationException("Swagger 文档超过 20MB 限制。");
+            if (buffer.Length + count > MaxSwaggerFileSizeBytes)
+            {
+                throw new InvalidOperationException("Swagger 文档超过 20MB 限制。");
+            }
+            await buffer.WriteAsync(chunk.AsMemory(0, count), cancellationToken);
         }
 
-        return document;
+        using var boundedContent = new ByteArrayContent(buffer.ToArray());
+        boundedContent.Headers.ContentType = content.Headers.ContentType;
+        return await boundedContent.ReadAsStringAsync(cancellationToken);
     }
 
     private static HttpClient CreateSwaggerImportHttpClient()

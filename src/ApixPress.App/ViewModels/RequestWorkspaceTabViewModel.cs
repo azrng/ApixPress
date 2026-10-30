@@ -30,6 +30,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         ResponseSection = new ResponseSectionViewModel();
 
         ConfigTab.PropertyChanged += OnConfigTabPropertyChanged;
+        ConfigTab.PathParametersEdited += OnPathParametersEdited;
         UpdateTabHeader();
     }
 
@@ -402,6 +403,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
     protected override void DisposeManaged()
     {
         ConfigTab.PropertyChanged -= OnConfigTabPropertyChanged;
+        ConfigTab.PathParametersEdited -= OnPathParametersEdited;
         // 标签独占的子 VM 同步释放：ConfigTab/ResponseSection 各自的 CTS 与防抖资源不再悬挂
         ConfigTab.Dispose();
         ResponseSection.Dispose();
@@ -419,6 +421,18 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         {
             RequestTabHeaderUpdate();
         }
+    }
+
+    private void OnPathParametersEdited(object? sender, EventArgs e)
+    {
+        if (IsDisposed || _bulkStateMutationDepth > 0)
+        {
+            return;
+        }
+
+        UrlValidationMessage = string.Empty;
+        IsCloseDiscardPending = false;
+        MarkDirtyFromUserEdit();
     }
 
     partial void OnEntryTypeChanged(string value)
@@ -457,6 +471,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
 
     partial void OnRequestUrlChanged(string value)
     {
+        ConfigTab.SynchronizePathParametersFromUrl(value);
         UrlValidationMessage = string.Empty;
         IsCloseDiscardPending = false;
         RequestTabHeaderUpdate();
@@ -499,6 +514,7 @@ public partial class RequestWorkspaceTabViewModel : ViewModelBase
         SelectedMethod = string.IsNullOrWhiteSpace(snapshot.Method) ? "GET" : snapshot.Method;
         RequestUrl = snapshot.Url;
         ConfigTab.ApplySnapshot(snapshot);
+        ConfigTab.SynchronizePathParametersFromUrl(snapshot.Url);
     }
 
     private void RunWithBulkStateMutation(Action action)

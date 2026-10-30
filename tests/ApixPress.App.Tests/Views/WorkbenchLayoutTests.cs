@@ -631,18 +631,23 @@ public sealed class WorkbenchLayoutTests
     }
 
     [Fact]
-    public void UseCasesDrawer_CaseCard_ContextMenu_ShouldOfferCardActions()
+    public void UseCasesDrawer_CaseCard_ShouldOfferInlineLoadAndOverflowActions()
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "UseCasesDrawerView.axaml"));
         var caseCard = document.Descendants()
             .Single(element => element.Name.LocalName == "Border" && HasClass(element, "CaseCard"));
 
-        // 右键四项与行内按钮同一批命令（注入式）
+        var buttons = caseCard.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .ToArray();
+        Assert.Contains(buttons, item => item.Attribute("Content")?.Value == "加载"
+            && item.Attribute("Command")?.Value == "{Binding LoadCommand}");
+        Assert.Contains(buttons, item => item.Attribute("Content")?.Value == "更多"
+            && item.Elements().Any(child => child.Name.LocalName == "Button.Flyout"));
+
         var menuItems = caseCard.Descendants()
             .Where(element => element.Name.LocalName == "MenuItem")
             .ToArray();
-        Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "加载"
-            && item.Attribute("Command")?.Value == "{Binding LoadCommand}");
         Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "改名"
             && item.Attribute("Command")?.Value == "{Binding RenameCommand}");
         Assert.Contains(menuItems, item => item.Attribute("Header")?.Value == "复制"
@@ -886,16 +891,62 @@ public sealed class WorkbenchLayoutTests
     }
 
     [Theory]
-    [InlineData("HttpInterfaceWorkbenchView.axaml")]
-    [InlineData("QuickRequestWorkbenchView.axaml")]
-    public void RequestConfigurationTabs_ShouldExposeParameterCountBadges(string fileName)
+    [InlineData("HttpInterfaceWorkbenchView.axaml", "RequestParameterCountText")]
+    [InlineData("QuickRequestWorkbenchView.axaml", "QueryParameterCountText")]
+    public void RequestConfigurationTabs_ShouldExposeParameterCountBadges(string fileName, string parameterCountBinding)
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
 
+        // 接口工作台 Params 页签合并 Path+Query 计数；快捷请求仅 Query 计数
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Badge"
-            && (element.Attribute("Header")?.Value ?? string.Empty).Contains("QueryParameterCountText"));
+            && (element.Attribute("Header")?.Value ?? string.Empty).Contains(parameterCountBinding));
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Badge"
             && (element.Attribute("Header")?.Value ?? string.Empty).Contains("HeaderCountText"));
+    }
+
+    [Fact]
+    public void HttpInterfaceParamsTab_ShouldExposePathParameterEditingAndValidation()
+    {
+        var document = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "HttpInterfaceParamsTabView.axaml"));
+        var markup = document.ToString(SaveOptions.DisableFormatting);
+
+        Assert.Contains("ConfigTab.PathParameters", markup);
+        Assert.Contains("Text=\"{Binding Value, Mode=TwoWay}\"", markup);
+        Assert.Contains("IsRequiredPathValueMissing", markup);
+        Assert.Contains("PathParameterValidationMessage", markup);
+        Assert.Contains("ValidationFocusBehavior.HasError", markup);
+    }
+
+    [Fact]
+    public void RequestHistorySidebar_ShouldOfferPagedSearchAndVirtualizedRows()
+    {
+        var document = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "ProjectWorkspaceSidebarView.axaml"));
+        var markup = document.ToString(SaveOptions.DisableFormatting);
+
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "VirtualizingStackPanel"
+            && element.Ancestors().Any(ancestor => ancestor.Name.LocalName == "ListBox"));
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "TextBlock"
+            && (element.Attribute("Text")?.Value ?? string.Empty).Contains("HistorySearchScopeHint"));
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "TextBlock"
+            && (element.Attribute("Text")?.Value ?? string.Empty).Contains("HistorySearchEmptyDescription"));
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Button"
+            && (element.Attribute("Command")?.Value ?? string.Empty).Contains("LoadMoreHistoryCommand"));
+        Assert.Contains("HistoryLoadMoreErrorText", markup);
+    }
+
+    [Fact]
+    public void HttpInterfaceBodyTab_ShouldWrapBodyModesAndUploadControls()
+    {
+        var document = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "HttpInterfaceBodyTabView.axaml"));
+
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "WrapPanel"
+            && element.Ancestors().Any(ancestor => ancestor.Name.LocalName == "SelectionList"));
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "WrapPanel"
+            && element.Attribute("ItemSpacing") is not null
+            && element.Attribute("LineSpacing") is not null);
     }
 
     [Fact]
@@ -917,8 +968,9 @@ public sealed class WorkbenchLayoutTests
         var casesDrawer = XDocument.Load(FindSourceFile(
             "src", "ApixPress.App", "Views", "Controls", "UseCasesDrawerView.axaml"));
         Assert.Contains(casesDrawer.Descendants(), element =>
-            (element.Attribute("Command")?.Value ?? string.Empty).Contains("RequestDeleteCaseCommand", StringComparison.Ordinal)
-            && (element.Attribute("Content")?.Value ?? string.Empty) == "删除");
+            element.Name.LocalName == "MenuItem"
+            && (element.Attribute("Command")?.Value ?? string.Empty) == "{Binding DeleteCommand}"
+            && (element.Attribute("Header")?.Value ?? string.Empty) == "删除");
 
         var history = XDocument.Load(FindSourceFile(
             "src", "ApixPress.App", "Views", "Controls", "RequestHistoryDetailView.axaml"));

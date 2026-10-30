@@ -81,6 +81,10 @@
           <div class="h-line2"><span class="status-mini err">超时</span><span>09-11 22:17</span><span style="margin-left:auto;">30 000 ms</span></div>
         </div>
       </div>
+      <div class="history-pagination" id="historyPagination">
+        <span id="historyLoadStatus">已加载最近 50 条</span>
+        <button class="btn btn-ghost" id="loadOlderHistory">加载更早历史</button>
+      </div>
       <div class="history-state" id="historyEmpty" hidden>
         <span class="history-state-icon"><i class="ri-history-line"></i></span>
         <strong>还没有请求历史</strong>
@@ -90,7 +94,8 @@
       <div class="history-state history-state-search" id="historyNoMatch" hidden>
         <span class="history-state-icon"><i class="ri-search-line"></i></span>
         <strong>没有匹配的请求</strong>
-        <span>换个方法、URL 或状态码试试。</span>
+        <span id="historyNoMatchHint">当前已加载的历史中没有匹配请求。</span>
+        <button class="btn btn-ghost" id="loadOlderFromSearch">加载更早记录继续搜索</button>
         <button class="btn btn-ghost" id="clearHistorySearch">清除搜索</button>
       </div>
       <!-- 加载失败态：与空态文案区分，错误原因可选中复制 + 一键重试（默认隐藏，演示时移除 display:none） -->
@@ -228,7 +233,14 @@
     document.getElementById("historyNoMatch").hidden = !hasItems || visibleCount > 0;
     historySearchBox.hidden = !hasItems;
     clearBtn.hidden = !hasItems;
+    document.getElementById("historyPagination").hidden = !hasItems;
     document.getElementById("historyList").style.display = visibleCount > 0 ? "flex" : "none";
+    document.getElementById("historyLoadStatus").textContent = "已加载最近 " + loadedHistoryCount + " 条";
+    document.getElementById("loadOlderHistory").hidden = !hasOlderHistory;
+    document.getElementById("loadOlderFromSearch").hidden = !hasOlderHistory;
+    document.getElementById("historyNoMatchHint").textContent = hasOlderHistory
+      ? "当前已加载的历史中没有匹配请求，还可以继续搜索更早记录。"
+      : "已搜索全部保留的历史记录，换个方法、URL 或状态码试试。";
   }
 
   // 历史行悬停操作：重发 / 删除
@@ -253,6 +265,22 @@
   var historySearch = document.getElementById("historySearch");
   var historySearchBox = document.getElementById("historySearchBox");
   var clearHistorySearch = document.getElementById("clearHistorySearch");
+  var loadedHistoryCount = 50;
+  var hasOlderHistory = true;
+  function loadOlderHistoryDemo() {
+    if (!hasOlderHistory) return;
+    var olderRows = [
+      '<div class="h-item" data-context-menu="history"><div class="h-actions"><button class="resend" title="重新发送">↻</button><button class="del" title="删除">🗑</button></div><div class="h-line1"><span class="badge get">GET</span><span class="h-url">/api/Group/{groupId}/Students</span></div><div class="h-line2"><span class="status-mini ok">200</span><span>09-10 16:21</span><span style="margin-left:auto;">76 ms</span></div></div>',
+      '<div class="h-item" data-context-menu="history"><div class="h-actions"><button class="resend" title="重新发送">↻</button><button class="del" title="删除">🗑</button></div><div class="h-line1"><span class="badge post">POST</span><span class="h-url">/api/Group/Create</span></div><div class="h-line2"><span class="status-mini ok">201</span><span>09-09 13:02</span><span style="margin-left:auto;">121 ms</span></div></div>'
+    ].join("");
+    document.getElementById("historyList").insertAdjacentHTML("beforeend", '<div class="h-group-cap"><span>更早</span><span>2</span></div>' + olderRows);
+    loadedHistoryCount += 50;
+    hasOlderHistory = false;
+    syncHistoryEmpty();
+    protoToast("已加载更早的 50 条请求历史（演示）");
+  }
+  document.getElementById("loadOlderHistory").addEventListener("click", loadOlderHistoryDemo);
+  document.getElementById("loadOlderFromSearch").addEventListener("click", loadOlderHistoryDemo);
   clearBtn.addEventListener("click", function () {
     if (!clearArmed) {
       clearArmed = true;

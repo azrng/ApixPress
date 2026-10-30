@@ -112,10 +112,21 @@ public sealed class RequestHistoryRetentionTests
 
         public int DeletedCount { get; set; }
 
+        public Task<IReadOnlyList<RequestHistoryEntity>> GetAllAsync(string projectId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<RequestHistoryEntity>>([]);
+
         public Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryAsync(string projectId, int limit, CancellationToken cancellationToken)
         {
             return Task.FromResult<IReadOnlyList<RequestHistoryEntity>>([]);
         }
+
+        public Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryPageAsync(
+            string projectId,
+            DateTime? beforeTimestamp,
+            string? beforeId,
+            int limit,
+            CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<RequestHistoryEntity>>([]);
 
         public Task<RequestHistoryEntity?> GetByIdAsync(string projectId, string id, CancellationToken cancellationToken)
         {

@@ -12,6 +12,8 @@ namespace ApixPress.App.Services.Implementations;
 
 public sealed class RequestHistoryService : IRequestHistoryService, ITransientDependency
 {
+    private const int HistoryPageSize = 50;
+
     private readonly IRequestHistoryRepository _requestHistoryRepository;
     private readonly IJsonSerializer _serializer;
 
@@ -30,6 +32,33 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
             // 50 行完整请求快照 JSON 的逐行反序列化是 CPU 密集操作：不能落回 UI 线程 continuation
             return await Task.Run(() => entities.Select(ToSummaryDto).ToList(), cancellationToken);
         });
+    }
+
+    public Task<RequestHistoryPageDto> GetHistoryPageAsync(
+        string projectId,
+        DateTime? beforeTimestamp,
+        string? beforeId,
+        CancellationToken cancellationToken)
+    {
+        return PerfLog.MeasureAsync<RequestHistoryPageDto>("历史·分页加载", async () =>
+        {
+            var entities = await _requestHistoryRepository.GetHistoryPageAsync(
+                projectId,
+                beforeTimestamp,
+                beforeId,
+                HistoryPageSize + 1,
+                cancellationToken);
+            var hasMore = entities.Count > HistoryPageSize;
+            var pageEntities = hasMore ? entities.Take(HistoryPageSize).ToList() : entities;
+            var items = await Task.Run(() => pageEntities.Select(ToSummaryDto).ToList(), cancellationToken);
+            return new RequestHistoryPageDto(items, hasMore);
+        });
+    }
+
+    public async Task<IReadOnlyList<RequestHistoryItemDto>> GetAllHistoryAsync(string projectId, CancellationToken cancellationToken)
+    {
+        var entities = await _requestHistoryRepository.GetAllAsync(projectId, cancellationToken);
+        return await Task.Run(() => entities.Select(ToDetailDto).ToList(), cancellationToken);
     }
 
     public Task<RequestHistoryItemDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
@@ -113,7 +142,9 @@ public sealed class RequestHistoryService : IRequestHistoryService, ITransientDe
     private RequestHistoryItemDto ToDetailDto(RequestHistoryEntity entity)
     {
         var requestSnapshot = _serializer.ToObject<RequestSnapshotDto>(entity.RequestSnapshotJson) ?? new RequestSnapshotDto();
-        var responseSnapshot = _serializer.ToObject<ResponseSnapshotDto>(entity.ResponseSnapshotJson);
+        var responseSnapshot = string.IsNullOrWhiteSpace(entity.ResponseSnapshotJson) || entity.ResponseSnapshotJson.Trim() == "{}"
+            ? null
+            : _serializer.ToObject<ResponseSnapshotDto>(entity.ResponseSnapshotJson);
         return CreateDetailDto(entity.Id, entity.Timestamp, requestSnapshot, responseSnapshot);
     }
 

@@ -59,6 +59,39 @@ public sealed class RequestHistoryServiceTests
         Assert.True(repository.ClearAllCalled);
     }
 
+    [Fact]
+    public async Task GetHistoryPageAsync_ShouldReturnFiftyItemsAndAdvanceWithTimestampAndIdCursor()
+    {
+        var timestamp = new DateTime(2026, 4, 24, 10, 0, 0, DateTimeKind.Utc);
+        var repository = new StubRequestHistoryRepository
+        {
+            HistoryItems = Enumerable.Range(0, 52)
+                .Select(index => new RequestHistoryEntity
+                {
+                    Id = $"history-{index:D3}",
+                    ProjectId = "project-1",
+                    Timestamp = timestamp.AddSeconds(-index),
+                    RequestSnapshotJson = "{}",
+                    RequestName = $"请求 {index}"
+                })
+                .ToList()
+        };
+        var service = new RequestHistoryService(repository, CreateSerializer());
+
+        var firstPage = await service.GetHistoryPageAsync("project-1", null, null, CancellationToken.None);
+        var secondPage = await service.GetHistoryPageAsync(
+            "project-1",
+            firstPage.Items[^1].Timestamp,
+            firstPage.Items[^1].Id,
+            CancellationToken.None);
+
+        Assert.Equal(50, firstPage.Items.Count);
+        Assert.True(firstPage.HasMore);
+        Assert.Equal("history-000", firstPage.Items[0].Id);
+        Assert.Equal(["history-050", "history-051"], secondPage.Items.Select(item => item.Id));
+        Assert.False(secondPage.HasMore);
+    }
+
     private static SysTextJsonSerializer CreateSerializer()
     {
         return new SysTextJsonSerializer(Options.Create(new DefaultJsonSerializerOptions()));
@@ -69,10 +102,37 @@ public sealed class RequestHistoryServiceTests
         public IReadOnlyList<RequestHistoryEntity> HistoryItems { get; init; } = [];
 
         public bool ClearAllCalled { get; private set; }
+        public int LastHistoryPageLimit { get; private set; }
+
+        public Task<IReadOnlyList<RequestHistoryEntity>> GetAllAsync(string projectId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<RequestHistoryEntity>>([]);
 
         public Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryAsync(string projectId, int limit, CancellationToken cancellationToken)
         {
             return Task.FromResult(HistoryItems);
+        }
+
+        public Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryPageAsync(
+            string projectId,
+            DateTime? beforeTimestamp,
+            string? beforeId,
+            int limit,
+            CancellationToken cancellationToken)
+        {
+            LastHistoryPageLimit = limit;
+            var query = HistoryItems.AsEnumerable();
+            if (beforeTimestamp is not null)
+            {
+                query = query.Where(item => item.Timestamp < beforeTimestamp.Value
+                    || (item.Timestamp == beforeTimestamp.Value
+                        && string.CompareOrdinal(item.Id, beforeId) < 0));
+            }
+
+            return Task.FromResult<IReadOnlyList<RequestHistoryEntity>>(query
+                .OrderByDescending(item => item.Timestamp)
+                .ThenByDescending(item => item.Id, StringComparer.Ordinal)
+                .Take(limit)
+                .ToList());
         }
 
         public Task<RequestHistoryEntity?> GetByIdAsync(string projectId, string id, CancellationToken cancellationToken)

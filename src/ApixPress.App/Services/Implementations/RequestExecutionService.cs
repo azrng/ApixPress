@@ -198,15 +198,19 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         }
 
         // FormData 允许 BodyContent 为空但 FormFields 携带有效字段（手填快照/旧数据修复场景），不静默丢请求体
-        var hasSendableFormFields = request.BodyMode == BodyModes.FormData && request.FormFields
-            .Any(field => field.IsEnabled && !string.IsNullOrWhiteSpace(field.Name));
+        var hasSendableFormFields = request.BodyMode is BodyModes.FormData or BodyModes.FormUrlEncoded
+            && request.FormFields.Any(field => field.IsEnabled && !string.IsNullOrWhiteSpace(field.Name)
+                && (request.BodyMode != BodyModes.FormUrlEncoded || field.FieldType != FormFieldTypes.File));
         if (string.IsNullOrWhiteSpace(request.BodyContent) && !hasSendableFormFields)
         {
             return null;
         }
 
-        var bodyContent = ReplaceVariables(request.BodyContent, activeVariables);
-        if (request.BodyMode != BodyModes.FormData && request.BodyMode != BodyModes.Binary)
+        var bodyContent = request.BodyMode == BodyModes.FormUrlEncoded
+            ? request.BodyContent
+            : ReplaceVariables(request.BodyContent, activeVariables);
+        if (request.BodyMode != BodyModes.FormData && request.BodyMode != BodyModes.Binary
+            && request.BodyMode != BodyModes.FormUrlEncoded)
         {
             EnsureTextRequestBodySize(bodyContent);
         }
@@ -216,12 +220,33 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             BodyModes.RawJson => new StringContent(bodyContent, Encoding.UTF8, "application/json"),
             BodyModes.RawXml => new StringContent(bodyContent, Encoding.UTF8, "application/xml"),
             BodyModes.RawText => new StringContent(bodyContent, Encoding.UTF8, "text/plain"),
-            BodyModes.FormUrlEncoded => new FormUrlEncodedContent(
-                ParseKeyValuePairs(bodyContent)),
+            BodyModes.FormUrlEncoded => BuildFormUrlEncodedContent(request, bodyContent, activeVariables),
             BodyModes.FormData => BuildFormDataContent(request, bodyContent, activeVariables),
             BodyModes.Binary => BuildBinaryFileContent(bodyContent),
             _ => new StringContent(bodyContent, Encoding.UTF8, "text/plain")
         };
+    }
+
+    /// <summary>组装 URL 编码表单，按字段替换环境变量后再编码。</summary>
+    private static HttpContent BuildFormUrlEncodedContent(
+        RequestSnapshotDto request, string encodedBodyContent, IReadOnlyDictionary<string, string> activeVariables)
+    {
+        var resolved = ResolveFormUrlEncodedPairs(request, encodedBodyContent, activeVariables);
+        EnsureTextRequestBodySize(string.Join("&", resolved.Select(field =>
+            $"{Uri.EscapeDataString(field.Key)}={Uri.EscapeDataString(field.Value)}")));
+        return new FormUrlEncodedContent(resolved);
+    }
+
+    private static List<KeyValuePair<string, string>> ResolveFormUrlEncodedPairs(
+        RequestSnapshotDto request, string encodedBodyContent, IReadOnlyDictionary<string, string> activeVariables)
+    {
+        var fields = request.FormFields.Count > 0
+            ? request.FormFields.Where(field => field.IsEnabled && field.FieldType != FormFieldTypes.File
+                && !string.IsNullOrWhiteSpace(field.Name))
+                .Select(field => new KeyValuePair<string, string>(field.Name, field.Value))
+            : ParseKeyValuePairs(encodedBodyContent);
+        return fields.Select(field => new KeyValuePair<string, string>(
+            ReplaceVariables(field.Key, activeVariables), ReplaceVariables(field.Value, activeVariables))).ToList();
     }
 
     /// <summary>
@@ -341,6 +366,13 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
     /// </summary>
     private static string ResolveActualBodyText(RequestSnapshotDto request, IReadOnlyDictionary<string, string> activeVariables)
     {
+        if (request.BodyMode == BodyModes.FormUrlEncoded)
+        {
+            var fields = ResolveFormUrlEncodedPairs(request, request.BodyContent, activeVariables);
+            return LimitActualRequestBodyText(string.Join("&", fields.Select(field =>
+                $"{System.Net.WebUtility.UrlEncode(field.Key)}={System.Net.WebUtility.UrlEncode(field.Value)}")));
+        }
+
         if (request.BodyMode == BodyModes.FormData && request.FormFields.Count > 0)
         {
             var lines = request.FormFields
@@ -386,42 +418,6 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         }
     }
 
-    /// <summary>
-    /// 替换 ":name" 形式的路径参数。仅当令牌后跟串尾或路径/查询边界符时才替换，
-    /// 避免 ":id" 误伤 ":identity" 这类前缀相同的参数名。
-    /// </summary>
-    private static string ReplaceColonPathParameter(string url, string name, string value)
-    {
-        var token = $":{name}";
-        var builder = new System.Text.StringBuilder(url.Length + value.Length);
-        var searchIndex = 0;
-        while (true)
-        {
-            var found = url.IndexOf(token, searchIndex, StringComparison.OrdinalIgnoreCase);
-            if (found < 0)
-            {
-                builder.Append(url, searchIndex, url.Length - searchIndex);
-                break;
-            }
-
-            var nextIndex = found + token.Length;
-            var isBoundary = nextIndex >= url.Length || url[nextIndex] is '/' or '?' or '&' or '#';
-            builder.Append(url, searchIndex, found - searchIndex);
-            if (isBoundary)
-            {
-                builder.Append(value);
-            }
-            else
-            {
-                builder.Append(url, found, nextIndex - found);
-            }
-
-            searchIndex = nextIndex;
-        }
-
-        return builder.ToString();
-    }
-
     public static string BuildUrl(RequestSnapshotDto request, string baseUrl, IReadOnlyDictionary<string, string> variables)
     {
         var effectiveVariables = new Dictionary<string, string>(variables, StringComparer.OrdinalIgnoreCase);
@@ -431,13 +427,11 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
         }
 
         var url = ReplaceVariables(request.Url, effectiveVariables);
-
-        foreach (var pathParameter in request.PathParameters.Where(item => !string.IsNullOrWhiteSpace(item.Name)))
-        {
-            var value = Uri.EscapeDataString(ReplaceVariables(pathParameter.Value, effectiveVariables));
-            url = url.Replace($"{{{pathParameter.Name}}}", value, StringComparison.OrdinalIgnoreCase);
-            url = ReplaceColonPathParameter(url, pathParameter.Name, value);
-        }
+        url = RequestPathParameterTemplate.ReplaceValues(
+            url,
+            request.PathParameters.Select(item => (item.Name, (string?)item.Value)),
+            value => ReplaceVariables(value, effectiveVariables),
+            requireValues: true);
 
         if (!Uri.TryCreate(url, UriKind.Absolute, out _))
         {
@@ -449,15 +443,27 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             url = $"{baseUrl.TrimEnd('/')}/{url.TrimStart('/')}";
         }
 
-        var builder = new UriBuilder(url);
-        var queryItems = ParseQuery(builder.Query);
-        foreach (var queryParameter in request.QueryParameters.Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)))
+        var explicitParameters = request.QueryParameters
+            .Where(item => item.IsEnabled && !string.IsNullOrWhiteSpace(item.Name)).ToList();
+        if (explicitParameters.Count == 0)
         {
-            queryItems[queryParameter.Name] = ReplaceVariables(queryParameter.Value, effectiveVariables);
+            return url;
         }
 
-        builder.Query = string.Join("&", queryItems.Select(item => $"{Uri.EscapeDataString(item.Key)}={Uri.EscapeDataString(item.Value)}"));
-        return builder.Uri.ToString();
+        var appendedQuery = string.Join("&", explicitParameters.Select(item =>
+            $"{Uri.EscapeDataString(item.Name)}={Uri.EscapeDataString(ReplaceVariables(item.Value, effectiveVariables))}"));
+        var fragmentStart = url.IndexOf('#');
+        var fragment = fragmentStart >= 0 ? url[fragmentStart..] : string.Empty;
+        var urlWithoutFragment = fragmentStart >= 0 ? url[..fragmentStart] : url;
+        var queryStart = urlWithoutFragment.IndexOf('?');
+        if (queryStart < 0)
+        {
+            return $"{urlWithoutFragment}?{appendedQuery}{fragment}";
+        }
+
+        var existingQuery = urlWithoutFragment[(queryStart + 1)..];
+        var separator = string.IsNullOrEmpty(existingQuery) || existingQuery.EndsWith('&') ? string.Empty : "&";
+        return $"{urlWithoutFragment}{separator}{appendedQuery}{fragment}";
     }
 
     public static string ReplaceVariables(string input, IReadOnlyDictionary<string, string> variables)
@@ -472,26 +478,6 @@ public sealed partial class RequestExecutionService : IRequestExecutionService, 
             var key = match.Groups[1].Value;
             return variables.TryGetValue(key, out var value) ? value : match.Value;
         });
-    }
-
-    private static Dictionary<string, string> ParseQuery(string query)
-    {
-        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var cleanQuery = query.TrimStart('?');
-        if (string.IsNullOrWhiteSpace(cleanQuery))
-        {
-            return result;
-        }
-
-        foreach (var pair in cleanQuery.Split('&', StringSplitOptions.RemoveEmptyEntries))
-        {
-            var parts = pair.Split('=', 2);
-            var key = Uri.UnescapeDataString(parts[0]);
-            var value = parts.Length > 1 ? Uri.UnescapeDataString(parts[1]) : string.Empty;
-            result[key] = value;
-        }
-
-        return result;
     }
 
     internal static async Task<ResponseContentPreviewResult> ReadResponseContentPreviewAsync(HttpContent content, CancellationToken cancellationToken)

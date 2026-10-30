@@ -15,6 +15,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
 {
     private readonly IFilePickerService? _filePickerService;
     private readonly List<RequestParameterItemViewModel> _subscribedQueryParameterItems = [];
+    private readonly List<RequestParameterItemViewModel> _subscribedPathParameterItems = [];
     private bool _isUpdatingQueryParametersSelectionState;
     private bool? _queryParametersSelectionState;
     // 空状态时也要完整容纳“区域标题 + 表头 + 空提示”，过小会触发 Avalonia Grid 按比例压缩内容，导致副标题被裁剪。
@@ -68,6 +69,9 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     [ObservableProperty]
     private string binaryFileSizeText = string.Empty;
 
+    [ObservableProperty]
+    private string pathParameterValidationMessage = string.Empty;
+
 
     public RequestConfigTabViewModel() : this(null) { }
 
@@ -92,6 +96,7 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         }
 
         QueryParameters.CollectionChanged += OnQueryParametersCollectionChanged;
+        PathParameters.CollectionChanged += OnPathParametersCollectionChanged;
         Headers.CollectionChanged += OnHeadersCollectionChanged;
         FormFields.CollectionChanged += OnFormFieldsCollectionChanged;
         SelectedBodyModeOption = BodyModeOptions[0];
@@ -110,6 +115,14 @@ public partial class RequestConfigTabViewModel : ViewModelBase
     public bool HasQueryParameters => QueryParameters.Count > 0;
 
     public string QueryParameterCountText => QueryParameters.Count.ToString();
+
+    public bool HasPathParameters => PathParameters.Count > 0;
+
+    public string PathParameterCountText => PathParameters.Count.ToString();
+
+    public bool ShowPathParametersEmptyState => !HasPathParameters;
+
+    public bool HasPathParameterValidationMessage => !string.IsNullOrWhiteSpace(PathParameterValidationMessage);
 
     public bool ShowQueryParametersEmptyState => !HasQueryParameters;
 
@@ -141,13 +154,58 @@ public partial class RequestConfigTabViewModel : ViewModelBase
 
     public bool HasBodyContent => SelectedBodyMode != BodyModes.None;
 
+    // 页签顺序对齐原型 02：0=Params（路径参数）、1=Query、2=Body、3=Headers
     public double ConfigPanelMaxHeight => SelectedTabIndex switch
     {
-        0 when QueryParameters.Count == 0 => CompactConfigPanelMaxHeight,
-        1 when !HasExpandableBodyConfig => CompactConfigPanelMaxHeight,
-        2 when Headers.Count == 0 => CompactConfigPanelMaxHeight,
+        0 when PathParameters.Count == 0 => CompactConfigPanelMaxHeight,
+        1 when QueryParameters.Count == 0 => CompactConfigPanelMaxHeight,
+        2 when !HasExpandableBodyConfig => CompactConfigPanelMaxHeight,
+        3 when Headers.Count == 0 => CompactConfigPanelMaxHeight,
         _ => ExpandedConfigPanelMaxHeight
     };
+
+    /// <summary>路径表格只由 URL 模板驱动；同名行保留用户已填的值。</summary>
+    public void SynchronizePathParametersFromUrl(string? url)
+    {
+        var existing = PathParameters
+            .Where(item => !string.IsNullOrWhiteSpace(item.Name))
+            .GroupBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+        var names = RequestPathParameterTemplate.ExtractNames(url);
+        if (PathParameters.Count == names.Count
+            && PathParameters.Select(item => item.Name).SequenceEqual(names, StringComparer.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        PathParameters.ReplaceWith(names.Select(name => existing.TryGetValue(name, out var item)
+            ? item
+            : new RequestParameterItemViewModel { Name = name }));
+        PathParameterValidationMessage = string.Empty;
+    }
+
+    /// <summary>发送前定位第一个空路径参数并切回 Params 页；返回缺失参数名供状态栏提示。</summary>
+    public string? ValidateRequiredPathParameters()
+    {
+        foreach (var item in PathParameters)
+        {
+            item.IsRequiredPathValueMissing = false;
+        }
+
+        var missing = PathParameters.FirstOrDefault(item => string.IsNullOrWhiteSpace(item.Value));
+        if (missing is null)
+        {
+            PathParameterValidationMessage = string.Empty;
+            return null;
+        }
+
+        SelectedTabIndex = 0;
+        missing.IsRequiredPathValueMissing = true;
+        PathParameterValidationMessage = $"请填写路径参数“{missing.Name}”。";
+        return missing.Name;
+    }
+
+    public event EventHandler? PathParametersEdited;
 
     private bool HasExpandableBodyConfig => HasRawBodyEditor || HasFormFields;
 
@@ -453,17 +511,22 @@ public partial class RequestConfigTabViewModel : ViewModelBase
 
     /// <summary>
     /// 按内容选择默认配置页签：请求体有内容（含表单字段）时打开 Body，
-    /// 其次有 Query 参数时停在 Params，仅配置了 Header 时打开 Headers，空请求维持 Params。
+    /// 其次有路径参数时停在 Params，再次有 Query 参数时打开 Query，
+    /// 仅配置了 Header 时打开 Headers，空请求维持 Params。
     /// </summary>
     public void SelectDefaultTabByContent()
     {
         var hasBodyContent = SelectedBodyMode != BodyModes.None
             && (!string.IsNullOrWhiteSpace(RequestBody) || FormFields.Count > 0);
         SelectedTabIndex = hasBodyContent
-            ? 1
-            : Headers.Count > 0 && QueryParameters.Count == 0
-                ? 2
-                : 0;
+            ? 2
+            : HasPathParameters
+                ? 0
+                : HasQueryParameters
+                    ? 1
+                    : Headers.Count > 0
+                        ? 3
+                        : 0;
     }
 
     public RequestSnapshotDto BuildRequestSnapshot(string endpointId, string method, string url, string? requestNameOverride = null)
@@ -665,6 +728,15 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         OnPropertyChanged(nameof(ConfigPanelMaxHeight));
     }
 
+    private void OnPathParametersCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        SyncPathParameterSubscriptions();
+        OnPropertyChanged(nameof(HasPathParameters));
+        OnPropertyChanged(nameof(PathParameterCountText));
+        OnPropertyChanged(nameof(ShowPathParametersEmptyState));
+        OnPropertyChanged(nameof(ConfigPanelMaxHeight));
+    }
+
     private void OnHeadersCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
     {
         OnPropertyChanged(nameof(HasHeaders));
@@ -681,6 +753,29 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         }
     }
 
+    private void OnPathParameterItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not (nameof(RequestParameterItemViewModel.Name)
+            or nameof(RequestParameterItemViewModel.Value)
+            or null or ""))
+        {
+            return;
+        }
+
+        OnPropertyChanged(nameof(HasPathParameters));
+        OnPropertyChanged(nameof(PathParameterCountText));
+        if (e.PropertyName == nameof(RequestParameterItemViewModel.Value))
+        {
+            PathParameterValidationMessage = string.Empty;
+        }
+        PathParametersEdited?.Invoke(this, EventArgs.Empty);
+    }
+
+    partial void OnPathParameterValidationMessageChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasPathParameterValidationMessage));
+    }
+
     private void SyncQueryParameterSubscriptions()
     {
         foreach (var item in _subscribedQueryParameterItems)
@@ -694,6 +789,21 @@ public partial class RequestConfigTabViewModel : ViewModelBase
         {
             item.PropertyChanged += OnQueryParameterItemPropertyChanged;
             _subscribedQueryParameterItems.Add(item);
+        }
+    }
+
+    private void SyncPathParameterSubscriptions()
+    {
+        foreach (var item in _subscribedPathParameterItems)
+        {
+            item.PropertyChanged -= OnPathParameterItemPropertyChanged;
+        }
+
+        _subscribedPathParameterItems.Clear();
+        foreach (var item in PathParameters)
+        {
+            item.PropertyChanged += OnPathParameterItemPropertyChanged;
+            _subscribedPathParameterItems.Add(item);
         }
     }
 

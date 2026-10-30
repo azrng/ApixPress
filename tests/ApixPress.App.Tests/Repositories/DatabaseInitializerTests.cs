@@ -29,8 +29,10 @@ public sealed class DatabaseInitializerTests
             "select count(1) from pragma_table_info('project_export_settings') where name in ('format', 'include_interfaces', 'include_request_cases', 'include_environments', 'include_request_history', 'last_output_directory')");
         var projectSortOrderColumnCount = connection.ExecuteScalar<long>(
             "select count(1) from pragma_table_info('projects') where name = 'sort_order'");
+        var historyPagingIndexCount = connection.ExecuteScalar<long>(
+            "select count(1) from sqlite_master where type = 'index' and name = 'ix_request_history_project_timestamp_id'");
 
-        Assert.Equal(9, schemaVersion);
+        Assert.Equal(10, schemaVersion);
         Assert.Equal(0, projectCount);
         Assert.Equal(0, environmentCount);
         Assert.Equal(1, httpSettingsTableCount);
@@ -38,6 +40,7 @@ public sealed class DatabaseInitializerTests
         Assert.Equal(1, exportSettingsTableCount);
         Assert.Equal(6, exportSettingsColumnCount);
         Assert.Equal(1, projectSortOrderColumnCount);
+        Assert.Equal(1, historyPagingIndexCount);
     }
 
     [Fact]
@@ -156,7 +159,7 @@ public sealed class DatabaseInitializerTests
         var basicColumnCount = verificationConnection.ExecuteScalar<long>(
             "select count(1) from pragma_table_info('project_http_settings') where name in ('basic_username', 'basic_password')");
 
-        Assert.Equal(9, schemaVersion);
+        Assert.Equal(10, schemaVersion);
         Assert.Equal(1, httpSettingsTableCount);
         Assert.Equal(2, basicColumnCount);
     }
@@ -179,7 +182,7 @@ public sealed class DatabaseInitializerTests
                     ('project-old', '较早项目', '', 0, '2026-01-01', '2026-01-02', 0);
 
                 alter table projects drop column sort_order;
-                delete from schema_migrations where version = 9;
+                delete from schema_migrations where version >= 9;
                 """);
         }
 
@@ -232,6 +235,30 @@ public sealed class DatabaseInitializerTests
             "select max(version) from schema_migrations");
 
         Assert.Equal(string.Empty, folderPath);
-        Assert.Equal(9, schemaVersion);
+        Assert.Equal(10, schemaVersion);
+    }
+
+    [Fact]
+    public void Initialize_ShouldApplyHistoryPagingIndexToAnExistingVersionNineDatabase()
+    {
+        using var factory = new TestSqliteConnectionFactory();
+        new DatabaseInitializer(factory).Initialize();
+        using (var connection = factory.CreateConnection())
+        {
+            connection.Open();
+            connection.Execute("drop index ix_request_history_project_timestamp_id");
+            connection.Execute("delete from schema_migrations where version = 10");
+        }
+
+        new DatabaseInitializer(factory).Initialize();
+
+        using var verificationConnection = factory.CreateConnection();
+        verificationConnection.Open();
+        var schemaVersion = verificationConnection.ExecuteScalar<long>("select max(version) from schema_migrations");
+        var indexCount = verificationConnection.ExecuteScalar<long>(
+            "select count(1) from sqlite_master where type = 'index' and name = 'ix_request_history_project_timestamp_id'");
+
+        Assert.Equal(10, schemaVersion);
+        Assert.Equal(1, indexCount);
     }
 }

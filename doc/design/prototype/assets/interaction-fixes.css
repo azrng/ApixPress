@@ -11,6 +11,17 @@
 .interaction-tab-menu .menu { position: absolute; right: 0; top: 100%; z-index: 90; width: 260px; background: var(--bg-elevated); border: 1px solid var(--border-default); padding: 8px; border-radius: var(--r-md); }
 .interaction-tab-menu button { width: 100%; text-align: left; margin: 4px 0; }
 
+/* 请求参数：路径参数由 URL 模板驱动，与可增删的 Query 参数分 Tab 展示。 */
+.params-scroll { max-height: 260px; overflow: auto; padding-bottom: 8px; }
+.params-scroll .section-head { padding-top: 10px; }
+.path-params-head { padding-bottom: 7px; }
+.path-parameter-table { border: 1px solid var(--border-subtle); border-radius: var(--r-md); }
+.path-parameter-table .table-row { grid-template-columns: minmax(100px, 1fr) minmax(160px, 2fr); }
+.path-parameter-name { color: var(--violet); font-family: var(--mono); font-size: 12px; padding-left: 8px; }
+.path-parameter-value { font-family: var(--mono); }
+.path-parameter-empty { margin: 0 14px; border: 1px dashed var(--border-default); border-radius: var(--r-md); padding: 12px; color: var(--text-tertiary); font-size: 12px; text-align: center; }
+.path-parameter-empty[hidden], .path-parameter-table[hidden] { display: none !important; }
+
 /* 请求历史空状态：在侧栏内解释原因并提供下一步操作。 */
 .history-state {
   flex: 1; min-height: 180px; display: flex; flex-direction: column;
@@ -29,3 +40,10 @@
 }
 .history-state .btn { height: 28px; min-width: auto; margin-top: 3px; padding: 0 12px; font-size: 12px; }
 .history-state-search { min-height: 140px; }
+.history-pagination {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 10px; color: var(--text-tertiary); font-size: 11px;
+  border-top: 1px solid var(--border-subtle);
+}
+.history-pagination .btn { height: 28px; min-width: auto; padding: 0 10px; font-size: 11px; }
+.history-pagination[hidden], #loadOlderHistory[hidden], #loadOlderFromSearch[hidden] { display: none; }

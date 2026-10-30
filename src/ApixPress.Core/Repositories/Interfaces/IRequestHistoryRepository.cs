@@ -6,6 +6,16 @@ public interface IRequestHistoryRepository
 {
     Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryAsync(string projectId, int limit, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryPageAsync(
+        string projectId,
+        DateTime? beforeTimestamp,
+        string? beforeId,
+        int limit,
+        CancellationToken cancellationToken);
+
+    /// <summary>读取项目完整历史快照，用于备份。</summary>
+    Task<IReadOnlyList<RequestHistoryEntity>> GetAllAsync(string projectId, CancellationToken cancellationToken);
+
     Task<RequestHistoryEntity?> GetByIdAsync(string projectId, string id, CancellationToken cancellationToken);
 
     Task UpsertAsync(RequestHistoryEntity entity, CancellationToken cancellationToken);

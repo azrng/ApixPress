@@ -40,8 +40,8 @@
               <TabItem.Header>
                 <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.1}">
                   <TextBlock Text="Params" />
-                  <u:Badge Header="{Binding ConfigTab.QueryParameterCountText}"
-                           IsVisible="{Binding ConfigTab.HasQueryParameters}" />
+                  <u:Badge Header="{Binding ConfigTab.RequestParameterCountText}"
+                           IsVisible="{Binding ConfigTab.HasRequestParameters}" />
                 </StackPanel>
               </TabItem.Header>
             </TabItem>

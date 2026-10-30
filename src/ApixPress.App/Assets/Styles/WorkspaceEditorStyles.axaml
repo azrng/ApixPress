@@ -520,6 +520,19 @@
     <Setter Property="Margin" Value="0,0,4,0" />
   </Style>
 
+  <Style Selector="Path.WorkspaceTreeFolderGlyph">
+    <Setter Property="Width" Value="14" />
+    <Setter Property="Height" Value="14" />
+    <Setter Property="Stretch" Value="Uniform" />
+    <Setter Property="Fill" Value="Transparent" />
+    <Setter Property="Stroke" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="StrokeThickness" Value="1.2" />
+    <Setter Property="StrokeJoin" Value="Round" />
+    <Setter Property="StrokeLineCap" Value="Round" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,0,4,0" />
+  </Style>
+
   <!-- 用例计数芯片：对齐原型 08 接口节点的 "(N 个用例)" 提示，点击打开用例抽屉 -->
   <Style Selector="Button.WorkspaceTreeCaseChip">
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />

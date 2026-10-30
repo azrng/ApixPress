@@ -501,6 +501,52 @@ public static class ViewModelSharedTestDoubles
         /// <summary>打开后 GetHistoryAsync 抛异常，用于验证列表加载失败的错误态与重试。</summary>
         public bool ShouldThrowHistoryError { get; set; }
 
+        public Task<IReadOnlyList<RequestHistoryItemDto>> GetAllHistoryAsync(string projectId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<RequestHistoryItemDto>>(Items);
+
+        public Task<RequestHistoryPageDto> GetHistoryPageAsync(
+            string projectId,
+            DateTime? beforeTimestamp,
+            string? beforeId,
+            CancellationToken cancellationToken)
+        {
+            GetHistoryCallCount++;
+            cancellationToken.ThrowIfCancellationRequested();
+            if (ShouldThrowHistoryError)
+            {
+                throw new InvalidOperationException("数据库暂时不可用");
+            }
+
+            const int pageSize = 50;
+            var query = Items.AsEnumerable();
+            if (beforeTimestamp is not null)
+            {
+                query = query.Where(item => item.Timestamp < beforeTimestamp.Value
+                    || (item.Timestamp == beforeTimestamp.Value
+                        && string.CompareOrdinal(item.Id, beforeId) < 0));
+            }
+
+            var page = query
+                .OrderByDescending(item => item.Timestamp)
+                .ThenByDescending(item => item.Id, StringComparer.Ordinal)
+                .Take(pageSize + 1)
+                .ToList();
+            var hasMore = page.Count > pageSize;
+            return Task.FromResult(new RequestHistoryPageDto(
+                page.Take(pageSize).Select(item => new RequestHistoryItemDto
+                {
+                    Id = item.Id,
+                    Timestamp = item.Timestamp,
+                    HasResponse = item.HasResponse,
+                    StatusCode = item.StatusCode,
+                    DurationMs = item.DurationMs,
+                    SizeBytes = item.SizeBytes,
+                    RequestSnapshot = item.RequestSnapshot,
+                    ResponseSnapshot = null
+                }).ToList(),
+                hasMore));
+        }
+
         public Task<IReadOnlyList<RequestHistoryItemDto>> GetHistoryAsync(string projectId, CancellationToken cancellationToken)
         {
             GetHistoryCallCount++;

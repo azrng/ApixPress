@@ -63,12 +63,12 @@ public sealed class RequestHistoryPanelViewModelTests
     }
 
     [Fact]
-    public async Task PrependHistoryItem_BeyondLimit_ShouldTrimTailRowAndShrinkGroupHeader()
+    public async Task PrependHistoryItem_AfterFirstPage_ShouldKeepLoadedHistoryWithoutTrimming()
     {
         var service = new ViewModelSharedTestDoubles.FakeRequestHistoryService();
-        for (var index = 0; index < 50; index++)
+        for (var index = 0; index < 51; index++)
         {
-            service.Items.Add(CreateDto($"hist-{index}", DateTime.UtcNow.AddDays(-2)));
+            service.Items.Add(CreateDto($"hist-{index:D2}", DateTime.UtcNow.AddDays(-2).AddSeconds(-index)));
         }
 
         var viewModel = new RequestHistoryPanelViewModel(service);
@@ -78,11 +78,43 @@ public sealed class RequestHistoryPanelViewModelTests
 
         viewModel.PrependHistoryItem(CreateDto("new-1", DateTime.UtcNow));
 
+        Assert.Equal(51, viewModel.HistoryItems.Count);
+        Assert.Equal(51, viewModel.VisibleHistoryItems.Count);
+        Assert.True(viewModel.HasMoreHistory);
+        // 展示行 = 今天头(1) + 今天 1 条 + 更早日期头(1) + 更早日期 50 条 = 53
+        Assert.Equal(53, viewModel.HistoryDisplayItems.Count);
+        Assert.Equal(50, GroupCount(viewModel.HistoryDisplayItems[2]));
+    }
+
+    [Fact]
+    public async Task LoadMoreHistoryAsync_ShouldAppendOlderPageAndAllowSearchingIt()
+    {
+        var service = new ViewModelSharedTestDoubles.FakeRequestHistoryService();
+        var timestamp = DateTime.UtcNow.AddDays(-2);
+        for (var index = 0; index < 52; index++)
+        {
+            service.Items.Add(CreateDto($"hist-{index:D2}", timestamp.AddSeconds(-index)));
+        }
+
+        var viewModel = new RequestHistoryPanelViewModel(service);
+        viewModel.SetProjectContext("proj-1");
+        await viewModel.LoadHistoryAsync();
+
         Assert.Equal(50, viewModel.HistoryItems.Count);
-        Assert.Equal(50, viewModel.VisibleHistoryItems.Count);
-        // 展示行 = 今天头(1) + 今天 1 条 + 更早日期头(1) + 更早日期 49 条 = 52
-        Assert.Equal(52, viewModel.HistoryDisplayItems.Count);
-        Assert.Equal(49, GroupCount(viewModel.HistoryDisplayItems[2]));
+        Assert.True(viewModel.HasMoreHistory);
+
+        viewModel.SearchText = "hist-51";
+        await WaitUntilAsync(() => viewModel.ShowHistorySearchEmptyState);
+        Assert.Contains("最近已加载 50 条", viewModel.HistorySearchScopeHint);
+        Assert.Contains("加载更早", viewModel.HistorySearchEmptyDescription);
+
+        await viewModel.LoadMoreHistoryAsync();
+
+        Assert.Equal(52, viewModel.HistoryItems.Count);
+        Assert.False(viewModel.HasMoreHistory);
+        Assert.Single(viewModel.VisibleHistoryItems);
+        Assert.Equal("hist-51", viewModel.VisibleHistoryItems[0].Id);
+        Assert.Contains("已搜索全部", viewModel.HistorySearchEmptyDescription);
     }
 
     [Fact]
@@ -177,6 +209,17 @@ public sealed class RequestHistoryPanelViewModelTests
     private static int GroupCount(object displayItem)
     {
         return Assert.IsType<HistoryDateGroupHeaderViewModel>(displayItem).Count;
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        var deadline = Environment.TickCount64 + 2000;
+        while (!condition() && Environment.TickCount64 < deadline)
+        {
+            await Task.Delay(10);
+        }
+
+        Assert.True(condition(), "条件未在限定时间内成立。");
     }
 
     [Fact]

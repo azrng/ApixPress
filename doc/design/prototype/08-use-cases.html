@@ -101,11 +101,15 @@
           <button class="btn btn-ghost" data-toast="已保存请求用例（演示）">保存请求用例</button>
         </div>
         <div class="sub-tabs" data-tabs="cfg" style="margin-top:10px;">
-          <span class="sub-tab active" data-v="Params">Params <span class="cnt">1</span></span>
+          <span class="sub-tab" data-v="Params">Params</span>
+          <span class="sub-tab active" data-v="Query">Query <span class="cnt">1</span></span>
           <span class="sub-tab" data-v="Body">Body</span>
           <span class="sub-tab" data-v="Headers">Headers</span>
         </div>
-        <div data-tabs-panel="cfg" data-v="Params" class="on">
+        <div data-tabs-panel="cfg" data-v="Params">
+          <div class="cell-empty">URL 中没有路径参数。</div>
+        </div>
+        <div data-tabs-panel="cfg" data-v="Query" class="on">
           <div class="table">
             <div class="table-row header">
               <span class="th-check"><span class="checkbox on"></span>启用</span>

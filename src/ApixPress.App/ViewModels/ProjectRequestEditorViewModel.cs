@@ -887,7 +887,11 @@ public partial class ProjectRequestEditorViewModel : ViewModelBase, IDialogConte
     {
         try
         {
-            return ProjectHttpDocumentFormatter.BuildUrl(RequestUrl, CurrentHttpInterfaceBaseUrl, ConfigTab.QueryParameters);
+            return ProjectHttpDocumentFormatter.BuildUrl(
+                RequestUrl,
+                CurrentHttpInterfaceBaseUrl,
+                ConfigTab.PathParameters,
+                ConfigTab.QueryParameters);
         }
         catch (Exception exception)
         {

@@ -90,7 +90,7 @@ public partial class ExplorerItemViewModel : ViewModelBase
     public bool ShowMethodBadge => string.Equals(NodeType, "http-interface", StringComparison.OrdinalIgnoreCase)
         || IsRequestCaseNode;
 
-    public bool ShowLeadingGlyph => !ShowMethodBadge;
+    public bool ShowLeadingGlyph => !ShowMethodBadge && !IsFolderNode;
 
     public bool IsQuickRequestNode => string.Equals(NodeType, "quick-request", StringComparison.OrdinalIgnoreCase);
 

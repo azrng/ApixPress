@@ -228,7 +228,7 @@ public sealed class ProjectDataExportService : IProjectDataExportService, ITrans
         var history = new List<RequestHistoryItemDto>();
         if (request.IncludeRequestHistory && _requestHistoryService is not null)
         {
-            history = (await _requestHistoryService.GetHistoryAsync(request.ProjectId, cancellationToken)).ToList();
+            history = (await _requestHistoryService.GetAllHistoryAsync(request.ProjectId, cancellationToken)).ToList();
         }
 
         var package = new ProjectDataExportPackageDto
@@ -250,6 +250,10 @@ public sealed class ProjectDataExportService : IProjectDataExportService, ITrans
         {
             await stream.WriteAsync(new byte[] { 0xEF, 0xBB, 0xBF }, cancellationToken);
             await JsonSerializer.SerializeAsync(stream, package, SerializerOptions, cancellationToken);
+            if (stream.Position > MaxProjectPackageFileBytes)
+            {
+                throw new InvalidOperationException("项目数据包超过 20MB 导入上限，请减少导出范围。");
+            }
         });
         return ResultModel<ProjectDataExportResultDto>.Success(new ProjectDataExportResultDto
         {

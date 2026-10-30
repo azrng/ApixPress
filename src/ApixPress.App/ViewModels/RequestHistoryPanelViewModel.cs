@@ -12,11 +12,14 @@ namespace ApixPress.App.ViewModels;
 public partial class RequestHistoryPanelViewModel : ViewModelBase
 {
     private const int SearchDebounceMilliseconds = 250;
-    private const int MaxHistoryItems = 50;
 
     private readonly IRequestHistoryService _requestHistoryService;
     private CancellationTokenSource? _loadHistoryCancellationTokenSource;
+    private CancellationTokenSource? _loadMoreHistoryCancellationTokenSource;
+    private CancellationTokenSource? _loadHistoryDetailCancellationTokenSource;
     private CancellationTokenSource? _searchDebounceCancellationTokenSource;
+    private DateTime? _historyCursorTimestamp;
+    private string? _historyCursorId;
     private string _currentProjectId = string.Empty;
     private bool _hasLoadedHistory;
     private ICommand? _resendRowCommand;
@@ -30,12 +33,23 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     public bool HasHistory => HistoryItems.Count > 0;
     public bool HasVisibleHistory => VisibleHistoryItems.Count > 0;
     public bool HasSearchText => !string.IsNullOrWhiteSpace(SearchText);
+    public bool ShowHistoryPaginationFooter => HasHistory || HasMoreHistory;
+    public bool ShowHistorySearchScopeHint => HasSearchText && HasMoreHistory;
+    public string HistoryPaginationStatusText => HasMoreHistory
+        ? $"已加载最近 {HistoryItems.Count} 条"
+        : $"已加载全部 {HistoryItems.Count} 条历史";
+    public string HistorySearchScopeHint => $"搜索范围：最近已加载 {HistoryItems.Count} 条历史；仍可继续搜索更早记录。";
+    public bool CanLoadMoreHistory => HasMoreHistory && !IsLoadingMoreHistory;
+    public string LoadMoreHistoryButtonText => IsLoadingMoreHistory ? "正在加载…" : "加载更早历史";
+    public string HistorySearchEmptyDescription => HasMoreHistory
+        ? "当前已加载的历史中没有匹配请求；加载更早记录可继续搜索。"
+        : "已搜索全部保留的历史记录，换个方法、URL 或状态码试试。";
 
     /// <summary>空态文案的展示条件：没有可见记录且不是加载失败——失败态由错误块独占，不与“还没有发送记录”共存。</summary>
     public bool ShowHistoryEmptyText => !HasVisibleHistory && !HasHistoryLoadError;
 
-    public bool ShowHistoryEmptyState => _hasLoadedHistory && !HasHistory && !IsHistoryLoading && !HasHistoryLoadError;
-    public bool ShowHistorySearchEmptyState => _hasLoadedHistory && HasHistory && HasSearchText
+    public bool ShowHistoryEmptyState => _hasLoadedHistory && !HasHistory && !HasMoreHistory && !IsHistoryLoading && !HasHistoryLoadError;
+    public bool ShowHistorySearchEmptyState => _hasLoadedHistory && (HasHistory || HasMoreHistory) && HasSearchText
         && !HasVisibleHistory && !IsHistoryLoading && !HasHistoryLoadError;
     public string HistoryEmptyStateText => HasSearchText ? "没有匹配的请求历史" : "还没有发送记录";
     public bool HasSelectedHistory => SelectedHistoryItem is not null;
@@ -47,6 +61,17 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool isHistoryLoading;
+
+    [ObservableProperty]
+    private bool isLoadingMoreHistory;
+
+    [ObservableProperty]
+    private bool hasMoreHistory;
+
+    [ObservableProperty]
+    private string historyLoadMoreErrorText = string.Empty;
+
+    public bool HasHistoryLoadMoreError => !string.IsNullOrWhiteSpace(HistoryLoadMoreErrorText);
 
     /// <summary>历史列表加载失败（区别于空态）：侧栏显示错误原因与「重试」入口。</summary>
     [ObservableProperty]
@@ -70,24 +95,50 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     protected override void DisposeManaged()
     {
         CancellationTokenSourceHelper.CancelAndDispose(ref _loadHistoryCancellationTokenSource);
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadMoreHistoryCancellationTokenSource);
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadHistoryDetailCancellationTokenSource);
         CancellationTokenSourceHelper.CancelAndDispose(ref _searchDebounceCancellationTokenSource);
         SelectedResponseSection.Dispose();
     }
 
     public void SetProjectContext(string projectId)
     {
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadHistoryCancellationTokenSource);
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadMoreHistoryCancellationTokenSource);
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadHistoryDetailCancellationTokenSource);
         _currentProjectId = projectId;
         _hasLoadedHistory = false;
+        _historyCursorTimestamp = null;
+        _historyCursorId = null;
+        HasMoreHistory = false;
+        HistoryLoadMoreErrorText = string.Empty;
+        HistoryLoadErrorText = string.Empty;
+        HasHistoryLoadError = false;
         SearchText = string.Empty;
         SelectedHistoryItem = null;
+        IsHistoryLoading = false;
+        IsLoadingMoreHistory = false;
+        HistoryItems.Clear();
+        RefreshVisibleHistoryItems();
     }
 
     public void ClearProjectContext()
     {
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadHistoryCancellationTokenSource);
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadMoreHistoryCancellationTokenSource);
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadHistoryDetailCancellationTokenSource);
         _currentProjectId = string.Empty;
         _hasLoadedHistory = false;
+        _historyCursorTimestamp = null;
+        _historyCursorId = null;
+        HasMoreHistory = false;
+        HistoryLoadMoreErrorText = string.Empty;
+        HistoryLoadErrorText = string.Empty;
+        HasHistoryLoadError = false;
         SearchText = string.Empty;
         SelectedHistoryItem = null;
+        IsHistoryLoading = false;
+        IsLoadingMoreHistory = false;
         HistoryItems.Clear();
         RefreshVisibleHistoryItems();
     }
@@ -112,6 +163,14 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         }
 
         var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadHistoryCancellationTokenSource).Token;
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadMoreHistoryCancellationTokenSource);
+        _hasLoadedHistory = false;
+        HasMoreHistory = false;
+        _historyCursorTimestamp = null;
+        _historyCursorId = null;
+        HistoryLoadMoreErrorText = string.Empty;
+        HistoryLoadErrorText = string.Empty;
+        HasHistoryLoadError = false;
         IsHistoryLoading = true;
         try
         {
@@ -122,8 +181,12 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
                 return;
             }
 
-            var history = await _requestHistoryService.GetHistoryAsync(_currentProjectId, cancellationToken);
-            HistoryItems.ReplaceWith(history.Select(CreateHistoryItem));
+            var page = await _requestHistoryService.GetHistoryPageAsync(_currentProjectId, null, null, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            HistoryItems.ReplaceWith(page.Items.Select(CreateHistoryItem));
+            HasMoreHistory = page.HasMore;
+            _historyCursorTimestamp = page.Items.LastOrDefault()?.Timestamp;
+            _historyCursorId = page.Items.LastOrDefault()?.Id;
             _hasLoadedHistory = true;
             HasHistoryLoadError = false;
             HistoryLoadErrorText = string.Empty;
@@ -141,7 +204,71 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         }
         finally
         {
-            IsHistoryLoading = false;
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                IsHistoryLoading = false;
+            }
+        }
+    }
+
+    [RelayCommand]
+    public async Task LoadMoreHistoryAsync()
+    {
+        if (IsDisposed || !HasMoreHistory || IsLoadingMoreHistory || string.IsNullOrWhiteSpace(_currentProjectId))
+        {
+            return;
+        }
+
+        if (_historyCursorTimestamp is null || string.IsNullOrWhiteSpace(_historyCursorId))
+        {
+            HasMoreHistory = false;
+            NotifyHistoryVisibilityChanged();
+            return;
+        }
+
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadMoreHistoryCancellationTokenSource).Token;
+        IsLoadingMoreHistory = true;
+        HistoryLoadMoreErrorText = string.Empty;
+        try
+        {
+            var page = await _requestHistoryService.GetHistoryPageAsync(
+                _currentProjectId,
+                _historyCursorTimestamp,
+                _historyCursorId,
+                cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var knownIds = HistoryItems.Select(item => item.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var item in page.Items)
+            {
+                if (knownIds.Add(item.Id))
+                {
+                    HistoryItems.Add(CreateHistoryItem(item));
+                }
+            }
+
+            if (page.Items.Count > 0)
+            {
+                _historyCursorTimestamp = page.Items[^1].Timestamp;
+                _historyCursorId = page.Items[^1].Id;
+            }
+            HasMoreHistory = page.HasMore && page.Items.Count > 0;
+            RefreshVisibleHistoryItems();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception)
+        {
+            HistoryLoadMoreErrorText = $"更早历史加载失败：{exception.Message}";
+        }
+        finally
+        {
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                IsLoadingMoreHistory = false;
+                NotifyHistoryVisibilityChanged();
+            }
         }
     }
 
@@ -162,7 +289,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
             };
         }
 
-        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadHistoryCancellationTokenSource).Token;
+        var cancellationToken = CancellationTokenSourceHelper.Refresh(ref _loadHistoryDetailCancellationTokenSource).Token;
         try
         {
             var detail = await _requestHistoryService.GetDetailAsync(_currentProjectId, item.Id, cancellationToken);
@@ -181,7 +308,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// 新请求写入历史：无搜索时走差量路径（头部插入 + 尾部裁剪），
+    /// 新请求写入历史：无搜索时走差量路径（头部插入），
     /// 避免每条新记录都触发可见与展示两条集合的全量 Reset 重建。
     /// </summary>
     public void PrependHistoryItem(RequestHistoryItemDto item)
@@ -197,10 +324,6 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         PerfLog.Measure("历史·前置插入", () =>
         {
             HistoryItems.Insert(0, viewModel);
-            while (HistoryItems.Count > MaxHistoryItems)
-            {
-                HistoryItems.RemoveAt(HistoryItems.Count - 1);
-            }
 
             if (HasSearchText)
             {
@@ -214,10 +337,6 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
             }
 
             VisibleHistoryItems.Insert(0, viewModel);
-            while (VisibleHistoryItems.Count > MaxHistoryItems)
-            {
-                VisibleHistoryItems.RemoveAt(VisibleHistoryItems.Count - 1);
-            }
 
             SyncHistoryDisplayItems();
             NotifyHistoryVisibilityChanged();
@@ -232,8 +351,20 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
             return;
         }
 
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadHistoryCancellationTokenSource);
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadMoreHistoryCancellationTokenSource);
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadHistoryDetailCancellationTokenSource);
+        IsHistoryLoading = false;
+        IsLoadingMoreHistory = false;
         await _requestHistoryService.ClearAsync(_currentProjectId, CancellationToken.None);
         _hasLoadedHistory = true;
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadMoreHistoryCancellationTokenSource);
+        HasMoreHistory = false;
+        _historyCursorTimestamp = null;
+        _historyCursorId = null;
+        HistoryLoadMoreErrorText = string.Empty;
+        HistoryLoadErrorText = string.Empty;
+        HasHistoryLoadError = false;
         SearchText = string.Empty;
         SelectedHistoryItem = null;
         HistoryItems.Clear();
@@ -243,6 +374,7 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     partial void OnSelectedHistoryItemChanged(RequestHistoryItemViewModel? value)
     {
         OnPropertyChanged(nameof(HasSelectedHistory));
+        CancellationTokenSourceHelper.CancelAndDispose(ref _loadHistoryDetailCancellationTokenSource);
         SelectedResponseSection.Reset();
 
         if (value is not null)
@@ -269,6 +401,9 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasSearchText));
         OnPropertyChanged(nameof(HistoryEmptyStateText));
         OnPropertyChanged(nameof(ShowHistorySearchEmptyState));
+        OnPropertyChanged(nameof(ShowHistorySearchScopeHint));
+        OnPropertyChanged(nameof(HistorySearchEmptyDescription));
+        OnPropertyChanged(nameof(HistorySearchScopeHint));
         _ = DebounceSearchAsync();
     }
 
@@ -284,6 +419,12 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(ShowHistoryEmptyState));
         OnPropertyChanged(nameof(ShowHistorySearchEmptyState));
+    }
+
+    partial void OnIsLoadingMoreHistoryChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanLoadMoreHistory));
+        OnPropertyChanged(nameof(LoadMoreHistoryButtonText));
     }
 
     private async Task DebounceSearchAsync()
@@ -502,6 +643,11 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowHistorySearchEmptyState));
         OnPropertyChanged(nameof(ShowHistoryEmptyText));
         OnPropertyChanged(nameof(HistoryEmptyStateText));
+        OnPropertyChanged(nameof(ShowHistoryPaginationFooter));
+        OnPropertyChanged(nameof(HistoryPaginationStatusText));
+        OnPropertyChanged(nameof(HistorySearchScopeHint));
+        OnPropertyChanged(nameof(ShowHistorySearchScopeHint));
+        OnPropertyChanged(nameof(HistorySearchEmptyDescription));
     }
 
     partial void OnHasHistoryLoadErrorChanged(bool value)
@@ -509,6 +655,21 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
         OnPropertyChanged(nameof(ShowHistoryEmptyText));
         OnPropertyChanged(nameof(ShowHistoryEmptyState));
         OnPropertyChanged(nameof(ShowHistorySearchEmptyState));
+    }
+
+    partial void OnHasMoreHistoryChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowHistoryPaginationFooter));
+        OnPropertyChanged(nameof(ShowHistorySearchScopeHint));
+        OnPropertyChanged(nameof(HistoryPaginationStatusText));
+        OnPropertyChanged(nameof(CanLoadMoreHistory));
+        OnPropertyChanged(nameof(ShowHistoryEmptyState));
+        OnPropertyChanged(nameof(ShowHistorySearchEmptyState));
+    }
+
+    partial void OnHistoryLoadMoreErrorTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasHistoryLoadMoreError));
     }
 
     private static bool MatchesSearch(RequestHistoryItemViewModel item, string keyword)

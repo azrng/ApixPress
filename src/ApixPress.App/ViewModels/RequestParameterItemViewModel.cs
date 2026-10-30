@@ -21,6 +21,9 @@ public partial class RequestParameterItemViewModel : ViewModelBase
     [ObservableProperty]
     private bool isEnabled = true;
 
+    [ObservableProperty]
+    private bool isRequiredPathValueMissing;
+
     /// <summary>form-data 字段类型（Text/File），仅 FormData 模式允许切换；其他参数类型恒为 Text。</summary>
     [ObservableProperty]
     private string fieldType = FormFieldTypes.Text;
@@ -38,5 +41,10 @@ public partial class RequestParameterItemViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsFileField));
         OnPropertyChanged(nameof(FieldTypeDisplayText));
+    }
+
+    partial void OnValueChanged(string value)
+    {
+        IsRequiredPathValueMissing = false;
     }
 }

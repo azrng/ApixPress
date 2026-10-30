@@ -502,6 +502,16 @@
     <Setter Property="BorderThickness" Value="0,0,0,2" />
   </Style>
 
+  <Style Selector="TextBox.ParameterInput.PathParameterInvalid">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Danger}" />
+    <Setter Property="BorderThickness" Value="0,0,0,2" />
+  </Style>
+
+  <Style Selector="TextBlock.PathParameterValidationText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Danger}" />
+    <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
+  </Style>
+
   <!-- Add Button -->
   <Style Selector="Button.AddButton">
     <Setter Property="Background" Value="Transparent" />

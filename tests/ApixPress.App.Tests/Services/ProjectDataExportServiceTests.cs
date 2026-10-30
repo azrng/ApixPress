@@ -875,8 +875,18 @@ public sealed class ProjectDataExportServiceTests
     {
         public IReadOnlyList<RequestHistoryItemDto> History { get; init; } = [];
 
+        public Task<IReadOnlyList<RequestHistoryItemDto>> GetAllHistoryAsync(string projectId, CancellationToken cancellationToken)
+            => Task.FromResult<IReadOnlyList<RequestHistoryItemDto>>(History);
+
         public Task<IReadOnlyList<RequestHistoryItemDto>> GetHistoryAsync(string projectId, CancellationToken cancellationToken)
             => Task.FromResult(History);
+
+        public Task<RequestHistoryPageDto> GetHistoryPageAsync(
+            string projectId,
+            DateTime? beforeTimestamp,
+            string? beforeId,
+            CancellationToken cancellationToken)
+            => Task.FromResult(new RequestHistoryPageDto([], false));
 
         public Task<RequestHistoryItemDto?> GetDetailAsync(string projectId, string id, CancellationToken cancellationToken)
             => Task.FromResult(History.FirstOrDefault(item => item.Id == id));

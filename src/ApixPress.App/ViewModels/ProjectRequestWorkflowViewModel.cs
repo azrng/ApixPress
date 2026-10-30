@@ -94,6 +94,16 @@ public partial class ProjectRequestWorkflowViewModel : ViewModelBase
             return;
         }
 
+        var missingPathParameter = workspaceTab.ConfigTab.ValidateRequiredPathParameters();
+        if (missingPathParameter is not null)
+        {
+            var message = $"请填写路径参数“{missingPathParameter}”。";
+            workspaceTab.UrlValidationMessage = message;
+            _hostContext.Messenger.Send(new StatusMessageRequest(message));
+            _hostContext.Messenger.Send(new WorkspaceStateChangedMessage(WorkspaceStateChangeFlags.ShellState));
+            return;
+        }
+
         var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
             _lifetimeCancellationTokenSource?.Token ?? CancellationToken.None);
         if (!_requestCancellationByTab.TryAdd(workspaceTab, cancellationTokenSource))

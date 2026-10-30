@@ -92,7 +92,7 @@ public sealed class ResponseSectionViewModelTests
         Assert.True(viewModel.HasActualRequest);
         Assert.Equal("GET", viewModel.ActualRequestMethod);
         Assert.Equal("https://api.example.com/users?expand=profile", viewModel.ActualRequestUrl);
-        Assert.Equal("Light Success", viewModel.ActualRequestMethodBadgeClass);
+        Assert.Equal("HttpMethodTextLabel HttpMethodGet", viewModel.ActualRequestMethodBadgeClass);
         Assert.True(viewModel.HasActualRequestHeaderRows);
         Assert.Equal("Accept", viewModel.ActualRequestHeaderRows[0].Name);
         Assert.Equal("*/*", viewModel.ActualRequestHeaderRows[0].Value);
@@ -196,7 +196,7 @@ public sealed class ResponseSectionViewModelTests
         Assert.False(viewModel.HasActualRequest);
         Assert.Equal(string.Empty, viewModel.ActualRequestMethod);
         Assert.Equal(string.Empty, viewModel.ActualRequestUrl);
-        Assert.Equal("Light Secondary", viewModel.ActualRequestMethodBadgeClass);
+        Assert.Equal("HttpMethodTextLabel HttpMethodOther", viewModel.ActualRequestMethodBadgeClass);
     }
 
     [Fact]

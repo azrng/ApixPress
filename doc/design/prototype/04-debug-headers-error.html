@@ -152,12 +152,18 @@
         <!-- 请求配置 Tabs -->
         <div class="sub-tabs" data-tabs="cfg" style="margin-top:10px;">
           <span class="sub-tab" data-v="Params">Params</span>
+          <span class="sub-tab" data-v="Query">Query <span class="cnt">1</span></span>
           <span class="sub-tab" data-v="Body">Body</span>
           <span class="sub-tab active" data-v="Headers">Headers <span class="cnt">2</span></span>
         </div>
 
-        <!-- Params 面板 -->
+        <!-- Params 面板：仅路径参数 -->
         <div data-tabs-panel="cfg" data-v="Params">
+          <div class="cell-empty">URL 中没有路径参数。</div>
+        </div>
+
+        <!-- Query 面板：仅查询参数 -->
+        <div data-tabs-panel="cfg" data-v="Query">
           <div class="table">
             <div class="table-row header">
               <span class="th-check"><span class="checkbox on"></span>启用</span>

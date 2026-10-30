@@ -151,12 +151,18 @@
         <!-- 请求配置 Tabs -->
         <div class="sub-tabs" data-tabs="cfg" style="margin-top:10px;">
           <span class="sub-tab" data-v="Params">Params</span>
+          <span class="sub-tab" data-v="Query">Query</span>
           <span class="sub-tab active" data-v="Body">Body <span class="cnt">2</span></span>
           <span class="sub-tab" data-v="Headers">Headers <span class="cnt">1</span></span>
         </div>
 
-        <!-- Params 面板 -->
+        <!-- Params 面板：仅路径参数 -->
         <div data-tabs-panel="cfg" data-v="Params">
+          <div class="cell-empty">URL 中没有路径参数。</div>
+        </div>
+
+        <!-- Query 面板：仅查询参数 -->
+        <div data-tabs-panel="cfg" data-v="Query">
           <div class="cell-empty">本接口无 Query 参数。</div>
         </div>
 
@@ -208,6 +214,7 @@
                   <div class="file-chips">
                     <span class="file-chip"><span class="fname">需求说明书-v2.pdf</span><span class="fsize">1.8 MB</span><span class="x">✕</span></span>
                     <span class="file-chip"><span class="fname">界面设计稿.png</span><span class="fsize">486 KB</span><span class="x">✕</span></span>
+                    <span class="file-chip"><span class="fname">接口联调测试数据与说明文档.zip</span><span class="fsize">3.2 MB</span><span class="x">✕</span></span>
                     <button class="file-add">＋ 添加文件</button>
                   </div>
                 </span>

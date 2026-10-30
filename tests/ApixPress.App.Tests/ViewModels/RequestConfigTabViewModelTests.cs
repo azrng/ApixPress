@@ -46,6 +46,44 @@ public sealed class RequestConfigTabViewModelTests
     }
 
     [Fact]
+    public void SynchronizePathParametersFromUrl_ShouldKeepUrlOrderAndPreserveMatchingValues()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+        viewModel.SynchronizePathParametersFromUrl("/teams/:teamId/projects/{projectId}?filter={queryOnly}");
+
+        Assert.Equal(["teamId", "projectId"], viewModel.PathParameters.Select(item => item.Name));
+        viewModel.PathParameters[0].Value = "team 1";
+        var existingTeamParameter = viewModel.PathParameters[0];
+
+        viewModel.SynchronizePathParametersFromUrl("/teams/:teamId/users/{userId}");
+
+        Assert.Same(existingTeamParameter, viewModel.PathParameters[0]);
+        Assert.Equal("team 1", viewModel.PathParameters[0].Value);
+        Assert.Equal(["teamId", "userId"], viewModel.PathParameters.Select(item => item.Name));
+    }
+
+    [Fact]
+    public void ValidateRequiredPathParameters_ShouldFocusAndMarkTheFirstMissingValue()
+    {
+        var viewModel = new RequestConfigTabViewModel();
+        viewModel.SynchronizePathParametersFromUrl("/orgs/{orgId}/users/{userId}");
+        viewModel.PathParameters[0].Value = "org-1";
+        viewModel.SelectedTabIndex = 2;
+
+        var missingName = viewModel.ValidateRequiredPathParameters();
+
+        Assert.Equal("userId", missingName);
+        Assert.Equal(0, viewModel.SelectedTabIndex);
+        Assert.True(viewModel.PathParameters[1].IsRequiredPathValueMissing);
+        Assert.Contains("userId", viewModel.PathParameterValidationMessage);
+
+        viewModel.PathParameters[1].Value = "user-1";
+        Assert.Null(viewModel.ValidateRequiredPathParameters());
+        Assert.False(viewModel.PathParameters[1].IsRequiredPathValueMissing);
+        Assert.Equal(string.Empty, viewModel.PathParameterValidationMessage);
+    }
+
+    [Fact]
     public void BuildRequestSnapshot_ShouldSerializeOnlyEnabledFormFields()
     {
         var viewModel = new RequestConfigTabViewModel

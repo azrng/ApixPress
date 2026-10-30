@@ -3,6 +3,7 @@ using ApixPress.App.Models.DTOs;
 using ApixPress.App.Services.Implementations;
 using ApixPress.App.Services.Interfaces;
 using ApixPress.App.Tests.ViewModels;
+using ApixPress.App.ViewModels;
 using Azrng.Core.Results;
 using System.Net.Http.Headers;
 
@@ -68,6 +69,37 @@ public sealed class RequestExecutionServiceTests
         Assert.Equal("https://api.example.com/users/42?expand=profile", url);
     }
 
+    [Theory]
+    [InlineData("https://api.example.com/users/{userId}?fields=id#details")]
+    [InlineData("https://api.example.com/users/:userId?fields=id#details")]
+    public void BuildUrl_ShouldEncodePathParameterAndPreserveUrlSuffix(string requestUrl)
+    {
+        var request = new RequestSnapshotDto
+        {
+            Method = "GET",
+            Url = requestUrl,
+            PathParameters =
+            [
+                new RequestKeyValueDto { Name = "userId", Value = "group/a b" }
+            ]
+        };
+
+        var url = RequestExecutionService.BuildUrl(request, "https://api.example.com", new Dictionary<string, string>());
+
+        Assert.Equal("https://api.example.com/users/group%2Fa%20b?fields=id#details", url);
+    }
+
+    [Fact]
+    public void BuildUrl_ShouldRejectMissingRequiredPathParameter()
+    {
+        var request = new RequestSnapshotDto { Url = "https://api.example.com/users/{userId}" };
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            RequestExecutionService.BuildUrl(request, "https://api.example.com", new Dictionary<string, string>()));
+
+        Assert.Contains("userId", exception.Message);
+    }
+
     [Fact]
     public void BuildUrl_ShouldSkipDisabledQueryParameters()
     {
@@ -85,6 +117,64 @@ public sealed class RequestExecutionServiceTests
         var url = RequestExecutionService.BuildUrl(request, "https://api.example.com", new Dictionary<string, string>());
 
         Assert.Equal("https://api.example.com/users?enabled=1", url);
+    }
+
+    [Fact]
+    public void BuildUrl_ShouldPreserveDuplicateAndCaseSensitiveQueryParameters()
+    {
+        var request = new RequestSnapshotDto
+        {
+            Url = "https://api.example.com/items?tag=one&tag=two&Tag=three",
+            QueryParameters =
+            [
+                new RequestKeyValueDto { Name = "id", Value = "1", IsEnabled = true },
+                new RequestKeyValueDto { Name = "id", Value = "2", IsEnabled = true }
+            ]
+        };
+
+        var url = RequestExecutionService.BuildUrl(request, "", new Dictionary<string, string>());
+
+        Assert.Equal("https://api.example.com/items?tag=one&tag=two&Tag=three&id=1&id=2", url);
+    }
+
+    [Fact]
+    public void BuildUrl_ShouldPreserveExistingQueryEncodingAndNoValueParameters()
+    {
+        var request = new RequestSnapshotDto
+        {
+            Url = "https://api.example.com/items?name=first+last&flag&encoded=%2B",
+            QueryParameters =
+            [
+                new RequestKeyValueDto { Name = "search", Value = "a b" }
+            ]
+        };
+
+        var url = RequestExecutionService.BuildUrl(request, "", new Dictionary<string, string>());
+
+        Assert.Equal("https://api.example.com/items?name=first+last&flag&encoded=%2B&search=a%20b", url);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task SendAsync_FormUrlEncoded_ShouldResolveVariablesAfterDecoding(bool hasFields)
+    {
+        var handler = new CapturingHttpMessageHandler();
+        using var client = new HttpClient(handler);
+        var service = new RequestExecutionService(
+            new ViewModelSharedTestDoubles.FakeEnvironmentVariableService(),
+            new FakeAppShellSettingsService(), serializer: null!, (_, _, _) => client);
+        var config = new RequestConfigTabViewModel { SelectedBodyMode = BodyModes.FormUrlEncoded };
+        config.FormFields.Add(new RequestParameterItemViewModel { Name = "client", Value = "{{baseUrl}}" });
+        var snapshot = config.BuildRequestSnapshot("", "POST", "https://api.example.com/token");
+        if (!hasFields) snapshot.FormFields.Clear();
+
+        var result = await service.SendAsync(snapshot,
+            new ProjectEnvironmentDto { Id = "env-1", BaseUrl = "https://example.com/a?x=1&y=2" }, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("client=https%3A%2F%2Fexample.com%2Fa%3Fx%3D1%26y%3D2", handler.LastBodyText);
+        Assert.Equal(handler.LastBodyText, result.Data!.ActualRequest!.BodyText);
     }
 
     [Fact]

@@ -15,7 +15,17 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryAsync(string projectId, int limit, CancellationToken cancellationToken)
+    public Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryAsync(string projectId, int limit, CancellationToken cancellationToken)
+    {
+        return GetHistoryPageAsync(projectId, null, null, limit, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<RequestHistoryEntity>> GetHistoryPageAsync(
+        string projectId,
+        DateTime? beforeTimestamp,
+        string? beforeId,
+        int limit,
+        CancellationToken cancellationToken)
     {
         const string sql = """
                            -- 列表是摘要投影：不取 response_snapshot_json 原文（单条可达 MB 级），
@@ -71,13 +81,22 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
                                end SizeBytes
                            from request_history
                            where project_id = @ProjectId
-                           order by timestamp desc
+                             and (@BeforeTimestamp is null
+                                  or timestamp < @BeforeTimestamp
+                                  or (timestamp = @BeforeTimestamp and id < @BeforeId))
+                           order by timestamp desc, id desc
                            limit @Limit
                            """;
 
         using var connection = _connectionFactory.CreateConnection();
         var items = await Task.Run(async () => await connection.QueryAsync<HistorySummaryRow>(
-            new CommandDefinition(sql, new { ProjectId = projectId, Limit = limit }, cancellationToken: cancellationToken)));
+            new CommandDefinition(sql, new
+            {
+                ProjectId = projectId,
+                BeforeTimestamp = beforeTimestamp,
+                BeforeId = beforeId,
+                Limit = limit
+            }, cancellationToken: cancellationToken)));
         return items.Select(row => new RequestHistoryEntity
         {
             Id = row.Id,
@@ -107,6 +126,31 @@ public sealed class RequestHistoryRepository : IRequestHistoryRepository, ITrans
         public long? StatusCode { get; set; }
         public long DurationMs { get; set; }
         public long SizeBytes { get; set; }
+    }
+
+    public async Task<IReadOnlyList<RequestHistoryEntity>> GetAllAsync(string projectId, CancellationToken cancellationToken)
+    {
+        const string sql = """
+                           select id Id, project_id ProjectId, timestamp Timestamp,
+                                  request_snapshot_json RequestSnapshotJson, response_snapshot_json ResponseSnapshotJson
+                           from request_history where project_id = @ProjectId order by timestamp desc
+                           """;
+        using var connection = _connectionFactory.CreateConnection();
+        var items = await Task.Run(async () =>
+        {
+            var size = await connection.ExecuteScalarAsync<long>(new CommandDefinition("""
+                select coalesce(sum(length(cast(request_snapshot_json as blob)) +
+                                    length(cast(response_snapshot_json as blob))), 0)
+                from request_history where project_id = @ProjectId
+                """, new { ProjectId = projectId }, cancellationToken: cancellationToken));
+            if (size > 20 * 1024 * 1024)
+            {
+                throw new InvalidOperationException("请求历史超过 20MB 数据包上限，请减少导出范围。");
+            }
+            return await connection.QueryAsync<RequestHistoryEntity>(
+                new CommandDefinition(sql, new { ProjectId = projectId }, cancellationToken: cancellationToken));
+        });
+        return items.ToList();
     }
 
     public async Task<RequestHistoryEntity?> GetByIdAsync(string projectId, string id, CancellationToken cancellationToken)
