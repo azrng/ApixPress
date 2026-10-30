@@ -11,6 +11,7 @@ public partial class HttpInterfaceWorkbenchView : UserControl
     private RequestConfigTabViewModel? _configTab;
     private ResponseSectionViewModel? _responseSection;
     private HttpInterfaceParamsTabView? _paramsTabView;
+    private HttpInterfaceQueryTabView? _queryTabView;
     private HttpInterfaceBodyTabView? _bodyTabView;
     private HttpInterfaceHeadersTabView? _headersTabView;
     private int? _currentSelectedTabIndex;
@@ -178,10 +179,12 @@ public partial class HttpInterfaceWorkbenchView : UserControl
         _currentSelectedTabIndex = selectedTabIndex;
         ConfigTabContentHost.Children.Clear();
 
+        // 页签顺序对齐原型 02：0=Params（路径参数）、1=Query、2=Body、3=Headers
         Control content = selectedTabIndex switch
         {
-            1 => EnsureBodyTabView(),
-            2 => EnsureHeadersTabView(),
+            1 => EnsureQueryTabView(),
+            2 => EnsureBodyTabView(),
+            3 => EnsureHeadersTabView(),
             _ => EnsureParamsTabView()
         };
 
@@ -195,6 +198,7 @@ public partial class HttpInterfaceWorkbenchView : UserControl
         ConfigTabContentHost.Children.Clear();
         _currentSelectedTabIndex = null;
         _paramsTabView = null;
+        _queryTabView = null;
         _bodyTabView = null;
         _headersTabView = null;
     }
@@ -204,6 +208,11 @@ public partial class HttpInterfaceWorkbenchView : UserControl
         if (_paramsTabView is not null)
         {
             _paramsTabView.DataContext = _viewModel;
+        }
+
+        if (_queryTabView is not null)
+        {
+            _queryTabView.DataContext = _viewModel;
         }
 
         if (_bodyTabView is not null)
@@ -224,6 +233,15 @@ public partial class HttpInterfaceWorkbenchView : UserControl
             DataContext = _viewModel
         };
         return _paramsTabView;
+    }
+
+    private HttpInterfaceQueryTabView EnsureQueryTabView()
+    {
+        _queryTabView ??= new HttpInterfaceQueryTabView
+        {
+            DataContext = _viewModel
+        };
+        return _queryTabView;
     }
 
     private HttpInterfaceBodyTabView EnsureBodyTabView()

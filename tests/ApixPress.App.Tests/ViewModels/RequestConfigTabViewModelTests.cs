@@ -295,10 +295,14 @@ public sealed class RequestConfigTabViewModelTests
     {
         var viewModel = new RequestConfigTabViewModel();
 
+        // 页签顺序对齐原型 02：0=Params、1=Query、2=Body、3=Headers
         viewModel.SelectedTabIndex = 0;
         Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
 
-        viewModel.SelectedTabIndex = 2;
+        viewModel.SelectedTabIndex = 1;
+        Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
+
+        viewModel.SelectedTabIndex = 3;
         Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
     }
 
@@ -307,20 +311,24 @@ public sealed class RequestConfigTabViewModelTests
     {
         var viewModel = new RequestConfigTabViewModel();
 
-        viewModel.SelectedTabIndex = 1;
+        viewModel.SelectedTabIndex = 2;
         Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
 
         viewModel.SelectedBodyMode = BodyModes.RawJson;
         Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
 
-        viewModel.SelectedTabIndex = 0;
+        viewModel.SelectedTabIndex = 1;
         viewModel.QueryParameters.Add(new RequestParameterItemViewModel());
         Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
 
-        viewModel.SelectedTabIndex = 2;
+        viewModel.SelectedTabIndex = 3;
         Assert.Equal(288, viewModel.ConfigPanelMaxHeight);
 
         viewModel.Headers.Add(new RequestParameterItemViewModel());
+        Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
+
+        viewModel.SelectedTabIndex = 0;
+        viewModel.PathParameters.Add(new RequestParameterItemViewModel());
         Assert.Equal(420, viewModel.ConfigPanelMaxHeight);
     }
 
@@ -329,7 +337,7 @@ public sealed class RequestConfigTabViewModelTests
     {
         var viewModel = new RequestConfigTabViewModel
         {
-            SelectedTabIndex = 1,
+            SelectedTabIndex = 2,
             SelectedBodyMode = BodyModes.FormData
         };
 
@@ -413,17 +421,19 @@ public sealed class RequestConfigTabViewModelTests
     }
 
     [Theory]
-    [InlineData(BodyModes.RawJson, "{\"model\":\"demo\"}", 0, 0, 1)]
-    [InlineData(BodyModes.FormUrlEncoded, "field=1", 0, 0, 1)]
-    [InlineData(BodyModes.FormUrlEncoded, "", 1, 0, 0)]
-    [InlineData(BodyModes.None, "", 2, 0, 0)]
-    [InlineData(BodyModes.None, "", 0, 2, 2)]
-    [InlineData(BodyModes.None, "", 0, 0, 0)]
+    [InlineData(BodyModes.RawJson, "{\"model\":\"demo\"}", 0, 0, 0, 2)]
+    [InlineData(BodyModes.FormUrlEncoded, "field=1", 0, 0, 0, 2)]
+    [InlineData(BodyModes.FormUrlEncoded, "", 1, 0, 0, 1)]
+    [InlineData(BodyModes.None, "", 2, 0, 0, 1)]
+    [InlineData(BodyModes.None, "", 0, 2, 0, 3)]
+    [InlineData(BodyModes.None, "", 0, 0, 1, 0)]
+    [InlineData(BodyModes.None, "", 0, 0, 0, 0)]
     public void ApplySnapshot_ShouldSelectDefaultTabByContent(
         string bodyMode,
         string bodyContent,
         int queryCount,
         int headerCount,
+        int pathCount,
         int expectedTabIndex)
     {
         var viewModel = new RequestConfigTabViewModel();
@@ -436,6 +446,9 @@ public sealed class RequestConfigTabViewModelTests
             BodyContent = bodyContent,
             QueryParameters = Enumerable.Range(0, queryCount)
                 .Select(i => new RequestKeyValueDto { Name = $"q{i}", Value = $"{i}" })
+                .ToList(),
+            PathParameters = Enumerable.Range(0, pathCount)
+                .Select(i => new RequestKeyValueDto { Name = $"p{i}", Value = $"{i}" })
                 .ToList(),
             Headers = Enumerable.Range(0, headerCount)
                 .Select(i => new RequestKeyValueDto { Name = $"X-H{i}", Value = $"{i}" })
@@ -455,7 +468,7 @@ public sealed class RequestConfigTabViewModelTests
             BodyMode = BodyModes.RawText,
             BodyContent = "hello"
         });
-        Assert.Equal(1, viewModel.SelectedTabIndex);
+        Assert.Equal(2, viewModel.SelectedTabIndex);
 
         viewModel.Reset();
 
@@ -645,7 +658,7 @@ public sealed class RequestConfigTabViewModelTests
 
         viewModel.SelectDefaultTabByContent();
 
-        Assert.Equal(1, viewModel.SelectedTabIndex);
+        Assert.Equal(2, viewModel.SelectedTabIndex);
     }
 
     private static void AssertResetNotification(NotifyCollectionChangedEventArgs e, ref int count)

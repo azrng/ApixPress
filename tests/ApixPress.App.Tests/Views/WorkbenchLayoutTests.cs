@@ -299,6 +299,7 @@ public sealed class WorkbenchLayoutTests
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "QuickRequestWorkbenchView.axaml"));
 
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "HttpInterfaceParamsTabView");
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "HttpInterfaceQueryTabView");
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "HttpInterfaceBodyTabView");
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "HttpInterfaceHeadersTabView");
         Assert.DoesNotContain(document.Descendants(), element => element.Name.LocalName == "Border" && HasClass(element, "HttpRequestTableHeader"));
@@ -891,15 +892,17 @@ public sealed class WorkbenchLayoutTests
     }
 
     [Theory]
-    [InlineData("HttpInterfaceWorkbenchView.axaml", "RequestParameterCountText")]
-    [InlineData("QuickRequestWorkbenchView.axaml", "QueryParameterCountText")]
-    public void RequestConfigurationTabs_ShouldExposeParameterCountBadges(string fileName, string parameterCountBinding)
+    [InlineData("HttpInterfaceWorkbenchView.axaml")]
+    [InlineData("QuickRequestWorkbenchView.axaml")]
+    public void RequestConfigurationTabs_ShouldExposeParameterCountBadges(string fileName)
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
 
-        // 接口工作台 Params 页签合并 Path+Query 计数；快捷请求仅 Query 计数
+        // 页签拆分后徽标各自独立：Params=路径参数、Query=查询参数、Headers=请求头
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Badge"
-            && (element.Attribute("Header")?.Value ?? string.Empty).Contains(parameterCountBinding));
+            && (element.Attribute("Header")?.Value ?? string.Empty).Contains("PathParameterCountText"));
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Badge"
+            && (element.Attribute("Header")?.Value ?? string.Empty).Contains("QueryParameterCountText"));
         Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Badge"
             && (element.Attribute("Header")?.Value ?? string.Empty).Contains("HeaderCountText"));
     }
@@ -916,6 +919,23 @@ public sealed class WorkbenchLayoutTests
         Assert.Contains("IsRequiredPathValueMissing", markup);
         Assert.Contains("PathParameterValidationMessage", markup);
         Assert.Contains("ValidationFocusBehavior.HasError", markup);
+
+        // 与 Query 参数分页签后，Params 页不得再承载 Query 表格
+        Assert.DoesNotContain("QueryParameters", markup);
+    }
+
+    [Fact]
+    public void HttpInterfaceQueryTab_ShouldExposeQueryParameterEditing()
+    {
+        var document = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "HttpInterfaceQueryTabView.axaml"));
+        var markup = document.ToString(SaveOptions.DisableFormatting);
+
+        Assert.Contains("ConfigTab.QueryParameters", markup);
+        Assert.Contains("QueryParametersSelectionState", markup);
+        Assert.Contains("AddQueryParameterCommand", markup);
+        Assert.Contains("RemoveParameterCommand", markup);
+        Assert.DoesNotContain("PathParameters", markup);
     }
 
     [Fact]
