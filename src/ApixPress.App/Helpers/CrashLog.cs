@@ -37,8 +37,21 @@ internal static class CrashLog
         }
     }
 
-    public static string GetLogDirectory() => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "ApixPress",
-        "logs");
+    /// <summary>
+    /// 日志目录：默认 %LOCALAPPDATA%\ApixPress\logs；
+    /// 设置环境变量 APIXPRESS_LOG_DIR 可整体重定向（单测用，避免写进真实用户日志）。
+    /// </summary>
+    public static string GetLogDirectory()
+    {
+        var overrideDirectory = Environment.GetEnvironmentVariable("APIXPRESS_LOG_DIR");
+        if (!string.IsNullOrWhiteSpace(overrideDirectory))
+        {
+            return overrideDirectory;
+        }
+
+        return Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "ApixPress",
+            "logs");
+    }
 }

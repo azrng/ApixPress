@@ -260,9 +260,28 @@ public partial class ResponseSectionViewModel : ViewModelBase
             .Refresh(ref _formatBodyCancellationTokenSource)
             .Token;
 
+        string body;
         try
         {
-            var body = await Task.Run(() => BuildDisplayBody(response), cancellationToken);
+            body = await Task.Run(() => BuildDisplayBody(response), cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (Exception)
+        {
+            // 后台格式化失败不能让正文卡在“正在格式化…”占位符：回退原始正文展示
+            if (generation != _formatBodyGeneration || IsDisposed)
+            {
+                return;
+            }
+
+            body = response.Content;
+        }
+
+        try
+        {
             if (cancellationToken.IsCancellationRequested || generation != _formatBodyGeneration || IsDisposed)
             {
                 return;

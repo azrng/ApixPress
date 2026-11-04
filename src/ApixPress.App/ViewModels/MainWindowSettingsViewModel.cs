@@ -638,6 +638,12 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
         }
+        catch (Exception exception)
+        {
+            // 自动保存异常不能静默（fire-and-forget 无人观察）：落两条状态文案，用户在设置页可见
+            GeneralSettingsSaveStatus = $"自动保存失败：{exception.Message}";
+            StorageSettingsSaveStatus = $"自动保存失败：{exception.Message}";
+        }
     }
 
     private async Task SaveShellSettingsAsync(CancellationToken cancellationToken)

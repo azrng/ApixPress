@@ -64,7 +64,19 @@ public partial class ProjectQuickRequestSaveViewModel : ViewModelBase, IDialogCo
 
     private async Task ShowDialogAsync()
     {
-        await _hostContext.DialogService.ShowDialogAsync<Views.Controls.QuickRequestSaveDialogView>(this, _saveAsNew ? "快捷请求另存为" : "保存快捷请求");
+        try
+        {
+            await _hostContext.DialogService.ShowDialogAsync<Views.Controls.QuickRequestSaveDialogView>(this, _saveAsNew ? "快捷请求另存为" : "保存快捷请求");
+        }
+        catch (OperationCanceledException)
+        {
+            // 弹窗取消属于正常交互，不算错误
+        }
+        catch (Exception exception)
+        {
+            // fire-and-forget 打开弹窗失败必须给用户反馈，不能静默吞掉
+            _hostContext.Messenger.Send(new StatusMessageRequest($"打开快捷请求保存弹窗失败：{exception.Message}"));
+        }
     }
 
     [RelayCommand]

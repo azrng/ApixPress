@@ -52,7 +52,19 @@ public partial class ProjectHttpCaseSaveViewModel : ViewModelBase, IDialogContex
 
     private async Task ShowDialogAsync()
     {
-        await _hostContext.DialogService.ShowDialogAsync<Views.Controls.HttpCaseSaveDialogView>(this, "保存为用例");
+        try
+        {
+            await _hostContext.DialogService.ShowDialogAsync<Views.Controls.HttpCaseSaveDialogView>(this, "保存为用例");
+        }
+        catch (OperationCanceledException)
+        {
+            // 弹窗取消属于正常交互，不算错误
+        }
+        catch (Exception exception)
+        {
+            // fire-and-forget 打开弹窗失败必须给用户反馈，不能静默吞掉
+            _hostContext.Messenger.Send(new StatusMessageRequest($"打开保存用例弹窗失败：{exception.Message}"));
+        }
     }
 
     [RelayCommand]

@@ -396,7 +396,28 @@ public partial class RequestHistoryPanelViewModel : ViewModelBase
 
     private async Task LoadSelectedHistoryDetailAsync(RequestHistoryItemViewModel item)
     {
-        var detail = await EnsureHistoryDetailLoadedAsync(item);
+        RequestHistoryItemDto? detail;
+        try
+        {
+            detail = await EnsureHistoryDetailLoadedAsync(item);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch (Exception exception)
+        {
+            // 详情加载失败不能静默（fire-and-forget 的异常无人观察）：复用响应区失败态展示给用户
+            if (!IsDisposed && ReferenceEquals(SelectedHistoryItem, item))
+            {
+                SelectedResponseSection.ApplyResult(
+                    ResultModel<ResponseSnapshotDto>.Failure($"历史详情加载失败：{exception.Message}"),
+                    new RequestSnapshotDto());
+            }
+
+            return;
+        }
+
         if (IsDisposed || !ReferenceEquals(SelectedHistoryItem, item) || detail?.ResponseSnapshot is null)
         {
             return;
