@@ -43,4 +43,17 @@ public partial class ProjectInnerTabBarView : UserControl
             viewModel.IsWorkspaceTabMenuOpen = false;
         }
     }
+
+    // Flyout 内编译绑定跨层查找会静默断链（$parent[Window] 取不到命令），激活标签走 code-behind
+    private void OnWorkspaceTabListItemClick(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: RequestWorkspaceTabViewModel tab }
+            || DataContext is not ProjectTabViewModel viewModel)
+        {
+            return;
+        }
+
+        viewModel.Workspace.ActivateWorkspaceTab(tab);
+        WorkspaceTabListButton.Flyout?.Hide();
+    }
 }

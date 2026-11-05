@@ -1182,6 +1182,42 @@ public sealed class WorkbenchLayoutTests
         Assert.Contains(dialog.Descendants(), element => HasClass(element, "DialogFormLabel"));
     }
 
+    [Fact]
+    public void InnerTabBar_AllTabsFlyout_ShouldRenderStructuredTabListCard()
+    {
+        var document = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Views", "Controls", "ProjectInnerTabBarView.axaml"));
+        var allTabsButton = document.Descendants()
+            .Single(element => element.Name.LocalName == "Button"
+                && element.Attribute("Content")?.Value == "所有标签");
+        var flyout = allTabsButton.Elements()
+            .Single(element => element.Name.LocalName == "Button.Flyout")
+            .Descendants();
+        var card = flyout.Single(element => HasClass(element, "WorkspaceTabListCard"));
+
+        // 标题 + 计数徽标：计数直连可见标签集合
+        Assert.Contains(card.Descendants(), element => element.Attribute("Text")?.Value == "打开的标签");
+        Assert.Contains(card.Descendants(), element => HasClass(element, "WorkspaceTabListCountText")
+            && element.Attribute("Text")?.Value == "{Binding Workspace.VisibleWorkspaceTabs.Count}");
+
+        // 列表项：当前项高亮与未保存标记绑定标签自身状态
+        var itemButton = card.Descendants()
+            .Single(element => element.Name.LocalName == "Button" && HasClass(element, "WorkspaceTabListItem"));
+        Assert.Equal("OnWorkspaceTabListItemClick", itemButton.Attribute("Click")?.Value);
+        Assert.Contains(itemButton.Descendants(), element => HasClass(element, "WorkspaceTabListCheckGlyph")
+            && element.Attribute("IsVisible")?.Value == "{Binding IsActive}");
+        Assert.Contains(itemButton.Descendants(), element => HasClass(element, "WorkspaceTabListUnsavedGlyph")
+            && element.Attribute("IsVisible")?.Value == "{Binding ShowUnsavedChanges}");
+        Assert.Contains(itemButton.Descendants(), element => HasClass(element, "WorkspaceTabListItemText")
+            && element.Attribute("Text")?.Value == "{Binding HeaderText}");
+
+        // 空状态与恢复入口
+        Assert.Contains(card.Descendants(), element => HasClass(element, "WorkspaceTabListEmpty")
+            && element.Attribute("IsVisible")?.Value == "{Binding !Workspace.HasVisibleWorkspaceTabs}");
+        Assert.Contains(card.Descendants(), element => HasClass(element, "WorkspaceTabListRestoreButton")
+            && element.Attribute("Command")?.Value == "{Binding Workspace.RestoreClosedWorkspaceTabCommand}");
+    }
+
     private static string FindSourceFile(params string[] pathParts)
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);

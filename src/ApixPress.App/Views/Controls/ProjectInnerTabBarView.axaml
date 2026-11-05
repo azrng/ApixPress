@@ -123,18 +123,82 @@
               </ContextMenu>
             </Button.ContextMenu>
           </Button>
-          <Button Classes="HttpSaveButton" Content="所有标签" AutomationProperties.Name="所有已打开的标签">
+          <Button x:Name="WorkspaceTabListButton"
+                  Classes="HttpSaveButton"
+                  Content="所有标签"
+                  AutomationProperties.Name="所有已打开的标签">
             <Button.Flyout>
               <Flyout Placement="BottomEdgeAlignedRight">
-                <ListBox Classes="NotificationItemList"
-                         ItemsSource="{Binding Workspace.VisibleWorkspaceTabs}"
-                         SelectedItem="{Binding Workspace.ActiveWorkspaceTab, Mode=TwoWay}">
-                  <ListBox.ItemTemplate>
-                    <DataTemplate x:DataType="vm:RequestWorkspaceTabViewModel">
-                      <TextBlock Text="{Binding HeaderText}" ToolTip.Tip="{Binding HeaderText}" />
-                    </DataTemplate>
-                  </ListBox.ItemTemplate>
-                </ListBox>
+                <!-- 所有标签弹层：结构化卡片（标题+计数、当前项高亮、未保存标记、恢复入口） -->
+                <Grid Classes="WorkspaceTabListCard"
+                      RowDefinitions="Auto,*,Auto">
+                  <Grid Grid.Row="0"
+                        Classes="WorkspaceTabListHead"
+                        ColumnDefinitions="*,Auto">
+                    <TextBlock Classes="WorkspaceTabListTitle"
+                               Text="打开的标签" />
+                    <Border Grid.Column="1"
+                            Classes="WorkspaceTabListCountBadge">
+                      <TextBlock Classes="WorkspaceTabListCountText"
+                                 Text="{Binding Workspace.VisibleWorkspaceTabs.Count}" />
+                    </Border>
+                  </Grid>
+
+                  <ScrollViewer Grid.Row="1"
+                                Classes="WorkspaceTabListScroll"
+                                MaxHeight="300">
+                    <ItemsControl ItemsSource="{Binding Workspace.VisibleWorkspaceTabs}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RequestWorkspaceTabViewModel">
+                          <!-- Flyout 内编译绑定跨层查找会静默断链：激活走 code-behind，命令不写在这里 -->
+                          <Button Classes="WorkspaceTabListItem"
+                                  Click="OnWorkspaceTabListItemClick"
+                                  AutomationProperties.Name="{Binding HeaderText}">
+                            <Grid ColumnDefinitions="Auto,Auto,*"
+                                  ColumnSpacing="{StaticResource Space.1}">
+                              <Border Grid.ColumnSpan="3"
+                                      Classes="WorkspaceTabListItemActiveBackdrop"
+                                      IsVisible="{Binding IsActive}" />
+                              <TextBlock Grid.Column="0"
+                                         Classes="WorkspaceTabListCheckGlyph"
+                                         IsVisible="{Binding IsActive}"
+                                         Text="&#x2713;" />
+                              <TextBlock Grid.Column="1"
+                                         Classes="WorkspaceTabListUnsavedGlyph"
+                                         IsVisible="{Binding ShowUnsavedChanges}"
+                                         Text="&#x25CF;"
+                                         ToolTip.Tip="有未保存修改" />
+                              <TextBlock Grid.Column="2"
+                                         Classes="WorkspaceTabListItemText"
+                                         Text="{Binding HeaderText}"
+                                         ToolTip.Tip="{Binding HeaderText}"
+                                         TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                          </Button>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </ScrollViewer>
+
+                  <TextBlock Grid.Row="1"
+                             Classes="WorkspaceTabListEmpty"
+                             IsVisible="{Binding !Workspace.HasVisibleWorkspaceTabs}"
+                             Text="当前没有打开的标签" />
+
+                  <StackPanel Grid.Row="2">
+                    <Border Classes="WorkspaceTabListSeparator" />
+                    <Button Classes="WorkspaceTabListRestoreButton"
+                            Command="{Binding Workspace.RestoreClosedWorkspaceTabCommand}">
+                      <Grid ColumnDefinitions="*,Auto">
+                      <TextBlock Classes="WorkspaceTabListRestoreText"
+                                 Text="恢复关闭的标签" />
+                        <TextBlock Grid.Column="1"
+                                   Classes="WorkspaceTabListShortcutText"
+                                   Text="Ctrl+Shift+T" />
+                      </Grid>
+                    </Button>
+                  </StackPanel>
+                </Grid>
               </Flyout>
             </Button.Flyout>
           </Button>

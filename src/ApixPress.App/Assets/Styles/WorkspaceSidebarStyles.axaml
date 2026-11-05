@@ -312,6 +312,109 @@
     <Setter Property="Padding" Value="6,2" />
   </Style>
 
+  <!-- 「所有标签」弹层：结构化卡片（标题+计数、当前项高亮、未保存标记、恢复入口） -->
+  <Style Selector="Grid.WorkspaceTabListCard">
+    <Setter Property="Width" Value="280" />
+    <Setter Property="RowSpacing" Value="{StaticResource Space.1}" />
+  </Style>
+  <Style Selector="Grid.WorkspaceTabListHead">
+    <Setter Property="Margin" Value="10,6,10,2" />
+  </Style>
+  <Style Selector="TextBlock.WorkspaceTabListTitle">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+  <Style Selector="Border.WorkspaceTabListCountBadge">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="Padding" Value="5,1" />
+    <Setter Property="MinWidth" Value="16" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="TextBlock.WorkspaceTabListCountText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="ScrollViewer.WorkspaceTabListScroll">
+    <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+    <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+  </Style>
+  <Style Selector="Button.WorkspaceTabListItem">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="Margin" Value="4,1" />
+  </Style>
+  <Style Selector="Button.WorkspaceTabListItem:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+  </Style>
+  <Style Selector="Border.WorkspaceTabListItemActiveBackdrop">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Selected}" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+  </Style>
+  <Style Selector="TextBlock.WorkspaceTabListCheckGlyph">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Width" Value="14" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="TextBlock.WorkspaceTabListUnsavedGlyph">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Status.Warning.Text}" />
+    <Setter Property="FontSize" Value="10" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="TextBlock.WorkspaceTabListItemText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.WorkspaceTabListItem:pointerover TextBlock.WorkspaceTabListItemText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
+  </Style>
+  <Style Selector="TextBlock.WorkspaceTabListEmpty">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="HorizontalAlignment" Value="Center" />
+    <Setter Property="Margin" Value="0,18" />
+  </Style>
+  <Style Selector="Border.WorkspaceTabListSeparator">
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Border.Subtle}" />
+    <Setter Property="Margin" Value="4,2" />
+  </Style>
+  <Style Selector="Button.WorkspaceTabListRestoreButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="Padding" Value="10,0" />
+    <Setter Property="Margin" Value="4,2,4,4" />
+  </Style>
+  <Style Selector="Button.WorkspaceTabListRestoreButton /template/ ContentPresenter">
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+  </Style>
+  <Style Selector="Button.WorkspaceTabListRestoreButton:pointerover /template/ ContentPresenter">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+  <Style Selector="TextBlock.WorkspaceTabListRestoreText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="TextBlock.WorkspaceTabListShortcutText">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
   <Style Selector="Button.ProjectWorkspaceInnerTabCloseButton">
     <Setter Property="Width" Value="16" />
     <Setter Property="Height" Value="16" />

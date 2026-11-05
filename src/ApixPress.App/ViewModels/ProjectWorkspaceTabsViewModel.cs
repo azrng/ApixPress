@@ -47,6 +47,9 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
     public ObservableCollection<RequestWorkspaceTabViewModel> WorkspaceTabs { get; } = [];
     public ReadOnlyObservableCollection<RequestWorkspaceTabViewModel> VisibleWorkspaceTabs { get; }
 
+    /// <summary>「所有标签」弹层的空状态判定：可见标签为零时展示引导文案。</summary>
+    public bool HasVisibleWorkspaceTabs => _visibleWorkspaceTabs.Count > 0;
+
     [ObservableProperty]
     private RequestWorkspaceTabViewModel? activeWorkspaceTab;
 
@@ -586,6 +589,8 @@ public partial class ProjectWorkspaceTabsViewModel : ViewModelBase
                 }
             }
         });
+
+        OnPropertyChanged(nameof(HasVisibleWorkspaceTabs));
     }
 
     private void CloseOtherWorkspaceTabs(RequestWorkspaceTabViewModel? keepTab)

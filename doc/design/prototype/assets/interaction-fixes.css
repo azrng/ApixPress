@@ -7,9 +7,55 @@
 .interaction-current { outline: 1px solid var(--accent); }
 .h-item:focus-within .h-actions, .h-item.active .h-actions { opacity: 1; visibility: visible; }
 .interaction-tab-menu { position: relative; margin-left: auto; }
-.interaction-tab-menu summary { cursor: pointer; padding: 6px; }
-.interaction-tab-menu .menu { position: absolute; right: 0; top: 100%; z-index: 90; width: 260px; background: var(--bg-elevated); border: 1px solid var(--border-default); padding: 8px; border-radius: var(--r-md); }
-.interaction-tab-menu button { width: 100%; text-align: left; margin: 4px 0; }
+.interaction-tab-menu summary {
+  cursor: pointer; padding: 6px 10px; display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--text-secondary); list-style: none; user-select: none;
+}
+.interaction-tab-menu summary::-webkit-details-marker { display: none; }
+.interaction-tab-menu summary:hover { color: var(--text-primary); background: var(--bg-subtle); border-radius: var(--r-md); }
+.interaction-tab-menu .count {
+  min-width: 16px; height: 16px; padding: 0 5px; border-radius: var(--r-pill);
+  background: var(--bg-selected); color: var(--text-secondary);
+  font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center;
+}
+/* 所有标签弹层：结构化卡片（标题+计数、当前项高亮、未保存标记、恢复入口） */
+.interaction-tab-menu .menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 90; width: 280px;
+  background: var(--bg-elevated); border: 1px solid var(--border-default);
+  padding: 6px; border-radius: var(--r-lg); box-shadow: 0 16px 40px rgba(0,0,0,.55);
+  display: none; flex-direction: column; gap: 2px;
+}
+.interaction-tab-menu[open] .menu { display: flex; animation: proto-pop .18s cubic-bezier(.22,.8,.36,1) both; }
+.interaction-tab-menu .menu-head {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px 6px;
+  font-size: 12px; color: var(--text-tertiary); letter-spacing: .5px;
+}
+.interaction-tab-menu .menu-head .count { margin-left: auto; }
+.interaction-tab-menu .tab-item {
+  width: 100%; height: 32px; padding: 0 10px; display: flex; align-items: center; gap: 8px;
+  border: 0; border-radius: var(--r-md); background: transparent;
+  color: var(--text-secondary); font-size: 13px; text-align: left; cursor: pointer;
+}
+.interaction-tab-menu .tab-item:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.interaction-tab-menu .tab-item.active { background: var(--bg-selected); color: var(--text-primary); }
+.interaction-tab-menu .tab-item .check { width: 14px; flex: none; color: var(--accent); font-weight: 700; visibility: hidden; }
+.interaction-tab-menu .tab-item.active .check { visibility: visible; }
+.interaction-tab-menu .tab-item .unsaved { flex: none; color: var(--warn); font-size: 10px; }
+.interaction-tab-menu .tab-item .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.interaction-tab-menu .menu-sep { height: 1px; background: var(--border-subtle); margin: 6px 4px; }
+.interaction-tab-menu .menu-foot {
+  width: 100%; height: 32px; padding: 0 10px; display: flex; align-items: center; gap: 8px;
+  border: 0; border-radius: var(--r-md); background: transparent;
+  color: var(--text-secondary); font-size: 12px; text-align: left; cursor: pointer;
+}
+.interaction-tab-menu .menu-foot:hover:not(:disabled) { background: var(--bg-subtle); color: var(--text-primary); }
+.interaction-tab-menu .menu-foot:disabled { opacity: .45; cursor: default; }
+.interaction-tab-menu .menu-foot .kbd {
+  margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--text-tertiary);
+}
+.interaction-tab-menu .menu-empty { padding: 18px 10px; text-align: center; color: var(--text-tertiary); font-size: 12px; }
+/* 标签条上的未保存标记：弹层列表与标签条共用同一语义 */
+.inner-tabbar .unsaved-dot { color: var(--warn); font-size: 10px; margin-left: 4px; }
 
 /* 请求参数：路径参数由 URL 模板驱动，与可增删的 Query 参数分 Tab 展示。 */
 .params-scroll { max-height: 260px; overflow: auto; padding-bottom: 8px; }

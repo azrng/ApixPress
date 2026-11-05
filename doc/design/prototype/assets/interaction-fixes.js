@@ -23,16 +23,56 @@
   if (bar) {
     var menu = document.createElement('details');
     menu.className = 'interaction-tab-menu';
-    menu.innerHTML = '<summary>所有标签</summary><div class="menu"><button class="btn btn-ghost" data-restore-tab>恢复关闭的标签 · Ctrl+Shift+T</button><div data-open-tabs></div></div>';
+    menu.innerHTML = ''
+      + '<summary>所有标签<b class="count" data-tab-count></b></summary>'
+      + '<div class="menu">'
+      + '<div class="menu-head">打开的标签<b class="count" data-tab-count></b></div>'
+      + '<div data-open-tabs></div>'
+      + '<div class="menu-sep"></div>'
+      + '<button class="menu-foot" data-restore-tab><span>恢复关闭的标签</span><span class="kbd">Ctrl+Shift+T</span></button>'
+      + '</div>';
     bar.appendChild(menu);
+
+    /* 标签名取纯文本：剔除关闭按钮与未保存标记，避免混入图标字符 */
+    function tabLabel(tab) {
+      var clone = tab.cloneNode(true);
+      clone.querySelectorAll('.close, .unsaved-dot').forEach(function (node) { node.remove(); });
+      return clone.textContent.trim();
+    }
+
     function updateTabs() {
+      var tabs = Array.prototype.slice.call(bar.querySelectorAll('.inner-tab'));
+      menu.querySelectorAll('[data-tab-count]').forEach(function (badge) { badge.textContent = tabs.length; });
       var list = menu.querySelector('[data-open-tabs]');
       list.replaceChildren();
-      bar.querySelectorAll('.inner-tab').forEach(function (tab) {
+      if (!tabs.length) {
+        var empty = document.createElement('div');
+        empty.className = 'menu-empty';
+        empty.textContent = '当前没有打开的标签';
+        list.appendChild(empty);
+      }
+      tabs.forEach(function (tab) {
         var button = document.createElement('button');
-        button.className = 'btn btn-ghost';
-        button.textContent = tab.textContent;
-        button.onclick = function () { tab.scrollIntoView({block:'nearest', inline:'nearest'}); tab.classList.add('active'); menu.open = false; };
+        button.className = 'tab-item' + (tab.classList.contains('active') ? ' active' : '');
+        button.setAttribute('aria-current', tab.classList.contains('active') ? 'true' : 'false');
+        var check = document.createElement('span');
+        check.className = 'check'; check.textContent = '✓';
+        button.appendChild(check);
+        if (tab.querySelector('.unsaved-dot')) {
+          var unsaved = document.createElement('span');
+          unsaved.className = 'unsaved'; unsaved.textContent = '●'; unsaved.title = '有未保存修改';
+          button.appendChild(unsaved);
+        }
+        var label = document.createElement('span');
+        label.className = 't'; label.textContent = tabLabel(tab); label.title = label.textContent;
+        button.appendChild(label);
+        button.onclick = function () {
+          bar.querySelectorAll('.inner-tab').forEach(function (item) { item.classList.remove('active'); });
+          tab.classList.add('active');
+          tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+          menu.open = false;
+          updateTabs();
+        };
         list.appendChild(button);
       });
       menu.querySelector('[data-restore-tab]').disabled = closed.length === 0;
@@ -54,6 +94,7 @@
       protoToast('标签已关闭，可在所有标签中恢复，或按 Ctrl+Shift+T');
     }, true);
     menu.querySelector('[data-restore-tab]').onclick = restore;
+    menu.addEventListener('toggle', function () { if (menu.open) updateTabs(); });
     document.addEventListener('keydown', function (e) {
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 't') { e.preventDefault(); restore(); }
     });
