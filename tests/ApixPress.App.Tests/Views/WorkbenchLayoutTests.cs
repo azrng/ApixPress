@@ -315,6 +315,18 @@ public sealed class WorkbenchLayoutTests
         // 模式选择与提示合并为一行后，内容宿主位于第 1 行并占满剩余空间
         Assert.Equal("1", contentHost.Attribute("Grid.Row")?.Value);
 
+        // 工具行按原型 body-modes 单行排布：芯片 Auto + 提示 *（省略号）+ 操作按钮 Auto，不再拆两行
+        var toolbarGrid = document.Descendants()
+            .Single(element => element.Name.LocalName == "SelectionList"
+                && HasClass(element, "HttpBodyModeSelector")).Parent;
+        Assert.NotNull(toolbarGrid);
+        Assert.Equal("Auto,*,Auto", toolbarGrid.Attribute("ColumnDefinitions")?.Value);
+        Assert.Null(toolbarGrid.Attribute("RowDefinitions"));
+        var hint = document.Descendants()
+            .Single(element => element.Name.LocalName == "TextBlock" && HasClass(element, "HttpBodyModeHintText"));
+        Assert.Equal("1", hint.Attribute("Grid.Column")?.Value);
+        Assert.Null(hint.Attribute("Grid.Row"));
+
         // 宿主最小高必须留在紧凑面板预算内（288 - URL行/页签行/边距/选择器 ≈ 剩 128），
         // 超预算会触发 Grid 亏空排列，空态向上叠住选择器行（T057 回归守卫）
         var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceEditorStyles.axaml"));

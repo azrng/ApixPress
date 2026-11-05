@@ -12,17 +12,13 @@
         RowDefinitions="Auto,*"
         RowSpacing="{StaticResource Space.3}"
         HorizontalAlignment="Stretch">
-    <!-- 对齐原型 body-modes：模式选择与内容类型提示并排一行，编辑器紧随其上移 -->
+    <!-- 对齐原型 body-modes：模式芯片、内容类型提示、操作按钮并排一行（原型 .body-mode-hint 为 flex:1 + 省略号），编辑器紧随其上移 -->
     <Grid Grid.Row="0"
-          ColumnDefinitions="*,Auto"
-          RowDefinitions="Auto,Auto"
-          RowSpacing="{StaticResource Space.2}"
+          ColumnDefinitions="Auto,*,Auto"
           ColumnSpacing="{StaticResource Space.3}">
-      <u:SelectionList Grid.Row="0"
-                       Grid.Column="0"
-                       Grid.ColumnSpan="2"
+      <u:SelectionList Grid.Column="0"
                        Classes="HttpBodyModeSelector"
-                       HorizontalAlignment="Stretch"
+                       HorizontalAlignment="Left"
                        ItemsSource="{Binding ConfigTab.BodyModeOptions}"
                        SelectedItem="{Binding ConfigTab.SelectedBodyModeOption}">
         <u:SelectionList.ItemsPanel>
@@ -38,15 +34,13 @@
           </DataTemplate>
         </u:SelectionList.ItemTemplate>
       </u:SelectionList>
-      <TextBlock Grid.Row="1"
-                 Grid.Column="0"
+      <TextBlock Grid.Column="1"
                  Classes="HttpBodyModeHintText"
                  VerticalAlignment="Center"
                  MinWidth="0"
                  TextTrimming="CharacterEllipsis"
                  Text="{Binding ConfigTab.BodyModeHint}" />
-      <StackPanel Grid.Row="1"
-                  Grid.Column="1"
+      <StackPanel Grid.Column="2"
                   Orientation="Horizontal"
                   Spacing="{StaticResource Space.2}">
         <Button Classes="HttpBodyExampleButton"
