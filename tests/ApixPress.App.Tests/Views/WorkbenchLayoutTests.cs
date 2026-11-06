@@ -1218,6 +1218,29 @@ public sealed class WorkbenchLayoutTests
             && element.Attribute("Command")?.Value == "{Binding Workspace.RestoreClosedWorkspaceTabCommand}");
     }
 
+    [Fact]
+    public void InnerTabBar_AllTabsFlyout_ButtonsShouldStretchAlignmentInPair()
+    {
+        // Semi 默认 Button HorizontalAlignment=Center：只设 HorizontalContentAlignment 会让按钮收缩居中，
+        // 两个属性必须成对设置为 Stretch（2026-11-06 弹层按钮收缩居中缺陷的回归守卫）
+        var styles = XDocument.Load(FindSourceFile(
+            "src", "ApixPress.App", "Assets", "Styles", "WorkspaceSidebarStyles.axaml"));
+
+        foreach (var selectorName in new[] { "Button.WorkspaceTabListItem", "Button.WorkspaceTabListRestoreButton" })
+        {
+            var style = styles.Descendants()
+                .Single(element => element.Name.LocalName == "Style"
+                    && element.Attribute("Selector")?.Value == selectorName);
+            foreach (var property in new[] { "HorizontalAlignment", "HorizontalContentAlignment" })
+            {
+                var setter = style.Descendants()
+                    .Single(element => element.Name.LocalName == "Setter"
+                        && element.Attribute("Property")?.Value == property);
+                Assert.Equal("Stretch", setter.Attribute("Value")?.Value);
+            }
+        }
+    }
+
     private static string FindSourceFile(params string[] pathParts)
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);

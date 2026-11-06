@@ -345,6 +345,8 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <!-- Semi 默认 Button HorizontalAlignment=Center，只改 ContentAlignment 会让按钮收缩居中，两处必须成对设置 -->
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     <Setter Property="MinHeight" Value="32" />
     <Setter Property="Padding" Value="10,0" />
@@ -392,6 +394,7 @@
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Md}" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
     <Setter Property="MinHeight" Value="30" />
     <Setter Property="Padding" Value="10,0" />
