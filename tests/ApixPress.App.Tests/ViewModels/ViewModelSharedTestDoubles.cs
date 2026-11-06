@@ -973,4 +973,15 @@ public static class ViewModelSharedTestDoubles
             string? Title,
             bool ShowCloseButton);
     }
+
+    /// <summary>强调色服务替身：只记录 Apply 调用，不触碰 Avalonia 全局资源（测试进程无 UI 线程资源）。</summary>
+    public sealed class FakeAccentPaletteService : IAccentPaletteService
+    {
+        public List<string> AppliedThemes { get; } = [];
+
+        public void Apply(string accentTheme)
+        {
+            AppliedThemes.Add(accentTheme);
+        }
+    }
 }

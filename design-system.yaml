@@ -91,6 +91,35 @@ tokens:
       subtle_border: "#3844E7D4"
       subtle_text: "#81F1E4"
       gradient: "linear-gradient(135deg, #44E7D4, #22C7B8)"
+    accent_presets:
+      # T123 强调色运行时预设（设置→通用→外观）；teal 即上方 brand 默认值的镜像
+      teal:
+        primary: "#44E7D4"
+        strong: "#22C7B8"
+        hover: "#6BF0E2"
+        on_primary: "#08201E"
+        ring: "#3D44E7D4"
+        subtle_background: "#8C123B3C"
+        subtle_border: "#3844E7D4"
+        subtle_text: "#81F1E4"
+      blue:
+        primary: "#4C9AF0"
+        strong: "#2E7FD9"
+        hover: "#6FAFF4"
+        on_primary: "#0A1B2E"
+        ring: "#3D4C9AF0"
+        subtle_background: "#8C1B3353"
+        subtle_border: "#384C9AF0"
+        subtle_text: "#9EC2F5"
+      purple:
+        primary: "#A797FF"
+        strong: "#8A7AE8"
+        hover: "#B9ADFF"
+        on_primary: "#17102B"
+        ring: "#3DA797FF"
+        subtle_background: "#8C2B2450"
+        subtle_border: "#38A797FF"
+        subtle_text: "#CFC6FF"
     selection:
       primary: "#A797FF"
       hover: "#BDB2FF"

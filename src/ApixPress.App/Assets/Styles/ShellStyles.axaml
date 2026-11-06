@@ -575,6 +575,26 @@
     <Setter Property="BorderThickness" Value="1" />
   </Style>
 
+  <!-- T123 强调色色块：透明描边小圆钮，选中时品牌描边（Classes.Active 绑定 VM 布尔） -->
+  <Style Selector="Button.AccentSwatchButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Padding" Value="2" />
+    <Setter Property="CornerRadius" Value="{StaticResource Radius.Pill}" />
+    <Setter Property="MinWidth" Value="30" />
+    <Setter Property="MinHeight" Value="30" />
+  </Style>
+
+  <Style Selector="Button.AccentSwatchButton:pointerover">
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
+  </Style>
+
+  <Style Selector="Button.AccentSwatchButton.Active">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Padding" Value="1" />
+  </Style>
+
   <Style Selector="Border.SettingsPageSection">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Subtle}" />

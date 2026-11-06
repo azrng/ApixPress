@@ -36,6 +36,7 @@ public sealed partial class MainWindowViewModelTests
             requestCaseService ?? new FakeRequestCaseService(),
             requestHistoryService ?? new FakeRequestHistoryService(),
             systemDataService ?? new FakeSystemDataService(),
+            new ViewModelSharedTestDoubles.FakeAccentPaletteService(),
             environmentVariableService ?? new FakeEnvironmentVariableService(),
             projectWorkspaceService ?? new FakeProjectWorkspaceService(),
             shellSettingsService ?? new FakeAppShellSettingsService(),

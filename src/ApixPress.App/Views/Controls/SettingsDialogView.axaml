@@ -115,6 +115,48 @@
                     </Grid>
                   </Border>
                   <TextBlock Classes="SettingsSubsectionTitle"
+                             Text="外观" />
+                  <!-- T123 强调色：三预设色块，点击即切换并自动保存；选中态用品牌描边 -->
+                  <Border Classes="SettingsPageSection">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="{StaticResource Space.4}">
+                      <StackPanel Spacing="4">
+                        <TextBlock Classes="SettingsGroupTitle"
+                                   Text="强调色" />
+                        <TextBlock Classes="CaptionText"
+                                   Text="切换后主按钮、选中态与焦点环即时变色，并自动保存；重启后保持。" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="1"
+                                  Orientation="Horizontal"
+                                  Spacing="{StaticResource Space.2}">
+                        <Button Classes="AccentSwatchButton"
+                                Classes.Active="{Binding ShellPanels.SettingsCenter.IsTealAccent}"
+                                ToolTip.Tip="青色（默认）"
+                                AutomationProperties.Name="强调色：青色（默认）"
+                                Command="{Binding ShellPanels.SettingsCenter.SelectAccentThemeCommand}"
+                                CommandParameter="teal">
+                          <Ellipse Width="18" Height="18" Fill="#44E7D4" />
+                        </Button>
+                        <Button Classes="AccentSwatchButton"
+                                Classes.Active="{Binding ShellPanels.SettingsCenter.IsBlueAccent}"
+                                ToolTip.Tip="蓝色"
+                                AutomationProperties.Name="强调色：蓝色"
+                                Command="{Binding ShellPanels.SettingsCenter.SelectAccentThemeCommand}"
+                                CommandParameter="blue">
+                          <Ellipse Width="18" Height="18" Fill="#4C9AF0" />
+                        </Button>
+                        <Button Classes="AccentSwatchButton"
+                                Classes.Active="{Binding ShellPanels.SettingsCenter.IsPurpleAccent}"
+                                ToolTip.Tip="紫色"
+                                AutomationProperties.Name="强调色：紫色"
+                                Command="{Binding ShellPanels.SettingsCenter.SelectAccentThemeCommand}"
+                                CommandParameter="purple">
+                          <Ellipse Width="18" Height="18" Fill="#A797FF" />
+                        </Button>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                  <TextBlock Classes="SettingsSubsectionTitle"
                              Text="诊断与更新" />
                   <Border Classes="SettingsPageSection">
                     <Grid ColumnDefinitions="*,Auto"

@@ -27,6 +27,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDialogContext
         private readonly IRequestCaseService _requestCaseService;
         private readonly IRequestHistoryService _requestHistoryService;
         private readonly ISystemDataService _systemDataService;
+        private readonly IAccentPaletteService _accentPaletteService;
         private readonly IProjectWorkspaceService _projectWorkspaceService;
         private readonly IAppShellSettingsService _appShellSettingsService;
         private readonly IApplicationUpdateService _applicationUpdateService;
@@ -47,6 +48,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDialogContext
             IRequestCaseService requestCaseService,
             IRequestHistoryService requestHistoryService,
             ISystemDataService systemDataService,
+            IAccentPaletteService accentPaletteService,
             IProjectWorkspaceService projectWorkspaceService,
             IAppShellSettingsService appShellSettingsService,
             IApplicationUpdateService applicationUpdateService,
@@ -66,6 +68,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDialogContext
             _requestCaseService = requestCaseService;
             _requestHistoryService = requestHistoryService;
             _systemDataService = systemDataService;
+            _accentPaletteService = accentPaletteService;
             _projectWorkspaceService = projectWorkspaceService;
             _appShellSettingsService = appShellSettingsService;
             _applicationUpdateService = applicationUpdateService;
@@ -100,6 +103,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDialogContext
                         _windowHostService,
                         _filePickerService,
                         _systemDataService,
+                        _accentPaletteService,
                         _currentAppVersion,
                         _setStatusMessage,
                         _notifyShellState,
@@ -140,6 +144,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDialogContext
         IRequestCaseService requestCaseService,
         IRequestHistoryService requestHistoryService,
         ISystemDataService systemDataService,
+        IAccentPaletteService accentPaletteService,
         IEnvironmentVariableService environmentVariableService,
         IProjectWorkspaceService projectWorkspaceService,
         IAppShellSettingsService appShellSettingsService,
@@ -174,6 +179,7 @@ public partial class MainWindowViewModel : ViewModelBase, IDialogContext
             requestCaseService,
             requestHistoryService,
             systemDataService,
+            accentPaletteService,
             projectWorkspaceService,
             appShellSettingsService,
             applicationUpdateService,

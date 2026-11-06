@@ -15,4 +15,7 @@ public sealed class AppShellSettingsDto
     public bool EnableVerboseLogging { get; init; }
 
     public bool EnableUpdateReminder { get; init; } = true;
+
+    /// <summary>强调色预设标识（teal/blue/purple），对应 AccentPaletteService 预设表（T123）</summary>
+    public string AccentTheme { get; init; } = "teal";
 }

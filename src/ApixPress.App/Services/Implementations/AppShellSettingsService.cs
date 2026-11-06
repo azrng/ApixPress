@@ -164,7 +164,8 @@ public sealed class AppShellSettingsService : IAppShellSettingsService, ISinglet
             AutoFollowRedirects = settings.AutoFollowRedirects,
             SendNoCacheHeader = settings.SendNoCacheHeader,
             EnableVerboseLogging = settings.EnableVerboseLogging,
-            EnableUpdateReminder = settings.EnableUpdateReminder
+            EnableUpdateReminder = settings.EnableUpdateReminder,
+            AccentTheme = settings.AccentTheme
         };
     }
 }

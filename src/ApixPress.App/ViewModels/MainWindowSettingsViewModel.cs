@@ -22,6 +22,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     private readonly IWindowHostService _windowHostService;
     private readonly IFilePickerService _filePickerService;
     private readonly ISystemDataService _systemDataService;
+    private readonly IAccentPaletteService _accentPaletteService;
     private readonly Action<string> _setStatusMessage;
     private readonly Action _notifyShellState;
     private readonly Action _clearSystemDataViews;
@@ -37,6 +38,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
         IWindowHostService windowHostService,
         IFilePickerService filePickerService,
         ISystemDataService systemDataService,
+        IAccentPaletteService accentPaletteService,
         string currentAppVersion,
         Action<string> setStatusMessage,
         Action notifyShellState,
@@ -48,6 +50,7 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
         _windowHostService = windowHostService;
         _filePickerService = filePickerService;
         _systemDataService = systemDataService;
+        _accentPaletteService = accentPaletteService;
         _setStatusMessage = setStatusMessage;
         _notifyShellState = notifyShellState;
         _clearSystemDataViews = clearSystemDataViews;
@@ -118,6 +121,26 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool enableUpdateReminder = true;
+
+    /// <summary>强调色预设标识（teal/blue/purple，T123 外观小节）。</summary>
+    [ObservableProperty]
+    private string accentTheme = "teal";
+
+    public bool IsTealAccent => string.Equals(AccentTheme, "teal", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsBlueAccent => string.Equals(AccentTheme, "blue", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsPurpleAccent => string.Equals(AccentTheme, "purple", StringComparison.OrdinalIgnoreCase);
+
+    partial void OnAccentThemeChanged(string value)
+    {
+        // 应用与保存同一入口：启动加载（_isApplyingShellSettings=true）时只应用不落盘
+        _accentPaletteService.Apply(value);
+        OnPropertyChanged(nameof(IsTealAccent));
+        OnPropertyChanged(nameof(IsBlueAccent));
+        OnPropertyChanged(nameof(IsPurpleAccent));
+        TriggerShellSettingsSave();
+    }
 
     [ObservableProperty]
     private string generalSettingsSaveStatus = "设置会自动保存到用户数据目录。";
@@ -280,6 +303,16 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
     private void ShowGeneralSettings()
     {
         SelectGeneralSection();
+    }
+
+    /// <summary>外观小节的强调色色块点击（T123）：切预设并触发自动保存。</summary>
+    [RelayCommand]
+    private void SelectAccentTheme(string? theme)
+    {
+        if (!string.IsNullOrWhiteSpace(theme))
+        {
+            AccentTheme = theme;
+        }
     }
 
     [RelayCommand]
@@ -604,6 +637,9 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
             SendNoCacheHeader = settings.SendNoCacheHeader;
             EnableVerboseLogging = settings.EnableVerboseLogging;
             EnableUpdateReminder = settings.EnableUpdateReminder;
+            AccentTheme = string.IsNullOrWhiteSpace(settings.AccentTheme)
+                ? "teal"
+                : settings.AccentTheme;
             GeneralSettingsSaveStatus = result.IsSuccess
                 ? "设置会自动保存到用户数据目录。"
                 : "设置读取失败，已回退默认值。";
@@ -659,7 +695,8 @@ public sealed partial class MainWindowSettingsViewModel : ViewModelBase
                 AutoFollowRedirects = AutoFollowRedirects,
                 SendNoCacheHeader = SendNoCacheHeader,
                 EnableVerboseLogging = EnableVerboseLogging,
-                EnableUpdateReminder = EnableUpdateReminder
+                EnableUpdateReminder = EnableUpdateReminder,
+                AccentTheme = AccentTheme
             }, cancellationToken);
 
             GeneralSettingsSaveStatus = result.IsSuccess
