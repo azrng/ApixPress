@@ -59,6 +59,14 @@ public partial class ResponseSectionViewModel : ViewModelBase
     [ObservableProperty]
     private string sizeText = string.Empty;
 
+    /// <summary>响应 Content-Type 徽标文本（去掉 charset 等参数），失败响应为空（T123 徽标组）</summary>
+    [ObservableProperty]
+    private string contentTypeText = string.Empty;
+
+    public bool HasContentTypeText => !string.IsNullOrEmpty(ContentTypeText);
+
+    partial void OnContentTypeTextChanged(string value) => OnPropertyChanged(nameof(HasContentTypeText));
+
     [ObservableProperty]
     private string bodyText = string.Empty;
 
@@ -210,6 +218,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
             StatusText = ResponseNoticeTitle;
             DurationText = string.Empty;
             SizeText = string.Empty;
+            ContentTypeText = string.Empty;
             BodyText = error;
             HeadersText = string.Empty;
             SetHeaderRows([]);
@@ -221,6 +230,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
         StatusText = r.StatusCode is { } code ? $"HTTP {code}" : "请求完成";
         DurationText = $"{r.DurationMs} ms";
         SizeText = FormatResponseSizeText(r);
+        ContentTypeText = FormatContentTypeText(r.Headers);
         HeadersText = string.Join(Environment.NewLine, r.Headers.Select(h => $"{h.Name}: {h.Value}"));
         SetHeaderRows(r.Headers
             .Select(h => new ResponseHeaderRowViewModel(h.Name, h.Value))
@@ -319,6 +329,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
         StatusText = string.Empty;
         DurationText = string.Empty;
         SizeText = string.Empty;
+        ContentTypeText = string.Empty;
         BodyText = string.Empty;
         HeadersText = string.Empty;
         SetHeaderRows([]);
@@ -718,6 +729,20 @@ public partial class ResponseSectionViewModel : ViewModelBase
         return response.SizeBytes > response.CapturedSizeBytes
             ? $"{UiFormatHelper.FormatBytes(response.SizeBytes)}（仅展示前 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}）"
             : $"至少 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}（仅展示前 {UiFormatHelper.FormatBytes(response.CapturedSizeBytes)}）";
+    }
+
+    /// <summary>提取 Content-Type 值并去掉分号后的参数（charset 等），用于徽标展示；缺失返回空串。</summary>
+    internal static string FormatContentTypeText(List<ResponseHeaderDto>? headers)
+    {
+        var raw = headers?.FirstOrDefault(header =>
+            string.Equals(header.Name, "Content-Type", StringComparison.OrdinalIgnoreCase))?.Value;
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return string.Empty;
+        }
+
+        var mediaType = raw.Split(';')[0].Trim();
+        return mediaType.Length == 0 ? string.Empty : mediaType;
     }
 
     private static string BuildUnavailablePreviewNotice(ResponseSnapshotDto response)

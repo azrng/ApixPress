@@ -9,6 +9,7 @@ public partial class QuickRequestWorkbenchView : UserControl
     public QuickRequestWorkbenchView()
     {
         InitializeComponent();
+        Helpers.WorkbenchSplitterReset.Attach(WorkbenchSplitter, 0);
     }
     private void OnResponseSearchKeyDown(object? sender, KeyEventArgs e)
     {

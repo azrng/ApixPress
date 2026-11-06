@@ -542,6 +542,57 @@ public sealed class WorkbenchLayoutTests
     [Theory]
     [InlineData("HttpInterfaceWorkbenchView.axaml")]
     [InlineData("QuickRequestWorkbenchView.axaml")]
+    public void WorkbenchResponseHead_ShouldRenderMetaBadgesAfterStatusBadge(string fileName)
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
+
+        // T123 徽标组：状态徽标后依次为耗时/大小/内容类型三枚中性等宽徽标（7 列布局，Light Tertiary 灰系）
+        var headGrid = document.Descendants()
+            .Single(element => element.Name.LocalName == "Grid"
+                && element.Attribute("ColumnDefinitions")?.Value.Split(',').Length == 7
+                && element.Descendants().Count(child => child.Name.LocalName == "Badge") == 4);
+
+        var metaBadges = headGrid.Descendants()
+            .Where(element => element.Name.LocalName == "Badge"
+                && element.Attribute(XName.Get("ClassHelper.Classes", "https://irihi.tech/shared"))?.Value == "Light Tertiary")
+            .ToArray();
+        Assert.Equal(3, metaBadges.Length);
+        Assert.All(metaBadges, badge =>
+        {
+            Assert.Equal("{StaticResource Font.Monospace}", badge.Attribute("FontFamily")?.Value);
+            Assert.Equal("12", badge.Attribute("BadgeFontSize")?.Value);
+        });
+        Assert.Equal("{Binding ResponseSection.DurationText}", metaBadges[0].Attribute("Header")?.Value);
+        Assert.Equal("{Binding ResponseSection.SizeText}", metaBadges[1].Attribute("Header")?.Value);
+        Assert.Equal("{Binding ResponseSection.ContentTypeText}", metaBadges[2].Attribute("Header")?.Value);
+        Assert.Equal("{Binding ResponseSection.HasContentTypeText}", metaBadges[2].Attribute("IsVisible")?.Value);
+
+        // 状态徽标之后、内容类型徽标之前（列 3/4/5），复制按钮右移到列 6
+        Assert.Equal("3", metaBadges[0].Attribute("Grid.Column")?.Value);
+        Assert.Equal("4", metaBadges[1].Attribute("Grid.Column")?.Value);
+        Assert.Equal("5", metaBadges[2].Attribute("Grid.Column")?.Value);
+        var copyButton = headGrid.Descendants()
+            .Single(element => element.Name.LocalName == "Button" && HasClass(element, "HttpResponseCopyButton"));
+        Assert.Equal("6", copyButton.Attribute("Grid.Column")?.Value);
+    }
+
+    [Theory]
+    [InlineData("HttpInterfaceWorkbenchView.axaml")]
+    [InlineData("QuickRequestWorkbenchView.axaml")]
+    public void WorkbenchSplitter_ShouldExposeNameForDoubleClickReset(string fileName)
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));
+
+        // T123 双击重置：code-behind 经 WorkbenchSplitterReset.Attach 挂接，依赖 x:Name 定位
+        var splitter = document.Descendants()
+            .Single(element => element.Name.LocalName == "GridSplitter"
+                && HasClass(element, "HttpWorkbenchSplitter"));
+        Assert.Equal("WorkbenchSplitter", splitter.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value);
+    }
+
+    [Theory]
+    [InlineData("HttpInterfaceWorkbenchView.axaml")]
+    [InlineData("QuickRequestWorkbenchView.axaml")]
     public void WorkbenchResponseCopyMenu_ShouldOfferBodyHeadersAndCurl(string fileName)
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", fileName));

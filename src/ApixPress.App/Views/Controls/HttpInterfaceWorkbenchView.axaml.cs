@@ -20,6 +20,7 @@ public partial class HttpInterfaceWorkbenchView : UserControl
     public HttpInterfaceWorkbenchView()
     {
         InitializeComponent();
+        Helpers.WorkbenchSplitterReset.Attach(WorkbenchSplitter, 0);
         DataContextChanged += OnDataContextChanged;
         AttachedToVisualTree += (_, _) =>
         {

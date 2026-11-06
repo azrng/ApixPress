@@ -75,6 +75,7 @@
     </Border>
 
     <GridSplitter Grid.Row="1"
+                  x:Name="WorkbenchSplitter"
                   Classes="HttpWorkbenchSplitter"
                   ResizeDirection="Rows"
                   HorizontalAlignment="Stretch" />
@@ -121,7 +122,7 @@
                      Classes="SectionTitle"
                      Text="返回响应" />
           <Grid Grid.Column="2"
-                ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                 ColumnSpacing="{StaticResource Space.2}"
                 HorizontalAlignment="Right"
                 IsVisible="{Binding ResponseSection.HasResponse}">
@@ -142,16 +143,27 @@
             <u:Badge Grid.Column="2"
                      Header="{Binding ResponseSection.StatusText}"
                      iri:ClassHelper.Classes="{Binding ResponseSection.StatusBadgeClass}" />
-            <TextBlock Grid.Column="3"
-                       Classes="CaptionText"
-                       VerticalAlignment="Center"
-                       Text="{Binding ResponseSection.DurationText}" />
-            <TextBlock Grid.Column="4"
-                       Classes="CaptionText"
-                       VerticalAlignment="Center"
-                       Text="{Binding ResponseSection.SizeText}" />
+            <!-- T123 徽标组：耗时/大小/内容类型从纯文本升级为中性徽标（Light Tertiary 灰系，等宽字体） -->
+            <u:Badge Grid.Column="3"
+                     Header="{Binding ResponseSection.DurationText}"
+                     FontFamily="{StaticResource Font.Monospace}"
+                     BadgeFontSize="12"
+                     iri:ClassHelper.Classes="Light Tertiary"
+                     IsVisible="{Binding ResponseSection.DurationText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            <u:Badge Grid.Column="4"
+                     Header="{Binding ResponseSection.SizeText}"
+                     FontFamily="{StaticResource Font.Monospace}"
+                     BadgeFontSize="12"
+                     iri:ClassHelper.Classes="Light Tertiary"
+                     IsVisible="{Binding ResponseSection.SizeText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+            <u:Badge Grid.Column="5"
+                     Header="{Binding ResponseSection.ContentTypeText}"
+                     FontFamily="{StaticResource Font.Monospace}"
+                     BadgeFontSize="12"
+                     iri:ClassHelper.Classes="Light Tertiary"
+                     IsVisible="{Binding ResponseSection.HasContentTypeText}" />
             <!-- 响应复制菜单：DataContext 路径绑定（MenuFlyout 内 $parent 查找会断链，禁止使用） -->
-            <Button Grid.Column="5"
+            <Button Grid.Column="6"
                     Classes="HttpResponseCopyButton"
                     ToolTip.Tip="复制响应内容">
               <TextBlock FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets"

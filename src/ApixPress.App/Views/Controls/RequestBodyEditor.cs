@@ -17,6 +17,9 @@ public sealed class RequestBodyEditor : ResponseBodyEditor
         set => SetValue(PlaceholderTextProperty, value);
     }
 
+    // 可编辑编辑器不启用 JSON 折叠：折叠区间与用户输入互相干扰
+    protected override bool EnableFolding => false;
+
     public RequestBodyEditor()
     {
         IsReadOnly = false;

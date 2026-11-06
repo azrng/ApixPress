@@ -48,6 +48,82 @@ public sealed class ResponseSectionViewModelTests
     }
 
     [Fact]
+    public void ApplyResult_ShouldExposeContentTypeWithoutParameters_WhenPresent()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 12,
+                SizeBytes = 2,
+                Content = "{}",
+                Headers =
+                [
+                    new ResponseHeaderDto { Name = "Content-Type", Value = "application/json; charset=utf-8" }
+                ]
+            }),
+            new RequestSnapshotDto());
+
+        // T123 徽标组：Content-Type 去掉 charset 参数后作为徽标文本
+        Assert.Equal("application/json", viewModel.ContentTypeText);
+        Assert.True(viewModel.HasContentTypeText);
+    }
+
+    [Fact]
+    public void ApplyResult_ShouldClearContentType_WhenResponseFails()
+    {
+        var viewModel = new ResponseSectionViewModel();
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Failure("请求超时。", "request_timeout"),
+            new RequestSnapshotDto());
+
+        Assert.False(viewModel.HasContentTypeText);
+        Assert.Equal(string.Empty, viewModel.ContentTypeText);
+    }
+
+    [Fact]
+    public void Reset_ShouldClearContentTypeBadge()
+    {
+        var viewModel = new ResponseSectionViewModel();
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 12,
+                SizeBytes = 2,
+                Content = "{}",
+                Headers =
+                [
+                    new ResponseHeaderDto { Name = "Content-Type", Value = "text/plain" }
+                ]
+            }),
+            new RequestSnapshotDto());
+        Assert.True(viewModel.HasContentTypeText);
+
+        viewModel.Reset();
+
+        Assert.False(viewModel.HasContentTypeText);
+    }
+
+    [Theory]
+    [InlineData("application/json; charset=utf-8", "application/json")]
+    [InlineData("text/html;charset=UTF-8", "text/html")]
+    [InlineData("application/xml", "application/xml")]
+    [InlineData("", "")]
+    [InlineData("  ", "")]
+    public void FormatContentTypeText_ShouldStripParametersAndTrim(string raw, string expected)
+    {
+        var headers = raw.Length == 0
+            ? new List<ResponseHeaderDto>()
+            : [new ResponseHeaderDto { Name = "Content-Type", Value = raw }];
+
+        Assert.Equal(expected, ResponseSectionViewModel.FormatContentTypeText(headers));
+    }
+
+    [Fact]
     public void ApplyResult_ShouldShowTimeoutNotice_WhenRequestTimesOut()
     {
         var viewModel = new ResponseSectionViewModel();

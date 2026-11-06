@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.LogicalTree;
 using Avalonia.Media;
 using AvaloniaEdit;
+using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Highlighting.Xshd;
 
@@ -57,13 +58,19 @@ public class ResponseBodyEditor : TextEditor
     public ResponseBodyEditor()
     {
         IsReadOnly = true;
-        ShowLineNumbers = false;
+        ShowLineNumbers = true;
         WordWrap = false;
         Background = Brushes.Transparent;
         BorderThickness = new Thickness(0);
         SyntaxHighlighting = LoadJsonHighlighting();
         TextArea.TextView.LineTransformers.Add(new ResponseSearchHighlighter(this));
     }
+
+    private readonly JsonFoldingStrategy _foldingStrategy = new();
+    private FoldingManager? _foldingManager;
+
+    /// <summary>是否启用 JSON 折叠边栏；可编辑子类（请求 Body 编辑器）关闭，避免折叠与输入互相干扰。</summary>
+    protected virtual bool EnableFolding => true;
 
     public static readonly StyledProperty<IReadOnlyList<int>> SearchMatchOffsetsProperty =
         AvaloniaProperty.Register<ResponseBodyEditor, IReadOnlyList<int>>(nameof(SearchMatchOffsets), Array.Empty<int>());
@@ -102,6 +109,8 @@ public class ResponseBodyEditor : TextEditor
             {
                 Document.Text = text;
             }
+
+            UpdateFolding();
         }
         if (change.Property == TextProperty || change.Property == SearchMatchOffsetsProperty
             || change.Property == SearchMatchLengthProperty || change.Property == CurrentSearchMatchOffsetProperty)
@@ -133,6 +142,46 @@ public class ResponseBodyEditor : TextEditor
     {
         base.OnAttachedToLogicalTree(e);
         MapTokenBindings();
+        UpdateFolding();
+    }
+
+    protected override void OnDetachedFromLogicalTree(LogicalTreeAttachmentEventArgs e)
+    {
+        // FoldingManager 与当前 TextArea/Document 绑定，卸树即拆（换文档前必须卸载的契约）
+        UninstallFolding();
+        base.OnDetachedFromLogicalTree(e);
+    }
+
+    /// <summary>
+    /// JSON 折叠维护：正文为 JSON 时安装折叠管理器并刷新折叠区间，非 JSON 或禁用时卸载，
+    /// 避免 XML/纯文本响应多出一条空白折叠边栏（FoldingMargin 空态仍占字号宽度）。
+    /// </summary>
+    private void UpdateFolding()
+    {
+        if (!EnableFolding || !JsonFoldingStrategy.LooksLikeJson(Document.Text))
+        {
+            UninstallFolding();
+            return;
+        }
+
+        if (_foldingManager is null)
+        {
+            _foldingManager = FoldingManager.Install(TextArea);
+        }
+
+        var foldings = _foldingStrategy.CreateFoldings(Document);
+        _foldingManager.UpdateFoldings(foldings, -1);
+    }
+
+    private void UninstallFolding()
+    {
+        if (_foldingManager is null)
+        {
+            return;
+        }
+
+        FoldingManager.Uninstall(_foldingManager);
+        _foldingManager = null;
     }
 
     private void MapTokenBindings()
