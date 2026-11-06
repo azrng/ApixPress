@@ -1,6 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:u="https://irihi.tech/ursa">
+        xmlns:u="https://irihi.tech/ursa"
+        xmlns:iri="https://irihi.tech/shared">
   <Style Selector="Button.ProjectWorkspaceToolbarButton">
     <Setter Property="Padding" Value="10,8" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
@@ -814,6 +815,12 @@
 
   <Style Selector="TextBox.HttpTableInput">
     <Setter Property="Padding" Value="6,4" />
+  </Style>
+
+  <!-- Header 名候选输入（T124）：Semi 的 AutoCompleteBox 内部 TextBox 走独立主题、拿不到外层 Classes，
+       经 ClassHelper 透传 ParameterInput/HttpTableInput，外观与焦点态复用同行其他单元格输入的既有样式 -->
+  <Style Selector="AutoCompleteBox.HeaderNameInput /template/ TextBox#PART_TextBox">
+    <Setter Property="iri:ClassHelper.Classes" Value="ParameterInput HttpTableInput" />
   </Style>
 
   <!-- 扁平化：标题栏不再独立成框，与下方表格卡片构成一个视觉整体（间距由父级 RowSpacing 提供） -->

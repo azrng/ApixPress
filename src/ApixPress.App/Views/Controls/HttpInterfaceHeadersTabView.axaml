@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:u="https://irihi.tech/ursa"
              xmlns:vm="using:ApixPress.App.ViewModels"
+             xmlns:helpers="using:ApixPress.App.Helpers"
              x:Class="ApixPress.App.Views.Controls.HttpInterfaceHeadersTabView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
@@ -14,9 +15,11 @@
       <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource Space.3}">
         <StackPanel Spacing="{StaticResource Space.1}">
           <TextBlock Classes="HttpConfigSectionLabel" Text="请求头" />
-          <TextBlock Classes="CaptionText" Text="常用示例：Authorization、Content-Type、Accept。" />
+          <TextBlock Classes="CaptionText" Text="Header 名可从内置常用请求头中选择，也可直接输入自定义名称。" />
         </StackPanel>
-        <Button Grid.Column="1"
+        <!-- 新增行后由 code-behind 聚焦其 Header 名输入（T124），依赖 x:Name 定位 -->
+        <Button x:Name="AddHeaderButton"
+                Grid.Column="1"
                 Classes="AddButton HttpConfigAddButton"
                 Content="添加 Header"
                 Command="{Binding ConfigTab.AddHeaderCommand}" />
@@ -36,13 +39,21 @@
 
         <Grid Grid.Row="1">
           
-            <ListBox Classes="ParameterGridList" IsVisible="{Binding ConfigTab.HasHeaders}" ItemsSource="{Binding ConfigTab.Headers}">
+            <ListBox x:Name="HeaderList" Classes="ParameterGridList" IsVisible="{Binding ConfigTab.HasHeaders}" ItemsSource="{Binding ConfigTab.Headers}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:RequestParameterItemViewModel">
                   <Border Classes="ParameterRow HttpConfigTableRow">
                     <Grid ColumnDefinitions="56,2.4*,2.8*,2.2*,44" ColumnSpacing="{StaticResource Space.3}">
                       <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" />
-                      <TextBox Grid.Column="1" Classes="ParameterInput HttpTableInput" Text="{Binding Name}" PlaceholderText="例如：Authorization" />
+                      <!-- Header 名：内置常用请求头候选 + 自由输入（T124），包含匹配不区分大小写；空输入点击或按 ↓ 展开全部候选 -->
+                      <AutoCompleteBox Grid.Column="1"
+                                       Classes="HeaderNameInput"
+                                       ItemsSource="{x:Static helpers:CommonRequestHeaders.Names}"
+                                       FilterMode="Contains"
+                                       MinimumPrefixLength="0"
+                                       IsTextCompletionEnabled="False"
+                                       PlaceholderText="输入或选择 Header 名"
+                                       Text="{Binding Name, Mode=TwoWay}" />
                       <TextBox Grid.Column="2" Classes="ParameterInput HttpTableInput" Text="{Binding Value}" PlaceholderText="例如：Bearer {{token}}" />
                       <TextBox Grid.Column="3" Classes="ParameterInput HttpTableInput" Text="{Binding Description}" PlaceholderText="说明" />
                       <u:IconButton Grid.Column="4"

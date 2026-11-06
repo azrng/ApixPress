@@ -1077,6 +1077,11 @@ public sealed partial class ProjectTabViewModelTests
         {
             DataContext = viewModel
         });
+        // Header 名候选（T124）：x:Static 清单与 code-behind 的 x:Name 挂接在加载期解析，实例化冒烟防运行期才暴露
+        var headersTabException = Record.Exception(() => new ApixPress.App.Views.Controls.HttpInterfaceHeadersTabView
+        {
+            DataContext = viewModel
+        });
         var responseSearchException = Record.Exception(() =>
         {
             var editor = new ResponseBodyEditor
@@ -1106,6 +1111,7 @@ public sealed partial class ProjectTabViewModelTests
         Assert.Null(deleteConfirmDialogException);
         Assert.Null(requestCaseDeleteConfirmDialogException);
         Assert.Null(bodyTabException);
+        Assert.Null(headersTabException);
         Assert.Null(responseSearchException);
     }
 

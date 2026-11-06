@@ -189,7 +189,7 @@
           <div class="section-head">
             <div>
               <div class="section-title">请求 Headers</div>
-              <div class="section-hint">随请求发送的头部；取消勾选的 Header 不会参与请求，敏感值建议引用环境变量。</div>
+              <div class="section-hint">随请求发送的头部；取消勾选的 Header 不会参与请求，敏感值建议引用环境变量。Header 名可从内置常用请求头中选择，也可直接输入自定义名称。</div>
             </div>
             <button class="btn-add" id="addHeader">添加 Header</button>
           </div>
@@ -200,26 +200,60 @@
             </div>
             <div class="table-row">
               <span><span class="checkbox on"></span></span>
-              <span><input class="cell-input mono" value="Authorization"></span>
+              <span><input class="cell-input mono" list="builtinHeaderKeys" placeholder="输入或选择 Header 名" value="Authorization"></span>
               <span><input class="cell-input mono" value="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6..."></span>
               <span><input class="cell-input" value="登录令牌，引用 {{token}}"></span>
               <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
             <div class="table-row">
               <span><span class="checkbox on"></span></span>
-              <span><input class="cell-input mono" value="Content-Type"></span>
+              <span><input class="cell-input mono" list="builtinHeaderKeys" placeholder="输入或选择 Header 名" value="Content-Type"></span>
               <span><input class="cell-input mono" value="application/json"></span>
               <span><input class="cell-input" placeholder="说明"></span>
               <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
             <div class="table-row">
               <span><span class="checkbox"></span></span>
-              <span><input class="cell-input mono" value="X-Debug"></span>
+              <span><input class="cell-input mono" list="builtinHeaderKeys" placeholder="输入或选择 Header 名" value="X-Debug"></span>
               <span><input class="cell-input mono" value="true"></span>
               <span><input class="cell-input" value="调试用，默认关闭"></span>
               <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
           </div>
+          <!-- Header 名内置候选（T124）：仅静态常用请求头，输入时按包含匹配过滤，不匹配也可自由输入 -->
+          <datalist id="builtinHeaderKeys">
+            <option value="Accept"></option>
+            <option value="Accept-Charset"></option>
+            <option value="Accept-Encoding"></option>
+            <option value="Accept-Language"></option>
+            <option value="Authorization"></option>
+            <option value="Cache-Control"></option>
+            <option value="Connection"></option>
+            <option value="Content-Disposition"></option>
+            <option value="Content-Encoding"></option>
+            <option value="Content-Language"></option>
+            <option value="Content-Length"></option>
+            <option value="Content-Type"></option>
+            <option value="Cookie"></option>
+            <option value="Date"></option>
+            <option value="Expect"></option>
+            <option value="Host"></option>
+            <option value="If-Match"></option>
+            <option value="If-Modified-Since"></option>
+            <option value="If-None-Match"></option>
+            <option value="If-Unmodified-Since"></option>
+            <option value="Origin"></option>
+            <option value="Pragma"></option>
+            <option value="Proxy-Authorization"></option>
+            <option value="Range"></option>
+            <option value="Referer"></option>
+            <option value="User-Agent"></option>
+            <option value="X-Api-Key"></option>
+            <option value="X-Correlation-Id"></option>
+            <option value="X-Forwarded-For"></option>
+            <option value="X-Request-Id"></option>
+            <option value="X-Requested-With"></option>
+          </datalist>
         </div>
       </div>
 
@@ -314,6 +348,8 @@
     row.querySelector(".checkbox").classList.add("on");
     row.querySelectorAll("input").forEach(function (i) { i.value = ""; });
     table.appendChild(row);
+    // 新行聚焦 Header 名：可直接输入，或点击输入框从内置候选中选择
+    row.querySelector("input").focus();
   });
   // 删除 Header 行
   document.getElementById("headerTable").addEventListener("click", function (e) {

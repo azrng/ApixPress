@@ -306,6 +306,35 @@ public sealed class WorkbenchLayoutTests
     }
 
     [Fact]
+    public void HttpInterfaceHeadersTab_HeaderNameShouldOfferBuiltInSuggestions()
+    {
+        var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "HttpInterfaceHeadersTabView.axaml"));
+
+        // T124：Header 名 = 内置常用请求头候选 + 自由输入；Text 仍双向绑定 Name，包含匹配，空输入也能展开全部候选
+        var headerName = document.Descendants()
+            .Single(element => element.Name.LocalName == "AutoCompleteBox" && HasClass(element, "HeaderNameInput"));
+        Assert.Equal("1", headerName.Attribute("Grid.Column")?.Value);
+        Assert.Equal("{Binding Name, Mode=TwoWay}", headerName.Attribute("Text")?.Value);
+        Assert.Equal("{x:Static helpers:CommonRequestHeaders.Names}", headerName.Attribute("ItemsSource")?.Value);
+        Assert.Equal("Contains", headerName.Attribute("FilterMode")?.Value);
+        Assert.Equal("0", headerName.Attribute("MinimumPrefixLength")?.Value);
+
+        // 空输入点击展开、新增行聚焦由 code-behind 挂接，依赖 x:Name 定位
+        var xName = XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml");
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "Button"
+            && element.Attribute(xName)?.Value == "AddHeaderButton");
+        Assert.Contains(document.Descendants(), element => element.Name.LocalName == "ListBox"
+            && element.Attribute(xName)?.Value == "HeaderList");
+
+        // Semi 内部 TextBox 拿不到外层 Classes：必须经 ClassHelper 透传表格输入样式，外观与同行其他单元格一致
+        var styles = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Assets", "Styles", "WorkspaceEditorStyles.axaml"));
+        var passthrough = styles.Descendants().Single(element => element.Name.LocalName == "Style"
+            && element.Attribute("Selector")?.Value == "AutoCompleteBox.HeaderNameInput /template/ TextBox#PART_TextBox");
+        Assert.Contains(passthrough.Elements(), setter => setter.Attribute("Property")?.Value == "iri:ClassHelper.Classes"
+            && setter.Attribute("Value")?.Value == "ParameterInput HttpTableInput");
+    }
+
+    [Fact]
     public void HttpInterfaceBodyTab_ShouldReserveSpaceForTheActiveEditor()
     {
         var document = XDocument.Load(FindSourceFile("src", "ApixPress.App", "Views", "Controls", "HttpInterfaceBodyTabView.axaml"));
