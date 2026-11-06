@@ -12,7 +12,7 @@
   <SolidColorBrush x:Key="Brush.Background.CodeEditor" Color="#131A20" />
   <SolidColorBrush x:Key="Brush.Background.Selected" Color="#2A2748" />
   <SolidColorBrush x:Key="Brush.Background.Disabled" Color="#232327" />
-  <SolidColorBrush x:Key="Brush.Background.Overlay" Color="#88000000" />
+  <SolidColorBrush x:Key="Brush.Background.Overlay" Color="#8C000000" />
 
   <!-- Border -->
   <SolidColorBrush x:Key="Brush.Border.Default" Color="#394754" />
@@ -22,12 +22,14 @@
   <SolidColorBrush x:Key="Brush.Border.CodeEditor" Color="#2D3944" />
   <SolidColorBrush x:Key="Brush.Border.Strong" Color="#526171" />
   <SolidColorBrush x:Key="Brush.Border.Focus" Color="#44E7D4" />
+  <SolidColorBrush x:Key="Brush.Focus.Ring" Color="#3D44E7D4" />
   <SolidColorBrush x:Key="Brush.Border.Danger" Color="#E5484D" />
 
   <!-- Text -->
   <SolidColorBrush x:Key="Brush.Text.Primary" Color="#F0F5F8" />
   <SolidColorBrush x:Key="Brush.Text.Secondary" Color="#AEBCC9" />
-  <SolidColorBrush x:Key="Brush.Text.Tertiary" Color="#8A9BAA" />
+  <!-- T123 对比度修正：原 #8A9BAA 在 elevated (#2B3642) 上仅 4.30:1，提亮至全部表面 ≥4.5:1 -->
+  <SolidColorBrush x:Key="Brush.Text.Tertiary" Color="#94A6B6" />
   <SolidColorBrush x:Key="Brush.Text.Inverse" Color="#FFFFFF" />
   <SolidColorBrush x:Key="Brush.Text.Link" Color="#44E7D4" />
   <SolidColorBrush x:Key="Brush.Text.Danger" Color="#FF7A7D" />
@@ -141,4 +143,6 @@
   <StaticResource x:Key="DialogBackground" ResourceKey="Brush.Background.Elevated" />
   <StaticResource x:Key="DrawerBackground" ResourceKey="Brush.Background.Elevated" />
   <StaticResource x:Key="OverlayDialogMaskBrush" ResourceKey="Brush.Background.Overlay" />
+  <!-- 弹层（Ursa Dialog/Drawer 的 CardBorder）边框纳入应用 token：Semi 默认 BorderCardBorderBrush 走 SemiColorBorder -->
+  <StaticResource x:Key="BorderCardBorderBrush" ResourceKey="Brush.Border.Default" />
 </ResourceDictionary>

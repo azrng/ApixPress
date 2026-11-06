@@ -24,4 +24,9 @@
   <BoxShadows x:Key="Shadow.Brand.Tight">0 8 18 0 #3044E7D4</BoxShadows>
   <!-- 首页空状态图标徽章：品牌光环圈 + 柔和落影组合（design-system shadow.brand_ring） -->
   <BoxShadows x:Key="Shadow.Brand.Ring">0 0 0 8 #1A44E7D4, 0 12 28 0 #3844E7D4</BoxShadows>
+  <!-- 统一焦点环（T123）：TextBox 聚焦时的品牌色半透明外圈，配合 2px 边框 -->
+  <BoxShadows x:Key="Shadow.Focus.Ring">0 0 0 3 #3D44E7D4</BoxShadows>
+  <!-- 弹层（Ursa Dialog/Drawer 的 CardBorder）阴影纳入应用海拔 token：Semi 默认 BorderCardBoxShadow 走 SemiShadowElevated。
+       必须放本文件：App 资源加载顺序 Colors 先于 Shadows，桥接放 Colors 会因 StaticResource 急切解析找不到 Shadow.Dialog -->
+  <StaticResource x:Key="BorderCardBoxShadow" ResourceKey="Shadow.Dialog" />
 </ResourceDictionary>

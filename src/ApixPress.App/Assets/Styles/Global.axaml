@@ -4,4 +4,21 @@
   <StyleInclude Source="/Assets/Styles/ProjectBrowserStyles.axaml" />
   <StyleInclude Source="/Assets/Styles/WorkspaceStyles.axaml" />
   <StyleInclude Source="/Assets/Styles/DialogStyles.axaml" />
+
+  <!-- 统一焦点环（T123）：Semi 的 TextBox 焦点只换 1px 边框色，键盘路径辨识度不足。
+       全局补 2px 品牌边框 + 半透明外圈；:not(:error) 让数据校验错误态保持原有红色视觉。
+       ParameterInput（表格内联紧凑输入）豁免：保留 2px 品牌下划线式焦点，避免四边 2px 挤压行高。 -->
+  <Style Selector="TextBox:focus:not(:error)">
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="TextBox:focus:not(:error) /template/ Border#PART_ContentPresenterBorder">
+    <Setter Property="BoxShadow" Value="{DynamicResource Shadow.Focus.Ring}" />
+  </Style>
+
+  <!-- 统一按钮键盘焦点（T123）：Semi 按钮无任何焦点视觉，全部按钮 :focus-visible 统一品牌色 1px 描边。
+       经模板 ContentPresenter 的 TemplateBinding 转发生效，与既有 CTA :focus-visible 同机制。 -->
+  <Style Selector="Button:focus-visible">
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
+    <Setter Property="BorderThickness" Value="1" />
+  </Style>
 </Styles>

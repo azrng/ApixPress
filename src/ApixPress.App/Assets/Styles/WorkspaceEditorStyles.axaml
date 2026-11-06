@@ -948,9 +948,10 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
   </Style>
 
+  <!-- T123 品牌克制：文件类型芯片/附件芯片为纯装饰，品牌色降级为中性 -->
   <Style Selector="Button.HttpFieldTypeChip.file">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
   </Style>
 
   <!-- 对齐原型 03 file-chip：文件名（mono 省略）+ 大小 + 移除 -->
@@ -960,14 +961,14 @@
     <Setter Property="MaxWidth" Value="220" />
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
     <Setter Property="BorderThickness" Value="1" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Sm}" />
   </Style>
 
   <Style Selector="TextBlock.HttpFileChipName">
     <Setter Property="FontSize" Value="{StaticResource Font.Size.Caption}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
     <Setter Property="FontFamily" Value="{StaticResource Font.Monospace}" />
     <Setter Property="TextTrimming" Value="CharacterEllipsis" />
   </Style>

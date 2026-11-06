@@ -422,10 +422,11 @@
     <Setter Property="HorizontalAlignment" Value="Center" />
   </Style>
 
+  <!-- T123 品牌克制：空状态装饰图标弱化为三级文本色 -->
   <Style Selector="TextBlock.HistoryEmptyIconGlyph">
     <Setter Property="VerticalAlignment" Value="Center" />
     <Setter Property="HorizontalAlignment" Value="Center" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Tertiary}" />
     <Setter Property="FontSize" Value="{StaticResource Font.Size.BodyLarge}" />
   </Style>
 

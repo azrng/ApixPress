@@ -552,14 +552,15 @@
     <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
 
+  <!-- T123 品牌克制：侧栏新建按钮降级为中性底（主 CTA 才承担品牌实心底） -->
   <Style Selector="Button.ProjectSidebarAddButton">
     <Setter Property="Width" Value="36" />
     <Setter Property="Height" Value="36" />
     <Setter Property="Padding" Value="0" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="Background" Value="{DynamicResource Brush.Background.Subtle}" />
     <Setter Property="BorderThickness" Value="0" />
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Inverse}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 
   <Style Selector="Button.ProjectSidebarAddButton:pointerover">

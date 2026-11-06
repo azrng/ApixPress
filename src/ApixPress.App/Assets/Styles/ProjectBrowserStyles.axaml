@@ -481,12 +481,7 @@
     <Setter Property="MinHeight" Value="42" />
   </Style>
 
-  <Style Selector="TextBox.UrlInput:focus">
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="BorderThickness" Value="2" />
-  </Style>
-
-  <!-- Parameter Input -->
+  <!-- Parameter Input（紧凑内联输入，焦点豁免全局环：保留品牌下划线式，防四边 2px 挤压行高，见 Global.axaml） -->
   <Style Selector="TextBox.ParameterInput">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderBrush" Value="Transparent" />
@@ -497,7 +492,6 @@
   </Style>
 
   <Style Selector="TextBox.ParameterInput:focus">
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
     <Setter Property="BorderThickness" Value="0,0,0,2" />
   </Style>

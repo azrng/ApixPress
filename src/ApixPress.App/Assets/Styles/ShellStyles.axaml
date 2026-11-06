@@ -249,11 +249,7 @@
   <Style Selector="TextBox.EnvironmentNameInput:pointerover">
     <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Default}" />
   </Style>
-
-  <Style Selector="TextBox.EnvironmentNameInput:focus">
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="Background" Value="{DynamicResource Brush.Background.App}" />
-  </Style>
+  <!-- 焦点态走 Global.axaml 统一焦点环（T123），此处不再本地覆盖 -->
 
   <!-- 激活徽章：选中底 + 品牌描边胶囊（描边区别于环境卡自身的选中底） -->
   <Style Selector="Border.EnvCardActiveChip">
@@ -878,10 +874,7 @@
   <Style Selector="Button.PrimaryButton:pressed, Button.DialogPrimaryButton:pressed, Button.HttpSendButton:pressed">
     <Setter Property="Background" Value="{DynamicResource Brush.Brand.Primary}" />
   </Style>
-  <Style Selector="Button.PrimaryButton:focus-visible, Button.DialogPrimaryButton:focus-visible, Button.HttpSendButton:focus-visible, Button.HttpSaveButton:focus-visible">
-    <Setter Property="BorderBrush" Value="{DynamicResource Brush.Border.Focus}" />
-    <Setter Property="BorderThickness" Value="1" />
-  </Style>
+  <!-- 键盘焦点描边由 Global.axaml 的 Button:focus-visible 统一提供（T123），CTA 不再单独覆盖 -->
   <Style Selector="Button.PrimaryButton:disabled, Button.DialogPrimaryButton:disabled, Button.HttpSendButton:disabled">
     <Setter Property="Opacity" Value="0.5" />
   </Style>

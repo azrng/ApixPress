@@ -337,12 +337,13 @@
     <Setter Property="CornerRadius" Value="{StaticResource Radius.Lg}" />
   </Style>
 
+  <!-- T123 品牌克制：导入弹窗装饰字形与动作标题降级为中性文本层级 -->
   <Style Selector="TextBlock.ProjectImportFormatGlyph">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Secondary}" />
   </Style>
 
   <Style Selector="TextBlock.ProjectImportActionTitle">
-    <Setter Property="Foreground" Value="{DynamicResource Brush.Brand.Primary}" />
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Text.Primary}" />
   </Style>
 
   <Style Selector="Border.ProjectImportInputCard">

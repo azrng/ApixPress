@@ -73,7 +73,7 @@ tokens:
       border_strong: "#526171"
       text_primary: "#F0F5F8"
       text_secondary: "#AEBCC9"
-      text_tertiary: "#8A9BAA"
+      text_tertiary: "#94A6B6"
     brand:
       50: "#EDFCFA"
       100: "#D1F8F1"
@@ -105,7 +105,7 @@ tokens:
       background: "#C9363E"
       hover: "#B52D35"
       border: "#E5484D"
-      text: "#FF7A7D"
+      text: "#FFFFFF"
     danger_section:
       background: "#264B2329"
       border: "#38FF737C"
