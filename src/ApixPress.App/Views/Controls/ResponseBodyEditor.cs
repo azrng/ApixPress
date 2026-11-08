@@ -60,6 +60,10 @@ public class ResponseBodyEditor : TextEditor
         IsReadOnly = true;
         ShowLineNumbers = true;
         WordWrap = false;
+        // 关闭 AvaloniaEdit 内置超链接渲染：URL 会被染成硬编码深蓝+下划线，与 JSON 字符串色冲突；
+        // 且响应查看器是只读展示，链接点击行为无意义（T123 用户反馈）
+        Options.EnableHyperlinks = false;
+        Options.EnableEmailHyperlinks = false;
         Background = Brushes.Transparent;
         BorderThickness = new Thickness(0);
         SyntaxHighlighting = LoadJsonHighlighting();
