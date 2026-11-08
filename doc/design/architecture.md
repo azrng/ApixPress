@@ -34,4 +34,4 @@ Avalonia 桌面应用（Avalonia 11 + MVVM，CommunityToolkit.Mvvm），双项�
 | [update-and-release.md](update-and-release.md) | 关于页检查更新与发布链路 | §7 |
 | [request-fidelity.md](request-fidelity.md) | 请求调用保真与多文件上传 | §8 |
 
-MVP 基线（架构图、页面清单、业务规则、交互说明）见原文档归档；页面与业务规则的现状口径以 `doc/requirement.md`（兼容入口，225 行未超限）为准。
+MVP 基线（架构图、页面清单、业务规则、交互说明）见原文档归档；页面与业务规则的现状口径以 [REQ-001 全局需求基线](../requirements/baseline.md)为准。

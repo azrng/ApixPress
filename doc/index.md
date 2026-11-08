@@ -8,7 +8,7 @@ last_updated: 2026-10-14
 
 # 文档索引
 
-- 需求：[`requirements/index.md`](requirements/index.md)
+- 需求：[`requirements/index.md`](requirements/index.md)；全局基线 [REQ-001](requirements/baseline.md)（原 doc/requirement.md 迁移删除）
 - 架构总览：[`design/architecture.md`](design/architecture.md)（原单文件设计文档 2026-11-08 归档重组，历史见 [`design/archive/design-doc-v1.md`](design/archive/design-doc-v1.md)）
 - 设计：[`design/index.md`](design/index.md)
 - UI 重设计需求：[`requirements/ui/overall-redesign.md`](requirements/ui/overall-redesign.md)
@@ -21,4 +21,4 @@ last_updated: 2026-10-14
 - 请求用例交付契约：[`contracts/project-data/request-case-delivery.md`](contracts/project-data/request-case-delivery.md)
 - 高保真原型：[`design/prototype/09-import-export.html`](design/prototype/09-import-export.html)
 - 请求用例交付优化评审：[`用例交付优化任务清单.md`](用例交付优化任务清单.md)
-- 兼容入口：[`requirement.md`](requirement.md)（225 行未超限，暂留）；设计侧兼容入口已归档至 [`design/archive/design-doc-v1.md`](design/archive/design-doc-v1.md)
+- 兼容入口：需求侧 `doc/requirement.md` 已迁移删除（见 REQ-001）；设计侧兼容入口已归档至 [`design/archive/design-doc-v1.md`](design/archive/design-doc-v1.md)
