@@ -1,6 +1,6 @@
 # Avalonia 桌面端设计系统唯一事实来源
 # 面向人和 AI 共同使用：可读、可解析、非可执行、易于比对
-# 技术栈：.NET 10 + Avalonia 12.1.4 + Ursa.Avalonia + CommunityToolkit.Mvvm
+# 技术栈：.NET 10 + Avalonia 12.1.6 + Ursa.Avalonia + CommunityToolkit.Mvvm
 
 meta:
   name: "Avalonia 桌面端设计系统"
@@ -12,8 +12,8 @@ meta:
     - "desktop"
   tech_stack:
     runtime: ".NET 10"
-    ui_framework: "Avalonia 12.1.4"
-    component_library: "Semi.Avalonia 12.1.0.1 + Ursa.Avalonia 2.2.0"
+    ui_framework: "Avalonia 12.1.6"
+    component_library: "Semi.Avalonia 12.1.0.1 + Ursa.Avalonia 2.3.1"
     mvvm: "CommunityToolkit.Mvvm"
     data_access: "Dapper + SQLite / PostgreSQL（按项目选择）"
     messaging: "IMessenger"
