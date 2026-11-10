@@ -29,12 +29,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.1.4" />
+    <PackageReference Include="Avalonia" Version="12.1.6" />
     <!-- 本产品仅发布 win-x64：不引用 Avalonia.Desktop（会连带 X11 / macOS / FreeDesktop 后端
          约 4-5MB 进产物），显式引用 Win32 窗口平台 + Skia 渲染层 + HarfBuzz 文本整形 -->
-    <PackageReference Include="Avalonia.Win32" Version="12.1.4" />
-    <PackageReference Include="Avalonia.Skia" Version="12.1.4" />
-    <PackageReference Include="Avalonia.HarfBuzz" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Win32" Version="12.1.6" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.6" />
+    <PackageReference Include="Avalonia.HarfBuzz" Version="12.1.6" />
     <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
@@ -42,14 +42,14 @@
     </PackageReference>
     <PackageReference Include="Azrng.Core.Json" Version="1.3.1" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="Dapper" Version="2.1.79" />
-    <PackageReference Include="Irihi.Ursa" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.12" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.12" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+    <PackageReference Include="Dapper" Version="2.1.89" />
+    <PackageReference Include="Irihi.Ursa" Version="2.3.1" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
     <PackageReference Include="Semi.Avalonia" Version="12.1.0.1" />
-    <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.2.0" />
+    <PackageReference Include="Irihi.Ursa.Themes.Semi" Version="2.3.1" />
   </ItemGroup>
 
   <!-- 仅 NativeAOT 发布生效：保留依赖注入所需的类型成员，并允许 JSON 反射序列化兜底 -->
