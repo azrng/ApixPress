@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using ApixPress.App.Models.DTOs;
 using ApixPress.App.ViewModels.Base;
 using Azrng.Core.Results;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Xml.Linq;
@@ -13,13 +14,17 @@ namespace ApixPress.App.ViewModels;
 
 public partial class ResponseSectionViewModel : ViewModelBase
 {
-    private const int MaxSynchronousFormattedBodyLength = 256 * 1024;
+    // 后台美化的体量上限：超过后不再 parse/序列化（防极端响应的内存峰值），原文展示
+    private const int MaxBackgroundFormattedBodyLength = 4 * 1024 * 1024;
     private const int MaxSynchronousFormatThreshold = 64 * 1024;
     private const int MaxSearchableBodyLength = 1024 * 1024;
     // 小正文即时搜索保持零感知延迟；超过该长度（最长 1MB）的循环扫描合并进 250ms 防抖
     private const int InstantSearchMaxBodyLength = 16 * 1024;
     private const int MaxDisplayBodyCharacters = 256 * 1024;
     private const int MaxActualRequestBodyCharacters = 256 * 1024;
+    // 编辑器对超长单行的 TextLine 排版成本极高（256K 单行实测令 UI 挂起分钟级），
+    // 展示层统一按此长度软断行兜底；pretty JSON 每行远小于该值，正常展示不受影响
+    private const int MaxDisplayLineLength = 8 * 1024;
     private const string FormattingBodyPlaceholder = "正在格式化响应正文...";
 
     private static readonly JsonSerializerOptions PrettyJsonOptions = new()
@@ -697,7 +702,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
         var formattedBody = FormatResponseBody(response);
         if (!response.IsContentTruncated)
         {
-            return LimitDisplayBody(formattedBody);
+            return WrapOverlongLines(LimitDisplayBody(formattedBody));
         }
 
         var notice = response.SizeBytes > response.CapturedSizeBytes
@@ -706,7 +711,7 @@ public partial class ResponseSectionViewModel : ViewModelBase
         var bodyWithNotice = string.IsNullOrWhiteSpace(formattedBody)
             ? notice
             : $"{formattedBody}{Environment.NewLine}{Environment.NewLine}{notice}";
-        return LimitDisplayBody(bodyWithNotice);
+        return WrapOverlongLines(LimitDisplayBody(bodyWithNotice));
     }
 
     private static string LimitDisplayBody(string body)
@@ -717,6 +722,44 @@ public partial class ResponseSectionViewModel : ViewModelBase
         }
 
         return $"{body[..MaxDisplayBodyCharacters]}{Environment.NewLine}{Environment.NewLine}[界面仅展示前 {UiFormatHelper.FormatBytes(MaxDisplayBodyCharacters)}，避免大文本导致卡顿。]";
+    }
+
+    /// <summary>
+    /// 展示层软断行：AvaloniaEdit 对超长单行的 TextLine 排版成本极高（紧凑 JSON 或超长字符串值
+    /// 可达数百 K 字符单行，实测令 UI 挂起分钟级），超过 <see cref="MaxDisplayLineLength"/> 的行
+    /// 按固定长度折行。仅影响界面展示，不改动存储与复制语义（历史快照仍存原文）。
+    /// </summary>
+    private static string WrapOverlongLines(string body)
+    {
+        if (body.Length <= MaxDisplayLineLength)
+        {
+            return body;
+        }
+
+        var lines = body.Split('\n');
+        for (var index = 0; index < lines.Length; index++)
+        {
+            var line = lines[index];
+            if (line.Length <= MaxDisplayLineLength)
+            {
+                continue;
+            }
+
+            var wrapped = new StringBuilder(line.Length + line.Length / MaxDisplayLineLength * Environment.NewLine.Length);
+            for (var start = 0; start < line.Length; start += MaxDisplayLineLength)
+            {
+                if (start > 0)
+                {
+                    wrapped.Append(Environment.NewLine);
+                }
+
+                wrapped.Append(line, start, Math.Min(MaxDisplayLineLength, line.Length - start));
+            }
+
+            lines[index] = wrapped.ToString();
+        }
+
+        return string.Join('\n', lines);
     }
 
     private static string FormatResponseSizeText(ResponseSnapshotDto response)
@@ -764,7 +807,9 @@ public partial class ResponseSectionViewModel : ViewModelBase
             return response.Content;
         }
 
-        if (response.Content.Length > MaxSynchronousFormattedBodyLength)
+        // 后台美化上限只防极端体量（4MB+）的 parse 内存峰值；正常 MB 级 JSON 必须美化，
+        // 否则紧凑原文（无换行）会以超长单行进入编辑器排版，直接卡死 UI
+        if (response.Content.Length > MaxBackgroundFormattedBodyLength)
         {
             return response.Content;
         }

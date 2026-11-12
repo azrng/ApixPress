@@ -368,7 +368,7 @@ public sealed class ResponseSectionViewModelTests
     }
 
     [Fact]
-    public async Task ApplyResult_ShouldKeepLargeJsonBodyUnformattedAndLimitDisplay()
+    public async Task ApplyResult_ShouldFormatLargeJsonBodyAndWrapOverlongLines()
     {
         // 本用例依赖"无 Avalonia 宿主"的同步应用路径（Application.Current 为 null）。
         // 并行套件中其它测试类可能已初始化 Avalonia，此时异步应用依赖的 UI 泵不存在，
@@ -401,9 +401,55 @@ public sealed class ResponseSectionViewModelTests
 
         await viewModel.WaitForPendingBodyFormatAsync();
 
-        Assert.StartsWith(rawContent[..(256 * 1024)], viewModel.BodyText);
+        // 大 JSON 仍要美化：紧凑原文以单行进入编辑器会令 UI 挂起（生产事故实测）
+        Assert.Contains(Environment.NewLine, viewModel.BodyText);
+        Assert.Contains("\"data\": \"", viewModel.BodyText);
+        // 美化后超长字符串值仍是单行，展示层必须软断行兜底
+        Assert.All(
+            viewModel.BodyText.Split('\n'),
+            line => Assert.True(line.TrimEnd('\r').Length <= 8 * 1024, "展示正文存在超过 8K 的超长行"));
         Assert.Contains("界面仅展示前", viewModel.BodyText);
         Assert.DoesNotContain(rawContent[^32..], viewModel.BodyText);
+    }
+
+    [Fact]
+    public async Task ApplyResult_ShouldWrapOverlongPlainBodyLines()
+    {
+        // 与上一用例相同的宿主守卫：无 Avalonia 时才走可等待的同步应用路径
+        if (Avalonia.Application.Current is not null)
+        {
+            return;
+        }
+
+        var viewModel = new ResponseSectionViewModel();
+        var rawContent = new string('x', 100 * 1024);
+
+        viewModel.ApplyResult(
+            ResultModel<ResponseSnapshotDto>.Success(new ResponseSnapshotDto
+            {
+                StatusCode = 200,
+                DurationMs = 20,
+                SizeBytes = rawContent.Length,
+                Content = rawContent,
+                Headers =
+                [
+                    new ResponseHeaderDto
+                    {
+                        Name = "Content-Type",
+                        Value = "text/plain"
+                    }
+                ]
+            }),
+            new RequestSnapshotDto());
+
+        await viewModel.WaitForPendingBodyFormatAsync();
+
+        // 非文本格式化路径（纯文本直出）同样不能把超长单行交给编辑器排版
+        Assert.All(
+            viewModel.BodyText.Split('\n'),
+            line => Assert.True(line.TrimEnd('\r').Length <= 8 * 1024, "展示正文存在超过 8K 的超长行"));
+        // 软断行只影响展示，内容字符不丢失（≤256K 不触发截断）
+        Assert.Equal(rawContent.Length, viewModel.BodyText.Replace("\r", string.Empty).Replace("\n", string.Empty).Length);
     }
 
     [Fact]
