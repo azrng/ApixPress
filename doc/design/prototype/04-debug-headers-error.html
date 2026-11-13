@@ -6,6 +6,38 @@
 <title>ApixPress 原型 · 04 接口调试 Headers 与异常响应</title>
 <link rel="stylesheet" href="shared.css">
 <link rel="stylesheet" href="assets/interaction-fixes.css">
+<style>
+  /* Header 名下拉展开态（T128）：圆角浮层 + 条目内衬 + 柔和阴影，仅内置常用项 */
+  .header-suggest-wrap { margin: 2px 0 6px; }
+  .header-suggest {
+    margin: 0 24px 0 74px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-md);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .45);
+    padding: 4px;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .header-suggest-item {
+    padding: 6px 10px;
+    border-radius: var(--r-sm);
+    font-size: 12.5px; font-family: var(--mono, monospace);
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .header-suggest-item:hover {
+    background: var(--bg-selected);
+    color: var(--text-primary);
+  }
+  .header-suggest-item.picked {
+    background: var(--bg-selected);
+    color: var(--accent);
+  }
+  .header-suggest-note {
+    margin: 6px 24px 0 74px;
+    font-size: 11px; color: var(--text-tertiary);
+  }
+</style>
 </head>
 <body>
 
@@ -200,60 +232,45 @@
             </div>
             <div class="table-row">
               <span><span class="checkbox on"></span></span>
-              <span><input class="cell-input mono" list="builtinHeaderKeys" placeholder="输入或选择 Header 名" value="Authorization"></span>
+              <span><input class="cell-input mono" placeholder="输入或选择 Header 名" value="Authorization"></span>
               <span><input class="cell-input mono" value="Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6..."></span>
               <span><input class="cell-input" value="登录令牌，引用 {{token}}"></span>
               <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
+            <!-- Header 名下拉展开态（T128）：仅内置 13 个常用请求头，圆角浮层 + 条目内衬，输入时按包含匹配过滤，不匹配也可自由输入 -->
+            <div class="header-suggest-wrap">
+              <div class="header-suggest">
+                <div class="header-suggest-item" data-value="Accept">Accept</div>
+                <div class="header-suggest-item" data-value="Accept-Encoding">Accept-Encoding</div>
+                <div class="header-suggest-item" data-value="Accept-Language">Accept-Language</div>
+                <div class="header-suggest-item" data-value="Authorization">Authorization</div>
+                <div class="header-suggest-item" data-value="Cache-Control">Cache-Control</div>
+                <div class="header-suggest-item" data-value="Content-Length">Content-Length</div>
+                <div class="header-suggest-item" data-value="Content-Type">Content-Type</div>
+                <div class="header-suggest-item" data-value="Cookie">Cookie</div>
+                <div class="header-suggest-item" data-value="Origin">Origin</div>
+                <div class="header-suggest-item" data-value="Referer">Referer</div>
+                <div class="header-suggest-item" data-value="User-Agent">User-Agent</div>
+                <div class="header-suggest-item" data-value="X-Api-Key">X-Api-Key</div>
+                <div class="header-suggest-item" data-value="X-Requested-With">X-Requested-With</div>
+              </div>
+              <div class="header-suggest-note">下拉仅列内置常用项；继续输入可过滤，未命中的名称可直接自定义。</div>
+            </div>
             <div class="table-row">
               <span><span class="checkbox on"></span></span>
-              <span><input class="cell-input mono" list="builtinHeaderKeys" placeholder="输入或选择 Header 名" value="Content-Type"></span>
+              <span><input class="cell-input mono" placeholder="输入或选择 Header 名" value="Content-Type"></span>
               <span><input class="cell-input mono" value="application/json"></span>
               <span><input class="cell-input" placeholder="说明"></span>
               <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
             <div class="table-row">
               <span><span class="checkbox"></span></span>
-              <span><input class="cell-input mono" list="builtinHeaderKeys" placeholder="输入或选择 Header 名" value="X-Debug"></span>
+              <span><input class="cell-input mono" placeholder="输入或选择 Header 名" value="X-Debug"></span>
               <span><input class="cell-input mono" value="true"></span>
               <span><input class="cell-input" value="调试用，默认关闭"></span>
               <span class="del-btn"><i class="ri-delete-bin-line"></i></span>
             </div>
           </div>
-          <!-- Header 名内置候选（T124）：仅静态常用请求头，输入时按包含匹配过滤，不匹配也可自由输入 -->
-          <datalist id="builtinHeaderKeys">
-            <option value="Accept"></option>
-            <option value="Accept-Charset"></option>
-            <option value="Accept-Encoding"></option>
-            <option value="Accept-Language"></option>
-            <option value="Authorization"></option>
-            <option value="Cache-Control"></option>
-            <option value="Connection"></option>
-            <option value="Content-Disposition"></option>
-            <option value="Content-Encoding"></option>
-            <option value="Content-Language"></option>
-            <option value="Content-Length"></option>
-            <option value="Content-Type"></option>
-            <option value="Cookie"></option>
-            <option value="Date"></option>
-            <option value="Expect"></option>
-            <option value="Host"></option>
-            <option value="If-Match"></option>
-            <option value="If-Modified-Since"></option>
-            <option value="If-None-Match"></option>
-            <option value="If-Unmodified-Since"></option>
-            <option value="Origin"></option>
-            <option value="Pragma"></option>
-            <option value="Proxy-Authorization"></option>
-            <option value="Range"></option>
-            <option value="Referer"></option>
-            <option value="User-Agent"></option>
-            <option value="X-Api-Key"></option>
-            <option value="X-Correlation-Id"></option>
-            <option value="X-Forwarded-For"></option>
-            <option value="X-Request-Id"></option>
-            <option value="X-Requested-With"></option>
-          </datalist>
         </div>
       </div>
 
@@ -367,6 +384,21 @@
     document.getElementById("saveCaseModal").classList.remove("open");
     protoAttachCaseToSelectedTree(name);
     protoToast("用例「" + name + "」已保存，可在接口用例抽屉中管理（演示）");
+  });
+
+  // Header 名下拉（T128）：点击候选项回填第一行输入框并标记选中态（演示）
+  var pickedItem = null;
+  document.querySelectorAll(".header-suggest-item").forEach(function (item) {
+    item.addEventListener("click", function () {
+      if (pickedItem) pickedItem.classList.remove("picked");
+      pickedItem = item;
+      item.classList.add("picked");
+      var nameInput = document.querySelector("#headerTable .table-row:not(.header) input");
+      if (nameInput) {
+        nameInput.value = item.getAttribute("data-value");
+        nameInput.focus();
+      }
+    });
   });
 </script>
 <script src="assets/interaction-fixes.js"></script>

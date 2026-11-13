@@ -29,4 +29,15 @@
   <!-- 弹层（Ursa Dialog/Drawer 的 CardBorder）阴影纳入应用海拔 token：Semi 默认 BorderCardBoxShadow 走 SemiShadowElevated。
        必须放本文件：App 资源加载顺序 Colors 先于 Shadows，桥接放 Colors 会因 StaticResource 急切解析找不到 Shadow.Dialog -->
   <StaticResource x:Key="BorderCardBoxShadow" ResourceKey="Shadow.Dialog" />
+  <!-- AutoCompleteBox 下拉弹层（T128）：Popup 内容不经过视图资源链，只能在应用级覆盖 Semi 的
+       AutoCompleteBoxPopup* 键（与上方 SemiColor* 同一桥接模式）。全应用仅 Headers 页签与导入
+       对话框两处 ACB，统一弹层观感：8px 圆角 + 1px 描边 + 海拔阴影 + 与输入框留 4px 间距 + 4px 内衬。
+       依赖顺序：Brush.*（Colors 第 1）/ Radius.Md（Spacing 第 3）/ Shadow.Lg（本文件第 4） -->
+  <Thickness x:Key="AutoCompleteBoxPopupMargin">0,4,0,0</Thickness>
+  <Thickness x:Key="AutoCompleteBoxPopupPadding">4</Thickness>
+  <Thickness x:Key="AutoCompleteBoxPopupBorderThickness">1</Thickness>
+  <StaticResource x:Key="AutoCompleteBoxPopupCornerRadius" ResourceKey="Radius.Md" />
+  <StaticResource x:Key="AutoCompleteBoxPopupBackground" ResourceKey="Brush.Background.Elevated" />
+  <StaticResource x:Key="AutoCompleteBoxPopupBorderBrush" ResourceKey="Brush.Border.Default" />
+  <StaticResource x:Key="AutoCompleteBoxPopupBoxShadow" ResourceKey="Shadow.Lg" />
 </ResourceDictionary>

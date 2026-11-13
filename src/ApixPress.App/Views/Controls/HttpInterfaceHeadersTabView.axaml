@@ -8,6 +8,8 @@
              x:Class="ApixPress.App.Views.Controls.HttpInterfaceHeadersTabView"
              x:DataType="vm:ProjectTabViewModel"
              mc:Ignorable="d">
+  <!-- Header 名下拉的弹层观感经应用级资源键覆盖（Assets/Styles/Shadows.axaml 的 AutoCompleteBoxPopup* 桥接）：
+       Popup 内容的资源查找不经过视图资源链（T128 实测 UserControl.Resources 与 ControlTheme.Resources 均不生效） -->
   <Grid Margin="{StaticResource Pad.TabSheet}"
         RowDefinitions="Auto,*"
         RowSpacing="{StaticResource Space.2}">
